@@ -17,7 +17,7 @@ authors = [
     { name = "seud0nym", email = "seud0nym@yahoo.com.au" }
 ]
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 
 [project.scripts]
 sigenergy2mqtt = "sigenergy2mqtt.__main__:main"
