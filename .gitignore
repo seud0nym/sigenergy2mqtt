@@ -1,3 +1,10 @@
+# Project
+.debug.*
+.vscode/launch.json
+doc/protocol/
+
+# Python
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

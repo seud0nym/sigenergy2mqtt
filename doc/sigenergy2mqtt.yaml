@@ -1,0 +1,229 @@
+# log-level
+#   default: WARNING
+#   description:  The sigenergy2mqtt logging level. Must be one of:
+#                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+log-level: WARNING
+# discovery-only
+#   default: false
+#   description:  Causes sigenergy2mqtt to exit after publishing auto-discovery
+#                 to Home Assistant. Valid values are true or false.
+discovery-only: false
+home-assistant:
+  # discovery-prefix
+  #   default: homeassistant
+  #   description:  The Home Assistant discovery prefix. Only specify if you
+  #                 have changed the prefix in Home Assistant.
+  discovery-prefix: homeassistant
+  # entity-id-prefix
+  #   default: sigen
+  #   description:  The prefix that will be applied to all unique ids and 
+  #                 entity ids.
+  entity-id-prefix: sigen
+  # unique-id-prefix
+  #   default: sigen
+  #   description:  The prefix string that will be prepended to the Home 
+  #                 Assistant MQTT unique id. This should NEVER be changed 
+  #                 after initial discovery has been published.
+  unique-id-prefix: sigen
+mqtt:
+  # broker
+  #   default: 127.0.0.1
+  #   description:  The host name or IP address of the MQTT broker.
+  broker: 127.0.0.1
+  # port
+  #   default: 1883
+  #   description:  The port number used by the MQTT broker.
+  port: 1883
+  # anonymous
+  #   default: false
+  #   description:  If true, the MQTT broker does not require authentication.
+  #                 If false, username and password must be supplied.
+  anonymous: false
+  # username
+  #   default: ""
+  #   description:  The username for authenticating to the MQTT broker. Not
+  #                 required if anonymous: true
+  username: not_required_for_anonymous
+  # password
+  #   default: ""
+  #   description:  The password for authenticating to the MQTT broker. Not
+  #                 required if anonymous: true
+  password: not_required_for_anonymous
+  # log-level
+  #   default: WARNING
+  #   description:  The MQTT interace logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: WARNING
+modbus:
+    # host
+    #   default: ""
+    #   description:  The host name or IP address of a Sigenergy Modbus 
+    #                 interface. There may be multiple hosts defined if 
+    #                 there are multiple Sigenergy devices.
+  - host: sigenergy.local
+    # port
+    #   default: 502
+    #   description:  The port number used by the Sigenergy Modbus interface.
+    port: 502
+    # inverters
+    #   default: [ ]
+    #   description:  The array of slave (device address) ids to access the 
+    #                 inverter registers. If you have multiple inverters, 
+    #                 specify the slave addresses separated with commas.
+    #                 e.g. [ 1, 2 ] At least 1 inverter slave address must
+    #                 be specified (unlesss the host is an AC Charger).
+    inverters: [ 1 ]
+    # dc-chargers
+    #   default: [ ]
+    #   description:  The array of slave (device address) ids to access the 
+    #                 DC Charger registers. If you have multiple DC Chargers, 
+    #                 specify the slave addresses separated with commas.
+    #                 e.g. [ 3, 4 ] If do not have a DC Charger, use [ ].
+    dc-chargers: [ ]
+    # log-level
+    #   default: WARNING
+    #   description:  The Modbus interace logging level. Must be one of:
+    #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+    log-level: WARNING
+    # read-only
+    #   default: true
+    #   description:  If true, all read-only entities will be published to
+    #                 MQTT.
+    read-only: true
+    # read-write
+    #   default: true
+    #   description:  If true, all read-write entities will be published to
+    #                 MQTT. Specify false to disable read-write entities.
+    read-write: false
+    # write-only
+    #   default: true
+    #   description:  If true, all write-only entities (usually power on/off
+    #                 buttons) will be published to MQTT. Specify false to 
+    #                 disable write-only entities.
+    write-only: true
+    smart-port:
+      # enabled
+      #   default: false
+      #   description:  If true, sigenergy2mqtt will interrogate a third-party
+      #                 device for production data.
+      enabled: false
+      # module
+      #   default: ""
+      #   description:  The name of the module to be loaded to interrogate a
+      #                 third-party device. At this time, the only valid value
+      #                 is enphase.
+      module: enphase
+      # host
+      #   default: ""
+      #   description:  The host name or IP address for the third-party API.
+      host: envoy.local
+      # port
+      #   default: null
+      #   description:  The port number used by the third-party API.
+      port: 502
+      # username
+      #   default: ""
+      #   description:  The username for authenticating to the third-party API.
+      username: enlighten_login@email.address
+      # password
+      #   default: ""
+      #   description:  The password for authenticating to the third-party API.
+      password: your_enlighten_password
+      # pv-power
+      #   default: ""
+      #   description:  The Python sensor class used to report PV generation
+      #                 through the third-party API. If specified, the Sigenergy
+      #                 Plant PV Power entity will be disabled by default, and
+      #                 a new entity called Total PV Power will be published 
+      #                 that will combine the Sigenergy and third-party 
+      #                 PV generation into a single number.
+      pv_power: EnphasePVPower
+    #
+    # Host sections can contain inverters and dc-chargers, OR ac-chargers.
+    #
+  - host: sigen-evac.local
+    port: 502
+    # ac-chargers
+    #   default: [ ]
+    #   description:  The array of slave (device address) ids to access the 
+    #                 AC Charger registers. If ac-chargers is specified, you
+    #                 cannot specify inverters or dc-chargers, and smart-port
+    #                 configuration is ignored.
+    ac-chargers: [ ]
+    log-level: WARNING
+    read-only: true
+    read-write: true
+    write-only: true
+# sensor-debug-logging
+#   default: false
+#   description:  When log-level is DEBUG, controls whether individual
+#                 individual sensors debugging messages are displayed.
+#                 If false, individual sensor debugging may be enabled
+#                 through sensor-overrides.
+sensor-debug-logging: false
+# sensors-enabled-by-default
+#   default: false
+#   description:  When sensors are initially discovered by Home Assistant,
+#                 the majority will be disabled in the UI. If you want all 
+#                 sensors to be enabled, set this to true. Not thate this 
+#                 setting is only applicable to the first time that the 
+#                 entity is discovered by Home Assistant. Once it has been 
+#                 discovered, you must control enabled/disabled through
+#                 Home Assistant (unless you make the sensor unpublishable).
+sensors-enabled-by-default: false
+sensor-overrides:
+  # Specify the sensor to be overriden by either by the full entity id,
+  # a partial entity id, the full sensor class name, or a partial 
+  # sensor class name. For example, specifying Reactive: would match all
+  # sensors with Reactive in their class name.
+  partial_or_full_entity_id_or_sensor_class_name:
+    # debug-logging
+    #   default: There is no default
+    #   description:  If true, then debug messages will be logged when
+    #                 log-level is set to DEBUG.
+    debug-logging: true
+    # publishable
+    #   default: There is no default
+    #   description:  If false, the sensor will not be published to MQTT
+    #                 and will not appear in Homew Assistant at all.
+    publishable: false
+    # gain
+    #   default: There is no default
+    #   description:  The Sigenergy Modbus Protocol defines a gain to be
+    #                 applied to the raw value raed from the interface.
+    #                 e.g. an energy register may have a gain of 1000 to
+    #                 be expressed in kWh. If the gain is over-ridden, you
+    #                 must also over-ride the unit-of-measurement with a 
+    #                 correct, correspnding unit.
+    gain: 1
+    # icon
+    #   default: There is no default
+    #   description:  Specify a different icon for the sensor.
+    icon: "mdi:emoticon-happy"
+    # precision
+    #   default: There is no default
+    #   description:  Specify the display precision (number of decimal 
+    #                 places) for this sensor.
+    precision: 2
+    # scan-interval
+    #   default: There is no default
+    #   description:  Change the default scan interval at which the state
+    #                 of this sensor is read.
+    scan-interval: 10
+    # unit-of-measurement
+    #   default: There is no default
+    #   description:  Change the unit of this sensor. Used in conjunction
+    #                 with gain.
+    unit-of-measurement: Wh
+  # Example of making all sensors of the second PV string on inverter slave
+  # address 1 unpublishable. Because it will have no sensors, the PV String
+  # device will also not appear in Home Assistant.
+  _0_inverter_1_pv2:
+    publishable: false
+  # Examples of scan-interval overrides based on sensor class name.
+  GridSensorActivePower:
+    scan-interval: 2
+  PlantPVPower:
+    scan-interval: 2
+  BatteryPower:
+    scan-interval: 2

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sigenergy2mqtt"
+dynamic = ["version"]
+dependencies = [
+    "paho-mqtt==1.6.1",
+    "pymodbus==3.8.6",
+    "requests==2.32.3",
+    "ruamel.yaml==0.18.6",
+    "ruamel.yaml.clib==0.2.8"
+]
+description = "Publish Modbus data from Sigenergy to MQTT"
+authors = [
+    { name = "seud0nym", email = "seud0nym@yahoo.com.au" }
+]
+license = "MIT"
+requires-python = ">=3.9"
+
+[project.scripts]
+sigenergy2mqtt = "sigenergy2mqtt.__main__:main"
+
+[project.urls]
+repository = "https://github.com/seud0nym/sigenergy2mqtt"
+
+[tool.hatch.version]
+path = "sigenergy2mqtt/config/config.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["sigenergy2mqtt/**"]
+
+[tool.hatch.build.targets.wheel]
+include = ["sigenergy2mqtt/**"]

@@ -1,0 +1,6 @@
+{
+    "ruff.lineLength": 200,
+    "python.analysis.extraPaths": [
+        "./src"
+    ]
+}
