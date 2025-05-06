@@ -1,14 +1,18 @@
 # log-level
 #   default: WARNING
-#   description:  The sigenergy2mqtt logging level. Must be one of:
+#   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
-# discovery-only
-#   default: false
-#   description:  Causes sigenergy2mqtt to exit after publishing auto-discovery
-#                 to Home Assistant. Valid values are true or false.
-discovery-only: false
 home-assistant:
+  # device-name-prefix
+  #   default: ""
+  #   description:  An optional prefix to be prepended to MQTT device names.
+  device-name-prefix: homeassistant
+  # discovery-only
+  #   default: false
+  #   description:  Causes sigenergy2mqtt to exit after publishing auto-discovery
+  #                 to Home Assistant. Valid values are true or false.
+  discovery-only: false
   # discovery-prefix
   #   default: homeassistant
   #   description:  The Home Assistant discovery prefix. Only specify if you
@@ -19,6 +23,21 @@ home-assistant:
   #   description:  The prefix that will be applied to all unique ids and 
   #                 entity ids.
   entity-id-prefix: sigen
+  # republish-discovery-interval
+  #   default: 0
+  #   description:  The interval (in seconds) at which the Home Assistant
+  #                 discovery will be automatically republished.
+  republish-discovery-interval: 0
+  # sensors-enabled-by-default
+  #   default: false
+  #   description:  When sensors are initially discovered by Home Assistant,
+  #                 the majority will be disabled in the UI. If you want all 
+  #                 sensors to be enabled, set this to true. Not thate this 
+  #                 setting is only applicable to the first time that the 
+  #                 entity is discovered by Home Assistant. Once it has been 
+  #                 discovered, you must control enabled/disabled through
+  #                 Home Assistant (unless you make the sensor unpublishable).
+  sensors-enabled-by-default: false
   # unique-id-prefix
   #   default: sigen
   #   description:  The prefix string that will be prepended to the Home 
@@ -73,12 +92,12 @@ modbus:
     #                 e.g. [ 1, 2 ] At least 1 inverter slave address must
     #                 be specified (unlesss the host is an AC Charger).
     inverters: [ 1 ]
-    # dc-chargers
+    # ac-chargers
     #   default: [ ]
     #   description:  The array of slave (device address) ids to access the 
-    #                 DC Charger registers. If you have multiple DC Chargers, 
+    #                 AC Charger registers. If you have multiple AC Chargers, 
     #                 specify the slave addresses separated with commas.
-    #                 e.g. [ 3, 4 ] If do not have a DC Charger, use [ ].
+    #                 e.g. [ 3, 4 ] If do not have an AC Charger, use [ ].
     dc-chargers: [ ]
     # log-level
     #   default: WARNING
@@ -107,37 +126,51 @@ modbus:
       #   description:  If true, sigenergy2mqtt will interrogate a third-party
       #                 device for production data.
       enabled: false
-      # module
-      #   default: ""
-      #   description:  The name of the module to be loaded to interrogate a
-      #                 third-party device. At this time, the only valid value
-      #                 is enphase.
-      module: enphase
-      # host
-      #   default: ""
-      #   description:  The host name or IP address for the third-party API.
-      host: envoy.local
-      # port
-      #   default: null
-      #   description:  The port number used by the third-party API.
-      port: 502
-      # username
-      #   default: ""
-      #   description:  The username for authenticating to the third-party API.
-      username: enlighten_login@email.address
-      # password
-      #   default: ""
-      #   description:  The password for authenticating to the third-party API.
-      password: your_enlighten_password
-      # pv-power
-      #   default: ""
-      #   description:  The Python sensor class used to report PV generation
-      #                 through the third-party API. If specified, the Sigenergy
-      #                 Plant PV Power entity will be disabled by default, and
-      #                 a new entity called Total PV Power will be published 
-      #                 that will combine the Sigenergy and third-party 
-      #                 PV generation into a single number.
-      pv_power: EnphasePVPower
+      module:
+        # name
+        #   default: ""
+        #   description:  The name of the module to be loaded to interrogate a
+        #                 third-party device. At this time, the only valid value
+        #                 is enphase.
+        name: enphase
+        # host
+        #   default: ""
+        #   description:  The host name or IP address for the third-party API.
+        host: envoy.local
+        # port
+        #   default: null
+        #   description:  The port number used by the third-party API.
+        port: 502
+        # username
+        #   default: ""
+        #   description:  The username for authenticating to the third-party API.
+        username: enlighten_login@email.address
+        # password
+        #   default: ""
+        #   description:  The password for authenticating to the third-party API.
+        password: your_enlighten_password
+        # pv-power
+        #   default: ""
+        #   description:  The Python sensor class used to report PV generation
+        #                 through the third-party API. If specified, the Sigenergy
+        #                 Plant PV Power entity will be disabled by default, and
+        #                 a new entity called Total PV Power will be published 
+        #                 that will combine the Sigenergy and third-party 
+        #                 PV generation into a single number.
+        pv_power: EnphasePVPower
+      mqtt:
+          # topic
+          #   default: There is no default
+          #   description:  The MQTT to subscribe to for updates to third-party
+          #                 PV production to be included in the Total PV Power.
+          #                 Multiple topic/gain configurations may be specified.
+        - topic:  null
+          # gain
+          #   default: 1
+          #   description:  The gain to be applied to the PV production published
+          #                 on the topic. For example, if the production is
+          #                 published in kWh, then the gain should be 1000.
+          gain: 1
     #
     # Host sections can contain inverters and dc-chargers, OR ac-chargers.
     #
@@ -161,16 +194,6 @@ modbus:
 #                 If false, individual sensor debugging may be enabled
 #                 through sensor-overrides.
 sensor-debug-logging: false
-# sensors-enabled-by-default
-#   default: false
-#   description:  When sensors are initially discovered by Home Assistant,
-#                 the majority will be disabled in the UI. If you want all 
-#                 sensors to be enabled, set this to true. Not thate this 
-#                 setting is only applicable to the first time that the 
-#                 entity is discovered by Home Assistant. Once it has been 
-#                 discovered, you must control enabled/disabled through
-#                 Home Assistant (unless you make the sensor unpublishable).
-sensors-enabled-by-default: false
 sensor-overrides:
   # Specify the sensor to be overriden by either by the full entity id,
   # a partial entity id, the full sensor class name, or a partial 
@@ -182,11 +205,6 @@ sensor-overrides:
     #   description:  If true, then debug messages will be logged when
     #                 log-level is set to DEBUG.
     debug-logging: true
-    # publishable
-    #   default: There is no default
-    #   description:  If false, the sensor will not be published to MQTT
-    #                 and will not appear in Homew Assistant at all.
-    publishable: false
     # gain
     #   default: There is no default
     #   description:  The Sigenergy Modbus Protocol defines a gain to be
@@ -200,15 +218,33 @@ sensor-overrides:
     #   default: There is no default
     #   description:  Specify a different icon for the sensor.
     icon: "mdi:emoticon-happy"
+    # max-failures
+    #   default: 10
+    #   description:  The maximum number of failures before attempts to
+    #                 read the state are tapered off.
+    max-failures: 10
+    # max-failure-retry-interval
+    #   default: null
+    #   description:  After max-failures are reached, this option specifies
+    #                 how long (in seconds) to wait before retrying. The
+    #                 default is to not retry. If specified, this interval
+    #                 will increase by the same amount after each subsequent 
+    #                 failure above max-failures.
+    max-failure-retry-interval: null
     # precision
     #   default: There is no default
     #   description:  Specify the display precision (number of decimal 
     #                 places) for this sensor.
     precision: 2
+    # publishable
+    #   default: There is no default
+    #   description:  If false, the sensor will not be published to MQTT
+    #                 and will not appear in Homew Assistant at all.
+    publishable: false
     # scan-interval
     #   default: There is no default
-    #   description:  Change the default scan interval at which the state
-    #                 of this sensor is read.
+    #   description:  Change the default scan interval in seconds at which
+    #                 the state of this sensor is read.
     scan-interval: 10
     # unit-of-measurement
     #   default: There is no default
