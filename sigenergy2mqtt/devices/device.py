@@ -1,5 +1,4 @@
 from .types import DeviceType
-from pathlib import Path
 from pymodbus import ModbusException
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from random import randint, uniform
@@ -176,9 +175,6 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             discovery["o"] = Config.origin
             discovery["cmps"] = components
             discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
-            file = Path(Config.persistent_state_path, f"{self.unique_id}.discovery")
-            with file.open("w") as f:
-                f.write(discovery_json)
             if clean:
                 logging.debug(f"Publishing empty discovery for {self.name} ({clean=})")
                 mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
