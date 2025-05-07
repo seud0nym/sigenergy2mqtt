@@ -29,6 +29,7 @@ async def async_main() -> None:
             async with modbus:
                 try:
                     inverter_type: HybridInverter | PVInverter = None  # Flag to indicate whether Plant has been created, so that it is only created with first inverter
+                    inverters: dict[int, str] = {}
                     for device_address in device.inverters:
                         inverter, inverter_type, plant, remote_ems = await make_plant_and_inverter(
                             plant_index,
@@ -36,11 +37,12 @@ async def async_main() -> None:
                             device_address,
                             inverter_type,
                         )
+                        inverters[device_address] = inverter.unique_id
                         config.add_device(plant_index, plant)
                         config.add_device(plant_index, inverter)
                         plant.add_ess_accumlation_sensors(plant_index, *[host.device for host in config._devices if isinstance(host.device, Inverter)])
                     for device_address in device.dc_chargers:
-                        charger = await make_dc_charger(plant_index, device_address, plant, remote_ems)
+                        charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
                         config.add_device(plant_index, charger)
                     for device_address in device.ac_chargers:
                         assert inverter_type is None, "modbus host configuration can contain inverters (with dc-chargers), OR ac-chargers, but not both"
@@ -113,9 +115,9 @@ async def make_ac_charger(plant_index, modbus, device_address, plant, remote_ems
     return charger
 
 
-async def make_dc_charger(plant_index, device_address, plant, remote_ems):
+async def make_dc_charger(plant_index, device_address, inverter_unique_id, remote_ems):
     charger = DCCharger(plant_index, device_address, remote_ems)
-    charger.via_device = plant.unique_id
+    charger.via_device = inverter_unique_id
     return charger
 
 
