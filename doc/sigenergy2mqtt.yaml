@@ -4,6 +4,12 @@
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
 home-assistant:
+  # enabled
+  #   default: false
+  #   description:  If true, sigenergy2mqtt will publish auto-discovery 
+  #                 messages for Home Assistant to automatically configure
+  #                 the devices and entities.
+  enabled: false
   # device-name-prefix
   #   default: ""
   #   description:  An optional prefix to be prepended to MQTT device names.
@@ -263,3 +269,35 @@ sensor-overrides:
     scan-interval: 2
   BatteryPower:
     scan-interval: 2
+pvoutput:
+  # enabled
+  #   default: false
+  #   description:  If true, sigenergy2mqtt will update the system status
+  #                 in PVOutput.
+  enabled: false
+  # log-level
+  #   default: CRITICAL
+  #   description:  The PVOutput interace logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: DEBUG
+  # api-key
+  #   default: ""
+  #   description:  The PVOutput API key (create/find your key under 
+  #                 https://pvoutput.org/account.jsp)
+  api-key: ""
+  # system-id
+  #   default: ""
+  #   description:  The PVOutput System ID (create/find your System id 
+  #                 under https://pvoutput.org/account.jsp)
+  system-id: 93768
+  # interval-minutes
+  #   default: 5
+  #   description:  The Status interval at which PVOutput will be 
+  #                 updated. It must match the Status interval selected
+  #                 in PVOutput (https://pvoutput.org/edit.jsp?sid=xxxx)
+  interval-minutes: 5
+  # consumption
+  #   default: false
+  #   description:  If true, consumption information will be sent to 
+  #                 PVOutput.
+  consumption: true
