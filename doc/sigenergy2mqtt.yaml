@@ -101,9 +101,10 @@ modbus:
     # ac-chargers
     #   default: [ ]
     #   description:  The array of slave (device address) ids to access the 
-    #                 AC Charger registers. If you have multiple AC Chargers, 
+    #                 DC Charger registers. This is normally the same as the 
+    #                 inverter slave address. If you have multiple DC Chargers, 
     #                 specify the slave addresses separated with commas.
-    #                 e.g. [ 3, 4 ] If do not have an AC Charger, use [ ].
+    #                 e.g. [ 3, 4 ] If do not have an DC Charger, use [ ].
     dc-chargers: [ ]
     # log-level
     #   default: WARNING
