@@ -109,6 +109,9 @@ When you are ready to start the service, use this command:
 ```bash
 systemctl start sigenergy2mqtt.service
 ```
+## Post-Installation
+
+If you are using Home Assistant, you can set the current values for the daily and lifetime accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values. Make sure you enter lifetime values first, because daily sensors use the lifetime numbers as their base.
 
 ## Upgrades
 
