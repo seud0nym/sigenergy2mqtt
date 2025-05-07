@@ -7,7 +7,7 @@ from ruamel.yaml import YAML
 from typing import List
 import logging
 
-__version__ = "2025.5.6.dev4"
+__version__ = "2025.5.7"
 
 class Config:
     origin = {"name": "sigenergy2mqtt", "sw": __version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
