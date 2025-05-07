@@ -15,12 +15,8 @@ def get_pvoutput_host_config(configs: list[HostConfig], next_plant_index: int) -
     logger.setLevel(Config.pvoutput.log_level)
 
     pvoutput = HostConfig(None, None, "PVOutput")
-
     status = PVOutputStatusService(next_plant_index, logger)
-    pvoutput.add_device(next_plant_index, status)
-
     output = PVOutputOutputService(next_plant_index, logger)
-    pvoutput.add_device(next_plant_index, output)
 
     plant_pv_power: PlantPVPower = None
     total_pv_power: TotalPVPower = None
@@ -44,5 +40,9 @@ def get_pvoutput_host_config(configs: list[HostConfig], next_plant_index: int) -
         output.register_power(total_pv_power.state_topic, total_pv_power.gain)
     elif plant_pv_power is not None:
         output.register_power(plant_pv_power.state_topic, plant_pv_power.gain)
+
+    pvoutput.add_device(next_plant_index, status)
+    # Is the daily output service really needed? Also, seems to record peak on wrong day???
+    # pvoutput.add_device(next_plant_index, output)
 
     return pvoutput

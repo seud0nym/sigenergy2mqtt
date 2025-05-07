@@ -34,12 +34,14 @@ class PVOutputConfiguration:
                         case "consumption":
                             self.consumption = check_bool(value, f"pvoutput {field}")
                         case "exports":
+                            logging.warning("pvoutput exports configuration - daily output service currently disabled")
                             self.exports = check_bool(value, f"pvoutput {field}")
                         case "interval-minutes":
                             self.interval_minutes = check_int(value, f"pvoutput {field}", min=5, max=60)
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput {field}")
                         case "peak-power":
+                            logging.warning("pvoutput peak-power configuration - daily output service currently disabled")
                             self.peak_power = check_bool(value, f"pvoutput {field}")
                         case "system-id":
                             self.system_id = str(value)
