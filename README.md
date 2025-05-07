@@ -138,7 +138,7 @@ systemctl restart sigenergy2mqtt.service
 | TotalPVPower<sup>1</sup> | PlantPVPower &plus; SmartPort.PVPowerSensor |
 | PlantConsumedPower | (either PlantPVPower _or_ TotalPVPower)<sup>2</sup> &plus; GridSensorActivePower &minus; BatteryPower |
 | PlantLifetimeConsumedEnergy<sup>3</sup> | Riemann &sum; of PlantConsumedPower |
-| PlantDailyConsumedEnergy<sup>3</sup> | PlantLifetimeConsumedEnergy &minus PlantLifetimeConsumedEnergy at last midnight |
+| PlantDailyConsumedEnergy<sup>3</sup> | PlantLifetimeConsumedEnergy &minus; PlantLifetimeConsumedEnergy at last midnight |
 | PlantLifetimePVEnergy<sup>3</sup> | Riemann &sum; of (either PlantPVPower _or_ TotalPVPower)<sup>2</sup> |
 | PlantDailyPVEnergy<sup>3</sup> | PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight |
 | PlantDailyChargeEnergy<sup>3</sup> | &sum; of DailyChargeEnergy across all Inverters associated with the Plant |
@@ -158,7 +158,7 @@ Notes:
 |------------------|--------|
 | InverterBatteryChargingPower | ChargeDischargePower &gt; 0 |
 | InverterBatteryDischargingPower | ChargeDischargePower &lt; 0 &times; -1 |
-| InverterDailyPVEnergy | InverterLifetimePVEnergy &minus InverterLifetimePVEnergy at last midnight |
+| InverterDailyPVEnergy | InverterLifetimePVEnergy &minus; InverterLifetimePVEnergy at last midnight |
 | InverterLifetimePVEnergy | Riemann &sum; of InverterPVPower |
 
 ### Inverter Strings
