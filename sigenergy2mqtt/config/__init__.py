@@ -46,6 +46,13 @@ _parser.add_argument(
     help=f"Set the log level. Valid values are: {logging.DEBUG}=DEBUG {logging.INFO}=INFO {logging.WARNING}=WARNING {logging.ERROR}=ERROR {logging.CRITICAL}=CRITICAL. Default is {logging.WARNING} (warnings, errors and critical failures)",
 )
 _parser.add_argument(
+    "-v",
+    "--version",
+    action="store_true",
+    dest="show_version",
+    help="Shows the version number, then exits immediately.",
+)
+_parser.add_argument(
     "--modbus-log-level",
     action="store",
     dest="modbus_log_level",
@@ -87,6 +94,9 @@ _parser.add_argument(
 )
 _args = _parser.parse_args()
 # endregion
+
+if _args.show_version:
+    sys.exit(0)
 
 # region Load the configuration
 if _args.config != "/etc/sigenergy2mqtt.yaml":
