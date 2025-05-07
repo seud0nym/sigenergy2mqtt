@@ -1,4 +1,4 @@
-### <img src="resources/sigenergy2mqtt.png" alt="sigenergy2mqtt" height="50">
+<img src="resources/sigenergy2mqtt.png" alt="sigenergy2mqtt" height="50"><br>
 [![License](https://img.shields.io/github/license/seud0nym/sigenergy2mqtt.svg?style=flat)](https://github.com/seud0nym/sigenergy2mqtt/blob/master/LICENSE) 
 ![Top Language](https://img.shields.io/github/languages/top/seud0nym/sigenergy2mqtt)
 [![Latest Release](https://img.shields.io/github/release/seud0nym/sigenergy2mqtt/all.svg?style=flat&label=latest)](https://github.com/seud0nym/sigenergy2mqtt/releases) 
