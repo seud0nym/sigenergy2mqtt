@@ -165,7 +165,7 @@ Notes:
 
 | Cacluated Sensor | Source/Calculation |
 |------------------|--------|
-| PVStringDailyEnergy | PVStringLifetimeEnergy &minus PVStringLifetimeEnergy at last midnight |
+| PVStringDailyEnergy | PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight |
 | PVStringLifetimeEnergy | Riemann &sum; of PVStringPower |
 | PVStringPower | PVVoltageSensor &times; PVCurrentSensor |
 
