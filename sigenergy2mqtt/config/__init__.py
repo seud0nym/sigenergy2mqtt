@@ -100,12 +100,15 @@ if _args.show_version:
 
 # region Load the configuration
 if _args.config != "/etc/sigenergy2mqtt.yaml":
-    if Path(_args.config).is_file():
-        Config.load(_args.config)
+    filename = str(_args.config).strip()
+    if Path(filename).is_file():
+        Config.load(filename)
     else:
-        raise FileNotFoundError(f"Specified config file {_args.config} does not exist!")
+        raise FileNotFoundError(f"Specified config file {filename} does not exist!")
 elif Path("/etc/sigenergy2mqtt.yaml").is_file():
     Config.load("/etc/sigenergy2mqtt.yaml")
+elif Path("/data/sigenergy2mqtt.yaml").is_file():
+    Config.load("/data/sigenergy2mqtt.yaml")
 elif Path("./sigenergy2mqtt.yaml").is_file():
     Config.load("./sigenergy2mqtt.yaml")
 else:
@@ -126,7 +129,7 @@ if _args.mqtt_log_level is not None:
 # endregion Logging configuration
 
 
-for _storage_base_path in ["/var/lib/", str(Path.home()), "/tmp/"]:
+for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
     if os.access(_storage_base_path, os.W_OK):
         path = Path(_storage_base_path, "sigenergy2mqtt")
         Config.persistent_state_path = path.resolve()
