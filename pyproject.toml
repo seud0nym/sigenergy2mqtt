@@ -10,7 +10,6 @@ dependencies = [
     "pymodbus==3.8.6",
     "requests==2.32.3",
     "ruamel.yaml==0.18.6",
-    "ruamel.yaml.clib==0.2.8"
 ]
 description = "Publish Modbus data from Sigenergy to MQTT"
 authors = [
@@ -27,9 +26,6 @@ repository = "https://github.com/seud0nym/sigenergy2mqtt"
 
 [tool.hatch.version]
 path = "sigenergy2mqtt/config/config.py"
-
-[tool.hatch.build.targets.sdist]
-include = ["sigenergy2mqtt/**"]
 
 [tool.hatch.build.targets.wheel]
 include = ["sigenergy2mqtt/**"]
