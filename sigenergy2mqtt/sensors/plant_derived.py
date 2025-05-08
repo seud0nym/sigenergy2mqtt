@@ -222,7 +222,8 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             if self._debug_logging:
                 logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - {self._sources=}")
             return  # until all values populated, can't do calculation
-        logging.debug(f"Publishing {self.__class__.__name__} - {self._sources=}")
+        if self._debug_logging:
+            logging.debug(f"Publishing {self.__class__.__name__} - {self._sources=}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         for value in self._sources.values():
