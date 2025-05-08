@@ -18,6 +18,7 @@ In addition, `sigenergy2mqtt` has several optional features:
 - [Installation](#installation)
     - [Quick Start](#quick-start-configuration)
     - [Background Service](#background-service)
+    - [Post-Installation](#post-installation)
     - [Upgrades](#upgrades)
 - [Derived Sensors](#derived-sensors)
 - [Home Assistant Auto-Discovery](#home-assistant-auto-discovery)
@@ -41,7 +42,7 @@ Download the latest release from https://github.com/seud0nym/sigenergy2mqtt/rele
 pip install sigenergy2mqtt-version-py3-none-any.whl
 ```
 
-To confirm that it has been installed correctly, verify the version nunmber with this command:
+To confirm that it has been installed correctly, verify the version number with this command:
 ```bash
 sigenergy2mqtt --version
 ```
@@ -64,6 +65,12 @@ modbus:
     read-only: true
     read-write: true
     write-only: true
+pvoutput:
+  enabled: false
+  api-key: your_api_key
+  system-id: your_system_id
+  interval-minutes: 5
+  consumption: true
 ```
 
 Notes:
@@ -123,7 +130,7 @@ systemctl restart sigenergy2mqtt.service
 
 # Derived Sensors
 
-`sigenergy2mqtt` calculates the following additional sensors:
+In addition to the values read from the Modbus registers, `sigenergy2mqtt` calculates the following additional sensors:
 
 ### Plant
 
