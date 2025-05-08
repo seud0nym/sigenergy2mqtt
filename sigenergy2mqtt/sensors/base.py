@@ -62,7 +62,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
         self._failures: int = 0
         self._max_failures: int = 10
-        self._max_failures_retry_interval: int = None
+        self._max_failures_retry_interval: int = 0
         self._next_retry: float = None
 
         self["platform"] = "sensor"
@@ -312,7 +312,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             modbus:     The Modbus client for determining the current state.
             republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
         """
-        if self._failures < self._max_failures or (self._next_retry and self._next_retry >= time.time()):
+        now = time.time()
+        if self._failures < self._max_failures or (self._next_retry and self._next_retry <= now):
             try:
                 value = await self.get_state(modbus=modbus, raw=False, republish=republish)
                 if value is None and not self.force_publish:
@@ -334,18 +335,24 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     self._failures += 1
                     self._next_retry = (
                         None
-                        if self._failures < self._max_failures or self._max_failures_retry_interval is None
-                        else (time.time() + (self._max_failures_retry_interval * min(1, self._failures - self._max_failures)))
+                        if self._failures < self._max_failures or self._max_failures_retry_interval == 0
+                        else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
                     )
-                self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
+                    if self._debug_logging:
+                        logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
+                if Config.home_assistant.enabled:
+                    self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
                 if self._failures >= self._max_failures:
-                    logging.warning(f"DISABLING {self.__class__.__name__} until {'restart' if self._next_retry is None else time.strftime('%c')} - MAX_FAILURES exceeded: {self._failures} until")
+                    logging.warning(f"{self.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}")
                     for sensor in self._derived_sensors.values():
                         logging.warning(
-                            f"DISABLING {sensor.__class__.__name__} until {'restart' if self._next_retry is None else time.strftime('%c')} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
+                            f"{sensor.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
                         )
             finally:
                 self.force_publish = False
+        elif self._debug_logging:
+            logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
+
 
     def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
         """Publishes the attributes for this sensor.
@@ -554,7 +561,7 @@ class ModBusSensor(Sensor):
                         logging.debug(rr)
                     logging.warning(f"{self.__class__.__name__} - Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
                     self._max_failures = 0
-                    self._max_failures_retry_interval = None
+                    self._max_failures_retry_interval = 0
                     raise Exception("0x02 ILLEGAL DATA ADDRESS")
                 case 3:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x03 ILLEGAL DATA VALUE")

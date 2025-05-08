@@ -82,7 +82,7 @@ class Config:
                                     or (p == "gain" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=True, min=1) == v)
                                     or (p == "icon" and check_string(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, starts_with="mdi:") == v)
                                     or (p == "max-failures" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=True, min=1) == v)
-                                    or (p == "max-failures-retry-interval" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=True, min=5) == v)
+                                    or (p == "max-failures-retry-interval" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, min=30) == v)
                                     or (p == "precision" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, min=0, max=6) == v)
                                     or (p == "publishable" and check_bool(v, f"Error processing {sensor} override {p} = {v} -") == v)
                                     or (p == "scan-interval" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, min=1) == v)
