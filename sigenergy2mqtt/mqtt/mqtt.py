@@ -4,8 +4,8 @@ from sigenergy2mqtt.config import Config
 from typing import Any, Awaitable, Callable, Dict
 import asyncio
 import logging
+import os
 import paho.mqtt.client as mqtt
-import sys
 import time
 
 logger = logging.getLogger("paho.mqtt")
@@ -78,12 +78,12 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code) -
             case 3:
                 logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} REFUSED - Server unavailable")
             case 4:
-                logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} REFUSED - Bad user name or password ({Config.mqtt.username}/{Config.mqtt.password})")
+                logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} REFUSED - Bad user name or password")
             case 5:
                 logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} REFUSED - Username {Config.mqtt.username} not authorised")
             case _:
                 logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} FAILED - Reason Code was {reason_code}")
-        sys.exit(2)
+        os._exit(2)
 
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, reason_code) -> None:
