@@ -23,7 +23,7 @@ class PowerPlant(ModBusDevice):
         rated_discharging_power: ro.PlantRatedDischargingPower,
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
-        super().__init__(device_type, name, plant_index, 247, "Energy Management System")
+        super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw="Modbus Protocol V2.5")
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
         battery_power = ro.BatteryPower(plant_index)
