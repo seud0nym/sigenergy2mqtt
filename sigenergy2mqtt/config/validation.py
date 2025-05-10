@@ -30,6 +30,8 @@ def is_valid_hostname(hostname):
 
 
 def check_bool(value, source):
+    if isinstance(value, str) and value.lower() in ("true", "1", "yes", "on", "y", "false", "0", "no", "off", "n"):
+        return True if value.lower() in ("true", "1", "yes", "on", "y") else False
     if isinstance(value, bool):
         return value
     else:

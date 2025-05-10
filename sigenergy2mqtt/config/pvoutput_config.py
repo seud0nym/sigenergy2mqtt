@@ -18,7 +18,7 @@ class PVOutputConfiguration:
     
     output_hour: int = 23
  
-    log_level: int = logging.CRITICAL
+    log_level: int = logging.WARNING
 
     def configure(self, config: dict) -> None:
         if isinstance(config, dict):
@@ -30,26 +30,24 @@ class PVOutputConfiguration:
                 for field, value in config.items():
                     match field:
                         case "api-key":
-                            self.api_key = value
+                            self.api_key = check_string(value, "pvoutput api-key", allow_none=not self.enabled, allow_empty=not self.enabled, hex_chars_only=True)
                         case "consumption":
                             self.consumption = check_bool(value, f"pvoutput {field}")
                         case "exports":
                             logging.warning("pvoutput exports configuration - daily output service currently disabled")
                             self.exports = check_bool(value, f"pvoutput {field}")
                         case "interval-minutes":
-                            self.interval_minutes = check_int(value, f"pvoutput {field}", min=5, max=60)
+                            self.interval_minutes = check_int(value, f"pvoutput {field}", min=5, max=15)
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput {field}")
                         case "peak-power":
                             logging.warning("pvoutput peak-power configuration - daily output service currently disabled")
                             self.peak_power = check_bool(value, f"pvoutput {field}")
                         case "system-id":
-                            self.system_id = str(value)
+                            self.system_id = check_string(str(value), "pvoutput system-id", allow_none=not self.enabled, allow_empty=not self.enabled)
                         case _:
                             if field != "enabled":
                                 raise ValueError(f"pvoutput configuration element contains unknown option '{field}'")
-                check_string(self.api_key, "pvoutput api-key", allow_none=False, allow_empty=False, hex_chars_only=True)
-                check_string(self.system_id, "pvoutput system-id", allow_none=False, allow_empty=False)
         else:
             raise ValueError("pvoutput configuration element must contain options and their values")
    

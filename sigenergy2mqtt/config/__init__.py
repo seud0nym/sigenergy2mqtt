@@ -1,6 +1,7 @@
 __all__ = ["Config", "SmartPortConfig", "RegisterAccess"]
 
 
+from . import const
 from .config import Config
 from .device_config import RegisterAccess, SmartPortConfig
 from pathlib import Path
@@ -26,24 +27,252 @@ _parser.add_argument(
     "--config",
     nargs="?",
     action="store",
-    dest="config",
-    default="/etc/sigenergy2mqtt.yaml",
+    dest=const.SIGENERGY2MQTT_CONFIG,
     help="The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)",
 )
 _parser.add_argument(
     "-l",
     "--log-level",
     action="store",
-    dest="log_level",
+    dest=const.SIGENERGY2MQTT_LOG_LEVEL,
+    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+)
+_parser.add_argument(
+    "--hass-enabled",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_HASS_ENABLED,
+    help="Enable auto-discovery in Home Assistant.",
+)
+_parser.add_argument(
+    "--hass-discovery-prefix",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX,
+    help="The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)",
+)
+_parser.add_argument(
+    "--hass-entity-id-prefix",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX,
+    help="The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)",
+)
+_parser.add_argument(
+    "--hass-unique-id-prefix",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX,
+    help="The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant.",
+)
+_parser.add_argument(
+    "--hass-device-name-prefix",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX,
+    help="The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')",
+)
+
+_parser.add_argument(
+    "--hass-discovery-only",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY,
+    help="Exit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.",
+)
+_parser.add_argument(
+    "-b",
+    "--mqtt-broker",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_BROKER,
+    help="The hostname or IP address of an MQTT broker (default: 127.0.0.1)",
+)
+_parser.add_argument(
+    "--mqtt-port",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_PORT,
     type=int,
-    choices=[
-        logging.DEBUG,
-        logging.INFO,
-        logging.WARNING,
-        logging.ERROR,
-        logging.CRITICAL,
-    ],
-    help=f"Set the log level. Valid values are: {logging.DEBUG}=DEBUG {logging.INFO}=INFO {logging.WARNING}=WARNING {logging.ERROR}=ERROR {logging.CRITICAL}=CRITICAL. Default is {logging.WARNING} (warnings, errors and critical failures)",
+    help="The listening port of the MQTT broker (default: 1883)",
+)
+_parser.add_argument(
+    "--mqtt-anonymous",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_MQTT_ANONYMOUS,
+    help="Connect to MQTT anonomously (i.e. without username/password).",
+)
+_parser.add_argument(
+    "-u",
+    "--mqtt-username",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_USERNAME,
+    help="A valid username for the MQTT broker",
+)
+_parser.add_argument(
+    "-p",
+    "--mqtt-password",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_PASSWORD,
+    help="A valid password for the MQTT broker username",
+)
+_parser.add_argument(
+    "--mqtt-log-level",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_LOG_LEVEL,
+    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    help="Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+)
+_parser.add_argument(
+    "-m",
+    "--modbus-host",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_HOST,
+    help="The hostname or IP address of the Sigenergy device",
+)
+_parser.add_argument(
+    "--modbus-port",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_PORT,
+    type=int,
+    help="The Sigenergy device Modbus port number (default: 502)",
+)
+_parser.add_argument(
+    "--modbus-slave",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE,
+    type=int,
+    help="The Sigenergy Inverter Modbus Device ID (Slave ID). May be specified as a comma separated list if you have multiple inverters.",
+)
+_parser.add_argument(
+    "--modbus-accharger-slave",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE,
+    type=int,
+    help="The Sigenergy AC Charger Modbus Device ID (Slave ID). May be specified as a comma separated list if you have multiple inverters.",
+)
+_parser.add_argument(
+    "--modbus-dccharger-slave",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE,
+    type=int,
+    help="The Sigenergy DC Charger Modbus Device ID (Slave ID). May be specified as a comma separated list if you have multiple inverters.",
+)
+_parser.add_argument(
+    "--modbus-log-level",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL,
+    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    help="Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+)
+_parser.add_argument(
+    "--smartport-enabled",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_ENABLED,
+    help="Enable interrogation of a third-party device for production data.",
+)
+_parser.add_argument(
+    "--smartport-module-name",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME,
+    help="The name of the module which will be used to obtain third-party device production data.",
+)
+_parser.add_argument(
+    "--smartport-host",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_HOST,
+    help="The IP address or hostname of the third-party device.",
+)
+_parser.add_argument(
+    "--smartport-username",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_USERNAME,
+    help="The username to authenticate to the third-party device.",
+)
+_parser.add_argument(
+    "--smartport-password",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_PASSWORD,
+    help="The password to authenticate to the third-party device.",
+)
+_parser.add_argument(
+    "--smartport-pv-power",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_PV_POWER,
+    help="The sensor class to hold the production data obtained from the third-party device.",
+)
+_parser.add_argument(
+    "--smartport-mqtt-topic",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC,
+    help="The MQTT topic to which to subscribe to obtain the production data for the third-party device.",
+)
+_parser.add_argument(
+    "--smartport-mqtt-gain",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN,
+    type=int,
+    help="The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).",   
+)
+_parser.add_argument(
+    "--pvoutput-enabled",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_ENABLED,
+    help="Enable status updates to PVOutput.",
+)
+_parser.add_argument(
+    "--pvoutput-api-key",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_API_KEY,
+    help="The API Key for PVOutput",
+)
+_parser.add_argument(
+    "--pvoutput-system-id",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID,
+    help="The PVOutput System ID",
+)
+_parser.add_argument(
+    "--pvoutput-consumption",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION,
+    help="Enable sending consumption status to PVOutput.",
+)
+_parser.add_argument(
+    "--pvoutput-interval",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL,
+    type=int,
+    help="The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.",
+)
+_parser.add_argument(
+    "--pvoutput-log-level",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL,
+    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    help="Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+)
+_parser.add_argument(
+    "--clean",
+    action="store_true",
+    dest="clean",
+    help="Publish empty discovery to delete existing devices, then exits immediately.",
 )
 _parser.add_argument(
     "-v",
@@ -52,91 +281,51 @@ _parser.add_argument(
     dest="show_version",
     help="Shows the version number, then exits immediately.",
 )
-_parser.add_argument(
-    "--modbus-log-level",
-    action="store",
-    dest="modbus_log_level",
-    type=int,
-    choices=[
-        logging.DEBUG,
-        logging.INFO,
-        logging.WARNING,
-        logging.ERROR,
-        logging.CRITICAL,
-    ],
-    help=f"Set the pymodbus log level. Valid values are: {logging.DEBUG}=DEBUG {logging.INFO}=INFO {logging.WARNING}=WARNING {logging.ERROR}=ERROR {logging.CRITICAL}=CRITICAL. Default is the setting of --log-level.",
-)
-_parser.add_argument(
-    "--mqtt-log-level",
-    action="store",
-    dest="mqtt_log_level",
-    type=int,
-    choices=[
-        logging.DEBUG,
-        logging.INFO,
-        logging.WARNING,
-        logging.ERROR,
-        logging.CRITICAL,
-    ],
-    help=f"Set the paho.mqtt log level. Valid values are: {logging.DEBUG}=DEBUG {logging.INFO}=INFO {logging.WARNING}=WARNING {logging.ERROR}=ERROR {logging.CRITICAL}=CRITICAL. Default is the setting of --log-level.",
-)
-_parser.add_argument(
-    "--hass-discovery-only",
-    action="store_true",
-    dest="discovery_only",
-    help="Exit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.",
-)
-_parser.add_argument(
-    "--clean",
-    action="store_true",
-    dest="clean",
-    help="Publish empty discovery to delete existing devices, then exits immediately.",
-)
 _args = _parser.parse_args()
 # endregion
 
 if _args.show_version:
     sys.exit(0)
 
-# region Load the configuration
-if _args.config != "/etc/sigenergy2mqtt.yaml":
-    filename = str(_args.config).strip()
-    if Path(filename).is_file():
-        Config.load(filename)
+for arg in vars(_args):
+    if arg == "clean":
+        Config.clean = _args.clean
+        continue
+    elif (
+        arg == const.SIGENERGY2MQTT_HASS_ENABLED or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
+    ) and getattr(_args, arg) not in ["true", "True", True, 1]:
+        continue
+    os.environ[arg] = str(getattr(_args, arg))
+
+try:
+    if _args.SIGENERGY2MQTT_CONFIG:
+        filename = str(_args.SIGENERGY2MQTT_CONFIG).strip()
+        if Path(filename).is_file():
+            Config.load(filename)
+        else:
+            raise FileNotFoundError(f"Specified config file '{filename}' does not exist!")
+    elif Path("/etc/sigenergy2mqtt.yaml").is_file():
+        Config.load("/etc/sigenergy2mqtt.yaml")
+    elif Path("/data/sigenergy2mqtt.yaml").is_file():
+        Config.load("/data/sigenergy2mqtt.yaml")
+    elif Path("./sigenergy2mqtt.yaml").is_file():
+        Config.load("./sigenergy2mqtt.yaml")
     else:
-        raise FileNotFoundError(f"Specified config file {filename} does not exist!")
-elif Path("/etc/sigenergy2mqtt.yaml").is_file():
-    Config.load("/etc/sigenergy2mqtt.yaml")
-elif Path("/data/sigenergy2mqtt.yaml").is_file():
-    Config.load("/data/sigenergy2mqtt.yaml")
-elif Path("./sigenergy2mqtt.yaml").is_file():
-    Config.load("./sigenergy2mqtt.yaml")
-else:
-    raise FileNotFoundError("No config file specified and none found in default locations!")
-# endregion
-
-Config.clean = _args.clean
-if _args.discovery_only or Config.clean:
-    Config.home_assistant.discovery_only = True
-
-# region Logging configuration
-if _args.log_level is not None:
-    Config.log_level = _args.log_level
-if _args.modbus_log_level is not None:
-    Config.set_modbus_log_level(_args.modbus_log_level)
-if _args.mqtt_log_level is not None:
-    Config.mqtt.log_level = _args.mqtt_log_level
-# endregion Logging configuration
-
+        Config.reload()
+except Exception as e:
+    _logger.critical(f"Error loading configuration file: {e}")
+    sys.exit(1)
 
 for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
-    if os.access(_storage_base_path, os.W_OK):
+    if os.path.isdir(_storage_base_path) and os.access(_storage_base_path, os.W_OK):
         path = Path(_storage_base_path, "sigenergy2mqtt")
         Config.persistent_state_path = path.resolve()
         if not path.is_dir():
             path.mkdir()
             logging.debug(f"Created persistent state path: {Config.persistent_state_path}")
         break
+    else:
+        logging.debug(f"Unable to create persistent state path in {_storage_base_path}: Not writable or does not exist")
 if Config.persistent_state_path == ".":
-    _logger.warning("Unable to create persistent state path! Defaulting to current directory")
-
+    _logger.critical("Unable to create persistent state path!")
+    sys.exit(1)

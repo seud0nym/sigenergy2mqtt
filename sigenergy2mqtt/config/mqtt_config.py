@@ -12,7 +12,7 @@ class MqttConfiguration:
     username: str = None
     password: str = None
 
-    log_level: int = logging.CRITICAL
+    log_level: int = logging.WARNING
 
     def configure(self, config: dict) -> None:
         if isinstance(config, dict):
