@@ -101,10 +101,15 @@ modbus:
     # ac-chargers
     #   default: [ ]
     #   description:  The array of slave (device address) ids to access the 
+    #                 AC Charger registers. If do not have an AC Charger, 
+    #                 use [ ].
+    ac-chargers: [ ]
+    # dc-chargers
+    #   default: [ ]
+    #   description:  The array of slave (device address) ids to access the 
     #                 DC Charger registers. This is normally the same as the 
-    #                 inverter slave address. If you have multiple DC Chargers, 
-    #                 specify the slave addresses separated with commas.
-    #                 e.g. [ 3, 4 ] If do not have an DC Charger, use [ ].
+    #                 inverter slave address. If do not have an DC Charger, 
+    #                 use [ ].
     dc-chargers: [ ]
     # log-level
     #   default: WARNING
@@ -178,22 +183,6 @@ modbus:
           #                 on the topic. For example, if the production is
           #                 published in kWh, then the gain should be 1000.
           gain: 1
-    #
-    # Host sections can contain inverters and dc-chargers, OR ac-chargers.
-    #
-  - host: sigen-evac.local
-    port: 502
-    # ac-chargers
-    #   default: [ ]
-    #   description:  The array of slave (device address) ids to access the 
-    #                 AC Charger registers. If ac-chargers is specified, you
-    #                 cannot specify inverters or dc-chargers, and smart-port
-    #                 configuration is ignored.
-    ac-chargers: [ ]
-    log-level: WARNING
-    read-only: true
-    read-write: true
-    write-only: true
 # sensor-debug-logging
 #   default: false
 #   description:  When log-level is DEBUG, controls whether individual
