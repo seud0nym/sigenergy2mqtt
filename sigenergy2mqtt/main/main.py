@@ -45,7 +45,6 @@ async def async_main() -> None:
                         charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
                         config.add_device(plant_index, charger)
                     for device_address in device.ac_chargers:
-                        assert inverter_type is None, "modbus host configuration can contain inverters (with dc-chargers), OR ac-chargers, but not both"
                         charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
                         config.add_device(plant_index, charger)
                 finally:
