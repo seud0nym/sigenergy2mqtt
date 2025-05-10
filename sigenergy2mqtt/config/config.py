@@ -1,4 +1,5 @@
 from . import const
+from . import version
 from .device_config import DeviceConfig
 from .home_assistant_config import HomeAssistantConfiguration
 from .mqtt_config import MqttConfiguration
@@ -9,11 +10,9 @@ from typing import List
 import logging
 import os
 
-__version__ = "2025.5.8"
-
 
 class Config:
-    origin = {"name": "sigenergy2mqtt", "sw": __version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
+    origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
     home_assistant = HomeAssistantConfiguration()
     mqtt = MqttConfiguration()
@@ -91,7 +90,7 @@ class Config:
                     case const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
                         overrides["modbus"][0]["smart-port"]["mqtt"][0]["topic"] = os.environ[key]
                     case const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-                        overrides["modbus"][0]["smart-port"]["mqtt"][0]["gain"] = check_int(os.environ[key], key, allow_none=True, min=1)                                
+                        overrides["modbus"][0]["smart-port"]["mqtt"][0]["gain"] = check_int(os.environ[key], key, allow_none=True, min=1)
                     case const.SIGENERGY2MQTT_MQTT_BROKER:
                         overrides["mqtt"]["broker"] = check_host(os.environ[key], key)
                     case const.SIGENERGY2MQTT_MQTT_PORT:
