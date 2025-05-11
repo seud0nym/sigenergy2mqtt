@@ -274,7 +274,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
                     if wait > 0:
-                        task = asyncio.create_task(asyncio.sleep(wait))
+                        task = asyncio.create_task(asyncio.sleep(sleep))
                         for sensor in sensors:
                             sensor.sleeper_task = task
                         try:
