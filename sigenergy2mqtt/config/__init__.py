@@ -293,7 +293,7 @@ for arg in vars(_args):
         Config.clean = _args.clean
         continue
     elif (
-        arg == const.SIGENERGY2MQTT_HASS_ENABLED or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
+        arg == const.SIGENERGY2MQTT_HASS_ENABLED or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
     ) and getattr(_args, arg) not in ["true", "True", True, 1]:
         continue
     os.environ[arg] = str(getattr(_args, arg))
