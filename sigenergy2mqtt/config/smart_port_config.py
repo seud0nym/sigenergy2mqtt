@@ -53,6 +53,8 @@ class TopicConfig:
                                 topic.gain = check_int(value, f"modbus smart-port mqtt {field}", allow_none=False, min=1)
                             case _:
                                 raise ValueError(f"modbus smart-port mqtt topic configuration element contains unknown option '{field}'")
+                    if topic.topic and not topic.topic.isspace(): # Command line/Environment variable overrides can cause an empty topic
+                        result.append(topic)
                     result.append(topic)
                 else:
                     raise ValueError("modbus smart-port mqtt configuration elements must contain a list of topics and, optionally, their gains")

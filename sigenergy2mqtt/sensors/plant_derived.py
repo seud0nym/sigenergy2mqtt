@@ -204,10 +204,13 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         topics: set[str] = set()
         if Config.devices[self._plant_index].smartport.enabled:
             for topic in Config.devices[self._plant_index].smartport.mqtt:
-                self._sources[topic.topic] = TotalPVPower.Value(topic.gain)
-                topics.add(topic.topic)
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {topic.topic} as source")
+                if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
+                    self._sources[topic.topic] = TotalPVPower.Value(topic.gain)
+                    topics.add(topic.topic)
+                    if self._debug_logging:
+                        logging.debug(f"{self.__class__.__name__} Added MQTT topic {topic.topic} as source")
+                else:
+                    logging.warning(f"{self.__class__.__name__} Empty MQTT topic ignored")
         return topics
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
