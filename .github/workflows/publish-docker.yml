@@ -1,9 +1,8 @@
 name: Publish Docker Images
 
-"on":
-  push:
-    tags:
-      - "*"
+on:
+  release:
+    types: [published]
 
   workflow_call:
     secrets:
@@ -11,8 +10,6 @@ name: Publish Docker Images
         required: true
       DOCKER_HUB_USERNAME:
         required: true
-
-  workflow_dispatch:
 
 jobs:
   publish:
