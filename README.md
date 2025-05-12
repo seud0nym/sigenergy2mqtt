@@ -16,10 +16,15 @@ In addition, `sigenergy2mqtt` has several optional features:
 - [Disclaimer](#disclaimer)
 - [Pre-requisites](#pre-requisites)
 - [Installation](#installation)
-    - [Quick Start](#quick-start-configuration)
-    - [Background Service](#background-service)
-    - [Post-Installation](#post-installation)
-    - [Upgrades](#upgrades)
+    - [Linux](#linux)
+      - [Background Service](#background-service)
+      - [Upgrades](#upgrades)
+    - [Docker](#docker)
+- [Configuration](#configuration)
+    - [Configuration File](#configuration-file)
+    - [Command Line Options](#command-line-options)
+    - [Environment Variables](#environment-variables)
+- [Post-Installation](#post-installation)
 - [Home Assistant Auto-Discovery](#home-assistant-auto-discovery)
 - [Alternatives](#alternatives)
 
@@ -27,33 +32,102 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 `sigenergy2mqtt` was developed for my own use, and as such has only been tested in my single-phase environment without AC or DC chargers. In addition, there has been only cursory testing of the write functions. If you find a problem, please raise an issue.
 
-### Pre-requisites:
+## Pre-requisites:
 
 - Python 3.11 or later
 - An MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an add-on to Home Assistant
-- A Linux server (physical hardware, or a virtual machine/container) that runs continuously in which to install `sigenergy2mqtt` (hardware requirements are minimal: I use a Proxmox LXC with 2 cores and 256MiB RAM to run [Mosquitto](https://mosquitto.org/), [ecowitt2mqtt](https://github.com/bachya/ecowitt2mqtt) and `sigenergy2mqtt`)
+- A Linux server (physical hardware, or a virtual machine/container) that runs continuously in which to install `sigenergy2mqtt` (hardware requirements are minimal: I use a Proxmox LXC with 2 cores and 256MiB RAM to run [Mosquitto](https://mosquitto.org/), [SIGENERGY2mqtt](https://github.com/bachya/SIGENERGY2mqtt) and `sigenergy2mqtt`)
 - A Sigenergy energy solution with Modbus-TCP enabled by your installer
 
 ## Installation
+
+### Linux
 
 Install `sigenergy2mqtt` via `pip`:
 ```bash
 pip install sigenergy2mqtt
 ```
 
-To confirm that it has been installed correctly, verify the version number with this command:
-```bash
-sigenergy2mqtt --version
+#### Background Service
+
+To run `sigenergy2mqtt` as a service that starts automatically in the background on system boot, 
+create the file `/etc/systemd/system/sigenergy2mqtt.service` with your favourite editor, 
+with the following contents:
+```
+[Unit]
+Description=Publish Modbus data from Sigenergy to MQTT
+Documentation=https://github.com/seud0nym/sigenergy2mqtt
+After=network.target mosquitto.service
+
+[Service]
+Type=simple
+User=sigenergy
+Group=daemon
+ExecStart=/usr/local/bin/sigenergy2mqtt
+ExecReload=kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-### Quick Start Configuration
+Notes:
+- If you are _not_ running `sigenergy2mqtt` on the same host/container as `Mosquitto`, remove _mosquitto.service_ from the `After=` line.
 
-You _can_ configure `sigenergy2mqtt` via the [command line](#command-line-options) and/or [environment variables](#environment-variables), but using a persistent configuration file is a better option.
+Once that is done, run the following commands:
+```bash
+useradd -m -g 1 sigenergy
+systemctl enable sigenergy2mqtt.service
+```
 
-Create the file `/etc/sigenergy2mqtt.yaml` using your favourite editor, with the following contents:
+When you are ready to start the service, use this command:
+```bash
+systemctl start sigenergy2mqtt.service
+```
+
+#### Upgrades
+
+To upgrade to a new release, install using `pip` with the `--upgrade` option:
+```bash
+pip install sigenergy2mqtt --upgrade
+systemctl restart sigenergy2mqtt.service
+```
+
+### Docker
+
+`sigenergy2mqtt` is available via a Docker image from both Docker Hub and ghcr.io. It can be configured by using the environment variables listed [below](#environment-variables), or by placing your [configuration file](#configuration-file) in the root of the `/data` volume,
+
+Running the image is straightforward:
+
+```
+docker run -it \
+    -e SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1 \
+    -e SIGENERGY2MQTT_MQTT_USERNAME=user \
+    -e SIGENERGY2MQTT_MQTT_PASSWORD=password \
+    -v /data:/data \
+    seud0nym/sigenergy2mqtt:latest
+```
+
+Note that you must provide persistent storage via the `-v` option to preserve the state  of calculated accumulation sensors across executions. You can also place your [configuration file](#configuration-file) in the root of this directory, rather than configuring via environment variables.
+
+`docker-compose` users can find an example configuration file at [`docker-compose.yaml`](docker-compose.yaml).
+
+
+## Configuration
+
+You _can_ configure `sigenergy2mqtt` via the [command line](#command-line-options) and/or [environment variables](#environment-variables), but using a persistent configuration file is a better option, as it provides access to all advanced feature configuration. 
+
+### Configuration File
+
+The complete list of configuration options with associated comments can be found in [sigenergy2mqtt.yaml](sigenergy2mqtt.yaml).
+
+Example:
 ```
 home-assistant:
   enabled: true
+  sensors-enabled-by-default: false
 mqtt:
   broker: 127.0.0.1
   username: ""
@@ -75,10 +149,9 @@ pvoutput:
 Notes:
 - Configure your MQTT broker IP address/host name and Sigenergy IP address/host name as appropriate for your environment. 
 - The number in square brackets after `inverters` is the Device ID (slave address) as advised by your installer. It is usually `1`. If you have multiple inverters, separate them with commas (e.g. `[ 1,2 ]`)
-- If your MQTT broker requires authentication, change `anonymous` to false and enter the required username and password.
+- If your MQTT broker does not require authentication, add the option `anonymous: true` under `mqtt`.
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
-- The complete list of configuration options with associated comments can be found in [this file](doc/sigenergy2mqtt.yaml).
-- The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data` or the current directory from which `sigenergy2mqtt` is run. You can also use the `-c` command line option to specify a different location and/or filename.
+- The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data` or the current directory from which `sigenergy2mqtt` is run. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
 
 ### Command Line Options
 
@@ -194,53 +267,9 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` : The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
 - `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` : Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
 
-### Background Service
-
-To run `sigenergy2mqtt` as a service that starts automatically in the background on system boot, create the file `/etc/systemd/system/sigenergy2mqtt.service` with your favourite editor, with the following contents:
-```
-[Unit]
-Description=Publish Modbus data from Sigenergy to MQTT
-Documentation=https://github.com/seud0nym/sigenergy2mqtt
-After=network.target mosquitto.service
-
-[Service]
-Type=simple
-User=sigenergy
-Group=daemon
-ExecStart=/usr/local/bin/sigenergy2mqtt
-ExecReload=kill -HUP $MAINPID
-KillMode=process
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Notes:
-- If you are _not_ running `sigenergy2mqtt` on the same host/container as `Mosquitto`, remove _mosquitto.service_ from the `After=` line.
-
-Once that is done, run the following commands:
-```bash
-useradd -m -g 1 sigenergy
-systemctl enable sigenergy2mqtt.service
-```
-
-When you are ready to start the service, use this command:
-```bash
-systemctl start sigenergy2mqtt.service
-```
-### Post-Installation
+## Post-Installation
 
 If you are using Home Assistant, you can set the current values for the daily and lifetime accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values. Make sure you enter lifetime values first, because daily sensors use the lifetime numbers as their base.
-
-### Upgrades
-
-To upgrade to a new release, install using `pip` with the `--upgrade` option:
-```bash
-pip install sigenergy2mqtt --upgrade
-systemctl restart sigenergy2mqtt.service
-```
 
 ## Home Assistant Auto-Discovery
 
