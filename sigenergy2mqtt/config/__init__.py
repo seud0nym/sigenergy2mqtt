@@ -14,7 +14,11 @@ import sys
 if os.isatty(sys.stdout.fileno()):
     logging.basicConfig(format="%(asctime)s %(levelname)-5s sigenergy2mqtt:%(module)s:%(lineno)s %(message)s", level=logging.INFO)
 else:
-    logging.basicConfig(format="%(levelname)-5s %(module)s:%(lineno)s %(message)s", level=logging.INFO)
+    cgroup = Path('/proc/self/cgroup')
+    if Path('/.dockerenv').is_file() or (cgroup.is_file() and 'docker' in cgroup.read_text()):
+        logging.basicConfig(format="%(asctime)s %(levelname)-5s %(module)s:%(lineno)s %(message)s", level=logging.INFO)
+    else:
+        logging.basicConfig(format="%(levelname)-5s %(module)s:%(lineno)s %(message)s", level=logging.INFO)
 _logger = logging.getLogger("root")
 _logger.info(f"Release {Config.origin['sw']}")
 
