@@ -14,22 +14,34 @@ class MqttConfiguration:
 
     log_level: int = logging.WARNING
 
-    def configure(self, config: dict) -> None:
+    def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
             for field, value in config.items():
                 for field, value in config.items():
                     match field:
                         case "broker":
+                            if override:
+                                logging.debug(f"Applying 'mqtt broker' override from env/cli ({value})")
                             self.broker = check_host(value, f"mqtt {field}")
                         case "port":
+                            if override:
+                                logging.debug(f"Applying 'mqtt port' override from env/cli ({value})")
                             self.port = check_port(value, f"mqtt {field}")
                         case "anonymous":
+                            if override:
+                                logging.debug(f"Applying 'mqtt anonymous' override from env/cli ({value})")
                             self.anonymous = check_bool(value, f"mqtt {field}")
                         case "username":
+                            if override:
+                                logging.debug(f"Applying 'mqtt username' override from env/cli ({value})")
                             self.username = value
                         case "password":
+                            if override:
+                                logging.debug("Applying 'mqtt password' override from env/cli (******)")
                             self.password = value
                         case "log-level":
+                            if override:
+                                logging.debug(f"Applying 'mqtt log level' override from env/cli ({value})")
                             self.log_level = check_log_level(value, f"mqtt {field}")
                         case _:
                             raise ValueError(f"mqtt configuration element contains unknown option '{field}'")

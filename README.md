@@ -118,11 +118,11 @@ Command line options override both environment variables and the configuration f
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]
                         The Sigenergy device Modbus port number (default: 502)
   --modbus-slave [SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE]
-                        The Sigenergy Inverter Modbus Device ID (Slave ID). May be specified as a comma separated list if you have multiple inverters.
+                        The Sigenergy Inverter Modbus Device ID (Slave ID). May be specified multiple times.
   --modbus-accharger-slave [SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE]
-                        The Sigenergy AC Charger Modbus Device ID (Slave ID). May be specified as a comma separated list if you have multiple inverters.
+                        The Sigenergy AC Charger Modbus Device ID (Slave ID).
   --modbus-dccharger-slave [SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE]
-                        The Sigenergy DC Charger Modbus Device ID (Slave ID). May be specified as a comma separated list if you have multiple inverters.
+                        The Sigenergy DC Charger Modbus Device ID (Slave ID).
   --modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
   --smartport-enabled   Enable interrogation of a third-party device for production data.
@@ -176,6 +176,8 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_MODBUS_HOST` : The hostname or IP address of the Sigenergy device
 - `SIGENERGY2MQTT_MODBUS_PORT` : The Sigenergy device Modbus port number (default: 502)
 - `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : The Sigenergy device Modbus Device ID (Slave ID). May be specified as a comma separated list. (default: 1)
+- `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` : The Sigenergy AC Charger Modbus Device ID (Slave ID).
+- `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : The Sigenergy DC Charger Modbus Device ID (Slave ID).
 - `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` : Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
 - `SIGENERGY2MQTT_SMARTPORT_ENABLED` : Enable interrogation of a third-party device for production data.
 - `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME' : The name of the module which will be used to obtain third-party device production data.

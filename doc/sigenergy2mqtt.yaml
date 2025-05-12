@@ -169,7 +169,7 @@ modbus:
         #                 a new entity called Total PV Power will be published 
         #                 that will combine the Sigenergy and third-party 
         #                 PV generation into a single number.
-        pv_power: EnphasePVPower
+        pv-power: EnphasePVPower
       mqtt:
           # topic
           #   default: There is no default

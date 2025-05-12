@@ -39,6 +39,7 @@ class Config:
 
     @staticmethod
     def load(filename: str) -> None:
+        logging.info(f"Loading configuration from {filename}...")
         Config._source = filename
         Config.reload()
 
@@ -53,16 +54,17 @@ class Config:
         overrides = {
             "home-assistant": {},
             "mqtt": {},
-            "modbus": [{"smart-port": {"mqtt": [{}]}}],
+            "modbus": [{"smart-port": {"mqtt": [{}], "module": {}}}],
             "pvoutput": {},
         }
         for key, value in os.environ.items():
             if key.startswith("SIGENERGY2MQTT_") and value is not None and value != "None":
+                logging.debug(f"Found env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 match key:
                     case const.SIGENERGY2MQTT_HASS_ENABLED:
-                        overrides["home_assistant"]["enabled"] = check_bool(os.environ[key], key)
+                        overrides["home-assistant"]["enabled"] = check_bool(os.environ[key], key)
                     case const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY:
-                        overrides["home_assistant"]["discovery-only"] = check_bool(os.environ[key], key)
+                        overrides["home-assistant"]["discovery-only"] = check_bool(os.environ[key], key)
                     case const.SIGENERGY2MQTT_LOG_LEVEL:
                         overrides["log-level"] = check_log_level(os.environ[key], key)
                     case const.SIGENERGY2MQTT_MODBUS_HOST:
@@ -70,23 +72,23 @@ class Config:
                     case const.SIGENERGY2MQTT_MODBUS_PORT:
                         overrides["modbus"][0]["port"] = check_port(os.environ[key], key)
                     case const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE:
-                        overrides["modbus"][0]["inverters"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key, allow_none=False, allow_empty=False)
+                        overrides["modbus"][0]["inverters"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key)
                     case const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE:
-                        overrides["modbus"][0]["ac-chargers"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key, allow_none=False, allow_empty=False)
+                        overrides["modbus"][0]["ac-chargers"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key)
                     case const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE:
-                        overrides["modbus"][0]["dc-chargers"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key, allow_none=False, allow_empty=False)
+                        overrides["modbus"][0]["dc-chargers"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key)
                     case const.SIGENERGY2MQTT_SMARTPORT_ENABLED:
                         overrides["modbus"][0]["smart-port"]["enabled"] = check_bool(os.environ[key], key)
                     case const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-                        overrides["modbus"][0]["smart-port"]["module-name"] = os.environ[key]
+                        overrides["modbus"][0]["smart-port"]["module"]["name"] = os.environ[key]
                     case const.SIGENERGY2MQTT_SMARTPORT_HOST:
-                        overrides["modbus"][0]["smart-port"]["host"] = check_host(os.environ[key], key)
+                        overrides["modbus"][0]["smart-port"]["module"]["host"] = check_host(os.environ[key], key)
                     case const.SIGENERGY2MQTT_SMARTPORT_USERNAME:
-                        overrides["modbus"][0]["smart-port"]["username"] = os.environ[key]
+                        overrides["modbus"][0]["smart-port"]["module"]["username"] = os.environ[key]
                     case const.SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-                        overrides["modbus"][0]["smart-port"]["password"] = os.environ[key]
+                        overrides["modbus"][0]["smart-port"]["module"]["password"] = os.environ[key]
                     case const.SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-                        overrides["modbus"][0]["smart-port"]["pv-power"] = os.environ[key]
+                        overrides["modbus"][0]["smart-port"]["module"]["pv-power"] = os.environ[key]
                     case const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
                         overrides["modbus"][0]["smart-port"]["mqtt"][0]["topic"] = os.environ[key]
                     case const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
@@ -113,21 +115,23 @@ class Config:
                         overrides["pvoutput"]["consumption"] = check_bool(os.environ[key], key)
                     case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
                         overrides["pvoutput"]["interval_minutes"] = check_int(os.environ[key], key, min=5, max=15)
-        Config._configure(overrides)
+        Config._configure(overrides, True)
 
         if len(Config.devices) == 0:
             raise ValueError("No modbus devices found in configuration file.")
 
     @staticmethod
-    def _configure(data: dict) -> None:
+    def _configure(data: dict, override: bool = False) -> None:
         for name in data.keys():
             match name:
                 case "home-assistant":
-                    Config.home_assistant.configure(data[name])
+                    Config.home_assistant.configure(data[name], override)
                 case "log-level":
+                    if override:                      
+                        logging.debug(f"Applying 'log level' override from env/cli ({data[name]})")
                     Config.log_level = check_log_level(data[name], name)
                 case "mqtt":
-                    Config.mqtt.configure(data[name])
+                    Config.mqtt.configure(data[name], override)
                 case "modbus":
                     if isinstance(data[name], list):
                         index = 0
@@ -138,13 +142,15 @@ class Config:
                                     Config.devices.append(device)
                                 else:
                                     device = Config.devices[index]
-                                device.configure(config)
+                                device.configure(config, override)
                             index += 1
                     else:
                         raise ValueError("modbus configuration element must contain a list of Sigenergy hosts")
                 case "pvoutput":
-                    Config.pvoutput.configure(data[name])
+                    Config.pvoutput.configure(data[name], override)
                 case "sensor-debug-logging":
+                    if override:
+                        logging.debug(f"Applying 'sensor debug logging' override from env/cli ({data[name]})")
                     Config.sensor_debug_logging = check_bool(data[name], name)
                 case "sensor-overrides":
                     if isinstance(data[name], dict):
@@ -152,20 +158,20 @@ class Config:
                             Config.sensor_overrides[sensor] = {}
                             for p, v in settings.items():
                                 if (
-                                    (p == "debug-logging" and check_bool(v, f"Error processing {sensor} override {p} = {v} -") == v)
-                                    or (p == "gain" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=True, min=1) == v)
-                                    or (p == "icon" and check_string(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, starts_with="mdi:") == v)
-                                    or (p == "max-failures" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=True, min=1) == v)
-                                    or (p == "max-failures-retry-interval" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, min=0) == v)
-                                    or (p == "precision" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, min=0, max=6) == v)
-                                    or (p == "publishable" and check_bool(v, f"Error processing {sensor} override {p} = {v} -") == v)
-                                    or (p == "scan-interval" and check_int(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False, min=1) == v)
-                                    or (p == "unit-of-measurement" and check_string(v, f"Error processing {sensor} override {p} = {v} -", allow_none=False) == v)
+                                    (p == "debug-logging" and check_bool(v, f"Error processing '{sensor}' sensor override {p} = {v} -") == v)
+                                    or (p == "gain" and check_int(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=True, min=1) == v)
+                                    or (p == "icon" and check_string(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False, starts_with="mdi:") == v)
+                                    or (p == "max-failures" and check_int(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=True, min=1) == v)
+                                    or (p == "max-failures-retry-interval" and check_int(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False, min=0) == v)
+                                    or (p == "precision" and check_int(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False, min=0, max=6) == v)
+                                    or (p == "publishable" and check_bool(v, f"Error processing '{sensor}' sensor override {p} = {v} -") == v)
+                                    or (p == "scan-interval" and check_int(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False, min=1) == v)
+                                    or (p == "unit-of-measurement" and check_string(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False) == v)
                                 ):
-                                    logging.debug(f"Applying {sensor} override: {p} = {v}")
+                                    logging.debug(f"Applying '{sensor}' sensor override: {p} = {v}")
                                     Config.sensor_overrides[sensor][p] = v
                                 else:
-                                    raise ValueError(f"Error processing {sensor} override {p} = {v} - property is not known or not overridable")
+                                    raise ValueError(f"Error processing '{sensor}' sensor override {p} = {v} - property is not known or not overridable")
                     elif data[name] is not None:
                         raise ValueError("sensor-overrides configuration elements must contain a list of classnames, each followed by options and their values")
                 case _:

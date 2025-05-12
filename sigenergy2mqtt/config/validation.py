@@ -48,6 +48,16 @@ def check_host(value, source):
 def check_int(value, source, min: int = None, max: int = None, allow_none: bool = False):
     if allow_none and value is None:
         return value
+    if isinstance(value, str):
+        try:
+            value = int(value)
+        except ValueError:
+            raise ValueError(f"{source} must be a integer")
+        if min is not None and value < min:
+            raise ValueError(f"{source} must be a integer greater than or equal to {min}")
+        if max is not None and value > max:
+            raise ValueError(f"{source} must be a integer less than or equal to {max}")
+        return value
     elif isinstance(value, int):
         if min is not None and value < min:
             raise ValueError(f"{source} must be a integer greater than or equal to {min}")
@@ -95,10 +105,7 @@ def check_module(value, source):
 
 
 def check_port(value, source):
-    if value is not None and isinstance(value, int):
-        return value
-    else:
-        raise ValueError(f"{source} must be a number")
+    return check_int(value, source, min=1, max=65535)
 
 
 def check_string(value, source, allow_none: bool = True, allow_empty: bool = True, hex_chars_only: bool = False, starts_with: str = None):

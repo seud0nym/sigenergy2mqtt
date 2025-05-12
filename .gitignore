@@ -1,8 +1,9 @@
 # Project
+.debug.env
 .debug.py
 .debug.yaml
 .vscode/launch.json
-debug/
+data/
 doc/protocol/
 
 # Python
