@@ -1,0 +1,10 @@
+services:
+  sigenergy2mqtt:
+    image: sigenergy2mqtt:latest
+    container_name: sigenergy2mqtt
+    environment:
+      # Configure the environment variables for sigenergy2mqtt e.g.
+      SIGENERGY2MQTT_LOG_LEVEL: DEBUG
+    volumes:
+      # Mount the data directory to persist data
+      - ./data:/data
