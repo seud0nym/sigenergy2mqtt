@@ -1,0 +1,13 @@
+#!/bin/bash
+
+cd $(basename $0)/..
+
+new_version=$(date +"%Y.%-m.%-d")
+
+sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" sigenergy2mqtt/config/version.py
+git add sigenergy2mqtt/config/version.py
+
+# Commit, tag, and push:
+git commit -m "Bump version to $new_version"
+git tag "$new_version"
+git push && git push --tags
