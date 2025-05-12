@@ -2,6 +2,9 @@
 [![License](https://img.shields.io/github/license/seud0nym/sigenergy2mqtt.svg?style=flat)](https://github.com/seud0nym/sigenergy2mqtt/blob/master/LICENSE) 
 ![Top Language](https://img.shields.io/github/languages/top/seud0nym/sigenergy2mqtt)
 [![Latest Release](https://img.shields.io/github/release/seud0nym/sigenergy2mqtt/all.svg?style=flat&label=latest)](https://github.com/seud0nym/sigenergy2mqtt/releases) 
+![PyPI - Version](https://img.shields.io/pypi/v/sigenergy2mqtt)
+![Docker Image Version](https://img.shields.io/docker/v/seud0nym/sigenergy2mqtt?label=docker)
+
 
 `sigenergy2mmqtt` is a bridge between the Modbus interface of the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
 
