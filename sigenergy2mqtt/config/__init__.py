@@ -330,7 +330,10 @@ for arg in vars(_args):
         continue
     override = getattr(_args, arg)
     if override:
-        os.environ[arg] = str(override)
+        if isinstance(override, list):
+            os.environ[arg] = ",".join([str(x) for x in override])
+        else:
+            os.environ[arg] = str(override)
         if arg == const.SIGENERGY2MQTT_LOG_LEVEL:
             _logger.setLevel(getattr(logging, override))
 
@@ -350,7 +353,7 @@ try:
     else:
         Config.reload()
 except Exception as e:
-    _logger.critical(f"Error processing configuration: {repr(e)}")
+    _logger.critical(f"Error processing configuration: {e}")
     sys.exit(1)
 
 for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
