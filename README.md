@@ -6,7 +6,7 @@
 ![Docker Image Version](https://img.shields.io/docker/v/seud0nym/sigenergy2mqtt?label=docker)
 
 
-`sigenergy2mmqtt` is a bridge between the Modbus interface of the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
+`sigenergy2mqtt` is a bridge between the Modbus interface of the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
 
 In addition, `sigenergy2mqtt` has several optional features: 
 
@@ -117,7 +117,6 @@ Note that you must provide persistent storage via the `-v` option to preserve th
 
 `docker-compose` users can find an example configuration file at [`docker-compose.yaml`](docker-compose.yaml).
 
-
 ## Configuration
 
 You _can_ configure `sigenergy2mqtt` via the [command line](#command-line-options) and/or [environment variables](#environment-variables), but using a persistent configuration file is a better option, as it provides access to all advanced feature configuration. 
@@ -127,10 +126,9 @@ You _can_ configure `sigenergy2mqtt` via the [command line](#command-line-option
 The complete list of configuration options with associated comments can be found in [sigenergy2mqtt.yaml](sigenergy2mqtt.yaml).
 
 Example:
-```
+```yaml
 home-assistant:
   enabled: true
-  sensors-enabled-by-default: false
 mqtt:
   broker: 127.0.0.1
   username: ""
