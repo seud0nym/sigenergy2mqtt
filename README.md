@@ -136,9 +136,6 @@ mqtt:
 modbus:
   - host: sigenergy.local
     inverters: [ 1 ]
-    read-only: true
-    read-write: true
-    write-only: true
 pvoutput:
   enabled: false
   api-key: your_api_key
@@ -180,7 +177,7 @@ Command line options override both environment variables and the configuration f
                         The hostname or IP address of an MQTT broker (default: 127.0.0.1)
   --mqtt-port [SIGENERGY2MQTT_MQTT_PORT]
                         The listening port of the MQTT broker (default: 1883)
-  --mqtt-anonymous      Connect to MQTT anonomously (i.e. without username/password).
+  --mqtt-anonymous      Connect to MQTT anonymously (i.e. without username/password).
   -u [SIGENERGY2MQTT_MQTT_USERNAME], --mqtt-username [SIGENERGY2MQTT_MQTT_USERNAME]
                         A valid username for the MQTT broker
   -p [SIGENERGY2MQTT_MQTT_PASSWORD], --mqtt-password [SIGENERGY2MQTT_MQTT_PASSWORD]
@@ -243,7 +240,7 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`: Set to 'true' to e xit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.
 - `SIGENERGY2MQTT_MQTT_BROKER` : The hostname or IP address of an MQTT broker (default: 127.0.0.1)
 - `SIGENERGY2MQTT_MQTT_PORT` : The listening port of the MQTT broker (default: 1883)
-- `SIGENERGY2MQTT_MQTT_ANONYMOUS` : Set to 'true' to connect to MQTT anonomously (i.e. without username/password).
+- `SIGENERGY2MQTT_MQTT_ANONYMOUS` : Set to 'true' to connect to MQTT anonymously (i.e. without username/password).
 - `SIGENERGY2MQTT_MQTT_USERNAME` : A valid username for the MQTT broker
 - `SIGENERGY2MQTT_MQTT_PASSWORD` : A valid password for the MQTT broker username
 - `SIGENERGY2MQTT_MQTT_LOG_LEVEL` : Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
