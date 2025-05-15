@@ -1,5 +1,5 @@
 from typing import Final
 
-__version__ = "2025.5.13"
+__version__ = "2025.5.15"
 
 SIGENERGY_MODBUS_PROTOCOL: Final = "V2.5"
