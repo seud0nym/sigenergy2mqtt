@@ -112,7 +112,7 @@ _parser.add_argument(
     "--mqtt-anonymous",
     action="store_true",
     dest=const.SIGENERGY2MQTT_MQTT_ANONYMOUS,
-    help="Connect to MQTT anonomously (i.e. without username/password).",
+    help="Connect to MQTT anonymously (i.e. without username/password).",
 )
 _parser.add_argument(
     "-u",

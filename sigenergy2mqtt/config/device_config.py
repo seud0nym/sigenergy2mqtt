@@ -33,40 +33,40 @@ class DeviceConfig:
                 match field:
                     case "host":
                         if override:
-                            logging.debug(f"Applying 'modbus host' override from env/cli ({value})")
-                        self.host = check_host(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.host' override from env/cli ({value=})")
+                        self.host = check_host(value, f"modbus.{field}")
                     case "port":
                         if override:
-                            logging.debug(f"Applying 'modbus port' override from env/cli ({value})")
-                        self.port = check_port(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.port' override from env/cli ({value=})")
+                        self.port = check_port(value, f"modbus.{field}")
                     case "log-level":
                         if override:
-                            logging.debug(f"Applying 'modbus log level' override from env/cli ({value})")
-                        self.log_level = check_log_level(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.log-level' override from env/cli ({value=})")
+                        self.log_level = check_log_level(value, f"modbus.{field}")
                     case "read-only":
                         if override:
-                            logging.debug(f"Applying 'modbus read-only' override from env/cli ({value})")
-                        self.registers.read_only = check_bool(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.read-only' override from env/cli ({value=})")
+                        self.registers.read_only = check_bool(value, f"modbus.{field}")
                     case "read-write":
                         if override:
-                            logging.debug(f"Applying 'modbus read-write' override from env/cli ({value})")
-                        self.registers.read_write = check_bool(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.read-write' override from env/cli ({value=})")
+                        self.registers.read_write = check_bool(value, f"modbus.{field}")
                     case "write-only":
                         if override:
-                            logging.debug(f"Applying 'modbus write-only' override from env/cli ({value})")
-                        self.registers.write_only = check_bool(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.write-only' override from env/cli ({value=})")
+                        self.registers.write_only = check_bool(value, f"modbus.{field}")
                     case "ac-chargers":
                         if override:
-                            logging.debug(f"Applying 'modbus ac-chargers' override from env/cli ({value})")
-                        self.ac_chargers = check_int_list(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.ac-chargers' override from env/cli ({value=})")
+                        self.ac_chargers = check_int_list(value, f"modbus.{field}")
                     case "dc-chargers":
                         if override:
-                            logging.debug(f"Applying 'modbus dc-chargers' override from env/cli ({value})")
-                        self.dc_chargers = check_int_list(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.dc-chargers' override from env/cli ({value=})")
+                        self.dc_chargers = check_int_list(value, f"modbus.{field}")
                     case "inverters":
                         if override:
-                            logging.debug(f"Applying 'modbus inverters' override from env/cli ({value})")
-                        self.inverters = check_int_list(value, f"modbus {field}")
+                            logging.debug(f"Applying 'modbus.inverters' override from env/cli ({value=})")
+                        self.inverters = check_int_list(value, f"modbus.{field}")
                     case "smart-port":
                         self.smartport.configure(value, override)
                     case _:

@@ -132,7 +132,7 @@ class Config:
                     Config.home_assistant.configure(data[name], override)
                 case "log-level":
                     if override:                      
-                        logging.debug(f"Applying 'log level' override from env/cli ({data[name]})")
+                        logging.debug(f"Applying 'log-level' override from env/cli ({data[name]})")
                     Config.log_level = check_log_level(data[name], name)
                 case "mqtt":
                     Config.mqtt.configure(data[name], override)
@@ -154,7 +154,7 @@ class Config:
                     Config.pvoutput.configure(data[name], override)
                 case "sensor-debug-logging":
                     if override:
-                        logging.debug(f"Applying 'sensor debug logging' override from env/cli ({data[name]})")
+                        logging.debug(f"Applying 'sensor-debug-logging' override from env/cli ({data[name]})")
                     Config.sensor_debug_logging = check_bool(data[name], name)
                 case "sensor-overrides":
                     if isinstance(data[name], dict):
@@ -172,11 +172,11 @@ class Config:
                                     or (p == "scan-interval" and check_int(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False, min=1) == v)
                                     or (p == "unit-of-measurement" and check_string(v, f"Error processing '{sensor}' sensor override {p} = {v} -", allow_none=False) == v)
                                 ):
-                                    logging.debug(f"Applying '{sensor}' sensor override: {p} = {v}")
+                                    logging.debug(f"Applying '{sensor}' sensor-override: {p} = {v}")
                                     Config.sensor_overrides[sensor][p] = v
                                 else:
-                                    raise ValueError(f"Error processing '{sensor}' sensor override {p} = {v} - property is not known or not overridable")
+                                    raise ValueError(f"Error processing '{sensor}' sensor-override {p} = {v} - property is not known or not overridable")
                     elif data[name] is not None:
-                        raise ValueError("sensor-overrides configuration elements must contain a list of classnames, each followed by options and their values")
+                        raise ValueError("sensor-overrides configuration elements must contain a list of class names, each followed by options and their values")
                 case _:
                     raise ValueError(f"Configuration contains unknown element '{name}'")
