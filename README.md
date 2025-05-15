@@ -104,7 +104,7 @@ systemctl restart sigenergy2mqtt.service
 
 Running the image is straightforward:
 
-```
+```bash
 docker run -it \
     -e SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1 \
     -e SIGENERGY2MQTT_MQTT_USERNAME=user \
