@@ -2,5 +2,32 @@
     "ruff.lineLength": 200,
     "python.analysis.extraPaths": [
         "./sigenergy2mqtt"
+    ],
+    "cSpell.words": [
+        "ACCHARGER",
+        "cmps",
+        "CMUxxxxxxxxxx",
+        "CMUyyyyyyyyyy",
+        "DCCHARGER",
+        "dockerenv",
+        "HACS",
+        "HASS",
+        "homeassistant",
+        "levelname",
+        "MAINPID",
+        "modbus",
+        "Mosquitto",
+        "mqtt",
+        "paho",
+        "proc",
+        "pvoutput",
+        "pymodbus",
+        "ruamel",
+        "seud0nym",
+        "sigen",
+        "SIGENERGY",
+        "SigenStor",
+        "SMARTPORT",
+        "writeonly"
     ]
 }
