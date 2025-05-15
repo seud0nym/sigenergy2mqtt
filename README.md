@@ -256,7 +256,7 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : The Sigenergy DC Charger Modbus Device ID (Slave ID).
 - `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` : Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
 - `SIGENERGY2MQTT_SMARTPORT_ENABLED` : Enable interrogation of a third-party device for production data.
-- `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME' : The name of the module which will be used to obtain third-party device production data.
+- `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` : The name of the module which will be used to obtain third-party device production data.
 - `SIGENERGY2MQTT_SMARTPORT_HOST` : The IP address or hostname of the third-party device.
 - `SIGENERGY2MQTT_SMARTPORT_USERNAME` : The username to authenticate to the third-party device.
 - `SIGENERGY2MQTT_SMARTPORT_PASSWORD` : The password to authenticate to the third-party device.
