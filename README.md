@@ -35,13 +35,6 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 `sigenergy2mqtt` was developed for my own use, and as such has only been tested in my single-phase environment without AC or DC chargers. In addition, there has been only cursory testing of the write functions. If you find a problem, please raise an issue.
 
-## Pre-requisites:
-
-- Python 3.11 or later
-- An MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an add-on to Home Assistant
-- A Linux server (physical hardware, or a virtual machine/container) that runs continuously in which to install `sigenergy2mqtt` (hardware requirements are minimal: I use a Proxmox LXC with 2 cores and 256MiB RAM to run [Mosquitto](https://mosquitto.org/), [SIGENERGY2mqtt](https://github.com/bachya/SIGENERGY2mqtt) and `sigenergy2mqtt`)
-- A Sigenergy energy solution with Modbus-TCP enabled by your installer
-
 ## Installation
 
 ### Home Assistant Add-on
