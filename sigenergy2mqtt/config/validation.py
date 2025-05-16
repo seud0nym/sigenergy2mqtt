@@ -109,9 +109,12 @@ def check_port(value, source):
 
 
 def check_string(value, source, allow_none: bool = True, allow_empty: bool = True, hex_chars_only: bool = False, starts_with: str = None):
-    if isinstance(value, str):
-        if not allow_none and value is None:
+    if value is None:
+        if allow_none:
+            return value
+        else:
             raise ValueError(f"{source} must be a valid string and not null")
+    elif isinstance(value, str):
         if not allow_empty and (value == "" or value.isspace()):
             raise ValueError(f"{source} must be a valid string and not empty")
         if hex_chars_only:
@@ -119,7 +122,7 @@ def check_string(value, source, allow_none: bool = True, allow_empty: bool = Tru
                 int(value, 16)
             except ValueError:
                 raise ValueError(f"{source} must only contain hexadecimal characters")
-        if value is not None and starts_with is not None and not value.starts_with(starts_with):
+        if value is not None and starts_with is not None and not value.startswith(starts_with):
             raise ValueError(f"{source} must start with '{starts_with}")
         return value
     else:
