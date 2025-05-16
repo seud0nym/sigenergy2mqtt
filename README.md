@@ -1,11 +1,10 @@
 <img src="https://github.com/seud0nym/sigenergy2mqtt/raw/main/resources/logo.png" alt="sigenergy2mqtt" height="50"><br>
 [![License](https://img.shields.io/github/license/seud0nym/sigenergy2mqtt.svg?style=flat)](https://github.com/seud0nym/sigenergy2mqtt/blob/master/LICENSE) 
-![Top Language](https://img.shields.io/github/languages/top/seud0nym/sigenergy2mqtt)
 [![Latest Release](https://img.shields.io/github/release/seud0nym/sigenergy2mqtt/all.svg?style=flat&label=latest)](https://github.com/seud0nym/sigenergy2mqtt/releases) 
-![PyPI - Version](https://img.shields.io/pypi/v/sigenergy2mqtt)
-![Docker Image Version](https://img.shields.io/docker/v/seud0nym/sigenergy2mqtt?label=docker)
-![Docker Pulls](https://img.shields.io/docker/pulls/seud0nym/sigenergy2mqtt)
-
+[![PyPI - Version](https://img.shields.io/pypi/v/sigenergy2mqtt)](https://pypi.org/project/sigenergy2mqtt/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/sigenergy2mqtt?label=pypi%20downloads)](https://pypi.org/project/sigenergy2mqtt/)
+[![Docker Image Version](https://img.shields.io/docker/v/seud0nym/sigenergy2mqtt?label=docker)](https://hub.docker.com/r/seud0nym/sigenergy2mqtt)
+[![Docker Pulls](https://img.shields.io/docker/pulls/seud0nym/sigenergy2mqtt)](https://hub.docker.com/r/seud0nym/sigenergy2mqtt)
 
 
 `sigenergy2mqtt` is a bridge between the Modbus interface of the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
