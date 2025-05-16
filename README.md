@@ -4,6 +4,8 @@
 [![Latest Release](https://img.shields.io/github/release/seud0nym/sigenergy2mqtt/all.svg?style=flat&label=latest)](https://github.com/seud0nym/sigenergy2mqtt/releases) 
 ![PyPI - Version](https://img.shields.io/pypi/v/sigenergy2mqtt)
 ![Docker Image Version](https://img.shields.io/docker/v/seud0nym/sigenergy2mqtt?label=docker)
+![Docker Pulls](https://img.shields.io/docker/pulls/seud0nym/sigenergy2mqtt)
+
 
 
 `sigenergy2mqtt` is a bridge between the Modbus interface of the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
@@ -17,7 +19,6 @@ In addition, `sigenergy2mqtt` has several optional features:
 `sigenergy2mqtt` was inspired the Home Assistant integrations developed by [TypQxQ](https://github.com/TypQxQ/).
 
 - [Disclaimer](#disclaimer)
-- [Pre-requisites](#pre-requisites)
 - [Installation](#installation)
     - [Home Assistant Add-on](#home-assistant-add-on)
     - [Linux](#linux)
@@ -339,7 +340,7 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_MQTT_LOG_LEVEL` : Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
 - `SIGENERGY2MQTT_MODBUS_HOST` : The hostname or IP address of the Sigenergy device
 - `SIGENERGY2MQTT_MODBUS_PORT` : The Sigenergy device Modbus port number (default: 502)
-- `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : The Sigenergy device Modbus Device ID (Slave ID). May be specified as a comma separated list. (default: 1)
+- `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1)
 - `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` : The Sigenergy AC Charger Modbus Device ID (Slave ID).
 - `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : The Sigenergy DC Charger Modbus Device ID (Slave ID).
 - `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` : Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
