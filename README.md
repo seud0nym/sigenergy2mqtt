@@ -19,9 +19,8 @@ In addition, `sigenergy2mqtt` has several optional features:
 - [Disclaimer](#disclaimer)
 - [Pre-requisites](#pre-requisites)
 - [Installation](#installation)
+    - [Home Assistant Add-on](#home-assistant-add-on)
     - [Linux](#linux)
-      - [Background Service](#background-service)
-      - [Upgrades](#upgrades)
     - [Docker](#docker)
 - [Configuration](#configuration)
     - [Configuration File](#configuration-file)
@@ -45,7 +44,39 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 ## Installation
 
+### Home Assistant Add-on
+
+You need to add my Home Assistant Add-ons repository first, and then you will be able to add the `sigenergy2mqtt` add-on.
+
+#### Automatically Add Repository
+
+[![Open your Home Assistant instance and show the add add-on repository dialogue with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fseud0nym%2Fhome-assistant-addons)
+
+#### Manually Add Repository
+
+Follow these steps to get the add-on repository installed on your Home Assistant system:
+
+1. Navigate in your Home Assistant frontend to **Settings** -> **Add-ons** -> **Add-on store**.
+1. Click the three vertical dots in the top-right corner and select **Repositories**.
+1. Enter https://github.com/seud0nym/home-assistant-addons and click the **ADD** button.
+1. Close the Repositories window and refresh.
+
+#### Installation
+
+1. Select the `sigenergy2mqtt` add-on in the Home Assistant Add-ons Store
+1. Enter the configuration details on the Configuration tab, and save.
+1. Start the add-on from the Info tab.
+
 ### Linux
+
+#### Pre-requisites
+
+- Python 3.11 or later
+- An MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an add-on to Home Assistant
+- A Linux server (physical hardware, or a virtual machine/container) that runs continuously in which to install `sigenergy2mqtt` (hardware requirements are minimal: I use a Proxmox LXC with 2 cores and 256MiB RAM to run [Mosquitto](https://mosquitto.org/), [SIGENERGY2mqtt](https://github.com/bachya/SIGENERGY2mqtt) and `sigenergy2mqtt`)
+- A Sigenergy energy solution with Modbus-TCP enabled by your installer
+
+#### Installation
 
 Install `sigenergy2mqtt` via `pip`:
 ```bash
