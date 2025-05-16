@@ -71,10 +71,7 @@ class DeviceConfig:
                         self.smartport.configure(value, override)
                     case _:
                         raise ValueError(f"modbus device configuration element contains unknown option '{field}'")
-            if len(self.ac_chargers) > 0:
-                if (len(self.inverters) > 0 or len(self.dc_chargers) > 0):
-                    raise ValueError("modbus host with ac-chargers configured cannot contain configuration for dc-chargers or inverters")
-            elif len(self.inverters) == 0:
+            if len(self.inverters) == 0:
                 self.inverters.append(1)
         else:
             raise ValueError("modbus device configuration elements must contain options and their values")
