@@ -5,11 +5,13 @@
     ],
     "cSpell.words": [
         "ACCHARGER",
+        "actEnergyDlvd",
         "cmps",
         "CMUxxxxxxxxxx",
         "CMUyyyyyyyyyy",
         "DCCHARGER",
         "dockerenv",
+        "enphase",
         "HACS",
         "HASS",
         "homeassistant",
