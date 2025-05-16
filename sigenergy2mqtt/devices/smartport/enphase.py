@@ -95,7 +95,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                             sensor.set_source_values(self, self._states)
                         return True
                     except ValueError as e:
-                        logging.error(f"{self.__class__.__name__} - Invalid JSON reponse from {url}: {e}")
+                        logging.error(f"{self.__class__.__name__} - Invalid JSON response from {url}: {e}")
                         raise
                     except Exception as e:
                         logging.error(f"{self.__class__.__name__} - Unhandled error from {url}: {e}")
