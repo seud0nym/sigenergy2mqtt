@@ -63,7 +63,7 @@ class TopicConfig:
                             case "topic":
                                 if override:
                                     logging.debug(f"Applying 'modbus.smart-port.mqtt.topic' override from env/cli ({value=})")
-                                topic.topic = check_string(value, f"modbus.smart-port.mqtt.{field}", allow_none=False, allow_empty=False)
+                                topic.topic = check_string(value, f"modbus.smart-port.mqtt.{field}", allow_none=True, allow_empty=False)
                             case "gain":
                                 if override:
                                     logging.debug(f"Applying 'modbus.smart-port.mqtt.gain' override from env/cli ({value=})")
