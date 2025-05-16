@@ -25,6 +25,7 @@ In addition, `sigenergy2mqtt` has several optional features:
     - [Docker](#docker)
 - [Configuration](#configuration)
     - [Configuration File](#configuration-file)
+      - [Configuring Smart-Port Production](#configuring-smart-port-production)
     - [Command Line Options](#command-line-options)
     - [Environment Variables](#environment-variables)
 - [Post-Installation](#post-installation)
@@ -150,6 +151,74 @@ Notes:
 - If your MQTT broker does not require authentication, add the option `anonymous: true` under `mqtt`.
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
 - The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data` or the current directory from which `sigenergy2mqtt` is run. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
+
+#### Configuring Smart-Port Production
+
+##### Enphase Envoy
+
+This configuration only works with firmware versions starting with D7 and D8.
+
+```yaml
+...
+modbus:
+  - host: your_sigenergy_ip_address
+    inverters: [ 1 ]
+    log-level: INFO
+    smart-port:
+      enabled: true
+      module: 
+        name: enphase
+        host: your_enphase_envoy_ip_address
+        username: your_enphase_enlighten_username
+        password: your_enphase_enlighten_password
+        pv-power: EnphasePVPower
+...
+```
+
+##### Any System Already Integrated with Home Assistant
+
+###### `sigenergy2mqtt` Configuration File
+```yaml
+...
+modbus:
+  - host: your_sigenergy_ip_address
+    inverters: [ 1 ]
+    log-level: INFO
+    smart-port:
+      enabled: true
+      mqtt:
+        - topic: sigenergy2mqtt/smartport/envoy_nnnnnnnnnn_current_power_production/state
+          gain: 1
+...
+```
+
+Notes:
+- The topic can be anything meaningful.
+- The gain represents the multiplier to convert the state to watts (so if it is provided in kWh, 1000 is the multiplier).
+- You can specify multiple MQTT topic/gain pairs in the configuration file (but command line and environment overrides are limited to a single topic).
+
+###### Home Assistant Automation
+
+Create a new automation and enter a YAML configuration similar to this, using the entity_id that contains the current PV power production from your third-party inverter (this example uses Enphase again):
+
+```yaml
+alias: Publish Envoy PV Production
+description: "Update sigenergy2mqtt with the current PV production reported by Enphase Envoy"
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.envoy_nnnnnnnnnn_current_power_production
+conditions: []
+actions:
+  - action: mqtt.publish
+    data:
+      topic: sigenergy2mqtt/smartport/envoy_nnnnnnnnnn_current_power_production/state
+      payload: "{{ trigger.to_state.state }}"
+mode: queued
+```
+
+Notes:
+- The topic must match in both the `signenergy2mqtt` configuration and the Home Assistant automation.
 
 ### Command Line Options
 
