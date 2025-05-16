@@ -218,7 +218,7 @@ mode: queued
 ```
 
 Notes:
-- The topic must match in both the `signenergy2mqtt` configuration and the Home Assistant automation.
+- The topic must match in both the `sigenergy2mqtt` configuration and the Home Assistant automation.
 
 ### Command Line Options
 
