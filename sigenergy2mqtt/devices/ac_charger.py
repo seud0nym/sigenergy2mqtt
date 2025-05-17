@@ -25,8 +25,9 @@ class ACCharger(ModBusDevice):
         self._add_read_sensor(ro.ACChargerRatedVoltage(plant_index, device_address))
         self._add_read_sensor(input_breaker)
         self._add_read_sensor(
-            ro.ACChargerAlarms(plant_index, device_address, ro.ACChargerAlarm1(plant_index, device_address), ro.ACChargerAlarm2(plant_index, device_address)),
-            ro.ACChargerAlarm3(plant_index, device_address),
+            ro.ACChargerAlarms(
+                plant_index, device_address, ro.ACChargerAlarm1(plant_index, device_address), ro.ACChargerAlarm2(plant_index, device_address), ro.ACChargerAlarm3(plant_index, device_address)
+            )
         )
         self._add_read_sensor(rw.ACChargerOutputCurrent(remote_ems, plant_index, device_address, ib_value, rc_value))
 
