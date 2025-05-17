@@ -1,4 +1,5 @@
 from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy
+from concurrent.futures import Future
 from dataclasses import dataclass
 from pathlib import Path
 from pymodbus import ModbusException
@@ -343,7 +344,9 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 if Config.home_assistant.enabled:
                     self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
                 if self._failures >= self._max_failures:
-                    logging.warning(f"{self.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}")
+                    logging.warning(
+                        f"{self.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
+                    )
                     for sensor in self._derived_sensors.values():
                         logging.warning(
                             f"{sensor.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
@@ -352,7 +355,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 self.force_publish = False
         elif self._debug_logging:
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
-
 
     def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
         """Publishes the attributes for this sensor.
@@ -1611,7 +1613,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
 class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
     """Superclass of all sensor definitions that are derived by accumulating a daily total from a power sensor"""
 
-    _state_at_midnight_lock = asyncio.Lock()
+    futures: set[Future] = set()
 
     def __init__(
         self,
@@ -1627,6 +1629,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         precision=2,
     ):
         super().__init__(name, unique_id, object_id, source, unit, device_class, state_class, icon, gain, precision)
+        self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float = 0.0 if source.latest_raw_state is None else source.latest_raw_state
         self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")
         if self._persistent_state_file.is_file():
@@ -1650,7 +1653,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._state_now: float = ((source.latest_raw_state if source.latest_raw_state else 0) * source.gain) - self._state_at_midnight
         self.set_latest_state(round(self._state_now / self.gain, self.precision))
         if not self._persistent_state_file.is_file():
-            asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop())
+            self.futures.add( asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
         if source in self.observable_topics():
