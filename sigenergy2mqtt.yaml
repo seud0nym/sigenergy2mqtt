@@ -219,14 +219,14 @@ sensor-overrides:
     #   description:  The maximum number of failures before attempts to
     #                 read the state are tapered off.
     max-failures: 10
-    # max-failure-retry-interval
-    #   default: null
+    # max-failures-retry-interval
+    #   default: There is no default
     #   description:  After max-failures are reached, this option specifies
     #                 how long (in seconds) to wait before retrying. The
     #                 default is to not retry. If specified, this interval
     #                 will increase by the same amount after each subsequent 
     #                 failure above max-failures.
-    max-failure-retry-interval: null
+    max-failures-retry-interval: 60
     # precision
     #   default: There is no default
     #   description:  Specify the display precision (number of decimal 
