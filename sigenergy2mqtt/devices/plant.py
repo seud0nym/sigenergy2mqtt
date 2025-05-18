@@ -144,7 +144,7 @@ class PowerPlant(ModBusDevice):
         self._add_derived_sensor(derived.BatteryChargingPower(plant_index, battery_power), battery_power)
         self._add_derived_sensor(derived.BatteryDischargingPower(plant_index, battery_power), battery_power)
 
-    def add_ess_accumlation_sensors(self, plant_index, *inverters: Inverter):
+    def add_ess_accumulation_sensors(self, plant_index, *inverters: Inverter):
         sensors: dict[str, list[Sensor]] = {}
         for inverter in inverters:
             for address in (30566, 30568, 30572, 30574):
