@@ -6,6 +6,8 @@
     "cSpell.words": [
         "ACCHARGER",
         "actEnergyDlvd",
+        "AFCI",
+        "atmidnight",
         "cmps",
         "CMUxxxxxxxxxx",
         "CMUyyyyyyyyyy",
@@ -18,6 +20,7 @@
         "homeassistant",
         "levelname",
         "MAINPID",
+        "mday",
         "modbus",
         "Mosquitto",
         "mqtt",
@@ -31,6 +34,7 @@
         "SIGENERGY",
         "SigenStor",
         "SMARTPORT",
+        "wordorder",
         "writeonly"
     ]
 }

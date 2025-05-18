@@ -26,7 +26,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         **kwargs,
     ):
         self._plant_index = plant_index
-        self._registers = None if plant_index not in Config.devices else Config.devices[plant_index].registers
+        self._registers = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
 
         self._children: List[Device] = []
 

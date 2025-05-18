@@ -144,8 +144,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         return self._sleeper_task
 
     @sleeper_task.setter
-    def sleeper_task(self, coro: Coroutine[Any, Any, None]) -> None:
-        self._sleeper_task = coro
+    def sleeper_task(self, coroutine: Coroutine[Any, Any, None]) -> None:
+        self._sleeper_task = coroutine
 
     @property
     def state_class(self) -> StateClass:
@@ -236,11 +236,19 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
         if self._publishable and registers:
             if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} - Applying device 'read-write' override ({registers.read_write})")
                 self._publishable = registers.read_write
             elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} - Applying device 'read-only' override ({registers.read_only})")
                 self._publishable = registers.read_only
             elif isinstance(self, WriteOnlySensor):
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} - Applying device 'write-only' override ({registers.write_only})")
                 self._publishable = registers.write_only
+            else:
+                logging.warning(f"{self.__class__.__name__} - Failed to determine superclass to apply device publishable overrides")
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = f"{Config.home_assistant.discovery_prefix}/{self['platform']}/{device_id}/{self['object_id']}" if Config.home_assistant.enabled else f"sigenergy2mqtt/{self['object_id']}"
@@ -937,7 +945,7 @@ class WriteOnlySensor(WritableSensorMixin):
 
 
 class RemoteEMSMixin(Sensor):
-    """Mixin to flag the class that will control Read-Write sensor availablity"""
+    """Mixin to flag the class that will control Read-Write sensor availability"""
 
     pass
 
@@ -1653,7 +1661,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._state_now: float = ((source.latest_raw_state if source.latest_raw_state else 0) * source.gain) - self._state_at_midnight
         self.set_latest_state(round(self._state_now / self.gain, self.precision))
         if not self._persistent_state_file.is_file():
-            self.futures.add( asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
+            self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
         if source in self.observable_topics():
