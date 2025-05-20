@@ -44,10 +44,5 @@ class MqttConfiguration:
                         self.log_level = check_log_level(value, f"mqtt.{field}")
                     case _:
                         raise ValueError(f"mqtt configuration element contains unknown option '{field}'")
-            if not self.anonymous:
-                if self.username is None:
-                    raise ValueError("mqtt configuration does not contain the username and anonymous is not set to true")
-                if self.password is None:
-                    raise ValueError("mqtt configuration does not contain the password and anonymous is not set to true")
         else:
             raise ValueError("mqtt configuration element must contain options and their values")
