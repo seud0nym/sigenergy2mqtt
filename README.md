@@ -173,7 +173,7 @@ Notes:
 - The number in square brackets after `inverters` is the Device ID (slave address) as advised by your installer. It is usually `1`. If you have multiple inverters, separate them with commas (e.g. `[ 1,2 ]`)
 - If your MQTT broker does not require authentication, add the option `anonymous: true` under `mqtt`.
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
-- The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data` or the current directory from which `sigenergy2mqtt` is run. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
+- The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
 
 #### Configuring Smart-Port Production
 

@@ -359,8 +359,6 @@ try:
         Config.load("/etc/sigenergy2mqtt.yaml")
     elif Path("/data/sigenergy2mqtt.yaml").is_file():
         Config.load("/data/sigenergy2mqtt.yaml")
-    elif Path("./sigenergy2mqtt.yaml").is_file():
-        Config.load("./sigenergy2mqtt.yaml")
     else:
         Config.reload()
 except Exception as e:
