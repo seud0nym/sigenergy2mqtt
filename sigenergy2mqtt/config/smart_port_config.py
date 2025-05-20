@@ -13,6 +13,8 @@ class ModuleConfig:
     password: str = ""
     pv_power: str = ""
 
+    testing: bool = False
+
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
             for field, value in config.items():

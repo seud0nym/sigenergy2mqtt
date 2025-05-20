@@ -339,14 +339,20 @@ class EnphaseVoltage(DerivedSensor):
 
 class SmartPort(Device):
     def __init__(self, plant_index: int, config: ModuleConfig):
-        url = f"http://{config.host}/info"
-        with requests.Session() as session:
-            with session.get(url, timeout=20, verify=False) as response:
-                assert response.status_code == 200, f"Failed to connect to {url} - Response code was {response.status_code}"
-                root = xml.fromstring(response.content)
-                sn = root.find("./device/sn").text
-                pn = root.find("./device/pn").text
-                fw = root.find("./device/software").text
+        if config.testing:
+            logging.debug(f"SmartPort {plant_index} testing mode enabled")
+            fw = "D7.0.0"
+            sn = "123456789012"
+            pn = "Envoy-S"
+        else:
+            url = f"http://{config.host}/info"
+            with requests.Session() as session:
+                with session.get(url, timeout=20, verify=False) as response:
+                    assert response.status_code == 200, f"Failed to connect to {url} - Response code was {response.status_code}"
+                    root = xml.fromstring(response.content)
+                    sn = root.find("./device/sn").text
+                    pn = root.find("./device/pn").text
+                    fw = root.find("./device/software").text
         assert fw.startswith("D7") or fw.startswith("D8"), f"Unsupported Enphase Envoy firmware {fw}"
         unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Smart-Port"
