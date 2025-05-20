@@ -4,7 +4,7 @@ In addition to the values read from the Modbus registers, `sigenergy2mqtt` calcu
 
 ## Plant
 
-| Cacluated Sensor | Source/Calculation |
+| Calculated Sensor | Source/Calculation |
 |------------------|--------|
 | BatteryChargingPower | BatteryPower &gt; 0 |
 | BatteryDischargingPower | BatteryPower &lt; 0 |
@@ -34,7 +34,7 @@ Notes:
 
 ## Inverters
 
-| Cacluated Sensor | Source/Calculation |
+| Calculated Sensor | Source/Calculation |
 |------------------|--------|
 | InverterBatteryChargingPower | ChargeDischargePower &gt; 0 |
 | InverterBatteryDischargingPower | ChargeDischargePower &lt; 0 &times; -1 |
@@ -43,7 +43,7 @@ Notes:
 
 ## Inverter Strings
 
-| Cacluated Sensor | Source/Calculation |
+| Calculated Sensor | Source/Calculation |
 |------------------|--------|
 | PVStringDailyEnergy | PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight |
 | PVStringLifetimeEnergy | Riemann &sum; of PVStringPower |
