@@ -4,7 +4,7 @@
 .debug.yaml
 .vscode/launch.json
 data/
-doc/
+protocol/
 
 # Python
 
