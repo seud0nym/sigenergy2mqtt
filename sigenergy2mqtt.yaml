@@ -38,7 +38,7 @@ home-assistant:
   #   default: false
   #   description:  When sensors are initially discovered by Home Assistant,
   #                 the majority will be disabled in the UI. If you want all 
-  #                 sensors to be enabled, set this to true. Not thate this 
+  #                 sensors to be enabled, set this to true. Note that this 
   #                 setting is only applicable to the first time that the 
   #                 entity is discovered by Home Assistant. Once it has been 
   #                 discovered, you must control enabled/disabled through
@@ -76,7 +76,7 @@ mqtt:
   password: not_required_for_anonymous
   # log-level
   #   default: WARNING
-  #   description:  The MQTT interace logging level. Must be one of:
+  #   description:  The MQTT interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: WARNING
 modbus:
@@ -96,7 +96,7 @@ modbus:
     #                 inverter registers. If you have multiple inverters, 
     #                 specify the slave addresses separated with commas.
     #                 e.g. [ 1, 2 ] At least 1 inverter slave address must
-    #                 be specified (unlesss the host is an AC Charger).
+    #                 be specified (unless the host is an AC Charger).
     inverters: [ 1 ]
     # ac-chargers
     #   default: [ ]
@@ -113,7 +113,7 @@ modbus:
     dc-chargers: [ ]
     # log-level
     #   default: WARNING
-    #   description:  The Modbus interace logging level. Must be one of:
+    #   description:  The Modbus interface logging level. Must be one of:
     #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
     log-level: WARNING
     # read-only
@@ -191,7 +191,7 @@ modbus:
 #                 through sensor-overrides.
 sensor-debug-logging: false
 sensor-overrides:
-  # Specify the sensor to be overriden by either by the full entity id,
+  # Specify the sensor to be overridden by either by the full entity id,
   # a partial entity id, the full sensor class name, or a partial 
   # sensor class name. For example, specifying Reactive: would match all
   # sensors with Reactive in their class name.
@@ -204,11 +204,11 @@ sensor-overrides:
     # gain
     #   default: There is no default
     #   description:  The Sigenergy Modbus Protocol defines a gain to be
-    #                 applied to the raw value raed from the interface.
+    #                 applied to the raw value read from the interface.
     #                 e.g. an energy register may have a gain of 1000 to
     #                 be expressed in kWh. If the gain is over-ridden, you
     #                 must also over-ride the unit-of-measurement with a 
-    #                 correct, correspnding unit.
+    #                 correct, corresponding unit.
     gain: 1
     # icon
     #   default: There is no default
@@ -235,7 +235,7 @@ sensor-overrides:
     # publishable
     #   default: There is no default
     #   description:  If false, the sensor will not be published to MQTT
-    #                 and will not appear in Homew Assistant at all.
+    #                 and will not appear in Home Assistant at all.
     publishable: false
     # scan-interval
     #   default: There is no default
@@ -267,7 +267,7 @@ pvoutput:
   enabled: false
   # log-level
   #   default: CRITICAL
-  #   description:  The PVOutput interace logging level. Must be one of:
+  #   description:  The PVOutput interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: DEBUG
   # api-key
