@@ -365,6 +365,10 @@ Environment variables override the configuration file, but *not* command line op
 
 If you are using Home Assistant, you can set the current values for the daily and lifetime accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values. Make sure you enter lifetime values first, because daily sensors use the lifetime numbers as their base.
 
+### MQTT Publish and Subscribe Topics
+
+The topics that are published and subscribed to by `sigenergy2mqtt` can be found [here](sigenergy2mqtt/sensors/README.md).
+
 ## Home Assistant Auto-Discovery
 
 For each host defined in the `modbus` section of the configuration file, an MQTT device will be created in Home Assistant. The first device will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related devices, such as `Sigenergy Plant Grid Sensor` and if applicable, `Sigenergy Plant Smart-Port`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
@@ -393,12 +397,12 @@ Sigenergy Plant
 
 For simple Sigenergy systems, with no integrated legacy solar system or requirement to integrate with PVOutput, the [Sigenergy Local Modbus HACS integration](https://github.com/TypQxQ/Sigenergy-Local-Modbus) may be a better alternative for integration with Home Assistant.
 
-| Feature | Sigenergy-Local-Modbus | sigenergy2mqtt | Comments |
-|:--------|:----------------------:|:--------------:|:---------|
-| Pre-requisites | None | Python, MQTT broker | |
-| Installation | GUI | Manual | |
-| Configuration| GUI | Edit configuration file | |
-| Home Assistant | HACS Integration | Optional Auto-discovery | |
-| PVOutput | No | Optional | |
-| Third-Party Solar included in production/consumption | No | Optional | Since the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port are no longer included in the PV Power reported by the Modbus interface. However, this may change in future firmware releases. |
+| Feature | Sigenergy Local Modbus | sigenergy2mqtt  (Linux) | sigenergy2mqtt  (HA Add-on) | Comments |
+|:--------|:----------------------:|:-----------------------:|:---------------------------:|:---------|
+| Pre-requisites | None | Python, MQTT broker | None | |
+| Installation | GUI | Manual | GUI | |
+| Configuration| GUI | Edit configuration file | GUI and/or config file | |
+| Home Assistant | HACS Integration | Optional Auto-discovery | Auto-discovery |
+| PVOutput | No | Optional | Optional | |
+| Third-Party Solar included in production/consumption | No | Optional | Optional | Since the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port are no longer included in the PV Power reported by the Modbus interface. However, this may change in future firmware releases. |
 
