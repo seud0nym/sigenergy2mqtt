@@ -12,9 +12,7 @@ if [[ $old_version =~ ^"$new_version" ]]; then
     else
         new_version="${new_version}-1"
     fi
-    sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
 fi
-
 
 sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
 git add sigenergy2mqtt/config/version.py
