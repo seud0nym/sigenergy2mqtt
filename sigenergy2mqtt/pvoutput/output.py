@@ -102,17 +102,21 @@ class PVOutputOutputService(Device):
             for i in range(3):
                 try:
                     self._logger.debug(f"PVOutput Add Output Service - Attempt #{i} with {payload=}")
-                    with requests.post("https://pvoutput.org/service/r2/addoutput.jsp", headers=headers, data=payload, timeout=10) as response:
-                        self._logger.debug(f"PVOutput Add Output Service - Attempt #{i} {response.status_code=} {response.headers=}")
-                        reset = round(float(response.headers["X-Rate-Limit-Reset"]) - time.time())
-                        if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
-                            self._logger.warning(f"PVOutput Add Output Service - Only {response.headers['X-Rate-Limit-Remaining']} requests left, reset after {reset} seconds")
-                        if response.status_code == 403:
-                            self._logger.warning(f"PVOutput Add Output Service - Forbidden: {response.reason}")
-                            asyncio.sleep(reset + 1)
-                        else:
-                            response.raise_for_status()
-                            break
+                    if Config.pvoutput.testing:
+                        self._logger.debug("PVOutput Add Output Service - Testing mode, not sending request")
+                        break
+                    else:
+                        with requests.post("https://pvoutput.org/service/r2/addoutput.jsp", headers=headers, data=payload, timeout=10) as response:
+                            self._logger.debug(f"PVOutput Add Output Service - Attempt #{i} {response.status_code=} {response.headers=}")
+                            reset = round(float(response.headers["X-Rate-Limit-Reset"]) - time.time())
+                            if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
+                                self._logger.warning(f"PVOutput Add Output Service - Only {response.headers['X-Rate-Limit-Remaining']} requests left, reset after {reset} seconds")
+                            if response.status_code == 403:
+                                self._logger.warning(f"PVOutput Add Output Service - Forbidden: {response.reason}")
+                                asyncio.sleep(reset + 1)
+                            else:
+                                response.raise_for_status()
+                                break
                 except requests.exceptions.HTTPError as exc:
                     self._logger.error(f"PVOutput Add Output Service - HTTP Error: {exc}")
                 except requests.exceptions.ConnectionError as exc:
@@ -131,22 +135,19 @@ class PVOutputOutputService(Device):
         return tasks
 
     async def set_consumption(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
-        if Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
+        self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
         async with self._lock:
             self._consumption[topic].state = value if isinstance(value, float) else float(value)
             self._consumption[topic].timestamp = time.localtime()
 
     async def set_exported(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
-        if Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
+        self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
         async with self._lock:
             self._exports[topic].state = value if isinstance(value, float) else float(value)
             self._exports[topic].timestamp = time.localtime()
 
     async def set_generation(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
-        if Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - set_exported from '{topic}' {value=}")
+        self._logger.debug(f"PVOutput Add Output Service - set_exported from '{topic}' {value=}")
         async with self._lock:
             self._generation[topic].state = value if isinstance(value, float) else float(value)
             self._generation[topic].timestamp = time.localtime()

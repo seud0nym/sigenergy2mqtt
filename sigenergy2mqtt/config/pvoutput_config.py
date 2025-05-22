@@ -20,6 +20,8 @@ class PVOutputConfiguration:
  
     log_level: int = logging.WARNING
 
+    testing: bool = False
+
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
             for field, value in config.items():
@@ -57,6 +59,10 @@ class PVOutputConfiguration:
                             if override:
                                 logging.debug(f"Applying 'pvoutput.system-id' override from env/cli ({value=})")
                             self.system_id = check_string(str(value), "pvoutput.system-id", allow_none=not self.enabled, allow_empty=not self.enabled)
+                        case "testing":
+                            if override:
+                                logging.debug(f"Applying 'pvoutput.testing' override from env/cli ({value=})")
+                            self.testing = check_bool(value, f"pvoutput.{field}")
                         case _:
                             if field != "enabled":
                                 raise ValueError(f"pvoutput configuration element contains unknown option '{field}'")

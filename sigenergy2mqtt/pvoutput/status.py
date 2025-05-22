@@ -74,17 +74,21 @@ class PVOutputStatusService(Device):
             for i in range(3):
                 try:
                     self._logger.debug(f"PVOutput Add Status Service - Attempt #{i} with {payload=}")
-                    with requests.post("https://pvoutput.org/service/r2/addstatus.jsp", headers=headers, data=payload, timeout=10) as response:
-                        self._logger.debug(f"PVOutput Add Status Service - Attempt #{i} {response.status_code=} {response.headers=}")
-                        reset = round(float(response.headers["X-Rate-Limit-Reset"]) - time.time())
-                        if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
-                            self._logger.warning(f"PVOutput Add Status Service - Only {response.headers['X-Rate-Limit-Remaining']} requests left, reset after {reset} seconds")
-                        if response.status_code == 403:
-                            self._logger.warning(f"PVOutput Add Status Service - Forbidden: {response.reason}")
-                            asyncio.sleep(reset + 1)
-                        else:
-                            response.raise_for_status()
-                            break
+                    if Config.pvoutput.testing:
+                        self._logger.debug("PVOutput Add Status Service - Testing mode, not sending request")
+                        break
+                    else:
+                        with requests.post("https://pvoutput.org/service/r2/addstatus.jsp", headers=headers, data=payload, timeout=10) as response:
+                            self._logger.debug(f"PVOutput Add Status Service - Attempt #{i} {response.status_code=} {response.headers=}")
+                            reset = round(float(response.headers["X-Rate-Limit-Reset"]) - time.time())
+                            if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
+                                self._logger.warning(f"PVOutput Add Status Service - Only {response.headers['X-Rate-Limit-Remaining']} requests left, reset after {reset} seconds")
+                            if response.status_code == 403:
+                                self._logger.warning(f"PVOutput Add Status Service - Forbidden: {response.reason}")
+                                asyncio.sleep(reset + 1)
+                            else:
+                                response.raise_for_status()
+                                break
                 except requests.exceptions.HTTPError as exc:
                     self._logger.error(f"PVOutput Add Status Service - HTTP Error: {exc}")
                 except requests.exceptions.ConnectionError as exc:
@@ -101,14 +105,12 @@ class PVOutputStatusService(Device):
         return tasks
 
     async def set_consumption(self, modbus: any, mqtt: any, value: float | int | str, topic: str) -> bool:
-        if Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Status Service - set_consumption from '{topic}' {value=}")
+        self._logger.debug(f"PVOutput Add Status Service - set_consumption from '{topic}' {value=}")
         async with self._lock:
             self._consumption[topic].state = value if isinstance(value, float) else float(value)
 
     async def set_generation(self, modbus: any, mqtt: any, value: float | int | str, topic: str) -> bool:
-        if Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Status Service - set_generation from '{topic}' {value=}")
+        self._logger.debug(f"PVOutput Add Status Service - set_generation from '{topic}' {value=}")
         async with self._lock:
             self._generation[topic].state = value if isinstance(value, float) else float(value)
 

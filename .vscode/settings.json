@@ -7,6 +7,7 @@
         "ACCHARGER",
         "actEnergyDlvd",
         "AFCI",
+        "Apikey",
         "atmidnight",
         "cmps",
         "CMUxxxxxxxxxx",
@@ -20,7 +21,7 @@
         "homeassistant",
         "levelname",
         "MAINPID",
-        "mday",
+        "mktime",
         "modbus",
         "Mosquitto",
         "mqtt",
@@ -34,6 +35,10 @@
         "SIGENERGY",
         "SigenStor",
         "SMARTPORT",
+        "tm_isdst",
+        "tm_mday",
+        "tm_wday",
+        "tm_yday",
         "wordorder",
         "writeonly"
     ]
