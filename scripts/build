@@ -16,6 +16,7 @@ if [[ $old_version =~ ^"$new_version" ]]; then
     fi
     sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
 fi
+sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
 
 python3 -m build
 python3 -m twine check dist/*
