@@ -57,6 +57,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     def online(self) -> bool:
         return self._online
     
+    @property
     def registers(self) -> RegisterAccess:
         return self._registers
 
