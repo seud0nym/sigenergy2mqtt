@@ -326,6 +326,21 @@ _args = _parser.parse_args()
 if _args.show_version:
     sys.exit(0)
 
+def apply_cli_to_env(variable: str, value: str) -> None:
+    was = os.getenv(variable)
+    if value is not None:
+        os.environ[variable] = str(value)
+        _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{value}' (was '{was}')")
+    else:
+        if was is not None:
+            os.environ[variable] = ""
+            _logger.debug(f"Environment variable '{variable}' overridden from command line: cleared (was '{was}')")
+        else:
+            _logger.debug(f"Environment variable '{variable}' not set")
+
+if _args.SIGENERGY2MQTT_LOG_LEVEL:
+    _logger.setLevel(getattr(logging, _args.SIGENERGY2MQTT_LOG_LEVEL))
+
 for arg in vars(_args):
     if arg == "clean":
         Config.clean = _args.clean
@@ -335,18 +350,16 @@ for arg in vars(_args):
     ) and getattr(_args, arg) not in ["true", "True", True, 1]:
         continue
     elif arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and getattr(_args, arg) in ["true", "True", True, 1]:
-        os.environ[const.SIGENERGY2MQTT_MODBUS_READ_ONLY] = "true"
-        os.environ[const.SIGENERGY2MQTT_MODBUS_READ_WRITE] = "false"
-        os.environ[const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY] = "false"
+        apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_ONLY, "true")
+        apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_WRITE, "false")
+        apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY, "false")
         continue
     override = getattr(_args, arg)
     if override:
         if isinstance(override, list):
-            os.environ[arg] = ",".join([str(x) for x in override])
+            apply_cli_to_env(arg, ",".join([str(x) for x in override]))
         else:
-            os.environ[arg] = str(override)
-        if arg == const.SIGENERGY2MQTT_LOG_LEVEL:
-            _logger.setLevel(getattr(logging, override))
+            apply_cli_to_env(arg, override)
 
 try:
     if _args.SIGENERGY2MQTT_CONFIG:

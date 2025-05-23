@@ -27,41 +27,30 @@ class PVOutputConfiguration:
             for field, value in config.items():
                 match field:
                     case "enabled":
-                        if override:
-                            logging.debug(f"Applying 'pvoutput.enabled' override from env/cli ({value=})")
+                        logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.enabled = {value}")
                         self.enabled = check_bool(value, f"pvoutput.{field}")
             if self.enabled:
                 for field, value in config.items():
+                    if field != "enabled":
+                        logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.{field} = {'******' if field == 'api-key' else value}")
                     match field:
                         case "api-key":
-                            if override:
-                                logging.debug("Applying 'pvoutput.api-key' override from env/cli (******)")
                             self.api_key = check_string(value, "pvoutput.api-key", allow_none=not self.enabled, allow_empty=not self.enabled, hex_chars_only=True)
                         case "consumption":
-                            if override:
-                                logging.debug(f"Applying 'pvoutput.consumption' override from env/cli ({value=})")
                             self.consumption = check_bool(value, f"pvoutput.{field}")
                         case "exports":
-                            logging.warning("pvoutput.exports configuration - daily output service currently disabled")
                             self.exports = check_bool(value, f"pvoutput.{field}")
                         case "interval-minutes":
-                            if override:
-                                logging.debug(f"Applying 'pvoutput.interval-minutes' override from env/cli ({value=})")
                             self.interval_minutes = check_int(value, f"pvoutput.{field}", min=5, max=15)
                         case "log-level":
-                            if override:
-                                logging.debug(f"Applying 'pvoutput.log level' override from env/cli ({value=})")
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
+                        case "output-hour":
+                            self.output_hour = check_int(value, f"pvoutput.{field}", min=20, max=23)
                         case "peak-power":
-                            logging.warning("pvoutput.peak-power configuration - daily output service currently disabled")
                             self.peak_power = check_bool(value, f"pvoutput.{field}")
                         case "system-id":
-                            if override:
-                                logging.debug(f"Applying 'pvoutput.system-id' override from env/cli ({value=})")
                             self.system_id = check_string(str(value), "pvoutput.system-id", allow_none=not self.enabled, allow_empty=not self.enabled)
                         case "testing":
-                            if override:
-                                logging.debug(f"Applying 'pvoutput.testing' override from env/cli ({value=})")
                             self.testing = check_bool(value, f"pvoutput.{field}")
                         case _:
                             if field != "enabled":
