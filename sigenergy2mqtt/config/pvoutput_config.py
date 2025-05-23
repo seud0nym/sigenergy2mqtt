@@ -9,14 +9,14 @@ class PVOutputConfiguration:
 
     consumption: bool = False
     exports: bool = False
-    peak_power: bool = False
+    peak_power: bool = True
 
     api_key: str = ""
     system_id: str = ""
 
     interval_minutes: int = 5
     
-    output_hour: int = 23
+    output_hour: int = 21
  
     log_level: int = logging.WARNING
 
@@ -35,7 +35,7 @@ class PVOutputConfiguration:
                         logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.{field} = {'******' if field == 'api-key' else value}")
                     match field:
                         case "api-key":
-                            self.api_key = check_string(value, "pvoutput.api-key", allow_none=not self.enabled, allow_empty=not self.enabled, hex_chars_only=True)
+                            self.api_key = check_string(value, "pvoutput.api-key", allow_none=(not self.enabled), allow_empty=(not self.enabled), hex_chars_only=True)
                         case "consumption":
                             self.consumption = check_bool(value, f"pvoutput.{field}")
                         case "exports":
@@ -49,7 +49,7 @@ class PVOutputConfiguration:
                         case "peak-power":
                             self.peak_power = check_bool(value, f"pvoutput.{field}")
                         case "system-id":
-                            self.system_id = check_string(str(value), "pvoutput.system-id", allow_none=not self.enabled, allow_empty=not self.enabled)
+                            self.system_id = check_string(str(value), "pvoutput.system-id", allow_none=(not self.enabled), allow_empty=(not self.enabled))
                         case "testing":
                             self.testing = check_bool(value, f"pvoutput.{field}")
                         case _:
