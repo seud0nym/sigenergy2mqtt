@@ -179,7 +179,7 @@ Notes:
 
 ##### Enphase Envoy
 
-This configuration only works with firmware versions starting with D7 and D8.
+This configuration only works with Enphase Envoy firmware versions prefixed with D7 and D8. Add the Envoy host and login details to your `sigenergy2mqtt` configuration file:
 
 ```yaml
 ...
@@ -198,9 +198,15 @@ modbus:
 ...
 ```
 
+Notes:
+1. The module `name` must be set to `enphase`.
+1. The module `pv-power` configuration must be set to `EnphasePVPower` to create the Plant `Total PV Power` sensor to accumulate the Enphase PV production and Sigenergy PV production.
+
 ##### Any System Already Integrated with Home Assistant
 
-###### `sigenergy2mqtt` Configuration File
+This configuration requires adding the MQTT topics to which `sigenergy2mqtt` will subscribe to get the third-party PV power production updates, and setting up an automation within Home Assistant to publish the third-party PV power production to MQTT whenever it changes.
+
+###### 1. `sigenergy2mqtt` Configuration File
 ```yaml
 ...
 modbus:
@@ -220,7 +226,7 @@ Notes:
 - The gain represents the multiplier to convert the state to watts (so if it is provided in kWh, 1000 is the multiplier).
 - You can specify multiple MQTT topic/gain pairs in the configuration file (but command line and environment overrides are limited to a single topic).
 
-###### Home Assistant Automation
+###### 2. Home Assistant Automation
 
 Create a new automation and enter a YAML configuration similar to this, using the entity_id that contains the current PV power production from your third-party inverter (this example uses Enphase again):
 
@@ -241,7 +247,7 @@ mode: queued
 ```
 
 Notes:
-- The topic must match in both the `sigenergy2mqtt` configuration and the Home Assistant automation.
+- The topic(s) must match in both the `sigenergy2mqtt` configuration and the Home Assistant automation.
 
 ### Command Line Options
 
