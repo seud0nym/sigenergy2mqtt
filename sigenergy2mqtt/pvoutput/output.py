@@ -34,41 +34,60 @@ class PVOutputOutputService(Device):
         pass
 
     def register_consumption(self, topic: str, gain: float) -> None:
-        self._consumption[topic] = Topic(topic, gain)
+        if Config.pvoutput.consumption:
+            self._consumption[topic] = Topic(topic, gain)
+        else:
+            self._logger.info(f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.consumption=}")
 
     def register_exports(self, topic: str, gain: float) -> None:
-        self._exports[topic] = Topic(topic, gain)
+        if Config.pvoutput.exports:
+            self._exports[topic] = Topic(topic, gain)
+        else:
+            self._logger.info(f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.exports=}")
 
     def register_generation(self, topic: str, gain: float) -> None:
-        self._generation[topic] = Topic(topic, gain)
+        if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
+            self._generation[topic] = Topic(topic, gain)
+        else:
+            self._logger.info(f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=}")
 
     def register_power(self, topic: str, gain: float) -> None:
-        self._power[topic] = Topic(topic, gain)
-        if len(self._power) > 1:
-            Config.pvoutput.peak_power = False
-            self._logger.warning("PVOutput Add Output Service - DISABLED peak-power reporting: Cannot determine peak power from multiple systems")
+        if Config.pvoutput.peak_power:
+            self._power[topic] = Topic(topic, gain)
+            if len(self._power) > 1:
+                Config.pvoutput.peak_power = False
+                self._logger.warning("PVOutput Add Output Service - DISABLED peak-power reporting: Cannot determine peak power from multiple systems")
+        else:
+            self._logger.info(f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.peak_power=}")
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
-        def seconds_to_midnight():
+        def seconds_until_publish():
             current_time = time.localtime()
-            midnight = time.mktime((current_time.tm_year, current_time.tm_mon, current_time.tm_mday, 23, 59, 58, current_time.tm_wday, current_time.tm_yday, current_time.tm_isdst))
-            return midnight - time.mktime(current_time)
+            publish_time = time.mktime(
+                (current_time.tm_year, current_time.tm_mon, current_time.tm_mday, Config.pvoutput.output_hour, 45, 0, current_time.tm_wday, current_time.tm_yday, current_time.tm_isdst)
+            )
+            return publish_time - time.mktime(current_time)
 
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
-            wait = seconds_to_midnight()
-            self._logger.debug(f"PVOutput Add Output Service commenced (Midnight is in {wait} seconds)")
+            wait = seconds_until_publish()
+            self._logger.debug(f"PVOutput Add Output Service commenced ({time.strftime('%H:%M:%S', time.localtime(time.time() + wait))} is in {wait} seconds)")
             while self.online:
-                try:
-                    if wait <= 0:
-                        await update_pvoutput()
-                        wait = seconds_to_midnight()
-                    sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
-                    wait -= sleep
-                    if wait > 0:
-                        await asyncio.sleep(sleep)
-                except asyncio.CancelledError:
-                    self._logger.debug("PVOutput Add Output Service sleep interrupted")
-            self._logger.debug(f"PVOutput Add Output Service completed - flagged as offline ({self.online=})")
+                if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
+                    try:
+                        if wait <= 0:
+                            await update_pvoutput()
+                            wait = seconds_until_publish()
+                        sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+                        wait -= sleep
+                        if wait > 0:
+                            await asyncio.sleep(sleep)
+                    except asyncio.CancelledError:
+                        self._logger.debug("PVOutput Add Output Service - Sleep interrupted")
+                else:
+                    self._logger.info(f"PVOutput Add Output Service - No data to publish ({Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=})")
+                    self.online = False
+                    break
+            self._logger.debug(f"PVOutput Add Output Service completed - Flagged as offline ({self.online=})")
             return
 
         async def update_pvoutput():
@@ -129,28 +148,38 @@ class PVOutputOutputService(Device):
             else:
                 self._logger.error(f"PVOutput Add Output Service - Failed to call PVOutput API after {i} attempts")
 
-            await asyncio.sleep(60)  # Make sure we get past midnight
-
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
 
     async def set_consumption(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
-        self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
-        async with self._lock:
-            self._consumption[topic].state = value if isinstance(value, float) else float(value)
-            self._consumption[topic].timestamp = time.localtime()
+        if Config.pvoutput.consumption:
+            if Config.sensor_debug_logging:
+                self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
+            async with self._lock:
+                self._consumption[topic].state = value if isinstance(value, float) else float(value)
+                self._consumption[topic].timestamp = time.localtime()
+        elif Config.sensor_debug_logging:
+            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_consumption from '{topic}' {value=} because {Config.pvoutput.consumption=}")
 
     async def set_exported(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
-        self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
-        async with self._lock:
-            self._exports[topic].state = value if isinstance(value, float) else float(value)
-            self._exports[topic].timestamp = time.localtime()
+        if Config.pvoutput.exports:
+            if Config.sensor_debug_logging:
+                self._logger.debug(f"PVOutput Add Output Service - set_exported from '{topic}' {value=}")
+            async with self._lock:
+                self._exports[topic].state = value if isinstance(value, float) else float(value)
+                self._exports[topic].timestamp = time.localtime()
+        elif Config.sensor_debug_logging:
+            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_exported from '{topic}' {value=} because {Config.pvoutput.exports=}")
 
     async def set_generation(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
-        self._logger.debug(f"PVOutput Add Output Service - set_exported from '{topic}' {value=}")
-        async with self._lock:
-            self._generation[topic].state = value if isinstance(value, float) else float(value)
-            self._generation[topic].timestamp = time.localtime()
+        if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
+            if Config.sensor_debug_logging:
+                self._logger.debug(f"PVOutput Add Output Service - set_generation from '{topic}' {value=}")
+            async with self._lock:
+                self._generation[topic].state = value if isinstance(value, float) else float(value)
+                self._generation[topic].timestamp = time.localtime()
+        elif Config.sensor_debug_logging:
+            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_exported from '{topic}' {value=} because {Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=}")
 
     async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
         if Config.pvoutput.peak_power:
@@ -161,8 +190,8 @@ class PVOutputOutputService(Device):
                 if self._power[topic].state < power:
                     self._power[topic].state = power
                     self._power[topic].timestamp = time.localtime()
-        else:
-            mqtt.unsubscribe(topic)
+        elif Config.sensor_debug_logging:
+            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_exported from '{topic}' {value=} because {Config.pvoutput.peak_power=}")
 
     def subscribe(self, mqtt, mqtt_handler):
         for topic in self._consumption.keys():

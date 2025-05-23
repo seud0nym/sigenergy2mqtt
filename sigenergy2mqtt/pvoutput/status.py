@@ -30,7 +30,10 @@ class PVOutputStatusService(Device):
         pass
 
     def register_consumption(self, topic: str, gain: float) -> None:
-        self._consumption[topic] = Topic(topic, gain)
+        if Config.pvoutput.consumption:
+            self._consumption[topic] = Topic(topic, gain)
+        else:
+            self._logger.info(f"PVOutput Add Status Service - Ignored subscription request for '{topic}' because {Config.pvoutput.consumption=}")
 
     def register_generation(self, topic: str, gain: float) -> None:
         self._generation[topic] = Topic(topic, gain)
@@ -105,12 +108,17 @@ class PVOutputStatusService(Device):
         return tasks
 
     async def set_consumption(self, modbus: any, mqtt: any, value: float | int | str, topic: str) -> bool:
-        self._logger.debug(f"PVOutput Add Status Service - set_consumption from '{topic}' {value=}")
-        async with self._lock:
-            self._consumption[topic].state = value if isinstance(value, float) else float(value)
+        if Config.pvoutput.consumption:
+            if Config.sensor_debug_logging:
+                self._logger.debug(f"PVOutput Add Status Service - set_consumption from '{topic}' {value=}")
+            async with self._lock:
+                self._consumption[topic].state = value if isinstance(value, float) else float(value)
+        elif Config.sensor_debug_logging:
+            self._logger.debug(f"PVOutput Add Status Service - Ignoring set_consumption from '{topic}' {value=} because {Config.pvoutput.consumption=}")
 
     async def set_generation(self, modbus: any, mqtt: any, value: float | int | str, topic: str) -> bool:
-        self._logger.debug(f"PVOutput Add Status Service - set_generation from '{topic}' {value=}")
+        if Config.sensor_debug_logging:
+            self._logger.debug(f"PVOutput Add Status Service - set_generation from '{topic}' {value=}")
         async with self._lock:
             self._generation[topic].state = value if isinstance(value, float) else float(value)
 
