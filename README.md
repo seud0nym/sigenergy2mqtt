@@ -410,5 +410,5 @@ For simple Sigenergy systems, with no integrated legacy solar system or requirem
 | Configuration| GUI | Edit configuration file | GUI and/or config file | |
 | Home Assistant | HACS Integration | Optional MQTT Auto-discovery | MQTT Auto-discovery |
 | PVOutput | No | Optional | Optional | |
-| Third-Party Solar included in production/consumption | No | Optional | Optional | Since the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port are no longer included in the PV Power reported by the Modbus interface. However, this may change in future firmware releases. |
+| Third-Party Solar included in production and consumption | No | Optional | Optional | Since the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port are no longer included in the PV Power reported by the Modbus interface. However, this may change in future firmware releases. |
 
