@@ -359,7 +359,8 @@ class ModBusDevice(Device, metaclass=abc.ABCMeta):
         if self._type is not None and not isinstance(sensor, self._type.__class__):
             if sensor.debug_logging:
                 logging.debug(f"{self.__class__.__name__} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
-        super()._add_read_sensor(sensor, group)
+        else:
+            super()._add_read_sensor(sensor, group)
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if self._type is not None and not isinstance(sensor, self._type.__class__):

@@ -118,7 +118,6 @@ class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):
             gain=None,
             precision=None,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
@@ -141,7 +140,6 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             gain=1000,
             precision=2,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
@@ -164,11 +162,9 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             gain=1000,
             precision=2,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
-    # Range: [-100.00,100.00]
     def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
         super().__init__(
             remote_ems=remote_ems,
@@ -190,11 +186,9 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             min=-100.00,
             max=100.00,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
-    # Range: [-60.00,60.00]
     def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
         super().__init__(
             remote_ems=remote_ems,
@@ -216,11 +210,9 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             min=-60.0,
             max=60.0,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
-    # Range: (-1,-0.8]U[0.8, 1]
     def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
         super().__init__(
             remote_ems=remote_ems,
@@ -242,4 +234,3 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             min=-1.0,
             max=1.0,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
