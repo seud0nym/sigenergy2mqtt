@@ -101,11 +101,11 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             return None
         elif value == 0:
             return "Max Self Consumption"
-        elif value == "1":
+        elif value == 1:
             return "Sigen AI Mode"
-        elif value == "2":
+        elif value == 2:
             return "TOU"
-        elif value == "7":
+        elif value == 7:
             return "Remote EMS Mode"
         else:
             return f"Unknown Mode: {value}"
