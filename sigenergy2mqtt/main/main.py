@@ -126,11 +126,20 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, inverter_
     firmware = InverterFirmwareVersion(plant_index, device_address)
     strings = PVStringCount(plant_index, device_address)
     output_type = OutputType(plant_index, device_address)
-    power_phases = await output_type.get_power_phases(modbus)
+
     model_id = await model.get_state(modbus=modbus)
     serial_number = await serial.get_state(modbus=modbus)
     firmware_version = await firmware.get_state(modbus=modbus)
     pv_string_count = await strings.get_state(modbus=modbus)
+    output_type_state = await output_type.get_state(raw=True, modbus=modbus)
+    match output_type_state:
+        case 0: # L/N
+            power_phases = 1
+        case 3: # L1/L2/N
+            power_phases = 2
+        case _:
+            power_phases = 3
+
     if re.search(r"EC|Hybrid|PG|PV.*M1-HYA", model_id):
         device_type = HybridInverter()
     else:
@@ -142,7 +151,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, inverter_
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)
         rdp_value = await rated_discharging_power.get_state(modbus=modbus)
-        plant = PowerPlant(plant_index, device_type, power_phases, rcp_value, rdp_value, rated_charging_power, rated_discharging_power)
+        plant = PowerPlant(plant_index, device_type, output_type_state, power_phases, rcp_value, rdp_value, rated_charging_power, rated_discharging_power)
         remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
         assert remote_ems is not None, "Failed to find RemoteEMS instance"
 

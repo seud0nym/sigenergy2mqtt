@@ -16,6 +16,7 @@ class PowerPlant(ModBusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
+        output_type: int,
         power_phases: int,
         rcp_value: float,
         rdp_value: float,
@@ -72,31 +73,31 @@ class PowerPlant(ModBusDevice):
         self._add_read_sensor(remote_ems)
         self._add_read_sensor(control_mode)
         self._add_read_sensor(rw.ActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
+        self._add_read_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(plant_index))
         self._add_read_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.QSAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.PowerFactorAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.PhaseAActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.PhaseAReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.PhaseAActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
-        self._add_read_sensor(rw.PhaseAQSAdjustmentTargetValue(plant_index, remote_ems))
+        self._add_read_sensor(rw.QSAdjustmentTargetValue(plant_index))
+        self._add_read_sensor(rw.PowerFactorAdjustmentTargetValue(plant_index))
+        self._add_read_sensor(rw.PhaseAActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
+        self._add_read_sensor(rw.PhaseAReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
+        self._add_read_sensor(rw.PhaseAActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type))
+        self._add_read_sensor(rw.PhaseAQSAdjustmentTargetValue(plant_index, remote_ems, output_type))
         if power_phases > 1:
-            self._add_read_sensor(rw.PhaseBActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseBReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseBActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseBQSAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.IndependentPhasePowerControl(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseCActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseCReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseCActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
-            self._add_read_sensor(rw.PhaseCQSAdjustmentTargetValue(plant_index, remote_ems))
+            self._add_read_sensor(rw.PhaseBActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.PhaseBReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.PhaseBActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.PhaseBQSAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.PhaseCActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, output_type))
+            self._add_read_sensor(rw.PhaseCReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.PhaseCActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.PhaseCQSAdjustmentTargetValue(plant_index, remote_ems, output_type))
+            self._add_read_sensor(rw.IndependentPhasePowerControl(plant_index, remote_ems, output_type))
         self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, rcp_value, control_mode))
         self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, rdp_value, control_mode))
         self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems, control_mode))
-        self._add_read_sensor(rw.GridMaxExportLimit(plant_index, remote_ems))
-        self._add_read_sensor(rw.GridMaxImportLimit(plant_index, remote_ems))
-        self._add_read_sensor(rw.PCSMaxExportLimit(plant_index, remote_ems))
-        self._add_read_sensor(rw.PCSMaxImportLimit(plant_index, remote_ems))
+        self._add_read_sensor(rw.GridMaxExportLimit(plant_index))
+        self._add_read_sensor(rw.GridMaxImportLimit(plant_index))
+        self._add_read_sensor(rw.PCSMaxExportLimit(plant_index))
+        self._add_read_sensor(rw.PCSMaxImportLimit(plant_index))
 
         self._add_writeonly_sensor(rw.PlantStatus(plant_index))
 

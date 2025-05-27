@@ -1061,16 +1061,6 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
                 case _:
                     return f"Unknown Output Type: {value}"
 
-    async def get_power_phases(self, modbus: ModbusClient) -> int:
-        value = await self.get_state(modbus=modbus, raw=True)
-        match value:
-            case 0:
-                return 1
-            case 3:
-                return 2
-            case _:
-                return 3
-
 
 class ABLineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
@@ -1140,9 +1130,9 @@ class CALineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
 
 class PhaseAVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     # When Output Type is L/N, refers to “Phase Voltage”
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, power_phases: int):
         super().__init__(
-            name="Phase A Voltage",
+            name="Phase Voltage" if power_phases == 1 else "Phase A Voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_a_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1206,9 +1196,9 @@ class PhaseCVoltage(ReadOnlySensor, HybridInverter, PVInverter):
 
 class PhaseACurrent(ReadOnlySensor, HybridInverter, PVInverter):
     # When Output Type is L/N, refers to “Phase Current”
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, power_phases: int):
         super().__init__(
-            name="Phase A Current",
+            name="Phase Current" if power_phases == 1 else "Phase A Current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_a_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1517,7 +1507,6 @@ class VehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverter):
-    # Single time
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="DC Charger Current Charging Capacity",
@@ -1537,9 +1526,11 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             precision=2,
         )
 
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(mqtt, comment="Single time", **kwargs)
+
 
 class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverter):
-    # Single time
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="DC Charger Current Charging Duration",
@@ -1558,6 +1549,9 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             gain=1,
             precision=None,
         )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(mqtt, comment="Single time", **kwargs)
 
 
 # endregion
