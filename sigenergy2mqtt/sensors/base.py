@@ -66,6 +66,9 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self._max_failures_retry_interval: int = 0
         self._next_retry: float = None
 
+        self._qos = 0
+        self._retain = False
+
         self["platform"] = "sensor"
         self["name"] = name
         self["object_id"] = object_id
@@ -335,7 +338,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         self._next_retry = None
                     if self._debug_logging:
                         logging.debug(f"Publishing {self.__class__.__name__} = {value}")
-                    mqtt.publish(self["state_topic"], f"{value}", 0, False)
+                    mqtt.publish(self["state_topic"], f"{value}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
             except Exception as exc:
