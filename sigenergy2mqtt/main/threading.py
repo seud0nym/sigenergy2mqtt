@@ -38,8 +38,8 @@ async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.Abst
                     logging.warning(f"No acknowledgement of '{device.name}' discovery received??")
                     break
 
-        if Config.home_assistant.enabled and Config.home_assistant.discovery_only:
-            logging.info(f"Configured for discovery only - shutting down '{device.name}'...")
+        if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
+            logging.info(f"Configured for {'clean' if Config.clean else 'discovery'} only - shutting down '{device.name}'...")
         else:
             logging.info(f"Registering MQTT subscriptions for '{device.name}'")
             device.subscribe(mqtt_client, mqtt_handler)

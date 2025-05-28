@@ -14,9 +14,9 @@ import os
 class Config:
     origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
+    devices: List[DeviceConfig] = []
     home_assistant = HomeAssistantConfiguration()
     mqtt = MqttConfiguration()
-    devices: List[DeviceConfig] = []
     pvoutput = PVOutputConfiguration()
     sensor_debug_logging: bool = False
     sensor_overrides: dict = {}
