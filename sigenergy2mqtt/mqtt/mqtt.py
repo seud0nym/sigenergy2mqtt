@@ -87,11 +87,11 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code) -
 
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, reason_code) -> None:
-    logger.info(f"Disconnected from sigenergy2mqtt.mqttbroker {Config.mqtt.broker} (Reason Code = {reason_code})")
+    logger.info(f"Disconnected from {Config.mqtt.broker} (Reason Code = {reason_code})")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
-    logger.debug(f"Received message from sigenergy2mqtt.mqttbroker {Config.mqtt.broker} for topic {message.topic}: Payload = {message.payload}")
+    logger.debug(f"Received message from {Config.mqtt.broker} for topic {message.topic}: Payload = {message.payload}")
     userdata.on_message(client, message.topic, str(message.payload, "utf-8"))
 
 
@@ -104,8 +104,10 @@ def on_subscribe(client: mqtt.Client, userdata: MqttHandler, mid, granted_qos) -
     logger.debug(f"Acknowledged subscribe MID={mid}")
     userdata.on_response(mid, "subscribe", client)
 
+
 def on_unsubscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_code_list, properties):
     userdata.on_response(mid, "unsubscribe", client)
+
 
 # endregion
 

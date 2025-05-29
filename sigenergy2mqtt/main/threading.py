@@ -12,6 +12,7 @@ import logging
 import time
 import uuid
 
+
 async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.AbstractEventLoop):
     device: Device = None
     modbus_client: ModbusClient = None
@@ -23,7 +24,7 @@ async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.Abst
         modbus_client = await ClientFactory.get_client(config.host, config.port)
     mqtt_client_id = f"sigenergy2mqtt_{uuid.uuid4()}_{config.description}"
 
-    mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, loop)
+    mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
     for device in config.devices:
         if Config.home_assistant.enabled:
