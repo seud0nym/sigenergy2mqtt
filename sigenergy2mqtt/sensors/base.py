@@ -1631,7 +1631,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         new_total = self._current_total + increase
 
         if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
-            logging.error(
+            logging.warning(
                 f"Sensor {self.__class__.__name__} has negative value in new sum total (Was = {self._current_total} Previous = {previous} Current = {current} Interval = {sensor.latest_interval:.2f}s New Total = {new_total}) from {sensor.__class__.__name__} but state_class is {self.state_class}???"
             )
             return False
