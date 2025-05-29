@@ -120,12 +120,7 @@ class PVStringPower(DerivedSensor):
             return False
         if self.voltage is None or self.current is None:
             return False  # until all values populated, can't do calculation
-        self.set_latest_state(
-            round(
-                (self.voltage * self.current) / self.gain,
-                self._precision,
-            ),
-        )
+        self.set_latest_state(self.voltage * self.current)
         return True
 
 

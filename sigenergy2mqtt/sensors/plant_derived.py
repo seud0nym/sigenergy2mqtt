@@ -153,17 +153,17 @@ class PlantConsumedPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if issubclass(type(sensor), BatteryPower):
-            self.battery_power = values[-1][1] * sensor.gain
+            self.battery_power = values[-1][1]
         elif issubclass(type(sensor), GridSensorActivePower):
-            self.grid_sensor_active_power = values[-1][1] * sensor.gain
+            self.grid_sensor_active_power = values[-1][1]
         elif issubclass(type(sensor), (PlantPVPower, TotalPVPower)):
-            self.pv_power = values[-1][1] * sensor.gain
+            self.pv_power = values[-1][1]
         else:
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         if self.battery_power is None or self.grid_sensor_active_power is None or self.pv_power is None:
             return False  # until all values populated, can't do calculation
-        self.set_latest_state(round((self.pv_power + self.grid_sensor_active_power - self.battery_power) / self.gain, self._precision))
+        self.set_latest_state(self.pv_power + self.grid_sensor_active_power - self.battery_power)
         return True
 
 
@@ -193,7 +193,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         if source in self._sources:
             self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
             if sum([1 for value in self._sources.values() if value.state is None]) == 0:
-                self.set_latest_state(round(sum([value.state for value in self._sources.values()]) / self.gain, self._precision))
+                self.set_latest_state(sum([value.state for value in self._sources.values()]))
                 await self.publish(mqtt, modbus, republish=True)
             elif self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Updated from topic '{source}' - {self._sources=}")
@@ -246,12 +246,12 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         elif sensor.unique_id not in self._sources:
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from '{sensor.unique_id}' ({sensor.__class__.__name__}), but sensor is not registered")
             return False
-        self._sources[sensor.unique_id].state = values[-1][1] * sensor.gain
+        self._sources[sensor.unique_id].state = values[-1][1]
         if sum([1 for value in self._sources.values() if value.state is None]) > 0:
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Updated from sensor '{sensor.unique_id}' - {self._sources=}")
             return False  # until all values populated, can't do calculation
-        self.set_latest_state(round(sum([value.state for value in self._sources.values()]) / self.gain, self._precision))
+        self.set_latest_state(sum([value.state for value in self._sources.values()]))
         return True
 
 

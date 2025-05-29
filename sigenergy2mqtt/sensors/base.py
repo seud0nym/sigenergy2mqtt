@@ -51,24 +51,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self._used_unique_ids[unique_id] = self.__class__.__name__
         self._used_object_ids[object_id] = self.__class__.__name__
 
-        self._derived_sensors: Dict[str, "DerivedSensor"] = {}
-        self._requisite_sensors: Dict[str, "RequisiteSensor"] = {}
-
-        self._debug_logging = Config.sensor_debug_logging
-        self._force_publish = False
-        self._publishable = True
-        self._persistent_publish_state_file = Path(Config.persistent_state_path, f"{unique_id}.publishable")
-        self._states = []
-        self._sleeper_task: Coroutine = None
-
-        self._failures: int = 0
-        self._max_failures: int = 10
-        self._max_failures_retry_interval: int = 0
-        self._next_retry: float = None
-
-        self._qos = 0
-        self._retain = False
-
         self["platform"] = "sensor"
         self["name"] = name
         self["object_id"] = object_id
@@ -80,8 +62,30 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self["display_precision"] = precision
         self["enabled_by_default"] = Config.home_assistant.enabled_by_default
 
-        self._gain = gain
-        self._precision = precision
+        self._gain: float = gain
+        self._precision: int = precision
+
+        self._derived_sensors: Dict[str, "DerivedSensor"] = {}
+        self._requisite_sensors: Dict[str, "RequisiteSensor"] = {}
+
+        self._debug_logging: bool = Config.sensor_debug_logging
+
+        self._force_publish: bool = False
+        self._publishable: bool = True
+        self._persistent_publish_state_file: Path = Path(Config.persistent_state_path, f"{unique_id}.publishable")
+
+        self._states: list[tuple[float, float | int]] = []
+        self._max_states: int = 2
+
+        self._failures: int = 0
+        self._max_failures: int = 10
+        self._max_failures_retry_interval: int = 0
+        self._next_retry: float = None
+
+        self._qos: int = 0
+        self._retain: bool = False
+
+        self._sleeper_task: Coroutine = None
 
     # region Properties
     @property
@@ -167,6 +171,28 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         return self["unique_id"]
 
     # endregion
+
+    def _apply_gain_and_precision(self, state, raw):
+        """
+        Applies gain and precision adjustments to a given state value if applicable.
+
+        If the state is a float or int and the 'raw' flag is False, this method:
+          - Divides the state by self._gain if self._gain is set and not equal to 1.
+          - Rounds the state to self._precision decimal places if self._precision is set.
+
+        Args:
+            state (float or int): The value to be adjusted.
+            raw (bool): Indicates whether the value is raw (unprocessed). If True, no adjustments are made.
+
+        Returns:
+            float or int: The adjusted state value after applying gain and precision, or the original state if conditions are not met.
+        """
+        if isinstance(state, (float, int)) and not raw:
+            if self._gain is not None and self._gain != 1:
+                state /= self._gain
+            if self._precision is not None:
+                state = round(state, self._precision)
+        return state
 
     @abc.abstractmethod
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
@@ -305,16 +331,16 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         Returns:
             The state of this sensor.
         """
+        state = None
         if republish and len(self._states) > 0:
-            return self._states[-1][1]
+            state = self._states[-1][1]
         else:
             result = await self._update_internal_state(**kwargs)
             if result:
                 for sensor in self._requisite_sensors.values():
                     result = result and sensor.update_base_sensor_state(self, **kwargs)
-                return self._states[-1][1]
-            else:
-                return None
+                state = self._states[-1][1]
+        return self._apply_gain_and_precision(state, raw)
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
         """Publishes this sensor.
@@ -406,8 +432,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             state:      The current state.
         """
         self._states.append((time.time(), state))
-        if len(self._states) > 2:  # only keep the two latest values
-            self._states = self._states[-2:]
+        if len(self._states) > self._max_states:
+            self._states = self._states[-self._max_states :]
 
 
 class RequisiteSensor(Sensor):
@@ -498,7 +524,7 @@ class DerivedSensor(Sensor):
         if len(self._states) == 0:
             return 0
         else:
-            return self._states[-1][1]
+            return self._apply_gain_and_precision(self._states[-1][1], raw)
 
     @abc.abstractmethod
     def set_source_values(self, sensor: Sensor, values: list) -> bool:
@@ -674,12 +700,7 @@ class ReadOnlySensor(ModBusSensor, ReadableSensorMixin):
             elapsed = time.time() - start
             logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) took {elapsed:.3f}s")
         if self._check_register_response(rr, f"read_{self._input_type}_registers"):
-            state_is = modbus.convert_from_registers(rr.registers, self._data_type)
-            if self._data_type != ModbusClient.DATATYPE.STRING and self.gain != 1:
-                state_is = state_is / self.gain
-            self.set_latest_state(
-                state_is if self._data_type == ModbusClient.DATATYPE.STRING else round(state_is, self._precision),
-            )
+            self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
             result = True
 
         return result
@@ -800,11 +821,6 @@ class WritableSensorMixin(ModBusSensor):
         return topic
 
     def _encode_value(self, value: int | float | str) -> list[int]:
-        if isinstance(value, (int, float)) and self.gain != 1:
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} applying gain of {self.gain} to {value} before encoding")
-            value = int(value * self.gain)
-
         if self._debug_logging:
             logging.debug(f"{self.__class__.__name__} attempting to encode {value} [{self._data_type}]")
 
@@ -1423,7 +1439,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             The state of this sensor.
         """
         if republish and len(self._states) > 0:
-            return self._states[-1][1]
+            return self._apply_gain_and_precision(self._states[-1][1], raw)
         else:
             result = AlarmSensor.NO_ALARM
             for alarm in self._alarms:
@@ -1434,7 +1450,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
                     else:
                         result = ", ".join([result, state])
             self.set_state(result)
-            return self._states[-1][1]
+            return self._apply_gain_and_precision(self._states[-1][1], raw)
 
 
 class RunningStateSensor(ReadOnlySensor):
@@ -1576,7 +1592,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         else:
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} persistent state file {self._persistent_state_file} not found")
-        self.set_latest_state(round(self._current_total / self.gain, self.precision))
+        self.set_latest_state(self._current_total)
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
         if source in self.observable_topics():
@@ -1584,7 +1600,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({new_total=})")
             await self._persist_current_total(new_total)
             self._current_total = new_total
-            self.set_latest_state(round(self._current_total / self.gain, self.precision))
+            self.set_latest_state(self._current_total)
             self.force_publish = True
             return True
         else:
@@ -1597,8 +1613,8 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         elif len(values) < 2:
             return False  # Need at least two points to calculate
 
-        previous = values[-2][1] * sensor.gain
-        current = values[-1][1] * sensor.gain
+        previous = values[-2][1]
+        current = values[-1][1]
         average = (previous + current) / 2
         interval_hours = sensor.latest_interval / 3600
         increase = average * interval_hours
@@ -1612,7 +1628,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         else:
             asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_running_loop())
             self._current_total = new_total
-            self.set_latest_state(round(self._current_total / self.gain, self.precision))
+            self.set_latest_state(self._current_total)
             return True
 
     async def _persist_current_total(self, new_total: float) -> None:
@@ -1661,8 +1677,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         else:
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} persistent state file {self._persistent_state_file} not found")
-        self._state_now: float = ((source.latest_raw_state if source.latest_raw_state else 0) * source.gain) - self._state_at_midnight
-        self.set_latest_state(round(self._state_now / self.gain, self.precision))
+        self._state_now: float = (source.latest_raw_state if source.latest_raw_state else 0) - self._state_at_midnight
+        self.set_latest_state(self._state_now)
         if not self._persistent_state_file.is_file():
             self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
 
@@ -1676,7 +1692,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} {source_state=} (from {self._source.unique_id}) {self._state_now=} {updated_midnight_state=}")
             await self._update_state_at_midnight(updated_midnight_state)
-            self.set_latest_state(round(self._state_now / self.gain, self.precision))
+            self.set_latest_state(self._state_now)
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({self._state_now=})")
             self.force_publish = True
             return True
@@ -1693,7 +1709,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
 
-        now_state = values[-1][1] * sensor.gain
+        now_state = values[-1][1]
 
         if len(values) > 1:
             was = time.localtime(values[-2][0])
@@ -1702,7 +1718,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_running_loop())
 
         self._state_now = now_state - self._state_at_midnight
-        self.set_latest_state(round(self._state_now / self.gain, self.precision))
+        self.set_latest_state(self._state_now)
 
     async def _update_state_at_midnight(self, midnight_state: float) -> None:
         async with self._state_at_midnight_lock:
@@ -1749,7 +1765,7 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
             gain = state.gain
             state.value = (value if isinstance(value, float) else float(value)) * gain
             if sum(1 for value in self._topics.values() if value.value is None) == 0:
-                self.set_latest_state(round(sum(value.value for value in self._topics.values()) / self.gain, self._precision))
+                self.set_latest_state(sum(value.value for value in self._topics.values()))
                 if self._debug_logging:
                     logging.debug(f"Publishing {self.__class__.__name__} FORCED - {[value.value for value in self._topics.values()]} = {self.latest_raw_state}")
                 self.force_publish = True

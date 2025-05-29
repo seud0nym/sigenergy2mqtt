@@ -87,8 +87,6 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         state_is = float(solar["activePower"])
                         if state_is < 0:
                             state_is = 0.0
-                        if self.gain != 1:
-                            state_is = state_is / self.gain
                         self.set_state(state_is)
                         self._states[-1] = (self._states[-1][0], self._states[-1][1], solar)
                         for sensor in self._derived_sensors.values():
@@ -207,7 +205,7 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
         if not issubclass(type(sensor), EnphasePVPower):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_state(round(values[-1][2]["actEnergyDlvd"] / self.gain, self._precision))
+        self.set_state(values[-1][2]["actEnergyDlvd"])
         return True
 
 
@@ -241,7 +239,7 @@ class EnphaseCurrent(DerivedSensor):
         if not issubclass(type(sensor), EnphasePVPower):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_state(round(values[-1][2]["current"] / self.gain, self._precision))
+        self.set_state(values[-1][2]["current"])
         return True
 
 
@@ -264,7 +262,7 @@ class EnphaseFrequency(DerivedSensor):
         if not issubclass(type(sensor), EnphasePVPower):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_state(round(values[-1][2]["freq"] / self.gain, self._precision))
+        self.set_state(values[-1][2]["freq"])
         return True
 
 
@@ -287,7 +285,7 @@ class EnphasePowerFactor(DerivedSensor):
         if not issubclass(type(sensor), EnphasePVPower):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_state(round(values[-1][2]["pwrFactor"] / self.gain, self._precision))
+        self.set_state(values[-1][2]["pwrFactor"])
         return True
 
 
@@ -310,7 +308,7 @@ class EnphaseReactivePower(DerivedSensor):
         if not issubclass(type(sensor), EnphasePVPower):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_state(round(values[-1][2]["reactivePower"] / self.gain, self._precision))
+        self.set_state(values[-1][2]["reactivePower"])
         return True
 
 
@@ -333,7 +331,7 @@ class EnphaseVoltage(DerivedSensor):
         if not issubclass(type(sensor), EnphasePVPower):
             logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_state(round(values[-1][2]["voltage"] / self.gain, self._precision))
+        self.set_state(values[-1][2]["voltage"])
         return True
 
 
