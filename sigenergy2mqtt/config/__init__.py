@@ -14,8 +14,8 @@ import sys
 if os.isatty(sys.stdout.fileno()):
     logging.basicConfig(format="%(asctime)s %(levelname)-5s sigenergy2mqtt:%(module)s:%(lineno)s %(message)s", level=logging.INFO)
 else:
-    cgroup = Path('/proc/self/cgroup')
-    if Path('/.dockerenv').is_file() or (cgroup.is_file() and 'docker' in cgroup.read_text()):
+    cgroup = Path("/proc/self/cgroup")
+    if Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text()):
         logging.basicConfig(format="%(asctime)s %(levelname)-5s %(module)s:%(lineno)s %(message)s", level=logging.INFO)
     else:
         logging.basicConfig(format="%(levelname)-5s %(module)s:%(lineno)s %(message)s", level=logging.INFO)
@@ -260,7 +260,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN, None),
-    help="The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).",   
+    help="The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).",
 )
 _parser.add_argument(
     "--pvoutput-enabled",
@@ -326,6 +326,7 @@ _args = _parser.parse_args()
 if _args.show_version:
     sys.exit(0)
 
+
 def apply_cli_to_env(variable: str, value: str) -> None:
     was = os.getenv(variable)
     if value is not None:
@@ -338,6 +339,7 @@ def apply_cli_to_env(variable: str, value: str) -> None:
         else:
             _logger.debug(f"Environment variable '{variable}' not set")
 
+
 if _args.SIGENERGY2MQTT_LOG_LEVEL:
     _logger.setLevel(getattr(logging, _args.SIGENERGY2MQTT_LOG_LEVEL))
 
@@ -346,7 +348,11 @@ for arg in vars(_args):
         Config.clean = _args.clean
         continue
     elif (
-        arg == const.SIGENERGY2MQTT_HASS_ENABLED or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
+        arg == const.SIGENERGY2MQTT_HASS_ENABLED
+        or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
+        or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
+        or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
+        or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
     ) and getattr(_args, arg) not in ["true", "True", True, 1]:
         continue
     elif arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and getattr(_args, arg) in ["true", "True", True, 1]:

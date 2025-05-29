@@ -4,6 +4,7 @@
         "./sigenergy2mqtt"
     ],
     "cSpell.words": [
+        "_mids",
         "ACCHARGER",
         "actEnergyDlvd",
         "AFCI",
@@ -19,6 +20,7 @@
         "HACS",
         "HASS",
         "homeassistant",
+        "inet_pton",
         "levelname",
         "MAINPID",
         "mktime",

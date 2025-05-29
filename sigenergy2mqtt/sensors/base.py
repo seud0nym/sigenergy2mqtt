@@ -1,8 +1,8 @@
 from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy
+from .sanity_check import SanityCheck
 from concurrent.futures import Future
 from dataclasses import dataclass
 from pathlib import Path
-from pymodbus import ModbusException
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadBuilder
@@ -76,6 +76,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
         self._states: list[tuple[float, float | int]] = []
         self._max_states: int = 2
+        self._sanity: SanityCheck = SanityCheck()
 
         self._failures: int = 0
         self._max_failures: int = 10
@@ -259,6 +260,14 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     if self._debug_logging:
                         logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'publishable' override ({overrides['publishable']})")
                     self._publishable = overrides["publishable"]
+                if "sanity-check-max-value" in overrides and self._sanity.max_value != overrides["sanity-check-max-value"]:
+                    if self._debug_logging:
+                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
+                    self._sanity.max_value = overrides["sanity-check-max-value"]
+                if "sanity-check-min-value" in overrides and self._sanity.min_value != overrides["sanity-check-min-value"]:
+                    if self._debug_logging:
+                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
+                    self._sanity.min_value = overrides["sanity-check-min-value"]
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
                     if self._debug_logging:
                         logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
@@ -431,9 +440,10 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         Args:
             state:      The current state.
         """
-        self._states.append((time.time(), state))
-        if len(self._states) > self._max_states:
-            self._states = self._states[-self._max_states :]
+        if self._sanity.check(state, self._states):
+            self._states.append((time.time(), state))
+            if len(self._states) > self._max_states:
+                self._states = self._states[-self._max_states :]
 
 
 class RequisiteSensor(Sensor):
@@ -881,7 +891,7 @@ class WritableSensorMixin(ModBusSensor):
                 self.force_publish = True
                 await self.publish(mqtt, modbus)
             return result
-        except ModbusException as exc:
+        except Exception as exc:
             logging.error(f"{self.__class__.__name__} write_registers threw {exc!s}")
             raise
 

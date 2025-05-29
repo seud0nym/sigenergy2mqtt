@@ -237,6 +237,20 @@ sensor-overrides:
     #   description:  If false, the sensor will not be published to MQTT
     #                 and will not appear in Home Assistant at all.
     publishable: false
+    # sanity-check-max-value
+    #   default: There is no default
+    #   description:  Sets a maximum allowable value for this sensor to
+    #                 allow anomalous readings to be ignored. This value
+    #                 must be a RAW value read from, for example, the 
+    #                 Modbus interface, BEFORE the gain is applied.
+    sanity-check-max-value: 100000
+    # sanity-check-min-value
+    #   default: There is no default
+    #   description:  Sets a minimum allowable value for this sensor to
+    #                 allow anomalous readings to be ignored. This value
+    #                 must be a RAW value read from, for example, the 
+    #                 Modbus interface, BEFORE the gain is applied.
+    sanity-check-min-value: -100000
     # scan-interval
     #   default: There is no default
     #   description:  Change the default scan interval in seconds at which

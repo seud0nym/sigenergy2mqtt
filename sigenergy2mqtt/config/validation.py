@@ -38,6 +38,29 @@ def check_bool(value, source):
         raise ValueError(f"{source} must be a either true or false")
 
 
+def check_float(value, source, min: float = None, max: float = None, allow_none: bool = False):
+    if allow_none and value is None:
+        return value
+    if isinstance(value, str):
+        try:
+            value = float(value)
+        except ValueError:
+            raise ValueError(f"{source} must be a float")
+        if min is not None and value < min:
+            raise ValueError(f"{source} must be a float greater than or equal to {min}")
+        if max is not None and value > max:
+            raise ValueError(f"{source} must be a float less than or equal to {max}")
+        return value
+    elif isinstance(value, float):
+        if min is not None and value < min:
+            raise ValueError(f"{source} must be a float greater than or equal to {min}")
+        if max is not None and value > max:
+            raise ValueError(f"{source} must be a float less than or equal to {max}")
+        return value
+    else:
+        raise ValueError(f"{source} must be a float")
+
+
 def check_host(value, source):
     if is_valid_hostname(value) or is_valid_ipv4(value) or is_valid_ipv6(value):
         return value
@@ -52,20 +75,20 @@ def check_int(value, source, min: int = None, max: int = None, allow_none: bool 
         try:
             value = int(value)
         except ValueError:
-            raise ValueError(f"{source} must be a integer")
+            raise ValueError(f"{source} must be an integer")
         if min is not None and value < min:
-            raise ValueError(f"{source} must be a integer greater than or equal to {min}")
+            raise ValueError(f"{source} must be an integer greater than or equal to {min}")
         if max is not None and value > max:
-            raise ValueError(f"{source} must be a integer less than or equal to {max}")
+            raise ValueError(f"{source} must be an integer less than or equal to {max}")
         return value
     elif isinstance(value, int):
         if min is not None and value < min:
-            raise ValueError(f"{source} must be a integer greater than or equal to {min}")
+            raise ValueError(f"{source} must be an integer greater than or equal to {min}")
         if max is not None and value > max:
-            raise ValueError(f"{source} must be a integer less than or equal to {max}")
+            raise ValueError(f"{source} must be an integer less than or equal to {max}")
         return value
     else:
-        raise ValueError(f"{source} must be a integer")
+        raise ValueError(f"{source} must be an integer")
 
 
 def check_int_list(value, source):
@@ -108,7 +131,7 @@ def check_port(value, source):
     return check_int(value, source, min=1, max=65535)
 
 
-def check_string(value, source, allow_none: bool = True, allow_empty: bool = True, hex_chars_only: bool = False, starts_with: str = None):
+def check_string(value, source, allow_none: bool = True, allow_empty: bool = True, hex_chars_only: bool = False, starts_with: str = None, *valid_values):
     if value is None:
         if allow_none:
             return value
@@ -124,6 +147,8 @@ def check_string(value, source, allow_none: bool = True, allow_empty: bool = Tru
                 raise ValueError(f"{source} must only contain hexadecimal characters")
         if value is not None and starts_with is not None and not value.startswith(starts_with):
             raise ValueError(f"{source} must start with '{starts_with}")
+        if valid_values and value not in valid_values:
+            raise ValueError(f"{source} must be one of {', '.join(valid_values)}")
         return value
     else:
         raise ValueError(f"{source} must be a valid string")

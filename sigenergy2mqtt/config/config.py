@@ -4,7 +4,7 @@ from .device_config import DeviceConfig
 from .home_assistant_config import HomeAssistantConfiguration
 from .mqtt_config import MqttConfiguration
 from .pvoutput_config import PVOutputConfiguration
-from .validation import check_bool, check_host, check_int, check_int_list, check_log_level, check_port, check_string
+from .validation import check_bool, check_host, check_float, check_int, check_int_list, check_log_level, check_port, check_string
 from ruamel.yaml import YAML
 from typing import List
 import logging
@@ -14,15 +14,15 @@ import os
 class Config:
     origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
-    devices: List[DeviceConfig] = []
-    home_assistant = HomeAssistantConfiguration()
-    mqtt = MqttConfiguration()
-    pvoutput = PVOutputConfiguration()
-    sensor_debug_logging: bool = False
-    sensor_overrides: dict = {}
-
     clean: bool = False
     log_level: int = logging.WARNING
+
+    devices: List[DeviceConfig] = []
+    home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
+    mqtt: MqttConfiguration = MqttConfiguration()
+    pvoutput: PVOutputConfiguration = PVOutputConfiguration()
+    sensor_debug_logging: bool = False
+    sensor_overrides: dict = {}
 
     persistent_state_path: str = "."
 
@@ -165,21 +165,34 @@ class Config:
                         for sensor, settings in data[name].items():
                             Config.sensor_overrides[sensor] = {}
                             for p, v in settings.items():
-                                if (
-                                    (p == "debug-logging" and check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -") == v)
-                                    or (p == "gain" and check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1) == v)
-                                    or (p == "icon" and check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, starts_with="mdi:") == v)
-                                    or (p == "max-failures" and check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1) == v)
-                                    or (p == "max-failures-retry-interval" and check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0) == v)
-                                    or (p == "precision" and check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0, max=6) == v)
-                                    or (p == "publishable" and check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -") == v)
-                                    or (p == "scan-interval" and check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=1) == v)
-                                    or (p == "unit-of-measurement" and check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False) == v)
-                                ):
-                                    logging.debug(f"Applying configuration sensor-overrides: {sensor}.{p} = {v}")
-                                    Config.sensor_overrides[sensor][p] = v
-                                else:
-                                    raise ValueError(f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} - property is not known or not overridable")
+                                logging.debug(f"Applying configuration sensor-overrides: {sensor}.{p} = {v}")
+                                match p:
+                                    case "debug-logging":
+                                        Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                    case "gain":
+                                        Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1)
+                                    case "icon":
+                                        Config.sensor_overrides[sensor][p] = check_string(
+                                            v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, starts_with="mdi:"
+                                        )
+                                    case "max-failures":
+                                        Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1)
+                                    case "max-failures-retry-interval":
+                                        Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0)
+                                    case "precision":
+                                        Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0, max=6)
+                                    case "publishable":
+                                        Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                    case "scan-interval":
+                                        Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=1)
+                                    case "sanity-check-max-value":
+                                        Config.sensor_overrides[sensor][p] = check_float(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                    case "sanity-check-min-value":
+                                        Config.sensor_overrides[sensor][p] = check_float(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                    case "unit-of-measurement":
+                                        Config.sensor_overrides[sensor][p] = check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                    case _:
+                                        raise ValueError(f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} - property is not known or not overridable")
                     elif data[name] is not None:
                         raise ValueError("sensor-overrides configuration elements must contain a list of class names, each followed by options and their values")
                 case _:

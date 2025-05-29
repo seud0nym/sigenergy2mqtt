@@ -169,6 +169,8 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
         self["enabled_by_default"] = True
+        self._sanity.max_value = 100000 # 100kW
+        self._sanity.min_value = -100000 # -100kW
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid", **kwargs)
