@@ -30,7 +30,16 @@ async def get_sensor_instances(hass: bool = False):
     Config.home_assistant.enabled = hass
 
     logging.info("Creating Power Plant")
-    plant = PowerPlant(plant_index, HybridInverter(), 3, 12.6, 13.68, PlantRatedChargingPower(plant_index), PlantRatedDischargingPower(plant_index))
+    plant = PowerPlant(
+        plant_index=plant_index,
+        device_type=HybridInverter(),
+        output_type=2,
+        power_phases=3,
+        rcp_value=12.6,
+        rdp_value=13.68,
+        rated_charging_power=PlantRatedChargingPower(plant_index),
+        rated_discharging_power=PlantRatedDischargingPower(plant_index),
+    )
     remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
