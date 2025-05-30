@@ -86,7 +86,7 @@ class PowerPlant(ModBusDevice):
             self._add_read_sensor(rw.PhaseBReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.PhaseBActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.PhaseBQSAdjustmentTargetValue(plant_index, remote_ems, output_type))
-            self._add_read_sensor(rw.PhaseCActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, output_type))
+            self._add_read_sensor(rw.PhaseCActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.PhaseCReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.PhaseCActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.PhaseCQSAdjustmentTargetValue(plant_index, remote_ems, output_type))
