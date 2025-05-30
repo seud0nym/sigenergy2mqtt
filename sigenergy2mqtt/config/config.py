@@ -64,14 +64,24 @@ class Config:
                     match key:
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
                             overrides["home-assistant"]["enabled"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
+                            overrides["home-assistant"]["entity-id-prefix"] = check_string(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
+                            overrides["home-assistant"]["device-name-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY:
                             overrides["home-assistant"]["discovery-only"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
+                            overrides["home-assistant"]["discovery-prefix"] = check_string(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
+                            overrides["home-assistant"]["unique-id-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_LOG_LEVEL:
                             overrides["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_HOST:
                             overrides["modbus"][0]["host"] = check_host(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_PORT:
                             overrides["modbus"][0]["port"] = check_port(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
+                            overrides["modbus"][0]["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE:
                             overrides["modbus"][0]["inverters"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key)
                         case const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE:
@@ -106,6 +116,8 @@ class Config:
                             overrides["mqtt"]["port"] = check_port(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_ANONYMOUS:
                             overrides["mqtt"]["anonymous"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MQTT_LOG_LEVEL:
+                            overrides["mqtt"]["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_USERNAME:
                             overrides["mqtt"]["username"] = os.environ[key]
                         case const.SIGENERGY2MQTT_MQTT_PASSWORD:
@@ -113,15 +125,19 @@ class Config:
                         case const.SIGENERGY2MQTT_PVOUTPUT_ENABLED:
                             overrides["pvoutput"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
-                            overrides["pvoutput"]["log_level"] = check_log_level(os.environ[key], key)
+                            overrides["pvoutput"]["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_API_KEY:
-                            overrides["pvoutput"]["api_key"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False, hex_chars_only=True)
+                            overrides["pvoutput"]["api-key"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False, hex_chars_only=True)
                         case const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
-                            overrides["pvoutput"]["system_id"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
+                            overrides["pvoutput"]["system-id"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
                             overrides["pvoutput"]["consumption"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
-                            overrides["pvoutput"]["interval_minutes"] = check_int(os.environ[key], key, min=5, max=15)
+                            overrides["pvoutput"]["interval-minutes"] = check_int(os.environ[key], key, min=5, max=15)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_TESTING:
+                            overrides["pvoutput"]["testing"] = check_bool(os.environ[key], key)
+                        case _:
+                            logging.warning(f"UNKNOWN env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 except Exception as e:
                     raise Exception(f"{repr(e)} when processing override '{key}'")
 
