@@ -611,7 +611,7 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
         elif value == "Command Discharging (Output power from the battery first)":
             result = await super().set_value(modbus, mqtt, 6, source)
         else:
-            logging.error(f"{self.name} - Ignored attempt to set value to {value}: Not a valid mode")
+            logging.warning(f"{self.name} - Ignored attempt to set value to {value}: Not a valid mode")
         if result:
             pass
         return result

@@ -23,7 +23,7 @@ class InverterBatteryChargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not issubclass(type(sensor), ChargeDischargePower):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self._precision),
@@ -47,7 +47,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not issubclass(type(sensor), ChargeDischargePower):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
@@ -116,7 +116,7 @@ class PVStringPower(DerivedSensor):
         elif issubclass(type(sensor), PVCurrentSensor):
             self.current = values[-1][1]
         else:
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         if self.voltage is None or self.current is None:
             return False  # until all values populated, can't do calculation

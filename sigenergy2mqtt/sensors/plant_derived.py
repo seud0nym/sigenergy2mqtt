@@ -36,7 +36,7 @@ class BatteryChargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not issubclass(type(sensor), BatteryPower):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self._precision),
@@ -60,7 +60,7 @@ class BatteryDischargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not issubclass(type(sensor), BatteryPower):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
@@ -84,7 +84,7 @@ class GridSensorExportPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not issubclass(type(sensor), GridSensorActivePower):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
@@ -108,7 +108,7 @@ class GridSensorImportPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not issubclass(type(sensor), GridSensorActivePower):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self._precision),
@@ -159,7 +159,7 @@ class PlantConsumedPower(DerivedSensor):
         elif issubclass(type(sensor), (PlantPVPower, TotalPVPower)):
             self.pv_power = values[-1][1]
         else:
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         if self.battery_power is None or self.grid_sensor_active_power is None or self.pv_power is None:
             return False  # until all values populated, can't do calculation
@@ -198,7 +198,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             elif self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Updated from topic '{source}' - {self._sources=}")
         else:
-            logging.error(f"Attempt to call {self.__class__.__name__}.notify with topic '{source}', but topic is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{source}', but topic is not registered")
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
@@ -241,10 +241,10 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if not isinstance(sensor, PVPowerSensor):
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         elif sensor.unique_id not in self._sources:
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from '{sensor.unique_id}' ({sensor.__class__.__name__}), but sensor is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from '{sensor.unique_id}' ({sensor.__class__.__name__}), but sensor is not registered")
             return False
         self._sources[sensor.unique_id].state = values[-1][1]
         if sum([1 for value in self._sources.values() if value.state is None]) > 0:

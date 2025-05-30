@@ -377,7 +377,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
             except Exception as exc:
-                logging.error(f"{self.__class__.__name__} Publishing SKIPPED - Failed to get state ({exc})")
+                logging.warning(f"{self.__class__.__name__} Publishing SKIPPED - Failed to get state ({exc})")
                 if modbus.connected:
                     self._failures += 1
                     self._next_retry = (
@@ -904,7 +904,7 @@ class WritableSensorMixin(ModBusSensor):
         if source == self["command_topic"]:
             return await self._write_registers(modbus, value, mqtt)
         else:
-            logging.error(f"{self.__class__.__name__} - attempt to set_value({value}) from unknown topic {source}")
+            logging.warning(f"{self.__class__.__name__} - Attempt to set_value({value}) from unknown topic {source}")
             return False
 
 
@@ -969,7 +969,7 @@ class WriteOnlySensor(WritableSensorMixin):
         elif value == "On":
             return await super().set_value(modbus, mqtt, 1, source)
         else:
-            logging.error(f"{self.__class__.__name__} - Ignored attempt to set value to {value}: Must be either 'On' or 'Off'")
+            logging.warning(f"{self.__class__.__name__} - Ignored attempt to set value to {value}: Must be either 'On' or 'Off'")
         return False
 
 
@@ -1099,9 +1099,9 @@ class NumericSensor(ReadWriteSensor):
                     state = state * self.gain
                 return await super().set_value(modbus, mqtt, state, source)
             except Exception as e:
-                logging.error(f"{self.__class__.__name__} - Attempt to set value to {value} FAILED: {e}")
+                logging.warning(f"{self.__class__.__name__} - Attempt to set value to {value} FAILED: {e}")
         else:
-            logging.error(f"{self.__class__.__name__} - Ignored attempt to set None value to {value}")
+            logging.warning(f"{self.__class__.__name__} - Ignored attempt to set None value to {value}")
         return False
 
 
@@ -1618,7 +1618,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if sensor is not self._source:
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         elif len(values) < 2:
             return False  # Need at least two points to calculate
@@ -1716,7 +1716,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if sensor is not self._source:
-            logging.error(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
 
         now_state = values[-1][1]
@@ -1781,7 +1781,7 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
                 self.force_publish = True
             return True
         else:
-            logging.error(f"{self.__class__.__name__} notified on topic '{topic}', but it is not observable???")
+            logging.warning(f"{self.__class__.__name__} notified on topic '{topic}', but it is not observable???")
         return False
 
     def observable_topics(self) -> set[str]:
