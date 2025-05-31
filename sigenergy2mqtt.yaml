@@ -132,6 +132,12 @@ modbus:
     #                 buttons) will be published to MQTT. Specify false to 
     #                 disable write-only entities.
     write-only: true
+    # no-remote-ems
+    #   default: false
+    #   description:  If true, read-write entities related to remote Energy
+    #                 Management System (EMS) integration will NOT be published
+    #                 to MQTT. Ignored if read-write option is false.
+    no-remote-ems: false
     smart-port:
       # enabled
       #   default: false

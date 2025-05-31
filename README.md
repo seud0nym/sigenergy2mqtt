@@ -293,6 +293,8 @@ Command line options override both environment variables and the configuration f
   --modbus-dccharger-slave [SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE]
                         The Sigenergy DC Charger Modbus Device ID (Slave ID).
   --modbus-readonly     Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be published if specified.
+  --modbus-no-remote-ems
+                        Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.
   --modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
   --smartport-enabled   Enable interrogation of a third-party device for production data.
@@ -348,6 +350,7 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1)
 - `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` : The Sigenergy AC Charger Modbus Device ID (Slave ID).
 - `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : The Sigenergy DC Charger Modbus Device ID (Slave ID).
+- `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`: If true, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is false. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is false.
 - `SIGENERGY2MQTT_MODBUS_READ_ONLY` : If false, read-only entities will not be published to MQTT. Default is true.
 - `SIGENERGY2MQTT_MODBUS_READ_WRITE` : If false, read-write entities will not be published to MQTT. Default is true.
 - `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` : If false, write-only entities will not be published to MQTT. Default is true.

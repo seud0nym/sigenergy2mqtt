@@ -8,6 +8,7 @@ import logging
 
 @dataclass
 class RegisterAccess:
+    no_remote_ems: bool = False
     read_only: bool = True
     read_write: bool = True
     write_only: bool = True
@@ -39,6 +40,8 @@ class DeviceConfig:
                         self.port = check_port(value, f"modbus.{field}")
                     case "log-level":
                         self.log_level = check_log_level(value, f"modbus.{field}")
+                    case "no-remote-ems":
+                        self.registers.no_remote_ems = check_bool(value, f"modbus.{field}")
                     case "read-only":
                         self.registers.read_only = check_bool(value, f"modbus.{field}")
                     case "read-write":

@@ -88,6 +88,8 @@ class Config:
                             overrides["modbus"][0]["ac-chargers"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key)
                         case const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE:
                             overrides["modbus"][0]["dc-chargers"] = check_int_list([int(slave) for slave in os.environ[key].split(",")], key)
+                        case const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
+                            overrides["modbus"][0]["no-remote-ems"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_READ_ONLY:
                             overrides["modbus"][0]["read-only"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_READ_WRITE:

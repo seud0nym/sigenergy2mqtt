@@ -192,6 +192,12 @@ _parser.add_argument(
     help="Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be published if specified.",
 )
 _parser.add_argument(
+    "--modbus-no-remote-ems",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS,
+    help="Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.",
+)
+_parser.add_argument(
     "--modbus-log-level",
     action="store",
     dest=const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL,
@@ -350,6 +356,7 @@ for arg in vars(_args):
     elif (
         arg == const.SIGENERGY2MQTT_HASS_ENABLED
         or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
+        or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED

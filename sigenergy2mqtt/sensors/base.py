@@ -273,7 +273,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
         if self._publishable and registers:
-            if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
+            if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "_address", None) == 40029):
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} - Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
+                self._publishable = False
+            elif isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
                 if self._debug_logging:
                     logging.debug(f"{self.__class__.__name__} - Applying device 'read-write' override ({registers.read_write})")
                 self._publishable = registers.read_write
