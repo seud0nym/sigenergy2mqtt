@@ -132,6 +132,7 @@ class PlantConsumedPower(DerivedSensor):
         self.battery_power: float = None
         self.grid_sensor_active_power: float = None
         self.pv_power: float = None
+        self._sanity.min_value = 0.0
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
         """Publishes this sensor.
