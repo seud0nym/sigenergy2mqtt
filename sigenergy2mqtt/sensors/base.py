@@ -1592,16 +1592,15 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         self._current_total: float = 0.0
         self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
         if self._persistent_state_file.is_file():
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} - Setting current total from {self._persistent_state_file}")
             with self._persistent_state_file.open("r") as f:
                 try:
                     self._current_total = float(f.read())
+                    logging.info(f"{self.__class__.__name__} - Loading current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
-                    logging.warning(f"{self.__class__.__name__} failed to read {self._persistent_state_file}: {error}")
+                    logging.warning(f"{self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
         else:
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} persistent state file {self._persistent_state_file} not found")
+                logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
         self.set_latest_state(self._current_total)
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
@@ -1623,17 +1622,23 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         elif len(values) < 2:
             return False  # Need at least two points to calculate
 
-        previous = values[-2][1]
-        current = values[-1][1]
-        average = (previous + current) / 2
+        # Calculate time difference in hours
         interval_hours = sensor.latest_interval / 3600
-        increase = average * interval_hours
+        if interval_hours < 0:
+            logging.warning(f"{self.__class__.__name__} negative interval IGNORED ({sensor.latest_interval=})")
+            return False
+
+        # Convert negative power readings to zero
+        previous = max(0.0, values[-2][1])
+        current = max(0.0, values[-1][1])
+        # Calculate the area under the power curve using the trapezoidal rule
+        # Area = 0.5 * (sum of parallel sides) * height
+        # Here, parallel sides are power readings, and height is time difference.
+        increase = 0.5 * (previous + current) * interval_hours
         new_total = self._current_total + increase
 
         if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
-            logging.warning(
-                f"Sensor {self.__class__.__name__} has negative value in new sum total (Was = {self._current_total} Previous = {previous} Current = {current} Interval = {sensor.latest_interval:.2f}s New Total = {new_total}) from {sensor.__class__.__name__} but state_class is {self.state_class}???"
-            )
+            logging.debug(f"{self.__class__.__name__} negative increase IGNORED ({self._current_total=} {previous=} {current=} {increase=} {new_total=} {sensor.latest_interval=:.2f}s)")
             return False
         else:
             asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_running_loop())
@@ -1673,21 +1678,20 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
             now = time.localtime()
             if fmt.tm_year == now.tm_year and fmt.tm_mon == now.tm_mon and fmt.tm_mday == now.tm_mday:
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} - Setting last midnight state from {self._persistent_state_file}")
                 with self._persistent_state_file.open("r") as f:
                     try:
                         self._state_at_midnight = float(f.read())
+                        logging.info(f"{self.__class__.__name__} - Loading last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
                     except ValueError as error:
-                        logging.warning(f"Sensor {self.__class__.__name__} failed to read {self._persistent_state_file}: {error}")
+                        logging.warning(f"Sensor {self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
             else:
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} - Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
+                logging.info(f"{self.__class__.__name__} - Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} persistent state file {self._persistent_state_file} not found")
-        self._state_now: float = (source.latest_raw_state if source.latest_raw_state else 0) - self._state_at_midnight
+                logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
+        self._state_now: float = max(0.0, source.latest_raw_state - self._state_at_midnight) if source.latest_raw_state else 0.0
+        logging.info(f"{self.__class__.__name__} - Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
         self.set_latest_state(self._state_now)
         if not self._persistent_state_file.is_file():
             self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
