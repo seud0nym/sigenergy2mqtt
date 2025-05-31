@@ -1,3 +1,4 @@
+import logging
 from .client_factory import ClientFactory
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 import asyncio
@@ -19,7 +20,10 @@ class CustomLock:
 
     async def acquire(self):
         self._waiters += 1
-        await self._lock.acquire()
+        try:
+            await self._lock.acquire()
+        except asyncio.CancelledError:
+            logging.info(f"Attempt to acquire Modbus lock on {self._host} interrupted")
         self._waiters -= 1
 
     def release(self):
