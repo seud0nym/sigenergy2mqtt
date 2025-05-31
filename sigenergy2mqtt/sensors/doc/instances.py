@@ -46,7 +46,6 @@ async def get_sensor_instances(hass: bool = False):
     logging.info("Creating Hybrid Inverter")
     hybrid_inverter = Inverter(
         plant_index=plant_index,
-        remote_ems=remote_ems,
         device_address=inverter_device_address,
         device_type=HybridInverter(),
         model_id="SigenStor EC 12.0 TP",
@@ -61,7 +60,6 @@ async def get_sensor_instances(hass: bool = False):
     logging.info("Creating PV Inverter")
     pv_inverter = Inverter(
         plant_index=plant_index,
-        remote_ems=remote_ems,
         device_address=inverter_device_address,
         device_type=PVInverter(),
         model_id="Sigen PV Max 5.0 TP",

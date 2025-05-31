@@ -116,9 +116,10 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     else:
                         logging.error(f"{self.__class__.__name__} - Cannot add {sensor.__class__.__name__} - not a DerivedSensor")
 
-    def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> None:
+    def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> bool:
         if not issubclass(type(sensor), ReadableSensorMixin):
             logging.error(f"{self.__class__.__name__} - Cannot add {sensor.__class__.__name__} - not a ReadableSensorMixin")
+            return False
         else:
             if group is None:
                 self._read_sensors[sensor.unique_id] = sensor
@@ -128,6 +129,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     self._group_sensors[group] = []
                 self._group_sensors[group].append(sensor)
                 self._add_to_all_sensors(sensor)
+            return True
 
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         if not self.get_sensor(sensor.unique_id, search_children=True):
@@ -355,12 +357,13 @@ class ModBusDevice(Device, metaclass=abc.ABCMeta):
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         super()._add_to_all_sensors(sensor)
 
-    def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> None:
+    def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> bool:
         if self._type is not None and not isinstance(sensor, self._type.__class__):
             if sensor.debug_logging:
                 logging.debug(f"{self.__class__.__name__} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
+            return False
         else:
-            super()._add_read_sensor(sensor, group)
+            return super()._add_read_sensor(sensor, group)
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if self._type is not None and not isinstance(sensor, self._type.__class__):

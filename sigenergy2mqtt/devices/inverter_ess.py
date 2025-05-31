@@ -45,7 +45,6 @@ class ESS(ModBusDevice):
         self._add_read_sensor(ro.RatedBatteryCapacity(plant_index, device_address))
 
         battery_power = ro.ChargeDischargePower(plant_index, device_address)
-        self._add_read_sensor(battery_power)
-
-        self._add_derived_sensor(derived.InverterBatteryChargingPower(plant_index, device_address, battery_power), battery_power)
-        self._add_derived_sensor(derived.InverterBatteryDischargingPower(plant_index, device_address, battery_power), battery_power)
+        if self._add_read_sensor(battery_power): # will return False if sensor not added because not applicable to this device_type
+            self._add_derived_sensor(derived.InverterBatteryChargingPower(plant_index, device_address, battery_power), battery_power)
+            self._add_derived_sensor(derived.InverterBatteryDischargingPower(plant_index, device_address, battery_power), battery_power)

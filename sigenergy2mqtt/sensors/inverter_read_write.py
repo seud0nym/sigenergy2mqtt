@@ -1,4 +1,4 @@
-from .base import DeviceClass, InputType, NumericSensor, ReadOnlySensor, RemoteEMSMixin, SwitchSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, ReadOnlySensor, SwitchSensor, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -99,9 +99,9 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
 
 
 class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):
-    def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Remote EMS Dispatch",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_remote_ems_dispatch",
             input_type=InputType.HOLDING,
@@ -121,9 +121,9 @@ class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):
 
 
 class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
-    def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Active Power Fixed Value Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_fixed_value_adjustment",
             input_type=InputType.HOLDING,
@@ -143,9 +143,9 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
 
 
 class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
-    def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Reactive Power Fixed Value Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_fixed_value_adjustment",
             input_type=InputType.HOLDING,
@@ -165,9 +165,9 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
 
 
 class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
-    def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Active Power Percentage Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_percentage_adjustment",
             input_type=InputType.HOLDING,
@@ -189,9 +189,9 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
 
 
 class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
-    def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Reactive Power Q/S Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_q_s_adjustment",
             input_type=InputType.HOLDING,
@@ -213,9 +213,9 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
 
 
 class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
-    def __init__(self, remote_ems: RemoteEMSMixin, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Power Factor Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor_adjustment",
             input_type=InputType.HOLDING,

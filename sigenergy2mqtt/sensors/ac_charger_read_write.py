@@ -32,7 +32,7 @@ class ACChargerOutputCurrent(NumericSensor):
         rated_current: float,
     ):
         super().__init__(
-            remote_ems=remote_ems,
+            remote_ems=None,
             name="Output Current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_output_current",
             input_type=InputType.HOLDING,

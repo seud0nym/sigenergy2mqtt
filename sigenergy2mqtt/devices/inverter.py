@@ -2,7 +2,6 @@ from .device import ModBusDevice
 from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
 from sigenergy2mqtt.devices.types import DeviceType
-from sigenergy2mqtt.sensors.base import RemoteEMSMixin
 import re
 import sigenergy2mqtt.sensors.inverter_derived as derived
 import sigenergy2mqtt.sensors.inverter_read_only as ro
@@ -13,7 +12,6 @@ class Inverter(ModBusDevice):
     def __init__(
         self,
         plant_index: int,
-        remote_ems: RemoteEMSMixin,
         device_address: int,
         device_type: DeviceType,
         model_id: str,
@@ -89,12 +87,12 @@ class Inverter(ModBusDevice):
         # endregion
 
         self._add_read_sensor(rw.GridCode(plant_index, device_address))
-        self._add_read_sensor(rw.InverterRemoteEMSDispatch(remote_ems, plant_index, device_address))
-        self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(remote_ems, plant_index, device_address))
-        self._add_read_sensor(rw.InverterReactivePowerFixedValueAdjustment(remote_ems, plant_index, device_address))
-        self._add_read_sensor(rw.InverterActivePowerPercentageAdjustment(remote_ems, plant_index, device_address))
-        self._add_read_sensor(rw.InverterReactivePowerQSAdjustment(remote_ems, plant_index, device_address))
-        self._add_read_sensor(rw.InverterPowerFactorAdjustment(remote_ems, plant_index, device_address))
+        self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
+        self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))
+        self._add_read_sensor(rw.InverterReactivePowerFixedValueAdjustment(plant_index, device_address))
+        self._add_read_sensor(rw.InverterActivePowerPercentageAdjustment(plant_index, device_address))
+        self._add_read_sensor(rw.InverterReactivePowerQSAdjustment(plant_index, device_address))
+        self._add_read_sensor(rw.InverterPowerFactorAdjustment(plant_index, device_address))
         self._add_writeonly_sensor(rw.InverterStatus(plant_index, device_address))
 
         lifetime_pv_energy = derived.InverterLifetimePVEnergy(plant_index, device_address, pv_power)
