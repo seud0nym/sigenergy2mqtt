@@ -145,6 +145,8 @@ class PlantConsumedPower(DerivedSensor):
             if self._debug_logging:
                 logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
             return  # until all values populated, can't do calculation
+        if self._debug_logging:
+            logging.debug(f"Publishing {self.__class__.__name__} - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         self.battery_power = None
@@ -163,7 +165,11 @@ class PlantConsumedPower(DerivedSensor):
             return False
         if self.battery_power is None or self.grid_sensor_active_power is None or self.pv_power is None:
             return False  # until all values populated, can't do calculation
-        self.set_latest_state(self.pv_power + self.grid_sensor_active_power - self.battery_power)
+        consumed_power = self.pv_power + self.grid_sensor_active_power - self.battery_power
+        if consumed_power < 0:
+            logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! (battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}) Adjusting to zero...")
+            consumed_power = 0
+        self.set_latest_state(consumed_power)
         return True
 
 
