@@ -704,6 +704,8 @@ class ReadOnlySensor(ModBusSensor, ReadableSensorMixin):
             else:
                 logging.error(f"{self.__class__.__name__} - Unknown input type '{self._input_type}'")
                 raise Exception(f"Unknown input type '{self._input_type}'")
+        except asyncio.CancelledError:
+            logging.info(f"{self.__class__.__name__} Modbus read interrupted")
         finally:
             lock.release()
         if Config.devices[self._plant_index].log_level == logging.DEBUG:
@@ -1701,10 +1703,9 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} notified of updated state {value} {self.unit}")
             self._state_now = (value if value is float else float(value)) * self.gain
-            source_state = self._source.latest_raw_state * self._source.gain
-            updated_midnight_state = source_state - self._state_now
+            updated_midnight_state = self._source.latest_raw_state - self._state_now
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} {source_state=} (from {self._source.unique_id}) {self._state_now=} {updated_midnight_state=}")
+                logging.debug(f"{self.__class__.__name__} {self._source.latest_raw_state=} (from {self._source.unique_id}) {self._state_now=} {updated_midnight_state=}")
             await self._update_state_at_midnight(updated_midnight_state)
             self.set_latest_state(self._state_now)
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({self._state_now=})")
