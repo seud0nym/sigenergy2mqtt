@@ -52,7 +52,7 @@ class PVOutputStatusService(Device):
                     if wait > 0:
                         await asyncio.sleep(sleep)
                 except asyncio.CancelledError:
-                    self._logger.debug("PVOutput Add Status Service sleep interrupted")
+                    self._logger.info("PVOutput Add Status Service sleep interrupted")
             self._logger.debug(f"PVOutput Add Status Service completed - flagged as offline ({self.online=})")
             return
 

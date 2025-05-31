@@ -82,7 +82,7 @@ class PVOutputOutputService(Device):
                         if wait > 0:
                             await asyncio.sleep(sleep)
                     except asyncio.CancelledError:
-                        self._logger.debug("PVOutput Add Output Service - Sleep interrupted")
+                        self._logger.info("PVOutput Add Output Service - Sleep interrupted")
                 else:
                     self._logger.info(f"PVOutput Add Output Service - No data to publish ({Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=})")
                     self.online = False
