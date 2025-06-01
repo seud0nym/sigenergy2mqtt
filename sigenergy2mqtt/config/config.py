@@ -56,12 +56,18 @@ class Config:
             "mqtt": {},
             "modbus": [{"smart-port": {"mqtt": [{}], "module": {}}}],
             "pvoutput": {},
+            "sensor-overrides": {},
         }
         for key, value in os.environ.items():
             if key.startswith("SIGENERGY2MQTT_") and key != "SIGENERGY2MQTT_CONFIG" and value is not None and value != "None":
                 logging.debug(f"Found env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 try:
                     match key:
+                        case const.SIGENERGY2MQTT_LOG_LEVEL:
+                            overrides["log-level"] = check_log_level(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_DEBUG_SENSOR:
+                            overrides["sensor-overrides"][check_string(os.environ[key], key, allow_empty=False, allow_none=False)] = {"debug-logging": True}
+                            overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
                             overrides["home-assistant"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
@@ -74,8 +80,6 @@ class Config:
                             overrides["home-assistant"]["discovery-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
                             overrides["home-assistant"]["unique-id-prefix"] = check_string(os.environ[key], key)
-                        case const.SIGENERGY2MQTT_LOG_LEVEL:
-                            overrides["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_HOST:
                             overrides["modbus"][0]["host"] = check_host(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_PORT:

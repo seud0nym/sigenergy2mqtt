@@ -46,6 +46,14 @@ _parser.add_argument(
     help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 _parser.add_argument(
+    "-d",
+    "--debug-sensor",
+    action="store",
+    dest=const.SIGENERGY2MQTT_DEBUG_SENSOR,
+    default=os.getenv(const.SIGENERGY2MQTT_DEBUG_SENSOR, None),
+    help="Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG",
+)
+_parser.add_argument(
     "--hass-enabled",
     action="store_true",
     dest=const.SIGENERGY2MQTT_HASS_ENABLED,
@@ -360,7 +368,7 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
-    ) and getattr(_args, arg) not in ["true", "True", True, 1]:
+    ) and getattr(_args, arg) not in ["true", "True", True, 1]:  # argparse will store false by default, so ignore unless actually specified (and therefore true)
         continue
     elif arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and getattr(_args, arg) in ["true", "True", True, 1]:
         apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_ONLY, "true")

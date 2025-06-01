@@ -258,19 +258,28 @@ Command line options override both environment variables and the configuration f
   -c [SIGENERGY2MQTT_CONFIG], --config [SIGENERGY2MQTT_CONFIG]
                         The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)
   -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+                        Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
+                        (warnings, errors and critical failures)
+  -d SIGENERGY2MQTT_DEBUG_SENSOR, --debug-sensor SIGENERGY2MQTT_DEBUG_SENSOR
+                        Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, 
+                        or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity 
+                        name. If specified, --debug-level is also forced to DEBUG
   --hass-enabled        Enable auto-discovery in Home Assistant.
   --hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]
                         The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
   --hass-entity-id-prefix [SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX]
-                        The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)
+                        The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs
+                         (default: sigen)
   --hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]
-                        The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER
-                        change it, as it will break existing entities in Home Assistant.
+                        The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs
+                         (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in 
+                         Home Assistant.
   --hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]
-                        The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')
+                        The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names 
+                        (default: '')
   --hass-discovery-only
-                        Exit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.
+                        Exit immediately after publishing discovery. Does not read values from the ModBus interface, 
+                        except to probe for device configuration.
   -b [SIGENERGY2MQTT_MQTT_BROKER], --mqtt-broker [SIGENERGY2MQTT_MQTT_BROKER]
                         The hostname or IP address of an MQTT broker (default: 127.0.0.1)
   --mqtt-port [SIGENERGY2MQTT_MQTT_PORT]
@@ -281,7 +290,8 @@ Command line options override both environment variables and the configuration f
   -p [SIGENERGY2MQTT_MQTT_PASSWORD], --mqtt-password [SIGENERGY2MQTT_MQTT_PASSWORD]
                         A valid password for the MQTT broker username
   --mqtt-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+                        Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
+                        Default is WARNING (warnings, errors and critical failures)
   -m [SIGENERGY2MQTT_MODBUS_HOST], --modbus-host [SIGENERGY2MQTT_MODBUS_HOST]
                         The hostname or IP address of the Sigenergy device
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]
@@ -292,11 +302,14 @@ Command line options override both environment variables and the configuration f
                         The Sigenergy AC Charger Modbus Device ID (Slave ID).
   --modbus-dccharger-slave [SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE]
                         The Sigenergy DC Charger Modbus Device ID (Slave ID).
-  --modbus-readonly     Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be published if specified.
+  --modbus-readonly     Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be 
+                        published if specified.
   --modbus-no-remote-ems
-                        Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.
+                        Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. 
+                        Ignored if --modbus-read-only is specified.
   --modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+                        Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
+                        Default is WARNING (warnings, errors and critical failures)
   --smartport-enabled   Enable interrogation of a third-party device for production data.
   --smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]
                         The name of the module which will be used to obtain third-party device production data.
@@ -311,7 +324,8 @@ Command line options override both environment variables and the configuration f
   --smartport-mqtt-topic [SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC]
                         The MQTT topic to which to subscribe to obtain the production data for the third-party device.
   --smartport-mqtt-gain [SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN]
-                        The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
+                        The gain to be applied to the production data for the third-party device obtained from the MQTT topic. 
+                        (e.g. 1000 if the data is in kW) Default is 1 (Watts).
   --pvoutput-enabled    Enable status updates to PVOutput.
   --pvoutput-api-key [SIGENERGY2MQTT_PVOUTPUT_API_KEY]
                         The API Key for PVOutput
@@ -322,7 +336,8 @@ Command line options override both environment variables and the configuration f
   --pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]
                         The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+                        Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
+                        (warnings, errors and critical failures)
   --clean               Publish empty discovery to delete existing devices, then exits immediately.
   -v, --version         Shows the version number, then exits immediately.
 ```
@@ -331,44 +346,84 @@ Command line options override both environment variables and the configuration f
 
 Environment variables override the configuration file, but *not* command line options.
 
-- `SIGENERGY2MQTT_CONFIG` : The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)
-- `SIGENERGY2MQTT_LOG_LEVEL` : Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
-- `SIGENERGY2MQTT_HASS_ENABLED` : Set to 'true' to enable auto-discovery in Home Assistant.
-- `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` : The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
-- `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` : The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)
-- `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX` : The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant.
-- `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` : The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')
-- `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`: Set to 'true' to e xit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.
-- `SIGENERGY2MQTT_MQTT_BROKER` : The hostname or IP address of an MQTT broker (default: 127.0.0.1)
-- `SIGENERGY2MQTT_MQTT_PORT` : The listening port of the MQTT broker (default: 1883)
-- `SIGENERGY2MQTT_MQTT_ANONYMOUS` : Set to 'true' to connect to MQTT anonymously (i.e. without username/password).
-- `SIGENERGY2MQTT_MQTT_USERNAME` : A valid username for the MQTT broker
-- `SIGENERGY2MQTT_MQTT_PASSWORD` : A valid password for the MQTT broker username
-- `SIGENERGY2MQTT_MQTT_LOG_LEVEL` : Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
-- `SIGENERGY2MQTT_MODBUS_HOST` : The hostname or IP address of the Sigenergy device
-- `SIGENERGY2MQTT_MODBUS_PORT` : The Sigenergy device Modbus port number (default: 502)
-- `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1)
-- `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` : The Sigenergy AC Charger Modbus Device ID (Slave ID).
-- `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : The Sigenergy DC Charger Modbus Device ID (Slave ID).
-- `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`: If true, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is false. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is false.
-- `SIGENERGY2MQTT_MODBUS_READ_ONLY` : If false, read-only entities will not be published to MQTT. Default is true.
-- `SIGENERGY2MQTT_MODBUS_READ_WRITE` : If false, read-write entities will not be published to MQTT. Default is true.
-- `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` : If false, write-only entities will not be published to MQTT. Default is true.
-- `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` : Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
-- `SIGENERGY2MQTT_SMARTPORT_ENABLED` : Enable interrogation of a third-party device for production data.
-- `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` : The name of the module which will be used to obtain third-party device production data.
-- `SIGENERGY2MQTT_SMARTPORT_HOST` : The IP address or hostname of the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_USERNAME` : The username to authenticate to the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_PASSWORD` : The password to authenticate to the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_PV_POWER` : The sensor class to hold the production data obtained from the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` : The MQTT topic to which to subscribe to obtain the production data for the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` : The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
-- `SIGENERGY2MQTT_PVOUTPUT_ENABLED` : Set to 'true' to enable status updates to PVOutput.
-- `SIGENERGY2MQTT_PVOUTPUT_API_KEY` : The API Key for PVOutput
-- `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` : The PVOutput System ID
-- `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` : Set to 'true' to enable sending consumption status to PVOutput.
-- `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` : The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
-- `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` : Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+- `SIGENERGY2MQTT_CONFIG` : 
+  - The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)
+- `SIGENERGY2MQTT_LOG_LEVEL` : 
+  - Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+- `SIGENERGY2MQTT_DEBUG_SENSOR` : 
+  - Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG
+- `SIGENERGY2MQTT_HASS_ENABLED` : 
+  - Set to 'true' to enable auto-discovery in Home Assistant.
+- `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` : 
+  - The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
+- `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` : 
+  - The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)
+- `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX` : 
+  - The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant.
+- `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` : 
+  - The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')
+- `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`: 
+  - Set to 'true' to e xit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.
+- `SIGENERGY2MQTT_MQTT_BROKER` : 
+  - The hostname or IP address of an MQTT broker (default: 127.0.0.1)
+- `SIGENERGY2MQTT_MQTT_PORT` : 
+  - The listening port of the MQTT broker (default: 1883)
+- `SIGENERGY2MQTT_MQTT_ANONYMOUS` : 
+  - Set to 'true' to connect to MQTT anonymously (i.e. without username/password).
+- `SIGENERGY2MQTT_MQTT_USERNAME` : 
+  - A valid username for the MQTT broker
+- `SIGENERGY2MQTT_MQTT_PASSWORD` : 
+  - A valid password for the MQTT broker username
+- `SIGENERGY2MQTT_MQTT_LOG_LEVEL` : 
+  - Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+- `SIGENERGY2MQTT_MODBUS_HOST` : 
+  - The hostname or IP address of the Sigenergy device
+- `SIGENERGY2MQTT_MODBUS_PORT` : 
+  - The Sigenergy device Modbus port number (default: 502)
+- `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : 
+  - The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1)
+- `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` : 
+  - The Sigenergy AC Charger Modbus Device ID (Slave ID).
+- `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : 
+  - The Sigenergy DC Charger Modbus Device ID (Slave ID).
+- `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`: 
+  - If true, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is false. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is false.
+- `SIGENERGY2MQTT_MODBUS_READ_ONLY` : 
+  - If false, read-only entities will not be published to MQTT. Default is true.
+- `SIGENERGY2MQTT_MODBUS_READ_WRITE` : 
+  - If false, read-write entities will not be published to MQTT. Default is true.
+- `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` : 
+  - If false, write-only entities will not be published to MQTT. Default is true.
+- `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` : 
+  - Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+- `SIGENERGY2MQTT_SMARTPORT_ENABLED` : 
+  - Enable interrogation of a third-party device for production data.
+- `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` : 
+  - The name of the module which will be used to obtain third-party device production data.
+- `SIGENERGY2MQTT_SMARTPORT_HOST` : 
+  - The IP address or hostname of the third-party device.
+- `SIGENERGY2MQTT_SMARTPORT_USERNAME` : 
+  - The username to authenticate to the third-party device.
+- `SIGENERGY2MQTT_SMARTPORT_PASSWORD` : 
+  - The password to authenticate to the third-party device.
+- `SIGENERGY2MQTT_SMARTPORT_PV_POWER` : 
+  - The sensor class to hold the production data obtained from the third-party device.
+- `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` : 
+  - The MQTT topic to which to subscribe to obtain the production data for the third-party device.
+- `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` : 
+  - The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
+- `SIGENERGY2MQTT_PVOUTPUT_ENABLED` : 
+  - Set to 'true' to enable status updates to PVOutput.
+- `SIGENERGY2MQTT_PVOUTPUT_API_KEY` : 
+  - The API Key for PVOutput
+- `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` : 
+  - The PVOutput System ID
+- `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` : 
+  - Set to 'true' to enable sending consumption status to PVOutput.
+- `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` : 
+  - The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
+- `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` : 
+  - Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
 
 ## Post-Installation
 
