@@ -32,6 +32,7 @@ fi
 
 echo -e "Updating version from \033[1;32m$old_version\033[0m to \033[1;32m$new_version\033[0m"
 sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
+[[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]] && sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
 
 rm -f dist/*
 
