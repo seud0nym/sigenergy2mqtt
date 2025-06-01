@@ -155,6 +155,6 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, inverter_
         remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
         assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
-    inverter = Inverter(plant_index, remote_ems, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware)
+    inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware)
     inverter.via_device = plant.unique_id
     return inverter, inverter_type, plant, remote_ems
