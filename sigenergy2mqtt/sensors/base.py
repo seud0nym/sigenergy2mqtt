@@ -1811,6 +1811,8 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
             if self._debug_logging:
                 logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - {[value.value for value in self._topics.values()]}")
             return  # until all values populated, can't do calculation
+        if self._debug_logging:
+            logging.debug(f"Publishing {self.__class__.__name__} READY - {[value.value for value in self._topics.values()]}")
         await super().publish(mqtt, modbus, republish=True)
         # reset internal values to missing for next calculation
         if self._debug_logging:

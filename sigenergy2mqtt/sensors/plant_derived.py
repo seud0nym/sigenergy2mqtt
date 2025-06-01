@@ -147,7 +147,7 @@ class PlantConsumedPower(DerivedSensor):
                 logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(f"Publishing {self.__class__.__name__} - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
+            logging.debug(f"Publishing {self.__class__.__name__} READY - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         self.battery_power = None
@@ -233,7 +233,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
                 logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - {self._sources=}")
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(f"Publishing {self.__class__.__name__} - {self._sources=}")
+            logging.debug(f"Publishing {self.__class__.__name__} READY - {self._sources=}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         for value in self._sources.values():

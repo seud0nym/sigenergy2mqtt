@@ -28,7 +28,7 @@ class PVString(ModBusDevice):
 
         voltage = PVVoltageSensor(plant_index, device_address, voltage_address, string_number)
         current = PVCurrentSensor(plant_index, device_address, current_address, string_number)
-        power = PVStringPower(plant_index, device_address, string_number)
+        power = PVStringPower(plant_index, device_address, string_number, voltage, current)
         lifetime_energy = PVStringLifetimeEnergy(plant_index, device_address, string_number, power)
         daily_energy = PVStringDailyEnergy(plant_index, device_address, string_number, lifetime_energy)
 

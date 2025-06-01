@@ -78,7 +78,7 @@ class InverterDailyPVEnergy(EnergyDailyAccumulationSensor):
 
 
 class PVStringPower(DerivedSensor):
-    def __init__(self, plant_index: int, device_address: int, string_number: int):
+    def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):
         super().__init__(
             name="Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
@@ -90,8 +90,10 @@ class PVStringPower(DerivedSensor):
             gain=None,
             precision=2,
         )
-        self.voltage: float = None
         self.current: float = None
+        self.current_gain: float = current.gain
+        self.voltage: float = None
+        self.voltage_gain: float = voltage.gain
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
         """Publishes this sensor.
@@ -105,6 +107,8 @@ class PVStringPower(DerivedSensor):
             if self._debug_logging:
                 logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - current={self.current} voltage={self.voltage}")
             return  # until all values populated, can't do calculation
+        if self._debug_logging:
+            logging.debug(f"Publishing {self.__class__.__name__} READY - current={self.current} voltage={self.voltage}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         self.voltage = None
@@ -112,9 +116,9 @@ class PVStringPower(DerivedSensor):
 
     def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
         if issubclass(type(sensor), PVVoltageSensor):
-            self.voltage = values[-1][1]
+            self.voltage = values[-1][1] / self.voltage_gain
         elif issubclass(type(sensor), PVCurrentSensor):
-            self.current = values[-1][1]
+            self.current = values[-1][1] / self.current_gain
         else:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
