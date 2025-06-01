@@ -2,6 +2,22 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
+python3 -c '
+import asyncio
+import logging
+from sigenergy2mqtt.sensors.doc import instances
+logging.getLogger("root").setLevel(logging.WARNING)
+async def check():
+    print("Checking sensors")
+    await instances.get_sensor_instances(hass=True)
+    await instances.get_sensor_instances(hass=False)
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(check())
+    instances.cancel_sensor_futures()
+    loop.close()
+' || exit
+
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
 new_version=$(date +"%Y.%-m.%-d")
 
@@ -14,11 +30,12 @@ if [[ $old_version =~ ^"$new_version" ]]; then
     fi
 fi
 
+echo -e "Updating version from \033[1;32m$old_version\033[0m to \033[1;32m$new_version\033[0m"
 sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
 
 rm -f dist/*
 
-python3 -m build
-python3 -m twine check dist/*
+python3 -m build || exit
+python3 -m twine check dist/* || exit
 
 [[ "$1" == "docker" ]] && docker build -t sigenergy2mqtt .

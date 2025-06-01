@@ -2,21 +2,9 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
-old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
-new_version=$(date +"%Y.%-m.%-d")
-
-if [[ $old_version =~ ^"$new_version" ]]; then
-    post=$(echo $old_version | cut -d'-' -f2)
-    if [[ $post =~ ^[0-9]+$ ]]; then
-        new_version="${new_version}-$((post + 1))"
-    else
-        new_version="${new_version}-1"
-    fi
-fi
-
-sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
+git restore sigenergy2mqtt/config/version.py
+. $(dirname $0)/build
 git add sigenergy2mqtt/config/version.py
-
 git commit -m "Bump version to $new_version"
 git tag "$new_version"
 git push && git push --tags
