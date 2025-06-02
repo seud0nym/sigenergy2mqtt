@@ -1,9 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, is_dataclass
+from pathlib import Path
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.mqtt import MqttClient
 from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
+import json
 import logging
 import requests
 import time
@@ -17,21 +19,57 @@ class Topic:
     timestamp: time.struct_time = None
 
 
+def topic_decoder(obj):
+    if "topic" in obj and "gain" in obj and "state" in obj and "timestamp" in obj:
+        return Topic(**obj)
+    return obj
+
+
+def topic_encoder(obj):
+    if is_dataclass(obj):
+        return asdict(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
 class PVOutputOutputService(Device):
     def __init__(self, plant_index: int, logger: logging.Logger):
         super().__init__("PVOutput Add Output service", plant_index, "pvoutput_output", "sigenergy2mqtt", "pvoutput.Output")
         self._logger = logger
+        self._lock = asyncio.Lock()
+
         self._consumption: dict[str, Topic] = dict()
         self._exports: dict[str, Topic] = dict()
         self._generation: dict[str, Topic] = dict()
-        self._power: dict[str, Topic] = dict()
-        self._lock = asyncio.Lock()
+        self._power: dict[str, Topic]
+
+        self._persistent_state_file = Path(Config.persistent_state_path, f"pvoutput_output_{plant_index}-peak_power.state")
+        if self._persistent_state_file.is_file():
+            fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
+            now = time.localtime()
+            if fmt.tm_year == now.tm_year and fmt.tm_mon == now.tm_mon and fmt.tm_mday == now.tm_mday:
+                with self._persistent_state_file.open("r") as f:
+                    try:
+                        self._power = json.load(f, object_hook=topic_decoder)
+                        self._logger.info(f"PVOutput Add Output Service - Loaded {self._persistent_state_file}")
+                    except ValueError as error:
+                        self._logger.warning(f"PVOutput Add Output Service - Failed to read {self._persistent_state_file}: {error}")
+            else:
+                self._logger.info(f"PVOutput Add Output Service - Ignored {self._persistent_state_file} because it is stale ({fmt})")
+                self._persistent_state_file.unlink(missing_ok=True)
+        else:
+            self._power = dict()
+            self._logger.debug(f"PVOutput Add Output Service - Persistent state file {self._persistent_state_file} not found")
+
+    # region Device overrides
 
     def publish_availability(self, mqtt: MqttClient, ha_state, qos=2):
         pass
 
     def publish_discovery(self, mqtt: MqttClient, force_publish=True, clean=False):
         pass
+
+    # endregion
+    # region Registrations
 
     def register_consumption(self, topic: str, gain: float) -> None:
         if Config.pvoutput.consumption:
@@ -49,7 +87,9 @@ class PVOutputOutputService(Device):
         if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
             self._generation[topic] = Topic(topic, gain)
         else:
-            self._logger.info(f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=}")
+            self._logger.info(
+                f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=}"
+            )
 
     def register_power(self, topic: str, gain: float) -> None:
         if Config.pvoutput.peak_power:
@@ -59,6 +99,8 @@ class PVOutputOutputService(Device):
                 self._logger.warning("PVOutput Add Output Service - DISABLED peak-power reporting: Cannot determine peak power from multiple systems")
         else:
             self._logger.info(f"PVOutput Add Output Service - Ignored subscription request for '{topic}' because {Config.pvoutput.peak_power=}")
+
+    # endregion
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
         def seconds_until_publish():
@@ -153,45 +195,38 @@ class PVOutputOutputService(Device):
 
     async def set_consumption(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
         if Config.pvoutput.consumption:
-            if Config.sensor_debug_logging:
-                self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
+            self._logger.debug(f"PVOutput Add Output Service - set_consumption from '{topic}' {value=}")
             async with self._lock:
                 self._consumption[topic].state = value if isinstance(value, float) else float(value)
                 self._consumption[topic].timestamp = time.localtime()
-        elif Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_consumption from '{topic}' {value=} because {Config.pvoutput.consumption=}")
 
     async def set_exported(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
         if Config.pvoutput.exports:
-            if Config.sensor_debug_logging:
-                self._logger.debug(f"PVOutput Add Output Service - set_exported from '{topic}' {value=}")
+            self._logger.debug(f"PVOutput Add Output Service - set_exported from '{topic}' {value=}")
             async with self._lock:
                 self._exports[topic].state = value if isinstance(value, float) else float(value)
                 self._exports[topic].timestamp = time.localtime()
-        elif Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_exported from '{topic}' {value=} because {Config.pvoutput.exports=}")
 
     async def set_generation(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
         if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
-            if Config.sensor_debug_logging:
-                self._logger.debug(f"PVOutput Add Output Service - set_generation from '{topic}' {value=}")
+            self._logger.debug(f"PVOutput Add Output Service - set_generation from '{topic}' {value=}")
             async with self._lock:
                 self._generation[topic].state = value if isinstance(value, float) else float(value)
                 self._generation[topic].timestamp = time.localtime()
-        elif Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_exported from '{topic}' {value=} because {Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=}")
 
     async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
         if Config.pvoutput.peak_power:
-            if Config.sensor_debug_logging:
+            power = value if isinstance(value, float) else float(value)
+            if self._power[topic].state < power:
                 self._logger.debug(f"PVOutput Add Output Service - set_power from '{topic}' {value=}")
-            async with self._lock:
-                power = value if isinstance(value, float) else float(value)
-                if self._power[topic].state < power:
+                async with self._lock:
                     self._power[topic].state = power
                     self._power[topic].timestamp = time.localtime()
-        elif Config.sensor_debug_logging:
-            self._logger.debug(f"PVOutput Add Output Service - Ignoring set_exported from '{topic}' {value=} because {Config.pvoutput.peak_power=}")
+                    with self._persistent_state_file.open("w") as f:
+                        json.dump(self._power, f, default=topic_encoder)
+            else:
+                self._logger.debug(f"PVOutput Add Output Service - Ignored set_power from '{topic}' because {value=} < {self._power[topic].state=}")
+
 
     def subscribe(self, mqtt, mqtt_handler):
         for topic in self._consumption.keys():
