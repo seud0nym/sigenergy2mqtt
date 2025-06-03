@@ -19,6 +19,7 @@ class PVOutputConfiguration:
     output_hour: int = 21
  
     log_level: int = logging.WARNING
+    update_debug_logging: bool = False
 
     testing: bool = False
 
@@ -52,6 +53,8 @@ class PVOutputConfiguration:
                             self.system_id = check_string(str(value), "pvoutput.system-id", allow_none=(not self.enabled), allow_empty=(not self.enabled))
                         case "testing":
                             self.testing = check_bool(value, f"pvoutput.{field}")
+                        case "update-debug-logging":
+                            self.update_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case _:
                             if field != "enabled":
                                 raise ValueError(f"pvoutput configuration element contains unknown option '{field}'")
