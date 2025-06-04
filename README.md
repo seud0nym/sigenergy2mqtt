@@ -277,7 +277,7 @@ Command line options override both environment variables and the configuration f
                         The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names 
                         (default: '')
   --hass-discovery-only
-                        Exit immediately after publishing discovery. Does not read values from the ModBus interface, 
+                        Exit immediately after publishing discovery. Does not read values from the Modbus interface, 
                         except to probe for device configuration.
   -b [SIGENERGY2MQTT_MQTT_BROKER], --mqtt-broker [SIGENERGY2MQTT_MQTT_BROKER]
                         The hostname or IP address of an MQTT broker (default: 127.0.0.1)
@@ -362,7 +362,7 @@ Environment variables override the configuration file, but *not* command line op
 - `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` : 
   - The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')
 - `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`: 
-  - Set to 'true' to e xit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.
+  - Set to 'true' to e xit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.
 - `SIGENERGY2MQTT_MQTT_BROKER` : 
   - The hostname or IP address of an MQTT broker (default: 127.0.0.1)
 - `SIGENERGY2MQTT_MQTT_PORT` : 
