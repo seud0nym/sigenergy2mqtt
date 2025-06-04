@@ -51,7 +51,7 @@ async def async_main() -> None:
     configs: list[HostConfig] = HostConfigFactory.get_configs()
 
     if Config.pvoutput.enabled and not Config.clean:
-        configs.append(get_pvoutput_host_config(configs, plant_index+1))
+        configs.append(get_pvoutput_host_config(configs, max(9, plant_index + 1)))
 
     def exit_on_signal(caught, frame):
         logging.info(f"Shutdown commenced - Signal {caught} received")
@@ -128,9 +128,9 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, inverter_
     pv_string_count = await strings.get_state(modbus=modbus)
     output_type_state = await output_type.get_state(raw=True, modbus=modbus)
     match output_type_state:
-        case 0: # L/N
+        case 0:  # L/N
             power_phases = 1
-        case 3: # L1/L2/N
+        case 3:  # L1/L2/N
             power_phases = 2
         case _:
             power_phases = 3
