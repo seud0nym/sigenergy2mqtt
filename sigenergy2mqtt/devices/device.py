@@ -56,7 +56,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     @property
     def online(self) -> bool:
         return self._online
-    
+
     @property
     def registers(self) -> RegisterAccess:
         return self._registers
@@ -64,9 +64,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     @online.setter
     def online(self, value: bool | asyncio.Future) -> None:
         if isinstance(value, bool):
-            if value: # True
+            if value:  # True
                 raise ValueError("online must be a Future to enable")
-            else: # False
+            else:  # False
                 logging.debug(f"{self.name} set to offline")
                 for sensor in self.sensors.values():
                     if sensor.sleeper_task is not None:
@@ -77,7 +77,8 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"{self.name} set to online ({value})")
             self._online = value
         else:
-           raise ValueError("online must be a Future or False")
+            raise ValueError("online must be a Future or False")
+
     @property
     def sensors(self) -> Dict[str, Sensor]:
         return self._all_sensors
@@ -167,7 +168,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         for device in self._children:
             device.publish_availability(mqtt, ha_state)
 
-    def publish_discovery(self, mqtt: MqttClient, force_publish: bool = True, clean: bool = False) -> List[Any]:
+    def publish_discovery(self, mqtt: MqttClient, force_publish: bool = True, clean: bool = False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         components = {}
         for sensor in self.sensors.values():
@@ -189,31 +190,10 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"Publishing empty discovery for {self.name} (No components found)")
             info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
         for device in self._children:
-            info = device.publish_discovery(mqtt)
+            device.publish_discovery(mqtt)
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt)
         return info
-
-    def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
-        mqtt_handler.register(mqtt, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
-        for sensor in self.sensors.values():
-            if isinstance(sensor, WritableSensorMixin):
-                try:
-                    mqtt_handler.register(mqtt, sensor.command_topic, sensor.set_value)
-                    if sensor.debug_logging:
-                        logging.debug(f"Sensor {sensor.name} subscribed to topic {sensor.command_topic} for writing")
-                except Exception as e:
-                    logging.error(f"Sensor {sensor.name} failed to subscribe to topic {sensor.command_topic}: {e}")
-            if isinstance(sensor, ObservableMixin):
-                for topic in sensor.observable_topics():
-                    try:
-                        mqtt_handler.register(mqtt, topic, sensor.notify)
-                        if sensor.debug_logging:
-                            logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification")
-                    except Exception as e:
-                        logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {e}")
-        for device in self._children:
-            device.subscribe(mqtt, mqtt_handler)
 
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
         async def publish_updates(modbus: ModbusClient, mqtt: MqttClient, *sensors: Sensor) -> None:
@@ -318,6 +298,27 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         if Config.home_assistant.enabled and Config.home_assistant.republish_discovery_interval > 0:
             tasks.append(republish_discovery(mqtt))
         return tasks
+
+    def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
+        mqtt_handler.register(mqtt, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
+        for sensor in self.sensors.values():
+            if isinstance(sensor, WritableSensorMixin):
+                try:
+                    mqtt_handler.register(mqtt, sensor.command_topic, sensor.set_value)
+                    if sensor.debug_logging:
+                        logging.debug(f"Sensor {sensor.name} subscribed to topic {sensor.command_topic} for writing")
+                except Exception as e:
+                    logging.error(f"Sensor {sensor.name} failed to subscribe to topic {sensor.command_topic}: {e}")
+            if isinstance(sensor, ObservableMixin):
+                for topic in sensor.observable_topics():
+                    try:
+                        mqtt_handler.register(mqtt, topic, sensor.notify)
+                        if sensor.debug_logging:
+                            logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification")
+                    except Exception as e:
+                        logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {e}")
+        for device in self._children:
+            device.subscribe(mqtt, mqtt_handler)
 
 
 class ModbusDevice(Device, metaclass=abc.ABCMeta):
