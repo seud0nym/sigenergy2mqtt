@@ -9,7 +9,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.config import Config, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.modbus import LockFactory
+from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient
 from typing import Any, Coroutine, Dict, Final
 import abc
@@ -601,7 +601,10 @@ class ModBusSensor(Sensor):
         return None if self._data_type == ModbusClient.DATATYPE.STRING else 1 if self._gain is None else self._gain
 
     def _check_register_response(self, rr: any, source: str) -> bool:
-        if rr.isError() or isinstance(rr, ExceptionResponse):
+        if rr is None:
+            logging.error(f"{self.__class__.__name__} Modbus {source} failed to read registers (None response)")
+            return False
+        elif rr.isError() or isinstance(rr, ExceptionResponse):
             match rr.exception_code:
                 case 1:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x01 ILLEGAL FUNCTION")
@@ -698,20 +701,21 @@ class ReadOnlySensor(ModBusSensor, ReadableSensorMixin):
         if Config.devices[self._plant_index].log_level == logging.DEBUG:
             logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address})")
             start = time.time()
-        lock = LockFactory.get_lock(modbus)
         try:
-            await lock.acquire()
-            if self._input_type == InputType.HOLDING:
-                rr = await modbus.read_holding_registers(self._address, count=self._count, slave=self._device_address)
-            elif self._input_type == InputType.INPUT:
-                rr = await modbus.read_input_registers(self._address, count=self._count, slave=self._device_address)
-            else:
-                logging.error(f"{self.__class__.__name__} - Unknown input type '{self._input_type}'")
-                raise Exception(f"Unknown input type '{self._input_type}'")
+            async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(self._scan_interval):
+                if self._input_type == InputType.HOLDING:
+                    rr = await modbus.read_holding_registers(self._address, count=self._count, slave=self._device_address)
+                elif self._input_type == InputType.INPUT:
+                    rr = await modbus.read_input_registers(self._address, count=self._count, slave=self._device_address)
+                else:
+                    logging.error(f"{self.__class__.__name__} - Unknown input type '{self._input_type}'")
+                    raise Exception(f"Unknown input type '{self._input_type}'")
         except asyncio.CancelledError:
-            logging.info(f"{self.__class__.__name__} Modbus read interrupted")
-        finally:
-            lock.release()
+            logging.warning(f"{self.__class__.__name__} Modbus read interrupted")
+            result = False
+        except asyncio.TimeoutError:
+            logging.warning(f"{self.__class__.__name__} Modbus read failed to acquire lock within {self._scan_interval}s")
+            result = False
         if Config.devices[self._plant_index].log_level == logging.DEBUG:
             elapsed = time.time() - start
             logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) took {elapsed:.3f}s")

@@ -23,33 +23,28 @@ async def async_main() -> None:
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
             config: HostConfig = HostConfigFactory.get_config(device.host, device.port)
             modbus = ModbusClient(device.host, port=device.port, framer=FramerType.SOCKET)
-            await modbus.connect()
-            assert modbus.connected
-            logging.info(f"Connected to Modbus interface at {device.host}:{device.port} for register probing")
             async with modbus:
-                try:
-                    inverter_type: HybridInverter | PVInverter = None  # Flag to indicate whether Plant has been created, so that it is only created with first inverter
-                    inverters: dict[int, str] = {}
-                    for device_address in device.inverters:
-                        inverter, inverter_type, plant, remote_ems = await make_plant_and_inverter(
-                            plant_index,
-                            modbus,
-                            device_address,
-                            inverter_type,
-                        )
-                        inverters[device_address] = inverter.unique_id
-                        config.add_device(plant_index, plant)
-                        config.add_device(plant_index, inverter)
-                        plant.add_ess_accumulation_sensors(plant_index, *[host.device for host in config._devices if isinstance(host.device, Inverter)])
-                    for device_address in device.dc_chargers:
-                        charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
-                        config.add_device(plant_index, charger)
-                    for device_address in device.ac_chargers:
-                        charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
-                        config.add_device(plant_index, charger)
-                finally:
-                    logging.info(f"Disconnecting from Modbus interface at {device.host}:{device.port} - register probing complete")
-                    modbus.close()
+                logging.info(f"Connected to Modbus interface at {device.host}:{device.port} for register probing")
+                inverter_type: HybridInverter | PVInverter = None  # Flag to indicate whether Plant has been created, so that it is only created with first inverter
+                inverters: dict[int, str] = {}
+                for device_address in device.inverters:
+                    inverter, inverter_type, plant, remote_ems = await make_plant_and_inverter(
+                        plant_index,
+                        modbus,
+                        device_address,
+                        inverter_type,
+                    )
+                    inverters[device_address] = inverter.unique_id
+                    config.add_device(plant_index, plant)
+                    config.add_device(plant_index, inverter)
+                    plant.add_ess_accumulation_sensors(plant_index, *[host.device for host in config._devices if isinstance(host.device, Inverter)])
+                for device_address in device.dc_chargers:
+                    charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
+                    config.add_device(plant_index, charger)
+                for device_address in device.ac_chargers:
+                    charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
+                    config.add_device(plant_index, charger)
+                logging.info(f"Disconnecting from Modbus interface at {device.host}:{device.port} - register probing complete")
         else:
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
 

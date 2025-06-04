@@ -262,18 +262,16 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                             wait = interval
                         except ModbusException as e:
                             lock = LockFactory.get_lock(modbus)
-                            try:
-                                await lock.acquire()
+                            logging.info(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
+                            async with lock.acquire_with_timeout(timeout=None):
                                 if not modbus.connected and self.online:
-                                    logging.info(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Attempting to reconnect...")
+                                    logging.info(f"{self.name} Sensor Scan Group [{names}] attempting to reconnect to Modbus...")
                                     while not modbus.connected:
                                         modbus.close()
                                         await asyncio.sleep(0.5)
                                         await modbus.connect()
                                         await asyncio.sleep(1)
                                     logging.info(f"{self.name} Sensor Scan Group [{names}] reconnected to Modbus")
-                            finally:
-                                lock.release()
                     sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
                     if wait > 0:
