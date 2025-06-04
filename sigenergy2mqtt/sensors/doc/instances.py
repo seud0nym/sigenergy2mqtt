@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, ModBusSensor, EnergyDailyAccumulationSensor
+from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, ModbusSensor, EnergyDailyAccumulationSensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
@@ -94,7 +94,7 @@ async def get_sensor_instances(hass: bool = False):
                 find_concrete_classes(c)
 
     def add_sensor_instance(s):
-        if isinstance(s, ModBusSensor):
+        if isinstance(s, ModbusSensor):
             key = s._address
         else:
             key = s.__class__.__name__

@@ -3,7 +3,7 @@ from pymodbus import ModbusException
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from random import randint, uniform
 from sigenergy2mqtt.config import Config, RegisterAccess
-from sigenergy2mqtt.modbus import LockFactory
+from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Self
@@ -261,7 +261,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                 logging.warning(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
                             wait = interval
                         except ModbusException as e:
-                            lock = LockFactory.get_lock(modbus)
+                            lock = ModbusLockFactory.get_lock(modbus)
                             logging.info(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
                             async with lock.acquire_with_timeout(timeout=None):
                                 if not modbus.connected and self.online:
@@ -320,7 +320,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         return tasks
 
 
-class ModBusDevice(Device, metaclass=abc.ABCMeta):
+class ModbusDevice(Device, metaclass=abc.ABCMeta):
     """Abstract definition of a Sigenergy device"""
 
     def __init__(

@@ -1,4 +1,4 @@
-from .base import DeviceClass, EnergyDailyAccumulationSensor, PVCurrentSensor, PVVoltageSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModBusSensor
+from .base import DeviceClass, EnergyDailyAccumulationSensor, PVCurrentSensor, PVVoltageSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor
 from .const import UnitOfPower
 from .inverter_read_only import ChargeDischargePower, InverterPVPower
 from sigenergy2mqtt.config import Config
@@ -21,7 +21,7 @@ class InverterBatteryChargingPower(DerivedSensor):
             precision=2,
         )
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -45,7 +45,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
             precision=2,
         )
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -114,7 +114,7 @@ class PVStringPower(DerivedSensor):
         self.voltage = None
         self.current = None
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if issubclass(type(sensor), PVVoltageSensor):
             self.voltage = values[-1][1] / self.voltage_gain
         elif issubclass(type(sensor), PVCurrentSensor):

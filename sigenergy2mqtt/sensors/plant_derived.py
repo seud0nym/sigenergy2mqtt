@@ -8,7 +8,7 @@ from .base import (
     StateClass,
     EnergyLifetimeAccumulationSensor,
     DerivedSensor,
-    ModBusSensor,
+    ModbusSensor,
 )
 from .const import UnitOfPower
 from .plant_read_only import BatteryPower, GridSensorActivePower, PlantPVPower
@@ -34,7 +34,7 @@ class BatteryChargingPower(DerivedSensor):
             precision=2,
         )
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -58,7 +58,7 @@ class BatteryDischargingPower(DerivedSensor):
             precision=2,
         )
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -82,7 +82,7 @@ class GridSensorExportPower(DerivedSensor):
             precision=active_power.precision,
         )
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -106,7 +106,7 @@ class GridSensorImportPower(DerivedSensor):
             precision=active_power.precision,
         )
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -154,7 +154,7 @@ class PlantConsumedPower(DerivedSensor):
         self.grid_sensor_active_power = None
         self.pv_power = None
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if issubclass(type(sensor), BatteryPower):
             self.battery_power = values[-1][1]
         elif issubclass(type(sensor), GridSensorActivePower):
@@ -246,7 +246,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source")
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not isinstance(sensor, PVPowerSensor):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False

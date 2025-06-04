@@ -1,10 +1,10 @@
-from .device import ModBusDevice
+from .device import ModbusDevice
 from sigenergy2mqtt.sensors.base import RemoteEMSMixin
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
 
 
-class DCCharger(ModBusDevice):
+class DCCharger(ModbusDevice):
     def __init__(self, plant_index: int, device_address: int, remote_ems: RemoteEMSMixin):
         super().__init__(None, "Sigenergy DC Charger", plant_index, device_address, "DC Charger")
 

@@ -1,10 +1,10 @@
-from .device import ModBusDevice
+from .device import ModbusDevice
 from sigenergy2mqtt.sensors.base import RemoteEMSMixin
 import sigenergy2mqtt.sensors.ac_charger_read_only as ro
 import sigenergy2mqtt.sensors.ac_charger_read_write as rw
 
 
-class ACCharger(ModBusDevice):
+class ACCharger(ModbusDevice):
     def __init__(
         self,
         plant_index: int,

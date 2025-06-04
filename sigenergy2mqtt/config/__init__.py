@@ -96,7 +96,7 @@ _parser.add_argument(
     "--hass-discovery-only",
     action="store_true",
     dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY,
-    help="Exit immediately after publishing discovery. Does not read values from the ModBus interface, except to probe for device configuration.",
+    help="Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.",
 )
 _parser.add_argument(
     "-b",

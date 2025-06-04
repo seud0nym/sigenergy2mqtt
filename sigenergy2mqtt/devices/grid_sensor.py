@@ -1,9 +1,9 @@
-from .device import ModBusDevice, DeviceType
+from .device import ModbusDevice, DeviceType
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 
 
-class GridSensor(ModBusDevice):
+class GridSensor(ModbusDevice):
     def __init__(
         self,
         plant_index: int,

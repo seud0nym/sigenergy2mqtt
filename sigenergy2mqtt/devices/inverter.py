@@ -1,4 +1,4 @@
-from .device import ModBusDevice
+from .device import ModbusDevice
 from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
 from sigenergy2mqtt.devices.types import DeviceType
@@ -8,7 +8,7 @@ import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
 
 
-class Inverter(ModBusDevice):
+class Inverter(ModbusDevice):
     def __init__(
         self,
         plant_index: int,

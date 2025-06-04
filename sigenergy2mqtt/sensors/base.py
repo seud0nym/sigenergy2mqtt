@@ -551,7 +551,7 @@ class DerivedSensor(Sensor):
         pass
 
 
-class ModBusSensor(Sensor):
+class ModbusSensor(Sensor):
     """Superclass of all Modbus sensor definitions"""
 
     def __init__(
@@ -655,7 +655,7 @@ class ReadableSensorMixin(abc.ABC):
         return self._scan_interval
 
 
-class ReadOnlySensor(ModBusSensor, ReadableSensorMixin):
+class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
     """Superclass of all read-only sensor definitions"""
 
     def __init__(
@@ -676,7 +676,7 @@ class ReadOnlySensor(ModBusSensor, ReadableSensorMixin):
         gain: float,
         precision: int,
     ):
-        ModBusSensor.__init__(self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision)
+        ModbusSensor.__init__(self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision)
         ReadableSensorMixin.__init__(self, scan_interval)
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception:
@@ -833,7 +833,7 @@ class ObservableMixin(abc.ABC):
         return set()
 
 
-class WritableSensorMixin(ModBusSensor):
+class WritableSensorMixin(ModbusSensor):
     @property
     def command_topic(self) -> str:
         topic: str = self["command_topic"]
@@ -1625,7 +1625,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         else:
             return False
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if sensor is not self._source:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -1727,7 +1727,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             await self._update_state_at_midnight(self._state_at_midnight)
         return await super().publish(mqtt, modbus, republish)
 
-    def set_source_values(self, sensor: ModBusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if sensor is not self._source:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False

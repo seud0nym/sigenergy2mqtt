@@ -1,10 +1,10 @@
-from .device import ModBusDevice, DeviceType
+from .device import ModbusDevice, DeviceType
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.sensors.base import PVCurrentSensor, PVVoltageSensor
 from sigenergy2mqtt.sensors.inverter_derived import PVStringPower, PVStringDailyEnergy, PVStringLifetimeEnergy
 
 
-class PVString(ModBusDevice):
+class PVString(ModbusDevice):
     def __init__(
         self,
         plant_index: int,

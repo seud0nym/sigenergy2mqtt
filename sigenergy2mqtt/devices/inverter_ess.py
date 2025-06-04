@@ -1,10 +1,10 @@
-from .device import ModBusDevice, DeviceType
+from .device import ModbusDevice, DeviceType
 from sigenergy2mqtt.config import Config
 import sigenergy2mqtt.sensors.inverter_derived as derived
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 
 
-class ESS(ModBusDevice):
+class ESS(ModbusDevice):
     def __init__(
         self,
         plant_index: int,

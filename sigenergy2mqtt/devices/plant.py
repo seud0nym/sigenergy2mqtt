@@ -1,4 +1,4 @@
-from .device import ModBusDevice
+from .device import ModbusDevice
 from .grid_sensor import GridSensor
 from .types import DeviceType
 from sigenergy2mqtt.config import Config, SIGENERGY_MODBUS_PROTOCOL
@@ -11,7 +11,7 @@ import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
 
 
-class PowerPlant(ModBusDevice):
+class PowerPlant(ModbusDevice):
     def __init__(
         self,
         plant_index: int,
