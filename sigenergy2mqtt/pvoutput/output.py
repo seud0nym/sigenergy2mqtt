@@ -61,8 +61,8 @@ class PVOutputOutputService(Service):
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
+            self.logger.debug(f"{self.__class__.__name__} - Commenced (Updating at {Config.pvoutput.output_hour}:45)")
             wait = self.seconds_until_daily_output_upload()
-            self.logger.debug(f"{self.__class__.__name__} - Commenced ({time.strftime('%H:%M:%S', time.localtime(time.time() + wait))} is in {wait} seconds)")
             while self.online:
                 if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
                     try:

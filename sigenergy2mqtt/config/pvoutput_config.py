@@ -46,7 +46,7 @@ class PVOutputConfiguration:
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
                         case "output-hour":
-                            self.output_hour = check_int(value, f"pvoutput.{field}", min=20, max=23)
+                            self.output_hour = check_int(value, f"pvoutput.{field}", min=0 if self.testing else 20, max=23)
                         case "peak-power":
                             self.peak_power = check_bool(value, f"pvoutput.{field}")
                         case "system-id":

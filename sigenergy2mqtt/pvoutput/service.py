@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass, is_dataclass
+from datetime import datetime, timedelta
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
@@ -76,32 +77,34 @@ class Service(Device):
     # endregion
 
     def seconds_until_daily_output_upload(self) -> float:
-        if Config.pvoutput.testing:
-            return 60.0
-        else:
-            current_time = time.localtime()
-            publish_time = time.mktime(
-                (current_time.tm_year, current_time.tm_mon, current_time.tm_mday, Config.pvoutput.output_hour, 45, 0, current_time.tm_wday, current_time.tm_yday, current_time.tm_isdst)
-            )
-            return publish_time - time.mktime(current_time)
+        t = time.localtime()
+        now = time.mktime(t)
+        next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, 45, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
+        if next <= now:
+            today = datetime.fromtimestamp(next)
+            tomorrow = today + timedelta(days=1)
+            next = tomorrow.timestamp()
+        seconds = 60 if Config.pvoutput.testing else next - now
+        self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({seconds}s)")
+        return seconds
 
     def seconds_until_status_upload(self) -> float:
-        if Config.pvoutput.testing:
-            return 60.0
-        else:
-            return float(Config.pvoutput.interval_minutes * 60)
+        seconds = 60 if Config.pvoutput.testing else float(Config.pvoutput.interval_minutes * 60)
+        self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + seconds))} ({seconds}s)")
+        return seconds        
 
     async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
         for i in range(1, 4, 1):
             try:
                 self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} to {url} with {payload=}")
                 if Config.pvoutput.testing:
-                    self.logger.debug("{self.__class__.__name__} - Testing mode, not sending request")
+                    self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} Testing mode, not sending request")
                     break
                 else:
                     with requests.post(url, headers=self.request_headers, data=payload, timeout=10) as response:
                         if response.status_code == 200:
-                            self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} {response.status_code=} {response.headers=}")
+                            self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} OKAY {response.status_code=} {response.headers=}")
+                            break
                         else:
                             self.logger.warning(f"{self.__class__.__name__} - Attempt #{i} FAILED {response.status_code=} {response.reason=}")
                         reset = round(float(response.headers["X-Rate-Limit-Reset"]) - time.time())
