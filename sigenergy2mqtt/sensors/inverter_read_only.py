@@ -573,7 +573,7 @@ class ReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             address=30589,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=5,
+            scan_interval=10,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
