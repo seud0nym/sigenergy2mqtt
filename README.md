@@ -138,7 +138,7 @@ docker run -it \
 
 Note that you must provide persistent storage via the `-v` option to preserve the state  of calculated accumulation sensors across executions. You can also place your [configuration file](#configuration-file) in the root of this directory, rather than configuring via environment variables.
 
-`docker-compose` users can find an example configuration file at [`docker-compose.yaml`](docker-compose.yaml).
+`docker-compose` users can find an example configuration file at [`docker-compose.yaml`](resources/docker-compose.yaml).
 
 ## Configuration
 
@@ -146,7 +146,7 @@ You _can_ configure `sigenergy2mqtt` via the [command line](#command-line-option
 
 ### Configuration File
 
-The complete list of configuration options with associated comments can be found in [sigenergy2mqtt.yaml](sigenergy2mqtt.yaml).
+The complete list of configuration options with associated comments can be found in [sigenergy2mqtt.yaml](resources/sigenergy2mqtt.yaml).
 
 Example:
 ```yaml
