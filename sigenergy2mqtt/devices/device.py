@@ -74,7 +74,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 self._online.cancel()
                 self._online = False
         elif isinstance(value, asyncio.Future):
-            logging.debug(f"{self.name} set to online ({value})")
+            logging.debug(f"{self.name} set to online")
             self._online = value
         else:
             raise ValueError("online must be a Future or False")
