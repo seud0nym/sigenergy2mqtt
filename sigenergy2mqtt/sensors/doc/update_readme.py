@@ -51,17 +51,17 @@ derived = {
 
 async def sensor_index():
     def published_topics(device):
-        f.write("| Sensor Class | Unit | Gain | State Topic | Interval | Source | Applicable To |\n")
-        f.write("|--------------|------|-----:|-------------|---------:|--------|---------------|\n")
+        f.write("| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |\n")
+        f.write("|--------------|---------:|------|-----:|-------------|--------|---------------|\n")
         for key in [key for key, value in mqtt_sensors.items() if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
             sensor = mqtt_sensors[key]
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
                 sensor_name = sensor.__class__.__name__
-                f.write(f"| {sensor_name} | {'' if sensor.unit is None else sensor.unit} | {'' if sensor.gain is None else sensor.gain} | {sensor.state_topic} <br/> {hass_sensors[key].state_topic} |")
+                f.write(f"| {sensor_name} |")
                 if hasattr(sensor, "scan_interval"):
                     f.write(f" {sensor.scan_interval}s ")
-                f.write("|")
+                f.write(f"| {'' if sensor.unit is None else sensor.unit} | {'' if sensor.gain is None else sensor.gain} | {sensor.state_topic} <br/> {hass_sensors[key].state_topic} |")
                 if sensor_name in derived:
                     f.write(derived[sensor_name])
                 elif hasattr(sensor, "_address"):
