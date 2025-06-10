@@ -111,8 +111,7 @@ class PVOutputOutputService(Service):
         if Config.pvoutput.peak_power:
             power = value if isinstance(value, float) else float(value)
             if self._power[topic].state < power:
-                if Config.pvoutput.update_debug_logging:
-                    self.logger.debug(f"{self.__class__.__name__} - set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
+                self.logger.debug(f"{self.__class__.__name__} - set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
                 async with self.lock(timeout=1):
                     self._power[topic].state = power
                     self._power[topic].timestamp = time.localtime()
