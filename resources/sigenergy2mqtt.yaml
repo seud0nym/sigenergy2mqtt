@@ -138,6 +138,30 @@ modbus:
     #                 Management System (EMS) integration will NOT be published
     #                 to MQTT. Ignored if read-write option is false.
     no-remote-ems: false
+    # scan-interval-low
+    #   default: 600
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned at a low frequency. Default is 600
+    #                 (seconds), and the minimum value is 300.
+    scan-interval-low: 600
+    # scan-interval-medium
+    #   default: 60
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned at a medium frequency. Default is 60
+    #                 (seconds), and the minimum value is 30.
+    scan-interval-medium: 60
+    # scan-interval-high
+    #   default: 10
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned at a high frequency. Default is 10
+    #                 (seconds), and the minimum value is 5.
+    scan-interval-high: 10
+    # scan-interval-realtime
+    #   default: 5
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned in near-real time. Default is 5
+    #                 (seconds), and the minimum value is 1.
+    scan-interval-realtime: 5
     smart-port:
       # enabled
       #   default: false

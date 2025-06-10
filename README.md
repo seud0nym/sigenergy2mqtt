@@ -309,6 +309,14 @@ Command line options override both environment variables and the configuration f
   --modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
                         Default is WARNING (warnings, errors and critical failures)
+  --scan-interval-low [SIGENERGY2MQTT_SCAN_INTERVAL_LOW]
+                        The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300.
+  --scan-interval-medium [SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM]
+                        The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30.
+  --scan-interval-high [SIGENERGY2MQTT_SCAN_INTERVAL_HIGH]
+                        The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5.
+  --scan-interval-realtime [SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME]
+                        The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
   --smartport-enabled   Enable interrogation of a third-party device for production data.
   --smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]
                         The name of the module which will be used to obtain third-party device production data.
@@ -411,6 +419,14 @@ Environment variables override the configuration file, but *not* command line op
   - The MQTT topic to which to subscribe to obtain the production data for the third-party device.
 - `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` : 
   - The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
+- `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` :
+  - The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300.
+- `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` :
+  - The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30.
+- `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` :
+  - The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5.
+- `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` :
+  - The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
 - `SIGENERGY2MQTT_PVOUTPUT_ENABLED` : 
   - Set to 'true' to enable status updates to PVOutput.
 - `SIGENERGY2MQTT_PVOUTPUT_API_KEY` : 

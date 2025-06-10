@@ -214,6 +214,42 @@ _parser.add_argument(
     help="Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 _parser.add_argument(
+    "--scan-interval-low",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW, None),
+    help="The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300.",
+)
+_parser.add_argument(
+    "--scan-interval-medium",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM, None),
+    help="The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30.",
+)
+_parser.add_argument(
+    "--scan-interval-high",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH, None),
+    help="The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5.",
+)
+_parser.add_argument(
+    "--scan-interval-realtime",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME, None),
+    help="The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.",
+)
+_parser.add_argument(
     "--smartport-enabled",
     action="store_true",
     dest=const.SIGENERGY2MQTT_SMARTPORT_ENABLED,

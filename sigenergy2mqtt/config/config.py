@@ -100,6 +100,14 @@ class Config:
                             overrides["modbus"][0]["read-write"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY:
                             overrides["modbus"][0]["write-only"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
+                            overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=300)
+                        case const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
+                            overrides["modbus"][0]["scan-interval-medium"] = check_int(os.environ[key], key, min=30)
+                        case const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
+                            overrides["modbus"][0]["scan-interval-high"] = check_int(os.environ[key], key, min=5)
+                        case const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
+                            overrides["modbus"][0]["scan-interval-realtime"] = check_int(os.environ[key], key, min=1)
                         case const.SIGENERGY2MQTT_SMARTPORT_ENABLED:
                             overrides["modbus"][0]["smart-port"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:

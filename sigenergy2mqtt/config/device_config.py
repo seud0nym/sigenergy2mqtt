@@ -1,9 +1,8 @@
 from .smart_port_config import SmartPortConfig
-from .validation import check_bool, check_host, check_int_list, check_log_level, check_port
+from .validation import check_bool, check_host, check_int, check_int_list, check_log_level, check_port
 from dataclasses import dataclass, field
 from typing import List
 import logging
-
 
 
 @dataclass
@@ -12,6 +11,15 @@ class RegisterAccess:
     read_only: bool = True
     read_write: bool = True
     write_only: bool = True
+
+
+@dataclass
+class ScanInterval:
+    realtime: int = 5
+    high: int = 10
+    medium: int = 60
+    low: int = 600
+
 
 @dataclass
 class DeviceConfig:
@@ -25,6 +33,7 @@ class DeviceConfig:
     log_level: int = logging.WARNING
 
     registers = RegisterAccess()
+    scan_interval = ScanInterval()
 
     smartport = SmartPortConfig()
 
@@ -56,6 +65,14 @@ class DeviceConfig:
                         self.inverters = check_int_list(value, f"modbus.{field}")
                     case "smart-port":
                         self.smartport.configure(value, override)
+                    case "scan-interval-low":
+                        self.scan_interval.low = check_int(value, f"modbus.{field}", min=300)
+                    case "scan-interval-medium":
+                        self.scan_interval.medium = check_int(value, f"modbus.{field}", min=30)
+                    case "scan-interval-high":
+                        self.scan_interval.high = check_int(value, f"modbus.{field}", min=5)
+                    case "scan-interval-realtime":
+                        self.scan_interval.realtime = check_int(value, f"modbus.{field}", min=1)
                     case _:
                         raise ValueError(f"modbus device configuration element contains unknown option '{field}'")
             if len(self.inverters) == 0:
