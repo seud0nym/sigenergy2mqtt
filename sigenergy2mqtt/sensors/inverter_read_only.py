@@ -103,6 +103,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
         if "device" in self and value is not None:
             # Firmware has been updated, so need to update the device and to republish discovery
             self.device["hw_version"] = value
+            self.device.rediscover = True
         return value
 
 

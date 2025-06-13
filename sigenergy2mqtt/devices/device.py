@@ -35,7 +35,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         self._read_sensors: Dict[str, ReadableSensorMixin] = {}
         self._write_sensors: Dict[str, WritableSensorMixin] = {}
 
-        self._force_publish = False
+        self._rediscover = False
         self._online: asyncio.Future = None
 
         self["name"] = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
@@ -56,6 +56,20 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     @property
     def online(self) -> bool:
         return self._online
+
+    @property
+    def rediscover(self) -> bool:
+        return self._rediscover
+
+    @rediscover.setter
+    def rediscover(self, value: bool) -> None:
+        if not isinstance(value, bool):
+            raise ValueError("rediscover must be a boolean")
+        self._rediscover = value
+        if value:
+            logging.info(f"{self.name} set to rediscover")
+        else:
+            logging.debug(f"{self.name} no longer set to rediscover")
 
     @property
     def registers(self) -> RegisterAccess:
@@ -235,11 +249,17 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                     actual_elapsed.append(sensor.latest_interval)
                                     if len(actual_elapsed) > 100:
                                         actual_elapsed = actual_elapsed[-100:]
+                            if self.rediscover:
+                                lock = ModbusLockFactory.get_lock(modbus)
+                                logging.info(f"{self.name} Sensor Scan Group [{names}]: Acquiring lock to republish discovery... ({lock.waiters=})")
+                                async with lock.acquire_with_timeout(timeout=1):
+                                    self.rediscover = False
+                                    self.publish_discovery(mqtt, force_publish=False, clean=False)
                             average_excess = max(0.0, statistics.fmean(actual_elapsed) - interval)
                             elapsed = time.time() - started
                             if elapsed > interval and modbus.connected:
                                 logging.warning(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
-                            wait = interval
+                            wait = max(interval - elapsed, 0.5)
                         except ModbusException as e:
                             lock = ModbusLockFactory.get_lock(modbus)
                             logging.info(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
