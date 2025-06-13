@@ -84,7 +84,7 @@ async def sensor_index():
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
                 sensor_name = sensor.__class__.__name__
-                f.write(f"| {sensor_name} | {sensor.state_topic} <br/> {hass_sensors[key].state_topic} | ")
+                f.write(f"| {sensor_name} | {sensor.state_topic} <br/> {hass_sensors[key].command_topic} | ")
                 if hasattr(sensor, "_address"):
                     f.write(f"Modbus Register {sensor._address} ")
                 f.write("|")
