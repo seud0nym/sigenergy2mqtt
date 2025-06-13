@@ -30,7 +30,7 @@ async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.Abst
         if Config.home_assistant.enabled:
             mid = device.publish_discovery(mqtt_client)
             mqtt_handler.wait_for(mid, mqtt_handler.discovery_published)
-            until = time.perf_counter() + 30
+            until = time.perf_counter() + 10
             while not mqtt_handler.is_discovery_published:
                 logging.debug(f"Waiting for '{device.name}' discovery to be acknowledged (mid={mid})")
                 await asyncio.sleep(0.5)
