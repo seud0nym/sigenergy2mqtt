@@ -369,14 +369,14 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 value = await self.get_state(modbus=modbus, raw=False, republish=republish)
                 if value is None and not self.force_publish:
                     if self._debug_logging:
-                        logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - Value is unchanged")
+                        logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - Value is unchanged")
                 else:
                     if self._failures > 0:
-                        logging.info(f"Resetting failure count for {self.__class__.__name__} from {self._failures} to 0")
+                        logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
                         self._failures = 0
                         self._next_retry = None
                     if self._debug_logging:
-                        logging.debug(f"Publishing {self.__class__.__name__} = {value}")
+                        logging.debug(f"{self.__class__.__name__} Publishing {value=}")
                     mqtt.publish(self["state_topic"], f"{value}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
@@ -395,11 +395,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
                 if self._failures >= self._max_failures:
                     logging.warning(
-                        f"{self.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
+                        f"{self.__class__.__name__} Publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
                     )
                     for sensor in self._derived_sensors.values():
                         logging.warning(
-                            f"{sensor.__class__.__name__} publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
+                            f"{sensor.__class__.__name__} Publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
                         )
             finally:
                 self.force_publish = False
@@ -414,16 +414,16 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             **kwargs:   key=value pairs that will be added as attributes.
         """
         if self.publishable and not Config.clean:
-            value = {}
-            value["sensor-class"] = self.__class__.__name__
-            value["gain"] = self._gain
+            attributes = {}
+            attributes["sensor-class"] = self.__class__.__name__
+            attributes["gain"] = self._gain
             if hasattr(self, "_scan_interval"):
-                value["scan-interval"] = self._scan_interval
+                attributes["scan-interval"] = self._scan_interval
             for k, v in kwargs.items():
-                value[k] = v
+                attributes[k] = v
             if self._debug_logging:
-                logging.debug(f"Publishing attributes of {self.__class__.__name__} = {value}")
-            mqtt.publish(self["json_attributes_topic"], json.dumps(value, indent=4), 2, True)
+                logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
+            mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), 2, True)
         self.force_publish = False
         for sensor in self._derived_sensors.values():
             sensor.publish_attributes(mqtt)
