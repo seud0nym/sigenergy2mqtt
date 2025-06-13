@@ -29,12 +29,16 @@ class MqttHandler:
             self._discovery_published = True
 
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
-        if topic in self._topics:
-            for method in self._topics[topic]:
-                logger.debug(f"MqttHandler handling topic {topic} with {method}")
-                asyncio.run_coroutine_threadsafe(method(self._modbus, client, str(payload), topic), self._loop)
+        value = str(payload).strip()
+        if not value:
+            logger.info(f"MqttHandler IGNORED empty payload from topic {topic}")
         else:
-            logger.warning(f"MqttHandler did not find a handler for topic {topic}")
+            if topic in self._topics:
+                for method in self._topics[topic]:
+                    logger.debug(f"MqttHandler handling topic {topic} with {method}")
+                    asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic), self._loop)
+            else:
+                logger.warning(f"MqttHandler did not find a handler for topic {topic}")
 
     def on_response(self, mid: Any, source: str, client: mqtt.Client) -> None:
         if mid in self._mids:
