@@ -107,20 +107,24 @@ class PVOutputOutputService(Service):
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
 
-    async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
+    async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> None:
         if Config.pvoutput.peak_power:
-            power = value if isinstance(value, float) else float(value)
-            if self._power[topic].state < power:
-                self.logger.debug(f"{self.__class__.__name__} - set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
-                async with self.lock(timeout=1):
-                    self._power[topic].state = power
-                    self._power[topic].timestamp = time.localtime()
-                    with self._persistent_state_file.open("w") as f:
-                        json.dump(self._power, f, default=Topic.json_encoder)
-            elif Config.pvoutput.update_debug_logging:
-                self.logger.debug(f"{self.__class__.__name__} - Ignored set_power from '{topic}': {value} < {self._power[topic].state}")
+            now = time.localtime()
+            if now.tm_hour < 5 or now.tm_hour > 22:
+                self.logger.info(f"{self.__class__.__name__} - Ignored set_power from '{topic}' {value=} (Outside of daylight hours)")
+            else:
+                power = value if isinstance(value, float) else float(value)
+                if self._power[topic].state < power:
+                    self.logger.debug(f"{self.__class__.__name__} - set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
+                    async with self.lock(timeout=1):
+                        self._power[topic].state = power
+                        self._power[topic].timestamp = time.localtime()
+                        with self._persistent_state_file.open("w") as f:
+                            json.dump(self._power, f, default=Topic.json_encoder)
+                elif Config.pvoutput.update_debug_logging:
+                    self.logger.debug(f"{self.__class__.__name__} - Ignored set_power from '{topic}': {value} < {self._power[topic].state}")
 
-    def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler):
+    def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
         self._consumption.subscribe(mqtt, mqtt_handler)
         self._exports.subscribe(mqtt, mqtt_handler)
         self._generation.subscribe(mqtt, mqtt_handler)
