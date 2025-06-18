@@ -100,7 +100,11 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         raise
         except requests.exceptions.RequestException as e:
             logging.error(f"{self.__class__.__name__} - Unhandled exception fetching data from {url} : {e}")
-            raise
+            if self._failures < (self._max_failures / 2):
+                raise
+            else:
+                logging.warning(f"{self.__class__.__name__} - Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
+                return True
         return False
 
     def get_token(self, reauthenticate: bool = False) -> str:
