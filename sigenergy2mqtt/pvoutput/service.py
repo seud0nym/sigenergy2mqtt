@@ -168,7 +168,7 @@ class ServiceTopics(dict):
             at = time.strftime("%H:%M", value.timestamp)
         return total, at
 
-    async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> bool:
+    async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if self._enabled:
             if Config.pvoutput.update_debug_logging:
                 self._logger.debug(f"{self._service.__class__.__name__} - Updating {self._name} from '{topic}' {value=}")

@@ -10,7 +10,7 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.config import Config, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.modbus import ModbusLockFactory
-from sigenergy2mqtt.mqtt import MqttClient
+from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any, Coroutine, Dict, Final
 import abc
 import asyncio
@@ -825,7 +825,7 @@ class TimestampSensor(ReadOnlySensor):
 
 class ObservableMixin(abc.ABC):
     @abc.abstractmethod
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         pass
 
     @abc.abstractmethod
@@ -910,7 +910,7 @@ class WritableSensorMixin(ModbusSensor):
         self["command_topic"] = f"{base}/set"
         return base
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source == self["command_topic"]:
             return await self._write_registers(modbus, value, mqtt)
         else:
@@ -973,7 +973,7 @@ class WriteOnlySensor(WritableSensorMixin):
             logging.debug(f"{self.__class__.__name__} - Discovered {components=}")
         return components
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: str, source: str) -> bool:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value == "Off":
             return await super().set_value(modbus, mqtt, 0, source)
         elif value == "On":
@@ -1101,7 +1101,7 @@ class NumericSensor(ReadWriteSensor):
                 state = self["max"]
         return state
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: str, source: str) -> bool:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value is not None:
             try:
                 state = float(value)
@@ -1613,7 +1613,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                 logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
         self.set_latest_state(self._current_total)
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             new_total = (value if value is float else float(value)) * self.gain
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({new_total=})")
@@ -1706,7 +1706,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         if not self._persistent_state_file.is_file():
             self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} notified of updated state {value} {self.unit}")
@@ -1782,9 +1782,9 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
         ReadableSensorMixin.__init__(self, interval)
         self["enabled_by_default"] = enabled
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, topic: str) -> bool | Exception | ExceptionResponse:
-        if topic in self._topics:
-            state = self._topics[topic]
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
+        if source in self._topics:
+            state = self._topics[source]
             gain = state.gain
             state.value = (value if isinstance(value, float) else float(value)) * gain
             if sum(1 for value in self._topics.values() if value.value is None) == 0:
@@ -1794,7 +1794,7 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
                 self.force_publish = True
             return True
         else:
-            logging.warning(f"{self.__class__.__name__} notified on topic '{topic}', but it is not observable???")
+            logging.warning(f"{self.__class__.__name__} notified on topic '{source}', but it is not observable???")
         return False
 
     def observable_topics(self) -> set[str]:

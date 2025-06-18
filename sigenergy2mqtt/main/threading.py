@@ -9,7 +9,6 @@ from typing import Awaitable, Callable, Iterable, List
 import asyncio
 import concurrent.futures
 import logging
-import time
 import uuid
 
 
@@ -28,43 +27,34 @@ async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.Abst
 
     for device in config.devices:
         if Config.home_assistant.enabled:
-            mid = device.publish_discovery(mqtt_client)
-            mqtt_handler.wait_for(mid, mqtt_handler.discovery_published)
-            until = time.perf_counter() + 10
-            while not mqtt_handler.is_discovery_published:
-                logging.debug(f"Waiting for '{device.name}' discovery to be acknowledged (mid={mid})")
-                await asyncio.sleep(0.5)
-                now = time.perf_counter()
-                if now >= until:
-                    logging.warning(f"No acknowledgement of '{device.name}' discovery received??")
-                    break
+            await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, force_publish=True, clean=False)
 
         if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
-            logging.info(f"Configured for {'clean' if Config.clean else 'discovery'} only - shutting down '{device.name}'...")
+            logging.info(f"{device.name} - Configured for {'clean' if Config.clean else 'discovery'} only - shutting down...")
         else:
-            logging.info(f"Registering MQTT subscriptions for '{device.name}'")
+            logging.info(f"{device.name} - Registering MQTT subscriptions")
             device.subscribe(mqtt_client, mqtt_handler)
 
             if Config.home_assistant.enabled:
-                logging.info(f"Publishing online availability for '{device.name}'")
+                logging.info(f"{device.name} - Publishing online availability")
                 device.publish_availability(mqtt_client, "online")
 
-            logging.info(f"Scheduling '{device.name}' sensor updates")
+            logging.info(f"{device.name} - Scheduling sensor updates")
             device_tasks = device.schedule(modbus_client, mqtt_client)
             tasks.extend(device_tasks)
 
     if len(tasks) > 0:
-        logging.info(f"Sensor updates for {config.description} commenced")
+        logging.info(f"{config.description} - Sensor updates commenced")
         result = asyncio.gather(*tasks, return_exceptions=True)
         config.online(result)
         try:
             await result
         except asyncio.CancelledError:
-            logging.info(f"Sensor updates for {config.description} interrupted")
+            logging.info(f"{config.description} - Sensor updates interrupted")
 
         if Config.home_assistant.enabled:
             for device in config.devices:
-                logging.info(f"Publishing offline availability for '{device.name}'")
+                logging.info(f"{device.name} - Publishing offline availability")
                 device.publish_availability(mqtt_client, "offline")
 
     if modbus_client is not None:

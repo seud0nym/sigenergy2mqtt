@@ -3,7 +3,7 @@ from pymodbus import ExceptionResponse
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.mqtt import MqttClient
+from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
 import logging
 
@@ -594,7 +594,7 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
         else:
             return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: str, source: str) -> bool | Exception | ExceptionResponse:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
         result = False
         if value == "PCS remote control":
             result = await super().set_value(modbus, mqtt, 0, source)
@@ -655,7 +655,7 @@ class MaxChargingLimit(NumericSensor, HybridInverter):
         self["availability"].append({"topic": self._sensor_availability_topic})
         return base
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source == self._remote_ems_control_mode_topic:
             if self._sensor_availability_topic is None:
                 logging.error(f"Sensor {self.name} availability topic is not configured??")
@@ -713,7 +713,7 @@ class MaxDischargingLimit(NumericSensor, HybridInverter):
         self["availability"].append({"topic": self._sensor_availability_topic})
         return base
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source == self._remote_ems_control_mode_topic:
             if self._sensor_availability_topic is None:
                 logging.error(f"Sensor {self.name} availability topic is not configured??")
@@ -765,7 +765,7 @@ class PVMaxPowerLimit(NumericSensor, HybridInverter):
         self["availability"].append({"topic": self._sensor_availability_topic})
         return base
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source == self._remote_ems_control_mode_topic:
             if self._sensor_availability_topic is None:
                 logging.error(f"Sensor {self.name} availability topic is not configured??")

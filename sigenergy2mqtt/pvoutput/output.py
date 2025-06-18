@@ -107,7 +107,7 @@ class PVOutputOutputService(Service):
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
 
-    async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str) -> None:
+    async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, mqtt_handler: MqttHandler) -> None:
         if Config.pvoutput.peak_power:
             now = time.localtime()
             if now.tm_hour < 5 or now.tm_hour > 22:

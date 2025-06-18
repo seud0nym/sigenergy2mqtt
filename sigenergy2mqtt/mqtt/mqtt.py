@@ -1,7 +1,7 @@
 from collections import namedtuple
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
-from typing import Any, Awaitable, Callable, Dict
+from typing import Any, Awaitable, Callable, Dict, Self
 import asyncio
 import logging
 import os
@@ -14,19 +14,10 @@ MqttResponse = namedtuple("MqttResponse", ["now", "handler"])
 
 class MqttHandler:
     def __init__(self, modbus: ModbusClient, loop: asyncio.AbstractEventLoop):
-        self._discovery_published = False
         self._mids: Dict[Any, MqttResponse] = {}
         self._topics: Dict[str, list[Callable[[mqtt.Client, str], None]]] = {}
         self._modbus = modbus
         self._loop = loop
-
-    @property
-    def is_discovery_published(self) -> bool:
-        return self._discovery_published
-
-    def discovery_published(self, client: mqtt.Client, source: str) -> None:
-        if source == "publish":
-            self._discovery_published = True
 
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
         value = str(payload).strip()
@@ -36,7 +27,7 @@ class MqttHandler:
             if topic in self._topics:
                 for method in self._topics[topic]:
                     logger.debug(f"MqttHandler handling topic {topic} with {method}")
-                    asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic), self._loop)
+                    asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
             else:
                 logger.warning(f"MqttHandler did not find a handler for topic {topic}")
 
@@ -52,19 +43,38 @@ class MqttHandler:
                 logger.debug(f"MqttHandler removing expired mid {mid}")
                 del self._mids[mid]
 
-    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str], Awaitable[bool]]) -> None:
+    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str, Self], Awaitable[bool]]) -> None:
         if topic not in self._topics:
             self._topics[topic] = []
         self._topics[topic].append(handler)
         client.subscribe(topic)
 
-    def wait_for(self, info: Any, handler: Callable[[mqtt.Client, str], None]) -> None:
-        if info is None:
-            self._discovery_published = True
+    async def wait_for(self, seconds: float, prefix: str, method: Callable | Awaitable, *args, **kwargs) -> bool:
+        responded: bool = False
+        def handle_response(client: mqtt.Client, source: str):
+            nonlocal responded
+            responded = True
+            logging.debug(f"{prefix} - {method.__name__} acknowledged (mid={info.mid})")
+        assert isinstance(seconds, (int, float)) and seconds < 60, "Seconds must be an integer or float and less then 60"
+        assert isinstance(method, (Callable, Awaitable)), "Method must be a Callable or Awaitable"
+        if isinstance(method, Awaitable):
+            info = await method(*args, **kwargs)
         else:
-            mid = info if not isinstance(info, mqtt.MQTTMessageInfo) else info.mid
-            self._mids[mid] = MqttResponse(time.time(), handler)
-            logger.debug(f"MqttHandler waiting for response mid {mid}")
+            info = method(*args, **kwargs)
+        if isinstance(info, mqtt.MQTTMessageInfo):
+            self._mids[info.mid] = MqttResponse(time.time(), handle_response)
+            until = time.time() + seconds
+            logging.debug(f"{prefix} - Waiting up to {seconds}s for {method.__name__} to be acknowledged (mid={info.mid})")
+            while not responded:
+                await asyncio.sleep(0.5)
+                if time.time() >= until:
+                    logging.warning(f"{prefix} - No acknowledgement of {method.__name__} received??")
+                    break
+            return responded
+        else:
+            if info is not None:
+                logging.warning(f"{prefix} - {method.__name__} did not return a valid MQTTMessageInfo object {info=} (unable to wait for acknowledgement)")
+            return False
 
 
 # region MQTT Client Callbacks

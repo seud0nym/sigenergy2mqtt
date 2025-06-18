@@ -82,11 +82,12 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 raise ValueError("online must be a Future to enable")
             else:  # False
                 logging.debug(f"{self.name} set to offline")
+                if self._online:
+                    self._online.cancel()
+                self._online = False
                 for sensor in self.sensors.values():
                     if sensor.sleeper_task is not None:
                         sensor.sleeper_task.cancel()
-                self._online.cancel()
-                self._online = False
         elif isinstance(value, asyncio.Future):
             logging.debug(f"{self.name} set to online")
             self._online = value
@@ -118,22 +119,22 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
 
     def _add_derived_sensor(self, sensor: DerivedSensor, *source_sensors: Sensor, search_children: bool = False) -> None:
         if len(source_sensors) == 0:
-            logging.error(f"{self.__class__.__name__} - Cannot add {sensor.__class__.__name__} - No source sensors defined")
+            logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - No source sensors defined")
         else:
             for to_sensor in source_sensors:
                 found = self.get_sensor(to_sensor.unique_id, search_children=search_children)
                 if not found:
-                    logging.error(f"{self.__class__.__name__} - Cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.__class__.__name__}")
+                    logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.__class__.__name__}")
                 else:
                     if issubclass(type(sensor), DerivedSensor):
                         to_sensor.add_derived_sensor(sensor)
                         self._add_to_all_sensors(sensor)
                     else:
-                        logging.error(f"{self.__class__.__name__} - Cannot add {sensor.__class__.__name__} - not a DerivedSensor")
+                        logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - not a DerivedSensor")
 
     def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> bool:
         if not issubclass(type(sensor), ReadableSensorMixin):
-            logging.error(f"{self.__class__.__name__} - Cannot add {sensor.__class__.__name__} - not a ReadableSensorMixin")
+            logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - not a ReadableSensorMixin")
             return False
         else:
             if group is None:
@@ -155,7 +156,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if not issubclass(type(sensor), WriteOnlySensor):
-            logging.error(f"{self.__class__.__name__} - Cannot add {sensor.unique_id} ({sensor.unique_id}) - not a WriteOnlySensor")
+            logging.error(f"{self.name} - Cannot add {sensor.unique_id} ({sensor.unique_id}) - not a WriteOnlySensor")
         else:
             self._write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
@@ -169,10 +170,16 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     return child.sensors[unique_id]
         return None
 
-    async def on_ha_state_change(self, modbus: ModbusClient, mqtt: MqttClient, ha_state: str, source: str) -> bool:
+    async def on_ha_state_change(self, modbus: ModbusClient, mqtt_client: MqttClient, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         if ha_state == "online":
-            time.sleep(randint(1, 10))  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
-            self.publish_discovery(mqtt)
+            seconds = randint(1, 10)
+            logging.info(f"{self.name} - Received online state from Home Assistant ({source=}): Republishing discovery and forcing publish of all sensors in {seconds}s")
+            time.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
+            if await mqtt_handler.wait_for(2.5, self.name, self.publish_discovery, mqtt_client, force_publish=True, clean=False):
+                for sensor in self.sensors.values():
+                    if sensor.sleeper_task is not None:
+                        logging.debug(f"{self.name} - Cancelling sleeper task for {sensor.__class__.__name__} to force publish")
+                        sensor.sleeper_task.cancel()
             return True
         else:
             return False
@@ -194,17 +201,17 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             discovery["cmps"] = components
             discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
             if clean:
-                logging.debug(f"Publishing empty discovery for {self.name} ({clean=})")
+                logging.debug(f"{self.name} - Publishing empty discovery ({clean=})")
                 mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
-            logging.info(f"Publishing discovery for {self.name} ({force_publish=})")
+            logging.info(f"{self.name} - Publishing discovery ({force_publish=})")
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         else:
-            logging.debug(f"Publishing empty availability for {self.name} (No components found)")
+            logging.debug(f"{self.name} - Publishing empty availability (No components found)")
             self.publish_availability(mqtt, None, qos=1)
-            logging.debug(f"Publishing empty discovery for {self.name} (No components found)")
+            logging.debug(f"{self.name} - Publishing empty discovery (No components found)")
             info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
         for device in self._children:
-            device.publish_discovery(mqtt)
+            device.publish_discovery(mqtt, force_publish=force_publish, clean=clean)
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt)
         return info
@@ -299,8 +306,8 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 await asyncio.sleep(1)
                 wait -= 1
                 if wait <= 0:
-                    logging.info(f"Re-publishing discovery for {self.name}")
-                    self.publish_discovery(mqtt, force_publish=False)
+                    logging.info(f"{self.name} - Re-publishing discovery")
+                    self.publish_discovery(mqtt, force_publish=False, clean=False)
                     wait = Config.home_assistant.republish_discovery_interval
 
         combined_sensors: Dict[str, ReadableSensorMixin] = self._read_sensors.copy()
@@ -379,7 +386,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
     def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> bool:
         if self._type is not None and not isinstance(sensor, self._type.__class__):
             if sensor.debug_logging:
-                logging.debug(f"{self.__class__.__name__} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
+                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
             return False
         else:
             return super()._add_read_sensor(sensor, group)
@@ -387,6 +394,6 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if self._type is not None and not isinstance(sensor, self._type.__class__):
             if sensor.debug_logging:
-                logging.debug(f"{self.__class__.__name__} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
+                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
         else:
             super()._add_writeonly_sensor(sensor)

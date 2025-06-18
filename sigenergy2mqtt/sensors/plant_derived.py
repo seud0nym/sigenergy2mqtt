@@ -15,7 +15,7 @@ from .plant_read_only import BatteryPower, GridSensorActivePower, PlantPVPower
 from dataclasses import dataclass
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.mqtt import MqttClient
+from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.inverter_read_only import AccumulatedChargeEnergy, AccumulatedDischargeEnergy, DailyChargeEnergy, DailyDischargeEnergy
 import logging
 
@@ -196,7 +196,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         self._sources: dict[str, TotalPVPower.Value] = dict()
         self.register_source_sensors(*sensors)
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str) -> bool:
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self._sources:
             self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
             if sum([1 for value in self._sources.values() if value.state is None]) == 0:
