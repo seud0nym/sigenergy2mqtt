@@ -91,7 +91,7 @@ class Service(Device):
     def seconds_until_status_upload(self) -> float:
         seconds = 60 if Config.pvoutput.testing else float(Config.pvoutput.interval_minutes * 60)
         self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + seconds))} ({seconds}s)")
-        return seconds        
+        return seconds
 
     async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
         for i in range(1, 4, 1):
@@ -142,7 +142,7 @@ class ServiceTopics(dict):
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
-        assert value is bool
+        assert isinstance(value, bool), "Enabled must be a boolean value"
         self._enabled = value
 
     def register(self, topic: str, gain: float) -> bool:
@@ -164,8 +164,9 @@ class ServiceTopics(dict):
         total: float = 0.0
         at: str = "00:00"
         for value in self.values():
-            total += round(value.state * value.gain)
-            at = time.strftime("%H:%M", value.timestamp)
+            if value.timestamp is not None:
+                total += round(value.state * value.gain)
+                at = time.strftime("%H:%M", value.timestamp)
         return total, at
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
