@@ -34,9 +34,12 @@ class MqttHandler:
     def on_response(self, mid: Any, source: str, client: mqtt.Client) -> None:
         if mid in self._mids:
             method = self._mids[mid].handler
-            logger.debug(f"MqttHandler handling {source} response mid {mid} with {method}")
-            method(client, source)
+            logger.debug(f"MqttHandler handling {source} response mid {mid} with method {method}")
+            if method is not None:
+                method(client, source)
             del self._mids[mid]
+        else:
+            self._mids[mid] = MqttResponse(time.time(), None)
         expires = time.time() - 60
         for mid in list(self._mids.keys()):
             if self._mids[mid].now < expires:
@@ -62,15 +65,19 @@ class MqttHandler:
         else:
             info = method(*args, **kwargs)
         if isinstance(info, mqtt.MQTTMessageInfo):
-            self._mids[info.mid] = MqttResponse(time.time(), handle_response)
-            until = time.time() + seconds
-            logging.debug(f"{prefix} - Waiting up to {seconds}s for {method.__name__} to be acknowledged (mid={info.mid})")
-            while not responded:
-                await asyncio.sleep(0.5)
-                if time.time() >= until:
-                    logging.warning(f"{prefix} - No acknowledgement of {method.__name__} received??")
-                    break
-            return responded
+            if info.mid in self._mids:
+                logging.debug(f"{prefix} - {method.__name__} has already been acknowledged (mid={info.mid})")
+                del self._mids[info.mid]
+            else:
+                self._mids[info.mid] = MqttResponse(time.time(), handle_response)
+                until = time.time() + seconds
+                logging.debug(f"{prefix} - Waiting up to {seconds}s for {method.__name__} to be acknowledged (mid={info.mid})")
+                while not responded:
+                    await asyncio.sleep(0.5)
+                    if time.time() >= until:
+                        logging.warning(f"{prefix} - No acknowledgement of {method.__name__} received??")
+                        break
+                return responded
         else:
             if info is not None:
                 logging.warning(f"{prefix} - {method.__name__} did not return a valid MQTTMessageInfo object {info=} (unable to wait for acknowledgement)")
