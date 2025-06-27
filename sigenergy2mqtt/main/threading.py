@@ -27,7 +27,7 @@ async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.Abst
 
     for device in config.devices:
         if Config.home_assistant.enabled:
-            await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, force_publish=True, clean=False)
+            await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, clean=False)
 
         if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
             logging.info(f"{device.name} - Configured for {'clean' if Config.clean else 'discovery'} only - shutting down...")

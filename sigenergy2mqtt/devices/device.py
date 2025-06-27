@@ -170,12 +170,14 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     return child.sensors[unique_id]
         return None
 
-    async def on_ha_state_change(self, modbus: ModbusClient, mqtt_client: MqttClient, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
+    async def on_ha_state_change(self, modbus: ModbusClient, mqtt: MqttClient, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         if ha_state == "online":
             seconds = float(randint(0, 3) + (randint(0, 10) / 10))
             logging.info(f"{self.name} - Received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
             await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
-            self.publish_discovery(mqtt_client, force_publish=True, clean=False)
+            await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt, clean=False)
+            for sensor in self.sensors.values():
+                sensor.publish(mqtt, modbus=modbus, republish=True)
             return True
         else:
             return False
@@ -185,7 +187,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         for device in self._children:
             device.publish_availability(mqtt, ha_state)
 
-    def publish_discovery(self, mqtt: MqttClient, force_publish: bool = True, clean: bool = False) -> Any:
+    def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         components = {}
         for sensor in self.sensors.values():
@@ -199,7 +201,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             if clean:
                 logging.debug(f"{self.name} - Publishing empty discovery ({clean=})")
                 mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
-            logging.info(f"{self.name} - Publishing discovery ({force_publish=})")
+            logging.info(f"{self.name} - Publishing discovery")
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         else:
             logging.debug(f"{self.name} - Publishing empty availability (No components found)")
@@ -207,11 +209,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"{self.name} - Publishing empty discovery (No components found)")
             info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
         for device in self._children:
-            device.publish_discovery(mqtt, force_publish=force_publish, clean=clean)
+            device.publish_discovery(mqtt, clean=clean)
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt)
-            if force_publish:
-                sensor.publish(mqtt, modbus=None, republish=True)
         return info
 
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
@@ -259,7 +259,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                 logging.info(f"{self.name} Sensor Scan Group [{names}]: Acquiring lock to republish discovery... ({lock.waiters=})")
                                 async with lock.acquire_with_timeout(timeout=1):
                                     self.rediscover = False
-                                    self.publish_discovery(mqtt, force_publish=False, clean=False)
+                                    self.publish_discovery(mqtt, clean=False)
                             average_excess = max(0.0, statistics.fmean(actual_elapsed) - interval)
                             elapsed = time.time() - started
                             if elapsed > interval and modbus.connected:
@@ -305,7 +305,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 wait -= 1
                 if wait <= 0:
                     logging.info(f"{self.name} - Re-publishing discovery")
-                    self.publish_discovery(mqtt, force_publish=False, clean=False)
+                    self.publish_discovery(mqtt, clean=False)
                     wait = Config.home_assistant.republish_discovery_interval
 
         combined_sensors: Dict[str, ReadableSensorMixin] = self._read_sensors.copy()

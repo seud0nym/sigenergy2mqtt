@@ -71,7 +71,7 @@ class Service(Device):
     def publish_availability(self, mqtt: MqttClient, ha_state, qos=2) -> None:
         pass
 
-    def publish_discovery(self, mqtt: MqttClient, force_publish=True, clean=False) -> Any:
+    def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
         pass
 
     # endregion
