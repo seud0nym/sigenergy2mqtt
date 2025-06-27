@@ -105,10 +105,10 @@ class PVStringPower(DerivedSensor):
         """
         if self.voltage is None or self.current is None:
             if self._debug_logging:
-                logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - current={self.current} voltage={self.voltage}")
+                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - current={self.current} voltage={self.voltage}")
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(f"Publishing {self.__class__.__name__} READY - current={self.current} voltage={self.voltage}")
+            logging.debug(f"{self.__class__.__name__} Publishing READY - current={self.current} voltage={self.voltage}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         self.voltage = None

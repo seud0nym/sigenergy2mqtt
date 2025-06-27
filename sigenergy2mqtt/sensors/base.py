@@ -300,7 +300,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
         return base
 
-    def get_discovery(self, force_publish: bool = True) -> Dict[str, dict[str, Any]]:
+    def get_discovery(self) -> Dict[str, dict[str, Any]]:
         """Gets the Home Assistant MQTT auto-discovery components for this sensor.
 
         Returns:
@@ -311,7 +311,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"{self.__class__.__name__} - getting discovery")
         components = self.get_discovery_components()
         if self.publishable and not Config.clean:
-            self.force_publish = force_publish
             if self._persistent_publish_state_file.exists():
                 self._persistent_publish_state_file.unlink(missing_ok=True)
                 if self._debug_logging:
@@ -1790,7 +1789,7 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
             if sum(1 for value in self._topics.values() if value.value is None) == 0:
                 self.set_latest_state(sum(value.value for value in self._topics.values()))
                 if self._debug_logging:
-                    logging.debug(f"Publishing {self.__class__.__name__} FORCED - {[value.value for value in self._topics.values()]} = {self.latest_raw_state}")
+                    logging.debug(f"{self.__class__.__name__} Publishing FORCED - {[value.value for value in self._topics.values()]} = {self.latest_raw_state}")
                 self.force_publish = True
             return True
         else:
@@ -1813,10 +1812,10 @@ class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMix
         """
         if sum(1 for value in self._topics.values() if value.value is None) > 0:
             if self._debug_logging:
-                logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - {[value.value for value in self._topics.values()]}")
+                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {[value.value for value in self._topics.values()]}")
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(f"Publishing {self.__class__.__name__} READY - {[value.value for value in self._topics.values()]}")
+            logging.debug(f"{self.__class__.__name__} Publishing READY - {[value.value for value in self._topics.values()]}")
         await super().publish(mqtt, modbus, republish=True)
         # reset internal values to missing for next calculation
         if self._debug_logging:

@@ -215,15 +215,15 @@ class ACChargerAlarm1(AlarmSensor):
         """
         match bit_position:
             case 0:
-                return "5001_1: Grid overvoltage"
+                return "5001_1: Grid over-voltage"
             case 1:
-                return "5001_2: Grid undervoltage"
+                return "5001_2: Grid under-voltage"
             case 2:
                 return "5001_3: Overload"
             case 3:
                 return "5001_4: Short circuit"
             case 4:
-                return "5001_5: Charging output overcurrent"
+                return "5001_5: Charging output over-current"
             case 5:
                 return "5001_6: Leak current out of limit"
             case 6:

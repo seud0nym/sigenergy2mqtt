@@ -172,14 +172,10 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
 
     async def on_ha_state_change(self, modbus: ModbusClient, mqtt_client: MqttClient, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         if ha_state == "online":
-            seconds = randint(1, 10)
-            logging.info(f"{self.name} - Received online state from Home Assistant ({source=}): Republishing discovery and forcing publish of all sensors in {seconds}s")
-            time.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
-            if await mqtt_handler.wait_for(2.5, self.name, self.publish_discovery, mqtt_client, force_publish=True, clean=False):
-                for sensor in self.sensors.values():
-                    if sensor.sleeper_task is not None:
-                        logging.debug(f"{self.name} - Cancelling sleeper task for {sensor.__class__.__name__} to force publish")
-                        sensor.sleeper_task.cancel()
+            seconds = float(randint(0, 3) + (randint(0, 10) / 10))
+            logging.info(f"{self.name} - Received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
+            await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
+            self.publish_discovery(mqtt_client, force_publish=True, clean=False)
             return True
         else:
             return False
@@ -193,7 +189,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         components = {}
         for sensor in self.sensors.values():
-            components.update(sensor.get_discovery(force_publish=force_publish))
+            components.update(sensor.get_discovery())
         if len(components) > 0:
             discovery = {}
             discovery["dev"] = self
@@ -214,6 +210,8 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             device.publish_discovery(mqtt, force_publish=force_publish, clean=clean)
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt)
+            if force_publish:
+                sensor.publish(mqtt, modbus=None, republish=True)
         return info
 
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
