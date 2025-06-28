@@ -177,7 +177,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
             await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt, clean=False)
             for sensor in self.sensors.values():
-                sensor.publish(mqtt, modbus=modbus, republish=True)
+                await sensor.publish(mqtt, modbus=modbus, republish=True)
             return True
         else:
             return False
