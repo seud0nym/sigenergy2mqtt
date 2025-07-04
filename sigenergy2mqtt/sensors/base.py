@@ -878,28 +878,37 @@ class WritableSensorMixin(ModbusSensor):
         logging.info(f"{self.__class__.__name__} - write_registers {self._address=} {value=} ({self.latest_raw_state=}) {slave=}")
         registers = self._encode_value(value)
         try:
+            max_wait = 2
             if len(registers) == 1:
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected})")
-                    start = time.time()
-                rr = await modbus.write_register(self._address, registers[0], slave=slave, no_response_expected=no_response_expected)
+                async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
+                    if Config.devices[self._plant_index].log_level == logging.DEBUG:
+                        logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]")
+                        start = time.time()
+                    rr = await modbus.write_register(self._address, registers[0], slave=slave, no_response_expected=no_response_expected)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     elapsed = time.time() - start
-                    logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) took {elapsed:.3f}s")
+                    logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
                 result = self._check_register_response(rr, "write_register")
             else:
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected})")
-                    start = time.time()
-                rr = await modbus.write_registers(self._address, registers, slave, no_response_expected=no_response_expected)
+                async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
+                    if Config.devices[self._plant_index].log_level == logging.DEBUG:
+                        logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]")
+                        start = time.time()
+                    rr = await modbus.write_registers(self._address, registers, slave, no_response_expected=no_response_expected)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     elapsed = time.time() - start
-                    logging.debug(f"{self.__class__.__name__} - write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) took {elapsed:.3f}s")
+                    logging.debug(f"{self.__class__.__name__} - write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
                 result = self._check_register_response(rr, "write_registers")
             if result:
                 self.force_publish = True
                 await self.publish(mqtt, modbus)
             return result
+        except asyncio.CancelledError:
+            logging.warning(f"{self.__class__.__name__} Modbus write interrupted")
+            result = False
+        except asyncio.TimeoutError:
+            logging.warning(f"{self.__class__.__name__} Modbus write failed to acquire lock within {max_wait}s")
+            result = False
         except Exception as exc:
             logging.error(f"{self.__class__.__name__} write_registers threw {exc!s}")
             raise
