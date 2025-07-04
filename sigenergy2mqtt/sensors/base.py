@@ -1222,11 +1222,14 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             return self.NO_ALARM
         else:
             active_alarms = []
-            for bit_position in range(16):
-                if value & (1 << bit_position):
-                    description = self.decode_alarm_bit(bit_position)
-                    if description:
-                        active_alarms.append(description)
+            try:
+                for bit_position in range(16):
+                    if value & (1 << bit_position):
+                        description = self.decode_alarm_bit(bit_position)
+                        if description:
+                            active_alarms.append(description)
+            except TypeError as e:
+                logging.error(f"{self.__class__.__name__} - Failed to decode alarm bits from '{value}': {e}")
             if not active_alarms:
                 return "Unknown Alarm"
             else:
