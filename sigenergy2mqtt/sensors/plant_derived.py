@@ -13,6 +13,7 @@ from .base import (
 from .const import UnitOfPower
 from .plant_read_only import BatteryPower, GridSensorActivePower, PlantPVPower
 from dataclasses import dataclass
+from enum import StrEnum
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
@@ -144,10 +145,10 @@ class PlantConsumedPower(DerivedSensor):
         """
         if self.battery_power is None or self.grid_sensor_active_power is None or self.pv_power is None:
             if self._debug_logging:
-                logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
+                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(f"Publishing {self.__class__.__name__} READY - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
+            logging.debug(f"{self.__class__.__name__} Publishing READY - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         self.battery_power = None
@@ -168,17 +169,29 @@ class PlantConsumedPower(DerivedSensor):
             return False  # until all values populated, can't do calculation
         consumed_power = self.pv_power + self.grid_sensor_active_power - self.battery_power
         if consumed_power < 0:
-            logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! (battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}) Adjusting to zero...")
+            logging.debug(
+                f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! (battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}) Adjusting to zero..."
+            )
             consumed_power = 0
         self.set_latest_state(consumed_power)
         return True
 
 
 class TotalPVPower(DerivedSensor, ObservableMixin):
+    class SourceType(StrEnum):
+        SMARTPORT = "s"
+        FAILOVER = "f"
+        MANDATORY = "m"
+
     @dataclass
     class Value:
         gain: float
+        type: str
+        enabled: bool = True
         state: float = None
+
+        def __repr__(self):
+            return f"{self.state} ({self.type.name}/{'enabled' if self.enabled else 'disabled'})"
 
     def __init__(self, plant_index: int, *sensors: Sensor):
         super().__init__(
@@ -194,25 +207,49 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         )
         self._plant_index = plant_index
         self._sources: dict[str, TotalPVPower.Value] = dict()
-        self.register_source_sensors(*sensors)
+        self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source in self._sources:
-            self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
-            if sum([1 for value in self._sources.values() if value.state is None]) == 0:
-                self.set_latest_state(sum([value.state for value in self._sources.values()]))
+    def failback(self, source: str):
+        logging.info(f"{self.__class__.__name__} Re-enabling '{source}' as source because state updated {self._sources[source].state}")
+        self._sources[source].enabled = True
+        for id, value in self._sources.items():
+            if value.type == TotalPVPower.SourceType.FAILOVER:
+                logging.info(f"{self.__class__.__name__} Disabling '{id}' as failover source because state updated from SmartPort sensor '{source}'")
+                value.enabled = False
+
+    def failover(self, smartport_sensor: Sensor) -> bool:
+        failed_over = False
+        for id, value in self._sources.items():
+            if value.type == TotalPVPower.SourceType.FAILOVER:
+                if value.enabled:
+                    return True
+                logging.info(f"{self.__class__.__name__} Enabling '{id}' as failover source because SmartPort sensor '{smartport_sensor.unique_id}' failed")
+                value.enabled = True
+                failed_over = True
+        if failed_over and smartport_sensor.unique_id in self._sources:
+            logging.info(f"{self.__class__.__name__} Disabling '{smartport_sensor.unique_id}' as SmartPort source because failover sources enabled")
+            self._sources[smartport_sensor.unique_id].enabled = False
+        return failed_over
+
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
+        if topic in self._sources:
+            if not self._sources[topic].enabled and self._sources[topic].type == TotalPVPower.SourceType.SMARTPORT:
+                self.failback(topic)
+            self._sources[topic].state = (value if isinstance(value, float) else float(value)) * self._sources[topic].gain
+            if self._debug_logging:
+                logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[topic].enabled else 'disabled'}) topic '{topic}' - {self._sources=}")
+            if self._sources[topic].enabled and sum([1 for value in self._sources.values() if value.enabled and value.state is None]) == 0:
+                self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
                 await self.publish(mqtt, modbus, republish=True)
-            elif self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from topic '{source}' - {self._sources=}")
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{source}', but topic is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{topic}', but topic is not registered")
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
         if Config.devices[self._plant_index].smartport.enabled:
             for topic in Config.devices[self._plant_index].smartport.mqtt:
                 if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
-                    self._sources[topic.topic] = TotalPVPower.Value(topic.gain)
+                    self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     topics.add(topic.topic)
                     if self._debug_logging:
                         logging.debug(f"{self.__class__.__name__} Added MQTT topic {topic.topic} as source")
@@ -228,37 +265,46 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             modbus:     The Modbus client for determining the current state.
             republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
         """
-        if sum([1 for value in self._sources.values() if value.state is None]) > 0:
+        if sum([1 for value in self._sources.values() if value.enabled and value.state is None]) > 0:
             if self._debug_logging:
-                logging.debug(f"Publishing {self.__class__.__name__} SKIPPED - {self._sources=}")
+                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(f"Publishing {self.__class__.__name__} READY - {self._sources=}")
+            logging.debug(f"{self.__class__.__name__} Publishing READY - {self._sources=}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         for value in self._sources.values():
             value.state = None
 
-    def register_source_sensors(self, *sensors: Sensor):
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        if Config.devices[self._plant_index].smartport.enabled:
+            return super().publish_attributes(mqtt, comment="PV Power + (sum of all Smart-Port PV Power sensors)", **kwargs)
+        else:
+            return super().publish_attributes(mqtt, comment="PV Power + Third-Party PV Power", **kwargs)
+
+    def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
         for sensor in sensors:
             assert isinstance(sensor, PVPowerSensor), f"Contributing sensors to TotalPVPower must be instances of PVPowerSensor ({sensor.__class__.__name__})"
-            self._sources[sensor.unique_id] = TotalPVPower.Value(sensor.gain)
+            self._sources[sensor.unique_id] = TotalPVPower.Value(sensor.gain, type=type, enabled=enabled)
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source")
+                logging.debug(f"{self.__class__.__name__} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+        source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from {sensor.__class__.__name__} - not PVPower instance")
             return False
-        elif sensor.unique_id not in self._sources:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from '{sensor.unique_id}' ({sensor.__class__.__name__}), but sensor is not registered")
+        elif source not in self._sources:
+            logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
             return False
-        self._sources[sensor.unique_id].state = values[-1][1]
-        if sum([1 for value in self._sources.values() if value.state is None]) > 0:
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from sensor '{sensor.unique_id}' - {self._sources=}")
-            return False  # until all values populated, can't do calculation
-        self.set_latest_state(sum([value.state for value in self._sources.values()]))
+        if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
+            self.failback(source)
+        self._sources[source].state = values[-1][1]
+        if self._debug_logging:
+            logging.debug(f"{self.__class__.__name__} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
+        if not self._sources[source].enabled or sum([1 for value in self._sources.values() if value.enabled and value.state is None]) > 0:
+            return False  # until all enabled values populated, can't do calculation
+        self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
         return True
 
 

@@ -25,9 +25,11 @@ class PowerPlant(ModbusDevice):
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
         super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw=f"Modbus Protocol {SIGENERGY_MODBUS_PROTOCOL}")
+        battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
-        battery_power = ro.BatteryPower(plant_index)
+        plant_third_party_pv_power = ro.PlantThirdPartyPVPower(plant_index)
+        total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
 
         self._add_read_sensor(ro.SystemTime(plant_index))
         self._add_read_sensor(ro.SystemTimeZone(plant_index))
@@ -103,9 +105,8 @@ class PowerPlant(ModbusDevice):
 
         self._add_child_device(GridSensor(plant_index, device_type, power_phases, grid_sensor_active_power))
 
-        total_pv_power = None
+        self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
         if Config.devices[plant_index].smartport.enabled:
-            total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
             smartport_config = Config.devices[plant_index].smartport
             if smartport_config.module.name:
                 module_config = smartport_config.module
@@ -119,23 +120,24 @@ class PowerPlant(ModbusDevice):
                     if module_config.pv_power and not module_config.pv_power.isspace():
                         for sensor in smartport.sensors.values():
                             if sensor.__class__.__name__ == module_config.pv_power:
-                                total_pv_power.register_source_sensors(sensor)
-                                self._add_derived_sensor(total_pv_power, plant_pv_power, sensor, search_children=True)
-                                plant_pv_power["enabled_by_default"] = False
+                                total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
+                                self._add_derived_sensor(total_pv_power, sensor, search_children=True)
                                 break
                 except Exception as exc:
                     logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {exc}")
                     raise
-
-        plant_consumed_power = derived.PlantConsumedPower(plant_index)
-        if total_pv_power is None:
-            self._add_derived_sensor(plant_consumed_power, plant_pv_power, battery_power, grid_sensor_active_power, search_children=True)
-            plant_lifetime_pv_energy = derived.PlantLifetimePVEnergy(plant_index, plant_pv_power)
-            self._add_derived_sensor(plant_lifetime_pv_energy, plant_pv_power)
+            self._add_read_sensor(plant_third_party_pv_power)
+            total_pv_power.register_source_sensors(plant_third_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
         else:
-            self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, search_children=True)
-            plant_lifetime_pv_energy = derived.PlantLifetimePVEnergy(plant_index, total_pv_power)
-            self._add_derived_sensor(plant_lifetime_pv_energy, total_pv_power)
+            self._add_read_sensor(plant_third_party_pv_power, "consumption")
+            total_pv_power.register_source_sensors(plant_third_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
+
+        self._add_derived_sensor(total_pv_power, plant_third_party_pv_power)
+        
+        plant_consumed_power = derived.PlantConsumedPower(plant_index)
+        self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, search_children=True)
+        plant_lifetime_pv_energy = derived.PlantLifetimePVEnergy(plant_index, total_pv_power)
+        self._add_derived_sensor(plant_lifetime_pv_energy, total_pv_power)
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
 
         plant_lifetime_consumed_energy = derived.PlantLifetimeConsumedEnergy(plant_index, plant_consumed_power)

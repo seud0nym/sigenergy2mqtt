@@ -1056,3 +1056,24 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight", **kwargs)
+
+
+class PlantThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Third-Party PV Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_third_party_pv_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30194,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:solar-power",
+            gain=None,  # 1000,
+            precision=2,
+        )
