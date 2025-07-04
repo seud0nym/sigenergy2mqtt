@@ -697,11 +697,11 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
             if timestamp + self._scan_interval > now:
                 return False
 
-        if Config.devices[self._plant_index].log_level == logging.DEBUG:
-            logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address})")
-            start = time.time()
         try:
             async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(self._scan_interval):
+                if Config.devices[self._plant_index].log_level == logging.DEBUG:
+                    logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s")
+                    start = time.time()
                 if self._input_type == InputType.HOLDING:
                     rr = await modbus.read_holding_registers(self._address, count=self._count, slave=self._device_address)
                 elif self._input_type == InputType.INPUT:
@@ -717,7 +717,7 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
             result = False
         if Config.devices[self._plant_index].log_level == logging.DEBUG:
             elapsed = time.time() - start
-            logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) took {elapsed:.3f}s")
+            logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
         if self._check_register_response(rr, f"read_{self._input_type}_registers"):
             self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
             result = True
