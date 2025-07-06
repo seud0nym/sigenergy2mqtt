@@ -569,13 +569,14 @@ class ModbusSensor(Sensor):
         icon: str,
         gain: float,
         precision: int,
+        unique_id_override: str = None,
     ):
         assert device_address is not None and 1 <= device_address <= 247, f"Invalid device address {device_address}"
         assert address >= 30000, f"Invalid address {address}"
         assert count > 0, f"Invalid count {count}"
         assert data_type in ModbusClient.DATATYPE, f"Invalid data type {data_type}"
 
-        unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{address}"
+        unique_id = unique_id_override if unique_id_override is not None else f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{address}"
 
         super().__init__(
             name,
@@ -674,8 +675,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         icon: str,
         gain: float,
         precision: int,
+        unique_id_override: str = None,
     ):
-        ModbusSensor.__init__(self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision)
+        ModbusSensor.__init__(self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision, unique_id_override=unique_id_override)
         ReadableSensorMixin.__init__(self, scan_interval)
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception:
@@ -983,9 +985,9 @@ class WriteOnlySensor(WritableSensorMixin):
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value == "Off":
-            return await super().set_value(modbus, mqtt, 0, source)
+            return await super().set_value(modbus, mqtt, 0, source, handler)
         elif value == "On":
-            return await super().set_value(modbus, mqtt, 1, source)
+            return await super().set_value(modbus, mqtt, 1, source, handler)
         else:
             logging.warning(f"{self.__class__.__name__} - Ignored attempt to set value to {value}: Must be either 'On' or 'Off'")
         return False
@@ -1115,7 +1117,7 @@ class NumericSensor(ReadWriteSensor):
                 state = float(value)
                 if self.gain != 1:
                     state = state * self.gain
-                return await super().set_value(modbus, mqtt, state, source)
+                return await super().set_value(modbus, mqtt, state, source, handler)
             except Exception as e:
                 logging.warning(f"{self.__class__.__name__} - Attempt to set value to {value} FAILED: {e}")
         else:
@@ -1538,6 +1540,8 @@ class RunningStateSensor(ReadOnlySensor):
             return "Fault"
         elif value == 3:
             return "Power-Off"
+        elif value == 7:
+            return "Environmental Abnormality"
         else:
             return f"Unknown State code: {value}"
 
@@ -1701,10 +1705,16 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             if fmt.tm_year == now.tm_year and fmt.tm_mon == now.tm_mon and fmt.tm_mday == now.tm_mday:
                 with self._persistent_state_file.open("r") as f:
                     try:
-                        self._state_at_midnight = float(f.read())
-                        logging.info(f"{self.__class__.__name__} - Loading last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
+                        value = float(f.read())
+                        if value <= 0.0:
+                            logging.info(f"{self.__class__.__name__} - Ignored last midnight state from {self._persistent_state_file} ({value})")
+                            self._persistent_state_file.unlink()
+                        else:
+                            self._state_at_midnight = value
+                            logging.info(f"{self.__class__.__name__} - Loading last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
                     except ValueError as error:
                         logging.warning(f"Sensor {self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
+                        self._persistent_state_file.unlink()
             else:
                 logging.info(f"{self.__class__.__name__} - Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
