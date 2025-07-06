@@ -182,7 +182,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-100.00,
             max=100.00,
         )
@@ -206,7 +206,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             state_class=None,
             icon="mdi:lightning-bolt",
             gain=100,
-            precision=2,
+            precision=None,
             min=-60.0,
             max=60.0,
         )
