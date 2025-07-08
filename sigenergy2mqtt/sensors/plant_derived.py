@@ -1,23 +1,22 @@
-from .base import (
-    BatteryEnergyAccumulationSensor,
-    DeviceClass,
-    EnergyDailyAccumulationSensor,
-    ObservableMixin,
-    PVPowerSensor,
-    Sensor,
-    StateClass,
-    EnergyLifetimeAccumulationSensor,
-    DerivedSensor,
-    ModbusSensor,
+from .base import DeviceClass, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, StateClass, DerivedSensor, ModbusSensor
+from .const import UnitOfEnergy, UnitOfPower
+from .plant_read_only import (
+    BatteryPower,
+    GridSensorActivePower,
+    ESSTotalChargedEnergy,
+    ESSTotalDischargedEnergy,
+    PlantPVPower,
+    PlantPVTotalGeneration,
+    PlantTotalExportedEnergy,
+    PlantTotalImportedEnergy,
+    ThirdPartyLifetimePVEnergy,
 )
-from .const import UnitOfPower
-from .plant_read_only import BatteryPower, GridSensorActivePower, PlantPVPower
 from dataclasses import dataclass
 from enum import StrEnum
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.inverter_read_only import AccumulatedChargeEnergy, AccumulatedDischargeEnergy, DailyChargeEnergy, DailyDischargeEnergy
+from typing import Any, Dict
 import logging
 
 
@@ -308,21 +307,10 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         return True
 
 
-class GridSensorLifetimeExportEnergy(EnergyLifetimeAccumulationSensor):
-    def __init__(self, plant_index: int, source: GridSensorExportPower):
-        super().__init__(
-            name="Lifetime Energy Exported",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",
-            source=source,
-            icon="mdi:transmission-tower-export",
-        )
-
-
 class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, source: GridSensorLifetimeExportEnergy):
+    def __init__(self, plant_index: int, source: PlantTotalExportedEnergy):
         super().__init__(
-            name="Daily Energy Exported",
+            name="Daily Exported Energy",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
             source=source,
@@ -330,21 +318,10 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
         )
 
 
-class GridSensorLifetimeImportEnergy(EnergyLifetimeAccumulationSensor):
-    def __init__(self, plant_index: int, source: GridSensorImportPower):
-        super().__init__(
-            name="Lifetime Energy Imported",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",
-            source=source,
-            icon="mdi:transmission-tower-import",
-        )
-
-
 class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, source: GridSensorLifetimeImportEnergy):
+    def __init__(self, plant_index: int, source: PlantTotalImportedEnergy):
         super().__init__(
-            name="Daily Energy Imported",
+            name="Daily Imported Energy",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             source=source,
@@ -352,43 +329,81 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
         )
 
 
-class PlantLifetimeConsumedEnergy(EnergyLifetimeAccumulationSensor):
-    def __init__(self, plant_index: int, source: PlantConsumedPower):
+class TotalLifetimePVEnergy(DerivedSensor):
+    def __init__(self, plant_index: int):
         super().__init__(
-            name="Lifetime Consumption",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_lifetime_consumed_energy",
-            source=source,
-            icon="mdi:home-lightning-bolt-outline",
-        )
-
-
-class PlantDailyConsumedEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, source: PlantLifetimeConsumedEnergy):
-        super().__init__(
-            name="Daily Consumption",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_consumed_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",
-            source=source,
-            icon="mdi:home-lightning-bolt-outline",
-        )
-
-
-class PlantLifetimePVEnergy(EnergyLifetimeAccumulationSensor):
-    def __init__(self, plant_index: int, source: PlantPVPower | TotalPVPower):
-        super().__init__(
-            name="Lifetime Production",
+            name="Lifetime Total PV Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_lifetime_pv_energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant-outline",
+            gain=100,
+            precision=2,
+        )
+        self["enabled_by_default"] = True
+        self.plant_lifetime_pv_energy: float = None
+        self.plant_3rd_party_lifetime_pv_energy: float = None
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor as was a ResettableAccumulationSensor prior to Modbus Protocol v2.7 
+        return components
+
+    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
+        """Publishes this sensor.
+
+        Args:
+            mqtt:       The MQTT client for publishing the current state.
+            modbus:     The Modbus client for determining the current state.
+            republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
+        """
+        if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
+            if self._debug_logging:
+                logging.debug(
+                    f"{self.__class__.__name__} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
+                )
+            return  # until all values populated, can't do calculation
+        if self._debug_logging:
+            logging.debug(
+                f"{self.__class__.__name__} Publishing READY - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
+            )
+        await super().publish(mqtt, modbus, republish=republish)
+        # reset internal values to missing for next calculation
+        self.plant_lifetime_pv_energy = None
+        self.plant_3rd_party_lifetime_pv_energy = None
+
+    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+        if issubclass(type(sensor), PlantPVTotalGeneration):
+            self.plant_lifetime_pv_energy = values[-1][1]
+        elif issubclass(type(sensor), ThirdPartyLifetimePVEnergy):
+            self.plant_3rd_party_lifetime_pv_energy = values[-1][1]
+        else:
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            return False
+        if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
+            return False  # until all values populated, can't do calculation
+        total = self.plant_lifetime_pv_energy + self.plant_3rd_party_lifetime_pv_energy
+        self.set_latest_state(total)
+        return True
+
+
+class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
+    def __init__(self, plant_index: int, source: TotalLifetimePVEnergy):
+        super().__init__(
+            name="Daily Total PV Production",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_total_daily_pv_energy",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_daily_pv_energy",
             source=source,
-            icon="mdi:solar-power-variant",
+            icon="mdi:solar-power-variant-outline",
         )
 
 
 class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, source: PlantLifetimePVEnergy):
+    def __init__(self, plant_index: int, source: PlantPVTotalGeneration):
         super().__init__(
-            name="Daily Production",
+            name="Daily PV Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_pv_energy",
             source=source,
@@ -396,8 +411,8 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
         )
 
 
-class PlantDailyChargeEnergy(BatteryEnergyAccumulationSensor):
-    def __init__(self, plant_index: int, *sensors: DailyChargeEnergy):
+class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
+    def __init__(self, plant_index: int, *sensors: ESSTotalChargedEnergy):
         super().__init__(
             "Daily Charge Energy",
             f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_charge_energy",
@@ -406,31 +421,11 @@ class PlantDailyChargeEnergy(BatteryEnergyAccumulationSensor):
         )
 
 
-class PlantDailyDischargeEnergy(BatteryEnergyAccumulationSensor):
-    def __init__(self, plant_index: int, *sensors: DailyDischargeEnergy):
+class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
+    def __init__(self, plant_index: int, *sensors: ESSTotalDischargedEnergy):
         super().__init__(
             "Daily Discharge Energy",
             f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_discharge_energy",
             f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
-            *sensors,
-        )
-
-
-class PlantAccumulatedChargeEnergy(BatteryEnergyAccumulationSensor):
-    def __init__(self, plant_index: int, *sensors: AccumulatedChargeEnergy):
-        super().__init__(
-            "Lifetime Charge Energy",
-            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",
-            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_accumulated_charge_energy",
-            *sensors,
-        )
-
-
-class PlantAccumulatedDischargeEnergy(BatteryEnergyAccumulationSensor):
-    def __init__(self, plant_index: int, *sensors: AccumulatedDischargeEnergy):
-        super().__init__(
-            "Lifetime Discharge Energy",
-            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",
-            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_accumulated_discharge_energy",
             *sensors,
         )

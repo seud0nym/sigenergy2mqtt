@@ -5,8 +5,8 @@ from .status import PVOutputStatusService
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import PowerPlant
 from sigenergy2mqtt.main import HostConfig
-from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, PlantDailyConsumedEnergy, PlantDailyPVEnergy, PlantLifetimePVEnergy, PlantLifetimeConsumedEnergy, TotalPVPower
-from sigenergy2mqtt.sensors.plant_read_only import PlantPVPower
+from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
+from sigenergy2mqtt.sensors.plant_read_only import PlantPVPower, TotalLoadConsumption, TotalLoadDailyConsumption
 import logging
 
 
@@ -21,13 +21,13 @@ def get_pvoutput_host_config(configs: list[HostConfig], next_plant_index: int) -
     plant_pv_power: PlantPVPower = None
     total_pv_power: TotalPVPower = None
     for sensor in [sensor for config in configs for device in config.devices if isinstance(device, PowerPlant) for sensor in device.sensors.values()]:
-        if isinstance(sensor, PlantLifetimePVEnergy):
+        if isinstance(sensor, TotalLifetimePVEnergy):
             status.register_generation(sensor.state_topic, sensor.gain)
-        elif isinstance(sensor, PlantLifetimeConsumedEnergy) and Config.pvoutput.consumption:
+        elif isinstance(sensor, TotalLoadConsumption) and Config.pvoutput.consumption:
             status.register_consumption(sensor.state_topic, sensor.gain)
-        elif isinstance(sensor, PlantDailyPVEnergy):
+        elif isinstance(sensor, TotalDailyPVEnergy):
             output.register_generation(sensor.state_topic, sensor.gain)
-        elif isinstance(sensor, PlantDailyConsumedEnergy) and Config.pvoutput.consumption:
+        elif isinstance(sensor, TotalLoadDailyConsumption) and Config.pvoutput.consumption:
             output.register_consumption(sensor.state_topic, sensor.gain)
         elif isinstance(sensor, GridSensorDailyExportEnergy) and Config.pvoutput.exports:
             output.register_exports(sensor.state_topic, sensor.gain)

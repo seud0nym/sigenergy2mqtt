@@ -1,7 +1,6 @@
-from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy
+from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 from .sanity_check import SanityCheck
 from concurrent.futures import Future
-from dataclasses import dataclass
 from pathlib import Path
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from pymodbus.constants import Endian
@@ -677,7 +676,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         precision: int,
         unique_id_override: str = None,
     ):
-        ModbusSensor.__init__(self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision, unique_id_override=unique_id_override)
+        ModbusSensor.__init__(
+            self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision, unique_id_override=unique_id_override
+        )
         ReadableSensorMixin.__init__(self, scan_interval)
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception:
@@ -702,7 +703,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         try:
             async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(self._scan_interval):
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s")
+                    logging.debug(
+                        f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
+                    )
                     start = time.time()
                 if self._input_type == InputType.HOLDING:
                     rr = await modbus.read_holding_registers(self._address, count=self._count, slave=self._device_address)
@@ -719,56 +722,73 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
             result = False
         if Config.devices[self._plant_index].log_level == logging.DEBUG:
             elapsed = time.time() - start
-            logging.debug(f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
+            logging.debug(
+                f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+            )
         if self._check_register_response(rr, f"read_{self._input_type}_registers"):
             self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
             result = True
 
         return result
 
+    def publish_attributes(self, mqtt: MqttClient, **kwargs):
+        return super().publish_attributes(mqtt, source=self._address, **kwargs)
 
-class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int):
-        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+class ReservedSensor(ReadOnlySensor):
+    """Base superclass of all sensor definitions that are reserved for future use.
+
+    Reserved sensors are NOT published.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        object_id: str,
+        input_type: InputType,
+        plant_index: int,
+        device_address: int,
+        address: int,
+        count: int,
+        data_type: ModbusClient.DATATYPE,
+        scan_interval: int,
+        unit: str,
+        device_class: DeviceClass,
+        state_class: StateClass,
+        icon: str,
+        gain: float,
+        precision: int,
+        unique_id_override: str = None,
+    ):
         super().__init__(
-            name="Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_current",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=address,
-            count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfElectricCurrent.AMPERE,
-            device_class=DeviceClass.CURRENT,
-            state_class=None,
-            icon="mdi:current-dc",
-            gain=100,
-            precision=2,
+            name,
+            object_id,
+            input_type,
+            plant_index,
+            device_address,
+            address,
+            count,
+            data_type,
+            scan_interval,
+            unit,
+            device_class,
+            state_class,
+            icon,
+            gain,
+            precision,
+            unique_id_override=unique_id_override,
         )
+        self._publishable = False # Reserved sensors are not published
 
+    @property
+    def publishable(self) -> bool:
+        return False
 
-class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int):
-        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
-        super().__init__(
-            name="Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_voltage",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=address,
-            count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfElectricPotential.VOLT,
-            device_class=DeviceClass.VOLTAGE,
-            state_class=None,
-            icon="mdi:flash",
-            gain=10,
-            precision=1,
-        )
+    @publishable.setter
+    def publishable(self, value: bool):
+        raise ValueError("Cannot set publishable for ReservedSensor")
+
+    def apply_sensor_overrides(self, registers):
+        pass
 
 
 class TimestampSensor(ReadOnlySensor):
@@ -884,22 +904,30 @@ class WritableSensorMixin(ModbusSensor):
             if len(registers) == 1:
                 async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                        logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]")
+                        logging.debug(
+                            f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
+                        )
                         start = time.time()
                     rr = await modbus.write_register(self._address, registers[0], slave=slave, no_response_expected=no_response_expected)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     elapsed = time.time() - start
-                    logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
+                    logging.debug(
+                        f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+                    )
                 result = self._check_register_response(rr, "write_register")
             else:
                 async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                        logging.debug(f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]")
+                        logging.debug(
+                            f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
+                        )
                         start = time.time()
                     rr = await modbus.write_registers(self._address, registers, slave, no_response_expected=no_response_expected)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     elapsed = time.time() - start
-                    logging.debug(f"{self.__class__.__name__} - write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
+                    logging.debug(
+                        f"{self.__class__.__name__} - write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+                    )
                 result = self._check_register_response(rr, "write_registers")
             if result:
                 self.force_publish = True
@@ -1697,7 +1725,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
     ):
         super().__init__(name, unique_id, object_id, source, unit, device_class, state_class, icon, gain, precision)
         self._state_at_midnight_lock = asyncio.Lock()
-        self._state_at_midnight: float = 0.0 if source.latest_raw_state is None else source.latest_raw_state
+        self._state_at_midnight: float = source.latest_raw_state
         self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")
         if self._persistent_state_file.is_file():
             fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
@@ -1761,7 +1789,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             if was.tm_year != now.tm_year or was.tm_mon != now.tm_mon or was.tm_mday != now.tm_mday:
                 asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_running_loop())
 
-        self._state_now = now_state - self._state_at_midnight
+        self._state_now = now_state - (self._state_at_midnight if self._state_at_midnight else now_state)
         self.set_latest_state(self._state_now)
 
     async def _update_state_at_midnight(self, midnight_state: float) -> None:
@@ -1769,82 +1797,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             with self._persistent_state_file.open("w") as f:
                 f.write(str(midnight_state))
             self._state_at_midnight = midnight_state
-
-
-class BatteryEnergyAccumulationSensor(Sensor, ReadableSensorMixin, ObservableMixin, HybridInverter):
-    def __init__(
-        self,
-        name: str,
-        unique_id: str,
-        object_id: str,
-        *sources: ReadOnlySensor,
-    ):
-        @dataclass
-        class State:
-            gain: float = None
-            value: float = None
-
-        self._topics: dict[str, State] = {}
-
-        interval = 5
-        enabled = True
-        for sensor in sources:
-            unit = sensor.unit
-            device_class = sensor.device_class
-            state_class = sensor.state_class
-            icon = sensor["icon"]
-            gain = sensor.gain
-            precision = sensor.precision
-            enabled = enabled and sensor["enabled_by_default"]
-            self._topics[sensor.state_topic] = State(sensor.gain, None)
-            interval += sensor.scan_interval
-
-        Sensor.__init__(self, name, unique_id, object_id, unit, device_class, state_class, icon, gain, precision)
-        ReadableSensorMixin.__init__(self, interval)
-        self["enabled_by_default"] = enabled
-
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
-        if source in self._topics:
-            state = self._topics[source]
-            gain = state.gain
-            state.value = (value if isinstance(value, float) else float(value)) * gain
-            if sum(1 for value in self._topics.values() if value.value is None) == 0:
-                self.set_latest_state(sum(value.value for value in self._topics.values()))
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Publishing FORCED - {[value.value for value in self._topics.values()]} = {self.latest_raw_state}")
-                self.force_publish = True
-            return True
-        else:
-            logging.warning(f"{self.__class__.__name__} notified on topic '{source}', but it is not observable???")
-        return False
-
-    def observable_topics(self) -> set[str]:
-        topics = ObservableMixin.observable_topics(self)
-        for topic in self._topics.keys():
-            topics.add(topic)
-        return topics
-
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
-        """Publishes this sensor.
-
-        Args:
-            mqtt:       The MQTT client for publishing the current state.
-            modbus:     The Modbus client for determining the current state.
-            republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
-        """
-        if sum(1 for value in self._topics.values() if value.value is None) > 0:
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {[value.value for value in self._topics.values()]}")
-            return  # until all values populated, can't do calculation
-        if self._debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY - {[value.value for value in self._topics.values()]}")
-        await super().publish(mqtt, modbus, republish=True)
-        # reset internal values to missing for next calculation
-        if self._debug_logging:
-            logging.debug(f"Resetting {self.__class__.__name__} topic values")
-        for topic in self._topics.keys():
-            state = self._topics[topic]
-            state.value = None
 
 
 class PVPowerSensor:

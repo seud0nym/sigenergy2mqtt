@@ -88,7 +88,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-100.00,
             max=100.00,
         )
@@ -115,7 +115,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             state_class=None,
             icon="mdi:lightning-bolt",
             gain=100,
-            precision=2,
+            precision=None,
             min=-60.0,
             max=60.0,
         )
@@ -177,6 +177,7 @@ class PhaseAActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter)
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+
 
 class PhaseBActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, output_type: int):
@@ -331,7 +332,7 @@ class PhaseAActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInve
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-100.00,
             max=100.00,
         )
@@ -360,7 +361,7 @@ class PhaseBActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInve
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-100.00,
             max=100.00,
         )
@@ -389,7 +390,7 @@ class PhaseCActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInve
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-100.00,
             max=100.00,
         )
@@ -418,7 +419,7 @@ class PhaseAQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-60.00,
             max=60.00,
         )
@@ -447,7 +448,7 @@ class PhaseBQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-60.00,
             max=60.00,
         )
@@ -476,7 +477,7 @@ class PhaseCQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-60.00,
             max=60.00,
         )
@@ -509,7 +510,9 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
         )
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS.", **kwargs)
+        return super().publish_attributes(
+            mqtt, comment="When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS.", **kwargs
+        )
 
 
 class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
@@ -597,19 +600,19 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
         result = False
         if value == "PCS remote control":
-            result = await super().set_value(modbus, mqtt, 0, source)
+            result = await super().set_value(modbus, mqtt, 0, source, handler)
         elif value == "Standby":
-            result = await super().set_value(modbus, mqtt, 1, source)
+            result = await super().set_value(modbus, mqtt, 1, source, handler)
         elif value == "Maximum Self-consumption (Default)":
-            result = await super().set_value(modbus, mqtt, 2, source)
+            result = await super().set_value(modbus, mqtt, 2, source, handler)
         elif value == "Command Charging (Consume power from the grid first)":
-            result = await super().set_value(modbus, mqtt, 3, source)
+            result = await super().set_value(modbus, mqtt, 3, source, handler)
         elif value == "Command Charging (Consume power from the PV first)":
-            result = await super().set_value(modbus, mqtt, 4, source)
+            result = await super().set_value(modbus, mqtt, 4, source, handler)
         elif value == "Command Discharging (Output power from PV first)":
-            result = await super().set_value(modbus, mqtt, 5, source)
+            result = await super().set_value(modbus, mqtt, 5, source, handler)
         elif value == "Command Discharging (Output power from the battery first)":
-            result = await super().set_value(modbus, mqtt, 6, source)
+            result = await super().set_value(modbus, mqtt, 6, source, handler)
         else:
             logging.warning(f"{self.name} - Ignored attempt to set value to {value}: Not a valid mode")
         if result:
@@ -855,7 +858,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
-            icon="mdi:transmission-tower-export",
+            icon="mdi:battery-negative",
             gain=1000,
             precision=2,
             min=0,
@@ -874,6 +877,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
         else:
             return value
 
+
 class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
@@ -890,7 +894,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
-            icon="mdi:transmission-tower-import",
+            icon="mdi:battery-positive",
             gain=1000,
             precision=2,
             min=0,
@@ -899,3 +903,87 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.", **kwargs)
+
+
+class ESSBackupSOC(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Backup SoC",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_backup_soc",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40046,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent-box-outline",
+            gain=10,
+            precision=None,
+            min=0.00,
+            max=100.00,
+        )
+        self["enabled_by_default"] = True
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(mqtt, comment="Range: [0.00,100.00]", **kwargs)
+
+
+class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Charge Cut-Off SoC",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_charge_cut_off_soc",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40047,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent-box-outline",
+            gain=10,
+            precision=None,
+            min=0.00,
+            max=100.00,
+        )
+        self["enabled_by_default"] = True
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(mqtt, comment="Range: [0.00,100.00]", **kwargs)
+
+
+class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Discharge Cut-Off SoC",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_discharge_cut_off_soc",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40048,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent-box-outline",
+            gain=10,
+            precision=None,
+            min=0.00,
+            max=100.00,
+        )
+        self["enabled_by_default"] = True
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(mqtt, comment="Range: [0.00,100.00]", **kwargs)
