@@ -1461,7 +1461,7 @@ class SITotalEVACChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
 class SITotalSelfPVGeneration(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            name="Total Self PV Generation",
+            name="Total PV Production",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_self_pv_generation",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1489,7 +1489,7 @@ class SITotalSelfPVGeneration(ReadOnlySensor, HybridInverter, PVInverter):
 class SITotalThirdPartyPVGeneration(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            name="Total Third-Party PV Generation",
+            name="Total Third-Party PV Production",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_third_party_pv_generation",
             input_type=InputType.INPUT,
             plant_index=plant_index,
