@@ -1,4 +1,4 @@
-from .const import PERCENTAGE, DeviceClass, InputType, StateClass
+from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 from .sanity_check import SanityCheck
 from concurrent.futures import Future
 from pathlib import Path
@@ -1634,8 +1634,14 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         unique_id: str,
         object_id: str,
         source: Sensor,
+        unit=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=DeviceClass.ENERGY,
+        state_class=StateClass.TOTAL_INCREASING,
+        icon="mdi:home-lightning-bolt",
+        gain=1000,
+        precision=2,
     ):
-        super().__init__(name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision)
+        super().__init__(name, unique_id, object_id, source, unit=unit, device_class=device_class, state_class=state_class, icon=icon, gain=gain, precision=precision)
         self._current_total: float = 0.0
         self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
         if self._persistent_state_file.is_file():
