@@ -1131,6 +1131,8 @@ class NumericSensor(ReadWriteSensor):
         self["max"] = max
         self["mode"] = "slider" if unit == PERCENTAGE else "box"
         self["step"] = 1 if precision is None else 10**-precision
+        self._sanity.min_value = None
+        self._sanity.max_value = None
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
