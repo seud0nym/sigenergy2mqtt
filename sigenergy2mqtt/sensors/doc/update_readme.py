@@ -7,7 +7,7 @@ from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.sensors.base import WriteOnlySensor
 
 
-logging.getLogger("root").setLevel(logging.INFO)
+logging.getLogger("root").setLevel(logging.WARNING)
 
 derived = {
     "BatteryChargingPower": "BatteryPower &gt; 0",
@@ -34,6 +34,8 @@ derived = {
     "PlantDailyDischargeEnergy": "&sum; of DailyDischargeEnergy across all Inverters associated with the Plant",
     "PlantDailyPVEnergy": "PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight",
     "TotalPVPower": "PlantPVPower &plus; (PlantThirdPartyPVPower _or_ &sum; of all configured SmartPort MQTT sources and SmartPort modules)",
+    "TotalLifetimePVEnergy": "&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy",
+    "TotalDailyPVEnergy": "TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight",
     "GeneralPCSAlarm": "Modbus Registers 30027 and 30028",
     "ACChargerAlarms": "Modbus Registers 32012, 32013, and 32014",
     "InverterPCSAlarm": "Modbus Registers 30605 and 30606",
@@ -58,6 +60,8 @@ async def sensor_index():
                     del derived[sensor_name]
                 elif hasattr(sensor, "_address"):
                     f.write(f"Modbus Register {sensor._address} ")
+                else:
+                    logging.getLogger("root").error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("|")
                 if sensor_parent in ("Inverter", "ESS", "PVString"):
                     if isinstance(sensor, HybridInverter) and isinstance(sensor, PVInverter):
