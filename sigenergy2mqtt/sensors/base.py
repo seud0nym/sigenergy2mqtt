@@ -1,4 +1,4 @@
-from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
+from .const import PERCENTAGE, DeviceClass, InputType, StateClass
 from .sanity_check import SanityCheck
 from concurrent.futures import Future
 from pathlib import Path
@@ -1583,12 +1583,12 @@ class ResettableAccumulationSensor(DerivedSensor, ObservableMixin):
         unique_id: str,
         object_id: str,
         source: Sensor,
-        unit=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=DeviceClass.ENERGY,
-        state_class=StateClass.TOTAL_INCREASING,
-        icon="mdi:sigma",
-        gain=1000,
-        precision=2,
+        unit: str,
+        device_class: DeviceClass,
+        state_class: StateClass,
+        icon: str,
+        gain: float,
+        precision: int,
     ):
         super().__init__(name, unique_id, object_id, unit, device_class, state_class, icon, gain, precision)
         self._source = source
@@ -1634,14 +1634,8 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         unique_id: str,
         object_id: str,
         source: Sensor,
-        unit=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=DeviceClass.ENERGY,
-        state_class=StateClass.TOTAL_INCREASING,
-        icon="mdi:transmission-tower-export",
-        gain=1000,
-        precision=2,
     ):
-        super().__init__(name, unique_id, object_id, source, unit, device_class, state_class, icon, gain, precision)
+        super().__init__(name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision)
         self._current_total: float = 0.0
         self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
         if self._persistent_state_file.is_file():
@@ -1716,14 +1710,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         unique_id: str,
         object_id: str,
         source: Sensor,
-        unit=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=DeviceClass.ENERGY,
-        state_class=StateClass.TOTAL_INCREASING,
-        icon="mdi:sigma",
-        gain=1000,
-        precision=2,
     ):
-        super().__init__(name, unique_id, object_id, source, unit, device_class, state_class, icon, gain, precision)
+        super().__init__(name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision)
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float = source.latest_raw_state
         self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")

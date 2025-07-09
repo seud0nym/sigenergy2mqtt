@@ -228,7 +228,6 @@ class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )
 
 

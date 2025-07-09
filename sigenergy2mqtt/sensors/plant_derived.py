@@ -314,7 +314,6 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
             source=source,
-            icon="mdi:transmission-tower-export",
         )
 
 
@@ -325,7 +324,6 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             source=source,
-            icon="mdi:transmission-tower-import",
         )
 
 
@@ -396,7 +394,6 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_total_daily_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_daily_pv_energy",
             source=source,
-            icon="mdi:solar-power-variant-outline",
         )
 
 
@@ -407,25 +404,24 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_pv_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )
 
 
 class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, *sensors: ESSTotalChargedEnergy):
+    def __init__(self, plant_index: int, source: ESSTotalChargedEnergy):
         super().__init__(
-            "Daily Charge Energy",
-            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_charge_energy",
-            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_charge_energy",
-            *sensors,
+            name="Daily Charge Energy",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_charge_energy",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_charge_energy",
+            source=source,
         )
 
 
 class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, *sensors: ESSTotalDischargedEnergy):
+    def __init__(self, plant_index: int, source: ESSTotalDischargedEnergy):
         super().__init__(
-            "Daily Discharge Energy",
-            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_discharge_energy",
-            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
-            *sensors,
+            name="Daily Discharge Energy",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_discharge_energy",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
+            source=source,
         )

@@ -113,7 +113,6 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )
 
 
@@ -124,5 +123,4 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )
