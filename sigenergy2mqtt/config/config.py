@@ -24,6 +24,8 @@ class Config:
     sensor_debug_logging: bool = False
     sensor_overrides: dict = {}
 
+    sanity_check_default_kw: float = 100.0
+
     persistent_state_path: str = "."
 
     _source: str = None
@@ -68,6 +70,8 @@ class Config:
                         case const.SIGENERGY2MQTT_DEBUG_SENSOR:
                             overrides["sensor-overrides"][check_string(os.environ[key], key, allow_empty=False, allow_none=False)] = {"debug-logging": True}
                             overrides["log-level"] = logging.DEBUG
+                        case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
+                            overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0) 
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
                             overrides["home-assistant"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
@@ -169,6 +173,9 @@ class Config:
                 case "log-level":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: log-level = {data[name]}")
                     Config.log_level = check_log_level(data[name], name)
+                case "sanity-check-default-kw":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
+                    Config.sanity_check_default_kw = check_float(data[name], name, allow_none=False, min=0)
                 case "mqtt":
                     Config.mqtt.configure(data[name], override)
                 case "modbus":
@@ -219,6 +226,8 @@ class Config:
                                         Config.sensor_overrides[sensor][p] = check_float(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
                                     case "sanity-check-min-value":
                                         Config.sensor_overrides[sensor][p] = check_float(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                    case "sanity-check-delta":
+                                        Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
                                     case "unit-of-measurement":
                                         Config.sensor_overrides[sensor][p] = check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
                                     case _:

@@ -268,6 +268,10 @@ Command line options override both environment variables and the configuration f
                         Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, 
                         or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity 
                         name. If specified, --debug-level is also forced to DEBUG
+  --sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW
+                        The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of 
+                        power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside 
+                        the range are ignored. 
   --hass-enabled        Enable auto-discovery in Home Assistant.
   --hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]
                         The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
@@ -364,6 +368,8 @@ Environment variables override the configuration file, but *not* command line op
   - Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
 - `SIGENERGY2MQTT_DEBUG_SENSOR` : 
   - Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG
+- `SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW` :
+  - The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored. 
 - `SIGENERGY2MQTT_HASS_ENABLED` : 
   - Set to 'true' to enable auto-discovery in Home Assistant.
 - `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` : 
@@ -447,7 +453,7 @@ Environment variables override the configuration file, but *not* command line op
 
 ## Post-Installation
 
-If you are using Home Assistant, you can set the current values for the daily and lifetime accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values. Make sure you enter lifetime values first, because daily sensors use the lifetime numbers as their base.
+If you are using Home Assistant, you can set the current values for the daily accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values.
 
 ### MQTT Publish and Subscribe Topics
 
@@ -455,13 +461,14 @@ The topics that are published and subscribed to by `sigenergy2mqtt` can be found
 
 ## Home Assistant Auto-Discovery
 
-For each host defined in the `modbus` section of the configuration file, an MQTT device will be created in Home Assistant. The first device will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related devices, such as `Sigenergy Plant Grid Sensor` and if applicable, `Sigenergy Plant Smart-Port`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
+For each host defined in the `modbus` section of the configuration file, an MQTT device will be created in Home Assistant. The first device will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related devices, such as `Sigenergy Plant Grid Sensor` and `Sigenergy Plant Statistics` and if applicable, `Sigenergy Plant Smart-Port`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
 
 Example:
 ```
 Sigenergy Plant
    ├─ Sigenergy Plant Grid Sensor
-   ├─ SigenStor Plant Smart-Port
+   ├─ Sigenergy Plant Smart-Port
+   ├─ Sigenergy Plant Statistics
    ├─ SigenStor CMUxxxxxxxxxx Energy Controller (ID 1)
    │    ├─ SigenStor CMUxxxxxxxxxx ESS
    │    ├─ SigenStor CMUxxxxxxxxxx PV String 1

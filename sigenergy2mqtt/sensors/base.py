@@ -259,6 +259,10 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     if self._debug_logging:
                         logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'publishable' override ({overrides['publishable']})")
                     self._publishable = overrides["publishable"]
+                if "sanity-check-delta" in overrides and self._sanity.delta != overrides["sanity-check-delta"]:
+                    if self._debug_logging:
+                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
+                    self._sanity.delta = overrides["sanity-check-delta"]
                 if "sanity-check-max-value" in overrides and self._sanity.max_value != overrides["sanity-check-max-value"]:
                     if self._debug_logging:
                         logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
@@ -640,6 +644,8 @@ class ReadableSensorMixin(abc.ABC):
     def __init__(self: Sensor, scan_interval: int):
         assert scan_interval is not None and scan_interval >= 1, "Scan interval cannot be less than 1 second"
         self._scan_interval = scan_interval
+
+        self._sanity.init(self["unit_of_measurement"], self["state_class"], self.gain, scan_interval)
 
         for identifier in Config.sensor_overrides.keys():
             if identifier in self.__class__.__name__ or identifier in self["object_id"]:
