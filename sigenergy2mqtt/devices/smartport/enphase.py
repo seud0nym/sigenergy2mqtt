@@ -51,6 +51,9 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
         self._username = username
         self._password = password
         self._token = ""
+        self._failover_initiated = False
+        self._max_failures = 5
+        self._max_failures_retry_interval = 30
 
     async def _update_internal_state(self, **kwargs) -> bool:
         """Retrieves the current state of this sensor and updates the internal state history.
@@ -91,6 +94,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         self._states[-1] = (self._states[-1][0], self._states[-1][1], solar)
                         for sensor in self._derived_sensors.values():
                             sensor.set_source_values(self, self._states)
+                        self._failover_initiated = False
                         return True
                     except ValueError as e:
                         logging.error(f"{self.__class__.__name__} - Invalid JSON response from {url}: {e}")
@@ -100,11 +104,15 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         raise
         except requests.exceptions.RequestException as e:
             logging.error(f"{self.__class__.__name__} - Unhandled exception fetching data from {url} : {e}")
-            if self._failures < (self._max_failures / 2):
+            if self._failover_initiated or (self._failures + 1) < self._max_failures:
                 raise
             else:
-                logging.warning(f"{self.__class__.__name__} - Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
-                return True
+                if "TotalPVPower" in self._derived_sensors:
+                    logging.info(f"{self.__class__.__name__} - Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
+                    self._failover_initiated = self._derived_sensors["TotalPVPower"].failover(self)
+                else:
+                    logging.warning(f"{self.__class__.__name__} - Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
+                    return True
         return False
 
     def get_token(self, reauthenticate: bool = False) -> str:
@@ -220,7 +228,6 @@ class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )
 
 

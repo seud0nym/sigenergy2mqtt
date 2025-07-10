@@ -11,23 +11,18 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 1. It can publish the appropriate messages to allow Home Assistant to automatically discover the Sigenergy devices, simplifying Home Assistant configuration. 
 1. Production and consumption data can automatically be uploaded to PVOutput. 
-1. Third-party solar production can be included in the total production and consumption computations, using either custom code or by subscribing to MQTT topics.
 
 `sigenergy2mqtt` was inspired the Home Assistant integrations developed by [TypQxQ](https://github.com/TypQxQ/).
 
+# Contents
+
 - [Disclaimer](#disclaimer)
 - [Installation](#installation)
-    - [Home Assistant Add-on](#home-assistant-add-on)
-    - [Linux](#linux)
-    - [Docker](#docker)
 - [Configuration](#configuration)
-    - [Configuration File](#configuration-file)
-      - [Configuring Smart-Port Production](#configuring-smart-port-production)
-    - [Command Line Options](#command-line-options)
-    - [Environment Variables](#environment-variables)
-- [Post-Installation](#post-installation)
-- [Home Assistant Auto-Discovery](#home-assistant-auto-discovery)
-- [Alternatives](#alternatives)
+  - [Configuration File](#configuration-file)
+  - [Command Line Options](#command-line-options)
+  - [Environment Variables](#environment-variables)
+- [MQTT Publish and Subscribe Topics](#mqtt-publish-and-subscribe-topics)
 
 ## Disclaimer
 
@@ -35,110 +30,11 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 ## Installation
 
-### Home Assistant Add-on
+Follow the installation guides for supported environments:
 
-You need to add my Home Assistant Add-ons repository first, and then you will be able to add the `sigenergy2mqtt` add-on.
-
-#### Automatically Add Repository
-
-[![Open your Home Assistant instance and show the add add-on repository dialogue with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fseud0nym%2Fhome-assistant-addons)
-
-#### Manually Add Repository
-
-Follow these steps to get the add-on repository installed on your Home Assistant system:
-
-1. Navigate in your Home Assistant frontend to **Settings** -> **Add-ons** -> **Add-on store**.
-1. Click the three vertical dots in the top-right corner and select **Repositories**.
-1. Enter https://github.com/seud0nym/home-assistant-addons and click the **ADD** button.
-1. Close the Repositories window and refresh.
-
-#### Installation
-
-1. Select the `sigenergy2mqtt` add-on in the Home Assistant Add-ons Store
-1. Enter the configuration details on the Configuration tab, and save.
-1. Start the add-on from the Info tab.
-
-### Linux
-
-#### Pre-requisites
-
-- Python 3.11 or later
-- An MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an add-on to Home Assistant
-- A Linux server (physical hardware, or a virtual machine/container) that runs continuously in which to install `sigenergy2mqtt` (hardware requirements are minimal: I use a Proxmox LXC with 2 cores and 256MiB RAM to run [Mosquitto](https://mosquitto.org/), [ecowitt2mqtt](https://github.com/bachya/ecowitt2mqtt) and `sigenergy2mqtt`)
-- A Sigenergy energy solution with Modbus-TCP enabled by your installer
-
-#### Installation
-
-Install `sigenergy2mqtt` via `pip`:
-```bash
-pip install sigenergy2mqtt
-```
-
-#### Background Service
-
-To run `sigenergy2mqtt` as a service that starts automatically in the background on system boot, 
-create the file `/etc/systemd/system/sigenergy2mqtt.service` with your favourite editor, 
-with the following contents:
-```
-[Unit]
-Description=Publish Modbus data from Sigenergy to MQTT
-Documentation=https://github.com/seud0nym/sigenergy2mqtt
-After=network.target mosquitto.service
-
-[Service]
-Type=simple
-User=sigenergy
-Group=daemon
-ExecStart=/usr/local/bin/sigenergy2mqtt
-ExecReload=kill -HUP $MAINPID
-KillMode=process
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Notes:
-- If you are _not_ running `sigenergy2mqtt` on the same host/container as `Mosquitto`, remove _mosquitto.service_ from the `After=` line.
-
-Once that is done, run the following commands:
-```bash
-useradd -m -g 1 sigenergy
-systemctl enable sigenergy2mqtt.service
-```
-
-When you are ready to start the service, use this command:
-```bash
-systemctl start sigenergy2mqtt.service
-```
-
-#### Upgrades
-
-To upgrade to a new release, install using `pip` with the `--upgrade` option:
-```bash
-pip install sigenergy2mqtt --upgrade
-systemctl restart sigenergy2mqtt.service
-```
-
-### Docker
-
-`sigenergy2mqtt` is available via a Docker image from both Docker Hub and ghcr.io. It can be configured by using the environment variables listed [below](#environment-variables), or by placing your [configuration file](#configuration-file) in the root of the `/data` volume,
-
-Running the image is straightforward:
-
-```bash
-docker run -it \
-    -e SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1 \
-    -e SIGENERGY2MQTT_MQTT_USERNAME=user \
-    -e SIGENERGY2MQTT_MQTT_PASSWORD=password \
-    -v /data:/data \
-    seud0nym/sigenergy2mqtt:latest
-```
-
-Note that you must provide persistent storage via the `-v` option to preserve the state  of calculated accumulation sensors across executions. You can also place your [configuration file](#configuration-file) in the root of this directory, rather than configuring via environment variables.
-
-`docker-compose` users can find an example configuration file at [`docker-compose.yaml`](resources/docker-compose.yaml).
+* [Home Assistant](resources/home-assistant/README.md)
+* [Docker](resources/docker/README.md)
+* [Linux](resources/linux/README.md)
 
 ## Configuration
 
@@ -174,7 +70,15 @@ Notes:
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
 - The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
 
-#### Configuring Smart-Port Production
+<details>
+<summary>
+<h4>Configuring Smart-Port Production</h4>
+</summary>
+
+Prior to the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port were included in the Plant `PV Power` reported by the Modbus interface. In firmware V100R001C00SPC108, the `PV Power` register only reports production from panels connected directly to Sigenergy. Firmware V100R001C00SPC109 adds a new sensor for `Third-Party PV Power`. This register, however, only appears to be updated every 8-10 seconds in my testing with my Enphase micro-inverters, so if you want more frequent updates of `Total PV Power` and `Consumed Power`, then you should enable smart-port in the configuration and configure either the [Enphase Envoy](#enphase-envoy) and/or the [MQTT](#any-system-already-integrated-with-home-assistant) smart-port integrations.
+
+- When smart-port is _not_ enabled in the configuration, the Plant `Total PV Power` sensor will be the sum of Plant `PV Power` and `Third-Party PV Power`. 
+- When smart-port _is_ enabled in the configuration, the Plant `Total PV Power` sensor will be the sum of `PV Power` and all configured Smart-Port PV Power sensors ([Enphase Envoy](#enphase-envoy) and/or [MQTT](#any-system-already-integrated-with-home-assistant)). Also, if the Smart-Port PV Power sensor fails to provide updates, `sigenergy2mqtt` will automatically fail-over to using the `Third-Party PV Power` sensor, and fail-back when it becomes available again.
 
 ##### Enphase Envoy
 
@@ -247,6 +151,7 @@ mode: queued
 
 Notes:
 - The topic(s) must match in both the `sigenergy2mqtt` configuration and the Home Assistant automation.
+</details>
 
 ### Command Line Options
 
@@ -263,6 +168,10 @@ Command line options override both environment variables and the configuration f
                         Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, 
                         or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity 
                         name. If specified, --debug-level is also forced to DEBUG
+  --sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW
+                        The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of 
+                        power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside 
+                        the range are ignored. 
   --hass-enabled        Enable auto-discovery in Home Assistant.
   --hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]
                         The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
@@ -353,135 +262,54 @@ Command line options override both environment variables and the configuration f
 
 Environment variables override the configuration file, but *not* command line options.
 
-- `SIGENERGY2MQTT_CONFIG` : 
-  - The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)
-- `SIGENERGY2MQTT_LOG_LEVEL` : 
-  - Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
-- `SIGENERGY2MQTT_DEBUG_SENSOR` : 
-  - Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG
-- `SIGENERGY2MQTT_HASS_ENABLED` : 
-  - Set to 'true' to enable auto-discovery in Home Assistant.
-- `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` : 
-  - The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
-- `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` : 
-  - The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)
-- `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX` : 
-  - The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant.
-- `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` : 
-  - The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')
-- `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`: 
-  - Set to 'true' to e xit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.
-- `SIGENERGY2MQTT_MQTT_BROKER` : 
-  - The hostname or IP address of an MQTT broker (default: 127.0.0.1)
-- `SIGENERGY2MQTT_MQTT_PORT` : 
-  - The listening port of the MQTT broker (default: 1883)
-- `SIGENERGY2MQTT_MQTT_ANONYMOUS` : 
-  - Set to 'true' to connect to MQTT anonymously (i.e. without username/password).
-- `SIGENERGY2MQTT_MQTT_USERNAME` : 
-  - A valid username for the MQTT broker
-- `SIGENERGY2MQTT_MQTT_PASSWORD` : 
-  - A valid password for the MQTT broker username
-- `SIGENERGY2MQTT_MQTT_LOG_LEVEL` : 
-  - Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
-- `SIGENERGY2MQTT_MODBUS_HOST` : 
-  - The hostname or IP address of the Sigenergy device
-- `SIGENERGY2MQTT_MODBUS_PORT` : 
-  - The Sigenergy device Modbus port number (default: 502)
-- `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` : 
-  - The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1)
-- `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` : 
-  - The Sigenergy AC Charger Modbus Device ID (Slave ID).
-- `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` : 
-  - The Sigenergy DC Charger Modbus Device ID (Slave ID).
-- `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`: 
-  - If true, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is false. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is false.
-- `SIGENERGY2MQTT_MODBUS_READ_ONLY` : 
-  - If false, read-only entities will not be published to MQTT. Default is true.
-- `SIGENERGY2MQTT_MODBUS_READ_WRITE` : 
-  - If false, read-write entities will not be published to MQTT. Default is true.
-- `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` : 
-  - If false, write-only entities will not be published to MQTT. Default is true.
-- `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` : 
-  - Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
-- `SIGENERGY2MQTT_SMARTPORT_ENABLED` : 
-  - Enable interrogation of a third-party device for production data.
-- `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` : 
-  - The name of the module which will be used to obtain third-party device production data.
-- `SIGENERGY2MQTT_SMARTPORT_HOST` : 
-  - The IP address or hostname of the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_USERNAME` : 
-  - The username to authenticate to the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_PASSWORD` : 
-  - The password to authenticate to the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_PV_POWER` : 
-  - The sensor class to hold the production data obtained from the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` : 
-  - The MQTT topic to which to subscribe to obtain the production data for the third-party device.
-- `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` : 
-  - The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
-- `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` :
-  - The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300.
-- `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` :
-  - The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30.
-- `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` :
-  - The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5.
-- `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` :
-  - The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
-- `SIGENERGY2MQTT_PVOUTPUT_ENABLED` : 
-  - Set to 'true' to enable status updates to PVOutput.
-- `SIGENERGY2MQTT_PVOUTPUT_API_KEY` : 
-  - The API Key for PVOutput
-- `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` : 
-  - The PVOutput System ID
-- `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` : 
-  - Set to 'true' to enable sending consumption status to PVOutput.
-- `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` : 
-  - The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
-- `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` : 
-  - Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)
+| Name | Description |
+|------|-------------|
+| `SIGENERGY2MQTT_CONFIG` | The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml) |
+| `SIGENERGY2MQTT_LOG_LEVEL` | Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+| `SIGENERGY2MQTT_DEBUG_SENSOR` | Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG |
+| `SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW` | The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored. |
+| `SIGENERGY2MQTT_HASS_ENABLED` | Set to 'true' to enable auto-discovery in Home Assistant. |
+| `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` | The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant) |
+| `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` | The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen) |
+| `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX` | The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant. |
+| `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` | The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '') |
+| `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`| Set to 'true' to e xit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration. |
+| `SIGENERGY2MQTT_MQTT_BROKER` | The hostname or IP address of an MQTT broker (default: 127.0.0.1) |
+| `SIGENERGY2MQTT_MQTT_PORT` | The listening port of the MQTT broker (default: 1883) |
+| `SIGENERGY2MQTT_MQTT_ANONYMOUS` | Set to 'true' to connect to MQTT anonymously (i.e. without username/password). |
+| `SIGENERGY2MQTT_MQTT_USERNAME` | A valid username for the MQTT broker |
+| `SIGENERGY2MQTT_MQTT_PASSWORD` | A valid password for the MQTT broker username |
+| `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+| `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device |
+| `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: 502) |
+| `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` | The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1) |
+| `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` | The Sigenergy AC Charger Modbus Device ID (Slave ID). |
+| `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` | The Sigenergy DC Charger Modbus Device ID (Slave ID). |
+| `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`| If true, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is false. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is false. |
+| `SIGENERGY2MQTT_MODBUS_READ_ONLY` | If false, read-only entities will not be published to MQTT. Default is true. |
+| `SIGENERGY2MQTT_MODBUS_READ_WRITE` | If false, read-write entities will not be published to MQTT. Default is true. |
+| `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` | If false, write-only entities will not be published to MQTT. Default is true. |
+| `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+| `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Enable interrogation of a third-party device for production data. |
+| `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` | The name of the module which will be used to obtain third-party device production data. |
+| `SIGENERGY2MQTT_SMARTPORT_HOST` | The IP address or hostname of the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_USERNAME` | The username to authenticate to the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_PASSWORD` | The password to authenticate to the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_PV_POWER` | The sensor class to hold the production data obtained from the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` | The MQTT topic to which to subscribe to obtain the production data for the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` | The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts). |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` | The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` | The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1. |
+| `SIGENERGY2MQTT_PVOUTPUT_ENABLED` | Set to 'true' to enable status updates to PVOutput. |
+| `SIGENERGY2MQTT_PVOUTPUT_API_KEY` | The API Key for PVOutput |
+| `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
+| `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | Set to 'true' to enable sending consumption status to PVOutput. |
+| `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` | The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes. |
+| `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 
-## Post-Installation
-
-If you are using Home Assistant, you can set the current values for the daily and lifetime accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values. Make sure you enter lifetime values first, because daily sensors use the lifetime numbers as their base.
-
-### MQTT Publish and Subscribe Topics
+## MQTT Publish and Subscribe Topics
 
 The topics that are published and subscribed to by `sigenergy2mqtt` can be found [here](sigenergy2mqtt/sensors/README.md).
-
-## Home Assistant Auto-Discovery
-
-For each host defined in the `modbus` section of the configuration file, an MQTT device will be created in Home Assistant. The first device will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related devices, such as `Sigenergy Plant Grid Sensor` and if applicable, `Sigenergy Plant Smart-Port`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
-
-Example:
-```
-Sigenergy Plant
-   ├─ Sigenergy Plant Grid Sensor
-   ├─ SigenStor Plant Smart-Port
-   ├─ SigenStor CMUxxxxxxxxxx Energy Controller (ID 1)
-   │    ├─ SigenStor CMUxxxxxxxxxx ESS
-   │    ├─ SigenStor CMUxxxxxxxxxx PV String 1
-   │    ├─ SigenStor CMUxxxxxxxxxx PV String 2
-   │    ├─ SigenStor CMUxxxxxxxxxx PV String 3
-   │    ├─ SigenStor CMUxxxxxxxxxx PV String 4
-   │    └─ Sigenergy DC Charger
-   └─ SigenStor CMUyyyyyyyyyy Energy Controller (ID 2)
-        ├─ SigenStor CMUyyyyyyyyyy ESS
-        ├─ SigenStor CMUyyyyyyyyyy PV String 1
-        ├─ SigenStor CMUyyyyyyyyyy PV String 2
-        └─ Sigenergy DC Charger
-```
-
-
-## Alternatives
-
-For simple Sigenergy systems, with no integrated legacy solar system or requirement to integrate with PVOutput, the [Sigenergy Local Modbus HACS integration](https://github.com/TypQxQ/Sigenergy-Local-Modbus) may be a better alternative for integration with Home Assistant.
-
-| Feature | Sigenergy Local Modbus | sigenergy2mqtt  (Linux) | sigenergy2mqtt  (HA Add-on) | Comments |
-|:--------|:----------------------:|:-----------------------:|:---------------------------:|:---------|
-| Pre-requisites | None | Python, MQTT broker | None | |
-| Installation | GUI | Manual | GUI | |
-| Configuration| GUI | Edit configuration file | GUI and/or config file | |
-| Home Assistant | HACS Integration | Optional MQTT Auto-discovery | MQTT Auto-discovery |
-| PVOutput | No | Optional | Optional | |
-| Third-Party Solar included in production and consumption | No | Optional | Optional | Since the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port are no longer included in the PV Power reported by the Modbus interface. However, this may change in future firmware releases. |
 

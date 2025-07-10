@@ -1,6 +1,6 @@
-from .base import DeviceClass, EnergyDailyAccumulationSensor, PVCurrentSensor, PVVoltageSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor
+from .base import DeviceClass, EnergyDailyAccumulationSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor
 from .const import UnitOfPower
-from .inverter_read_only import ChargeDischargePower, InverterPVPower
+from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.mqtt import MqttClient
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
@@ -53,28 +53,6 @@ class InverterBatteryDischargingPower(DerivedSensor):
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
         )
         return True
-
-
-class InverterLifetimePVEnergy(EnergyLifetimeAccumulationSensor):
-    def __init__(self, plant_index: int, device_address: int, source: InverterPVPower):
-        super().__init__(
-            name="Lifetime Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",
-            source=source,
-            icon="mdi:solar-power-variant",
-        )
-
-
-class InverterDailyPVEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, device_address: int, source: InverterLifetimePVEnergy):
-        super().__init__(
-            name="Daily Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",
-            source=source,
-            icon="mdi:solar-power-variant",
-        )
 
 
 class PVStringPower(DerivedSensor):
@@ -135,7 +113,6 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )
 
 
@@ -146,5 +123,4 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             source=source,
-            icon="mdi:solar-power-variant",
         )

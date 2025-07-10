@@ -37,7 +37,6 @@ async def async_main() -> None:
                     inverters[device_address] = inverter.unique_id
                     config.add_device(plant_index, plant)
                     config.add_device(plant_index, inverter)
-                    plant.add_ess_accumulation_sensors(plant_index, *[host.device for host in config._devices if isinstance(host.device, Inverter)])
                 for device_address in device.dc_chargers:
                     charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
                     config.add_device(plant_index, charger)

@@ -1,0 +1,18 @@
+[Unit]
+Description=Publish Modbus data from Sigenergy to MQTT
+Documentation=https://github.com/seud0nym/sigenergy2mqtt
+# If you are NOT running sigenergy2mqtt on the same host/container as Mosquitto, remove mosquitto.service from the `After=` line.
+After=network.target mosquitto.service
+
+[Service]
+Type=simple
+User=sigenergy
+Group=daemon
+ExecStart=/usr/local/bin/sigenergy2mqtt
+ExecReload=kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

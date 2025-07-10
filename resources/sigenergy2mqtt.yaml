@@ -3,6 +3,19 @@
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
+# sanity-check-default-kw
+#   default: 100.0
+#   description:  The default value used for sanity checks to validate the
+#                 maximum and minimum values for power and energy sensors.
+#                 The specified value is taken as the maximum in kW, and 
+#                 the minimum value is derived by multiplying by -1 (e.g. 
+#                 if the option value is 100, the minimum value will be
+#                 -100). The value is applied per second, so the actual
+#                 sanity check applied to a sensor is a multiple of the
+#                 scan-interval. For energy sensors, the check is applied
+#                 to the delta value. Readings outside of the range are
+#                 ignored.    
+sanity-check-default-kw: 100.0
 home-assistant:
   # enabled
   #   default: false
@@ -281,6 +294,13 @@ sensor-overrides:
     #                 must be a RAW value read from, for example, the 
     #                 Modbus interface, BEFORE the gain is applied.
     sanity-check-min-value: -100000
+    # sanity-check-delta
+    #   default: false
+    #   description:  If true, the sanity check will be applied to the
+    #                 change in value since the last reading, rather than
+    #                 the value itself. This is useful for sensors that
+    #                 are expected to change rapidly, such as power sensors.
+    sanity-check-delta: false
     # scan-interval
     #   default: There is no default
     #   description:  Change the default scan interval in seconds at which

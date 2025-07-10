@@ -202,6 +202,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 logging.debug(f"{self.name} - Publishing empty discovery ({clean=})")
                 mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
             logging.info(f"{self.name} - Publishing discovery")
+            logging.debug(f"{self.name} - Discovery JSON:\n{discovery_json}")
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         else:
             logging.debug(f"{self.name} - Publishing empty availability (No components found)")

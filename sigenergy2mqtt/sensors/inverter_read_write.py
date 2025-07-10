@@ -1,4 +1,4 @@
-from .base import DeviceClass, InputType, NumericSensor, ReadOnlySensor, SwitchSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, SwitchSensor, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -20,7 +20,7 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class GridCode(ReadOnlySensor, HybridInverter):  # Seems like a dangerous thing to be able to change, so leave it read-only
+class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v2.7 2025-05-23
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Grid Code",
@@ -39,50 +39,6 @@ class GridCode(ReadOnlySensor, HybridInverter):  # Seems like a dangerous thing 
             gain=None,
             precision=None,
         )
-        self["entity_category"] = "diagnostic"
-
-    async def get_state(self, modbus, raw=False, republish=False):
-        value = await super().get_state(modbus=modbus, raw=raw, republish=republish)
-        if raw:
-            return value
-        elif value is None:
-            return None
-        else:
-            match value:
-                case 1:
-                    return "Germany"
-                case 2:
-                    return "UK"
-                case 3:
-                    return "Italy"
-                case 4:
-                    return "Spain"
-                case 5:
-                    return "Portugal"
-                case 6:
-                    return "France"
-                case 7:
-                    return "Poland"
-                case 8:
-                    return "Hungary"
-                case 9:
-                    return "Belgium"
-                case 10:
-                    return "Norway"
-                case 11:
-                    return "Sweden"
-                case 12:
-                    return "Finland"
-                case 13:
-                    return "Denmark"
-                case 19:
-                    return "Australia"
-                case 26:
-                    return "Austria"
-                case 36:
-                    return "Ireland"
-                case _:
-                    return f"Unknown Country Code {value}"
 
 
 class DCChargerStatus(WriteOnlySensor, HybridInverter):
@@ -182,7 +138,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             state_class=None,
             icon="mdi:percent",
             gain=100,
-            precision=2,
+            precision=None,
             min=-100.00,
             max=100.00,
         )
@@ -206,7 +162,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             state_class=None,
             icon="mdi:lightning-bolt",
             gain=100,
-            precision=2,
+            precision=None,
             min=-60.0,
             max=60.0,
         )

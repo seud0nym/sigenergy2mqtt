@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from .base import (
     AlarmCombinedSensor,
     AlarmSensor,
@@ -105,6 +106,8 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             return "Sigen AI"
         elif value == 2:
             return "Time of Use"
+        elif value == 5:
+            return "Full Feed-in to Grid"
         elif value == 7:
             return "Remote EMS"
         elif value == 9:
@@ -1056,3 +1059,656 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight", **kwargs)
+
+
+class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime PV Production",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_plant_lifetime_pv_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30088,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant",
+            gain=100,
+            precision=2,
+        )
+
+
+class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Daily Consumption",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30092,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:home-lightning-bolt-outline",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Consumption",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30094,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:home-lightning-bolt-outline",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, address: int, smart_load_index: int):
+        assert 1 <= smart_load_index <= 24, "smart_load_index must be between 1 and 24"
+        super().__init__(
+            name=f"Smart Load {smart_load_index:02} Total Consumption",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_smart_load_{smart_load_index:02}_total_consumption",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=address,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL,
+            icon="mdi:lightning-bolt-circle",
+            gain=100,
+            precision=2,
+        )
+
+
+class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, address: int, smart_load_index: int):
+        assert 1 <= smart_load_index <= 24, "smart_load_index must be between 1 and 24"
+        super().__init__(
+            name=f"Smart Load {smart_load_index:02} Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_smart_load_{smart_load_index:02}_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=address,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL,
+            icon="mdi:lightning-bolt-outline",
+            gain=100,
+            precision=2,
+        )
+
+
+class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Third-Party PV Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_third_party_pv_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30194,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:solar-power",
+            gain=None,  # 1000,
+            precision=2,
+        )
+
+
+class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Third-Party PV Production",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_third_party_pv_lifetime_production",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30196,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant",
+            gain=100,
+            precision=2,
+        )
+
+
+class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Charge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30200,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:battery-arrow-up",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Discharge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30204,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:battery-arrow-down",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime DC EV Charge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_evdc_total_charge_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30208,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:ev-station",
+            gain=100,
+            precision=2,
+        )
+
+
+class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime DC EV Discharge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_evdc_total_discharge_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30212,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:ev-station",
+            gain=100,
+            precision=2,
+        )
+
+
+class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Imported Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30216,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:transmission-tower-import",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Exported Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30220,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:transmission-tower-export",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Lifetime Generator Output Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_plant_total_generator_output_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30224,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:generator-stationary",
+            gain=100,
+            precision=2,
+        )
+
+
+# region New statistics interface (Modbus Protocol v2.7+)
+
+
+class SITotalCommonLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Common Load Consumption",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_common_load_consumption",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30228,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:home-lightning-bolt-outline",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalEVACChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total AC EV Charge Energy",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_ev_ac_charged_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30232,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:ev-station",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalSelfPVGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total PV Production",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_self_pv_generation",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30236,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalThirdPartyPVGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Third-Party PV Production",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_third_party_pv_generation",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30240,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Charge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_charged_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30244,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:battery-arrow-up",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Discharge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_discharged_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30248,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:battery-arrow-down",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalEVDCChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total DC EV Charge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_evdc_total_charge_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30252,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:ev-station",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalEVDCDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total DC EV Discharge Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_evdc_total_discharge_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30256,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:ev-station",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Imported Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_imported_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30260,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:transmission-tower-import",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Exported Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_exported_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30264,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:transmission-tower-export",
+            gain=100,
+            precision=2,
+        )
+        self["enabled_by_default"] = True
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+class SITotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Generator Output Energy",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_generator_output_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30268,
+            count=4,
+            data_type=ModbusClient.DATATYPE.UINT64,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:generator-stationary",
+            gain=100,
+            precision=2,
+        )
+
+    def publish_attributes(self, mqtt, **kwargs) -> None:
+        return super().publish_attributes(
+            mqtt,
+            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
+            **kwargs,
+        )
+
+
+# endregion

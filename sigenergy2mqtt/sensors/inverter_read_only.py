@@ -1,8 +1,11 @@
+from typing import Any, Dict
+
 from .base import (
     AlarmCombinedSensor,
     AlarmSensor,
     DeviceClass,
     InputType,
+    ReservedSensor,
     StateClass,
     Alarm1Sensor,
     Alarm2Sensor,
@@ -264,7 +267,7 @@ class RatedDischargingPower(ReadOnlySensor, HybridInverter):
 # region Reserved
 
 
-class DailyExportEnergy(ReadOnlySensor, HybridInverter):
+class DailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Daily Energy Exported",
@@ -283,10 +286,9 @@ class DailyExportEnergy(ReadOnlySensor, HybridInverter):
             gain=100,
             precision=2,
         )
-        self._publishable = False  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
 
 
-class AccumulatedExportEnergy(ReadOnlySensor, HybridInverter):
+class AccumulatedExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Lifetime Energy Exported",
@@ -305,10 +307,9 @@ class AccumulatedExportEnergy(ReadOnlySensor, HybridInverter):
             gain=100,
             precision=2,
         )
-        self._publishable = False  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
 
 
-class DailyImportEnergy(ReadOnlySensor, HybridInverter):
+class DailyImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Daily Energy Imported",
@@ -327,10 +328,9 @@ class DailyImportEnergy(ReadOnlySensor, HybridInverter):
             gain=100,
             precision=2,
         )
-        self._publishable = False  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
 
 
-class AccumulatedImportEnergy(ReadOnlySensor, HybridInverter):
+class AccumulatedImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Lifetime Energy Imported",
@@ -349,7 +349,6 @@ class AccumulatedImportEnergy(ReadOnlySensor, HybridInverter):
             gain=100,
             precision=2,
         )
-        self._publishable = False  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
 
 
 # endregion
@@ -843,6 +842,94 @@ class InverterAlarm5(Alarm5Sensor, HybridInverter):
             device_address=device_address,
             address=30609,
         )
+
+
+class InverterActivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Active Power Fixed Value Adjustment Feedback",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_fixed_value_adjustment_feedback",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30613,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:comment-quote",
+            gain=1000,
+            precision=2,
+        )
+        self._publishable = False  # Returns 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
+
+
+class InverterReactivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Reactive Power Fixed Value Adjustment Feedback",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_fixed_value_adjustment_feedback",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30615,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:comment-quote",
+            gain=1000,
+            precision=2,
+        )
+        self._publishable = False  # Returns 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
+
+
+class InverterActivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Active Power Percentage Adjustment Feedback",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_percentage_adjustment_feedback",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30617,
+            count=1,
+            data_type=ModbusClient.DATATYPE.INT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent",
+            gain=100,
+            precision=None,
+        )
+        self._publishable = False  # Returns 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
+
+
+class InverterReactivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Reactive Power Percentage Adjustment Feedback",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_percentage_adjustment_feedback",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30618,
+            count=1,
+            data_type=ModbusClient.DATATYPE.INT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent",
+            gain=100,
+            precision=None,
+        )
+        self._publishable = False  # Returns 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
 
 
 class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
@@ -1347,6 +1434,50 @@ class MPTTCount(ReadOnlySensor, HybridInverter, PVInverter):
         self["entity_category"] = "diagnostic"
 
 
+class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int):
+        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+        super().__init__(
+            name="Current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_current",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusClient.DATATYPE.INT16,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfElectricCurrent.AMPERE,
+            device_class=DeviceClass.CURRENT,
+            state_class=None,
+            icon="mdi:current-dc",
+            gain=100,
+            precision=2,
+        )
+
+
+class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int):
+        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+        super().__init__(
+            name="Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_voltage",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusClient.DATATYPE.INT16,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfElectricPotential.VOLT,
+            device_class=DeviceClass.VOLTAGE,
+            state_class=None,
+            icon="mdi:flash",
+            gain=10,
+            precision=1,
+        )
+
+
 class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
@@ -1556,3 +1687,59 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
 
 
 # endregion
+
+
+class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Daily Production",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=31509,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components
+
+
+class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Lifetime Production",
+            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=31511,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:solar-power-variant",
+            gain=100,
+            precision=2,
+            unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+        )
+        self["enabled_by_default"] = True
+
+    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
+        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
+        return components

@@ -72,8 +72,6 @@ async def get_sensor_instances(hass: bool = False):
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
     )
 
-    plant.add_ess_accumulation_sensors(plant_index, hybrid_inverter, pv_inverter)
-
     logging.info("Creating DC Charger")
     dc_charger = DCCharger(plant_index, dc_charger_device_address, remote_ems)
 

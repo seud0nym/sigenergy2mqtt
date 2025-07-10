@@ -3,7 +3,6 @@ from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
 from sigenergy2mqtt.devices.types import DeviceType
 import re
-import sigenergy2mqtt.sensors.inverter_derived as derived
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
 
@@ -95,8 +94,12 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(rw.InverterPowerFactorAdjustment(plant_index, device_address))
         self._add_writeonly_sensor(rw.InverterStatus(plant_index, device_address))
 
-        lifetime_pv_energy = derived.InverterLifetimePVEnergy(plant_index, device_address, pv_power)
-        self._add_derived_sensor(lifetime_pv_energy, pv_power)
-        self._add_derived_sensor(derived.InverterDailyPVEnergy(plant_index, device_address, lifetime_pv_energy), lifetime_pv_energy)
+        self._add_read_sensor(ro.InverterPVLifetimeGeneration(plant_index, device_address))
+        self._add_read_sensor(ro.InverterPVDailyGeneration(plant_index, device_address))
+
+        self._add_read_sensor(ro.InverterActivePowerFixedValueAdjustmentFeedback(plant_index, device_address))
+        self._add_read_sensor(ro.InverterReactivePowerFixedValueAdjustmentFeedback(plant_index, device_address))
+        self._add_read_sensor(ro.InverterActivePowerPercentageAdjustmentFeedback(plant_index, device_address))
+        self._add_read_sensor(ro.InverterReactivePowerPercentageAdjustmentFeedback(plant_index, device_address))
 
         self._add_child_device(ESS(plant_index, device_address, device_type, model_id, serial))

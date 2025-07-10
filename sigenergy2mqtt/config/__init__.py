@@ -54,6 +54,14 @@ _parser.add_argument(
     help="Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG",
 )
 _parser.add_argument(
+    "--sanity-check-default-kw",
+    action="store",
+    dest=const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW,
+    type=float,
+    default=os.getenv(const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW, None),
+    help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored.",
+)
+_parser.add_argument(
     "--hass-enabled",
     action="store_true",
     dest=const.SIGENERGY2MQTT_HASS_ENABLED,

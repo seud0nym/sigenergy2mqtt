@@ -1,9 +1,8 @@
 from .device import ModbusDevice
 from .grid_sensor import GridSensor
+from .plant_statistics import PlantStatistics
 from .types import DeviceType
 from sigenergy2mqtt.config import Config, SIGENERGY_MODBUS_PROTOCOL
-from sigenergy2mqtt.devices.inverter import Inverter
-from sigenergy2mqtt.sensors.base import Sensor
 import importlib
 import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -25,9 +24,9 @@ class PowerPlant(ModbusDevice):
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
         super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw=f"Modbus Protocol {SIGENERGY_MODBUS_PROTOCOL}")
+        battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
-        battery_power = ro.BatteryPower(plant_index)
 
         self._add_read_sensor(ro.SystemTime(plant_index))
         self._add_read_sensor(ro.SystemTimeZone(plant_index))
@@ -52,6 +51,10 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.PlantReactivePower(plant_index))
         self._add_read_sensor(plant_pv_power, "consumption")
         self._add_read_sensor(battery_power, "consumption")
+
+        self._add_derived_sensor(derived.BatteryChargingPower(plant_index, battery_power), battery_power)
+        self._add_derived_sensor(derived.BatteryDischargingPower(plant_index, battery_power), battery_power)
+
         self._add_read_sensor(ro.AvailableMaxActivePower(plant_index))
         self._add_read_sensor(ro.AvailableMinActivePower(plant_index))
         self._add_read_sensor(ro.AvailableMaxReactivePower(plant_index))
@@ -98,14 +101,38 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(rw.GridMaxImportLimit(plant_index))
         self._add_read_sensor(rw.PCSMaxExportLimit(plant_index))
         self._add_read_sensor(rw.PCSMaxImportLimit(plant_index))
+        self._add_read_sensor(rw.ESSBackupSOC(plant_index))
+        self._add_read_sensor(rw.ESSChargeCutOffSOC(plant_index))
+        self._add_read_sensor(rw.ESSDischargeCutOffSOC(plant_index))
+        self._add_read_sensor(ro.TotalLoadConsumption(plant_index))
+        self._add_read_sensor(ro.TotalLoadDailyConsumption(plant_index))
+
+        address = 30098
+        for n in range(1, 25):
+            self._add_read_sensor(ro.SmartLoadTotalConsumption(plant_index, address, n))
+            self._add_read_sensor(ro.SmartLoadPower(plant_index, address + 48, n))
+            address += 2
+
+        total_charge_energy = ro.ESSTotalChargedEnergy(plant_index)
+        total_discharge_energy = ro.ESSTotalDischargedEnergy(plant_index)
+        self._add_read_sensor(total_charge_energy)        
+        self._add_read_sensor(total_discharge_energy)        
+        self._add_derived_sensor(derived.PlantDailyChargeEnergy(plant_index, total_charge_energy), total_charge_energy, search_children=False)
+        self._add_derived_sensor(derived.PlantDailyDischargeEnergy(plant_index, total_discharge_energy), total_discharge_energy, search_children=False)
+
+        self._add_read_sensor(ro.EVDCTotalChargedEnergy(plant_index))
+        self._add_read_sensor(ro.EVDCTotalDischargedEnergy(plant_index))
+        self._add_read_sensor(ro.PlantTotalGeneratorOutputEnergy(plant_index))
 
         self._add_writeonly_sensor(rw.PlantStatus(plant_index))
 
         self._add_child_device(GridSensor(plant_index, device_type, power_phases, grid_sensor_active_power))
+        self._add_child_device(PlantStatistics(plant_index, device_type))
 
-        total_pv_power = None
+        plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index)
+        total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
+        self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
         if Config.devices[plant_index].smartport.enabled:
-            total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
             smartport_config = Config.devices[plant_index].smartport
             if smartport_config.module.name:
                 module_config = smartport_config.module
@@ -119,42 +146,29 @@ class PowerPlant(ModbusDevice):
                     if module_config.pv_power and not module_config.pv_power.isspace():
                         for sensor in smartport.sensors.values():
                             if sensor.__class__.__name__ == module_config.pv_power:
-                                total_pv_power.register_source_sensors(sensor)
-                                self._add_derived_sensor(total_pv_power, plant_pv_power, sensor, search_children=True)
-                                plant_pv_power["enabled_by_default"] = False
+                                total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
+                                self._add_derived_sensor(total_pv_power, sensor, search_children=True)
                                 break
                 except Exception as exc:
                     logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {exc}")
                     raise
+            self._add_read_sensor(plant_3rd_party_pv_power)
+            total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
+        else:
+            self._add_read_sensor(plant_3rd_party_pv_power, "consumption")
+            total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
+
+        self._add_derived_sensor(total_pv_power, plant_3rd_party_pv_power)
 
         plant_consumed_power = derived.PlantConsumedPower(plant_index)
-        if total_pv_power is None:
-            self._add_derived_sensor(plant_consumed_power, plant_pv_power, battery_power, grid_sensor_active_power, search_children=True)
-            plant_lifetime_pv_energy = derived.PlantLifetimePVEnergy(plant_index, plant_pv_power)
-            self._add_derived_sensor(plant_lifetime_pv_energy, plant_pv_power)
-        else:
-            self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, search_children=True)
-            plant_lifetime_pv_energy = derived.PlantLifetimePVEnergy(plant_index, total_pv_power)
-            self._add_derived_sensor(plant_lifetime_pv_energy, total_pv_power)
+        self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, search_children=True)
+
+        plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(plant_index) 
+        plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(plant_index)
+        total_lifetime_pv_energy = derived.TotalLifetimePVEnergy(plant_index)
+        self._add_read_sensor(plant_lifetime_pv_energy, "lifetime_production")
+        self._add_read_sensor(plant_3rd_party_lifetime_pv_energy, "lifetime_production")
+        self._add_derived_sensor(total_lifetime_pv_energy, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
+        self._add_derived_sensor(derived.TotalDailyPVEnergy(plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
 
-        plant_lifetime_consumed_energy = derived.PlantLifetimeConsumedEnergy(plant_index, plant_consumed_power)
-        self._add_derived_sensor(plant_lifetime_consumed_energy, plant_consumed_power)
-        self._add_derived_sensor(derived.PlantDailyConsumedEnergy(plant_index, plant_lifetime_consumed_energy), plant_lifetime_consumed_energy)
-
-        self._add_derived_sensor(derived.BatteryChargingPower(plant_index, battery_power), battery_power)
-        self._add_derived_sensor(derived.BatteryDischargingPower(plant_index, battery_power), battery_power)
-
-    def add_ess_accumulation_sensors(self, plant_index, *inverters: Inverter):
-        sensors: dict[str, list[Sensor]] = {}
-        for inverter in inverters:
-            for address in (30566, 30568, 30572, 30574):
-                sensor = inverter.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{inverter.device_address:03d}_{address}", search_children=True)
-                classname = sensor.__class__.__name__
-                if classname not in sensors:
-                    sensors[classname] = []
-                sensors[classname].append(sensor)
-        self._add_read_sensor(derived.PlantDailyChargeEnergy(plant_index, *sensors["DailyChargeEnergy"]))
-        self._add_read_sensor(derived.PlantDailyDischargeEnergy(plant_index, *sensors["DailyDischargeEnergy"]))
-        self._add_read_sensor(derived.PlantAccumulatedChargeEnergy(plant_index, *sensors["AccumulatedChargeEnergy"]))
-        self._add_read_sensor(derived.PlantAccumulatedDischargeEnergy(plant_index, *sensors["AccumulatedDischargeEnergy"]))
