@@ -50,9 +50,10 @@ class PVOutputConfiguration:
                         case "peak-power":
                             self.peak_power = check_bool(value, f"pvoutput.{field}")
                         case "system-id":
-                            self.system_id = check_string(str(value), "pvoutput.system-id", allow_none=(not self.enabled), allow_empty=(not self.enabled))
-                        case "testing":
-                            self.testing = check_bool(value, f"pvoutput.{field}")
+                            self.system_id = check_string(str(value), f"pvoutput.{field}", allow_none=(not self.enabled), allow_empty=(not self.enabled))
+                            if self.system_id == "testing":
+                                self.testing = True
+                                logging.warning("PVOutput system-id is set to 'testing'. This is for testing purposes only and should not be used in production. PVOutput data will not be sent to the actual PVOutput service. Please set a valid system-id for production use.")
                         case "update-debug-logging":
                             self.update_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case _:
