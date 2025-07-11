@@ -30,7 +30,7 @@ class PVOutputOutputService(Service):
                         self.logger.info(f"{self.__class__.__name__} - Loaded {self._persistent_state_file}")
                         for topic in power.values():
                             self._power[topic.topic] = topic
-                            self.logger.info(f"{self.__class__.__name__} - Initialised {topic.topic} to {topic.state=}")
+                            self.logger.info(f"{self.__class__.__name__} - Registered power topic: {topic.topic} (gain={topic.gain}) with {topic.state=}")
                     except ValueError as error:
                         self.logger.warning(f"{self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
             else:
@@ -43,19 +43,27 @@ class PVOutputOutputService(Service):
 
     def register_consumption(self, topic: str, gain: float) -> None:
         self._consumption.register(topic, gain)
+        self.logger.debug(f"{self.__class__.__name__} - Registered consumption topic: {topic} ({gain=})")
 
     def register_exports(self, topic: str, gain: float) -> None:
         self._exports.register(topic, gain)
+        self.logger.debug(f"{self.__class__.__name__} - Registered exports topic: {topic} ({gain=})")
 
     def register_generation(self, topic: str, gain: float) -> None:
         self._generation.register(topic, gain)
+        self.logger.debug(f"{self.__class__.__name__} - Registered generation topic: {topic} ({gain=})")
 
     def register_power(self, topic: str, gain: float) -> None:
-        self._power.register(topic, gain)
-        if len(self._power) > 1:
+        if len(self._power) == 0:
+            self._power.register(topic, gain)
+            self.logger.debug(f"{self.__class__.__name__} - Registered power topic: {topic} ({gain=})")
+        elif topic in self._power:
+            self.logger.debug(f"{self.__class__.__name__} - IGNORED power topic: {topic} - Already registered")
+        else:
+            self.logger.warning(f"{self.__class__.__name__} - IGNORED power topic: {topic} - Too many sources? (topics={self._power.keys()})")
             Config.pvoutput.peak_power = False
             self._power.enabled = False
-            self.logger.warning(f"{self.__class__.__name__} - DISABLED peak-power reporting: Cannot determine peak power from multiple systems")
+            self.logger.warning(f"{self.__class__.__name__} - DISABLED peak power reporting - Cannot determine peak power from multiple systems")
 
     # endregion
 

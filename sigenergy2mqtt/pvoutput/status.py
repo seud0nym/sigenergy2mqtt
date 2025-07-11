@@ -17,9 +17,11 @@ class PVOutputStatusService(Service):
 
     def register_consumption(self, topic: str, gain: float) -> None:
         self._consumption.register(topic, gain)
+        self.logger.debug(f"{self.__class__.__name__} - Registered consumption topic: {topic} ({gain=})")
 
     def register_generation(self, topic: str, gain: float) -> None:
         self._generation.register(topic, gain)
+        self.logger.debug(f"{self.__class__.__name__} - Registered generation topic: {topic} ({gain=})")
 
     # endregion
 
