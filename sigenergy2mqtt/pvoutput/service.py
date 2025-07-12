@@ -102,14 +102,17 @@ class Service(Device):
                     break
                 else:
                     with requests.post(url, headers=self.request_headers, data=payload, timeout=10) as response:
+                        limit = int(response.headers["X-Rate-Limit-Limit"])
+                        remaining = int(response.headers["X-Rate-Limit-Remaining"])
+                        at = float(response.headers["X-Rate-Limit-Reset"])
+                        reset = round(at - time.time())
                         if response.status_code == 200:
-                            self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} OKAY {response.status_code=} {response.headers=}")
+                            self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
                             break
                         else:
-                            self.logger.warning(f"{self.__class__.__name__} - Attempt #{i} FAILED {response.status_code=} {response.reason=}")
-                        reset = round(float(response.headers["X-Rate-Limit-Reset"]) - time.time())
+                            self.logger.warning(f"{self.__class__.__name__} - Attempt #{i} FAILED status_code={response.status_code} reason={response.reason}")
                         if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
-                            self.logger.warning(f"{self.__class__.__name__} - Only {response.headers['X-Rate-Limit-Remaining']} requests left, reset after {reset} seconds")
+                            self.logger.warning(f"{self.__class__.__name__} - Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
                             await asyncio.sleep(reset)
                         else:
                             response.raise_for_status()
