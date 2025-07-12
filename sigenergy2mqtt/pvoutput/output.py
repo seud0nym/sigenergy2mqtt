@@ -119,11 +119,13 @@ class PVOutputOutputService(Service):
         if Config.pvoutput.peak_power:
             now = time.localtime()
             if now.tm_hour < 5 or now.tm_hour > 22:
-                self.logger.debug(f"{self.__class__.__name__} - Ignored set_power from '{topic}' {value=} (Outside of daylight hours)")
+                if Config.pvoutput.update_debug_logging:
+                    self.logger.debug(f"{self.__class__.__name__} - Ignored set_power from '{topic}' {value=} (Outside of daylight hours)")
             else:
                 power = value if isinstance(value, float) else float(value)
                 if self._power[topic].state < power:
-                    self.logger.debug(f"{self.__class__.__name__} - set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
+                    if Config.pvoutput.update_debug_logging:
+                        self.logger.debug(f"{self.__class__.__name__} - set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
                     async with self.lock(timeout=1):
                         self._power[topic].state = power
                         self._power[topic].timestamp = time.localtime()
