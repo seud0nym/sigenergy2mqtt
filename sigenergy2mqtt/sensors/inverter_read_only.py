@@ -374,6 +374,7 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = None
 
 
 class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
@@ -418,7 +419,10 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = None
 
+    def set_state(self, state: float | int | str) -> None:
+        super().set_state(state)
 
 class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
@@ -1710,6 +1714,7 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = None
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()

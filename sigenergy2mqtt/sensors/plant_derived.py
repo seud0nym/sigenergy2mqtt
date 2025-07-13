@@ -209,7 +209,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)
 
     def failback(self, source: str):
-        logging.info(f"{self.__class__.__name__} Re-enabling '{source}' as source because state updated {self._sources[source].state}")
+        logging.info(f"{self.__class__.__name__} Re-enabling '{source}' as source because state updated (state={self._sources[source].state})")
         self._sources[source].enabled = True
         for id, value in self._sources.items():
             if value.type == TotalPVPower.SourceType.FAILOVER:

@@ -1103,6 +1103,7 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = None
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
