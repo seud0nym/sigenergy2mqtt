@@ -15,11 +15,13 @@ class PVOutputConfiguration:
     system_id: str = ""
 
     interval_minutes: int = 5
-    
+
     output_hour: int = 21
- 
+
     log_level: int = logging.WARNING
     update_debug_logging: bool = False
+
+    temperature_topic: str = ""
 
     testing: bool = False
 
@@ -53,7 +55,11 @@ class PVOutputConfiguration:
                             self.system_id = check_string(str(value), f"pvoutput.{field}", allow_none=(not self.enabled), allow_empty=(not self.enabled))
                             if self.system_id == "testing":
                                 self.testing = True
-                                logging.warning("PVOutput system-id is set to 'testing'. This is for testing purposes only and should not be used in production. PVOutput data will not be sent to the actual PVOutput service. Please set a valid system-id for production use.")
+                                logging.warning(
+                                    "PVOutput system-id is set to 'testing'. This is for testing purposes only and should not be used in production. PVOutput data will not be sent to the actual PVOutput service. Please set a valid system-id for production use."
+                                )
+                        case "temperature-topic":
+                            self.temperature_topic = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
                         case "update-debug-logging":
                             self.update_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case _:
@@ -61,4 +67,3 @@ class PVOutputConfiguration:
                                 raise ValueError(f"pvoutput configuration element contains unknown option '{field}'")
         else:
             raise ValueError("pvoutput configuration element must contain options and their values")
-   
