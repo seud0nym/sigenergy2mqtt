@@ -134,7 +134,7 @@ class ServiceTopics(dict[str, Topic]):
         self._enabled = value
 
     def register(self, topic: str, gain: float) -> bool:
-        if self._enabled:
+        if self.enabled:
             if topic is None or topic == "" or topic.isspace():
                 self._logger.debug(f"{self._service.__class__.__name__} - Ignored subscription request for empty topic")
             elif topic not in self:
@@ -144,13 +144,15 @@ class ServiceTopics(dict[str, Topic]):
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
         for topic in self.keys():
-            if self._enabled:
+            if self.enabled:
                 result = mqtt_handler.register(mqtt, topic, self.update)
                 self._logger.debug(f"{self._service.__class__.__name__} - Subscribed to topic '{topic}' to record {self._name} ({result=})")
             else:
                 self._logger.debug(f"{self._service.__class__.__name__} - Not subscribing to topic '{topic}' because {self._name} uploading is disabled")
 
     def aggregate(self, exclude_zero: bool) -> tuple[float, str, int]:
+        if not self.enabled:
+            return None, None, 0
         if len(self) == 0:
             self._logger.debug(f"{self._service.__class__.__name__} - No {self._name} topics registered, skipping aggregation")
             return None, None, 0
@@ -180,7 +182,7 @@ class ServiceTopics(dict[str, Topic]):
         return (None if count == 0 else round(total)), at
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
-        if self._enabled:
+        if self.enabled:
             if Config.pvoutput.update_debug_logging:
                 self._logger.debug(f"{self._service.__class__.__name__} - Updating {self._name} from '{topic}' {value=}")
             async with self._service.lock(timeout=1):

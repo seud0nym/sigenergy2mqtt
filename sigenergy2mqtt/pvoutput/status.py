@@ -59,21 +59,17 @@ class PVOutputStatusService(Service):
         async def update_pvoutput() -> None:
             now = time.localtime()
             self.logger.debug(f"{self.__class__.__name__} - Creating payload...")
-            async with self.lock(timeout=5):
-                generated, _ = self._generation.sum()
-                consumed, _ = self._consumption.sum() if Config.pvoutput.consumption else (None, None)
-                temperature, _ = self._temperature.average(1) if Config.pvoutput.temperature_topic else (None, None)
-                voltage, _ = self._voltage.average(1)
             payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
-            if generated:
-                payload["v1"] = generated
-            if consumed:
-                payload["v3"] = consumed
-            if temperature:
-                payload["v5"] = temperature
-            if voltage:
-                payload["v6"] = voltage
-            if generated or consumed:  # At least one of the values v1, v2, v3 or v4 must be present
+            async with self.lock(timeout=5):
+                if self._generation.enabled:
+                    payload["v1"], _ = self._generation.sum()
+                if self._consumption.enabled:
+                    payload["v3"], _ = self._consumption.sum()
+                if self._temperature.enabled:
+                    payload["v5"], _ = self._temperature.average(1)
+                if self._voltage.enabled:
+                    payload["v6"], _ = self._voltage.average(1)
+            if payload["v1"] or payload["v3"]:  # At least one of the values v1, v2, v3 or v4 must be present
                 await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
             else:
                 self.logger.warning(f"{self.__class__.__name__} - No generation or consumption data to upload, skipping...")

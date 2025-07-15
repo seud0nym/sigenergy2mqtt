@@ -63,7 +63,6 @@ class PVOutputOutputService(Service):
             self.logger.debug(f"{self.__class__.__name__} - IGNORED power topic: {topic} - Already registered")
         else:
             self.logger.warning(f"{self.__class__.__name__} - IGNORED power topic: {topic} - Too many sources? (topics={self._power.keys()})")
-            Config.pvoutput.peak_power = False
             self._power.enabled = False
             self.logger.warning(f"{self.__class__.__name__} - DISABLED peak power reporting - Cannot determine peak power from multiple systems")
 
@@ -100,11 +99,11 @@ class PVOutputOutputService(Service):
             payload = {"d": time.strftime("%Y%m%d", now)}
             async with self.lock(timeout=5):
                 payload["g"], _ = self._generation.sum()
-                if Config.pvoutput.exports:
+                if self._exports.enabled:
                     payload["e"], _ = self._exports.sum()
-                if Config.pvoutput.consumption:
+                if self._consumption.enabled:
                     payload["c"], _ = self._consumption.sum()
-                if Config.pvoutput.peak_power:
+                if self._power.enabled:
                     payload["pp"], payload["pt"] = self._power.sum()
             await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             self.logger.debug(f"{self.__class__.__name__} - Resetting peak power history...")
