@@ -162,6 +162,19 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             self._write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
 
+    def get_all_sensors(self, search_children: bool = True) -> Dict[str, Sensor]:
+        """
+        Returns all sensors in this device and its children.
+        If search_children is False, only returns sensors in this device.
+        """
+        if search_children:
+            all_sensors = self._all_sensors.copy()
+            for child in self._children:
+                all_sensors.update(child.get_all_sensors(search_children=True))
+            return all_sensors
+        else:
+            return self._all_sensors
+
     def get_sensor(self, unique_id: str, search_children: bool = False) -> Sensor:
         if unique_id in self._all_sensors:
             return self._all_sensors[unique_id]
@@ -331,21 +344,22 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         return tasks
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
-        mqtt_handler.register(mqtt, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
+        result = mqtt_handler.register(mqtt, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
+        logging.debug(f"{self.name} subscribed to topic {Config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
         for sensor in self.sensors.values():
             if isinstance(sensor, WritableSensorMixin):
                 try:
-                    mqtt_handler.register(mqtt, sensor.command_topic, sensor.set_value)
+                    result = mqtt_handler.register(mqtt, sensor.command_topic, sensor.set_value)
                     if sensor.debug_logging:
-                        logging.debug(f"Sensor {sensor.name} subscribed to topic {sensor.command_topic} for writing")
+                        logging.debug(f"Sensor {sensor.name} subscribed to topic {sensor.command_topic} for writing ({result=})")
                 except Exception as e:
                     logging.error(f"Sensor {sensor.name} failed to subscribe to topic {sensor.command_topic}: {e}")
             if isinstance(sensor, ObservableMixin):
                 for topic in sensor.observable_topics():
                     try:
-                        mqtt_handler.register(mqtt, topic, sensor.notify)
+                        result = mqtt_handler.register(mqtt, topic, sensor.notify)
                         if sensor.debug_logging:
-                            logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification")
+                            logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification ({result=})")
                     except Exception as e:
                         logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {e}")
         for device in self._children:
