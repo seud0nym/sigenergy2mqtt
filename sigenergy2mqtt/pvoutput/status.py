@@ -1,4 +1,5 @@
 from .service import Service, ServiceTopics, Topic
+from datetime import datetime, timedelta
 from pathlib import Path
 from random import randint
 from sigenergy2mqtt.config import Config
@@ -80,15 +81,24 @@ class PVOutputStatusService(Service):
             now = time.localtime()
             self.logger.debug(f"{self.__class__.__name__} - Creating payload...")
             payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
+            if "t" in self._previous_payload:
+                t1 = datetime.strptime(self._previous_payload["t"], "%H:%M")
+                t2 = datetime.strptime(payload["t"], "%H:%M")
+                if t2 < t1:
+                    t2 += timedelta(days=1)
+                delta = t2 - t1
+                hours = delta.total_seconds() / 3600
+            else:
+                hours = None
             async with self.lock(timeout=5):
                 if self._generation.enabled:
                     payload["v1"], _ = self._generation.sum()
-                    if "v1" in self._previous_payload:
-                        payload["v2"] = payload["v1"] - self._previous_payload["v1"]
+                    if hours and "v1" in self._previous_payload:
+                        payload["v2"] = round((payload["v1"] - self._previous_payload["v1"]) / hours)
                 if self._consumption.enabled:
                     payload["v3"], _ = self._consumption.sum()
-                    if "v3" in self._previous_payload:
-                        payload["v4"] = payload["v3"] - self._previous_payload["v3"]
+                    if hours and "v3" in self._previous_payload:
+                        payload["v4"] = round((payload["v3"] - self._previous_payload["v3"]) / hours)
                 if self._temperature.enabled:
                     payload["v5"], _ = self._temperature.average(1)
                 if self._voltage.enabled:
