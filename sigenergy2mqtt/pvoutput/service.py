@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass, is_dataclass
-from datetime import datetime, timedelta
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
@@ -76,38 +75,24 @@ class Service(Device):
 
     # endregion
 
-    def seconds_until_daily_output_upload(self) -> float:
-        t = time.localtime()
-        now = time.mktime(t)
-        next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, 45, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
-        if next <= now:
-            today = datetime.fromtimestamp(next)
-            tomorrow = today + timedelta(days=1)
-            next = tomorrow.timestamp()
-        seconds = 60 if Config.pvoutput.testing else next - now
-        self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({seconds}s)")
-        return seconds
-
-    def seconds_until_status_upload(self) -> float:
-        seconds = 60 if Config.pvoutput.testing else float(Config.pvoutput.interval_minutes * 60)
-        self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + seconds))} ({seconds}s)")
-        return seconds
-
     async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
+        self.logger.info(f"{self.__class__.__name__} - Uploading {payload=}")
         for i in range(1, 4, 1):
             try:
-                self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} to {url} with {payload=}")
                 if Config.pvoutput.testing:
-                    self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} Testing mode, not sending request")
+                    self.logger.debug(f"{self.__class__.__name__} - Testing mode, not sending request to {url=}")
                     break
                 else:
+                    self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} to {url=}...")
                     with requests.post(url, headers=self.request_headers, data=payload, timeout=10) as response:
                         limit = int(response.headers["X-Rate-Limit-Limit"])
                         remaining = int(response.headers["X-Rate-Limit-Remaining"])
                         at = float(response.headers["X-Rate-Limit-Reset"])
                         reset = round(at - time.time())
                         if response.status_code == 200:
-                            self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
+                            self.logger.debug(
+                                f"{self.__class__.__name__} - Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                            )
                             break
                         else:
                             self.logger.warning(f"{self.__class__.__name__} - Attempt #{i} FAILED status_code={response.status_code} reason={response.reason}")
@@ -132,7 +117,7 @@ class Service(Device):
             self.logger.error(f"{self.__class__.__name__} - Failed to upload to {url} after 3 attempts")
 
 
-class ServiceTopics(dict):
+class ServiceTopics(dict[str, Topic]):
     def __init__(self, service: Service, enabled: bool, name: str, logger: logging.Logger):
         self._service = service
         self._enabled = enabled
@@ -149,31 +134,55 @@ class ServiceTopics(dict):
         self._enabled = value
 
     def register(self, topic: str, gain: float) -> bool:
-        if self._enabled:
-            if topic not in self:
+        if self.enabled:
+            if topic is None or topic == "" or topic.isspace():
+                self._logger.debug(f"{self._service.__class__.__name__} - Ignored subscription request for empty topic")
+            elif topic not in self:
                 self[topic] = Topic(topic, gain)
         else:
             self._logger.debug(f"{self._service.__class__.__name__} - Ignored subscription request for '{topic}' because {self._name} uploading is disabled")
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
         for topic in self.keys():
-            if self._enabled:
-                mqtt_handler.register(mqtt, topic, self.update)
-                self._logger.debug(f"{self._service.__class__.__name__} - Subscribed to topic '{topic}' to record {self._name}")
+            if self.enabled:
+                result = mqtt_handler.register(mqtt, topic, self.update)
+                self._logger.debug(f"{self._service.__class__.__name__} - Subscribed to topic '{topic}' to record {self._name} ({result=})")
             else:
                 self._logger.debug(f"{self._service.__class__.__name__} - Not subscribing to topic '{topic}' because {self._name} uploading is disabled")
 
-    def sum(self) -> tuple[float, str]:
-        total: float = 0.0
+    def aggregate(self, exclude_zero: bool) -> tuple[float, str, int]:
+        if not self.enabled:
+            return None, None, 0
+        if len(self) == 0:
+            self._logger.debug(f"{self._service.__class__.__name__} - No {self._name} topics registered, skipping aggregation")
+            return None, None, 0
         at: str = "00:00"
+        count: int = 0
+        total: float = 0.0
         for value in self.values():
-            if value.timestamp is not None:
-                total += round(value.state * value.gain)
+            if value.timestamp is not None and (not exclude_zero or value.state > 0.0):
+                total += value.state * value.gain
                 at = time.strftime("%H:%M", value.timestamp)
-        return total, at
+                count += 1
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug(
+                f"{self._service.__class__.__name__} - Aggregated {self._name}: {total=} {count=} {at=} ({[(v.state, time.strftime('%H:%M', value.timestamp) if value.timestamp else None) for v in self.values()]})"
+            )
+        if count > 0:
+            return total, at, count
+        else:
+            return None, None, count
+
+    def average(self, decimals: int) -> tuple[float, str]:
+        total, at, count = self.aggregate(exclude_zero=True)
+        return (None if count == 0 else round(total / count, decimals)), at
+
+    def sum(self) -> tuple[float, str]:
+        total, at, count = self.aggregate(exclude_zero=False)
+        return (None if count == 0 else round(total)), at
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
-        if self._enabled:
+        if self.enabled:
             if Config.pvoutput.update_debug_logging:
                 self._logger.debug(f"{self._service.__class__.__name__} - Updating {self._name} from '{topic}' {value=}")
             async with self._service.lock(timeout=1):

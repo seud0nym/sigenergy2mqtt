@@ -1,5 +1,7 @@
 from .service import Service, ServiceTopics, Topic
+from datetime import datetime, timedelta
 from pathlib import Path
+from random import randint
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any, Awaitable, Callable, Iterable, List
@@ -61,7 +63,6 @@ class PVOutputOutputService(Service):
             self.logger.debug(f"{self.__class__.__name__} - IGNORED power topic: {topic} - Already registered")
         else:
             self.logger.warning(f"{self.__class__.__name__} - IGNORED power topic: {topic} - Too many sources? (topics={self._power.keys()})")
-            Config.pvoutput.peak_power = False
             self._power.enabled = False
             self.logger.warning(f"{self.__class__.__name__} - DISABLED peak power reporting - Cannot determine peak power from multiple systems")
 
@@ -98,11 +99,11 @@ class PVOutputOutputService(Service):
             payload = {"d": time.strftime("%Y%m%d", now)}
             async with self.lock(timeout=5):
                 payload["g"], _ = self._generation.sum()
-                if Config.pvoutput.exports:
+                if self._exports.enabled:
                     payload["e"], _ = self._exports.sum()
-                if Config.pvoutput.consumption:
+                if self._consumption.enabled:
                     payload["c"], _ = self._consumption.sum()
-                if Config.pvoutput.peak_power:
+                if self._power.enabled:
                     payload["pp"], payload["pt"] = self._power.sum()
             await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             self.logger.debug(f"{self.__class__.__name__} - Resetting peak power history...")
@@ -114,6 +115,18 @@ class PVOutputOutputService(Service):
 
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
+
+    def seconds_until_daily_output_upload(self) -> float:
+        t = time.localtime()
+        now = time.mktime(t)
+        next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, 45, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
+        if next <= now:
+            today = datetime.fromtimestamp(next)
+            tomorrow = today + timedelta(days=1, seconds=randint(0, 15))  # Add a random offset of up to 15 seconds for variability
+            next = tomorrow.timestamp()
+        seconds = 60 if Config.pvoutput.testing else (next - now)
+        self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({seconds}s)")
+        return seconds
 
     async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, mqtt_handler: MqttHandler) -> None:
         if Config.pvoutput.peak_power:

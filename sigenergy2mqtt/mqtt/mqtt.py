@@ -46,18 +46,20 @@ class MqttHandler:
                 logger.debug(f"MqttHandler removing expired mid {mid}")
                 del self._mids[mid]
 
-    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str, Self], Awaitable[bool]]) -> None:
+    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str, Self], Awaitable[bool]]) -> tuple[int, int]:
         if topic not in self._topics:
             self._topics[topic] = []
         self._topics[topic].append(handler)
-        client.subscribe(topic)
+        return client.subscribe(topic)
 
     async def wait_for(self, seconds: float, prefix: str, method: Callable | Awaitable, *args, **kwargs) -> bool:
         responded: bool = False
+
         def handle_response(client: mqtt.Client, source: str):
             nonlocal responded
             responded = True
             logging.debug(f"{prefix} - {method.__name__} acknowledged (mid={info.mid})")
+
         assert isinstance(seconds, (int, float)) and seconds < 60, "Seconds must be an integer or float and less then 60"
         assert isinstance(method, (Callable, Awaitable)), "Method must be a Callable or Awaitable"
         if isinstance(method, Awaitable):
