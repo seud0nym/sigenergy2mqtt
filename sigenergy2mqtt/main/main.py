@@ -25,17 +25,16 @@ async def async_main() -> None:
             modbus = ModbusClient(device.host, port=device.port, framer=FramerType.SOCKET)
             async with modbus:
                 logging.info(f"Connected to Modbus interface at {device.host}:{device.port} for register probing")
-                inverter_type: HybridInverter | PVInverter = None  # Flag to indicate whether Plant has been created, so that it is only created with first inverter
+                plant: PowerPlant = None  # Make sure plant is only created with first inverter
                 inverters: dict[int, str] = {}
                 for device_address in device.inverters:
-                    inverter, inverter_type, plant, remote_ems = await make_plant_and_inverter(
-                        plant_index,
-                        modbus,
-                        device_address,
-                        inverter_type,
-                    )
+                    inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
+                    if plant is None and plant_tmp is not None:
+                        plant = plant_tmp
+                        config.add_device(plant_index, plant)
+                        remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
+                        assert remote_ems is not None, "Failed to find RemoteEMS instance"
                     inverters[device_address] = inverter.unique_id
-                    config.add_device(plant_index, plant)
                     config.add_device(plant_index, inverter)
                 for device_address in device.dc_chargers:
                     charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
@@ -114,7 +113,7 @@ async def make_dc_charger(plant_index, device_address, inverter_unique_id, remot
     return charger
 
 
-async def make_plant_and_inverter(plant_index, modbus, device_address, inverter_type) -> Tuple[Inverter, HybridInverter | PVInverter, PowerPlant, any]:
+async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, HybridInverter | PVInverter, PowerPlant, any]:
     model = InverterModel(plant_index, device_address)
     serial = InverterSerialNumber(plant_index, device_address)
     firmware = InverterFirmwareVersion(plant_index, device_address)
@@ -139,16 +138,13 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, inverter_
     else:
         device_type = PVInverter()
 
-    if inverter_type is None:
-        inverter_type = device_type
+    if plant is None:
         rated_charging_power = PlantRatedChargingPower(plant_index)
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)
         rdp_value = await rated_discharging_power.get_state(modbus=modbus)
         plant = PowerPlant(plant_index, device_type, output_type_state, power_phases, rcp_value, rdp_value, rated_charging_power, rated_discharging_power)
-        remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
-        assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
     inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware)
     inverter.via_device = plant.unique_id
-    return inverter, inverter_type, plant, remote_ems
+    return inverter, plant

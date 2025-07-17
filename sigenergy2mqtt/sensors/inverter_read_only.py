@@ -424,6 +424,7 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
     def set_state(self, state: float | int | str) -> None:
         super().set_state(state)
 
+
 class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
