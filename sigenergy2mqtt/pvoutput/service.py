@@ -185,9 +185,11 @@ class ServiceTopics(dict[str, Topic]):
         if self.enabled:
             if Config.pvoutput.update_debug_logging:
                 self._logger.debug(f"{self._service.__class__.__name__} - Updating {self._name} from '{topic}' {value=}")
-            async with self._service.lock(timeout=1):
-                self[topic].state = value if isinstance(value, float) else float(value)
-                self[topic].timestamp = time.localtime()
+            state = value if isinstance(value, float) else float(value)
+            if state >= 0.0:
+                async with self._service.lock(timeout=1):
+                    self[topic].state = state
+                    self[topic].timestamp = time.localtime()
             return True
         else:
             return False
