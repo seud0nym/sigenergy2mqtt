@@ -152,6 +152,8 @@ class Config:
                             overrides["pvoutput"]["consumption"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
                             overrides["pvoutput"]["interval-minutes"] = check_int(os.environ[key], key, min=5, max=15)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
+                            overrides["pvoutput"]["temperature_topic"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)  
                         case const.SIGENERGY2MQTT_PVOUTPUT_TESTING:
                             overrides["pvoutput"]["testing"] = check_bool(os.environ[key], key)
                         case _:

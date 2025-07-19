@@ -355,3 +355,10 @@ pvoutput:
   #   description:  If true, consumption information will be sent to 
   #                 PVOutput.
   consumption: true
+  # temperature-topic
+  #   default: null
+  #   description:  An MQTT topic from which the current temperature can be
+  #                 read. This is used to send the temperature to PVOutput.
+  #                 If not specified, the temperature will not be sent to
+  #                 PVOutput.
+  temperature_topic: null

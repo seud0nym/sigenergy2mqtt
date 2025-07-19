@@ -358,6 +358,14 @@ _parser.add_argument(
     help="The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.",
 )
 _parser.add_argument(
+    "--pvoutput-temp-topic",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC,
+    default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC, None),
+    help="An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.",
+)
+_parser.add_argument(
     "--pvoutput-log-level",
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL,

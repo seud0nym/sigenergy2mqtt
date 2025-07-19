@@ -251,6 +251,8 @@ Command line options override both environment variables and the configuration f
                         Enable sending consumption status to PVOutput.
   --pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]
                         The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
+  --pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]
+                        An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
                         (warnings, errors and critical failures)
@@ -307,6 +309,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
 | `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | Set to 'true' to enable sending consumption status to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` | The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes. |
+| `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC` | An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 
 ## MQTT Publish and Subscribe Topics
