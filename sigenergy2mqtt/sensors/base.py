@@ -928,7 +928,7 @@ class WritableSensorMixin(ModbusSensor):
                             f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
                         )
                         start = time.time()
-                    rr = await modbus.write_registers(self._address, registers, slave, no_response_expected=no_response_expected)
+                    rr = await modbus.write_registers(self._address, registers, slave=slave, no_response_expected=no_response_expected)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     elapsed = time.time() - start
                     logging.debug(
