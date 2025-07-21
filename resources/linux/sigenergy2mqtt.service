@@ -10,8 +10,8 @@ User=sigenergy
 Group=daemon
 ExecStart=/usr/local/bin/sigenergy2mqtt
 ExecReload=kill -HUP $MAINPID
-KillMode=process
 Restart=on-failure
+RestartKillSignal=SIGUSR1
 RestartSec=5s
 
 [Install]

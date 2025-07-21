@@ -42,6 +42,7 @@
         "sigen",
         "SIGENERGY",
         "SigenStor",
+        "SIGUSR",
         "SMARTPORT",
         "tm_isdst",
         "tm_mday",

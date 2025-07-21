@@ -51,22 +51,28 @@ async def async_main() -> None:
     if Config.pvoutput.enabled and not Config.clean:
         configs.append(get_pvoutput_host_config(configs, max(9, plant_index + 1)))
 
+    def configure_for_restart(caught, frame):
+        logging.info(f"Signal {caught} received - reconfiguring for restart")
+        Config.home_assistant.enabled = False # Disable publishing Home Assistant offline availability since we are going to restart
+        exit_on_signal(caught, frame)
+
     def exit_on_signal(caught, frame):
-        logging.info(f"Shutdown commenced - Signal {caught} received")
+        logging.info(f"Signal {caught} received - Shutdown commenced")
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
             config.offline()
 
     def reload_on_signal(caught, frame):
-        logging.info(f"Reloading configuration - Signal {caught} received")
+        logging.info(f"Signal {caught} received - Reloading configuration")
         Config.reload()
         configure_logging()
         for config in configs:
             config.reload_config()
 
-    signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGINT, exit_on_signal)
     signal.signal(signal.SIGHUP, reload_on_signal)
+    signal.signal(signal.SIGTERM, exit_on_signal)
+    signal.signal(signal.SIGUSR1, configure_for_restart)
 
     logging.info("Starting up...")
     await start(configs)
