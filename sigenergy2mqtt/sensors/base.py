@@ -740,6 +740,7 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
     def publish_attributes(self, mqtt: MqttClient, **kwargs):
         return super().publish_attributes(mqtt, source=self._address, **kwargs)
 
+
 class ReservedSensor(ReadOnlySensor):
     """Base superclass of all sensor definitions that are reserved for future use.
 
@@ -783,7 +784,7 @@ class ReservedSensor(ReadOnlySensor):
             precision,
             unique_id_override=unique_id_override,
         )
-        self._publishable = False # Reserved sensors are not published
+        self._publishable = False  # Reserved sensors are not published
 
     @property
     def publishable(self) -> bool:
@@ -1220,6 +1221,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         plant_index: int,
         device_address: int,
         address: int,
+        alarm_type: str,
     ):
         super().__init__(
             name,
@@ -1238,6 +1240,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             gain=None,
             precision=None,
         )
+        self.alarm_type = alarm_type
 
     @abc.abstractmethod
     def decode_alarm_bit(self, bit_position: int):
@@ -1265,9 +1268,12 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw:
             return value
-        elif value is None or value == 0:
+        elif value is None or value == 0 or (isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] == 0):
             return self.NO_ALARM
         else:
+            if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
+                logging.warning(f"{self.__class__.__name__} - Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
+                value = value[1]
             active_alarms = []
             try:
                 for bit_position in range(16):
@@ -1275,10 +1281,13 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                         description = self.decode_alarm_bit(bit_position)
                         if description:
                             active_alarms.append(description)
+                        else:
+                            active_alarms.append(f"Unknown (bit{bit_position}∈{value})")
+                            logging.warning(f"{self.__class__.__name__} - Unknown {self.alarm_type} alarm bit {bit_position} set in value {value}")
             except TypeError as e:
-                logging.error(f"{self.__class__.__name__} - Failed to decode alarm bits from '{value}': {e}")
+                logging.warning(f"{self.__class__.__name__} - Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")
             if not active_alarms:
-                return "Unknown Alarm"
+                return f"Unknown Alarm ({value})"
             else:
                 return ", ".join(active_alarms)
 
@@ -1287,7 +1296,7 @@ class Alarm1Sensor(AlarmSensor):
     """Superclass of all Alarm 1 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
     def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address)
+        super().__init__(name, object_id, plant_index, device_address, address, "PCS")
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1339,7 +1348,7 @@ class Alarm2Sensor(AlarmSensor):
     """Superclass of all Alarm 2 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
     def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address)
+        super().__init__(name, object_id, plant_index, device_address, address, "PCS")
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1377,7 +1386,7 @@ class Alarm3Sensor(AlarmSensor):
     """Superclass of all Alarm 3 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
     def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address)
+        super().__init__(name, object_id, plant_index, device_address, address, "ESS")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1412,7 +1421,7 @@ class Alarm4Sensor(AlarmSensor):
     """Superclass of all Alarm 4 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
     def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address)
+        super().__init__(name, object_id, plant_index, device_address, address, "GW")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1449,7 +1458,7 @@ class Alarm5Sensor(AlarmSensor):
     """Superclass of all Alarm 5 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
     def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address)
+        super().__init__(name, object_id, plant_index, device_address, address, "EVDC")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):

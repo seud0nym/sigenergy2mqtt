@@ -202,6 +202,7 @@ class ACChargerAlarm1(AlarmSensor):
             plant_index=plant_index,
             device_address=device_address,
             address=32012,
+            alarm_type="EVAC",
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -244,6 +245,7 @@ class ACChargerAlarm2(AlarmSensor):
             plant_index=plant_index,
             device_address=device_address,
             address=32013,
+            alarm_type="EVAC",
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -280,6 +282,7 @@ class ACChargerAlarm3(AlarmSensor):
             plant_index=plant_index,
             device_address=device_address,
             address=32014,
+            alarm_type="EVAC",
         )
 
     def decode_alarm_bit(self, bit_position: int):
