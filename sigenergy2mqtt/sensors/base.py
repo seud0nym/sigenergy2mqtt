@@ -1664,8 +1664,10 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         if self._persistent_state_file.is_file():
             with self._persistent_state_file.open("r") as f:
                 try:
-                    self._current_total = float(f.read())
-                    logging.info(f"{self.__class__.__name__} - Loading current state from {self._persistent_state_file} ({self._current_total})")
+                    content = f.read()
+                    if content is not None and content != "None" and content.isdecimal():
+                        self._current_total = float(content)
+                        logging.info(f"{self.__class__.__name__} - Loaded current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
                     logging.warning(f"{self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
         else:
@@ -1734,7 +1736,9 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         object_id: str,
         source: Sensor,
     ):
-        super().__init__(name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision)
+        super().__init__(
+            name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision
+        )
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float = source.latest_raw_state
         self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")
@@ -1744,13 +1748,15 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             if fmt.tm_year == now.tm_year and fmt.tm_mon == now.tm_mon and fmt.tm_mday == now.tm_mday:
                 with self._persistent_state_file.open("r") as f:
                     try:
-                        value = float(f.read())
-                        if value <= 0.0:
-                            logging.info(f"{self.__class__.__name__} - Ignored last midnight state from {self._persistent_state_file} ({value})")
-                            self._persistent_state_file.unlink()
-                        else:
-                            self._state_at_midnight = value
-                            logging.info(f"{self.__class__.__name__} - Loading last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
+                        content = f.read()
+                        if content is not None and content != "None" and content.isdecimal():
+                            value = float(content)
+                            if value <= 0.0:
+                                logging.info(f"{self.__class__.__name__} - Ignored negative last midnight state from {self._persistent_state_file} ({value})")
+                                self._persistent_state_file.unlink()
+                            else:
+                                self._state_at_midnight = value
+                                logging.info(f"{self.__class__.__name__} - Loaded last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
                     except ValueError as error:
                         logging.warning(f"Sensor {self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
                         self._persistent_state_file.unlink()
