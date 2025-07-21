@@ -2,7 +2,7 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
-if [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | wc -l) = 0 ]]; then
+if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[   $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | wc -l) = 0 ]]; then
   echo "Build CANCELLED - no changed files found"
   exit
 fi
