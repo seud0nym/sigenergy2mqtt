@@ -10,6 +10,7 @@ import argparse
 import logging
 import os
 import sys
+import time
 
 if os.isatty(sys.stdout.fileno()):
     logging.basicConfig(format="%(asctime)s %(levelname)-5s sigenergy2mqtt:%(module)s:%(lineno)s %(message)s", level=logging.INFO)
@@ -459,8 +460,13 @@ for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
             path.mkdir()
         logging.debug(f"{Config.persistent_state_path=}")
         break
-    else:
-        logging.debug(f"Unable to create persistent state path in {_storage_base_path}: Not writable or does not exist")
 if Config.persistent_state_path == ".":
     _logger.critical("Unable to create persistent state path!")
     sys.exit(1)
+
+directory = Path(Config.persistent_state_path)
+threshold_time = time.time() - (7 * 86400)
+for file in directory.iterdir():
+    if file.is_file() and not file.name.endswith(".publishable") and not file.name.endswith(".token") and file.stat().st_mtime < threshold_time:
+        _logger.debug(f"Removing stale state file: {file}")
+        file.unlink()
