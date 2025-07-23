@@ -141,10 +141,13 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
     @publishable.setter
     def publishable(self, value: bool):
         if not isinstance(value, bool):
-            raise ValueError("publishable must be a bool")
-        self._publishable = value
-        if self._debug_logging:
-            logging.debug(f"{self.__class__.__name__} publishable set to {value}")
+            raise ValueError(f"{self.__class__.__name__}.publishable must be a bool")
+        if self._publishable == value:
+            if self._debug_logging:
+                logging.debug(f"{self.__class__.__name__}.publishable unchanged ({value})")
+        else:
+            self._publishable = value
+            logging.debug(f"{self.__class__.__name__}.publishable set to {value}")
 
     @property
     def sleeper_task(self) -> Coroutine[Any, Any, None]:
@@ -213,8 +216,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             sensor:     The DerivedSensor instance.
         """
         self._derived_sensors[sensor.__class__.__name__] = sensor
-        if self._debug_logging:
-            logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} derived sensors")
+        logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} derived sensors")
 
     def add_requisite_sensor(self, sensor: "RequisiteSensor") -> None:
         """Adds a requisite sensor on which this sensor depends.
@@ -223,8 +225,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             sensor:     The RequisiteSensor instance.
         """
         self._requisite_sensors[sensor.__class__.__name__] = sensor
-        if self._debug_logging:
-            logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} requisite sensors")
+        logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} requisite sensors")
 
     def apply_sensor_overrides(self, registers: RegisterAccess):
         for identifier in Config.sensor_overrides.keys():
@@ -232,66 +233,54 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 overrides = Config.sensor_overrides[identifier]
                 if "debug-logging" in overrides and self._debug_logging != overrides["debug-logging"]:
                     self._debug_logging = overrides["debug-logging"]
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'debug-logging' override ({overrides['debug-logging']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'debug-logging' override ({overrides['debug-logging']})")
                 if "gain" in overrides and self._gain != overrides["gain"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'gain' override ({overrides['gain']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'gain' override ({overrides['gain']})")
                     self._gain = overrides["gain"]
                 if "icon" in overrides and self["icon"] != overrides["icon"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'icon' override ({overrides['icon']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'icon' override ({overrides['icon']})")
                     self["icon"] = overrides["icon"]
                 if "max-failures" in overrides and self._max_failures != overrides["max-failures"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'max-failures' override ({overrides['max-failures']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'max-failures' override ({overrides['max-failures']})")
                     self._max_failures = overrides["max-failures"]
                 if "max-failures-retry-interval" in overrides and self._max_failures_retry_interval != overrides["max-failures-retry-interval"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'max-failures-retry-interval' override ({overrides['max-failures-retry-interval']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'max-failures-retry-interval' override ({overrides['max-failures-retry-interval']})")
                     self._max_failures_retry_interval = overrides["max-failures-retry-interval"]
                 if "precision" in overrides and self._precision != overrides["precision"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'precision' override ({overrides['precision']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'precision' override ({overrides['precision']})")
                     self._precision = overrides["precision"]
                     self["display_precision"] = self._precision
-                if "publishable" in overrides and self._publishable != overrides["publishable"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'publishable' override ({overrides['publishable']})")
-                    self._publishable = overrides["publishable"]
+                if "publishable" in overrides and self.publishable != overrides["publishable"]:
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'publishable' override ({overrides['publishable']})")
+                    self.publishable = overrides["publishable"]
                 if "sanity-check-delta" in overrides and self._sanity.delta != overrides["sanity-check-delta"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
                     self._sanity.delta = overrides["sanity-check-delta"]
                 if "sanity-check-max-value" in overrides and self._sanity.max_value != overrides["sanity-check-max-value"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
                     self._sanity.max_value = overrides["sanity-check-max-value"]
                 if "sanity-check-min-value" in overrides and self._sanity.min_value != overrides["sanity-check-min-value"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
                     self._sanity.min_value = overrides["sanity-check-min-value"]
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
-        if self._publishable and registers:
+        if self.publishable and registers:
             if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "_address", None) == 40029):
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} - Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
-                self._publishable = False
+                logging.debug(f"{self.__class__.__name__} - Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
+                self.publishable = False
             elif isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
-                if self._debug_logging:
+                if not registers.read_write:
                     logging.debug(f"{self.__class__.__name__} - Applying device 'read-write' override ({registers.read_write})")
-                self._publishable = registers.read_write
+                    self.publishable = registers.read_write
             elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
-                if self._debug_logging:
+                if not registers.read_only:
                     logging.debug(f"{self.__class__.__name__} - Applying device 'read-only' override ({registers.read_only})")
-                self._publishable = registers.read_only
+                    self.publishable = registers.read_only
             elif isinstance(self, WriteOnlySensor):
-                if self._debug_logging:
+                if not registers.write_only:
                     logging.debug(f"{self.__class__.__name__} - Applying device 'write-only' override ({registers.write_only})")
-                self._publishable = registers.write_only
+                    self.publishable = registers.write_only
             else:
                 logging.warning(f"{self.__class__.__name__} - Failed to determine superclass to apply device publishable overrides")
 
@@ -316,20 +305,17 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         if self.publishable and not Config.clean:
             if self._persistent_publish_state_file.exists():
                 self._persistent_publish_state_file.unlink(missing_ok=True)
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} - removed {self._persistent_publish_state_file} ({self.publishable=} and {Config.clean=})")
+                logging.debug(f"{self.__class__.__name__} - removed {self._persistent_publish_state_file} ({self.publishable=} and {Config.clean=})")
         else:
             if self._persistent_publish_state_file.exists() or Config.clean:
                 components = {}
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery ({self.publishable=} exists and {Config.clean=})")
+                logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery ({self._persistent_publish_state_file} exists and {Config.clean=})")
             else:
                 for id in components.keys():
                     components[id] = {"p": self["platform"]}
                 with self._persistent_publish_state_file.open("w") as f:
                     f.write("0")
-                if self._debug_logging:
-                    logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery except {components} ({self.publishable=} exists and {Config.clean=})")
+                logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery except {components} ({self._persistent_publish_state_file} exists and {Config.clean=})")
         return components
 
     def get_discovery_components(self) -> Dict[str, Dict[str, Any]]:
@@ -370,14 +356,14 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             try:
                 value = await self.get_state(modbus=modbus, raw=False, republish=republish)
                 if value is None and not self.force_publish:
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - Value is unchanged")
                 else:
                     if self._failures > 0:
                         logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
                         self._failures = 0
                         self._next_retry = None
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} Publishing {value=}")
                     mqtt.publish(self["state_topic"], f"{value}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
@@ -391,7 +377,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         if self._failures < self._max_failures or self._max_failures_retry_interval == 0
                         else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
                     )
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
                 if Config.home_assistant.enabled:
                     self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
@@ -405,7 +391,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         )
             finally:
                 self.force_publish = False
-        elif self._debug_logging:
+        elif self.debug_logging:
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
 
     def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
@@ -611,12 +597,12 @@ class ModbusSensor(Sensor):
             match rr.exception_code:
                 case 1:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x01 ILLEGAL FUNCTION")
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(rr)
                     raise Exception("0x01 ILLEGAL FUNCTION")
                 case 2:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS")
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(rr)
                     logging.warning(f"{self.__class__.__name__} - Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
                     self._max_failures = 0
@@ -624,12 +610,12 @@ class ModbusSensor(Sensor):
                     raise Exception("0x02 ILLEGAL DATA ADDRESS")
                 case 3:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x03 ILLEGAL DATA VALUE")
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(rr)
                     raise Exception("0x03 ILLEGAL DATA VALUE")
                 case 4:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x04 SLAVE DEVICE FAILURE")
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(rr)
                     raise Exception("0x04 SLAVE DEVICE FAILURE")
                 case _:
@@ -651,8 +637,7 @@ class ReadableSensorMixin(abc.ABC):
             if identifier in self.__class__.__name__ or identifier in self["object_id"]:
                 overrides = Config.sensor_overrides[identifier]
                 if "scan-interval" in overrides and self._scan_interval != overrides["scan-interval"]:
-                    if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
+                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
                     self._scan_interval = overrides["scan-interval"]
 
     @property
@@ -784,7 +769,7 @@ class ReservedSensor(ReadOnlySensor):
             precision,
             unique_id_override=unique_id_override,
         )
-        self._publishable = False  # Reserved sensors are not published
+        self.publishable = False  # Reserved sensors are not published
 
     @property
     def publishable(self) -> bool:
@@ -792,7 +777,10 @@ class ReservedSensor(ReadOnlySensor):
 
     @publishable.setter
     def publishable(self, value: bool):
-        raise ValueError("Cannot set publishable for ReservedSensor")
+        if value:
+            raise ValueError("Cannot set publishable=True for ReservedSensor")
+        else:
+            logging.debug(f"{self.__class__.__name__} Ignored request to set publishable to {value} (reserved sensor)")
 
     def apply_sensor_overrides(self, registers):
         pass
@@ -869,7 +857,7 @@ class WritableSensorMixin(ModbusSensor):
         return topic
 
     def _encode_value(self, value: int | float | str) -> list[int]:
-        if self._debug_logging:
+        if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} attempting to encode {value} [{self._data_type}]")
 
         if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:
@@ -894,7 +882,7 @@ class WritableSensorMixin(ModbusSensor):
                     builder.add_string(str(value))
             registers = builder.to_registers()
 
-        if self._debug_logging:
+        if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} encoded {value} as {registers}")
 
         return registers
@@ -1139,11 +1127,11 @@ class NumericSensor(ReadWriteSensor):
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
         if isinstance(state, (float, int)):
             if state < self["min"]:
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} - {state=} < {self['min']=} so adjusted")
                 state = self["min"]
             elif state > self["max"]:
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} - {state=} > {self['max']=} so adjusted")
                 state = self["max"]
         return state
@@ -1671,8 +1659,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                 except ValueError as error:
                     logging.warning(f"{self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
         else:
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
+            logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
         self.set_latest_state(self._current_total)
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
@@ -1764,8 +1751,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 logging.info(f"{self.__class__.__name__} - Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
+            logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
         self._state_now: float = max(0.0, source.latest_raw_state - self._state_at_midnight) if source.latest_raw_state else 0.0
         logging.info(f"{self.__class__.__name__} - Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
         self.set_latest_state(self._state_now)
@@ -1774,11 +1760,11 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
-            if self._debug_logging:
+            if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} notified of updated state {value} {self.unit}")
             self._state_now = (value if value is float else float(value)) * self.gain
             updated_midnight_state = self._source.latest_raw_state - self._state_now
-            if self._debug_logging:
+            if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} {self._source.latest_raw_state=} (from {self._source.unique_id}) {self._state_now=} {updated_midnight_state=}")
             await self._update_state_at_midnight(updated_midnight_state)
             self.set_latest_state(self._state_now)
