@@ -6,10 +6,10 @@ build-backend = "hatchling.build"
 name = "sigenergy2mqtt"
 dynamic = ["version"]
 dependencies = [
-    "paho-mqtt==1.6.1",
-    "pymodbus==3.8.6",
-    "requests==2.32.3",
-    "ruamel.yaml==0.18.6",
+    "paho-mqtt==2.1.0",
+    "pymodbus==3.9.2",
+    "requests==2.32.4",
+    "ruamel.yaml==0.18.14",
 ]
 description = "Publish Modbus data from Sigenergy to MQTT, with optional Home Assistant Auto-Discovery and PVOutput updating"
 authors = [
