@@ -102,8 +102,10 @@ async def sensor_index():
     with readme.open("w") as f:
         f.write("# MQTT Topics\n")
         f.write("\nTopics prefixed with `homeassistant/` are used when the `home-assistant` configuration `enabled` option in the configuration file,\n")
-        f.write("or the `SIGENERGY2MQTT_HASS_ENABLED` environment variable, are set to true, or the `--hass-enabled` command line option is specified.\n")
+        f.write("or the `SIGENERGY2MQTT_HASS_ENABLED` environment variable, are set to true, or the `--hass-enabled` command line option is specified\n")
         f.write("Otherwise, the topics prefixed with `sigenergy2mqtt/` are used.\n")
+        f.write("\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n")
+        f.write("or by specifying the `--hass-use-simplified-topics` command line option.\n")
         f.write("\nThe number after the `sigen_` prefix represents the host index from the configuration file, starting from 0. (Home Assistant configuration may change the `sigen` topic prefix.)")
         f.write("\nInverter, AC Charger and DC Charger indexes use the device address (slave ID) as specified in the configuration file.\n")
         f.write("\nDefault Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.\n")

@@ -8,6 +8,7 @@ class HomeAssistantConfiguration:
     enabled: bool = False
     discovery_only: bool = False
     republish_discovery_interval: int = 0
+    use_simplified_topics: bool = False
 
     discovery_prefix: str = "homeassistant"
     entity_id_prefix: str = "sigen"
@@ -42,6 +43,8 @@ class HomeAssistantConfiguration:
                             self.enabled_by_default = check_bool(value, f"home-assistant.{field}")
                         case "unique-id-prefix":
                             self.unique_id_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False)
+                        case "use-simplified-topics":
+                            self.use_simplified_topics = check_bool(value, f"home-assistant.{field}")
                         case _:
                             if field != "enabled":
                                 raise ValueError(f"home-assistant.configuration element contains unknown option '{field}'")

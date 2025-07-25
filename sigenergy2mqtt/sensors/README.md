@@ -1,8 +1,11 @@
 # MQTT Topics
 
 Topics prefixed with `homeassistant/` are used when the `home-assistant` configuration `enabled` option in the configuration file,
-or the `SIGENERGY2MQTT_HASS_ENABLED` environment variable, are set to true, or the `--hass-enabled` command line option is specified.
+or the `SIGENERGY2MQTT_HASS_ENABLED` environment variable, are set to true, or the `--hass-enabled` command line option is specified
 Otherwise, the topics prefixed with `sigenergy2mqtt/` are used.
+
+You can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,
+or by specifying the `--hass-use-simplified-topics` command line option.
 
 The number after the `sigen_` prefix represents the host index from the configuration file, starting from 0. (Home Assistant configuration may change the `sigen` topic prefix.)
 Inverter, AC Charger and DC Charger indexes use the device address (slave ID) as specified in the configuration file.

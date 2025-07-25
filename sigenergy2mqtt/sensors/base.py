@@ -285,7 +285,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 logging.warning(f"{self.__class__.__name__} - Failed to determine superclass to apply device publishable overrides")
 
     def configure_mqtt_topics(self, device_id: str) -> str:
-        base = f"{Config.home_assistant.discovery_prefix}/{self['platform']}/{device_id}/{self['object_id']}" if Config.home_assistant.enabled else f"sigenergy2mqtt/{self['object_id']}"
+        base = (
+            f"{Config.home_assistant.discovery_prefix}/{self['platform']}/{device_id}/{self['object_id']}"
+            if Config.home_assistant.enabled and not Config.home_assistant.use_simplified_topics
+            else f"sigenergy2mqtt/{self['object_id']}"
+        )
         self["state_topic"] = f"{base}/state"
         self["json_attributes_topic"] = f"{base}/attributes"
         self["availability_mode"] = "all"

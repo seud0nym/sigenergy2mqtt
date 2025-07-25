@@ -63,6 +63,14 @@ home-assistant:
   #                 Assistant MQTT unique id. This should NEVER be changed 
   #                 after initial discovery has been published.
   unique-id-prefix: sigen
+  # use-simplified-topics
+  #   default: false
+  #   description:  If true, sigenergy2mqtt will use a simplified topic
+  #                 structure for Home Assistant entities. The topic will be
+  #                 sigenergy2mqtt/object_id/state instead of the full Home
+  #                 Assistant topic structure of 
+  #                 homeassistant/platform/device_id/object_id/state.
+  use-simplified-topics: false
 mqtt:
   # broker
   #   default: 127.0.0.1

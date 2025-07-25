@@ -84,6 +84,8 @@ class Config:
                             overrides["home-assistant"]["discovery-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
                             overrides["home-assistant"]["unique-id-prefix"] = check_string(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
+                            overrides["home-assistant"]["use-simplified-topics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_HOST:
                             overrides["modbus"][0]["host"] = check_host(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_PORT:

@@ -93,6 +93,12 @@ _parser.add_argument(
     help="The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant.",
 )
 _parser.add_argument(
+    "--hass-use-simplified-topics",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS,
+    help="Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)",
+)
+_parser.add_argument(
     "--hass-device-name-prefix",
     nargs="?",
     action="store",
@@ -417,6 +423,7 @@ for arg in vars(_args):
     elif (
         arg == const.SIGENERGY2MQTT_HASS_ENABLED
         or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
+        or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
