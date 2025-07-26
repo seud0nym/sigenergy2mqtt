@@ -11,7 +11,7 @@ echo "Bumping version..."
 cd "$(cd $(dirname $0)/..; pwd)"
 
 git restore sigenergy2mqtt/config/version.py
-. $(dirname $0)/build
+. $(dirname $0)/build docker
 
 git add sigenergy2mqtt/config/version.py
 git commit -m "Bump version to $new_version"

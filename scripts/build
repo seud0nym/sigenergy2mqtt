@@ -44,4 +44,4 @@ rm -f dist/*
 python3 -m build || exit
 python3 -m twine check dist/* || exit
 
-[[ "$1" == "docker" ]] && docker build -t sigenergy2mqtt .
+[[ "$1" == "docker" ]] && docker build -t sigenergy2mqtt . || exit
