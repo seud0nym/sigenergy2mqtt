@@ -23,7 +23,7 @@ class PVOutputOutputService(Service):
 
         obsolete = Path(Config.persistent_state_path, "pvoutput_output_9-peak_power.state")
         if obsolete.is_file():
-            obsolete.rename("pvoutput_output-peak_power.state")
+            obsolete.rename(Path(Config.persistent_state_path, "pvoutput_output-peak_power.state").resolve())
 
         self._persistent_state_file = Path(Config.persistent_state_path, "pvoutput_output-peak_power.state")
         if self._persistent_state_file.is_file():
