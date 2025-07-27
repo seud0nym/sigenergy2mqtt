@@ -8,6 +8,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.config import Config, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any, Coroutine, Dict, Final
@@ -701,7 +702,7 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                     logging.debug(
                         f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
                     )
-                    start = time.time()
+                start = time.monotonic()
                 if self._input_type == InputType.HOLDING:
                     rr = await modbus.read_holding_registers(self._address, count=self._count, slave=self._device_address)
                 elif self._input_type == InputType.INPUT:
@@ -709,14 +710,18 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                 else:
                     logging.error(f"{self.__class__.__name__} - Unknown input type '{self._input_type}'")
                     raise Exception(f"Unknown input type '{self._input_type}'")
+                elapsed = time.monotonic() - start
+                await Metrics.modbus_read(self._count, elapsed)
         except asyncio.CancelledError:
             logging.warning(f"{self.__class__.__name__} Modbus read interrupted")
             result = False
         except asyncio.TimeoutError:
             logging.warning(f"{self.__class__.__name__} Modbus read failed to acquire lock within {self._scan_interval}s")
             result = False
+        except Exception:
+            await Metrics.modbus_read_error()
+            raise
         if Config.devices[self._plant_index].log_level == logging.DEBUG:
-            elapsed = time.time() - start
             logging.debug(
                 f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
             )
@@ -906,10 +911,11 @@ class WritableSensorMixin(ModbusSensor):
                         logging.debug(
                             f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
                         )
-                        start = time.time()
+                    start = time.monotonic()
                     rr = await modbus.write_register(self._address, registers[0], slave=slave, no_response_expected=no_response_expected)
+                    elapsed = time.monotonic() - start
+                    await Metrics.modbus_write(1, elapsed)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    elapsed = time.time() - start
                     logging.debug(
                         f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
                     )
@@ -920,10 +926,11 @@ class WritableSensorMixin(ModbusSensor):
                         logging.debug(
                             f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
                         )
-                        start = time.time()
+                    start = time.monotonic()
                     rr = await modbus.write_registers(self._address, registers, slave=slave, no_response_expected=no_response_expected)
+                    elapsed = time.monotonic() - start
+                    await Metrics.modbus_write(len(registers), elapsed)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    elapsed = time.time() - start
                     logging.debug(
                         f"{self.__class__.__name__} - write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
                     )
@@ -940,6 +947,7 @@ class WritableSensorMixin(ModbusSensor):
             result = False
         except Exception as exc:
             logging.error(f"{self.__class__.__name__} write_registers threw {exc!s}")
+            await Metrics.modbus_write_error()
             raise
 
     def configure_mqtt_topics(self, device_id: str) -> None:
