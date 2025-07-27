@@ -381,6 +381,12 @@ _parser.add_argument(
     help="Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 _parser.add_argument(
+    "--no-metrics",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_NO_METRICS,
+    help="Do not publish any sigenergy2mqtt metrics.",
+)
+_parser.add_argument(
     "--clean",
     action="store_true",
     dest="clean",
@@ -428,6 +434,7 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
+        or arg == const.SIGENERGY2MQTT_NO_METRICS
     ) and getattr(_args, arg) not in ["true", "True", True, 1]:  # argparse will store false by default, so ignore unless actually specified (and therefore true)
         continue
     elif arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and getattr(_args, arg) in ["true", "True", True, 1]:

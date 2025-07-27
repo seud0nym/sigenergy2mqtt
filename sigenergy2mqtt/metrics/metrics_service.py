@@ -167,12 +167,13 @@ class MetricsService(Device):
 
     def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
-        if clean:
-            logging.debug(f"{self.name} - Publishing empty discovery ({clean=})")
-            mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
-        logging.info(f"{self.name} - Publishing discovery")
-        discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
-        info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
+        if clean or not Config.metrics_enabled:
+            logging.debug(f"{self.name} - Publishing empty discovery ({Config.metrics_enabled=} {clean=})")
+            info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
+        if Config.metrics_enabled:
+            logging.info(f"{self.name} - Publishing discovery")
+            discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
+            info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         return info
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
@@ -196,13 +197,13 @@ class MetricsService(Device):
                 if value == _previous_state[object_id]:
                     return None
             if value is None:
-                logging.warning(f"{self.__class__.__name__} - No value found for {object_id}")
+                logging.warning(f"{self.name} - No value found for {object_id}")
                 return None
             _previous_state[object_id] = value
             return f"{value:.2f}" if isinstance(value, float) else str(value)
 
         async def publish_updates(modbus: Any, mqtt: MqttClient) -> None:
-            logging.debug(f"{self.__class__.__name__} - Commenced")
+            logging.debug(f"{self.name} - Commenced")
             publishes = 0
             while self.online:
                 publishes += 1
@@ -216,11 +217,16 @@ class MetricsService(Device):
                                 mqtt.publish(discovery["state_topic"], f"{value:.2f}" if isinstance(value, float) else str(value), qos=0, retain=False)
                     await asyncio.sleep(1.0)
                 except asyncio.CancelledError:
-                    logging.info(f"{self.__class__.__name__} - Sleep interrupted")
+                    logging.info(f"{self.name} - Sleep interrupted")
                 except asyncio.TimeoutError:
-                    logging.warning(f"{self.__class__.__name__} - Failed to acquire lock within timeout")
-            logging.debug(f"{self.__class__.__name__} - Completed: Flagged as offline ({self.online=})")
+                    logging.warning(f"{self.name} - Failed to acquire lock within timeout")
+            logging.debug(f"{self.name} - Completed: Flagged as offline ({self.online=})")
             return
 
-        tasks = [publish_updates(modbus, mqtt)]
+        if Config.metrics_enabled:
+            logging.info(f"{self.name} - Scheduling metrics updates")
+            tasks = [publish_updates(modbus, mqtt)]
+        else:
+            logging.info(f"{self.name} - Metrics disabled, no tasks scheduled")
+            tasks = []
         return tasks

@@ -25,6 +25,7 @@ class Config:
     sensor_overrides: dict = {}
 
     sanity_check_default_kw: float = 100.0
+    metrics_enabled: bool = True
 
     persistent_state_path: str = "."
 
@@ -72,6 +73,8 @@ class Config:
                             overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0) 
+                        case const.SIGENERGY2MQTT_NO_METRICS:
+                            overrides["no-metrics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
                             overrides["home-assistant"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
@@ -180,6 +183,9 @@ class Config:
                 case "sanity-check-default-kw":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
                     Config.sanity_check_default_kw = check_float(data[name], name, allow_none=False, min=0)
+                case "no-metrics":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
+                    Config.metrics_enabled = not check_bool(data[name], name)
                 case "mqtt":
                     Config.mqtt.configure(data[name], override)
                 case "modbus":
