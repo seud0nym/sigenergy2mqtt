@@ -1,11 +1,11 @@
-__all__ = ["get_pvoutput_host_config"]
+__all__ = ["get_pvoutput_services"]
 
 from .output import PVOutputOutputService
 from .status import PVOutputStatusService
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
-from sigenergy2mqtt.main import HostConfig
+from sigenergy2mqtt.main.thread_config import ThreadConfig
+from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import PVVoltageSensor
 from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
@@ -13,13 +13,12 @@ from sigenergy2mqtt.sensors.plant_read_only import PlantPVPower, TotalLoadConsum
 import logging
 
 
-def get_pvoutput_host_config(configs: list[HostConfig], next_plant_index: int) -> HostConfig:
+def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     logger = logging.getLogger("pvoutput")
     logger.setLevel(Config.pvoutput.log_level)
 
-    pvoutput = HostConfig(None, None, "PVOutput")
-    status = PVOutputStatusService(next_plant_index, logger)
-    output = PVOutputOutputService(next_plant_index, logger)
+    status = PVOutputStatusService(logger)
+    output = PVOutputOutputService(logger)
 
     plant_pv_power: PlantPVPower = None
     total_pv_power: TotalPVPower = None
@@ -55,10 +54,7 @@ def get_pvoutput_host_config(configs: list[HostConfig], next_plant_index: int) -
     if Config.pvoutput.temperature_topic:
         status.register_temperature(Config.pvoutput.temperature_topic)
 
-    pvoutput.add_device(next_plant_index, status)
-    pvoutput.add_device(next_plant_index, output)
-
-    return pvoutput
+    return [status, output]
 
 
 def unit2gain(sensor: Sensor) -> float:

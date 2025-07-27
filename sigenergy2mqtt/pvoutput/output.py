@@ -12,8 +12,8 @@ import time
 
 
 class PVOutputOutputService(Service):
-    def __init__(self, plant_index: int, logger: logging.Logger):
-        super().__init__("PVOutput Add Output Service", plant_index, unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
+    def __init__(self, logger: logging.Logger):
+        super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
         self._consumption: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.consumption, "consumption", logger)
         self._exports: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.exports, "exports", logger)
@@ -21,7 +21,11 @@ class PVOutputOutputService(Service):
         self._power: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.peak_power, "peak power", logger)
         self._power.update = self.set_power
 
-        self._persistent_state_file = Path(Config.persistent_state_path, f"pvoutput_output_{plant_index}-peak_power.state")
+        obsolete = Path(Config.persistent_state_path, "pvoutput_output_9-peak_power.state")
+        if obsolete.is_file():
+            obsolete.rename("pvoutput_output-peak_power.state")
+
+        self._persistent_state_file = Path(Config.persistent_state_path, "pvoutput_output-peak_power.state")
         if self._persistent_state_file.is_file():
             fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
             now = time.localtime()

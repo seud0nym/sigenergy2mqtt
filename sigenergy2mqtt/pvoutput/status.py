@@ -8,8 +8,8 @@ import time
 
 
 class PVOutputStatusService(Service):
-    def __init__(self, plant_index: int, logger: logging.Logger):
-        super().__init__("PVOutput Add Status Service", plant_index, unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
+    def __init__(self, logger: logging.Logger):
+        super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
 
         self._consumption: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.consumption, "consumption", logger)
         self._generation: ServiceTopics[str, Topic] = ServiceTopics(self, True, "generation", logger)

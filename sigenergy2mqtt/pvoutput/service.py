@@ -34,8 +34,8 @@ class Topic:
 
 
 class Service(Device):
-    def __init__(self, name: str, plant_index: int, unique_id: str, model: str, logger: logging.Logger):
-        super().__init__(name, plant_index, unique_id, "sigenergy2mqtt", model)
+    def __init__(self, name: str, unique_id: str, model: str, logger: logging.Logger):
+        super().__init__(name, -1, unique_id, "sigenergy2mqtt", model)
         self._logger = logger
         self._lock = asyncio.Lock()
 

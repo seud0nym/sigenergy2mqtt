@@ -1,4 +1,4 @@
-from .host_config import HostConfig
+from .thread_config import ThreadConfig
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
@@ -12,7 +12,7 @@ import logging
 import uuid
 
 
-async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.AbstractEventLoop):
+async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop):
     device: Device = None
     modbus_client: ModbusClient = None
     tasks: List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]] = []
@@ -67,12 +67,12 @@ async def read_and_publish_device_sensors(config: HostConfig, loop: asyncio.Abst
     return
 
 
-def run_modbus_event_loop(device: HostConfig, loop: asyncio.AbstractEventLoop):
+def run_modbus_event_loop(device: ThreadConfig, loop: asyncio.AbstractEventLoop):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(read_and_publish_device_sensors(device, loop))
 
 
-async def start(configs: list[HostConfig]):
+async def start(configs: list[ThreadConfig]):
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(configs)) as executor:
         executions: list[concurrent.futures.Future] = []
         for config in configs:

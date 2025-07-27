@@ -11,7 +11,7 @@ class DeviceIndex:
 
 
 @dataclass
-class HostConfig:
+class ThreadConfig:
     host: str
     port: int
     name: str = ""
@@ -45,16 +45,16 @@ class HostConfig:
                 sensor.apply_sensor_overrides(device.registers)
 
 
-class HostConfigFactory:
-    _configs: dict[tuple[str, int], HostConfig] = {}
+class ThreadConfigFactory:
+    _configs: dict[tuple[str, int], ThreadConfig] = {}
 
     @classmethod
-    def get_config(self, host, port) -> HostConfig:
+    def get_config(self, host, port) -> ThreadConfig:
         key = (host, port)
-        if key not in HostConfigFactory._configs:
-            self._configs[key] = HostConfig(host, port)
+        if key not in ThreadConfigFactory._configs:
+            self._configs[key] = ThreadConfig(host, port)
         return self._configs[key]
 
     @classmethod
-    def get_configs(self) -> list[HostConfig]:
+    def get_configs(self) -> list[ThreadConfig]:
         return list(self._configs.values())

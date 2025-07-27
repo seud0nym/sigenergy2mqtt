@@ -1,11 +1,11 @@
-from .host_config import HostConfig, HostConfigFactory
+from .thread_config import ThreadConfig, ThreadConfigFactory
 from .threading import start
 from pymodbus import FramerType, pymodbus_apply_logging_config
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.pvoutput import get_pvoutput_host_config
+from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
@@ -21,7 +21,7 @@ async def async_main() -> None:
     for plant_index in range(len(Config.devices)):
         device = Config.devices[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
-            config: HostConfig = HostConfigFactory.get_config(device.host, device.port)
+            config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port)
             modbus = ModbusClient(device.host, port=device.port, framer=FramerType.SOCKET)
             async with modbus:
                 logging.info(f"Connected to Modbus interface at {device.host}:{device.port} for register probing")
@@ -46,10 +46,15 @@ async def async_main() -> None:
         else:
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
 
-    configs: list[HostConfig] = HostConfigFactory.get_configs()
+    configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
+
+    svc_thread_cfg = ThreadConfig(None, None, "Services")
 
     if Config.pvoutput.enabled and not Config.clean:
-        configs.append(get_pvoutput_host_config(configs, max(9, plant_index + 1)))
+        for service in get_pvoutput_services(configs):
+            svc_thread_cfg.add_device(-1, service)
+
+    configs.insert(0, svc_thread_cfg)
 
     def configure_for_restart(caught, frame):
         logging.info(f"Signal {caught} received - reconfiguring for restart")

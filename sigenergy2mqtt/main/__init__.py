@@ -1,5 +1,5 @@
-__all__ = ["async_main", "HostConfig"]
+__all__ = ["async_main", "ThreadConfig"]
 
 
-from .host_config import HostConfig
 from .main import async_main
+from .thread_config import ThreadConfig
