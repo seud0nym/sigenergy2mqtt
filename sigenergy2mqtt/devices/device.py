@@ -258,7 +258,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 if debug_logging:
                     logging.debug(f"{self.name} Sensor Scan Group [{names}] commenced (Interval = {interval} seconds)")
                 while self.online:
-                    started = time.time()  # Grab the started time first, so that elapsed contains ALL activity
+                    started = time.monotonic()  # Grab the started time first, so that elapsed contains ALL activity
                     for sensor in publishable:
                         if sensor.force_publish:
                             if debug_logging:
@@ -280,7 +280,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                     self.rediscover = False
                                     self.publish_discovery(mqtt, clean=False)
                             average_excess = max(0.0, statistics.fmean(actual_elapsed) - interval)
-                            elapsed = time.time() - started
+                            elapsed = time.monotonic() - started
                             if elapsed > interval and modbus.connected:
                                 logging.warning(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
                             wait = max(interval - elapsed, 0.5)
