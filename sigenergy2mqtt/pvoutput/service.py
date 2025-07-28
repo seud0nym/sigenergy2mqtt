@@ -76,14 +76,14 @@ class Service(Device):
     # endregion
 
     async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
-        self.logger.info(f"{self.__class__.__name__} - Uploading {payload=}")
+        self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
         for i in range(1, 4, 1):
             try:
                 if Config.pvoutput.testing:
-                    self.logger.debug(f"{self.__class__.__name__} - Testing mode, not sending request to {url=}")
+                    self.logger.info(f"{self.__class__.__name__} Testing mode, not sending request to {url=}")
                     break
                 else:
-                    self.logger.debug(f"{self.__class__.__name__} - Attempt #{i} to {url=}...")
+                    self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")
                     with requests.post(url, headers=self.request_headers, data=payload, timeout=10) as response:
                         limit = int(response.headers["X-Rate-Limit-Limit"])
                         remaining = int(response.headers["X-Rate-Limit-Remaining"])
@@ -91,30 +91,30 @@ class Service(Device):
                         reset = round(at - time.time())
                         if response.status_code == 200:
                             self.logger.debug(
-                                f"{self.__class__.__name__} - Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                                f"{self.__class__.__name__} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                             )
                             break
                         else:
-                            self.logger.warning(f"{self.__class__.__name__} - Attempt #{i} FAILED status_code={response.status_code} reason={response.reason}")
+                            self.logger.warning(f"{self.__class__.__name__} Attempt #{i} FAILED status_code={response.status_code} reason={response.reason}")
                         if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
-                            self.logger.warning(f"{self.__class__.__name__} - Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
+                            self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
                             await asyncio.sleep(reset)
                         else:
                             response.raise_for_status()
                             break
             except requests.exceptions.HTTPError as exc:
-                self.logger.error(f"{self.__class__.__name__} - HTTP Error: {exc}")
+                self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
             except requests.exceptions.ConnectionError as exc:
-                self.logger.error(f"{self.__class__.__name__} - Error Connecting: {exc}")
+                self.logger.error(f"{self.__class__.__name__} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
-                self.logger.error(f"{self.__class__.__name__} - Timeout Error: {exc}")
+                self.logger.error(f"{self.__class__.__name__} Timeout Error: {exc}")
             except Exception as exc:
-                self.logger.error(f"{self.__class__.__name__} - {exc}")
+                self.logger.error(f"{self.__class__.__name__} {exc}")
             if i <= 2:
-                self.logger.info(f"{self.__class__.__name__} - Retrying in 10 seconds")
+                self.logger.info(f"{self.__class__.__name__} Retrying in 10 seconds")
                 await asyncio.sleep(10)
         else:
-            self.logger.error(f"{self.__class__.__name__} - Failed to upload to {url} after 3 attempts")
+            self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after 3 attempts")
 
 
 class ServiceTopics(dict[str, Topic]):
@@ -136,25 +136,25 @@ class ServiceTopics(dict[str, Topic]):
     def register(self, topic: str, gain: float) -> bool:
         if self.enabled:
             if topic is None or topic == "" or topic.isspace():
-                self._logger.debug(f"{self._service.__class__.__name__} - Ignored subscription request for empty topic")
+                self._logger.debug(f"{self._service.__class__.__name__} Ignored subscription request for empty topic")
             elif topic not in self:
                 self[topic] = Topic(topic, gain)
         else:
-            self._logger.debug(f"{self._service.__class__.__name__} - Ignored subscription request for '{topic}' because {self._name} uploading is disabled")
+            self._logger.debug(f"{self._service.__class__.__name__} Ignored subscription request for '{topic}' because {self._name} uploading is disabled")
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
         for topic in self.keys():
             if self.enabled:
                 result = mqtt_handler.register(mqtt, topic, self.update)
-                self._logger.debug(f"{self._service.__class__.__name__} - Subscribed to topic '{topic}' to record {self._name} ({result=})")
+                self._logger.debug(f"{self._service.__class__.__name__} Subscribed to topic '{topic}' to record {self._name} ({result=})")
             else:
-                self._logger.debug(f"{self._service.__class__.__name__} - Not subscribing to topic '{topic}' because {self._name} uploading is disabled")
+                self._logger.debug(f"{self._service.__class__.__name__} Not subscribing to topic '{topic}' because {self._name} uploading is disabled")
 
     def aggregate(self, exclude_zero: bool) -> tuple[float, str, int]:
         if not self.enabled:
             return None, None, 0
         if len(self) == 0:
-            self._logger.debug(f"{self._service.__class__.__name__} - No {self._name} topics registered, skipping aggregation")
+            self._logger.debug(f"{self._service.__class__.__name__} No {self._name} topics registered, skipping aggregation")
             return None, None, 0
         at: str = "00:00"
         count: int = 0
@@ -166,7 +166,7 @@ class ServiceTopics(dict[str, Topic]):
                 count += 1
         if self._logger.isEnabledFor(logging.DEBUG):
             self._logger.debug(
-                f"{self._service.__class__.__name__} - Aggregated {self._name}: {total=} {count=} {at=} ({[(v.state, time.strftime('%H:%M', value.timestamp) if value.timestamp else None) for v in self.values()]})"
+                f"{self._service.__class__.__name__} Aggregated {self._name}: {total=} {count=} {at=} ({[(v.state, time.strftime('%H:%M', value.timestamp) if value.timestamp else None) for v in self.values()]})"
             )
         if count > 0:
             return total, at, count
@@ -184,7 +184,7 @@ class ServiceTopics(dict[str, Topic]):
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if self.enabled:
             if Config.pvoutput.update_debug_logging:
-                self._logger.debug(f"{self._service.__class__.__name__} - Updating {self._name} from '{topic}' {value=}")
+                self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from '{topic}' {value=}")
             state = value if isinstance(value, float) else float(value)
             if state >= 0.0:
                 async with self._service.lock(timeout=1):

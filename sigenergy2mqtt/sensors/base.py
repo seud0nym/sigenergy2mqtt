@@ -192,6 +192,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             float or int: The adjusted state value after applying gain and precision, or the original state if conditions are not met.
         """
         if isinstance(state, (float, int)) and not raw:
+            if self._debug_logging:
+                logging.debug(f"{self.__class__.__name__} Applying gain={self._gain} and precision={self._precision} to {state=}")
             if self._gain is not None and self._gain != 1:
                 state /= self._gain
             if self._precision is not None:
@@ -234,56 +236,56 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 overrides = Config.sensor_overrides[identifier]
                 if "debug-logging" in overrides and self._debug_logging != overrides["debug-logging"]:
                     self._debug_logging = overrides["debug-logging"]
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'debug-logging' override ({overrides['debug-logging']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'debug-logging' override ({overrides['debug-logging']})")
                 if "gain" in overrides and self._gain != overrides["gain"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'gain' override ({overrides['gain']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'gain' override ({overrides['gain']})")
                     self._gain = overrides["gain"]
                 if "icon" in overrides and self["icon"] != overrides["icon"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'icon' override ({overrides['icon']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'icon' override ({overrides['icon']})")
                     self["icon"] = overrides["icon"]
                 if "max-failures" in overrides and self._max_failures != overrides["max-failures"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'max-failures' override ({overrides['max-failures']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'max-failures' override ({overrides['max-failures']})")
                     self._max_failures = overrides["max-failures"]
                 if "max-failures-retry-interval" in overrides and self._max_failures_retry_interval != overrides["max-failures-retry-interval"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'max-failures-retry-interval' override ({overrides['max-failures-retry-interval']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'max-failures-retry-interval' override ({overrides['max-failures-retry-interval']})")
                     self._max_failures_retry_interval = overrides["max-failures-retry-interval"]
                 if "precision" in overrides and self._precision != overrides["precision"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'precision' override ({overrides['precision']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'precision' override ({overrides['precision']})")
                     self._precision = overrides["precision"]
                     self["display_precision"] = self._precision
                 if "publishable" in overrides and self.publishable != overrides["publishable"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'publishable' override ({overrides['publishable']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'publishable' override ({overrides['publishable']})")
                     self.publishable = overrides["publishable"]
                 if "sanity-check-delta" in overrides and self._sanity.delta != overrides["sanity-check-delta"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
                     self._sanity.delta = overrides["sanity-check-delta"]
                 if "sanity-check-max-value" in overrides and self._sanity.max_value != overrides["sanity-check-max-value"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
                     self._sanity.max_value = overrides["sanity-check-max-value"]
                 if "sanity-check-min-value" in overrides and self._sanity.min_value != overrides["sanity-check-min-value"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
                     self._sanity.min_value = overrides["sanity-check-min-value"]
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
         if self.publishable and registers:
             if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "_address", None) == 40029):
-                logging.debug(f"{self.__class__.__name__} - Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
+                logging.debug(f"{self.__class__.__name__} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
                 self.publishable = False
             elif isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
                 if not registers.read_write:
-                    logging.debug(f"{self.__class__.__name__} - Applying device 'read-write' override ({registers.read_write})")
+                    logging.debug(f"{self.__class__.__name__} Applying device 'read-write' override ({registers.read_write})")
                     self.publishable = registers.read_write
             elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
                 if not registers.read_only:
-                    logging.debug(f"{self.__class__.__name__} - Applying device 'read-only' override ({registers.read_only})")
+                    logging.debug(f"{self.__class__.__name__} Applying device 'read-only' override ({registers.read_only})")
                     self.publishable = registers.read_only
             elif isinstance(self, WriteOnlySensor):
                 if not registers.write_only:
-                    logging.debug(f"{self.__class__.__name__} - Applying device 'write-only' override ({registers.write_only})")
+                    logging.debug(f"{self.__class__.__name__} Applying device 'write-only' override ({registers.write_only})")
                     self.publishable = registers.write_only
             else:
-                logging.warning(f"{self.__class__.__name__} - Failed to determine superclass to apply device publishable overrides")
+                logging.warning(f"{self.__class__.__name__} Failed to determine superclass to apply device publishable overrides")
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = (
@@ -305,12 +307,12 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         """
         assert "availability" in self, f"{self.__class__.__name__} MQTT topics are not configured?"
         if self._debug_logging:
-            logging.debug(f"{self.__class__.__name__} - getting discovery")
+            logging.debug(f"{self.__class__.__name__} Getting discovery")
         components = self.get_discovery_components()
         if self.publishable and not Config.clean:
             if self._persistent_publish_state_file.exists():
                 self._persistent_publish_state_file.unlink(missing_ok=True)
-                logging.debug(f"{self.__class__.__name__} - removed {self._persistent_publish_state_file} ({self.publishable=} and {Config.clean=})")
+                logging.debug(f"{self.__class__.__name__} Removed {self._persistent_publish_state_file} ({self.publishable=} and {Config.clean=})")
         else:
             if self._persistent_publish_state_file.exists() or Config.clean:
                 components = {}
@@ -340,6 +342,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         state = None
         if republish and len(self._states) > 0:
             state = self._states[-1][1]
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} Republishing previous state ({state=})")
         else:
             result = await self._update_internal_state(**kwargs)
             if result:
@@ -362,7 +366,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 value = await self.get_state(modbus=modbus, raw=False, republish=republish)
                 if value is None and not self.force_publish:
                     if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - Value is unchanged")
+                        logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: Value is unchanged")
                 else:
                     if self._failures > 0:
                         logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
@@ -374,7 +378,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
             except Exception as exc:
-                logging.warning(f"{self.__class__.__name__} Publishing SKIPPED - Failed to get state ({exc})")
+                logging.warning(f"{self.__class__.__name__} Publishing SKIPPED: Failed to get state ({exc})")
                 if modbus.connected:
                     self._failures += 1
                     self._next_retry = (
@@ -438,6 +442,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             state:      The current state.
         """
         if self._sanity.check(state, self._states):
+            if self._debug_logging:
+                logging.debug(f"{self.__class__.__name__} New state is {state}")
             self._states.append((time.time(), state))
             if len(self._states) > self._max_states:
                 self._states = self._states[-self._max_states :]
@@ -609,7 +615,7 @@ class ModbusSensor(Sensor):
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS")
                     if self.debug_logging:
                         logging.debug(rr)
-                    logging.warning(f"{self.__class__.__name__} - Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
+                    logging.warning(f"{self.__class__.__name__} Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
                     self._max_failures = 0
                     self._max_failures_retry_interval = 0
                     raise Exception("0x02 ILLEGAL DATA ADDRESS")
@@ -642,7 +648,7 @@ class ReadableSensorMixin(abc.ABC):
             if identifier in self.__class__.__name__ or identifier in self["object_id"]:
                 overrides = Config.sensor_overrides[identifier]
                 if "scan-interval" in overrides and self._scan_interval != overrides["scan-interval"]:
-                    logging.debug(f"{self.__class__.__name__} - Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
                     self._scan_interval = overrides["scan-interval"]
 
     @property
@@ -686,7 +692,7 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         Returns:
             True if the state was updated, False if it was not.
         """
-        assert "modbus" in kwargs, f"{self.__class__.__name__} - Required argument 'modbus' not supplied"
+        assert "modbus" in kwargs, f"{self.__class__.__name__} Required argument 'modbus' not supplied"
         result = False
         modbus: ModbusClient = kwargs["modbus"]
 
@@ -698,9 +704,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
 
         try:
             async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(self._scan_interval):
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
+                if self.debug_logging:
                     logging.debug(
-                        f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
+                        f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
                     )
                 start = time.monotonic()
                 if self._input_type == InputType.HOLDING:
@@ -708,7 +714,7 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                 elif self._input_type == InputType.INPUT:
                     rr = await modbus.read_input_registers(self._address, count=self._count, slave=self._device_address)
                 else:
-                    logging.error(f"{self.__class__.__name__} - Unknown input type '{self._input_type}'")
+                    logging.error(f"{self.__class__.__name__} Unknown input type '{self._input_type}'")
                     raise Exception(f"Unknown input type '{self._input_type}'")
                 elapsed = time.monotonic() - start
                 await Metrics.modbus_read(self._count, elapsed)
@@ -721,10 +727,6 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         except Exception:
             await Metrics.modbus_read_error()
             raise
-        if Config.devices[self._plant_index].log_level == logging.DEBUG:
-            logging.debug(
-                f"{self.__class__.__name__} - read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
-            )
         if self._check_register_response(rr, f"read_{self._input_type}_registers"):
             self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
             result = True
@@ -901,7 +903,7 @@ class WritableSensorMixin(ModbusSensor):
         # no_response_expected = True if slave == 0 else False
         slave = self._device_address
         no_response_expected = False
-        logging.info(f"{self.__class__.__name__} - write_registers {self._address=} {value=} ({self.latest_raw_state=}) {slave=}")
+        logging.info(f"{self.__class__.__name__} write_registers {self._address=} {value=} ({self.latest_raw_state=}) {slave=}")
         registers = self._encode_value(value)
         try:
             max_wait = 2
@@ -909,7 +911,7 @@ class WritableSensorMixin(ModbusSensor):
                 async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
                         logging.debug(
-                            f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
+                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
                         )
                     start = time.monotonic()
                     rr = await modbus.write_register(self._address, registers[0], slave=slave, no_response_expected=no_response_expected)
@@ -917,14 +919,14 @@ class WritableSensorMixin(ModbusSensor):
                     await Metrics.modbus_write(1, elapsed)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     logging.debug(
-                        f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+                        f"{self.__class__.__name__} write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
                     )
                 result = self._check_register_response(rr, "write_register")
             else:
                 async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
                         logging.debug(
-                            f"{self.__class__.__name__} - write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
+                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
                         )
                     start = time.monotonic()
                     rr = await modbus.write_registers(self._address, registers, slave=slave, no_response_expected=no_response_expected)
@@ -932,7 +934,7 @@ class WritableSensorMixin(ModbusSensor):
                     await Metrics.modbus_write(len(registers), elapsed)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     logging.debug(
-                        f"{self.__class__.__name__} - write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+                        f"{self.__class__.__name__} write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
                     )
                 result = self._check_register_response(rr, "write_registers")
             if result:
@@ -959,7 +961,7 @@ class WritableSensorMixin(ModbusSensor):
         if source == self["command_topic"]:
             return await self._write_registers(modbus, value, mqtt)
         else:
-            logging.warning(f"{self.__class__.__name__} - Attempt to set_value({value}) from unknown topic {source}")
+            logging.warning(f"{self.__class__.__name__} Attempt to set_value({value}) from unknown topic {source}")
             return False
 
 
@@ -1015,7 +1017,7 @@ class WriteOnlySensor(WritableSensorMixin):
             config["payload_press"] = action
             components[f"{self.unique_id}_{action}"] = config
         if self._debug_logging:
-            logging.debug(f"{self.__class__.__name__} - Discovered {components=}")
+            logging.debug(f"{self.__class__.__name__} Discovered {components=}")
         return components
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
@@ -1024,7 +1026,7 @@ class WriteOnlySensor(WritableSensorMixin):
         elif value == "On":
             return await super().set_value(modbus, mqtt, 1, source, handler)
         else:
-            logging.warning(f"{self.__class__.__name__} - Ignored attempt to set value to {value}: Must be either 'On' or 'Off'")
+            logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either 'On' or 'Off'")
         return False
 
 
@@ -1140,11 +1142,11 @@ class NumericSensor(ReadWriteSensor):
         if isinstance(state, (float, int)):
             if state < self["min"]:
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} - {state=} < {self['min']=} so adjusted")
+                    logging.debug(f"{self.__class__.__name__} {state=} < {self['min']=} so adjusted")
                 state = self["min"]
             elif state > self["max"]:
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} - {state=} > {self['max']=} so adjusted")
+                    logging.debug(f"{self.__class__.__name__} {state=} > {self['max']=} so adjusted")
                 state = self["max"]
         return state
 
@@ -1156,9 +1158,9 @@ class NumericSensor(ReadWriteSensor):
                     state = state * self.gain
                 return await super().set_value(modbus, mqtt, state, source, handler)
             except Exception as e:
-                logging.warning(f"{self.__class__.__name__} - Attempt to set value to {value} FAILED: {e}")
+                logging.warning(f"{self.__class__.__name__} Attempt to set value to {value} FAILED: {e}")
         else:
-            logging.warning(f"{self.__class__.__name__} - Ignored attempt to set None value to {value}")
+            logging.warning(f"{self.__class__.__name__} Ignored attempt to set None value to {value}")
         return False
 
 
@@ -1272,7 +1274,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             return self.NO_ALARM
         else:
             if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
-                logging.warning(f"{self.__class__.__name__} - Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
+                logging.warning(f"{self.__class__.__name__} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
                 value = value[1]
             active_alarms = []
             try:
@@ -1283,9 +1285,9 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                             active_alarms.append(description)
                         else:
                             active_alarms.append(f"Unknown (bit{bit_position}∈{value})")
-                            logging.warning(f"{self.__class__.__name__} - Unknown {self.alarm_type} alarm bit {bit_position} set in value {value}")
+                            logging.warning(f"{self.__class__.__name__} Unknown {self.alarm_type} alarm bit {bit_position} set in value {value}")
             except TypeError as e:
-                logging.warning(f"{self.__class__.__name__} - Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")
+                logging.warning(f"{self.__class__.__name__} Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")
             if not active_alarms:
                 return f"Unknown Alarm ({value})"
             else:
@@ -1667,11 +1669,11 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                     content = f.read()
                     if content is not None and content != "None" and content.isdecimal():
                         self._current_total = float(content)
-                        logging.info(f"{self.__class__.__name__} - Loaded current state from {self._persistent_state_file} ({self._current_total})")
+                        logging.info(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
-                    logging.warning(f"{self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
+                    logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
         else:
-            logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
+            logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
         self.set_latest_state(self._current_total)
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
@@ -1751,21 +1753,21 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                         if content is not None and content != "None" and content.isdecimal():
                             value = float(content)
                             if value <= 0.0:
-                                logging.info(f"{self.__class__.__name__} - Ignored negative last midnight state from {self._persistent_state_file} ({value})")
+                                logging.info(f"{self.__class__.__name__} Ignored negative last midnight state from {self._persistent_state_file} ({value})")
                                 self._persistent_state_file.unlink()
                             else:
                                 self._state_at_midnight = value
-                                logging.info(f"{self.__class__.__name__} - Loaded last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
+                                logging.info(f"{self.__class__.__name__} Loaded last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
                     except ValueError as error:
-                        logging.warning(f"Sensor {self.__class__.__name__} - Failed to read {self._persistent_state_file}: {error}")
+                        logging.warning(f"Sensor {self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
                         self._persistent_state_file.unlink()
             else:
-                logging.info(f"{self.__class__.__name__} - Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
+                logging.info(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
-            logging.debug(f"{self.__class__.__name__} - Persistent state file {self._persistent_state_file} not found")
+            logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
         self._state_now: float = max(0.0, source.latest_raw_state - self._state_at_midnight) if source.latest_raw_state else 0.0
-        logging.info(f"{self.__class__.__name__} - Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
+        logging.info(f"{self.__class__.__name__} Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
         self.set_latest_state(self._state_now)
         if not self._persistent_state_file.is_file():
             self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))

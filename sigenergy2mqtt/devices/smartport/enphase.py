@@ -70,22 +70,22 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             url = f"https://{self._host}/ivp/meters/readings"
             headers = {"Authorization": f"Bearer {token}"}
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} - Fetching data for Envoy device {self._serial_number} from {url}")
+                logging.debug(f"{self.__class__.__name__} Fetching data for Envoy device {self._serial_number} from {url}")
             with requests.get(url, timeout=self.scan_interval, verify=False, headers=headers) as response:
                 if response.status_code == 401:
-                    logging.warning(f"{self.__class__.__name__} - Authentication failed: Generating new token")
+                    logging.warning(f"{self.__class__.__name__} Authentication failed: Generating new token")
                     return await self._update_internal_state(reauthenticate=True)
                 elif response.status_code != 200:
-                    logging.error(f"{self.__class__.__name__} - Failed to connect to {url}: Response={response}")
-                    raise Exception(f"{self.__class__.__name__} - Failed to connect to {url}: Response={response}")
+                    logging.error(f"{self.__class__.__name__} Failed to connect to {url}: Response={response}")
+                    raise Exception(f"{self.__class__.__name__} Failed to connect to {url}: Response={response}")
                 else:
                     elapsed_time = response.elapsed.total_seconds()
                     if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} - Response from {url} took {elapsed_time:.2f} seconds")
+                        logging.debug(f"{self.__class__.__name__} Response from {url} took {elapsed_time:.2f} seconds")
                     try:
                         reading = response.json()
                         if self._debug_logging:
-                            logging.debug(f"{self.__class__.__name__} - Response from {url}: JSON={json.dumps(reading)}")
+                            logging.debug(f"{self.__class__.__name__} Response from {url}: JSON={json.dumps(reading)}")
                         solar = reading[0]
                         state_is = float(solar["activePower"])
                         if state_is < 0:
@@ -97,21 +97,21 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         self._failover_initiated = False
                         return True
                     except ValueError as e:
-                        logging.error(f"{self.__class__.__name__} - Invalid JSON response from {url}: {e}")
+                        logging.error(f"{self.__class__.__name__} Invalid JSON response from {url}: {e}")
                         raise
                     except Exception as e:
-                        logging.error(f"{self.__class__.__name__} - Unhandled error from {url}: {e}")
+                        logging.error(f"{self.__class__.__name__} Unhandled error from {url}: {e}")
                         raise
         except requests.exceptions.RequestException as e:
-            logging.error(f"{self.__class__.__name__} - Unhandled exception fetching data from {url} : {e}")
+            logging.error(f"{self.__class__.__name__} Unhandled exception fetching data from {url} : {e}")
             if self._failover_initiated or (self._failures + 1) < self._max_failures:
                 raise
             else:
                 if "TotalPVPower" in self._derived_sensors:
-                    logging.info(f"{self.__class__.__name__} - Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
+                    logging.info(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
                     self._failover_initiated = self._derived_sensors["TotalPVPower"].failover(self)
                 else:
-                    logging.warning(f"{self.__class__.__name__} - Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
+                    logging.warning(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
                     return True
         return False
 

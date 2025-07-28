@@ -20,25 +20,25 @@ class PVOutputStatusService(Service):
 
     def register_consumption(self, topic: str, gain: float) -> None:
         self._consumption.register(topic, gain)
-        self.logger.debug(f"{self.__class__.__name__} - Registered consumption topic: {topic} ({gain=})")
+        self.logger.debug(f"{self.__class__.__name__} Registered consumption topic: {topic} ({gain=})")
 
     def register_generation(self, topic: str, gain: float) -> None:
         self._generation.register(topic, gain)
-        self.logger.debug(f"{self.__class__.__name__} - Registered generation topic: {topic} ({gain=})")
+        self.logger.debug(f"{self.__class__.__name__} Registered generation topic: {topic} ({gain=})")
 
     def register_temperature(self, topic: str) -> None:
         self._temperature.register(topic, 1.0)
-        self.logger.debug(f"{self.__class__.__name__} - Registered temperature topic: {topic}")
+        self.logger.debug(f"{self.__class__.__name__} Registered temperature topic: {topic}")
 
     def register_voltage(self, topic: str) -> None:
         self._voltage.register(topic, 1.0)
-        self.logger.debug(f"{self.__class__.__name__} - Registered voltage topic: {topic}")
+        self.logger.debug(f"{self.__class__.__name__} Registered voltage topic: {topic}")
 
     # endregion
 
     def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
-            self.logger.debug(f"{self.__class__.__name__} - Commenced (Interval = {Config.pvoutput.interval_minutes} minutes)")
+            self.logger.debug(f"{self.__class__.__name__} Commenced (Interval = {Config.pvoutput.interval_minutes} minutes)")
             wait = self.seconds_until_status_upload()
             while self.online:
                 try:
@@ -50,15 +50,15 @@ class PVOutputStatusService(Service):
                     if wait > 0:
                         await asyncio.sleep(sleep)
                 except asyncio.CancelledError:
-                    self.logger.info(f"{self.__class__.__name__} - Sleep interrupted")
+                    self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
                 except asyncio.TimeoutError:
-                    self.logger.warning(f"{self.__class__.__name__} - Failed to acquire lock within timeout")
-            self.logger.debug(f"{self.__class__.__name__} - Completed: Flagged as offline ({self.online=})")
+                    self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
+            self.logger.debug(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
             return
 
         async def update_pvoutput() -> None:
             now = time.localtime()
-            self.logger.debug(f"{self.__class__.__name__} - Creating payload...")
+            self.logger.debug(f"{self.__class__.__name__} Creating payload...")
             payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
             async with self.lock(timeout=5):
                 if self._generation.enabled:
@@ -72,7 +72,7 @@ class PVOutputStatusService(Service):
             if payload["v1"] or payload["v3"]:  # At least one of the values v1, v2, v3 or v4 must be present
                 await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
             else:
-                self.logger.warning(f"{self.__class__.__name__} - No generation or consumption data to upload, skipping...")
+                self.logger.warning(f"{self.__class__.__name__} No generation or consumption data to upload, skipping...")
 
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
@@ -84,7 +84,7 @@ class PVOutputStatusService(Service):
         next_boundary = (minutes // interval + 1) * interval  # Next interval boundary
         next_time = (next_boundary * 60) + randint(0, 15)  # Convert back to seconds with a random offset of up to 15 seconds for variability
         seconds = 60 if Config.pvoutput.testing else float(next_time - current_time)
-        self.logger.debug(f"{self.__class__.__name__} - Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
+        self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds
 
     def subscribe(self, mqtt, mqtt_handler) -> None:
