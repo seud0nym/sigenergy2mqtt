@@ -41,6 +41,7 @@ Sigenergy Plant
    ├─ Sigenergy Plant Grid Sensor
    ├─ Sigenergy Plant Smart-Port
    ├─ Sigenergy Plant Statistics
+   ├─ Sigenergy AC Charger
    ├─ SigenStor CMUxxxxxxxxxx Energy Controller (ID 1)
    │    ├─ SigenStor CMUxxxxxxxxxx ESS
    │    ├─ SigenStor CMUxxxxxxxxxx PV String 1
