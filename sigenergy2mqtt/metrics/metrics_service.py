@@ -210,6 +210,8 @@ class MetricsService(Device):
                     logging.info(f"{self.name} - Sleep interrupted")
                 except asyncio.TimeoutError:
                     logging.warning(f"{self.name} - Failed to acquire lock within timeout")
+                except Exception as exc:
+                    logging.error(f"{self.name} - Error during metrics publish: {exc}")
             mqtt.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
             logging.debug(f"{self.name} - Completed: Flagged as offline ({self.online=})")
             return

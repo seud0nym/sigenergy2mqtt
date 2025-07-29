@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 import asyncio
+import logging
 import time
 
 
@@ -27,7 +28,8 @@ class Metrics:
 
     @classmethod
     @asynccontextmanager
-    async def lock(self, timeout=None):
+    async def lock(cls, timeout=None):
+        acquired: bool = False
         try:
             if timeout is None:
                 acquired = await Metrics._lock.acquire()
@@ -42,28 +44,42 @@ class Metrics:
 
     @classmethod
     async def modbus_read(cls, registers: int, seconds: float) -> None:
-        elapsed = seconds * 1000.0
-        async with cls.lock(timeout=1):
-            cls.sigenergy2mqtt_modbus_reads += registers
-            cls.sigenergy2mqtt_modbus_read_total += elapsed
-            cls.sigenergy2mqtt_modbus_read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
-            cls.sigenergy2mqtt_modbus_read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
-            cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_reads if cls.sigenergy2mqtt_modbus_reads > 0 else 0.0
+        try:
+            elapsed = seconds * 1000.0
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_modbus_reads += registers
+                cls.sigenergy2mqtt_modbus_read_total += elapsed
+                cls.sigenergy2mqtt_modbus_read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
+                cls.sigenergy2mqtt_modbus_read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
+                cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_reads if cls.sigenergy2mqtt_modbus_reads > 0 else 0.0
+        except Exception as exc:
+            logging.warning(f"Error during modbus read metrics collection: {exc}")
 
     @classmethod
     async def modbus_read_error(cls) -> None:
-        cls.sigenergy2mqtt_modbus_read_errors += 1
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_modbus_read_errors += 1
+        except Exception as exc:
+            logging.warning(f"Error during modbus read error metrics collection: {exc}")
 
     @classmethod
     async def modbus_write(cls, registers: int, seconds: float) -> None:
         elapsed = seconds * 1000.0
-        async with cls.lock(timeout=1):
-            cls.sigenergy2mqtt_modbus_writes += registers
-            cls.sigenergy2mqtt_modbus_write_total += elapsed
-            cls.sigenergy2mqtt_modbus_write_max = max(cls.sigenergy2mqtt_modbus_write_max, elapsed)
-            cls.sigenergy2mqtt_modbus_write_min = min(cls.sigenergy2mqtt_modbus_write_min, elapsed)
-            cls.sigenergy2mqtt_modbus_write_mean = cls.sigenergy2mqtt_modbus_write_total / cls.sigenergy2mqtt_modbus_writes if cls.sigenergy2mqtt_modbus_writes > 0 else 0.0
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_modbus_writes += registers
+                cls.sigenergy2mqtt_modbus_write_total += elapsed
+                cls.sigenergy2mqtt_modbus_write_max = max(cls.sigenergy2mqtt_modbus_write_max, elapsed)
+                cls.sigenergy2mqtt_modbus_write_min = min(cls.sigenergy2mqtt_modbus_write_min, elapsed)
+                cls.sigenergy2mqtt_modbus_write_mean = cls.sigenergy2mqtt_modbus_write_total / cls.sigenergy2mqtt_modbus_writes if cls.sigenergy2mqtt_modbus_writes > 0 else 0.0
+        except Exception as exc:
+            logging.warning(f"Error during modbus write metrics collection: {exc}")
 
     @classmethod
     async def modbus_write_error(cls) -> None:
-        cls.sigenergy2mqtt_modbus_write_errors += 1
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_modbus_write_errors += 1
+        except Exception as exc:
+            logging.warning(f"Error during modbus write error metrics collection: {exc}")
