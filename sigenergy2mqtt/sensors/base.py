@@ -363,18 +363,19 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         now = time.time()
         if self._failures < self._max_failures or (self._next_retry and self._next_retry <= now):
             try:
-                value = await self.get_state(modbus=modbus, raw=False, republish=republish)
-                if value is None and not self.force_publish:
-                    if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: Value is unchanged")
-                else:
-                    if self._failures > 0:
-                        logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
-                        self._failures = 0
-                        self._next_retry = None
-                    if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Publishing {value=}")
-                    mqtt.publish(self["state_topic"], f"{value}", self._qos, self._retain)
+                if self.publishable:
+                    value = await self.get_state(modbus=modbus, raw=False, republish=republish)
+                    if value is None and not self.force_publish:
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: Value is unchanged")
+                    else:
+                        if self._failures > 0:
+                            logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
+                            self._failures = 0
+                            self._next_retry = None
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} Publishing {value=}")
+                        mqtt.publish(self["state_topic"], f"{value}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
             except Exception as exc:
