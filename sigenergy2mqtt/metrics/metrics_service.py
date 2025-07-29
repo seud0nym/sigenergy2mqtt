@@ -160,10 +160,9 @@ class MetricsService(Device):
 
     def __init__(self):
         super().__init__("Sigenergy Metrics", -1, MetricsService._unique_id, "sigenergy2mqtt", "Metrics")
-        logging.info(f"{self.name} - Initialised")
 
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
-        mqtt.publish("sigenergy2mqtt/status", ha_state, qos, True)
+        pass
 
     def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
@@ -177,9 +176,7 @@ class MetricsService(Device):
         return info
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
-        _previous_state: dict[str, Any] = {}
-
-        def get_value(object_id: str, force: bool = False) -> Any:
+        def get_value(object_id: str) -> Any:
             match object_id:
                 case "sigenergy2mqtt_modbus_locks":
                     value = f"{ModbusLockFactory.get_waiter_count()}"
@@ -193,26 +190,19 @@ class MetricsService(Device):
                     value = getattr(Metrics, object_id, None)
                     if value == float("inf"):
                         value = 0.0
-            if not force and object_id in _previous_state:
-                if value == _previous_state[object_id]:
-                    return None
             if value is None:
                 logging.warning(f"{self.name} - No value found for {object_id}")
                 return None
-            _previous_state[object_id] = value
             return f"{value:.2f}" if isinstance(value, float) else str(value)
 
         async def publish_updates(modbus: Any, mqtt: MqttClient) -> None:
             logging.debug(f"{self.name} - Commenced")
-            publishes = 0
             while self.online:
-                publishes += 1
-                if publishes > 600:
-                    publishes = 0
+                mqtt.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
                 try:
                     async with Metrics.lock(timeout=1):
                         for object_id, discovery in MetricsService._discovery["cmps"].items():
-                            value = get_value(object_id, force=(publishes == 0))
+                            value = get_value(object_id)
                             if value is not None:
                                 mqtt.publish(discovery["state_topic"], f"{value:.2f}" if isinstance(value, float) else str(value), qos=0, retain=False)
                     await asyncio.sleep(1.0)
@@ -220,6 +210,7 @@ class MetricsService(Device):
                     logging.info(f"{self.name} - Sleep interrupted")
                 except asyncio.TimeoutError:
                     logging.warning(f"{self.name} - Failed to acquire lock within timeout")
+            mqtt.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
             logging.debug(f"{self.name} - Completed: Flagged as offline ({self.online=})")
             return
 
