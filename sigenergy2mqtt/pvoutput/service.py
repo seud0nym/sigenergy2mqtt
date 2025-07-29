@@ -53,6 +53,7 @@ class Service(Device):
 
     @asynccontextmanager
     async def lock(self, timeout=None):
+        acquired: bool = False
         try:
             if timeout is None:
                 acquired = await self._lock.acquire()
@@ -80,7 +81,7 @@ class Service(Device):
         for i in range(1, 4, 1):
             try:
                 if Config.pvoutput.testing:
-                    self.logger.info(f"{self.__class__.__name__} Testing mode, not sending request to {url=}")
+                    self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
                     break
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")

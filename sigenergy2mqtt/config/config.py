@@ -72,7 +72,7 @@ class Config:
                             overrides["sensor-overrides"][check_string(os.environ[key], key, allow_empty=False, allow_none=False)] = {"debug-logging": True}
                             overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
-                            overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0) 
+                            overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
                         case const.SIGENERGY2MQTT_NO_METRICS:
                             overrides["no-metrics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
@@ -156,9 +156,11 @@ class Config:
                         case const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
                             overrides["pvoutput"]["consumption"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
-                            overrides["pvoutput"]["interval-minutes"] = check_int(os.environ[key], key, min=5, max=15)
+                            logging.warning(
+                                f"The '--pvoutput-interval' option and {const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL} environment variable are deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org."
+                            )
                         case const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-                            overrides["pvoutput"]["temperature-topic"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)  
+                            overrides["pvoutput"]["temperature-topic"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_TESTING:
                             overrides["pvoutput"]["testing"] = check_bool(os.environ[key], key)
                         case _:

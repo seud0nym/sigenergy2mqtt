@@ -14,8 +14,6 @@ class PVOutputConfiguration:
     api_key: str = ""
     system_id: str = ""
 
-    interval_minutes: int = 5
-
     output_hour: int = 21
 
     log_level: int = logging.WARNING
@@ -44,7 +42,9 @@ class PVOutputConfiguration:
                         case "exports":
                             self.exports = check_bool(value, f"pvoutput.{field}")
                         case "interval-minutes":
-                            self.interval_minutes = check_int(value, f"pvoutput.{field}", min=5, max=15)
+                            logging.warning(
+                                "The 'interval-minutes' option is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org."
+                            )
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
                         case "output-hour":

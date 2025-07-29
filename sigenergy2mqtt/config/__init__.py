@@ -362,7 +362,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL, None),
-    help="The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.",
+    help="WARNING! The '--pvoutput-interval' option is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org.",
 )
 _parser.add_argument(
     "--pvoutput-temp-topic",
