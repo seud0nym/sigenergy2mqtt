@@ -205,7 +205,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         components = {}
         for sensor in self.sensors.values():
-            components.update(sensor.get_discovery())
+            components.update(sensor.get_discovery(mqtt))
         if len(components) > 0:
             discovery = {}
             discovery["dev"] = self

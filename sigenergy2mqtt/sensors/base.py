@@ -299,7 +299,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
         return base
 
-    def get_discovery(self) -> Dict[str, dict[str, Any]]:
+    def get_discovery(self, mqtt: MqttClient) -> Dict[str, dict[str, Any]]:
         """Gets the Home Assistant MQTT auto-discovery components for this sensor.
 
         Returns:
@@ -314,6 +314,9 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 self._persistent_publish_state_file.unlink(missing_ok=True)
                 logging.debug(f"{self.__class__.__name__} Removed {self._persistent_publish_state_file} ({self.publishable=} and {Config.clean=})")
         else:
+            if "json_attributes_topic" in self:
+                mqtt.publish(self["json_attributes_topic"], None, qos=0, retain=False)  # Clear retained messages
+                logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic '{self['json_attributes_topic']}'")
             if self._persistent_publish_state_file.exists() or Config.clean:
                 components = {}
                 logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery ({self._persistent_publish_state_file} exists and {Config.clean=})")
