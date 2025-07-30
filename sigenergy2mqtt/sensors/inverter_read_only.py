@@ -868,7 +868,6 @@ class InverterActivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInve
             gain=1000,
             precision=2,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
 
 
 class InverterReactivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
@@ -890,7 +889,6 @@ class InverterReactivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridIn
             gain=1000,
             precision=2,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
 
 
 class InverterActivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
@@ -912,7 +910,6 @@ class InverterActivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInve
             gain=100,
             precision=None,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
 
 
 class InverterReactivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
@@ -934,7 +931,6 @@ class InverterReactivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridIn
             gain=100,
             precision=None,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS on F/W V100R001C00SPC109B09 (Hybrid Inverter)
 
 
 class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
