@@ -365,7 +365,7 @@ class SmartPort(Device):
         assert fw.startswith("D7") or fw.startswith("D8"), f"Unsupported Enphase Envoy firmware {fw}"
         unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Smart-Port"
-        super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", model_id=pn, serial_number=sn, hw_version=fw)
+        super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", mdl_id=pn, sn=sn, hw=fw)
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
         lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)
