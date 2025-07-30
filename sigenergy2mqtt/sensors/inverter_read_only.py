@@ -103,9 +103,9 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if "device" in self and value is not None:
+        if "device" in self and value is not None and self.device["hw"] != value:
             # Firmware has been updated, so need to update the device and to republish discovery
-            self.device["hw_version"] = value
+            self.device["hw"] = value
             self.device.rediscover = True
         return value
 

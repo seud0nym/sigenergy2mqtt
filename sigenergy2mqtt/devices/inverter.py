@@ -24,11 +24,11 @@ class Inverter(ModbusDevice):
     ):
         assert 2 <= strings <= 16, f"Invalid PV String Count ({strings} - must be between 2 and 16)"
         match = re.match(r"^[^\d]*", model_id)
-        words = (match.group(0).rstrip() if match else model_id).replace('EC', 'Energy Controller', 1).split()
+        words = (match.group(0).rstrip() if match else model_id).replace("EC", "Energy Controller", 1).split()
         words.insert(1, serial)
         name = " ".join(words)
 
-        super().__init__(device_type, name, plant_index, device_address, model=device_type.__str__(), mdl_id=model_id, sn=serial, hw=firmware)
+        super().__init__(device_type, name, plant_index, device_address, model=device_type.__str__(), mdl_id=model_id, sn=serial, hw=firmware)  # MUST use hw abbreviation - see InverterFirmwareVersion
 
         pv_power = ro.InverterPVPower(plant_index, device_address)
 
