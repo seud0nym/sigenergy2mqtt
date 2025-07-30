@@ -37,12 +37,21 @@ async def async_main() -> None:
                         assert remote_ems is not None, "Failed to find RemoteEMS instance"
                     inverters[device_address] = inverter.unique_id
                     config.add_device(plant_index, inverter)
-                for device_address in device.dc_chargers:
-                    charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
-                    config.add_device(plant_index, charger)
-                for device_address in device.ac_chargers:
-                    charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
-                    config.add_device(plant_index, charger)
+                if plant and len(device.dc_chargers) == 0:
+                    logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
+                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30252", search_children=True).publishable = False
+                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30256", search_children=True).publishable = False
+                else:
+                    for device_address in device.dc_chargers:
+                        charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
+                        config.add_device(plant_index, charger)
+                if plant and len(device.ac_chargers) == 0:
+                    logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
+                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True).publishable = False
+                else:
+                    for device_address in device.ac_chargers:
+                        charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
+                        config.add_device(plant_index, charger)
                 logging.info(f"Disconnecting from Modbus interface at {device.host}:{device.port} - register probing complete")
         else:
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
