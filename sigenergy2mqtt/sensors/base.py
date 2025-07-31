@@ -423,6 +423,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             attributes["gain"] = self._gain
             if hasattr(self, "_scan_interval"):
                 attributes["scan-interval"] = self._scan_interval
+            if hasattr(self, "command_topic"):
+                attributes["update-topic"] = self.command_topic
             for k, v in kwargs.items():
                 attributes[k] = v
             if self._debug_logging:
