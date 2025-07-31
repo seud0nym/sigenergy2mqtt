@@ -316,16 +316,19 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         else:
             if "json_attributes_topic" in self:
                 mqtt.publish(self["json_attributes_topic"], None, qos=0, retain=False)  # Clear retained messages
-                logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic '{self['json_attributes_topic']}'")
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic '{self['json_attributes_topic']}'")
             if self._persistent_publish_state_file.exists() or Config.clean:
                 components = {}
-                logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery ({self._persistent_publish_state_file} exists and {Config.clean=})")
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery ({self._persistent_publish_state_file} exists and {Config.clean=})")
             else:
                 for id in components.keys():
                     components[id] = {"p": self["platform"]}
                 with self._persistent_publish_state_file.open("w") as f:
                     f.write("0")
-                logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery except {components} ({self._persistent_publish_state_file} exists and {Config.clean=})")
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery except {components} ({self._persistent_publish_state_file} exists and {Config.clean=})")
         return components
 
     def get_discovery_components(self) -> Dict[str, Dict[str, Any]]:
