@@ -87,7 +87,6 @@ class PVOutputOutputService(Service):
                             self._consumption.check_is_updating(5, now)
                             self._exports.check_is_updating(5, now)
                             self._generation.check_is_updating(5, now)
-                            self._power.check_is_updating(5, now)
                         sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                         wait -= sleep
                         if wait > 0:
