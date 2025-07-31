@@ -134,6 +134,19 @@ class ServiceTopics(dict[str, Topic]):
         assert isinstance(value, bool), "Enabled must be a boolean value"
         self._enabled = value
 
+    def check_is_updating(self, interval_minutes: int, now: time.struct_time) -> None:
+        if self.enabled:
+            for value in self.values():
+                if value.timestamp is not None:
+                    seconds = int(time.mktime(now) - time.mktime(value.timestamp))
+                    minutes = int(seconds / 60.0)
+                    if minutes > interval_minutes:
+                        self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has not been updated for {minutes}m???")
+                    else:
+                        self._logger.debug(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} last updated {seconds}s ago")
+                else:
+                    self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has never been updated???")
+
     def register(self, topic: str, gain: float) -> bool:
         if self.enabled:
             if topic is None or topic == "" or topic.isspace():

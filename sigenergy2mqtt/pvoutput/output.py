@@ -82,6 +82,12 @@ class PVOutputOutputService(Service):
                         if wait <= 0:
                             await update_pvoutput()
                             wait = self.seconds_until_daily_output_upload()
+                        elif int(wait) % (30 if Config.pvoutput.testing else 900) == 0:
+                            now = time.localtime()
+                            self._consumption.check_is_updating(5, now)
+                            self._exports.check_is_updating(5, now)
+                            self._generation.check_is_updating(5, now)
+                            self._power.check_is_updating(5, now)
                         sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                         wait -= sleep
                         if wait > 0:
@@ -90,6 +96,8 @@ class PVOutputOutputService(Service):
                         self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
                     except asyncio.TimeoutError:
                         self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
+                    except Exception as e:
+                        self.logger.error(f"{self.__class__.__name__} {e}")
                 else:
                     self.logger.info(f"{self.__class__.__name__} No data to publish ({Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=})")
                     self.online = False

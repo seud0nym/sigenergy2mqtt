@@ -57,6 +57,8 @@ class PVOutputStatusService(Service):
                     self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
                 except asyncio.TimeoutError:
                     self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
+                except Exception as e:
+                    self.logger.error(f"{self.__class__.__name__} {e}")
             self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
             return
 
@@ -66,12 +68,16 @@ class PVOutputStatusService(Service):
             payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
             async with self.lock(timeout=5):
                 if self._generation.enabled:
+                    self._generation.check_is_updating(self._interval, now)
                     payload["v1"], _ = self._generation.sum()
                 if self._consumption.enabled:
+                    self._consumption.check_is_updating(self._interval, now)
                     payload["v3"], _ = self._consumption.sum()
                 if self._temperature.enabled:
+                    self._temperature.check_is_updating(self._interval, now)
                     payload["v5"], _ = self._temperature.average(1)
                 if self._voltage.enabled:
+                    self._voltage.check_is_updating(self._interval, now)
                     payload["v6"], _ = self._voltage.average(1)
             if payload["v1"] or payload["v3"]:  # At least one of the values v1, v2, v3 or v4 must be present
                 await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
@@ -85,6 +91,8 @@ class PVOutputStatusService(Service):
         """Calculate the seconds until the next PVOutput status upload."""
         url = "https://pvoutput.org/service/r2/getsystem.jsp"
         if Config.pvoutput.testing:
+            if self._interval is None:
+                self._interval = 5
             self.logger.info(f"{self.__class__.__name__} Testing mode, not sending request to {url=} - using default/previous interval of {self._interval} minutes")
         else:
             self.logger.debug(f"{self.__class__.__name__} Acquiring Status Interval from PVOutput ({url=})")
