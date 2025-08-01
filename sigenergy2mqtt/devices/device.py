@@ -274,9 +274,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                     if len(actual_elapsed) > 100:
                                         actual_elapsed = actual_elapsed[-100:]
                             if self.rediscover:
-                                lock = ModbusLockFactory.get_lock(modbus)
+                                lock = ModbusLockFactory.get(modbus)
                                 logging.info(f"{self.name} Sensor Scan Group [{names}]: Acquiring lock to republish discovery... ({lock.waiters=})")
-                                async with lock.acquire_with_timeout(timeout=1):
+                                async with lock.lock(timeout=1):
                                     self.rediscover = False
                                     self.publish_discovery(mqtt, clean=False)
                             average_excess = max(0.0, statistics.fmean(actual_elapsed) - interval)
@@ -285,9 +285,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                 logging.warning(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
                             wait = max(interval - elapsed, 0.5)
                         except ModbusException as e:
-                            lock = ModbusLockFactory.get_lock(modbus)
+                            lock = ModbusLockFactory.get(modbus)
                             logging.info(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
-                            async with lock.acquire_with_timeout(timeout=None):
+                            async with lock.lock(timeout=None):
                                 if not modbus.connected and self.online:
                                     logging.info(f"{self.name} Sensor Scan Group [{names}] attempting to reconnect to Modbus...")
                                     while not modbus.connected:

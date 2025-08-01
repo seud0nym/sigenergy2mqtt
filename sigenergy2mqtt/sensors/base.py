@@ -710,7 +710,7 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                 return False
 
         try:
-            async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(self._scan_interval):
+            async with ModbusLockFactory.get(modbus).lock(self._scan_interval):
                 if self.debug_logging:
                     logging.debug(
                         f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
@@ -725,6 +725,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                     raise Exception(f"Unknown input type '{self._input_type}'")
                 elapsed = time.monotonic() - start
                 await Metrics.modbus_read(self._count, elapsed)
+            if self._check_register_response(rr, f"read_{self._input_type}_registers"):
+                self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
+                result = True
         except asyncio.CancelledError:
             logging.warning(f"{self.__class__.__name__} Modbus read interrupted")
             result = False
@@ -887,7 +890,7 @@ class WritableSensorMixin(ModbusSensor):
         try:
             max_wait = 2
             if len(registers) == 1:
-                async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
+                async with ModbusLockFactory.get(modbus).lock(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
                         logging.debug(
                             f"{self.__class__.__name__} write_register({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]"
@@ -902,7 +905,7 @@ class WritableSensorMixin(ModbusSensor):
                     )
                 result = self._check_register_response(rr, "write_register")
             else:
-                async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
+                async with ModbusLockFactory.get(modbus).lock(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
                         logging.debug(
                             f"{self.__class__.__name__} write_register({self._address}, value={registers}, device_id={device_id}, {no_response_expected=}) [plant_index={self._plant_index}]"

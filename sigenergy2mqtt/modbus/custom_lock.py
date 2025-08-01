@@ -29,7 +29,7 @@ class ModbusLock:
             self._waiters -= 1
             
     @asynccontextmanager
-    async def acquire_with_timeout(self, timeout=None):
+    async def lock(self, timeout=None):
         acquired = await self.acquire(timeout)
         try:
             if not acquired:
