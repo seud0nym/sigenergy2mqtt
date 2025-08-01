@@ -11,7 +11,7 @@ import logging
 def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
     assert mqtt_client_id and not mqtt_client_id.isspace(), "mqtt_client_id must not be None or an empty string"
 
-    logging.info(f"Creating MQTT Client ID {mqtt_client_id} for {Config.mqtt.broker}:{Config.mqtt.port}")
+    logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for {Config.mqtt.broker}:{Config.mqtt.port}")
 
     mqtt_handler = MqttHandler(modbus, loop)
     mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler)
