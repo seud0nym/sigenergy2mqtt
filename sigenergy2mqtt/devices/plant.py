@@ -72,9 +72,8 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.PlantBatterySoH(plant_index))
 
         remote_ems = rw.RemoteEMS(plant_index)
-        control_mode = rw.RemoteEMSControlMode(plant_index, remote_ems)
         self._add_read_sensor(remote_ems)
-        self._add_read_sensor(control_mode)
+        self._add_read_sensor(rw.RemoteEMSControlMode(plant_index, remote_ems))
         self._add_read_sensor(rw.ActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
         self._add_read_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(plant_index))
         self._add_read_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
@@ -94,9 +93,9 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(rw.PhaseCActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.PhaseCQSAdjustmentTargetValue(plant_index, remote_ems, output_type))
             self._add_read_sensor(rw.IndependentPhasePowerControl(plant_index, remote_ems, output_type))
-        self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, rcp_value, control_mode))
-        self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, rdp_value, control_mode))
-        self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems, control_mode))
+        self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, rcp_value))
+        self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, rdp_value))
+        self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems))
         self._add_read_sensor(rw.GridMaxExportLimit(plant_index))
         self._add_read_sensor(rw.GridMaxImportLimit(plant_index))
         self._add_read_sensor(rw.PCSMaxExportLimit(plant_index))
@@ -115,8 +114,8 @@ class PowerPlant(ModbusDevice):
 
         total_charge_energy = ro.ESSTotalChargedEnergy(plant_index)
         total_discharge_energy = ro.ESSTotalDischargedEnergy(plant_index)
-        self._add_read_sensor(total_charge_energy)        
-        self._add_read_sensor(total_discharge_energy)        
+        self._add_read_sensor(total_charge_energy)
+        self._add_read_sensor(total_discharge_energy)
         self._add_derived_sensor(derived.PlantDailyChargeEnergy(plant_index, total_charge_energy), total_charge_energy, search_children=False)
         self._add_derived_sensor(derived.PlantDailyDischargeEnergy(plant_index, total_discharge_energy), total_discharge_energy, search_children=False)
 
@@ -163,7 +162,7 @@ class PowerPlant(ModbusDevice):
         plant_consumed_power = derived.PlantConsumedPower(plant_index)
         self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, search_children=True)
 
-        plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(plant_index) 
+        plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(plant_index)
         total_lifetime_pv_energy = derived.TotalLifetimePVEnergy(plant_index)
         self._add_read_sensor(plant_lifetime_pv_energy, "lifetime_production")
@@ -171,4 +170,3 @@ class PowerPlant(ModbusDevice):
         self._add_derived_sensor(total_lifetime_pv_energy, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
         self._add_derived_sensor(derived.TotalDailyPVEnergy(plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
-

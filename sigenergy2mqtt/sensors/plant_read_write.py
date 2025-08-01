@@ -621,13 +621,7 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
 
 
 class MaxChargingLimit(NumericSensor, HybridInverter):
-    def __init__(
-        self,
-        plant_index: int,
-        remote_ems: RemoteEMSMixin,
-        rated_charging_power: float,
-        mode: RemoteEMSControlMode,
-    ):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, rated_charging_power: float):
         super().__init__(
             remote_ems=remote_ems,
             name="Max Charging Limit",
@@ -648,44 +642,13 @@ class MaxChargingLimit(NumericSensor, HybridInverter):
             min=0,
             max=rated_charging_power,
         )
-        self._mode = mode
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        base = super().configure_mqtt_topics(device_id)
-        assert self._mode.state_topic and not self._mode.state_topic.isspace(), "RemoteEMSControlMode state_topic has not been configured"
-        self._remote_ems_control_mode_topic = self._mode.state_topic
-        self._sensor_availability_topic = f"{base}/availability"
-        self["availability"].append({"topic": self._sensor_availability_topic})
-        return base
-
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source == self._remote_ems_control_mode_topic:
-            if self._sensor_availability_topic is None:
-                logging.error(f"Sensor {self.name} availability topic is not configured??")
-                return False
-            else:
-                mqtt.publish(self._sensor_availability_topic, "online" if value == 3 or value == 4 else "offline")
-                return True
-        else:
-            return False
-
-    def observable_topics(self) -> set[str]:
-        topics = super().observable_topics()
-        topics.add(self._remote_ems_control_mode_topic)
-        return topics
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.", **kwargs)
 
 
 class MaxDischargingLimit(NumericSensor, HybridInverter):
-    def __init__(
-        self,
-        plant_index: int,
-        remote_ems: RemoteEMSMixin,
-        rated_discharging_power: float,
-        mode: RemoteEMSControlMode,
-    ):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, rated_discharging_power: float):
         super().__init__(
             remote_ems=remote_ems,
             name="Max Discharging Limit",
@@ -706,38 +669,13 @@ class MaxDischargingLimit(NumericSensor, HybridInverter):
             min=0,
             max=rated_discharging_power,
         )
-        self._mode = mode
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        base = super().configure_mqtt_topics(device_id)
-        assert self._mode.state_topic and not self._mode.state_topic.isspace(), "RemoteEMSControlMode state_topic has not been configured"
-        self._remote_ems_control_mode_topic = self._mode.state_topic
-        self._sensor_availability_topic = f"{base}/availability"
-        self["availability"].append({"topic": self._sensor_availability_topic})
-        return base
-
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source == self._remote_ems_control_mode_topic:
-            if self._sensor_availability_topic is None:
-                logging.error(f"Sensor {self.name} availability topic is not configured??")
-                return False
-            else:
-                mqtt.publish(self._sensor_availability_topic, "online" if value == 5 or value == 6 else "offline")
-                return True
-        else:
-            return False
-
-    def observable_topics(self) -> set[str]:
-        topics = super().observable_topics()
-        topics.add(self._remote_ems_control_mode_topic)
-        return topics
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.", **kwargs)
 
 
 class PVMaxPowerLimit(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, mode: RemoteEMSControlMode):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin):
         super().__init__(
             remote_ems=remote_ems,
             name="PV Max Power Limit",
@@ -758,31 +696,6 @@ class PVMaxPowerLimit(NumericSensor, HybridInverter):
             min=0,
             max=4294967.0,
         )
-        self._mode = mode
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        base = super().configure_mqtt_topics(device_id)
-        assert self._mode.state_topic and not self._mode.state_topic.isspace(), "RemoteEMSControlMode state_topic has not been configured"
-        self._remote_ems_control_mode_topic = self._mode.state_topic
-        self._sensor_availability_topic = f"{base}/availability"
-        self["availability"].append({"topic": self._sensor_availability_topic})
-        return base
-
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source == self._remote_ems_control_mode_topic:
-            if self._sensor_availability_topic is None:
-                logging.error(f"Sensor {self.name} availability topic is not configured??")
-                return False
-            else:
-                mqtt.publish(self._sensor_availability_topic, "online" if value == 3 or value == 4 or value == 5 or value == 6 else "offline")
-                return True
-        else:
-            return False
-
-    def observable_topics(self) -> set[str]:
-        topics = super().observable_topics()
-        topics.add(self._remote_ems_control_mode_topic)
-        return topics
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
         return super().publish_attributes(mqtt, comment="Takes effect when Remote EMS control mode (40031) is to Command Charging/Discharging.", **kwargs)
