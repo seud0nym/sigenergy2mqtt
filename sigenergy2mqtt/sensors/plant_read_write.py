@@ -675,7 +675,7 @@ class MaxChargingLimit(NumericSensor, HybridInverter):
         return topics
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is to Command Charging.", **kwargs)
+        return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.", **kwargs)
 
 
 class MaxDischargingLimit(NumericSensor, HybridInverter):
@@ -733,7 +733,7 @@ class MaxDischargingLimit(NumericSensor, HybridInverter):
         return topics
 
     def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is to Command Discharging.", **kwargs)
+        return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.", **kwargs)
 
 
 class PVMaxPowerLimit(NumericSensor, HybridInverter):
