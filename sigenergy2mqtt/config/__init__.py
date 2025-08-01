@@ -187,8 +187,16 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE,
     type=int,
-    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE, None),
-    help="The Sigenergy Inverter Modbus Device ID (Slave ID). May be specified multiple times.",
+    help="** DEPRECATED ** Use --modbus-inverter-device-id instead.",
+)
+_parser.add_argument(
+    "--modbus-inverter-device-id",
+    nargs="*",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID, None),
+    help="**The Sigenergy Inverter Modbus Device ID. May be specified multiple times.",
 )
 _parser.add_argument(
     "--modbus-accharger-slave",
@@ -196,8 +204,16 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE,
     type=int,
-    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE, None),
-    help="The Sigenergy AC Charger Modbus Device ID (Slave ID).",
+    help="** DEPRECATED ** Use --modbus-accharger-device-id instead.",
+)
+_parser.add_argument(
+    "--modbus-accharger-device-id",
+    nargs="*",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID, None),
+    help="The Sigenergy AC Charger Modbus Device ID.",
 )
 _parser.add_argument(
     "--modbus-dccharger-slave",
@@ -205,8 +221,16 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE,
     type=int,
-    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE, None),
-    help="The Sigenergy DC Charger Modbus Device ID (Slave ID).",
+    help="** DEPRECATED ** Use --modbus-dccharger-device-id instead.",
+)
+_parser.add_argument(
+    "--modbus-dccharger-device-id",
+    nargs="*",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID, None),
+    help="The Sigenergy DC Charger Modbus Device ID.",
 )
 _parser.add_argument(
     "--modbus-readonly",
@@ -362,7 +386,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL, None),
-    help="WARNING! The '--pvoutput-interval' option is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org.",
+    help="** DEPRECATED ** The Status Interval is now determined from the settings on pvoutput.org.",
 )
 _parser.add_argument(
     "--pvoutput-temp-topic",
@@ -409,8 +433,9 @@ if _args.show_version:
 def apply_cli_to_env(variable: str, value: str) -> None:
     was = os.getenv(variable)
     if value is not None:
-        os.environ[variable] = str(value)
-        _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{value}' (was '{was}')")
+        if value != os.environ[variable]:
+            os.environ[variable] = str(value)
+            _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{value}' (was '{was}')")
     else:
         if was is not None:
             os.environ[variable] = ""
@@ -421,6 +446,12 @@ def apply_cli_to_env(variable: str, value: str) -> None:
 
 if _args.SIGENERGY2MQTT_LOG_LEVEL:
     _logger.setLevel(getattr(logging, _args.SIGENERGY2MQTT_LOG_LEVEL))
+
+for key in os.environ.keys():
+    if key.endswith("_SLAVE"):
+        _logger.warning(f"The environment variable '{key}' is deprecated and will be removed in a future version. Use '{key.replace('_SLAVE', '_DEVICE_ID')}' instead.")
+    elif key == const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
+        _logger.warning(f"The environment variable '{key}' is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org.")
 
 for arg in vars(_args):
     if arg == "clean":
@@ -442,6 +473,12 @@ for arg in vars(_args):
         apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_WRITE, "false")
         apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY, "false")
         continue
+    elif arg == const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE and getattr(_args, arg) is not None:
+        _logger.warning("** DEPRECATED ** The '--modbus-inverter-slave' option is deprecated and will be removed in a future version. Use '--modbus-inverter-device-id' instead.")
+    elif arg == const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE and getattr(_args, arg) is not None:
+        _logger.warning("** DEPRECATED ** The '--modbus-accharger-slave' option is deprecated and will be removed in a future version. Use '--modbus-accharger-device-id' instead.")
+    elif arg == const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE and getattr(_args, arg) is not None:
+        _logger.warning("** DEPRECATED ** The '--modbus-dccharger-slave' option is deprecated and will be removed in a future version. Use '--modbus-dccharger-device-id' instead.")
     override = getattr(_args, arg)
     if override:
         if isinstance(override, list):
