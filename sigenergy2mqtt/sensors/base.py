@@ -3,8 +3,6 @@ from .sanity_check import SanityCheck
 from concurrent.futures import Future
 from pathlib import Path
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.config import Config, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -715,13 +713,13 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
             async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(self._scan_interval):
                 if self.debug_logging:
                     logging.debug(
-                        f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, slave={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
+                        f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
                     )
                 start = time.monotonic()
                 if self._input_type == InputType.HOLDING:
-                    rr = await modbus.read_holding_registers(self._address, count=self._count, slave=self._device_address)
+                    rr = await modbus.read_holding_registers(self._address, count=self._count, device_id=self._device_address)
                 elif self._input_type == InputType.INPUT:
-                    rr = await modbus.read_input_registers(self._address, count=self._count, slave=self._device_address)
+                    rr = await modbus.read_input_registers(self._address, count=self._count, device_id=self._device_address)
                 else:
                     logging.error(f"{self.__class__.__name__} Unknown input type '{self._input_type}'")
                     raise Exception(f"Unknown input type '{self._input_type}'")
@@ -876,74 +874,46 @@ class WritableSensorMixin(ModbusSensor):
         assert topic and not topic.isspace(), f"{self.__class__.__name__} command topic is not defined"
         return topic
 
-    def _encode_value(self, value: int | float | str) -> list[int]:
-        if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} attempting to encode {value} [{self._data_type}]")
-
-        if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:
-            # Unsigned 8-bit ints do not need encoding
-            registers = [value]
-        else:
-            builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
-            match self._data_type:
-                case ModbusClient.DATATYPE.UINT16:
-                    builder.add_16bit_uint(int(value))
-                case ModbusClient.DATATYPE.INT16:
-                    builder.add_16bit_int(int(value))
-                case ModbusClient.DATATYPE.UINT32:
-                    builder.add_32bit_uint(int(value))
-                case ModbusClient.DATATYPE.INT32:
-                    builder.add_32bit_int(int(value))
-                case ModbusClient.DATATYPE.UINT64:
-                    builder.add_64bit_uint(int(value))
-                case ModbusClient.DATATYPE.INT64:
-                    builder.add_64bit_int(int(value))
-                case ModbusClient.DATATYPE.STRING:
-                    builder.add_string(str(value))
-            registers = builder.to_registers()
-
-        if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} encoded {value} as {registers}")
-
-        return registers
-
     async def _write_registers(self, modbus: ModbusClient, value: float | int | str, mqtt: MqttClient) -> bool:
-        # slave = 0 if self._device_address == 247 else self._device_address
-        # no_response_expected = True if slave == 0 else False
-        slave = self._device_address
+        device_id = self._device_address
         no_response_expected = False
-        logging.info(f"{self.__class__.__name__} write_registers {self._address=} {value=} ({self.latest_raw_state=}) {slave=}")
-        registers = self._encode_value(value)
+        logging.info(f"{self.__class__.__name__} write_registers {self._address=} {value=} ({self.latest_raw_state=}) {device_id=}")
+        if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:  # Unsigned 8-bit ints do not need encoding
+            registers = [value]
+        elif self._data_type == ModbusClient.DATATYPE.STRING:
+            registers = modbus.convert_to_registers(str(value), self._data_type)
+        else:
+            registers = modbus.convert_to_registers(int(value), self._data_type)
         try:
             max_wait = 2
             if len(registers) == 1:
                 async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
                         logging.debug(
-                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
+                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]"
                         )
                     start = time.monotonic()
-                    rr = await modbus.write_register(self._address, registers[0], slave=slave, no_response_expected=no_response_expected)
+                    rr = await modbus.write_register(self._address, registers[0], device_id=device_id, no_response_expected=no_response_expected)
                     elapsed = time.monotonic() - start
                     await Metrics.modbus_write(1, elapsed)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     logging.debug(
-                        f"{self.__class__.__name__} write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+                        f"{self.__class__.__name__} write_register({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
                     )
                 result = self._check_register_response(rr, "write_register")
             else:
                 async with ModbusLockFactory.get_lock(modbus).acquire_with_timeout(max_wait):
                     if Config.devices[self._plant_index].log_level == logging.DEBUG:
                         logging.debug(
-                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}]"
+                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, device_id={device_id}, {no_response_expected=}) [plant_index={self._plant_index}]"
                         )
                     start = time.monotonic()
-                    rr = await modbus.write_registers(self._address, registers, slave=slave, no_response_expected=no_response_expected)
+                    rr = await modbus.write_registers(self._address, registers, device_id=device_id, no_response_expected=no_response_expected)
                     elapsed = time.monotonic() - start
                     await Metrics.modbus_write(len(registers), elapsed)
                 if Config.devices[self._plant_index].log_level == logging.DEBUG:
                     logging.debug(
-                        f"{self.__class__.__name__} write_registers({self._address}, value={registers}, slave={slave}, no_response_expected={no_response_expected}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
+                        f"{self.__class__.__name__} write_registers({self._address}, value={registers}, device_id={device_id}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
                     )
                 result = self._check_register_response(rr, "write_registers")
             if result:
