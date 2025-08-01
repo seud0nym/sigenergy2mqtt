@@ -1279,7 +1279,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw:
             return value
-        elif value is None or value == 0 or (isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] == 0):
+        elif value is None or value == 0 or (isinstance(value, list) and sum(value) == 0):
             return self.NO_ALARM
         else:
             if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
@@ -1298,7 +1298,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             except TypeError as e:
                 logging.warning(f"{self.__class__.__name__} Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")
             if not active_alarms:
-                return f"Unknown Alarm ({value})"
+                return f"Unknown Alarm {value}"
             else:
                 return ", ".join(active_alarms)
 
