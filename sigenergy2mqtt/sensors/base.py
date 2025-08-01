@@ -725,9 +725,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                     raise Exception(f"Unknown input type '{self._input_type}'")
                 elapsed = time.monotonic() - start
                 await Metrics.modbus_read(self._count, elapsed)
-            if self._check_register_response(rr, f"read_{self._input_type}_registers"):
+            result = self._check_register_response(rr, f"read_{self._input_type}_registers")
+            if result:
                 self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
-                result = True
         except asyncio.CancelledError:
             logging.warning(f"{self.__class__.__name__} Modbus read interrupted")
             result = False
@@ -737,9 +737,6 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         except Exception:
             await Metrics.modbus_read_error()
             raise
-        if self._check_register_response(rr, f"read_{self._input_type}_registers"):
-            self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
-            result = True
 
         return result
 
@@ -878,6 +875,7 @@ class WritableSensorMixin(ModbusSensor):
         return topic
 
     async def _write_registers(self, modbus: ModbusClient, value: float | int | str, mqtt: MqttClient) -> bool:
+        max_wait = 2
         device_id = self._device_address
         no_response_expected = False
         logging.info(f"{self.__class__.__name__} write_registers {self._address=} {value=} ({self.latest_raw_state=}) {device_id=}")
@@ -887,38 +885,21 @@ class WritableSensorMixin(ModbusSensor):
             registers = modbus.convert_to_registers(str(value), self._data_type)
         else:
             registers = modbus.convert_to_registers(int(value), self._data_type)
+        method = "write_register" if len(registers) == 1 else "write_registers"
         try:
-            max_wait = 2
-            if len(registers) == 1:
-                async with ModbusLockFactory.get(modbus).lock(max_wait):
-                    if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                        logging.debug(
-                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]"
-                        )
-                    start = time.monotonic()
+            async with ModbusLockFactory.get(modbus).lock(max_wait):
+                if Config.devices[self._plant_index].log_level == logging.DEBUG:
+                    logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]")
+                start = time.monotonic()
+                if len(registers) == 1:
                     rr = await modbus.write_register(self._address, registers[0], device_id=device_id, no_response_expected=no_response_expected)
-                    elapsed = time.monotonic() - start
-                    await Metrics.modbus_write(1, elapsed)
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(
-                        f"{self.__class__.__name__} write_register({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
-                    )
-                result = self._check_register_response(rr, "write_register")
-            else:
-                async with ModbusLockFactory.get(modbus).lock(max_wait):
-                    if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                        logging.debug(
-                            f"{self.__class__.__name__} write_register({self._address}, value={registers}, device_id={device_id}, {no_response_expected=}) [plant_index={self._plant_index}]"
-                        )
-                    start = time.monotonic()
+                else:
                     rr = await modbus.write_registers(self._address, registers, device_id=device_id, no_response_expected=no_response_expected)
-                    elapsed = time.monotonic() - start
-                    await Metrics.modbus_write(len(registers), elapsed)
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(
-                        f"{self.__class__.__name__} write_registers({self._address}, value={registers}, device_id={device_id}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s"
-                    )
-                result = self._check_register_response(rr, "write_registers")
+                elapsed = time.monotonic() - start
+                await Metrics.modbus_write(len(registers), elapsed)
+            if Config.devices[self._plant_index].log_level == logging.DEBUG:
+                logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
+            result = self._check_register_response(rr, method)
             if result:
                 self.force_publish = True
                 await self.publish(mqtt, modbus)
