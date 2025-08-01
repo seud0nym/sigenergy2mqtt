@@ -77,6 +77,10 @@ class Service(Device):
     # endregion
 
     async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
+        for key, value in payload.items():
+            if value is None:
+                del payload[key]
+                self.logger.warning(f"{self.__class__.__name__} Removed {key=} from payload because it is None")
         self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
         for i in range(1, 4, 1):
             try:
