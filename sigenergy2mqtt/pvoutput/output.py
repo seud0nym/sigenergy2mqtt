@@ -33,14 +33,14 @@ class PVOutputOutputService(Service):
                 with self._persistent_state_file.open("r") as f:
                     try:
                         power = json.load(f, object_hook=Topic.json_decoder)
-                        self.logger.info(f"{self.__class__.__name__} Loaded {self._persistent_state_file}")
+                        self.logger.debug(f"{self.__class__.__name__} Loaded {self._persistent_state_file}")
                         for topic in power.values():
                             self._power[topic.topic] = topic
-                            self.logger.info(f"{self.__class__.__name__} Registered power topic: {topic.topic} (gain={topic.gain}) with {topic.state=}")
+                            self.logger.debug(f"{self.__class__.__name__} Registered power topic: {topic.topic} (gain={topic.gain}) with {topic.state=}")
                     except ValueError as error:
                         self.logger.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
             else:
-                self.logger.info(f"{self.__class__.__name__} Ignored {self._persistent_state_file} because it is stale ({fmt})")
+                self.logger.debug(f"{self.__class__.__name__} Ignored {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
             self.logger.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")

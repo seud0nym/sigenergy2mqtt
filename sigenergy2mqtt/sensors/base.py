@@ -1732,21 +1732,21 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                         if content is not None and content != "None" and content.isdecimal():
                             value = float(content)
                             if value <= 0.0:
-                                logging.info(f"{self.__class__.__name__} Ignored negative last midnight state from {self._persistent_state_file} ({value})")
+                                logging.debug(f"{self.__class__.__name__} Ignored negative last midnight state from {self._persistent_state_file} ({value})")
                                 self._persistent_state_file.unlink()
                             else:
                                 self._state_at_midnight = value
-                                logging.info(f"{self.__class__.__name__} Loaded last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
+                                logging.debug(f"{self.__class__.__name__} Loaded last midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
                     except ValueError as error:
                         logging.warning(f"Sensor {self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
                         self._persistent_state_file.unlink()
             else:
-                logging.info(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
+                logging.debug(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
             logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
         self._state_now: float = max(0.0, source.latest_raw_state - self._state_at_midnight) if source.latest_raw_state else 0.0
-        logging.info(f"{self.__class__.__name__} Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
+        logging.debug(f"{self.__class__.__name__} Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
         self.set_latest_state(self._state_now)
         if not self._persistent_state_file.is_file():
             self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
