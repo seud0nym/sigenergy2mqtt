@@ -70,13 +70,12 @@ pvoutput:
   enabled: false
   api-key: your_api_key
   system-id: your_system_id
-  interval-minutes: 5
   consumption: true
 ```
 
 Notes:
 - Configure your MQTT broker IP address/host name and Sigenergy IP address/host name as appropriate for your environment. 
-- The number in square brackets after `inverters` is the Device ID (slave address) as advised by your installer. It is usually `1`. If you have multiple inverters, separate them with commas (e.g. `[ 1,2 ]`)
+- The number in square brackets after `inverters` is the Device ID as advised by your installer. It is usually `1`. If you have multiple inverters, separate them with commas (e.g. `[ 1,2 ]`)
 - If your MQTT broker does not require authentication, add the option `anonymous: true` under `mqtt`.
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
 - The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
@@ -174,6 +173,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_LOG_LEVEL` | Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 | `SIGENERGY2MQTT_DEBUG_SENSOR` | Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG |
 | `SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW` | The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored. |
+| `SIGENERGY2MQTT_NO_METRICS` | Set to 'true' to prevent sigenergy2mqtt from publishing metrics to MQTT. |
 | `SIGENERGY2MQTT_HASS_ENABLED` | Set to 'true' to enable auto-discovery in Home Assistant. |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` | The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant) |
 | `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` | The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen) |
@@ -189,9 +189,9 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 | `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device |
 | `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: 502) |
-| `SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE` | The Sigenergy device Modbus Device ID (Slave ID). May be specified as a space-separated list (e.g. "1 2"). (default: 1) |
-| `SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE` | The Sigenergy AC Charger Modbus Device ID (Slave ID). |
-| `SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE` | The Sigenergy DC Charger Modbus Device ID (Slave ID). |
+| `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID` | The Sigenergy device Modbus Device ID. May be specified as a space-separated list (e.g. "1 2"). (default: 1) |
+| `SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID` | The Sigenergy AC Charger Modbus Device ID. |
+| `SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID` | The Sigenergy DC Charger Modbus Device ID. |
 | `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`| If true, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is false. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is false. |
 | `SIGENERGY2MQTT_MODBUS_READ_ONLY` | If false, read-only entities will not be published to MQTT. Default is true. |
 | `SIGENERGY2MQTT_MODBUS_READ_WRITE` | If false, read-write entities will not be published to MQTT. Default is true. |
@@ -213,7 +213,6 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_PVOUTPUT_API_KEY` | The API Key for PVOutput |
 | `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
 | `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | Set to 'true' to enable sending consumption status to PVOutput. |
-| `SIGENERGY2MQTT_PVOUTPUT_INTERVAL` | The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes. |
 | `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC` | An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 
@@ -271,12 +270,12 @@ Command line options override both environment variables and the configuration f
                         The hostname or IP address of the Sigenergy device
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]
                         The Sigenergy device Modbus port number (default: 502)
-  --modbus-slave [SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE]
-                        The Sigenergy Inverter Modbus Device ID (Slave ID). May be specified multiple times.
-  --modbus-accharger-slave [SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE]
-                        The Sigenergy AC Charger Modbus Device ID (Slave ID).
-  --modbus-dccharger-slave [SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE]
-                        The Sigenergy DC Charger Modbus Device ID (Slave ID).
+  --modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID]
+                        The Sigenergy Inverter Modbus Device ID. May be specified multiple times.
+  --modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID]
+                        The Sigenergy AC Charger Modbus Device ID.
+  --modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID]
+                        The Sigenergy DC Charger Modbus Device ID.
   --modbus-readonly     Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be 
                         published if specified.
   --modbus-no-remote-ems
@@ -316,13 +315,12 @@ Command line options override both environment variables and the configuration f
                         The PVOutput System ID
   --pvoutput-consumption
                         Enable sending consumption status to PVOutput.
-  --pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]
-                        The interval in minutes to send data to PVOutput (default: 5). Valid values are 5, 10 or 15 minutes.
   --pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]
                         An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
                         (warnings, errors and critical failures)
+  --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --clean               Publish empty discovery to delete existing devices, then exits immediately.
   -v, --version         Shows the version number, then exits immediately.
 ```

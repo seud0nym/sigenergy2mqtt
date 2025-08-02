@@ -16,6 +16,11 @@ log-level: WARNING
 #                 to the delta value. Readings outside of the range are
 #                 ignored.    
 sanity-check-default-kw: 100.0
+# no-metrics
+#   default: false
+#   description:  If true, sigenergy2mqtt will not publish any metrics to
+#                 MQTT.
+no-metrics: false
 home-assistant:
   # enabled
   #   default: false
@@ -113,23 +118,22 @@ modbus:
     port: 502
     # inverters
     #   default: [ ]
-    #   description:  The array of slave (device address) ids to access the 
-    #                 inverter registers. If you have multiple inverters, 
-    #                 specify the slave addresses separated with commas.
-    #                 e.g. [ 1, 2 ] At least 1 inverter slave address must
-    #                 be specified (unless the host is an AC Charger).
+    #   description:  The array of device ids to access the inverter
+    #                 registers. If you have multiple inverters, specify
+    #                 the device ids separated with commas e.g. [ 1, 2 ]
+    #                 At least 1 inverter device id must be specified 
+    #                 (unless the host is an AC Charger).
     inverters: [ 1 ]
     # ac-chargers
     #   default: [ ]
-    #   description:  The array of slave (device address) ids to access the 
-    #                 AC Charger registers. If do not have an AC Charger, 
-    #                 use [ ].
+    #   description:  The array of device ids to access the AC Charger
+    #                 registers. If do not have an AC Charger, use [ ].
     ac-chargers: [ ]
     # dc-chargers
     #   default: [ ]
-    #   description:  The array of slave (device address) ids to access the 
-    #                 DC Charger registers. This is normally the same as the 
-    #                 inverter slave address. If do not have an DC Charger, 
+    #   description:  The array of device ids to access the DC Charger 
+    #                 registers. This is normally the same as the inverter
+    #                 device id. If do not have an DC Charger, 
     #                 use [ ].
     dc-chargers: [ ]
     # log-level
@@ -319,8 +323,8 @@ sensor-overrides:
     #   description:  Change the unit of this sensor. Used in conjunction
     #                 with gain.
     unit-of-measurement: Wh
-  # Example of making all sensors of the second PV string on inverter slave
-  # address 1 unpublishable. Because it will have no sensors, the PV String
+  # Example of making all sensors of the second PV string on inverter device
+  # id 1 unpublishable. Because it will have no sensors, the PV String
   # device will also not appear in Home Assistant.
   _0_inverter_1_pv2:
     publishable: false
@@ -352,12 +356,6 @@ pvoutput:
   #   description:  The PVOutput System ID (create/find your System id 
   #                 under https://pvoutput.org/account.jsp)
   system-id: 93768
-  # interval-minutes
-  #   default: 5
-  #   description:  The Status interval at which PVOutput will be 
-  #                 updated. It must match the Status interval selected
-  #                 in PVOutput (https://pvoutput.org/edit.jsp?sid=xxxx)
-  interval-minutes: 5
   # consumption
   #   default: false
   #   description:  If true, consumption information will be sent to 

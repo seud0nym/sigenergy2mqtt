@@ -4,6 +4,7 @@ from pathlib import Path
 from instances import get_sensor_instances, cancel_sensor_futures
 
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import WriteOnlySensor
 
 
@@ -43,6 +44,13 @@ derived = {
 
 
 async def sensor_index():
+    def metrics_topics():
+        f.write("| Metric | Interval | Unit | State Topic |\n")
+        f.write("|--------|---------:|------|-------------|\n")
+        metrics = MetricsService._discovery["cmps"]
+        for metric in sorted(metrics.values(), key=lambda x: x["name"]):
+            f.write(f"| {metric['name']} | 1 | {metric['unit_of_measurement'] if 'unit_of_measurement' in metric else ''} | {metric['state_topic']} |\n")
+
     def published_topics(device):
         f.write("| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |\n")
         f.write("|--------------|---------:|------|-----:|-------------|--------|---------------|\n")
@@ -107,7 +115,7 @@ async def sensor_index():
         f.write("\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n")
         f.write("or by specifying the `--hass-use-simplified-topics` command line option.\n")
         f.write("\nThe number after the `sigen_` prefix represents the host index from the configuration file, starting from 0. (Home Assistant configuration may change the `sigen` topic prefix.)")
-        f.write("\nInverter, AC Charger and DC Charger indexes use the device address (slave ID) as specified in the configuration file.\n")
+        f.write("\nInverter, AC Charger and DC Charger indexes use the device ID as specified in the configuration file.\n")
         f.write("\nDefault Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.\n")
         f.write("\n## Published Topics\n")
         f.write("\n### Plant\n")
@@ -129,6 +137,9 @@ async def sensor_index():
         published_topics("ACCharger")
         f.write("\n### DC Charger\n")
         published_topics("DCCharger")
+        f.write("\n### Metrics\n")
+        f.write("\nMetrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.\n")
+        metrics_topics()
         f.write("\n## Subscribed Topics\n")
         f.write("\n### Plant\n")
         subscribed_topics("PowerPlant")

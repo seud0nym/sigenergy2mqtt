@@ -8,7 +8,7 @@ You can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery i
 or by specifying the `--hass-use-simplified-topics` command line option.
 
 The number after the `sigen_` prefix represents the host index from the configuration file, starting from 0. (Home Assistant configuration may change the `sigen` topic prefix.)
-Inverter, AC Charger and DC Charger indexes use the device address (slave ID) as specified in the configuration file.
+Inverter, AC Charger and DC Charger indexes use the device ID as specified in the configuration file.
 
 Default Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.
 
@@ -205,7 +205,9 @@ After upgrading the device firmware to support the new Statistics Interface, the
 | A-B Line Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_a_b_line_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_a_b_line_voltage/state |Modbus Register 31005 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Active Power | 5s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_active_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power/state |Modbus Register 30587 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Active Power Fixed Value Adjustment | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment/state |Modbus Register 41501 | PV&nbsp;Inverter |
+| Active Power Fixed Value Adjustment Feedback | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state |Modbus Register 30613 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Active Power Percentage Adjustment | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment/state |Modbus Register 41505 | PV&nbsp;Inverter |
+| Active Power Percentage Adjustment Feedback | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state |Modbus Register 30617 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | B-C Line Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_b_c_line_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_b_c_line_voltage/state |Modbus Register 31007 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | C-A Line Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_c_a_line_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_c_a_line_voltage/state |Modbus Register 31009 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Daily Production | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_daily_pv_energy/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_daily_pv_energy/state |Modbus Register 31509 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
@@ -240,6 +242,8 @@ After upgrading the device firmware to support the new Statistics Interface, the
 | Rated Grid Voltage | 600s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_rated_grid_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_grid_voltage/state |Modbus Register 31000 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power/state |Modbus Register 30589 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Reactive Power Fixed Value Adjustment | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state |Modbus Register 41503 | PV&nbsp;Inverter |
+| Reactive Power Fixed Value Adjustment Feedback | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state |Modbus Register 30615 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
+| Reactive Power Percentage Adjustment Feedback | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state |Modbus Register 30618 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
 | Reactive Power Q/S Adjustment | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_q_s_adjustment/state |Modbus Register 41506 | PV&nbsp;Inverter |
 | Remote EMS Dispatch | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state <br/> homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/state |Modbus Register 41500 | PV&nbsp;Inverter |
 | Running State | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_running_state/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_running_state/state |Modbus Register 30578 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
@@ -334,6 +338,25 @@ After upgrading the device firmware to support the new Statistics Interface, the
 | Vehicle Battery Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_plant_vehicle_battery_voltage/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_battery_voltage/state |Modbus Register 31500 ||
 | Vehicle Charging Current | 10s | A | 10 | sigenergy2mqtt/sigen_0_plant_vehicle_charging_current/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_charging_current/state |Modbus Register 31501 ||
 | Vehicle SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_vehicle_soc/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_soc/state |Modbus Register 31504 ||
+
+### Metrics
+
+Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.
+| Metric | Interval | Unit | State Topic |
+|--------|---------:|------|-------------|
+| Modbus Active Locks | 1 |  | sigenergy2mqtt/metrics/modbus_locks |
+| Modbus Read Errors | 1 |  | sigenergy2mqtt/metrics/modbus_read_errors |
+| Modbus Read Max | 1 | ms | sigenergy2mqtt/metrics/modbus_read_max |
+| Modbus Read Mean | 1 | ms | sigenergy2mqtt/metrics/modbus_read_mean |
+| Modbus Read Min | 1 | ms | sigenergy2mqtt/metrics/modbus_read_min |
+| Modbus Reads/second | 1 |  | sigenergy2mqtt/metrics/modbus_reads_sec |
+| Modbus Write Errors | 1 |  | sigenergy2mqtt/metrics/modbus_write_errors |
+| Modbus Write Max | 1 | ms | sigenergy2mqtt/metrics/modbus_write_max |
+| Modbus Write Mean | 1 | ms | sigenergy2mqtt/metrics/modbus_write_mean |
+| Modbus Write Min | 1 | ms | sigenergy2mqtt/metrics/modbus_write_min |
+| Protocol Published | 1 |  | sigenergy2mqtt/metrics/modbus_protocol_published |
+| Protocol Version | 1 |  | sigenergy2mqtt/metrics/modbus_protocol |
+| Started | 1 |  | sigenergy2mqtt/metrics/started |
 
 ## Subscribed Topics
 
