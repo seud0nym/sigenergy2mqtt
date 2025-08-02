@@ -433,7 +433,7 @@ if _args.show_version:
 def apply_cli_to_env(variable: str, value: str) -> None:
     was = os.getenv(variable)
     if value is not None:
-        if value != os.environ[variable]:
+        if value != was:
             os.environ[variable] = str(value)
             _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{value}' (was '{was}')")
     else:
@@ -445,13 +445,16 @@ def apply_cli_to_env(variable: str, value: str) -> None:
 
 
 if _args.SIGENERGY2MQTT_LOG_LEVEL:
+    Config.log_level = getattr(logging, _args.SIGENERGY2MQTT_LOG_LEVEL)
     _logger.setLevel(getattr(logging, _args.SIGENERGY2MQTT_LOG_LEVEL))
+    _logger.log(_logger.level, f"sigenergy2mqtt log-level changed to {logging.getLevelName(Config.log_level)}")
 
 for key in os.environ.keys():
-    if key.endswith("_SLAVE"):
-        _logger.warning(f"The environment variable '{key}' is deprecated and will be removed in a future version. Use '{key.replace('_SLAVE', '_DEVICE_ID')}' instead.")
-    elif key == const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
-        _logger.warning(f"The environment variable '{key}' is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org.")
+    if key.startswith("SIGENERGY2MQTT_"):
+        if key.endswith("_SLAVE"):
+            _logger.warning(f"The environment variable '{key}' is deprecated and will be removed in a future version. Use '{key.replace('_SLAVE', '_DEVICE_ID')}' instead.")
+        elif key == const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
+            _logger.warning(f"The environment variable '{key}' is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org.")
 
 for arg in vars(_args):
     if arg == "clean":
