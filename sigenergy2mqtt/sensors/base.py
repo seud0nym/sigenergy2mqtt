@@ -393,6 +393,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     )
                     if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
+                else:
+                    raise
                 if Config.home_assistant.enabled:
                     self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
                 if self._failures >= self._max_failures:
@@ -710,11 +712,11 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
                 return False
 
         try:
-            async with ModbusLockFactory.get(modbus).lock(self._scan_interval):
-                if self.debug_logging:
-                    logging.debug(
-                        f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s"
-                    )
+            if self.debug_logging:
+                logging.debug(
+                    f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s - Acquiring lock"
+                )
+            async with ModbusLockFactory.get(modbus).lock():
                 start = time.monotonic()
                 if self._input_type == InputType.HOLDING:
                     rr = await modbus.read_holding_registers(self._address, count=self._count, device_id=self._device_address)

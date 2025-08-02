@@ -275,27 +275,29 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                         actual_elapsed = actual_elapsed[-100:]
                             if self.rediscover:
                                 lock = ModbusLockFactory.get(modbus)
-                                logging.info(f"{self.name} Sensor Scan Group [{names}]: Acquiring lock to republish discovery... ({lock.waiters=})")
+                                logging.debug(f"{self.name} Sensor Scan Group [{names}]: Acquiring lock to republish discovery... ({lock.waiters=})")
                                 async with lock.lock(timeout=1):
                                     self.rediscover = False
                                     self.publish_discovery(mqtt, clean=False)
                             average_excess = max(0.0, statistics.fmean(actual_elapsed) - interval)
                             elapsed = time.monotonic() - started
                             if elapsed > interval and modbus.connected:
-                                logging.warning(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
+                                logging.debug(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
                             wait = max(interval - elapsed, 0.5)
                         except ModbusException as e:
                             lock = ModbusLockFactory.get(modbus)
-                            logging.info(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
+                            logging.debug(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
                             async with lock.lock(timeout=None):
                                 if not modbus.connected and self.online:
-                                    logging.info(f"{self.name} Sensor Scan Group [{names}] attempting to reconnect to Modbus...")
+                                    logging.info(f"{self.name} attempting to reconnect to Modbus...")
                                     while not modbus.connected:
                                         modbus.close()
                                         await asyncio.sleep(0.5)
                                         await modbus.connect()
                                         await asyncio.sleep(1)
-                                    logging.info(f"{self.name} Sensor Scan Group [{names}] reconnected to Modbus")
+                                    logging.info(f"{self.name} reconnected to Modbus")
+                        except Exception as e:
+                            logging.error(f"{self.name} Sensor Scan Group [{names}] encountered an error: {e!s}")
                     sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
                     if wait > 0:
