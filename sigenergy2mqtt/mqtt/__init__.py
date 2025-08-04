@@ -22,8 +22,12 @@ def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.Abstract
         logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to broker {Config.mqtt.broker}:{Config.mqtt.port} with username {Config.mqtt.username}")
         mqtt_client.username_pw_set(Config.mqtt.username, Config.mqtt.password)
 
-    mqtt_client.connect(Config.mqtt.broker, port=Config.mqtt.port)
-    mqtt_client.loop_start()
+    try:
+        mqtt_client.connect(Config.mqtt.broker, port=Config.mqtt.port)
+        mqtt_client.loop_start()
 
-    logging.info(f"Connected to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}'")
-    return mqtt_client, mqtt_handler
+        logging.info(f"Connected to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}'")
+        return mqtt_client, mqtt_handler
+    except Exception as e:
+        logging.critical(f"Failed to connect to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}': {e}")
+        raise
