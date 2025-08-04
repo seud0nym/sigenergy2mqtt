@@ -251,39 +251,46 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 for sensor in publishable:
                     if isinstance(sensor, ReadOnlySensor) and interval != sensor.scan_interval:
                         logging.warning(f"Sensor {sensor.__class__.__name__} scan-interval ({sensor.scan_interval}s) ignored - the interval of {self.name} Sensor Group [{names}] is {interval}s")
-                wait: float = uniform(0.5, min(5, interval))
-                if debug_logging:
-                    logging.debug(f"{self.name} Sensor Scan Group [{names}] initial wait is {wait} seconds")
+                last_publish: float = time.monotonic()
+                next_publish: float = last_publish + uniform(0.5, min(5, interval))
                 actual_elapsed: list[float] = []
                 if debug_logging:
-                    logging.debug(f"{self.name} Sensor Scan Group [{names}] commenced (Interval = {interval} seconds)")
+                    logging.debug(f"{self.name} Sensor Scan Group [{names}] commenced ({interval=}s)")
                 while self.online:
-                    started = time.monotonic()  # Grab the started time first, so that elapsed contains ALL activity
+                    now = time.monotonic()  # Grab the started time first, so that elapsed contains ALL activity
                     for sensor in publishable:
                         if sensor.force_publish:
                             if debug_logging:
-                                logging.debug(f"{self.name} Sensor Scan Group [{names}] wait interrupted at {wait:.2f}s because force_publish set on {sensor.__class__.__name__}")
-                            wait = 0  # If any sensor requires a force publish, process all of them now
+                                logging.debug(
+                                    f"{self.name} Sensor Scan Group [{names}] wait interrupted with {next_publish - now:.2f}s remaining because force_publish set on {sensor.__class__.__name__}"
+                                )
+                            next_publish = now  # If any sensor requires a force publish, process all of them now
                             break
-                    if wait <= 0:
+                    if next_publish <= now:
+                        if debug_logging:
+                            logging.debug(f"{self.name} Sensor Scan Group [{names}] publishing sensors (elapsed={now - last_publish:.2f}s)")
+                        last_publish = now
                         try:
                             for sensor in sensors:
                                 if isinstance(sensor, ReadableSensorMixin) and sensor.publishable:  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor, etc.)
                                     await sensor.publish(mqtt, modbus)
-                                    actual_elapsed.append(sensor.latest_interval)
-                                    if len(actual_elapsed) > 100:
-                                        actual_elapsed = actual_elapsed[-100:]
+                                    if sensor.latest_interval is not None:
+                                        actual_elapsed.append(sensor.latest_interval)
+                                        if len(actual_elapsed) > 100:
+                                            actual_elapsed = actual_elapsed[-100:]
                             if self.rediscover:
                                 lock = ModbusLockFactory.get(modbus)
                                 logging.debug(f"{self.name} Sensor Scan Group [{names}]: Acquiring lock to republish discovery... ({lock.waiters=})")
                                 async with lock.lock(timeout=1):
                                     self.rediscover = False
                                     self.publish_discovery(mqtt, clean=False)
-                            average_excess = max(0.0, statistics.fmean(actual_elapsed) - interval)
-                            elapsed = time.monotonic() - started
+                            average_excess = statistics.fmean(actual_elapsed) - interval if len(actual_elapsed) > 0 else 0
+                            elapsed = time.monotonic() - now
                             if elapsed > interval and modbus.connected:
-                                logging.debug(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval}s) Elapsed = {elapsed:.2f}s Average Excess Time = {average_excess:.2f}s")
-                            wait = max(interval - elapsed, 0.5)
+                                logging.info(f"{self.name} Sensor Scan Group [{names}] exceeded scan interval ({interval=}s) {elapsed=:.2f}s {average_excess=:.3f}s")
+                            next_publish = time.monotonic() + max(interval - elapsed, 0.5)
+                            if debug_logging:
+                                logging.debug(f"{self.name} Sensor Scan Group [{names}] {interval=}s {elapsed=:.2f}s next={next_publish - time.monotonic():.2f}s {average_excess=:.3f}s")
                         except ModbusException as e:
                             lock = ModbusLockFactory.get(modbus)
                             logging.debug(f"{self.name} Sensor Scan Group [{names}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
@@ -298,9 +305,8 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                     logging.info(f"{self.name} reconnected to Modbus")
                         except Exception as e:
                             logging.error(f"{self.name} Sensor Scan Group [{names}] encountered an error: {e!s}")
-                    sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
-                    wait -= sleep
-                    if wait > 0:
+                    sleep = min(next_publish - time.monotonic(), 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+                    if sleep > 0:
                         task = asyncio.create_task(asyncio.sleep(sleep))
                         for sensor in sensors:
                             sensor.sleeper_task = task

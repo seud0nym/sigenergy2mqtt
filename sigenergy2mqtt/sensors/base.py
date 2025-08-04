@@ -111,7 +111,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
     @property
     def latest_interval(self) -> float:
-        return -1 if len(self._states) < 2 else self._states[-1][0] - self._states[-2][0]
+        return None if len(self._states) < 2 else self._states[-1][0] - self._states[-2][0]
 
     @property
     def latest_raw_state(self) -> float | int | str:
@@ -368,18 +368,18 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         if self._failures < self._max_failures or (self._next_retry and self._next_retry <= now):
             try:
                 if self.publishable:
-                    value = await self.get_state(modbus=modbus, raw=False, republish=republish)
-                    if value is None and not self.force_publish:
+                    state = await self.get_state(modbus=modbus, raw=False, republish=republish)
+                    if state is None and not self.force_publish:
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: Value is unchanged")
+                            logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: State is None?")
                     else:
                         if self._failures > 0:
                             logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
                             self._failures = 0
                             self._next_retry = None
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Publishing {value=}")
-                        mqtt.publish(self["state_topic"], f"{value}", self._qos, self._retain)
+                            logging.debug(f"{self.__class__.__name__} Publishing {state=}")
+                        mqtt.publish(self["state_topic"], f"{state}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
             except Exception as exc:
@@ -452,7 +452,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         """
         if self._sanity.check(state, self._states):
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} New state is {state}")
+                logging.debug(f"{self.__class__.__name__} Acquired raw {state=}")
             self._states.append((time.time(), state))
             if len(self._states) > self._max_states:
                 self._states = self._states[-self._max_states :]
@@ -705,17 +705,12 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         result = False
         modbus: ModbusClient = kwargs["modbus"]
 
-        now = time.time()
-        if not self.force_publish:
-            timestamp = 0 if len(self._states) == 0 else self._states[-1][0]
-            if timestamp + self._scan_interval > now:
-                return False
+        if self.debug_logging:
+            logging.debug(
+                f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) plant_index={self._plant_index} interval={self._scan_interval}s actual={None if len(self._states) == 0 else str(round(time.time() - self._states[-1][0], 2)) + 's'}"
+            )
 
         try:
-            if self.debug_logging:
-                logging.debug(
-                    f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) [plant_index={self._plant_index}] scan_interval={self._scan_interval}s - Acquiring lock"
-                )
             async with ModbusLockFactory.get(modbus).lock():
                 start = time.monotonic()
                 if self._input_type == InputType.HOLDING:
