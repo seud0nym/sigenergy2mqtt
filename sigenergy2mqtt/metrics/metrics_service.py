@@ -200,11 +200,10 @@ class MetricsService(Device):
             while self.online:
                 mqtt.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
                 try:
-                    async with Metrics.lock(timeout=1):
-                        for object_id, discovery in MetricsService._discovery["cmps"].items():
-                            value = get_value(object_id)
-                            if value is not None:
-                                mqtt.publish(discovery["state_topic"], f"{value:.2f}" if isinstance(value, float) else str(value), qos=0, retain=False)
+                    for object_id, discovery in MetricsService._discovery["cmps"].items():
+                        value = get_value(object_id)
+                        if value is not None:
+                            mqtt.publish(discovery["state_topic"], f"{value:.2f}" if isinstance(value, float) else str(value), qos=0, retain=False)
                     await asyncio.sleep(1.0)
                 except asyncio.CancelledError:
                     logging.info(f"{self.name} - Sleep interrupted")
