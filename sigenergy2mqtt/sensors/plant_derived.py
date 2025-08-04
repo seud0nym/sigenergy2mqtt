@@ -34,6 +34,11 @@ class BatteryChargingPower(DerivedSensor):
             precision=2,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "BatteryPower &gt; 0"
+        return attributes
+
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
@@ -57,6 +62,11 @@ class BatteryDischargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "BatteryPower &lt; 0"
+        return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), BatteryPower):
@@ -82,6 +92,11 @@ class GridSensorExportPower(DerivedSensor):
             precision=active_power.precision,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "GridSensorActivePower &lt; 0 &times; -1"
+        return attributes
+
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
@@ -105,6 +120,11 @@ class GridSensorImportPower(DerivedSensor):
             gain=None,
             precision=active_power.precision,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "GridSensorActivePower &gt; 0"
+        return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), GridSensorActivePower):
@@ -275,11 +295,13 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         for value in self._sources.values():
             value.state = None
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
         if Config.devices[self._plant_index].smartport.enabled:
-            return super().publish_attributes(mqtt, comment="PV Power + (sum of all Smart-Port PV Power sensors)", **kwargs)
+            attributes["comment"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
         else:
-            return super().publish_attributes(mqtt, comment="PV Power + Third-Party PV Power", **kwargs)
+            attributes["comment"] = "PV Power + Third-Party PV Power"
+        return attributes
 
     def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
         for sensor in sensors:
@@ -316,6 +338,11 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
             source=source,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight"
+        return attributes
+
 
 class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantTotalImportedEnergy):
@@ -325,6 +352,11 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             source=source,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight"
+        return attributes
 
 
 class TotalLifetimePVEnergy(DerivedSensor):
@@ -346,7 +378,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor as was a ResettableAccumulationSensor prior to Modbus Protocol v2.7 
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor as was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         return components
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:

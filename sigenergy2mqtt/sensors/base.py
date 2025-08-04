@@ -297,6 +297,21 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
         return base
 
+    def get_attributes(self) -> dict[str, Any]:
+        """Gets the Home Assistant attributes for this sensor.
+
+        Returns:
+            A dictionary of attributes for this sensor.
+        """
+        attributes = {}
+        attributes["sensor-class"] = self.__class__.__name__
+        attributes["gain"] = self._gain
+        if hasattr(self, "_scan_interval"):
+            attributes["scan-interval"] = self._scan_interval
+        if hasattr(self, "command_topic"):
+            attributes["update-topic"] = self.command_topic
+        return attributes
+
     def get_discovery(self, mqtt: MqttClient) -> Dict[str, dict[str, Any]]:
         """Gets the Home Assistant MQTT auto-discovery components for this sensor.
 
@@ -410,23 +425,14 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         elif self.debug_logging:
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
 
-    def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
+    def publish_attributes(self, mqtt: MqttClient) -> None:
         """Publishes the attributes for this sensor.
 
         Args:
             mqtt:       The MQTT client for publishing the current state.
-            **kwargs:   key=value pairs that will be added as attributes.
         """
         if self.publishable and not Config.clean:
-            attributes = {}
-            attributes["sensor-class"] = self.__class__.__name__
-            attributes["gain"] = self._gain
-            if hasattr(self, "_scan_interval"):
-                attributes["scan-interval"] = self._scan_interval
-            if hasattr(self, "command_topic"):
-                attributes["update-topic"] = self.command_topic
-            for k, v in kwargs.items():
-                attributes[k] = v
+            attributes = self.get_attributes()
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
             mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), 2, True)
@@ -737,8 +743,10 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
 
         return result
 
-    def publish_attributes(self, mqtt: MqttClient, **kwargs):
-        return super().publish_attributes(mqtt, source=self._address, **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = self._address
+        return attributes
 
 
 class ReservedSensor(ReadOnlySensor):
@@ -1598,8 +1606,11 @@ class ResettableAccumulationSensor(DerivedSensor, ObservableMixin):
         topics.add(self._reset_topic)
         return topics
 
-    def publish_attributes(self, mqtt, **kwargs):
-        return super().publish_attributes(mqtt, reset_topic=self._reset_topic, reset_unit=self.unit)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["reset_topic"] = self._reset_topic
+        attributes["reset_unit"] = self.unit
+        return attributes
 
 
 class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):

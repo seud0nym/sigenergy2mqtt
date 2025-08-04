@@ -10,6 +10,7 @@ from sigenergy2mqtt.config.smart_port_config import ModuleConfig
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+from typing import Any
 import asyncio
 import json
 import logging
@@ -115,6 +116,11 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                     return True
         return False
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API"
+        return attributes
+
     def get_token(self, reauthenticate: bool = False) -> str:
         """Return an Enphase authentication token for the specified device.
 
@@ -213,6 +219,11 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
             precision=2,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
+
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
         if not issubclass(type(sensor), EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
@@ -230,6 +241,11 @@ class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
             source=source,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
+
 
 class EnphaseCurrent(DerivedSensor):
     def __init__(self, plant_index: int, serial_number: str):
@@ -245,6 +261,11 @@ class EnphaseCurrent(DerivedSensor):
             precision=2,
         )
         self["enabled_by_default"] = False
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
         if not issubclass(type(sensor), EnphasePVPower):
@@ -269,6 +290,11 @@ class EnphaseFrequency(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
+
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
         if not issubclass(type(sensor), EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
@@ -291,6 +317,11 @@ class EnphasePowerFactor(DerivedSensor):
             precision=2,
         )
         self["enabled_by_default"] = False
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
         if not issubclass(type(sensor), EnphasePVPower):
@@ -315,6 +346,11 @@ class EnphaseReactivePower(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
+
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
         if not issubclass(type(sensor), EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
@@ -337,6 +373,11 @@ class EnphaseVoltage(DerivedSensor):
             precision=1,
         )
         self["enabled_by_default"] = False
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
+        return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
         if not issubclass(type(sensor), EnphasePVPower):

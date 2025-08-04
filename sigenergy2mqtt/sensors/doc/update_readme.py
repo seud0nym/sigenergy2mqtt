@@ -11,20 +11,6 @@ from sigenergy2mqtt.sensors.base import WriteOnlySensor
 logging.getLogger("root").setLevel(logging.WARNING)
 
 derived = {
-    "BatteryChargingPower": "BatteryPower &gt; 0",
-    "BatteryDischargingPower": "BatteryPower &lt; 0",
-    "EnphasePVPower": "Enphase Envoy API",
-    "EnphaseLifetimePVEnergy": "Enphase Envoy API when EnphasePVPower derived",
-    "EnphaseDailyPVEnergy": "Enphase Envoy API when EnphasePVPower derived",
-    "EnphaseCurrent": "Enphase Envoy API when EnphasePVPower derived",
-    "EnphaseFrequency": "Enphase Envoy API when EnphasePVPower derived",
-    "EnphasePowerFactor": "Enphase Envoy API when EnphasePVPower derived",
-    "EnphaseReactivePower": "Enphase Envoy API when EnphasePVPower derived",
-    "EnphaseVoltage": "Enphase Envoy API when EnphasePVPower derived",
-    "GridSensorDailyExportEnergy": "GridSensorLifetimeExportEnergy &minus; GridSensorLifetimeExportEnergy at last midnight",
-    "GridSensorDailyImportEnergy": "GridSensorLifetimeImportEnergy &minus; GridSensorLifetimeImportEnergy at last midnight",
-    "GridSensorExportPower": "GridSensorActivePower &lt; 0 &times; -1",
-    "GridSensorImportPower": "GridSensorActivePower &gt; 0",
     "InverterBatteryChargingPower": "ChargeDischargePower &gt; 0",
     "InverterBatteryDischargingPower": "ChargeDischargePower &lt; 0 &times; -1",
     "PVStringDailyEnergy": "PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight",

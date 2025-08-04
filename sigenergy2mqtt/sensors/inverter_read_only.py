@@ -1659,8 +1659,10 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Single time", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Single time"
+        return attributes
 
 
 class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1683,8 +1685,10 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             precision=None,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Single time", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Single time"
+        return attributes
 
 
 # endregion
