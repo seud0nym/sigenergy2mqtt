@@ -124,6 +124,7 @@ class ServiceTopics(dict[str, Topic]):
         self._enabled = enabled
         self._name = name
         self._logger = logger
+        self._last_update_warning: float = None
 
     @property
     def enabled(self) -> bool:
@@ -140,12 +141,14 @@ class ServiceTopics(dict[str, Topic]):
                 if value.timestamp is not None:
                     seconds = int(time.mktime(now) - time.mktime(value.timestamp))
                     minutes = int(seconds / 60.0)
-                    if minutes > interval_minutes:
+                    if minutes > interval_minutes and (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600):
                         self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has not been updated for {minutes}m???")
+                        self._last_update_warning = time.time()
                     else:
                         self._logger.debug(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} last updated {seconds}s ago")
-                else:
+                elif self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
                     self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has never been updated???")
+                    self._last_update_warning = time.time()
 
     def register(self, topic: str, gain: float) -> bool:
         if self.enabled:
