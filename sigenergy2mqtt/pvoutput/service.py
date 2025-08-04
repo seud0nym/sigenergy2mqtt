@@ -77,10 +77,6 @@ class Service(Device):
     # endregion
 
     async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
-        for key, value in payload.items():
-            if value is None:
-                del payload[key]
-                self.logger.warning(f"{self.__class__.__name__} Removed {key=} from payload because it is None")
         self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
         for i in range(1, 4, 1):
             try:
@@ -191,13 +187,25 @@ class ServiceTopics(dict[str, Topic]):
         else:
             return None, None, count
 
-    def average(self, decimals: int) -> tuple[float, str]:
+    def average_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None, decimals: int = 1) -> None:
         total, at, count = self.aggregate(exclude_zero=True)
-        return (None if count == 0 else round(total / count, decimals)), at
+        if count > 0 and total is not None:
+            payload[value_key] = round(total / count, decimals)
+            if datetime_key is not None:
+                payload[datetime_key] = at
+        else:
+            del payload[value_key]
+            self._logger.warning(f"{self._service.__class__.__name__} Removed '{value_key}' from payload because {count=} and {total=}")
 
-    def sum(self) -> tuple[float, str]:
+    def sum_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None) -> None:
         total, at, count = self.aggregate(exclude_zero=False)
-        return (None if count == 0 else round(total)), at
+        if count > 0 and total is not None:
+            payload[value_key] = round(total)
+            if datetime_key is not None:
+                payload[datetime_key] = at
+        else:
+            del payload[value_key]
+            self._logger.warning(f"{self._service.__class__.__name__} Removed '{value_key}' from payload because {count=} and {total=}")
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if self.enabled:

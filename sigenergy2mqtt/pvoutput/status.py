@@ -69,16 +69,16 @@ class PVOutputStatusService(Service):
             async with self.lock(timeout=5):
                 if self._generation.enabled:
                     self._generation.check_is_updating(self._interval, now)
-                    payload["v1"], _ = self._generation.sum()
+                    self._generation.sum_into(payload, "v1")
                 if self._consumption.enabled:
                     self._consumption.check_is_updating(self._interval, now)
-                    payload["v3"], _ = self._consumption.sum()
+                    self._consumption.sum_into(payload, "v3")
                 if self._temperature.enabled:
                     self._temperature.check_is_updating(self._interval, now)
-                    payload["v5"], _ = self._temperature.average(1)
+                    self._temperature.average_into(payload, "v5")
                 if self._voltage.enabled:
                     self._voltage.check_is_updating(self._interval, now)
-                    payload["v6"], _ = self._voltage.average(1)
+                    self._voltage.average_into(payload, "v6")
             if payload["v1"] or payload["v3"]:  # At least one of the values v1, v2, v3 or v4 must be present
                 await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
             else:
@@ -104,7 +104,7 @@ class PVOutputStatusService(Service):
                         self._interval = interval
             except Exception as exc:
                 if self._interval is None:
-                    self._interval = 5 # Default interval in minutes if not set
+                    self._interval = 5  # Default interval in minutes if not set
                 self.logger.warning(f"{self.__class__.__name__} Failed to acquire Status Interval from PVOutput: {exc} - using default/previous interval of {self._interval} minutes")
         current_time = time.time()  # Current time in seconds since epoch
         minutes = int(current_time // 60)  # Total minutes since epoch

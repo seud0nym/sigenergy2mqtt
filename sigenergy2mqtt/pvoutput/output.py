@@ -109,13 +109,13 @@ class PVOutputOutputService(Service):
             now = time.localtime()
             payload = {"d": time.strftime("%Y%m%d", now)}
             async with self.lock(timeout=5):
-                payload["g"], _ = self._generation.sum()
+                self._generation.sum_into(payload, "g")
                 if self._exports.enabled:
-                    payload["e"], _ = self._exports.sum()
+                    self._exports.sum_into(payload, "e")
                 if self._consumption.enabled:
-                    payload["c"], _ = self._consumption.sum()
+                    self._consumption.sum_into(payload, "c")
                 if self._power.enabled:
-                    payload["pp"], payload["pt"] = self._power.sum()
+                    self._power.sum_into(payload, "pp", "pt")
             await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             self.logger.debug(f"{self.__class__.__name__} Resetting peak power history to 0.0...")
             async with self.lock(timeout=5):
