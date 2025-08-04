@@ -100,7 +100,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         logging.error(f"{self.__class__.__name__} Invalid JSON response from {url}: {e}")
                         raise
                     except Exception as e:
-                        logging.error(f"{self.__class__.__name__} Unhandled error from {url}: {e}")
+                        logging.error(f"{self.__class__.__name__} Unhandled error from {url}: {repr(e)}")
                         raise
         except requests.exceptions.RequestException as e:
             logging.error(f"{self.__class__.__name__} Unhandled exception fetching data from {url} : {e}")
@@ -147,7 +147,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                                 logging.debug(f"No authentication token found in {token_file}!")
                             token = ""
                     except Exception as e:
-                        logging.warning(f"Failed to load authentication token from {token_file}: {e}")
+                        logging.warning(f"Failed to load authentication token from {token_file}: {repr(e)}")
                         token = ""
                 return token
             else:
@@ -165,7 +165,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                 try:
                     f.write(token)
                 except Exception as e:
-                    logging.error(f"Failed to save authentication token to {token_file}: {e}")
+                    logging.error(f"Failed to save authentication token to {token_file}: {repr(e)}")
 
         if not reauthenticate:
             if self._token and not self._token.isspace():

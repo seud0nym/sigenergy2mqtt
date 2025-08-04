@@ -148,8 +148,8 @@ class PowerPlant(ModbusDevice):
                                 total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
                                 self._add_derived_sensor(total_pv_power, sensor, search_children=True)
                                 break
-                except Exception as exc:
-                    logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {exc}")
+                except Exception as e:
+                    logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {repr(e)}")
                     raise
             self._add_read_sensor(plant_3rd_party_pv_power)
             total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)

@@ -304,7 +304,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                         await asyncio.sleep(1)
                                     logging.info(f"{self.name} reconnected to Modbus")
                         except Exception as e:
-                            logging.error(f"{self.name} Sensor Scan Group [{names}] encountered an error: {e!s}")
+                            logging.error(f"{self.name} Sensor Scan Group [{names}] encountered an error: {repr(e)}")
                     sleep = min(next_publish - time.monotonic(), 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     if sleep > 0:
                         task = asyncio.create_task(asyncio.sleep(sleep))
@@ -361,7 +361,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     if sensor.debug_logging:
                         logging.debug(f"Sensor {sensor.name} subscribed to topic {sensor.command_topic} for writing ({result=})")
                 except Exception as e:
-                    logging.error(f"Sensor {sensor.name} failed to subscribe to topic {sensor.command_topic}: {e}")
+                    logging.error(f"Sensor {sensor.name} failed to subscribe to topic {sensor.command_topic}: {repr(e)}")
             if isinstance(sensor, ObservableMixin):
                 for topic in sensor.observable_topics():
                     try:
@@ -369,7 +369,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                         if sensor.debug_logging:
                             logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification ({result=})")
                     except Exception as e:
-                        logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {e}")
+                        logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {repr(e)}")
         for device in self._children:
             device.subscribe(mqtt, mqtt_handler)
 

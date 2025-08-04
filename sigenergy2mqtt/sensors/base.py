@@ -382,8 +382,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         mqtt.publish(self["state_topic"], f"{state}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
-            except Exception as exc:
-                logging.warning(f"{self.__class__.__name__} Publishing SKIPPED: Failed to get state ({exc})")
+            except Exception as e:
+                logging.warning(f"{self.__class__.__name__} Publishing SKIPPED: Failed to get state ({repr(e)})")
                 if modbus.connected:
                     self._failures += 1
                     self._next_retry = (
@@ -396,7 +396,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 else:
                     raise
                 if Config.home_assistant.enabled:
-                    self.publish_attributes(mqtt, failures=self._failures, exception=f"{exc}")
+                    self.publish_attributes(mqtt, failures=self._failures, exception=f"{repr(e)}")
                 if self._failures >= self._max_failures:
                     logging.warning(
                         f"{self.__class__.__name__} Publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
@@ -907,8 +907,8 @@ class WritableSensorMixin(ModbusSensor):
         except asyncio.TimeoutError:
             logging.warning(f"{self.__class__.__name__} Modbus write failed to acquire lock within {max_wait}s")
             result = False
-        except Exception as exc:
-            logging.error(f"{self.__class__.__name__} write_registers threw {exc!s}")
+        except Exception as e:
+            logging.error(f"{self.__class__.__name__} write_registers: {repr(e)}")
             await Metrics.modbus_write_error()
             raise
 
@@ -1118,7 +1118,7 @@ class NumericSensor(ReadWriteSensor):
                     state = state * self.gain
                 return await super().set_value(modbus, mqtt, state, source, handler)
             except Exception as e:
-                logging.warning(f"{self.__class__.__name__} Attempt to set value to {value} FAILED: {e}")
+                logging.warning(f"{self.__class__.__name__} Attempt to set value to {value} FAILED: {repr(e)}")
         else:
             logging.warning(f"{self.__class__.__name__} Ignored attempt to set None value to {value}")
         return False

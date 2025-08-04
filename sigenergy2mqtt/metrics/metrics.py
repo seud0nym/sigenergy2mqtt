@@ -53,7 +53,7 @@ class Metrics:
                 cls.sigenergy2mqtt_modbus_read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
                 cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_reads if cls.sigenergy2mqtt_modbus_reads > 0 else 0.0
         except Exception as exc:
-            logging.warning(f"Error during modbus read metrics collection: {exc}")
+            logging.warning(f"Error during modbus read metrics collection: {repr(exc)}")
 
     @classmethod
     async def modbus_read_error(cls) -> None:
@@ -61,7 +61,7 @@ class Metrics:
             async with cls.lock(timeout=1):
                 cls.sigenergy2mqtt_modbus_read_errors += 1
         except Exception as exc:
-            logging.warning(f"Error during modbus read error metrics collection: {exc}")
+            logging.warning(f"Error during modbus read error metrics collection: {repr(exc)}")
 
     @classmethod
     async def modbus_write(cls, registers: int, seconds: float) -> None:
@@ -74,7 +74,7 @@ class Metrics:
                 cls.sigenergy2mqtt_modbus_write_min = min(cls.sigenergy2mqtt_modbus_write_min, elapsed)
                 cls.sigenergy2mqtt_modbus_write_mean = cls.sigenergy2mqtt_modbus_write_total / cls.sigenergy2mqtt_modbus_writes if cls.sigenergy2mqtt_modbus_writes > 0 else 0.0
         except Exception as exc:
-            logging.warning(f"Error during modbus write metrics collection: {exc}")
+            logging.warning(f"Error during modbus write metrics collection: {repr(exc)}")
 
     @classmethod
     async def modbus_write_error(cls) -> None:
@@ -82,4 +82,4 @@ class Metrics:
             async with cls.lock(timeout=1):
                 cls.sigenergy2mqtt_modbus_write_errors += 1
         except Exception as exc:
-            logging.warning(f"Error during modbus write error metrics collection: {exc}")
+            logging.warning(f"Error during modbus write error metrics collection: {repr(exc)}")
