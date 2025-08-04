@@ -190,25 +190,31 @@ class ServiceTopics(dict[str, Topic]):
         else:
             return None, None, count
 
-    def average_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None, decimals: int = 1) -> None:
+    def average_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None, decimals: int = 1) -> bool:
         total, at, count = self.aggregate(exclude_zero=True)
         if count > 0 and total is not None:
             payload[value_key] = round(total / count, decimals)
             if datetime_key is not None:
                 payload[datetime_key] = at
+            return True
         else:
-            del payload[value_key]
+            if value_key in payload:
+                del payload[value_key]
             self._logger.warning(f"{self._service.__class__.__name__} Removed '{value_key}' from payload because {count=} and {total=}")
+            return False
 
-    def sum_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None) -> None:
+    def sum_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None) -> bool:
         total, at, count = self.aggregate(exclude_zero=False)
         if count > 0 and total is not None:
             payload[value_key] = round(total)
             if datetime_key is not None:
                 payload[datetime_key] = at
+            return True
         else:
-            del payload[value_key]
+            if value_key in payload:
+                del payload[value_key]
             self._logger.warning(f"{self._service.__class__.__name__} Removed '{value_key}' from payload because {count=} and {total=}")
+            return False
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if self.enabled:

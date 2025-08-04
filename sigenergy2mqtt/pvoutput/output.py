@@ -109,14 +109,17 @@ class PVOutputOutputService(Service):
             now = time.localtime()
             payload = {"d": time.strftime("%Y%m%d", now)}
             async with self.lock(timeout=5):
-                self._generation.sum_into(payload, "g")
+                has_generation = self._generation.sum_into(payload, "g")
                 if self._exports.enabled:
                     self._exports.sum_into(payload, "e")
                 if self._consumption.enabled:
                     self._consumption.sum_into(payload, "c")
                 if self._power.enabled:
                     self._power.sum_into(payload, "pp", "pt")
-            await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
+            if has_generation:
+                await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
+            else:
+                self.logger.warning(f"{self.__class__.__name__} No generation data to upload, skipping...")
             self.logger.debug(f"{self.__class__.__name__} Resetting peak power history to 0.0...")
             async with self.lock(timeout=5):
                 for topic in self._power.values():

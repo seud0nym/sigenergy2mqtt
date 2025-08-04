@@ -79,7 +79,7 @@ class PVOutputStatusService(Service):
                 if self._voltage.enabled:
                     self._voltage.check_is_updating(self._interval, now)
                     self._voltage.average_into(payload, "v6")
-            if payload["v1"] or payload["v3"]:  # At least one of the values v1, v2, v3 or v4 must be present
+            if ("v1" in payload and payload["v1"]) or ("v3" in payload and payload["v3"]):  # At least one of the values v1, v2, v3 or v4 must be present
                 await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
             else:
                 self.logger.warning(f"{self.__class__.__name__} No generation or consumption data to upload, skipping...")
