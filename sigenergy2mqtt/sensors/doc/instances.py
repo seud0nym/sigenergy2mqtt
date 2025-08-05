@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, ModbusSensor, EnergyDailyAccumulationSensor
+from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
@@ -65,7 +65,7 @@ async def get_sensor_instances(hass: bool = False):
         model_id="Sigen PV Max 5.0 TP",
         serial="CMU876A65BP321",
         firmware="V100R001C00SPC108B088F",
-        strings=2,
+        strings=16,
         power_phases=3,
         pv_string_count=PVStringCount(plant_index, inverter_device_address),
         output_type=OutputType(plant_index, inverter_device_address),
@@ -92,10 +92,7 @@ async def get_sensor_instances(hass: bool = False):
                 find_concrete_classes(c)
 
     def add_sensor_instance(s):
-        if isinstance(s, ModbusSensor):
-            key = s._address
-        else:
-            key = s.__class__.__name__
+        key = s.unique_id
         if key not in sensor_instances:
             sensor_instances[key] = s
         elif s.__class__.__name__ != sensor_instances[key].__class__.__name__:
