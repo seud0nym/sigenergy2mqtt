@@ -815,6 +815,11 @@ class InverterPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Modbus Registers 30605 and 30606"
+        return attributes
+
 
 class InverterAlarm3(Alarm3Sensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
@@ -1455,6 +1460,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
         )
+        self.string_number = string_number
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1477,6 +1483,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
             gain=10,
             precision=1,
         )
+        self.string_number = string_number
 
 
 class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):

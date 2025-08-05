@@ -482,6 +482,7 @@ class GeneralPCSAlarm(AlarmCombinedSensor):
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        attributes["source"] = "Modbus Registers 30027 and 30028"
         return attributes
 
 

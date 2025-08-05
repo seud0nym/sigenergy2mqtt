@@ -154,6 +154,11 @@ class PlantConsumedPower(DerivedSensor):
         self.pv_power: float = None
         self._sanity.min_value = 0.0
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower"
+        return attributes
+
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
         """Publishes this sensor.
 
@@ -250,6 +255,14 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             self._sources[smartport_sensor.unique_id].enabled = False
         return failed_over
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        if Config.devices[self._plant_index].smartport.enabled:
+            attributes["source"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
+        else:
+            attributes["source"] = "PV Power + Third-Party PV Power"
+        return attributes
+
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if topic in self._sources:
             if not self._sources[topic].enabled and self._sources[topic].type == TotalPVPower.SourceType.SMARTPORT:
@@ -294,14 +307,6 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         # reset internal values to missing for next calculation
         for value in self._sources.values():
             value.state = None
-
-    def get_attributes(self) -> dict[str, Any]:
-        attributes = super().get_attributes()
-        if Config.devices[self._plant_index].smartport.enabled:
-            attributes["comment"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
-        else:
-            attributes["comment"] = "PV Power + Third-Party PV Power"
-        return attributes
 
     def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
         for sensor in sensors:
@@ -376,6 +381,11 @@ class TotalLifetimePVEnergy(DerivedSensor):
         self.plant_lifetime_pv_energy: float = None
         self.plant_3rd_party_lifetime_pv_energy: float = None
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
+        return attributes
+
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor as was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
@@ -428,6 +438,11 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
             source=source,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight"
+        return attributes
+
 
 class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantPVTotalGeneration):
@@ -437,6 +452,11 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_pv_energy",
             source=source,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight"
+        return attributes
 
 
 class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
@@ -448,6 +468,11 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
             source=source,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "&sum; of DailyChargeEnergy across all Inverters associated with the Plant"
+        return attributes
+
 
 class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: ESSTotalDischargedEnergy):
@@ -457,3 +482,8 @@ class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
             source=source,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "&sum; of DailyDischargeEnergy across all Inverters associated with the Plant"
+        return attributes

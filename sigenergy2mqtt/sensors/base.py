@@ -13,6 +13,7 @@ from typing import Any, Coroutine, Dict, Final
 import abc
 import asyncio
 import datetime
+import html
 import json
 import logging
 import sys
@@ -305,7 +306,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         """
         attributes = {}
         attributes["sensor-class"] = self.__class__.__name__
-        attributes["gain"] = self._gain
+        if self._gain:
+            attributes["gain"] = self._gain
         if hasattr(self, "_scan_interval"):
             attributes["scan-interval"] = self._scan_interval
         if hasattr(self, "command_topic"):
@@ -432,7 +434,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             mqtt:       The MQTT client for publishing the current state.
         """
         if self.publishable and not Config.clean:
-            attributes = self.get_attributes()
+            attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
             mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), 2, True)
