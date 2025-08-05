@@ -15,334 +15,4730 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 ## Published Topics
 
 ### Plant
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Active Power | 5s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_active_power/state |Modbus Register 30031 ||
-| Active Power Fixed Adjustment Target Value | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/state |Modbus Register 40001 ||
-| Active Power Percentage Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_percentage_adjustment_target_value/state |Modbus Register 40005 ||
-| Available Max Active Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_available_max_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_active_power/state |Modbus Register 30039 ||
-| Available Max Charging Capacity | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_plant_available_max_charging_capacity/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_charging_capacity/state |Modbus Register 30064 ||
-| Available Max Charging Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_available_max_charging_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_charging_power/state |Modbus Register 30047 ||
-| Available Max Discharging Capacity | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_plant_available_max_discharging_capacity/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_discharging_capacity/state |Modbus Register 30066 ||
-| Available Max Discharging Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_available_max_discharging_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_discharging_power/state |Modbus Register 30049 ||
-| Available Max Reactive Power | 600s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_available_max_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_reactive_power/state |Modbus Register 30043 ||
-| Available Min Active Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_available_min_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_min_active_power/state |Modbus Register 30041 ||
-| Available Min Reactive Power | 600s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_available_min_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_min_reactive_power/state |Modbus Register 30045 ||
-| Backup SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_ess_backup_soc/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_backup_soc/state |Modbus Register 40046 ||
-| Battery Charging Power || W | 1 | sigenergy2mqtt/sigen_0_battery_charging_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_charging_power/state |BatteryPower &gt; 0||
-| Battery Discharging Power || W | 1 | sigenergy2mqtt/sigen_0_battery_discharging_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_discharging_power/state |BatteryPower &lt; 0||
-| Battery Power | 5s | W | 1 | sigenergy2mqtt/sigen_0_plant_battery_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_power/state |Modbus Register 30037 ||
-| Battery SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_battery_soc/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_soc/state |Modbus Register 30014 ||
-| Battery SoH | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_battery_soh/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_soh/state |Modbus Register 30087 ||
-| Charge Cut-Off SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_charge_cut_off_soc/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_charge_cut_off_soc/state |Modbus Register 30085 ||
-| Charge Cut-Off SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_charge_cut_off_soc/state |Modbus Register 40047 ||
-| Consumed Power || W | 1 | sigenergy2mqtt/sigen_0_consumed_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_consumed_power/state |TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower||
-| DC Charger Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_general_alarm_5/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_5/state |Modbus Register 30072 ||
-| Daily Charge Energy || kWh | 100 | sigenergy2mqtt/sigen_0_daily_charge_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_charge_energy/state |&sum; of DailyChargeEnergy across all Inverters associated with the Plant||
-| Daily Consumption | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_daily_consumed_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_consumed_energy/state |Modbus Register 30092 ||
-| Daily Discharge Energy || kWh | 100 | sigenergy2mqtt/sigen_0_daily_discharge_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_discharge_energy/state |&sum; of DailyDischargeEnergy across all Inverters associated with the Plant||
-| Daily PV Production || kWh | 100 | sigenergy2mqtt/sigen_0_daily_pv_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_pv_energy/state |PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight||
-| Daily Total PV Production || kWh | 100 | sigenergy2mqtt/sigen_0_total_daily_pv_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_daily_pv_energy/state |TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight||
-| Discharge Cut-Off SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_discharge_cut_off_soc/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_discharge_cut_off_soc/state |Modbus Register 30086 ||
-| Discharge Cut-Off SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_discharge_cut_off_soc/state |Modbus Register 40048 ||
-| EMS Work Mode | 10s |  | 1 | sigenergy2mqtt/sigen_0_plant_ems_work_mode/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_ems_work_mode/state |Modbus Register 30003 ||
-| ESS Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_general_alarm_3/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_3/state |Modbus Register 30029 ||
-| Gateway Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_general_alarm_4/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_4/state |Modbus Register 30030 ||
-| Grid Max Export Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_export_limit/state |Modbus Register 40038 ||
-| Grid Max Import Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_import_limit/state |Modbus Register 40040 ||
-| Independent Phase Power Control | 60s |  | 1 | sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state <br/> homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_independent_phase_power_control/state |Modbus Register 40030 ||
-| Lifetime Charge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_accumulated_charge_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_accumulated_charge_energy/state |Modbus Register 30200 ||
-| Lifetime Consumption | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_lifetime_consumed_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_consumed_energy/state |Modbus Register 30094 ||
-| Lifetime DC EV Charge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_evdc_total_charge_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_evdc_total_charge_energy/state |Modbus Register 30208 ||
-| Lifetime DC EV Discharge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_evdc_total_discharge_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_evdc_total_discharge_energy/state |Modbus Register 30212 ||
-| Lifetime Discharge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_accumulated_discharge_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_accumulated_discharge_energy/state |Modbus Register 30204 ||
-| Lifetime Generator Output Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_plant_total_generator_output_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_total_generator_output_energy/state |Modbus Register 30224 ||
-| Lifetime PV Production | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_plant_lifetime_pv_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_lifetime_pv_energy/state |Modbus Register 30088 ||
-| Lifetime Third-Party PV Production | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_third_party_pv_lifetime_production/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_lifetime_production/state |Modbus Register 30196 ||
-| Lifetime Total PV Production || kWh | 100 | sigenergy2mqtt/sigen_0_lifetime_pv_energy/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_pv_energy/state |&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy||
-| Max Active Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_max_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_max_active_power/state |Modbus Register 30010 ||
-| Max Apparent Power | 600s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_max_apparent_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_max_apparent_power/state |Modbus Register 30012 ||
-| Max Charging Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_max_charging_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/state |Modbus Register 40032 ||
-| Max Discharging Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/state |Modbus Register 40034 ||
-| PCS Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_general_pcs_alarm/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_pcs_alarm/state |Modbus Registers 30027 and 30028||
-| PCS Max Export Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_export_limit/state |Modbus Register 40042 ||
-| PCS Max Import Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_import_limit/state |Modbus Register 40044 ||
-| PV Max Power Limit | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/state |Modbus Register 40036 ||
-| PV Power | 5s | W | 1 | sigenergy2mqtt/sigen_0_plant_pv_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_pv_power/state |Modbus Register 30035 ||
-| Phase A Active Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_phase_a_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power/state |Modbus Register 30015 ||
-| Phase A Active Power Fixed Adjustment Target Value | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state |Modbus Register 40008 ||
-| Phase A Active Power Percentage Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state |Modbus Register 40020 ||
-| Phase A Q/S Fixed Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state |Modbus Register 40023 ||
-| Phase A Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power/state |Modbus Register 30021 ||
-| Phase A Reactive Power Fixed Adjustment Target Value | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state |Modbus Register 40014 ||
-| Phase B Active Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_phase_b_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power/state |Modbus Register 30017 ||
-| Phase B Active Power Fixed Adjustment Target Value | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state |Modbus Register 40010 ||
-| Phase B Active Power Percentage Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state |Modbus Register 40021 ||
-| Phase B Q/S Fixed Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state |Modbus Register 40024 ||
-| Phase B Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power/state |Modbus Register 30023 ||
-| Phase B Reactive Power Fixed Adjustment Target Value | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state |Modbus Register 40016 ||
-| Phase C Active Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_phase_c_active_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power/state |Modbus Register 30019 ||
-| Phase C Active Power Fixed Adjustment Target Value | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state |Modbus Register 40012 ||
-| Phase C Active Power Percentage Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state |Modbus Register 40022 ||
-| Phase C Q/S Fixed Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state |Modbus Register 40025 ||
-| Phase C Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power/state |Modbus Register 30025 ||
-| Phase C Reactive Power Fixed Adjustment Target Value | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state |Modbus Register 40018 ||
-| Power Factor Adjustment Target Value | 60s |  | 1000 | sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/state |Modbus Register 40007 ||
-| Q/S Adjustment Target Value | 60s | % | 100 | sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_q_s_adjustment_target_value/state |Modbus Register 40006 ||
-| Rated Charging Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_rated_charging_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_charging_power/state |Modbus Register 30068 ||
-| Rated Discharging Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_rated_discharging_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_discharging_power/state |Modbus Register 30070 ||
-| Rated Energy Capacity | 600s | kWh | 100 | sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_energy_capacity/state |Modbus Register 30083 ||
-| Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_reactive_power/state |Modbus Register 30033 ||
-| Reactive Power Fixed Adjustment Target Value | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state |Modbus Register 40003 ||
-| Remote EMS | 10s |  | 1 | sigenergy2mqtt/sigen_0_plant_remote_ems/state <br/> homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems/state |Modbus Register 40029 ||
-| Remote EMS Control Mode | 60s |  | 1 | sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state <br/> homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/state |Modbus Register 40031 ||
-| Running State | 10s |  | 1 | sigenergy2mqtt/sigen_0_plant_running_state/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_running_state/state |Modbus Register 30051 ||
-| Smart Load 01 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_01_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_power/state |Modbus Register 30146 ||
-| Smart Load 01 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_01_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_total_consumption/state |Modbus Register 30098 ||
-| Smart Load 02 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_02_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_power/state |Modbus Register 30148 ||
-| Smart Load 02 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_02_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_total_consumption/state |Modbus Register 30100 ||
-| Smart Load 03 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_03_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_power/state |Modbus Register 30150 ||
-| Smart Load 03 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_03_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_total_consumption/state |Modbus Register 30102 ||
-| Smart Load 04 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_04_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_power/state |Modbus Register 30152 ||
-| Smart Load 04 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_04_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_total_consumption/state |Modbus Register 30104 ||
-| Smart Load 05 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_05_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_power/state |Modbus Register 30154 ||
-| Smart Load 05 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_05_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_total_consumption/state |Modbus Register 30106 ||
-| Smart Load 06 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_06_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_power/state |Modbus Register 30156 ||
-| Smart Load 06 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_06_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_total_consumption/state |Modbus Register 30108 ||
-| Smart Load 07 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_07_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_power/state |Modbus Register 30158 ||
-| Smart Load 07 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_07_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_total_consumption/state |Modbus Register 30110 ||
-| Smart Load 08 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_08_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_power/state |Modbus Register 30160 ||
-| Smart Load 08 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_08_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_total_consumption/state |Modbus Register 30112 ||
-| Smart Load 09 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_09_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_power/state |Modbus Register 30162 ||
-| Smart Load 09 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_09_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_total_consumption/state |Modbus Register 30114 ||
-| Smart Load 10 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_10_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_power/state |Modbus Register 30164 ||
-| Smart Load 10 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_10_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_total_consumption/state |Modbus Register 30116 ||
-| Smart Load 11 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_11_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_power/state |Modbus Register 30166 ||
-| Smart Load 11 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_11_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_total_consumption/state |Modbus Register 30118 ||
-| Smart Load 12 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_12_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_power/state |Modbus Register 30168 ||
-| Smart Load 12 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_12_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_total_consumption/state |Modbus Register 30120 ||
-| Smart Load 13 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_13_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_power/state |Modbus Register 30170 ||
-| Smart Load 13 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_13_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_total_consumption/state |Modbus Register 30122 ||
-| Smart Load 14 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_14_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_power/state |Modbus Register 30172 ||
-| Smart Load 14 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_14_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_total_consumption/state |Modbus Register 30124 ||
-| Smart Load 15 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_15_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_power/state |Modbus Register 30174 ||
-| Smart Load 15 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_15_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_total_consumption/state |Modbus Register 30126 ||
-| Smart Load 16 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_16_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_power/state |Modbus Register 30176 ||
-| Smart Load 16 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_16_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_total_consumption/state |Modbus Register 30128 ||
-| Smart Load 17 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_17_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_power/state |Modbus Register 30178 ||
-| Smart Load 17 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_17_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_total_consumption/state |Modbus Register 30130 ||
-| Smart Load 18 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_18_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_power/state |Modbus Register 30180 ||
-| Smart Load 18 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_18_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_total_consumption/state |Modbus Register 30132 ||
-| Smart Load 19 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_19_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_power/state |Modbus Register 30182 ||
-| Smart Load 19 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_19_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_total_consumption/state |Modbus Register 30134 ||
-| Smart Load 20 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_20_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_power/state |Modbus Register 30184 ||
-| Smart Load 20 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_20_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_total_consumption/state |Modbus Register 30136 ||
-| Smart Load 21 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_21_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_power/state |Modbus Register 30186 ||
-| Smart Load 21 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_21_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_total_consumption/state |Modbus Register 30138 ||
-| Smart Load 22 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_22_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_power/state |Modbus Register 30188 ||
-| Smart Load 22 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_22_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_total_consumption/state |Modbus Register 30140 ||
-| Smart Load 23 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_23_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_power/state |Modbus Register 30190 ||
-| Smart Load 23 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_23_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_total_consumption/state |Modbus Register 30142 ||
-| Smart Load 24 Power | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_24_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_power/state |Modbus Register 30192 ||
-| Smart Load 24 Total Consumption | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_smart_load_24_total_consumption/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_total_consumption/state |Modbus Register 30144 ||
-| System Time | 60s |  | 1 | sigenergy2mqtt/sigen_0_plant_system_time/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time/state |Modbus Register 30000 ||
-| System Time Zone | 600s |  | 1 | sigenergy2mqtt/sigen_0_plant_system_time_zone/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time_zone/state |Modbus Register 30002 ||
-| Third-Party PV Power | 5s | W | 1 | sigenergy2mqtt/sigen_0_third_party_pv_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_power/state |Modbus Register 30194 ||
-| Total PV Power || W | 1 | sigenergy2mqtt/sigen_0_total_pv_power/state <br/> homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_pv_power/state |PlantPVPower &plus; (PlantThirdPartyPVPower _or_ &sum; of all configured SmartPort MQTT sources and SmartPort modules)||
+<details>
+<summary>
+Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power/state</td></tr>
+<tr><td>Source</td><td>30031</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40001</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40005</td></tr>
+<tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Max Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_active_power/state</td></tr>
+<tr><td>Source</td><td>30039</td></tr>
+<tr><td>Comment</td><td>Feed to the AC terminal. Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Max Charging Capacity
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_charging_capacity/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_charging_capacity/state</td></tr>
+<tr><td>Source</td><td>30064</td></tr>
+<tr><td>Comment</td><td>Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Max Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_charging_power/state</td></tr>
+<tr><td>Source</td><td>30047</td></tr>
+<tr><td>Comment</td><td>Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Max Discharging Capacity
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_discharging_capacity/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_discharging_capacity/state</td></tr>
+<tr><td>Source</td><td>30066</td></tr>
+<tr><td>Comment</td><td>Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Max Discharging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_discharging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_discharging_power/state</td></tr>
+<tr><td>Source</td><td>30049</td></tr>
+<tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Max Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_max_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30043</td></tr>
+<tr><td>Comment</td><td>Feed to the AC terminal. Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Min Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_min_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_min_active_power/state</td></tr>
+<tr><td>Source</td><td>30041</td></tr>
+<tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Min Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_available_min_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_min_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30045</td></tr>
+<tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Backup SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_backup_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_backup_soc/state</td></tr>
+<tr><td>Source</td><td>40046</td></tr>
+<tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_battery_charging_power/state</td></tr>
+<tr><td>Source</td><td>BatteryPower &gt; 0</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery Discharging Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_discharging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_battery_discharging_power/state</td></tr>
+<tr><td>Source</td><td>BatteryPower &lt; 0</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_battery_power/state</td></tr>
+<tr><td>Source</td><td>30037</td></tr>
+<tr><td>Comment</td><td>ESS Power: <0 = discharging >0 = charging</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_battery_soc/state</td></tr>
+<tr><td>Source</td><td>30014</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery SoH
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_soh/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_battery_soh/state</td></tr>
+<tr><td>Source</td><td>30087</td></tr>
+<tr><td>Comment</td><td>This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Charge Cut-Off SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_charge_cut_off_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_charge_cut_off_soc/state</td></tr>
+<tr><td>Source</td><td>30085</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Charge Cut-Off SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_charge_cut_off_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/state</td></tr>
+<tr><td>Source</td><td>40047</td></tr>
+<tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Consumed Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_consumed_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_consumed_power/state</td></tr>
+<tr><td>Source</td><td>TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower</td></tr>
+</table>
+</details>
+<details>
+<summary>
+DC Charger Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_5/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_5/state</td></tr>
+<tr><td>Source</td><td>30072</td></tr>
+<tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_daily_charge_energy/state</td></tr>
+<tr><td>Source</td><td>&sum; of DailyChargeEnergy across all Inverters associated with the Plant</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_consumed_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_daily_consumed_energy/state</td></tr>
+<tr><td>Source</td><td>30092</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_daily_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>&sum; of DailyDischargeEnergy across all Inverters associated with the Plant</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_daily_pv_energy/state</td></tr>
+<tr><td>Source</td><td>PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Total PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_daily_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_total_daily_pv_energy/state</td></tr>
+<tr><td>Source</td><td>TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Discharge Cut-Off SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_discharge_cut_off_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_discharge_cut_off_soc/state</td></tr>
+<tr><td>Source</td><td>30086</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Discharge Cut-Off SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_discharge_cut_off_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/state</td></tr>
+<tr><td>Source</td><td>40048</td></tr>
+<tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+EMS Work Mode
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_ems_work_mode/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ems_work_mode/state</td></tr>
+<tr><td>Source</td><td>30003</td></tr>
+</table>
+</details>
+<details>
+<summary>
+ESS Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_3/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_3/state</td></tr>
+<tr><td>Source</td><td>30029</td></tr>
+<tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Gateway Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_4/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_4/state</td></tr>
+<tr><td>Source</td><td>30030</td></tr>
+<tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Max Export Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_export_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state</td></tr>
+<tr><td>Source</td><td>40038</td></tr>
+<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Max Import Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_import_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state</td></tr>
+<tr><td>Source</td><td>40040</td></tr>
+<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Independent Phase Power Control
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_independent_phase_power_control/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state</td></tr>
+<tr><td>Source</td><td>40030</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_accumulated_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_accumulated_charge_energy/state</td></tr>
+<tr><td>Source</td><td>30200</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_consumed_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_lifetime_consumed_energy/state</td></tr>
+<tr><td>Source</td><td>30094</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime DC EV Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_evdc_total_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_evdc_total_charge_energy/state</td></tr>
+<tr><td>Source</td><td>30208</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime DC EV Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_evdc_total_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_evdc_total_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>30212</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_accumulated_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_accumulated_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>30204</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Generator Output Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_total_generator_output_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_total_generator_output_energy/state</td></tr>
+<tr><td>Source</td><td>30224</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_lifetime_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_lifetime_pv_energy/state</td></tr>
+<tr><td>Source</td><td>30088</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Third-Party PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_lifetime_production/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_third_party_pv_lifetime_production/state</td></tr>
+<tr><td>Source</td><td>30196</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Total PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_lifetime_pv_energy/state</td></tr>
+<tr><td>Source</td><td>&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_max_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_active_power/state</td></tr>
+<tr><td>Source</td><td>30010</td></tr>
+<tr><td>Comment</td><td>This should be the base value of all active power adjustment actions</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Apparent Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_max_apparent_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_apparent_power/state</td></tr>
+<tr><td>Source</td><td>30012</td></tr>
+<tr><td>Comment</td><td>This should be the base value of all reactive power adjustment actions</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Charging Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/state</td></tr>
+<tr><td>Source</td><td>40032</td></tr>
+<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Discharging Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state</td></tr>
+<tr><td>Source</td><td>40034</td></tr>
+<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PCS Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_pcs_alarm/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_pcs_alarm/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30027 and 30028</td></tr>
+<tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PCS Max Export Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_export_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state</td></tr>
+<tr><td>Source</td><td>40042</td></tr>
+<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PCS Max Import Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_import_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state</td></tr>
+<tr><td>Source</td><td>40044</td></tr>
+<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV Max Power Limit
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state</td></tr>
+<tr><td>Source</td><td>40036</td></tr>
+<tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_pv_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_power/state</td></tr>
+<tr><td>Source</td><td>30035</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power/state</td></tr>
+<tr><td>Source</td><td>30015</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40008</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40020</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Q/S Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40023</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30021</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40014</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power/state</td></tr>
+<tr><td>Source</td><td>30017</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40010</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40021</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Q/S Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40024</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30023</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40016</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power/state</td></tr>
+<tr><td>Source</td><td>30019</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40012</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40022</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Q/S Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40025</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30025</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40018</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power Factor Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40007</td></tr>
+<tr><td>Comment</td><td>Range: (-1, -0.8] U [0.8, 1]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Q/S Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40006</td></tr>
+<tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_charging_power/state</td></tr>
+<tr><td>Source</td><td>30068</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Discharging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_discharging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_discharging_power/state</td></tr>
+<tr><td>Source</td><td>30070</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Energy Capacity
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_energy_capacity/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state</td></tr>
+<tr><td>Source</td><td>30083</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30033</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Source</td><td>40003</td></tr>
+<tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Remote EMS
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/state</td></tr>
+<tr><td>Source</td><td>40029</td></tr>
+<tr><td>Comment</td><td>When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Remote EMS Control Mode
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
+<tr><td>Source</td><td>40031</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Running State
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_running_state/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_running_state/state</td></tr>
+<tr><td>Source</td><td>30051</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 01 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_01_power/state</td></tr>
+<tr><td>Source</td><td>30146</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 01 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_01_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30098</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 02 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_02_power/state</td></tr>
+<tr><td>Source</td><td>30148</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 02 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_02_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30100</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 03 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_03_power/state</td></tr>
+<tr><td>Source</td><td>30150</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 03 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_03_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30102</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 04 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_04_power/state</td></tr>
+<tr><td>Source</td><td>30152</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 04 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_04_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30104</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 05 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_05_power/state</td></tr>
+<tr><td>Source</td><td>30154</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 05 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_05_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30106</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 06 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_06_power/state</td></tr>
+<tr><td>Source</td><td>30156</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 06 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_06_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30108</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 07 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_07_power/state</td></tr>
+<tr><td>Source</td><td>30158</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 07 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_07_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30110</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 08 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_08_power/state</td></tr>
+<tr><td>Source</td><td>30160</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 08 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_08_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30112</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 09 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_09_power/state</td></tr>
+<tr><td>Source</td><td>30162</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 09 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_09_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30114</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 10 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_10_power/state</td></tr>
+<tr><td>Source</td><td>30164</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 10 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_10_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30116</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 11 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_11_power/state</td></tr>
+<tr><td>Source</td><td>30166</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 11 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_11_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30118</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 12 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_12_power/state</td></tr>
+<tr><td>Source</td><td>30168</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 12 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_12_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30120</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 13 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_13_power/state</td></tr>
+<tr><td>Source</td><td>30170</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 13 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_13_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30122</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 14 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_14_power/state</td></tr>
+<tr><td>Source</td><td>30172</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 14 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_14_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30124</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 15 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_15_power/state</td></tr>
+<tr><td>Source</td><td>30174</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 15 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_15_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30126</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 16 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_16_power/state</td></tr>
+<tr><td>Source</td><td>30176</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 16 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_16_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30128</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 17 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_17_power/state</td></tr>
+<tr><td>Source</td><td>30178</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 17 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_17_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30130</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 18 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_18_power/state</td></tr>
+<tr><td>Source</td><td>30180</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 18 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_18_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30132</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 19 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_19_power/state</td></tr>
+<tr><td>Source</td><td>30182</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 19 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_19_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30134</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 20 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_20_power/state</td></tr>
+<tr><td>Source</td><td>30184</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 20 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_20_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30136</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 21 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_21_power/state</td></tr>
+<tr><td>Source</td><td>30186</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 21 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_21_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30138</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 22 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_22_power/state</td></tr>
+<tr><td>Source</td><td>30188</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 22 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_22_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30140</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 23 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_23_power/state</td></tr>
+<tr><td>Source</td><td>30190</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 23 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_23_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30142</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 24 Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_24_power/state</td></tr>
+<tr><td>Source</td><td>30192</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Smart Load 24 Total Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_total_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_24_total_consumption/state</td></tr>
+<tr><td>Source</td><td>30144</td></tr>
+</table>
+</details>
+<details>
+<summary>
+System Time
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time/state</td></tr>
+<tr><td>Source</td><td>30000</td></tr>
+</table>
+</details>
+<details>
+<summary>
+System Time Zone
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time_zone/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time_zone/state</td></tr>
+<tr><td>Source</td><td>30002</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Third-Party PV Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_third_party_pv_power/state</td></tr>
+<tr><td>Source</td><td>30194</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total PV Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_pv_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_total_pv_power/state</td></tr>
+<tr><td>Source</td><td>PV Power + (sum of all Smart-Port PV Power sensors)</td></tr>
+</table>
+</details>
 
 #### Grid Sensor
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Active Power | 5s | W | 1 | sigenergy2mqtt/sigen_0_plant_grid_sensor_active_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_active_power/state |Modbus Register 30005 ||
-| Daily Exported Energy || kWh | 100 | sigenergy2mqtt/sigen_0_grid_sensor_daily_export_energy/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_export_energy/state |GridSensorLifetimeExportEnergy &minus; GridSensorLifetimeExportEnergy at last midnight||
-| Daily Imported Energy || kWh | 100 | sigenergy2mqtt/sigen_0_grid_sensor_daily_import_energy/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_import_energy/state |GridSensorLifetimeImportEnergy &minus; GridSensorLifetimeImportEnergy at last midnight||
-| Export Power || W | 1 | sigenergy2mqtt/sigen_0_grid_sensor_export_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_export_power/state |GridSensorActivePower &lt; 0 &times; -1||
-| Grid Sensor Status | 10s |  | 1 | sigenergy2mqtt/sigen_0_plant_grid_sensor_status/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_status/state |Modbus Register 30004 ||
-| Grid Status | 10s |  | 1 | sigenergy2mqtt/sigen_0_plant_grid_status/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_status/state |Modbus Register 30009 ||
-| Import Power || W | 1 | sigenergy2mqtt/sigen_0_grid_sensor_import_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_import_power/state |GridSensorActivePower &gt; 0||
-| Lifetime Exported Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_grid_sensor_lifetime_export_energy/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_lifetime_export_energy/state |Modbus Register 30220 ||
-| Lifetime Imported Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_grid_sensor_lifetime_import_energy/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_lifetime_import_energy/state |Modbus Register 30216 ||
-| Phase A Active Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_grid_phase_a_active_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_active_power/state |Modbus Register 30052 ||
-| Phase A Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_grid_phase_a_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_reactive_power/state |Modbus Register 30058 ||
-| Phase B Active Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_grid_phase_b_active_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_active_power/state |Modbus Register 30054 ||
-| Phase B Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_grid_phase_b_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_reactive_power/state |Modbus Register 30060 ||
-| Phase C Active Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_grid_phase_c_active_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_active_power/state |Modbus Register 30056 ||
-| Phase C Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_plant_grid_phase_c_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_reactive_power/state |Modbus Register 30062 ||
-| Reactive Power | 10s | var | 1 | sigenergy2mqtt/sigen_0_plant_grid_sensor_reactive_power/state <br/> homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_reactive_power/state |Modbus Register 30007 ||
+<details>
+<summary>
+Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_active_power/state</td></tr>
+<tr><td>Source</td><td>30005</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Exported Energy
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_export_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_daily_export_energy/state</td></tr>
+<tr><td>Source</td><td>PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Imported Energy
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_import_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_daily_import_energy/state</td></tr>
+<tr><td>Source</td><td>PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Export Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_export_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_export_power/state</td></tr>
+<tr><td>Source</td><td>GridSensorActivePower &lt; 0 &times; -1</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Sensor Status
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_status/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_status/state</td></tr>
+<tr><td>Source</td><td>30004</td></tr>
+<tr><td>Comment</td><td>Gateway or meter connection status</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Status
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_status/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_status/state</td></tr>
+<tr><td>Source</td><td>30009</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Import Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_import_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_import_power/state</td></tr>
+<tr><td>Source</td><td>GridSensorActivePower &gt; 0</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Exported Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_lifetime_export_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_lifetime_export_energy/state</td></tr>
+<tr><td>Source</td><td>30220</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Imported Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_lifetime_import_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_lifetime_import_energy/state</td></tr>
+<tr><td>Source</td><td>30216</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_active_power/state</td></tr>
+<tr><td>Source</td><td>30052</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30058</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_active_power/state</td></tr>
+<tr><td>Source</td><td>30054</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30060</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_active_power/state</td></tr>
+<tr><td>Source</td><td>30056</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30062</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>var</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30007</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+</table>
+</details>
 
 #### Smart-Port (Enphase Envoy only)
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Current || A | 1 | sigenergy2mqtt/sigen_0_enphase_123456789012_current/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_current/state |Enphase Envoy API when EnphasePVPower derived||
-| Daily Production || kWh | 1000 | sigenergy2mqtt/sigen_0_enphase_123456789012_daily_pv_energy/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_daily_pv_energy/state |Enphase Envoy API when EnphasePVPower derived||
-| Frequency || Hz | 1 | sigenergy2mqtt/sigen_0_enphase_123456789012_frequency/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_frequency/state |Enphase Envoy API when EnphasePVPower derived||
-| Lifetime Production || kWh | 1000 | sigenergy2mqtt/sigen_0_enphase_123456789012_lifetime_pv_energy/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_lifetime_pv_energy/state |Enphase Envoy API when EnphasePVPower derived||
-| PV Power | 5s | W | 1 | sigenergy2mqtt/sigen_0_enphase_123456789012_active_power/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_active_power/state |Enphase Envoy API||
-| Power Factor ||  | 1 | sigenergy2mqtt/sigen_0_enphase_123456789012_power_factor/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_power_factor/state |Enphase Envoy API when EnphasePVPower derived||
-| Reactive Power || kvar | 1000 | sigenergy2mqtt/sigen_0_enphase_123456789012_reactive_power/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_reactive_power/state |Enphase Envoy API when EnphasePVPower derived||
-| Voltage || V | 1 | sigenergy2mqtt/sigen_0_enphase_123456789012_voltage/state <br/> homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_voltage/state |Enphase Envoy API when EnphasePVPower derived||
+<details>
+<summary>
+Current
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_current/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Frequency
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>Hz</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_frequency/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_frequency/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_active_power/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power Factor
+</summary>
+<table>
+<tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_power_factor/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_power_factor/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_voltage/state</td></tr>
+<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+</table>
+</details>
 
 #### Statistics
-
-After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting _without_ inheriting historical data.
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Total AC EV Charge Energy | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_ev_ac_charged_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_ev_ac_charged_energy/state |Modbus Register 30232 ||
-| Total Charge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_charged_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_charged_energy/state |Modbus Register 30244 ||
-| Total Common Load Consumption | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_common_load_consumption/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_common_load_consumption/state |Modbus Register 30228 ||
-| Total DC EV Charge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_evdc_total_charge_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_evdc_total_charge_energy/state |Modbus Register 30252 ||
-| Total DC EV Discharge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_evdc_total_discharge_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_evdc_total_discharge_energy/state |Modbus Register 30256 ||
-| Total Discharge Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_discharged_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_discharged_energy/state |Modbus Register 30248 ||
-| Total Exported Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_exported_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_exported_energy/state |Modbus Register 30264 ||
-| Total Generator Output Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_generator_output_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_generator_output_energy/state |Modbus Register 30268 ||
-| Total Imported Energy | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_imported_energy/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_imported_energy/state |Modbus Register 30260 ||
-| Total PV Production | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_self_pv_generation/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_self_pv_generation/state |Modbus Register 30236 ||
-| Total Third-Party PV Production | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_si_total_third_party_pv_generation/state <br/> homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_third_party_pv_generation/state |Modbus Register 30240 ||
+<details>
+<summary>
+Total AC EV Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_ev_ac_charged_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_ev_ac_charged_energy/state</td></tr>
+<tr><td>Source</td><td>30232</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_charged_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_charged_energy/state</td></tr>
+<tr><td>Source</td><td>30244</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Common Load Consumption
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_common_load_consumption/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_common_load_consumption/state</td></tr>
+<tr><td>Source</td><td>30228</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total DC EV Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_evdc_total_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_evdc_total_charge_energy/state</td></tr>
+<tr><td>Source</td><td>30252</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total DC EV Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_evdc_total_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_evdc_total_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>30256</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_discharged_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_discharged_energy/state</td></tr>
+<tr><td>Source</td><td>30248</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Exported Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_exported_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_exported_energy/state</td></tr>
+<tr><td>Source</td><td>30264</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Generator Output Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_generator_output_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_generator_output_energy/state</td></tr>
+<tr><td>Source</td><td>30268</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Imported Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_imported_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_imported_energy/state</td></tr>
+<tr><td>Source</td><td>30260</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_self_pv_generation/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_self_pv_generation/state</td></tr>
+<tr><td>Source</td><td>30236</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Third-Party PV Production
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_plantstatistics/sigen_0_si_total_third_party_pv_generation/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_si_total_third_party_pv_generation/state</td></tr>
+<tr><td>Source</td><td>30240</td></tr>
+<tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+</table>
+</details>
 
 ### Inverter
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| A-B Line Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_a_b_line_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_a_b_line_voltage/state |Modbus Register 31005 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Active Power | 5s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_active_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power/state |Modbus Register 30587 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Active Power Fixed Value Adjustment | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment/state |Modbus Register 41501 | PV&nbsp;Inverter |
-| Active Power Fixed Value Adjustment Feedback | 60s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state |Modbus Register 30613 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Active Power Percentage Adjustment | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment/state |Modbus Register 41505 | PV&nbsp;Inverter |
-| Active Power Percentage Adjustment Feedback | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state |Modbus Register 30617 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| B-C Line Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_b_c_line_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_b_c_line_voltage/state |Modbus Register 31007 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| C-A Line Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_c_a_line_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_c_a_line_voltage/state |Modbus Register 31009 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Daily Production | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_daily_pv_energy/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_daily_pv_energy/state |Modbus Register 31509 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Firmware Version | 600s |  |  | sigenergy2mqtt/sigen_0_inverter_1_firmware_version/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_firmware_version/state |Modbus Register 30525 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Gateway Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_alarm_4/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_alarm_4/state |Modbus Register 30608 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Grid Frequency | 10s | Hz | 100 | sigenergy2mqtt/sigen_0_inverter_1_grid_frequency/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_grid_frequency/state |Modbus Register 31002 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Insulation Resistance | 60s | MΩ | 1000 | sigenergy2mqtt/sigen_0_inverter_1_insulation_resistance/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_insulation_resistance/state |Modbus Register 31037 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Lifetime Production | 60s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_lifetime_pv_energy/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_lifetime_pv_energy/state |Modbus Register 31511 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| MPTT Count | 600s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_mptt_count/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_mptt_count/state |Modbus Register 31026 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Max Absorption Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_absorption_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_absorption_power/state |Modbus Register 30546 | Hybrid&nbsp;Inverter |
-| Max Active Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_active_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_active_power/state |Modbus Register 30544 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Max Active Power Adjustment | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_active_power_adjustment/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_active_power_adjustment/state |Modbus Register 30579 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Max Rated Apparent Power | 600s | kVA | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_rated_apparent_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_rated_apparent_power/state |Modbus Register 30542 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Max Reactive Power Adjustment | 600s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_reactive_power_adjustment/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_reactive_power_adjustment/state |Modbus Register 30583 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Min Active Power Adjustment | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_min_active_power_adjustment/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_min_active_power_adjustment/state |Modbus Register 30581 | Hybrid&nbsp;Inverter |
-| Min Reactive Power Adjustment | 600s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_min_reactive_power_adjustment/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_min_reactive_power_adjustment/state |Modbus Register 30585 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Output Type | 600s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_output_type/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_output_type/state |Modbus Register 31004 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| PACK/BCU Count | 60s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_pack_bcu_count/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pack_bcu_count/state |Modbus Register 31024 | Hybrid&nbsp;Inverter |
-| PCS Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_pcs_alarm/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pcs_alarm/state |Modbus Registers 30605 and 30606| Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| PV Power | 10s | W | 1 | sigenergy2mqtt/sigen_0_inverter_1_pv_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pv_power/state |Modbus Register 31035 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| PV String Count | 600s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_pv_string_count/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pv_string_count/state |Modbus Register 31025 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Phase A Current | 60s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_phase_a_current/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_a_current/state |Modbus Register 31017 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Phase A Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_phase_a_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_a_voltage/state |Modbus Register 31011 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Phase B Current | 60s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_phase_b_current/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_b_current/state |Modbus Register 31019 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Phase B Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_phase_b_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_b_voltage/state |Modbus Register 31013 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Phase C Current | 60s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_phase_c_current/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_c_current/state |Modbus Register 31021 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Phase C Voltage | 60s | V | 100 | sigenergy2mqtt/sigen_0_inverter_1_phase_c_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_c_voltage/state |Modbus Register 31015 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Power Factor | 10s |  | 1000 | sigenergy2mqtt/sigen_0_inverter_1_power_factor/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_power_factor/state |Modbus Register 31023 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Power Factor Adjustment | 60s |  | 1000 | sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_power_factor_adjustment/state |Modbus Register 41507 | PV&nbsp;Inverter |
-| Rated Active Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_rated_active_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_active_power/state |Modbus Register 30540 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Rated Grid Frequency | 600s | Hz | 100 | sigenergy2mqtt/sigen_0_inverter_1_rated_grid_frequency/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_grid_frequency/state |Modbus Register 31001 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Rated Grid Voltage | 600s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_rated_grid_voltage/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_grid_voltage/state |Modbus Register 31000 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Reactive Power | 10s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power/state |Modbus Register 30589 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Reactive Power Fixed Value Adjustment | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state |Modbus Register 41503 | PV&nbsp;Inverter |
-| Reactive Power Fixed Value Adjustment Feedback | 60s | kvar | 1000 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state |Modbus Register 30615 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Reactive Power Percentage Adjustment Feedback | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state |Modbus Register 30618 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Reactive Power Q/S Adjustment | 60s | % | 100 | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_q_s_adjustment/state |Modbus Register 41506 | PV&nbsp;Inverter |
-| Remote EMS Dispatch | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state <br/> homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/state |Modbus Register 41500 | PV&nbsp;Inverter |
-| Running State | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_running_state/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_running_state/state |Modbus Register 30578 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Shutdown Time | 600s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_shutdown_time/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_shutdown_time/state |Modbus Register 31040 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Startup Time | 600s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_startup_time/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_startup_time/state |Modbus Register 31038 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Temperature | 60s | °C | 10 | sigenergy2mqtt/sigen_0_inverter_1_temperature/state <br/> homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_temperature/state |Modbus Register 31003 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
+<details>
+<summary>
+A-B Line Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_a_b_line_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_a_b_line_voltage/state</td></tr>
+<tr><td>Source</td><td>31005</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power/state</td></tr>
+<tr><td>Source</td><td>30587</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Fixed Value Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Source</td><td>41501</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Fixed Value Adjustment Feedback
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state</td></tr>
+<tr><td>Source</td><td>30613</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Percentage Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state</td></tr>
+<tr><td>Source</td><td>41505</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Percentage Adjustment Feedback
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state</td></tr>
+<tr><td>Source</td><td>30617</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+B-C Line Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_b_c_line_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_b_c_line_voltage/state</td></tr>
+<tr><td>Source</td><td>31007</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+C-A Line Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_c_a_line_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_c_a_line_voltage/state</td></tr>
+<tr><td>Source</td><td>31009</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_daily_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_daily_pv_energy/state</td></tr>
+<tr><td>Source</td><td>31509</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Firmware Version
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_firmware_version/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_firmware_version/state</td></tr>
+<tr><td>Source</td><td>30525</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Gateway Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_alarm_4/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_4/state</td></tr>
+<tr><td>Source</td><td>30608</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Frequency
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>Hz</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_grid_frequency/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_grid_frequency/state</td></tr>
+<tr><td>Source</td><td>31002</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Insulation Resistance
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>MΩ</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_insulation_resistance/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_insulation_resistance/state</td></tr>
+<tr><td>Source</td><td>31037</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_lifetime_pv_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_lifetime_pv_energy/state</td></tr>
+<tr><td>Source</td><td>31511</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+MPTT Count
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_mptt_count/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_mptt_count/state</td></tr>
+<tr><td>Source</td><td>31026</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Absorption Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_absorption_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_absorption_power/state</td></tr>
+<tr><td>Source</td><td>30546</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_active_power/state</td></tr>
+<tr><td>Source</td><td>30544</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Active Power Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_active_power_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_active_power_adjustment/state</td></tr>
+<tr><td>Source</td><td>30579</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Rated Apparent Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kVA</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_rated_apparent_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_rated_apparent_power/state</td></tr>
+<tr><td>Source</td><td>30542</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Reactive Power Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_max_reactive_power_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_reactive_power_adjustment/state</td></tr>
+<tr><td>Source</td><td>30583</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Min Active Power Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_min_active_power_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_active_power_adjustment/state</td></tr>
+<tr><td>Source</td><td>30581</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Min Reactive Power Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_min_reactive_power_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_reactive_power_adjustment/state</td></tr>
+<tr><td>Source</td><td>30585</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Output Type
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_output_type/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_output_type/state</td></tr>
+<tr><td>Source</td><td>31004</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PACK/BCU Count
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pack_bcu_count/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pack_bcu_count/state</td></tr>
+<tr><td>Source</td><td>31024</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PCS Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pcs_alarm/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pcs_alarm/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30605 and 30606</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pv_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv_power/state</td></tr>
+<tr><td>Source</td><td>31035</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String Count
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pv_string_count/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv_string_count/state</td></tr>
+<tr><td>Source</td><td>31025</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_a_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_a_current/state</td></tr>
+<tr><td>Source</td><td>31017</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_a_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_a_voltage/state</td></tr>
+<tr><td>Source</td><td>31011</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_b_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_b_current/state</td></tr>
+<tr><td>Source</td><td>31019</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_b_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_b_voltage/state</td></tr>
+<tr><td>Source</td><td>31013</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_c_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_c_current/state</td></tr>
+<tr><td>Source</td><td>31021</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_phase_c_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_c_voltage/state</td></tr>
+<tr><td>Source</td><td>31015</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power Factor
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_power_factor/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor/state</td></tr>
+<tr><td>Source</td><td>31023</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power Factor Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_power_factor_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/state</td></tr>
+<tr><td>Source</td><td>41507</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Active Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_active_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_active_power/state</td></tr>
+<tr><td>Source</td><td>30540</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Grid Frequency
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>Hz</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_grid_frequency/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_grid_frequency/state</td></tr>
+<tr><td>Source</td><td>31001</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Grid Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_rated_grid_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_grid_voltage/state</td></tr>
+<tr><td>Source</td><td>31000</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power/state</td></tr>
+<tr><td>Source</td><td>30589</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Fixed Value Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Source</td><td>41503</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Fixed Value Adjustment Feedback
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>kvar</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state</td></tr>
+<tr><td>Source</td><td>30615</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Percentage Adjustment Feedback
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state</td></tr>
+<tr><td>Source</td><td>30618</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Q/S Adjustment
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_q_s_adjustment/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state</td></tr>
+<tr><td>Source</td><td>41506</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Remote EMS Dispatch
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
+<tr><td>Source</td><td>41500</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Running State
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_running_state/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_running_state/state</td></tr>
+<tr><td>Source</td><td>30578</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Shutdown Time
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_shutdown_time/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_shutdown_time/state</td></tr>
+<tr><td>Source</td><td>31040</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Startup Time
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_startup_time/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_startup_time/state</td></tr>
+<tr><td>Source</td><td>31038</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Temperature
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>°C</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_temperature/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_temperature/state</td></tr>
+<tr><td>Source</td><td>31003</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
 
 #### Energy Storage System
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_1_alarm_3/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_alarm_3/state |Modbus Register 30607 | Hybrid&nbsp;Inverter |
-| Available Charge Energy | 600s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_available_battery_charge_energy/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_available_battery_charge_energy/state |Modbus Register 30595 | Hybrid&nbsp;Inverter |
-| Available Discharge Energy | 600s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_available_battery_discharge_energy/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_available_battery_discharge_energy/state |Modbus Register 30597 | Hybrid&nbsp;Inverter |
-| Average Cell Temperature | 10s | °C | 10 | sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_average_cell_temperature/state |Modbus Register 30603 | Hybrid&nbsp;Inverter |
-| Average Cell Voltage | 10s | V | 1000 | sigenergy2mqtt/sigen_0_inverter_1_average_cell_voltage/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_average_cell_voltage/state |Modbus Register 30604 | Hybrid&nbsp;Inverter |
-| Battery Charging Power || W | 1 | sigenergy2mqtt/sigen_0_inverter_1_battery_charging_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_charging_power/state |ChargeDischargePower &gt; 0||
-| Battery Discharging Power || W | 1 | sigenergy2mqtt/sigen_0_inverter_1_battery_discharging_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_discharging_power/state |ChargeDischargePower &lt; 0 &times; -1||
-| Battery Power | 5s | W | 1 | sigenergy2mqtt/sigen_0_inverter_1_charge_discharge_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_charge_discharge_power/state |Modbus Register 30599 | Hybrid&nbsp;Inverter |
-| Battery SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_inverter_1_battery_soc/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_soc/state |Modbus Register 30601 | Hybrid&nbsp;Inverter |
-| Battery SoH | 60s | % | 10 | sigenergy2mqtt/sigen_0_inverter_1_battery_soh/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_soh/state |Modbus Register 30602 | Hybrid&nbsp;Inverter |
-| Daily Charge Energy | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_daily_charge_energy/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_daily_charge_energy/state |Modbus Register 30566 | Hybrid&nbsp;Inverter |
-| Daily Discharge Energy | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_daily_discharge_energy/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_daily_discharge_energy/state |Modbus Register 30572 | Hybrid&nbsp;Inverter |
-| Lifetime Charge Energy | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_accumulated_charge_energy/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_accumulated_charge_energy/state |Modbus Register 30568 | Hybrid&nbsp;Inverter |
-| Lifetime Discharge Energy | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_accumulated_discharge_energy/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_accumulated_discharge_energy/state |Modbus Register 30574 | Hybrid&nbsp;Inverter |
-| Max Battery Temperature | 60s | °C | 10 | sigenergy2mqtt/sigen_0_inverter_1_max_battery_temperature/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_battery_temperature/state |Modbus Register 30620 | Hybrid&nbsp;Inverter |
-| Max Charge Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_battery_charge_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_battery_charge_power/state |Modbus Register 30591 | Hybrid&nbsp;Inverter |
-| Max Discharge Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_max_battery_discharge_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_battery_discharge_power/state |Modbus Register 30593 | Hybrid&nbsp;Inverter |
-| Min Battery Temperature | 60s | °C | 10 | sigenergy2mqtt/sigen_0_inverter_1_min_battery_temperature/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_min_battery_temperature/state |Modbus Register 30621 | Hybrid&nbsp;Inverter |
-| Rated Battery Capacity | 600s | kWh | 100 | sigenergy2mqtt/sigen_0_inverter_1_rated_battery_capacity/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_rated_battery_capacity/state |Modbus Register 30548 | Hybrid&nbsp;Inverter |
-| Rated Charging Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_rated_charging_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_rated_charging_power/state |Modbus Register 30550 | Hybrid&nbsp;Inverter |
-| Rated Discharging Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_inverter_1_rated_discharging_power/state <br/> homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_rated_discharging_power/state |Modbus Register 30552 | Hybrid&nbsp;Inverter |
+<details>
+<summary>
+Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_alarm_3/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_3/state</td></tr>
+<tr><td>Source</td><td>30607</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_available_battery_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_available_battery_charge_energy/state</td></tr>
+<tr><td>Source</td><td>30595</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Available Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_available_battery_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_available_battery_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>30597</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Average Cell Temperature
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>°C</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_average_cell_temperature/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state</td></tr>
+<tr><td>Source</td><td>30603</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Average Cell Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_average_cell_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_average_cell_voltage/state</td></tr>
+<tr><td>Source</td><td>30604</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_charging_power/state</td></tr>
+<tr><td>Source</td><td>ChargeDischargePower &gt; 0</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery Discharging Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_discharging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_discharging_power/state</td></tr>
+<tr><td>Source</td><td>ChargeDischargePower &lt; 0 &times; -1</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_charge_discharge_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_charge_discharge_power/state</td></tr>
+<tr><td>Source</td><td>30599</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_soc/state</td></tr>
+<tr><td>Source</td><td>30601</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Battery SoH
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_soh/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_soh/state</td></tr>
+<tr><td>Source</td><td>30602</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_daily_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_daily_charge_energy/state</td></tr>
+<tr><td>Source</td><td>30566</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Daily Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_daily_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_daily_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>30572</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Charge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_accumulated_charge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_accumulated_charge_energy/state</td></tr>
+<tr><td>Source</td><td>30568</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Lifetime Discharge Energy
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_accumulated_discharge_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_accumulated_discharge_energy/state</td></tr>
+<tr><td>Source</td><td>30574</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Battery Temperature
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>°C</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_battery_temperature/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_battery_temperature/state</td></tr>
+<tr><td>Source</td><td>30620</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Charge Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_battery_charge_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_battery_charge_power/state</td></tr>
+<tr><td>Source</td><td>30591</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Discharge Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_battery_discharge_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_battery_discharge_power/state</td></tr>
+<tr><td>Source</td><td>30593</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Min Battery Temperature
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>°C</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_min_battery_temperature/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_battery_temperature/state</td></tr>
+<tr><td>Source</td><td>30621</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Battery Capacity
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_rated_battery_capacity/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_battery_capacity/state</td></tr>
+<tr><td>Source</td><td>30548</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_rated_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_charging_power/state</td></tr>
+<tr><td>Source</td><td>30550</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Discharging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_rated_discharging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_discharging_power/state</td></tr>
+<tr><td>Source</td><td>30552</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+</table>
+</details>
 
 #### PV String
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv1_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_current/state |Modbus Register 31028 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv2_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_current/state |Modbus Register 31030 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv3_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_current/state |Modbus Register 31032 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv4_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_current/state |Modbus Register 31034 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv5_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_current/state |Modbus Register 31043 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv6_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_current/state |Modbus Register 31045 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv7_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_current/state |Modbus Register 31047 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv8_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_current/state |Modbus Register 31049 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv9_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_current/state |Modbus Register 31051 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv10_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_current/state |Modbus Register 31053 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv11_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_current/state |Modbus Register 31055 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv12_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_current/state |Modbus Register 31057 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv13_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_current/state |Modbus Register 31059 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv14_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_current/state |Modbus Register 31061 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv15_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_current/state |Modbus Register 31063 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Current | 10s | A | 100 | sigenergy2mqtt/sigen_0_inverter_1_pv16_current/state <br/> homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_current/state |Modbus Register 31065 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Daily Production || kWh | 1000 | sigenergy2mqtt/sigen_0_inverter_1_pv1_daily_energy/state <br/> homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_daily_energy/state |PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight||
-| Lifetime Production || kWh | 1000 | sigenergy2mqtt/sigen_0_inverter_1_pv1_lifetime_energy/state <br/> homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_lifetime_energy/state |Riemann &sum; of PVStringPower||
-| Power || W | 1 | sigenergy2mqtt/sigen_0_inverter_1_pv1_power/state <br/> homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_power/state |PVVoltageSensor &times; PVCurrentSensor||
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv1_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_voltage/state |Modbus Register 31027 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv2_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_voltage/state |Modbus Register 31029 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv3_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_voltage/state |Modbus Register 31031 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv4_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_voltage/state |Modbus Register 31033 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv5_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_voltage/state |Modbus Register 31042 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv6_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_voltage/state |Modbus Register 31044 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv7_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_voltage/state |Modbus Register 31046 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv8_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_voltage/state |Modbus Register 31048 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv9_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_voltage/state |Modbus Register 31050 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv10_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_voltage/state |Modbus Register 31052 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv11_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_voltage/state |Modbus Register 31054 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv12_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_voltage/state |Modbus Register 31056 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv13_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_voltage/state |Modbus Register 31058 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv14_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_voltage/state |Modbus Register 31060 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv15_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_voltage/state |Modbus Register 31062 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_inverter_1_pv16_voltage/state <br/> homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_voltage/state |Modbus Register 31064 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
+
+The actual number of PV Strings is determined from `PV String Count` in the Inverter.
+<details>
+<summary>
+PV String 1 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_current/state</td></tr>
+<tr><td>Source</td><td>31028</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 2 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_current/state</td></tr>
+<tr><td>Source</td><td>31030</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 3 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_current/state</td></tr>
+<tr><td>Source</td><td>31032</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 4 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_current/state</td></tr>
+<tr><td>Source</td><td>31034</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 5 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_current/state</td></tr>
+<tr><td>Source</td><td>31043</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 6 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_current/state</td></tr>
+<tr><td>Source</td><td>31045</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 7 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_current/state</td></tr>
+<tr><td>Source</td><td>31047</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 8 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_current/state</td></tr>
+<tr><td>Source</td><td>31049</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 9 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_current/state</td></tr>
+<tr><td>Source</td><td>31051</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 10 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_current/state</td></tr>
+<tr><td>Source</td><td>31053</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 11 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_current/state</td></tr>
+<tr><td>Source</td><td>31055</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 12 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_current/state</td></tr>
+<tr><td>Source</td><td>31057</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 13 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_current/state</td></tr>
+<tr><td>Source</td><td>31059</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 14 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_current/state</td></tr>
+<tr><td>Source</td><td>31061</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 15 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_current/state</td></tr>
+<tr><td>Source</td><td>31063</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 16 Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_current/state</td></tr>
+<tr><td>Source</td><td>31065</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 1 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 2 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 3 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 4 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 5 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 6 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 7 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 8 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 9 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 10 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 11 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 12 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 13 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 14 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 15 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 16 Daily Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_daily_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 1 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 2 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 3 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 4 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 5 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 6 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 7 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 8 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 9 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 10 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 11 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 12 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 13 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 14 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 15 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 16 Lifetime Production
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_lifetime_energy/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 1 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 2 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 3 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 4 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 5 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 6 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 7 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 8 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 9 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 10 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 11 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 12 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 13 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 14 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 15 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 16 Power
+</summary>
+<table>
+<tr>
+<tr><td>Unit of Measurement</td><td>W</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 1 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_voltage/state</td></tr>
+<tr><td>Source</td><td>31027</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 2 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_voltage/state</td></tr>
+<tr><td>Source</td><td>31029</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 3 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_voltage/state</td></tr>
+<tr><td>Source</td><td>31031</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 4 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_voltage/state</td></tr>
+<tr><td>Source</td><td>31033</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 5 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_voltage/state</td></tr>
+<tr><td>Source</td><td>31042</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 6 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_voltage/state</td></tr>
+<tr><td>Source</td><td>31044</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 7 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_voltage/state</td></tr>
+<tr><td>Source</td><td>31046</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 8 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_voltage/state</td></tr>
+<tr><td>Source</td><td>31048</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 9 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_voltage/state</td></tr>
+<tr><td>Source</td><td>31050</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 10 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_voltage/state</td></tr>
+<tr><td>Source</td><td>31052</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 11 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_voltage/state</td></tr>
+<tr><td>Source</td><td>31054</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 12 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_voltage/state</td></tr>
+<tr><td>Source</td><td>31056</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 13 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_voltage/state</td></tr>
+<tr><td>Source</td><td>31058</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 14 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_voltage/state</td></tr>
+<tr><td>Source</td><td>31060</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 15 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_voltage/state</td></tr>
+<tr><td>Source</td><td>31062</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV String 16 Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_voltage/state</td></tr>
+<tr><td>Source</td><td>31064</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
 
 ### AC Charger
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| AC Charger Charging Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_ac_charger_3_rated_charging_power/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_charging_power/state |Modbus Register 32003 ||
-| AC Charger Input Breaker | 600s | A | 100 | sigenergy2mqtt/sigen_0_ac_charger_3_input_breaker/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_input_breaker/state |Modbus Register 32010 ||
-| AC Charger Rated Current | 600s | A | 100 | sigenergy2mqtt/sigen_0_ac_charger_3_rated_current/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_current/state |Modbus Register 32007 ||
-| AC Charger Rated Power | 600s | kW | 1000 | sigenergy2mqtt/sigen_0_ac_charger_3_rated_power/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_power/state |Modbus Register 32005 ||
-| AC Charger Rated Voltage | 600s | V | 10 | sigenergy2mqtt/sigen_0_ac_charger_3_rated_voltage/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_voltage/state |Modbus Register 32009 ||
-| AC Charger Running State | 10s |  | 1 | sigenergy2mqtt/sigen_0_ac_charger_3_running_state/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_running_state/state |Modbus Register 32000 ||
-| AC Charger Total Energy Consumed | 10s | kWh | 100 | sigenergy2mqtt/sigen_0_ac_charger_3_total_energy_consumed/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_total_energy_consumed/state |Modbus Register 32001 ||
-| Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_ac_charger_3_alarm/state <br/> homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_alarm/state |Modbus Registers 32012, 32013, and 32014||
-| Output Current | 60s | A | 100 | sigenergy2mqtt/sigen_0_ac_charger_3_output_current/state <br/> homeassistant/number/sigen_0_003_accharger/sigen_0_ac_charger_3_output_current/state |Modbus Register 42001 ||
+<details>
+<summary>
+AC Charger Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_charging_power/state</td></tr>
+<tr><td>Source</td><td>32003</td></tr>
+</table>
+</details>
+<details>
+<summary>
+AC Charger Input Breaker
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_input_breaker/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_input_breaker/state</td></tr>
+<tr><td>Source</td><td>32010</td></tr>
+</table>
+</details>
+<details>
+<summary>
+AC Charger Rated Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_current/state</td></tr>
+<tr><td>Source</td><td>32007</td></tr>
+</table>
+</details>
+<details>
+<summary>
+AC Charger Rated Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_power/state</td></tr>
+<tr><td>Source</td><td>32005</td></tr>
+</table>
+</details>
+<details>
+<summary>
+AC Charger Rated Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_voltage/state</td></tr>
+<tr><td>Source</td><td>32009</td></tr>
+</table>
+</details>
+<details>
+<summary>
+AC Charger Running State
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_running_state/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_running_state/state</td></tr>
+<tr><td>Source</td><td>32000</td></tr>
+</table>
+</details>
+<details>
+<summary>
+AC Charger Total Energy Consumed
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_total_energy_consumed/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_total_energy_consumed/state</td></tr>
+<tr><td>Source</td><td>32001</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_alarm/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_alarm/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 32012, 32013, and 32014</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Output Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_003_accharger/sigen_0_ac_charger_3_output_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_output_current/state</td></tr>
+<tr><td>Source</td><td>42001</td></tr>
+</table>
+</details>
 
 ### DC Charger
-| Sensor Class | Interval | Unit | Gain | State Topic | Source | Applicable To |
-|--------------|---------:|------|-----:|-------------|--------|---------------|
-| Alarms | 10s |  | 1 | sigenergy2mqtt/sigen_0_inverter_2_alarm_5/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_inverter_2_alarm_5/state |Modbus Register 30609 ||
-| DC Charger Current Charging Capacity | 600s | kWh | 100 | sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_capacity/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_current_charging_capacity/state |Modbus Register 31505 ||
-| DC Charger Current Charging Duration | 600s | s | 1 | sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_duration/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_current_charging_duration/state |Modbus Register 31507 ||
-| DC Charger Output Power | 10s | kW | 1000 | sigenergy2mqtt/sigen_0_plant_dc_charger_output_power/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_output_power/state |Modbus Register 31502 ||
-| Vehicle Battery Voltage | 10s | V | 10 | sigenergy2mqtt/sigen_0_plant_vehicle_battery_voltage/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_battery_voltage/state |Modbus Register 31500 ||
-| Vehicle Charging Current | 10s | A | 10 | sigenergy2mqtt/sigen_0_plant_vehicle_charging_current/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_charging_current/state |Modbus Register 31501 ||
-| Vehicle SoC | 60s | % | 10 | sigenergy2mqtt/sigen_0_plant_vehicle_soc/state <br/> homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_soc/state |Modbus Register 31504 ||
+<details>
+<summary>
+Alarms
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_inverter_2_alarm_5/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_2_alarm_5/state</td></tr>
+<tr><td>Source</td><td>30609</td></tr>
+</table>
+</details>
+<details>
+<summary>
+DC Charger Current Charging Capacity
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_current_charging_capacity/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_capacity/state</td></tr>
+<tr><td>Source</td><td>31505</td></tr>
+<tr><td>Comment</td><td>Single time</td></tr>
+</table>
+</details>
+<details>
+<summary>
+DC Charger Current Charging Duration
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>s</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_current_charging_duration/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_duration/state</td></tr>
+<tr><td>Source</td><td>31507</td></tr>
+<tr><td>Comment</td><td>Single time</td></tr>
+</table>
+</details>
+<details>
+<summary>
+DC Charger Output Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_output_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_output_power/state</td></tr>
+<tr><td>Source</td><td>31502</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Vehicle Battery Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
+<tr><td>Source</td><td>31500</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Vehicle Charging Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_charging_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_charging_current/state</td></tr>
+<tr><td>Source</td><td>31501</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Vehicle SoC
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>60s</td></tr>
+<tr><td>Unit of Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_soc/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_soc/state</td></tr>
+<tr><td>Source</td><td>31504</td></tr>
+</table>
+</details>
 
 ### Metrics
 
 Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.
-| Metric | Interval | Unit | State Topic |
+| Metric | Interval | Unit | State Topic|
 |--------|---------:|------|-------------|
 | Modbus Active Locks | 1 |  | sigenergy2mqtt/metrics/modbus_locks |
 | Modbus Read Errors | 1 |  | sigenergy2mqtt/metrics/modbus_read_errors |
@@ -361,58 +4757,385 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 ## Subscribed Topics
 
 ### Plant
-| Sensor Class | Command Topic | Target | Applicable To |
-|--------------|---------------|--------|---------------|
-| Active Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/set | Modbus Register 40001 ||
-| Active Power Percentage Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_percentage_adjustment_target_value/set | Modbus Register 40005 ||
-| Backup SoC | sigenergy2mqtt/sigen_0_plant_ess_backup_soc/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_backup_soc/set | Modbus Register 40046 ||
-| Charge Cut-Off SoC | sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_charge_cut_off_soc/set | Modbus Register 40047 ||
-| Discharge Cut-Off SoC | sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_discharge_cut_off_soc/set | Modbus Register 40048 ||
-| Grid Max Export Limit | sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_export_limit/set | Modbus Register 40038 ||
-| Grid Max Import Limit | sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_import_limit/set | Modbus Register 40040 ||
-| Independent Phase Power Control | sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state <br/> homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_independent_phase_power_control/set | Modbus Register 40030 ||
-| Max Charging Limit | sigenergy2mqtt/sigen_0_plant_max_charging_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/set | Modbus Register 40032 ||
-| Max Discharging Limit | sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/set | Modbus Register 40034 ||
-| PCS Max Export Limit | sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_export_limit/set | Modbus Register 40042 ||
-| PCS Max Import Limit | sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_import_limit/set | Modbus Register 40044 ||
-| PV Max Power Limit | sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/set | Modbus Register 40036 ||
-| Phase A Active Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/set | Modbus Register 40008 ||
-| Phase A Active Power Percentage Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/set | Modbus Register 40020 ||
-| Phase A Q/S Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/set | Modbus Register 40023 ||
-| Phase A Reactive Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/set | Modbus Register 40014 ||
-| Phase B Active Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/set | Modbus Register 40010 ||
-| Phase B Active Power Percentage Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/set | Modbus Register 40021 ||
-| Phase B Q/S Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/set | Modbus Register 40024 ||
-| Phase B Reactive Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/set | Modbus Register 40016 ||
-| Phase C Active Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/set | Modbus Register 40012 ||
-| Phase C Active Power Percentage Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/set | Modbus Register 40022 ||
-| Phase C Q/S Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/set | Modbus Register 40025 ||
-| Phase C Reactive Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/set | Modbus Register 40018 ||
-| Power On/Off | sigenergy2mqtt/sigen_0_plant_status/state <br/> homeassistant/button/sigen_0_247_powerplant/sigen_0_plant_status/set | Modbus Register 40000 ||
-| Power Factor Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/set | Modbus Register 40007 ||
-| Q/S Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_q_s_adjustment_target_value/set | Modbus Register 40006 ||
-| Reactive Power Fixed Adjustment Target Value | sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state <br/> homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_fixed_adjustment_target_value/set | Modbus Register 40003 ||
-| Remote EMS | sigenergy2mqtt/sigen_0_plant_remote_ems/state <br/> homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems/set | Modbus Register 40029 ||
-| Remote EMS Control Mode | sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state <br/> homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/set | Modbus Register 40031 ||
+<details>
+<summary>
+Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Backup SoC
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_backup_soc/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_backup_soc/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Charge Cut-Off SoC
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Discharge Cut-Off SoC
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Max Export Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Grid Max Import Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Independent Phase Power Control
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Charging Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Max Discharging Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PCS Max Export Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PCS Max Import Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+PV Max Power Limit
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Q/S Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase A Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Q/S Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase B Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Active Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Active Power Percentage Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Q/S Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Phase C Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power On/Off
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_status/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_status/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power Factor Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Q/S Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Fixed Adjustment Target Value
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Remote EMS
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Remote EMS Control Mode
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/set</td></tr>
+</table>
+</details>
 
 ### Inverter
-| Sensor Class | Command Topic | Target | Applicable To |
-|--------------|---------------|--------|---------------|
-| Active Power Fixed Value Adjustment | sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment/set | Modbus Register 41501 | PV&nbsp;Inverter |
-| Active Power Percentage Adjustment | sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment/set | Modbus Register 41505 | PV&nbsp;Inverter |
-| Power On/Off | sigenergy2mqtt/sigen_0_inverter_1_status/state <br/> homeassistant/button/sigen_0_001_inverter/sigen_0_inverter_1_status/set | Modbus Register 40500 | Hybrid&nbsp;Inverter <br/> PV&nbsp;Inverter |
-| Power Factor Adjustment | sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_power_factor_adjustment/set | Modbus Register 41507 | PV&nbsp;Inverter |
-| Reactive Power Fixed Value Adjustment | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/set | Modbus Register 41503 | PV&nbsp;Inverter |
-| Reactive Power Q/S Adjustment | sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state <br/> homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_q_s_adjustment/set | Modbus Register 41506 | PV&nbsp;Inverter |
-| Remote EMS Dispatch | sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state <br/> homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/set | Modbus Register 41500 | PV&nbsp;Inverter |
+<details>
+<summary>
+Active Power Fixed Value Adjustment
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/set</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Active Power Percentage Adjustment
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/set</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power On/Off
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_status/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_status/set</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power Factor Adjustment
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/set</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Fixed Value Adjustment
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/set</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Reactive Power Q/S Adjustment
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/set</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Remote EMS Dispatch
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/set</td></tr>
+<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+</table>
+</details>
 
 ### AC Charger
-| Sensor Class | Command Topic | Target | Applicable To |
-|--------------|---------------|--------|---------------|
-| Output Current | sigenergy2mqtt/sigen_0_ac_charger_3_output_current/state <br/> homeassistant/number/sigen_0_003_accharger/sigen_0_ac_charger_3_output_current/set | Modbus Register 42001 ||
-| Power On/Off | sigenergy2mqtt/sigen_0_ac_charger_3_status/state <br/> homeassistant/button/sigen_0_003_accharger/sigen_0_ac_charger_3_status/set | Modbus Register 42000 ||
+<details>
+<summary>
+Output Current
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_output_current/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_output_current/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Power On/Off
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_status/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_status/set</td></tr>
+</table>
+</details>
 
 ### DC Charger
-| Sensor Class | Command Topic | Target | Applicable To |
-|--------------|---------------|--------|---------------|
-| DC Charger Status | sigenergy2mqtt/sigen_0_dc_charger_2_status/state <br/> homeassistant/button/sigen_0_002_dccharger/sigen_0_dc_charger_2_status/set | Modbus Register 41000 ||
+<details>
+<summary>
+DC Charger Status
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_2_status/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_2_status/set</td></tr>
+</table>
+</details>

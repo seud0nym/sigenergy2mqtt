@@ -815,6 +815,11 @@ class InverterPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Modbus Registers 30605 and 30606"
+        return attributes
+
 
 class InverterAlarm3(Alarm3Sensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
@@ -1455,6 +1460,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
         )
+        self.string_number = string_number
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1477,6 +1483,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
             gain=10,
             precision=1,
         )
+        self.string_number = string_number
 
 
 class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1659,8 +1666,10 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Single time", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Single time"
+        return attributes
 
 
 class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1683,8 +1692,10 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             precision=None,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Single time", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Single time"
+        return attributes
 
 
 # endregion

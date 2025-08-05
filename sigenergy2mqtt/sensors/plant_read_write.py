@@ -5,6 +5,7 @@ from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
+from typing import Any
 import logging
 
 
@@ -66,8 +67,10 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode"
+        return attributes
 
 
 class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -93,8 +96,10 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             max=100.00,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [-100.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [-100.00,100.00]"
+        return attributes
 
 
 class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -120,8 +125,10 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             max=60.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode"
+        return attributes
 
 
 class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -148,8 +155,10 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             max=1.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: (-1, -0.8] U [0.8, 1]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: (-1, -0.8] U [0.8, 1]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        return attributes
 
 
 class PhaseAActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -175,8 +184,10 @@ class PhaseAActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter)
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        return attributes
 
 
 class PhaseBActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -202,8 +213,10 @@ class PhaseBActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter)
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        return attributes
 
 
 class PhaseCActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -229,8 +242,10 @@ class PhaseCActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter)
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        return attributes
 
 
 class PhaseAReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -256,8 +271,10 @@ class PhaseAReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverte
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        return attributes
 
 
 class PhaseBReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -283,8 +300,10 @@ class PhaseBReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverte
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        return attributes
 
 
 class PhaseCReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -310,8 +329,10 @@ class PhaseCReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverte
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        return attributes
 
 
 class PhaseAActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -339,8 +360,10 @@ class PhaseAActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInve
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
+        return attributes
 
 
 class PhaseBActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -368,8 +391,10 @@ class PhaseBActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInve
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
+        return attributes
 
 
 class PhaseCActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -397,8 +422,10 @@ class PhaseCActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInve
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
+        return attributes
 
 
 class PhaseAQSAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -426,8 +453,10 @@ class PhaseAQSAdjustmentTargetValue(NumericSensor, HybridInverter):
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
+        return attributes
 
 
 class PhaseBQSAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -455,8 +484,10 @@ class PhaseBQSAdjustmentTargetValue(NumericSensor, HybridInverter):
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
+        return attributes
 
 
 class PhaseCQSAdjustmentTargetValue(NumericSensor, HybridInverter):
@@ -484,8 +515,10 @@ class PhaseCQSAdjustmentTargetValue(NumericSensor, HybridInverter):
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
+        return attributes
 
 
 class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
@@ -509,10 +542,10 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
             precision=None,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(
-            mqtt, comment="When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS.", **kwargs
-        )
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS"
+        return attributes
 
 
 class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
@@ -539,8 +572,10 @@ class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
+        return attributes
 
 
 class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
@@ -643,8 +678,10 @@ class MaxChargingLimit(NumericSensor, HybridInverter):
             max=rated_charging_power,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging"
+        return attributes
 
 
 class MaxDischargingLimit(NumericSensor, HybridInverter):
@@ -670,8 +707,10 @@ class MaxDischargingLimit(NumericSensor, HybridInverter):
             max=rated_discharging_power,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging"
+        return attributes
 
 
 class PVMaxPowerLimit(NumericSensor, HybridInverter):
@@ -697,8 +736,10 @@ class PVMaxPowerLimit(NumericSensor, HybridInverter):
             max=4294967.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Takes effect when Remote EMS control mode (40031) is to Command Charging/Discharging.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
+        return attributes
 
 
 class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
@@ -724,8 +765,10 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             max=4294967.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Grid Sensor needed. Takes effect globally regardless of the EMS operating mode.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        return attributes
 
 
 class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
@@ -751,8 +794,10 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             max=4294967.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Grid Sensor needed. Takes effect globally regardless of the EMS operating mode.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        return attributes
 
 
 class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
@@ -778,8 +823,10 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             max=4294967.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+        return attributes
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -814,8 +861,10 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             max=4294967.0,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+        return attributes
 
 
 class ESSBackupSOC(NumericSensor, HybridInverter):
@@ -842,8 +891,10 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0.00,100.00]"
+        return attributes
 
 
 class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
@@ -870,8 +921,10 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0.00,100.00]"
+        return attributes
 
 
 class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
@@ -898,5 +951,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Range: [0.00,100.00]", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0.00,100.00]"
+        return attributes

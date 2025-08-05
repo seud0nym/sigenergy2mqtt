@@ -1,9 +1,10 @@
 from .base import DeviceClass, EnergyDailyAccumulationSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor
 from .const import UnitOfPower
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.mqtt import MqttClient
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+from typing import Any
 import logging
 
 
@@ -20,6 +21,11 @@ class InverterBatteryChargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "ChargeDischargePower &gt; 0"
+        return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), ChargeDischargePower):
@@ -45,6 +51,11 @@ class InverterBatteryDischargingPower(DerivedSensor):
             precision=2,
         )
 
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "ChargeDischargePower &lt; 0 &times; -1"
+        return attributes
+
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if not issubclass(type(sensor), ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
@@ -68,10 +79,16 @@ class PVStringPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.string_number = string_number
         self.current: float = None
         self.current_gain: float = current.gain
         self.voltage: float = None
         self.voltage_gain: float = voltage.gain
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "PVVoltageSensor &times; PVCurrentSensor"
+        return attributes
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
         """Publishes this sensor.
@@ -114,6 +131,12 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             source=source,
         )
+        self.string_number = string_number
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Riemann &sum; of PVStringPower"
+        return attributes
 
 
 class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
@@ -124,3 +147,9 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             source=source,
         )
+        self.string_number = string_number
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight"
+        return attributes

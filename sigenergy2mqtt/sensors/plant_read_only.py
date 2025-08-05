@@ -150,8 +150,10 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
         else:
             return f"Unknown Status: {value}"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Gateway or meter connection status", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Gateway or meter connection status"
+        return attributes
 
 
 class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -177,8 +179,10 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         self._sanity.max_value = 100000  # 100kW
         self._sanity.min_value = -100000  # -100kW
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
+        return attributes
 
 
 class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -201,8 +205,10 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint;", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
+        return attributes
 
 
 class GridStatus(ReadOnlySensor, HybridInverter):
@@ -263,8 +269,10 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="This should be the base value of all active power adjustment actions", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "This should be the base value of all active power adjustment actions"
+        return attributes
 
 
 class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -288,8 +296,10 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="This should be the base value of all reactive power adjustment actions", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "This should be the base value of all reactive power adjustment actions"
+        return attributes
 
 
 class PlantBatterySoC(ReadOnlySensor, HybridInverter):
@@ -444,16 +454,20 @@ class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__("PCS Alarms 1", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_1", plant_index, 247, 30027)
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="If any hybrid inverter has alarm, then this alarm will be set accordingly", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        return attributes
 
 
 class GeneralAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__("PCS Alarms 2", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_2", plant_index, 247, 30028)
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="If any hybrid inverter has alarm, then this alarm will be set accordingly", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        return attributes
 
 
 class GeneralPCSAlarm(AlarmCombinedSensor):
@@ -465,24 +479,31 @@ class GeneralPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="If any hybrid inverter has alarm, then this alarm will be set accordingly", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        attributes["source"] = "Modbus Registers 30027 and 30028"
+        return attributes
 
 
 class GeneralAlarm3(Alarm3Sensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__("ESS Alarms", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_3", plant_index, 247, 30029)
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="If any hybrid inverter has alarm, then this alarm will be set accordingly", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        return attributes
 
 
 class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__("Gateway Alarms", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_4", plant_index, 247, 30030)
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="If any hybrid inverter has alarm, then this alarm will be set accordingly", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        return attributes
 
 
 class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -570,8 +591,10 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="ESS Power: <0 = discharging >0 = charging", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "ESS Power: <0 = discharging >0 = charging"
+        return attributes
 
 
 class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -595,8 +618,10 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Feed to the AC terminal. Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Feed to the AC terminal. Count only the running inverters"
+        return attributes
 
 
 class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
@@ -620,8 +645,10 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Absorb from the AC terminal. Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
+        return attributes
 
 
 class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -645,8 +672,10 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Feed to the AC terminal. Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Feed to the AC terminal. Count only the running inverters"
+        return attributes
 
 
 class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -671,8 +700,10 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Absorb from the AC terminal. Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
+        return attributes
 
 
 class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
@@ -695,8 +726,10 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Count only the running inverters"
+        return attributes
 
 
 class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
@@ -719,8 +752,10 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
+        return attributes
 
 
 class PlantRunningState(RunningStateSensor, HybridInverter, PVInverter):
@@ -748,8 +783,10 @@ class GridPhaseAActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
+        return attributes
 
 
 class GridPhaseBActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -772,8 +809,10 @@ class GridPhaseBActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
+        return attributes
 
 
 class GridPhaseCActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -796,8 +835,10 @@ class GridPhaseCActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
+        return attributes
 
 
 class GridPhaseAReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -820,8 +861,10 @@ class GridPhaseAReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
+        return attributes
 
 
 class GridPhaseBReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -844,8 +887,10 @@ class GridPhaseBReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
+        return attributes
 
 
 class GridPhaseCReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -868,8 +913,10 @@ class GridPhaseCReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Data collected from grid sensor at grid to system checkpoint", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
+        return attributes
 
 
 class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
@@ -892,8 +939,10 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             precision=1,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Count only the running inverters"
+        return attributes
 
 
 class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
@@ -916,8 +965,10 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             precision=2,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="Count only the running inverters", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Count only the running inverters"
+        return attributes
 
 
 class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
@@ -968,8 +1019,10 @@ class GeneralAlarm5(Alarm5Sensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__("DC Charger Alarms", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_5", plant_index, 247, 30072)
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="If any hybrid inverter has alarm, then this alarm will be set accordingly", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
+        return attributes
 
 
 class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
@@ -1057,8 +1110,10 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(mqtt, comment="This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight", **kwargs)
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight"
+        return attributes
 
 
 class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1442,12 +1497,12 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=unique_id_override,
         )
 
-    def publish_attributes(self, mqtt, **kwargs) -> None:
-        return super().publish_attributes(
-            mqtt,
-            comment="After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data.",
-            **kwargs,
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = (
+            "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
         )
+        return attributes
 
 
 class SITotalCommonLoadConsumption(StatisticsInterfaceSensor):

@@ -2,6 +2,7 @@ from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, Read
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from typing import Any
 
 
 # 5.5 AC-Charger running information address definition (read-only register)
@@ -313,3 +314,8 @@ class ACChargerAlarms(AlarmCombinedSensor):
             f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm",
             *alarms,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Modbus Registers 32012, 32013, and 32014"
+        return attributes
