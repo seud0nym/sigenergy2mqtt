@@ -1229,11 +1229,11 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfEnergy.KILO_WATT_HOUR,
-            device_class=DeviceClass.ENERGY,
-            state_class=StateClass.TOTAL,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
             icon="mdi:lightning-bolt-outline",
-            gain=100,
+            gain=1000,
             precision=2,
         )
 
