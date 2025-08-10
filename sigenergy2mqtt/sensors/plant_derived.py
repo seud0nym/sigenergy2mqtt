@@ -15,9 +15,11 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any, Dict
 import logging
+import time
 
 
 class BatteryChargingPower(DerivedSensor):
@@ -136,7 +138,24 @@ class GridSensorImportPower(DerivedSensor):
         return True
 
 
-class PlantConsumedPower(DerivedSensor):
+class PlantConsumedPower(DerivedSensor, ObservableMixin):
+    @dataclass
+    class Value:
+        gain: float = 1.0
+        negate: bool = False
+        interval: int = None
+        state: float = None
+        last_update: float = None
+
+        def __repr__(self):
+            if self.last_update:
+                if self.state is not None:
+                    return f"{self.state}"
+                else:
+                    return f"{time.time() - self.last_update:.1f}s ago"
+            else:
+                return "Never"
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Consumed Power",
@@ -149,14 +168,33 @@ class PlantConsumedPower(DerivedSensor):
             gain=None,
             precision=2,
         )
-        self.battery_power: float = None
-        self.grid_sensor_active_power: float = None
-        self.pv_power: float = None
+        self._plant_index = plant_index
         self._sanity.min_value = 0.0
+        self._sources: dict[str, PlantConsumedPower.Value] = {
+            "battery": PlantConsumedPower.Value(),
+            "grid": PlantConsumedPower.Value(),
+            "pv": PlantConsumedPower.Value(),
+        }
+
+    def _set_latest_consumption(self):
+        if any(value.state is None for value in self._sources.values()):
+            return False
+        consumed_power = sum([value.state for value in self._sources.values() if value.state])
+        if consumed_power < 0:
+            logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
+            consumed_power = 0
+        if self._debug_logging:
+            logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources}")
+        self.set_latest_state(consumed_power)
+        return True
+
+    def _update_source(self, source: str, value: float) -> None:
+        self._sources[source].state = (-value if self._sources[source].negate else value) * self._sources[source].gain
+        self._sources[source].last_update = time.time()
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
-        attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower"
+        attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower"
         return attributes
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
@@ -167,38 +205,49 @@ class PlantConsumedPower(DerivedSensor):
             modbus:     The Modbus client for determining the current state.
             republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
         """
-        if self.battery_power is None or self.grid_sensor_active_power is None or self.pv_power is None:
-            if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
-            return  # until all values populated, can't do calculation
-        if self._debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY - battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}")
+        if not republish:
+            if not self._set_latest_consumption():
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources}")
+                return  # until all values populated, can't do calculation
+            republish = True  # if we got here, we have a valid value to publish
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
-        self.battery_power = None
-        self.grid_sensor_active_power = None
-        self.pv_power = None
+        for value in self._sources.values():
+            value.state = None
+
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
+        if topic in self._sources:
+            self._update_source(topic, value if isinstance(value, float) else float(value))
+            if self._debug_logging:
+                logging.debug(f"{self.__class__.__name__} Updated from topic '{topic}' - {self._sources}")
+            if self._set_latest_consumption():
+                await self.publish(mqtt, modbus, republish=True)
+        else:
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{topic}', but topic is not registered")
+
+    def observable_topics(self) -> set[str]:
+        topics: set[str] = set()
+        for charger in [device for device in DeviceRegistry.get(self._plant_index) if device.__class__.__name__.endswith("Charger")]:
+            for sensor in charger.get_all_sensors().values():
+                if sensor["object_id"].endswith("rated_charging_power") or sensor["object_id"].endswith("dc_charger_output_power"):
+                    self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval)
+                    topics.add(sensor.state_topic)
+                    if self._debug_logging:
+                        logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
+        return topics
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
         if issubclass(type(sensor), BatteryPower):
-            self.battery_power = values[-1][1]
+            self._update_source("battery", values[-1][1])
         elif issubclass(type(sensor), GridSensorActivePower):
-            self.grid_sensor_active_power = values[-1][1]
+            self._update_source("grid", values[-1][1])
         elif issubclass(type(sensor), (PlantPVPower, TotalPVPower)):
-            self.pv_power = values[-1][1]
+            self._update_source("pv", values[-1][1])
         else:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        if self.battery_power is None or self.grid_sensor_active_power is None or self.pv_power is None:
-            return False  # until all values populated, can't do calculation
-        consumed_power = self.pv_power + self.grid_sensor_active_power - self.battery_power
-        if consumed_power < 0:
-            logging.debug(
-                f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! (battery_power={self.battery_power} grid_sensor_active_power={self.grid_sensor_active_power} pv_power={self.pv_power}) Adjusting to zero..."
-            )
-            consumed_power = 0
-        self.set_latest_state(consumed_power)
-        return True
+        return self._set_latest_consumption()
 
 
 class TotalPVPower(DerivedSensor, ObservableMixin):
@@ -270,7 +319,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             self._sources[topic].state = (value if isinstance(value, float) else float(value)) * self._sources[topic].gain
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[topic].enabled else 'disabled'}) topic '{topic}' - {self._sources=}")
-            if self._sources[topic].enabled and sum([1 for value in self._sources.values() if value.enabled and value.state is None]) == 0:
+            if self._sources[topic].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
                 self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
                 await self.publish(mqtt, modbus, republish=True)
         else:
@@ -284,9 +333,9 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
                     self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     topics.add(topic.topic)
                     if self._debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Added MQTT topic {topic.topic} as source")
+                        logging.debug(f"{self.__class__.__name__} Added Smart-Port MQTT topic {topic.topic} as source")
                 else:
-                    logging.warning(f"{self.__class__.__name__} Empty MQTT topic ignored")
+                    logging.warning(f"{self.__class__.__name__} Empty Smart-Port MQTT topic ignored")
         return topics
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
@@ -297,12 +346,13 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             modbus:     The Modbus client for determining the current state.
             republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
         """
-        if sum([1 for value in self._sources.values() if value.enabled and value.state is None]) > 0:
+        if not republish:
+            if any(value.state is None for value in self._sources.values() if value.enabled):
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
+                return  # until all values populated, can't do calculation
             if self._debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
-            return  # until all values populated, can't do calculation
-        if self._debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY - {self._sources=}")
+                logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources=}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         for value in self._sources.values():
@@ -328,7 +378,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         self._sources[source].state = values[-1][1]
         if self._debug_logging:
             logging.debug(f"{self.__class__.__name__} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
-        if not self._sources[source].enabled or sum([1 for value in self._sources.values() if value.enabled and value.state is None]) > 0:
+        if not self._sources[source].enabled or any(value.state is None for value in self._sources.values() if value.enabled):
             return False  # until all enabled values populated, can't do calculation
         self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
         return True
@@ -407,7 +457,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
             return  # until all values populated, can't do calculation
         if self._debug_logging:
             logging.debug(
-                f"{self.__class__.__name__} Publishing READY - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
+                f"{self.__class__.__name__} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
             )
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation

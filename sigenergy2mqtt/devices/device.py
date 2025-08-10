@@ -48,6 +48,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             self[k] = v
 
         logging.debug(f"Created Device {self}")
+        DeviceRegistry.add(self._plant_index, self)
 
     # region Properties
     @property
@@ -423,3 +424,19 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
         else:
             super()._add_writeonly_sensor(sensor)
+
+
+class DeviceRegistry:
+    _devices: dict[int, list[Device]] = dict()
+
+    @classmethod
+    def add(cls, plant_index: int, device: Device) -> None:
+        if plant_index not in cls._devices:
+            cls._devices[plant_index] = list()
+        cls._devices[plant_index].append(device)
+
+    @classmethod
+    def get(cls, plant_index: int) -> tuple[Device]:
+        if plant_index in cls._devices:
+            return tuple(cls._devices[plant_index])
+        return None
