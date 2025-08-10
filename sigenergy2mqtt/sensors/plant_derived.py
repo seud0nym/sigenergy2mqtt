@@ -171,7 +171,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         self._plant_index = plant_index
         self._sanity.min_value = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = {
-            "battery": PlantConsumedPower.Value(),
+            "battery": PlantConsumedPower.Value(negate=True),
             "grid": PlantConsumedPower.Value(),
             "pv": PlantConsumedPower.Value(),
         }
