@@ -11,7 +11,7 @@ from typing import Any
 class ACChargerRunningState(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Running State",
+            name="Running State",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_running_state",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -70,7 +70,7 @@ class ACChargerRunningState(ReadOnlySensor):
 class ACChargerTotalEnergyConsumed(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Total Energy Consumed",
+            name="Total Energy Consumed",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_total_energy_consumed",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -92,7 +92,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
 class ACChargerChargingPower(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Charging Power",
+            name="Charging Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_charging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -100,7 +100,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             address=32003,
             count=2,
             data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -114,7 +114,7 @@ class ACChargerChargingPower(ReadOnlySensor):
 class ACChargerRatedPower(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Rated Power",
+            name="Rated Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -135,7 +135,7 @@ class ACChargerRatedPower(ReadOnlySensor):
 class ACChargerRatedCurrent(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Rated Current",
+            name="Rated Current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -156,7 +156,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
 class ACChargerRatedVoltage(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Rated Voltage",
+            name="Rated Voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -177,7 +177,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
 class ACChargerInputBreaker(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Input Breaker",
+            name="Input Breaker",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_input_breaker",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -198,7 +198,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
 class ACChargerAlarm1(AlarmSensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Alarm 1",
+            name="Alarm 1",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_1",
             plant_index=plant_index,
             device_address=device_address,
@@ -241,7 +241,7 @@ class ACChargerAlarm1(AlarmSensor):
 class ACChargerAlarm2(AlarmSensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Alarm 2",
+            name="Alarm 2",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_2",
             plant_index=plant_index,
             device_address=device_address,
@@ -278,7 +278,7 @@ class ACChargerAlarm2(AlarmSensor):
 class ACChargerAlarm3(AlarmSensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="AC Charger Alarm 3",
+            name="Alarm 3",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_3",
             plant_index=plant_index,
             device_address=device_address,

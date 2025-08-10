@@ -1607,7 +1607,7 @@ class VehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
 class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="DC Charger Output Power",
+            name="Output Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_output_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1615,7 +1615,7 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
             address=31502,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -1649,7 +1649,7 @@ class VehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
 class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="DC Charger Current Charging Capacity",
+            name="Current Charging Capacity",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_current_charging_capacity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1675,7 +1675,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
 class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="DC Charger Current Charging Duration",
+            name="Current Charging Duration",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_current_charging_duration",
             input_type=InputType.INPUT,
             plant_index=plant_index,

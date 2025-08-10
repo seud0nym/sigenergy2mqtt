@@ -1205,7 +1205,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             address,
             count=1,
             data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=None,
             device_class=None,
             state_class=None,
