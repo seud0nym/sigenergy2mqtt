@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import paho.mqtt.client as mqtt
+import ssl
 import time
 
 logger = logging.getLogger("paho.mqtt")
@@ -142,11 +143,28 @@ def on_unsubscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes
 
 
 class MqttClient(mqtt.Client):
-    def __init__(self, client_id: str = "", clean_session: bool = None, userdata: MqttHandler = None, protocol: int = mqtt.MQTTv311, transport: str = "tcp", reconnect_on_failure: bool = True):
+    def __init__(
+        self,
+        client_id: str | None = "",
+        clean_session: bool | None = None,
+        userdata: MqttHandler = None,
+        protocol: int = mqtt.MQTTv311,
+        transport: str = "tcp",
+        reconnect_on_failure: bool = True,
+    ):
         super().__init__(
-            mqtt.CallbackAPIVersion.VERSION2, client_id=client_id, clean_session=clean_session, userdata=userdata, protocol=protocol, transport=transport, reconnect_on_failure=reconnect_on_failure
+            mqtt.CallbackAPIVersion.VERSION2,
+            client_id=client_id,
+            clean_session=clean_session,
+            userdata=userdata,
+            protocol=protocol,
+            transport=transport,
+            reconnect_on_failure=reconnect_on_failure,
         )
         self.enable_logger(logger)
+        if Config.mqtt.tls:
+            ssl_context = ssl.create_default_context()
+            self.tls_set_context(ssl_context)
 
         self.on_disconnect = on_disconnect
         self.on_connect = on_connect

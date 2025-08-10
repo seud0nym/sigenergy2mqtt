@@ -26,8 +26,9 @@ _logger.info(f"Release {Config.origin['sw']}")
 # region Arguments
 _parser = argparse.ArgumentParser(
     description="Reads the Sigenergy modbus interface and publishes the data to MQTT. The data will be published to MQTT in the Home Assistant MQTT Discovery format.",
-    epilog="Command line options over-ride values in the configuration file.",
+    epilog="Command line options over-ride values in the configuration file and environment variables.",
 )
+# region General Configuration
 _parser.add_argument(
     "-c",
     "--config",
@@ -62,6 +63,14 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW, None),
     help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored.",
 )
+_parser.add_argument(
+    "--no-metrics",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_NO_METRICS,
+    help="Do not publish any sigenergy2mqtt metrics.",
+)
+# endregion
+# region Home Assistant Configuration
 _parser.add_argument(
     "--hass-enabled",
     action="store_true",
@@ -106,13 +115,14 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX, None),
     help="The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')",
 )
-
 _parser.add_argument(
     "--hass-discovery-only",
     action="store_true",
     dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY,
     help="Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.",
 )
+# endregion
+# region MQTT Configuration
 _parser.add_argument(
     "-b",
     "--mqtt-broker",
@@ -129,13 +139,19 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_MQTT_PORT,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_MQTT_PORT, None),
-    help="The listening port of the MQTT broker (default: 1883)",
+    help="The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)",
+)
+_parser.add_argument(
+    "--mqtt-tls",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_MQTT_TLS,
+    help="Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.",
 )
 _parser.add_argument(
     "--mqtt-anonymous",
     action="store_true",
     dest=const.SIGENERGY2MQTT_MQTT_ANONYMOUS,
-    help="Connect to MQTT anonymously (i.e. without username/password).",
+    help="Allow anonymous connection to MQTT broker (i.e. without username/password). If specified, the --mqtt-username and --mqtt-password options are ignored.",
 )
 _parser.add_argument(
     "-u",
@@ -163,6 +179,8 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_MQTT_LOG_LEVEL, None),
     help="Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
+# endregion
+# region Modbus Configuration
 _parser.add_argument(
     "-m",
     "--modbus-host",
@@ -252,6 +270,8 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL, None),
     help="Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
+# endregion
+# region Scan Interval Configuration
 _parser.add_argument(
     "--scan-interval-low",
     nargs="?",
@@ -288,6 +308,8 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME, None),
     help="The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.",
 )
+# endregion
+# region SmartPort Configuration
 _parser.add_argument(
     "--smartport-enabled",
     action="store_true",
@@ -351,6 +373,8 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN, None),
     help="The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).",
 )
+# endregion
+# region PVOutput Configuration
 _parser.add_argument(
     "--pvoutput-enabled",
     action="store_true",
@@ -404,12 +428,7 @@ _parser.add_argument(
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL, None),
     help="Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
-_parser.add_argument(
-    "--no-metrics",
-    action="store_true",
-    dest=const.SIGENERGY2MQTT_NO_METRICS,
-    help="Do not publish any sigenergy2mqtt metrics.",
-)
+# endregion
 _parser.add_argument(
     "--clean",
     action="store_true",
@@ -466,6 +485,7 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
+        or arg == const.SIGENERGY2MQTT_MQTT_TLS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
         or arg == const.SIGENERGY2MQTT_NO_METRICS

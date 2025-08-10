@@ -7,6 +7,7 @@ import logging
 class MqttConfiguration:
     broker: str = "127.0.0.1"
     port: int = 1883
+    tls: bool = False
 
     anonymous: bool = False
     username: str = None
@@ -16,6 +17,12 @@ class MqttConfiguration:
 
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
+            if "tls" in config:
+                logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: mqtt.tls = {config['tls']}")
+                self.tls = check_bool(config["tls"], "mqtt.tls")
+                if self.tls:
+                    logging.debug("Applying new default of 8883 to mqtt.port because communication to broker over TLS/SSL is enabled")
+                    self.port = 8883  # Default port for MQTT over TLS
             for field, value in config.items():
                 logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: mqtt.{field} = {'******' if field == 'password' else value}")
                 match field:
@@ -32,6 +39,7 @@ class MqttConfiguration:
                     case "log-level":
                         self.log_level = check_log_level(value, f"mqtt.{field}")
                     case _:
-                        raise ValueError(f"mqtt configuration element contains unknown option '{field}'")
+                        if field != "tls":
+                            raise ValueError(f"mqtt configuration element contains unknown option '{field}'")
         else:
             raise ValueError("mqtt configuration element must contain options and their values")
