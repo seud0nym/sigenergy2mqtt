@@ -25,11 +25,9 @@ class PVOutputConfiguration:
 
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
-            for field, value in config.items():
-                match field:
-                    case "enabled":
-                        logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.enabled = {value}")
-                        self.enabled = check_bool(value, f"pvoutput.{field}")
+            if "enabled" in config:
+                logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.enabled = {config['enabled']}")
+                self.enabled = check_bool(config['enabled'], "pvoutput.enabled")
             if self.enabled:
                 for field, value in config.items():
                     if field != "enabled":
