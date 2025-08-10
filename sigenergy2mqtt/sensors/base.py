@@ -427,14 +427,17 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         elif self.debug_logging:
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
 
-    def publish_attributes(self, mqtt: MqttClient) -> None:
+    def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
         """Publishes the attributes for this sensor.
 
         Args:
             mqtt:       The MQTT client for publishing the current state.
+            **kwargs:   key=value pairs that will be added as attributes.
         """
         if self.publishable and not Config.clean:
             attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
+            for k, v in kwargs.items():
+                attributes[k] = v
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
             mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), 2, True)
@@ -794,7 +797,7 @@ class ReservedSensor(ReadOnlySensor):
             precision,
             unique_id_override=unique_id_override,
         )
-        self.publishable = False  # Reserved sensors are not published
+        self._publishable = False  # Reserved sensors are not published
 
     @property
     def publishable(self) -> bool:
@@ -804,8 +807,6 @@ class ReservedSensor(ReadOnlySensor):
     def publishable(self, value: bool):
         if value:
             raise ValueError("Cannot set publishable=True for ReservedSensor")
-        else:
-            logging.debug(f"{self.__class__.__name__} Ignored request to set publishable to {value} (reserved sensor)")
 
     def apply_sensor_overrides(self, registers):
         pass
