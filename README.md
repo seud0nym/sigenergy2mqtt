@@ -182,7 +182,8 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` | The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '') |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`| Set to 'true' to e xit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration. |
 | `SIGENERGY2MQTT_MQTT_BROKER` | The hostname or IP address of an MQTT broker (default: 127.0.0.1) |
-| `SIGENERGY2MQTT_MQTT_PORT` | The listening port of the MQTT broker (default: 1883) |
+| `SIGENERGY2MQTT_MQTT_PORT` | The listening port of the MQTT broker (default is 1883, unless `--mqtt-tls` or `SIGENERGY2MQTT_MQTT_TLS` is specified, in which case the default is 8883) |
+| `SIGENERGY2MQTT_MQTT_TLS` | Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883. |
 | `SIGENERGY2MQTT_MQTT_ANONYMOUS` | Set to 'true' to connect to MQTT anonymously (i.e. without username/password). |
 | `SIGENERGY2MQTT_MQTT_USERNAME` | A valid username for the MQTT broker |
 | `SIGENERGY2MQTT_MQTT_PASSWORD` | A valid password for the MQTT broker username |
@@ -235,6 +236,7 @@ Command line options override both environment variables and the configuration f
                         The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of 
                         power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside 
                         the range are ignored. 
+  --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --hass-enabled        Enable auto-discovery in Home Assistant.
   --hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]
                         The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)
@@ -257,8 +259,9 @@ Command line options override both environment variables and the configuration f
   -b [SIGENERGY2MQTT_MQTT_BROKER], --mqtt-broker [SIGENERGY2MQTT_MQTT_BROKER]
                         The hostname or IP address of an MQTT broker (default: 127.0.0.1)
   --mqtt-port [SIGENERGY2MQTT_MQTT_PORT]
-                        The listening port of the MQTT broker (default: 1883)
-  --mqtt-anonymous      Connect to MQTT anonymously (i.e. without username/password).
+                        The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)
+  --mqtt-tls            Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.
+  --mqtt-anonymous      Connect to MQTT anonymously (i.e. without username/password).  If specified, the --mqtt-username and --mqtt-password options are ignored.
   -u [SIGENERGY2MQTT_MQTT_USERNAME], --mqtt-username [SIGENERGY2MQTT_MQTT_USERNAME]
                         A valid username for the MQTT broker
   -p [SIGENERGY2MQTT_MQTT_PASSWORD], --mqtt-password [SIGENERGY2MQTT_MQTT_PASSWORD]
@@ -320,7 +323,6 @@ Command line options override both environment variables and the configuration f
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
                         (warnings, errors and critical failures)
-  --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --clean               Publish empty discovery to delete existing devices, then exits immediately.
   -v, --version         Shows the version number, then exits immediately.
 ```
