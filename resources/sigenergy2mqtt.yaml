@@ -82,9 +82,14 @@ mqtt:
   #   description:  The host name or IP address of the MQTT broker.
   broker: 127.0.0.1
   # port
-  #   default: 1883
+  #   default: 1883 unless tls:true then 8883
   #   description:  The port number used by the MQTT broker.
   port: 1883
+  # tls
+  #   default: false
+  #   description: If true, secure communication to the broker over TLS/SSL
+  #                is enabled.
+  tls: false
   # anonymous
   #   default: false
   #   description:  If true, the MQTT broker does not require authentication.
