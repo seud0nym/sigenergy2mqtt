@@ -2,7 +2,11 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
-if [[ "$1" != "-f" ]] && ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | wc -l) = 0 ]]; then
+changed_files=y
+if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | wc -l) = 0 ]]; then
+    changed_files=n
+fi
+if echo "$*" | grep -vqe "-f" && [[ $changed_files = n ]]; then
   echo "Build CANCELLED - no changed files found"
   exit
 fi
@@ -24,31 +28,53 @@ if __name__ == "__main__":
 ' || exit
 
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
-new_version=$(date +"%Y.%-m.%-d")
-pypi_version=$new_version
 
-if [[ $old_version =~ ^"$new_version" ]]; then
+if [[ $changed_files = n ]]; then
+    new_version=$old_version
     post=$(echo $old_version | cut -d'-' -f2)
     if [[ $post =~ ^[0-9]+$ ]]; then
-        pypi_version="${new_version}.post$((post + 1))"
-        new_version="${new_version}-$((post + 1))"
+        pypi_version="$(echo $new_version | cut -d'-' -f1).post$post"
     else
-        pypi_version="${new_version}.post1"
-        new_version="${new_version}-1"
+        pypi_version=$old_version
     fi
+else
+    new_version=$(date +"%Y.%-m.%-d")
+    pypi_version=$new_version
+    if [[ $old_version =~ ^"$new_version" ]]; then
+        post=$(echo $old_version | cut -d'-' -f2)
+        if [[ $post =~ ^[0-9]+$ ]]; then
+            pypi_version="${new_version}.post$((post + 1))"
+            new_version="${new_version}-$((post + 1))"
+        else
+            pypi_version="${new_version}.post1"
+            new_version="${new_version}-1"
+        fi
+    fi
+    echo -e "Updating version from \033[1;32m$old_version\033[0m to \033[1;32m$new_version (PyPi=$pypi_version)\033[0m"
+    sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
 fi
-
-echo -e "Updating version from \033[1;32m$old_version\033[0m to \033[1;32m$new_version (PyPi=$pypi_version)\033[0m"
-sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
-[[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]] && sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
-[[ -e ../home-assistant-addons/sigenergy2mqtt/Dockerfile ]] && sed -e "s/install sigenergy2mqtt.*$/install sigenergy2mqtt==$pypi_version/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
-
 
 rm -f dist/*
 
 python3 -m build || exit
 python3 -m twine check dist/* || exit
-docker buildx build --output type=cacheonly --platform linux/amd64,linux/arm64 -t sigenergy2mqtt:latest . || exit
+if echo "$*" | grep -qe "docker"; then
+    docker buildx build --output type=cacheonly --platform linux/amd64,linux/arm64 -t sigenergy2mqtt:latest . || exit
+fi
+
+if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
+    echo -e "\033[1;32mUpdating add-on...\033[0m"
+    mkdir -p ../home-assistant-addons/sigenergy2mqtt/rootfs/dist
+    rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
+    cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
+    sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
+    if echo "$*" | grep -qe "docker"; then
+        docker image rm local/home-assistant-addon-sigenergy2mqtt-amd64:$old_version 
+        docker run --rm -it --privileged -v ../home-assistant-addons/sigenergy2mqtt:/data -v /var/run/docker.sock:/var/run/docker.sock:ro ghcr.io/home-assistant/amd64-builder:latest --target /data --test --no-latest -d local --amd64 || exit
+    fi
+fi
+
 
 echo -e "\033[1;32mBuild successful\033[0m"
 echo -e "New version: \033[1;32m$new_version\033[0m"
