@@ -148,6 +148,12 @@ _parser.add_argument(
     help="Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.",
 )
 _parser.add_argument(
+    "--mqtt-tls-insecure",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_MQTT_TLS_INSECURE,
+    help="Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. Ignored unless --mqtt-tls is also specified.",
+)
+_parser.add_argument(
     "--mqtt-anonymous",
     action="store_true",
     dest=const.SIGENERGY2MQTT_MQTT_ANONYMOUS,
@@ -486,6 +492,7 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS
+        or arg == const.SIGENERGY2MQTT_MQTT_TLS_INSECURE
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
         or arg == const.SIGENERGY2MQTT_NO_METRICS

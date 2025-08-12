@@ -8,6 +8,7 @@ class MqttConfiguration:
     broker: str = "127.0.0.1"
     port: int = 1883
     tls: bool = False
+    tls_insecure: bool = False  # Allow insecure TLS connections (not recommended)
 
     anonymous: bool = False
     username: str = None
@@ -38,6 +39,8 @@ class MqttConfiguration:
                         self.password = value
                     case "log-level":
                         self.log_level = check_log_level(value, f"mqtt.{field}")
+                    case "tls-insecure":
+                        self.tls_insecure = check_bool(value, f"mqtt.{field}")
                     case _:
                         if field != "tls":
                             raise ValueError(f"mqtt configuration element contains unknown option '{field}'")

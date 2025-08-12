@@ -183,7 +183,8 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`| Set to 'true' to e xit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration. |
 | `SIGENERGY2MQTT_MQTT_BROKER` | The hostname or IP address of an MQTT broker (default: 127.0.0.1) |
 | `SIGENERGY2MQTT_MQTT_PORT` | The listening port of the MQTT broker (default is 1883, unless `--mqtt-tls` or `SIGENERGY2MQTT_MQTT_TLS` is specified, in which case the default is 8883) |
-| `SIGENERGY2MQTT_MQTT_TLS` | Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883. |
+| `SIGENERGY2MQTT_MQTT_TLS` | Set to 'true' to enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883. |
+| `SIGENERGY2MQTT_MQTT_TLS_INSECURE` | If 'true', allows insecure communication over TLS. If your broker is using a self-signed certificate, you _must_ set this to 'true'. If you are using a valid certificate, set this to 'false' (or do not set at all). Ignored unless `SIGENERGY2MQTT_MQTT_TLS` is also 'true'. |
 | `SIGENERGY2MQTT_MQTT_ANONYMOUS` | Set to 'true' to connect to MQTT anonymously (i.e. without username/password). |
 | `SIGENERGY2MQTT_MQTT_USERNAME` | A valid username for the MQTT broker |
 | `SIGENERGY2MQTT_MQTT_PASSWORD` | A valid password for the MQTT broker username |
@@ -261,6 +262,8 @@ Command line options override both environment variables and the configuration f
   --mqtt-port [SIGENERGY2MQTT_MQTT_PORT]
                         The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)
   --mqtt-tls            Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.
+  --mqtt-tls-insecure   Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. 
+                        Ignored unless --mqtt-tls is also specified.
   --mqtt-anonymous      Connect to MQTT anonymously (i.e. without username/password).  If specified, the --mqtt-username and --mqtt-password options are ignored.
   -u [SIGENERGY2MQTT_MQTT_USERNAME], --mqtt-username [SIGENERGY2MQTT_MQTT_USERNAME]
                         A valid username for the MQTT broker

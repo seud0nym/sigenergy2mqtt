@@ -164,7 +164,16 @@ class MqttClient(mqtt.Client):
         self.enable_logger(logger)
         if Config.mqtt.tls:
             ssl_context = ssl.create_default_context()
+            if Config.mqtt.tls_insecure:
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+                logging.warning(f"Using insecure TLS connection (not recommended) to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{client_id}'")
+            else:
+                ssl_context.check_hostname = True
+                ssl_context.verify_mode = ssl.CERT_REQUIRED
+                logging.info(f"Using secure TLS connection to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{client_id}'")
             self.tls_set_context(ssl_context)
+            self.tls_insecure_set(Config.mqtt.tls_insecure)
 
         self.on_disconnect = on_disconnect
         self.on_connect = on_connect

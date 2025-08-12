@@ -90,6 +90,13 @@ mqtt:
   #   description: If true, secure communication to the broker over TLS/SSL
   #                is enabled.
   tls: false
+  # tls-insecure
+  #   default: false
+  #   description: If true, allows insecure communication over TLS. If your 
+  #                broker is using a self-signed certificate, you must set
+  #                this to true. If you are using a valid certificate, set 
+  #                this to false. Ignored unless tls is also true. 
+  tls-insecure: false
   # anonymous
   #   default: false
   #   description:  If true, the MQTT broker does not require authentication.
