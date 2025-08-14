@@ -122,8 +122,8 @@ def configure_logging():
 async def make_ac_charger(plant_index, modbus, device_address, plant, remote_ems):
     input_breaker = ACChargerInputBreaker(plant_index, device_address)
     rated_current = ACChargerRatedCurrent(plant_index, device_address)
-    ip_value = await input_breaker.get_state(input_breaker.get_state(modbus=modbus))
-    rc_value = await rated_current.get_state(rated_current.get_state(modbus=modbus))
+    ip_value = await input_breaker.get_state(modbus=modbus)
+    rc_value = await rated_current.get_state(modbus=modbus)
     charger = ACCharger(plant_index, device_address, remote_ems, ip_value, rc_value, input_breaker, rated_current)
     charger.via_device = plant.unique_id
     return charger
