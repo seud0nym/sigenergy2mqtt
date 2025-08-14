@@ -23,6 +23,18 @@ else:
 _logger = logging.getLogger("root")
 _logger.info(f"Release {Config.origin['sw']}")
 
+for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
+    if os.path.isdir(_storage_base_path) and os.access(_storage_base_path, os.W_OK):
+        path = Path(_storage_base_path, "sigenergy2mqtt")
+        Config.persistent_state_path = path.resolve()
+        if not path.is_dir():
+            path.mkdir()
+        logging.info(f"{Config.persistent_state_path=}")
+        break
+if Config.persistent_state_path == ".":
+    _logger.critical("Unable to create persistent state path!")
+    sys.exit(1)
+
 # region Arguments
 _parser = argparse.ArgumentParser(
     description="Reads the Sigenergy modbus interface and publishes the data to MQTT. The data will be published to MQTT in the Home Assistant MQTT Discovery format.",
@@ -531,18 +543,6 @@ try:
         Config.reload()
 except Exception as e:
     _logger.critical(f"Error processing configuration: {e}")
-    sys.exit(1)
-
-for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
-    if os.path.isdir(_storage_base_path) and os.access(_storage_base_path, os.W_OK):
-        path = Path(_storage_base_path, "sigenergy2mqtt")
-        Config.persistent_state_path = path.resolve()
-        if not path.is_dir():
-            path.mkdir()
-        logging.debug(f"{Config.persistent_state_path=}")
-        break
-if Config.persistent_state_path == ".":
-    _logger.critical("Unable to create persistent state path!")
     sys.exit(1)
 
 directory = Path(Config.persistent_state_path)
