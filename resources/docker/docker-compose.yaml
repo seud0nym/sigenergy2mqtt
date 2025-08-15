@@ -6,8 +6,8 @@ services:
       # Set your time zone (especially important for PVOutput uploads)
       - TZ=Australia/Melbourne 
       # Configure the environment variables for sigenergy2mqtt e.g.
-      - SIGENERGY2MQTT_LOG_LEVEL: DEBUG
-      - SIGENERGY2MQTT_MODBUS_HOST: sigenergy.local
+      - SIGENERGY2MQTT_LOG_LEVEL=DEBUG
+      - SIGENERGY2MQTT_MODBUS_HOST=sigenergy.local
     volumes:
       # Mount the data directory to persist data
       - ./data:/data
