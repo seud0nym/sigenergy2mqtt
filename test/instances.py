@@ -29,7 +29,7 @@ async def get_sensor_instances(hass: bool = False):
 
     Config.home_assistant.enabled = hass
 
-    logging.info("Creating Power Plant")
+    logging.info(f"Instantiating Power Plant ({hass=})")
     plant = PowerPlant(
         plant_index=plant_index,
         device_type=HybridInverter(),
@@ -43,7 +43,7 @@ async def get_sensor_instances(hass: bool = False):
     remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
-    logging.info("Creating Hybrid Inverter")
+    logging.info(f"Instantiating Hybrid Inverter ({hass=})")
     hybrid_inverter = Inverter(
         plant_index=plant_index,
         device_address=inverter_device_address,
@@ -57,7 +57,7 @@ async def get_sensor_instances(hass: bool = False):
         output_type=OutputType(plant_index, inverter_device_address),
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
     )
-    logging.info("Creating PV Inverter")
+    logging.info(f"Instantiating PV Inverter ({hass=})")
     pv_inverter = Inverter(
         plant_index=plant_index,
         device_address=inverter_device_address,
@@ -72,10 +72,10 @@ async def get_sensor_instances(hass: bool = False):
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
     )
 
-    logging.info("Creating DC Charger")
+    logging.info(f"Instantiating DC Charger ({hass=})")
     dc_charger = DCCharger(plant_index, dc_charger_device_address, remote_ems)
 
-    logging.info("Creating DC Charger")
+    logging.info(f"Instantiating AC Charger ({hass=})")
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
     ac_charger = ACCharger(plant_index, ac_charger_device_address, remote_ems, 1.0, 2.0, rated_current, input_breaker)

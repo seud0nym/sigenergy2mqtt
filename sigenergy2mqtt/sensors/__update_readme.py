@@ -1,14 +1,14 @@
+from pathlib import Path
 import asyncio
 import logging
-from pathlib import Path
-from instances import get_sensor_instances, cancel_sensor_futures
+import os
+import sys
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor
-
-
-logging.getLogger("root").setLevel(logging.WARNING)
+from test import get_sensor_instances, cancel_sensor_futures
 
 
 async def sensor_index():
@@ -139,6 +139,7 @@ async def sensor_index():
         subscribed_topics("ACCharger")
         f.write("\n### DC Charger\n")
         subscribed_topics("DCCharger")
+        logging.info(f"{readme} successfully updated")
 
 
 if __name__ == "__main__":
