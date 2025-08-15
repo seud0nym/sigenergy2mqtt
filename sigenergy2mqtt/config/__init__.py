@@ -3,7 +3,7 @@ __all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROT
 
 from . import const
 from .config import Config
-from .device_config import RegisterAccess, SmartPortConfig
+from .modbus_config import RegisterAccess, SmartPortConfig
 from .version import SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
 from pathlib import Path
 import argparse

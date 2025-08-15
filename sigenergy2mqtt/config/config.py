@@ -1,6 +1,6 @@
 from . import const
 from . import version
-from .device_config import DeviceConfig
+from .modbus_config import DeviceConfig
 from .home_assistant_config import HomeAssistantConfiguration
 from .mqtt_config import MqttConfiguration
 from .pvoutput_config import PVOutputConfiguration
