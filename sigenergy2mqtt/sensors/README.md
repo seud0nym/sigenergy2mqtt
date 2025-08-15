@@ -298,7 +298,7 @@ Consumed Power
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_consumed_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_consumed_power/state</td></tr>
-<tr><td>Source</td><td>TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower</td></tr>
+<tr><td>Source</td><td>TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower</td></tr>
 </table>
 </details>
 <details>
@@ -307,7 +307,7 @@ DC Charger Alarms
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_5/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_5/state</td></tr>
 <tr><td>Source</td><td>30072</td></tr>
@@ -427,7 +427,7 @@ ESS Alarms
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_3/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_3/state</td></tr>
 <tr><td>Source</td><td>30029</td></tr>
@@ -440,7 +440,7 @@ Gateway Alarms
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_4/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_4/state</td></tr>
 <tr><td>Source</td><td>30030</td></tr>
@@ -1154,8 +1154,8 @@ Smart Load 01 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_01_power/state</td></tr>
 <tr><td>Source</td><td>30146</td></tr>
@@ -1182,8 +1182,8 @@ Smart Load 02 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_02_power/state</td></tr>
 <tr><td>Source</td><td>30148</td></tr>
@@ -1210,8 +1210,8 @@ Smart Load 03 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_03_power/state</td></tr>
 <tr><td>Source</td><td>30150</td></tr>
@@ -1238,8 +1238,8 @@ Smart Load 04 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_04_power/state</td></tr>
 <tr><td>Source</td><td>30152</td></tr>
@@ -1266,8 +1266,8 @@ Smart Load 05 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_05_power/state</td></tr>
 <tr><td>Source</td><td>30154</td></tr>
@@ -1294,8 +1294,8 @@ Smart Load 06 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_06_power/state</td></tr>
 <tr><td>Source</td><td>30156</td></tr>
@@ -1322,8 +1322,8 @@ Smart Load 07 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_07_power/state</td></tr>
 <tr><td>Source</td><td>30158</td></tr>
@@ -1350,8 +1350,8 @@ Smart Load 08 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_08_power/state</td></tr>
 <tr><td>Source</td><td>30160</td></tr>
@@ -1378,8 +1378,8 @@ Smart Load 09 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_09_power/state</td></tr>
 <tr><td>Source</td><td>30162</td></tr>
@@ -1406,8 +1406,8 @@ Smart Load 10 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_10_power/state</td></tr>
 <tr><td>Source</td><td>30164</td></tr>
@@ -1434,8 +1434,8 @@ Smart Load 11 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_11_power/state</td></tr>
 <tr><td>Source</td><td>30166</td></tr>
@@ -1462,8 +1462,8 @@ Smart Load 12 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_12_power/state</td></tr>
 <tr><td>Source</td><td>30168</td></tr>
@@ -1490,8 +1490,8 @@ Smart Load 13 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_13_power/state</td></tr>
 <tr><td>Source</td><td>30170</td></tr>
@@ -1518,8 +1518,8 @@ Smart Load 14 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_14_power/state</td></tr>
 <tr><td>Source</td><td>30172</td></tr>
@@ -1546,8 +1546,8 @@ Smart Load 15 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_15_power/state</td></tr>
 <tr><td>Source</td><td>30174</td></tr>
@@ -1574,8 +1574,8 @@ Smart Load 16 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_16_power/state</td></tr>
 <tr><td>Source</td><td>30176</td></tr>
@@ -1602,8 +1602,8 @@ Smart Load 17 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_17_power/state</td></tr>
 <tr><td>Source</td><td>30178</td></tr>
@@ -1630,8 +1630,8 @@ Smart Load 18 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_18_power/state</td></tr>
 <tr><td>Source</td><td>30180</td></tr>
@@ -1658,8 +1658,8 @@ Smart Load 19 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_19_power/state</td></tr>
 <tr><td>Source</td><td>30182</td></tr>
@@ -1686,8 +1686,8 @@ Smart Load 20 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_20_power/state</td></tr>
 <tr><td>Source</td><td>30184</td></tr>
@@ -1714,8 +1714,8 @@ Smart Load 21 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_21_power/state</td></tr>
 <tr><td>Source</td><td>30186</td></tr>
@@ -1742,8 +1742,8 @@ Smart Load 22 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_22_power/state</td></tr>
 <tr><td>Source</td><td>30188</td></tr>
@@ -1770,8 +1770,8 @@ Smart Load 23 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_23_power/state</td></tr>
 <tr><td>Source</td><td>30190</td></tr>
@@ -1798,8 +1798,8 @@ Smart Load 24 Power
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_24_power/state</td></tr>
 <tr><td>Source</td><td>30192</td></tr>
@@ -2519,7 +2519,7 @@ Gateway Alarms
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_alarm_4/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_4/state</td></tr>
 <tr><td>Source</td><td>30608</td></tr>
@@ -3068,7 +3068,7 @@ Alarms
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_alarm_3/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_3/state</td></tr>
 <tr><td>Source</td><td>30607</td></tr>
@@ -4514,110 +4514,42 @@ PV String 16 Voltage
 ### AC Charger
 <details>
 <summary>
-AC Charger Charging Power
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kW</td></tr>
-<tr><td>Gain</td><td>1000</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_charging_power/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_charging_power/state</td></tr>
-<tr><td>Source</td><td>32003</td></tr>
-</table>
-</details>
-<details>
-<summary>
-AC Charger Input Breaker
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>600s</td></tr>
-<tr><td>Unit of Measurement</td><td>A</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_input_breaker/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_input_breaker/state</td></tr>
-<tr><td>Source</td><td>32010</td></tr>
-</table>
-</details>
-<details>
-<summary>
-AC Charger Rated Current
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>600s</td></tr>
-<tr><td>Unit of Measurement</td><td>A</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_current/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_current/state</td></tr>
-<tr><td>Source</td><td>32007</td></tr>
-</table>
-</details>
-<details>
-<summary>
-AC Charger Rated Power
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>600s</td></tr>
-<tr><td>Unit of Measurement</td><td>kW</td></tr>
-<tr><td>Gain</td><td>1000</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_power/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_power/state</td></tr>
-<tr><td>Source</td><td>32005</td></tr>
-</table>
-</details>
-<details>
-<summary>
-AC Charger Rated Voltage
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>600s</td></tr>
-<tr><td>Unit of Measurement</td><td>V</td></tr>
-<tr><td>Gain</td><td>10</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_rated_voltage/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_rated_voltage/state</td></tr>
-<tr><td>Source</td><td>32009</td></tr>
-</table>
-</details>
-<details>
-<summary>
-AC Charger Running State
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_running_state/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_running_state/state</td></tr>
-<tr><td>Source</td><td>32000</td></tr>
-</table>
-</details>
-<details>
-<summary>
-AC Charger Total Energy Consumed
-</summary>
-<table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Unit of Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>100</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_total_energy_consumed/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_total_energy_consumed/state</td></tr>
-<tr><td>Source</td><td>32001</td></tr>
-</table>
-</details>
-<details>
-<summary>
 Alarms
 </summary>
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_003_accharger/sigen_0_ac_charger_3_alarm/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_alarm/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_alarm/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 32012, 32013, and 32014</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Charging Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_charging_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_charging_power/state</td></tr>
+<tr><td>Source</td><td>32003</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Input Breaker
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_input_breaker/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_input_breaker/state</td></tr>
+<tr><td>Source</td><td>32010</td></tr>
 </table>
 </details>
 <details>
@@ -4629,9 +4561,77 @@ Output Current
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_003_accharger/sigen_0_ac_charger_3_output_current/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_output_current/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_002_accharger/sigen_0_ac_charger_2_output_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/state</td></tr>
 <tr><td>Source</td><td>42001</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Current
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_current/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_current/state</td></tr>
+<tr><td>Source</td><td>32007</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Power
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_power/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_power/state</td></tr>
+<tr><td>Source</td><td>32005</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Rated Voltage
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Unit of Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_voltage/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_voltage/state</td></tr>
+<tr><td>Source</td><td>32009</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Running State
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_running_state/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_running_state/state</td></tr>
+<tr><td>Source</td><td>32000</td></tr>
+</table>
+</details>
+<details>
+<summary>
+Total Energy Consumed
+</summary>
+<table>
+<tr>
+<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Unit of Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_total_energy_consumed/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_total_energy_consumed/state</td></tr>
+<tr><td>Source</td><td>32001</td></tr>
 </table>
 </details>
 
@@ -4642,22 +4642,22 @@ Alarms
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_inverter_2_alarm_5/state</td></tr>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_2_alarm_5/state</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_inverter_1_alarm_5/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_5/state</td></tr>
 <tr><td>Source</td><td>30609</td></tr>
 </table>
 </details>
 <details>
 <summary>
-DC Charger Current Charging Capacity
+Current Charging Capacity
 </summary>
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_current_charging_capacity/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_dc_charger_current_charging_capacity/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_capacity/state</td></tr>
 <tr><td>Source</td><td>31505</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
@@ -4665,14 +4665,14 @@ DC Charger Current Charging Capacity
 </details>
 <details>
 <summary>
-DC Charger Current Charging Duration
+Current Charging Duration
 </summary>
 <table>
 <tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>s</td></tr>
 <tr><td>Gain</td><td>1</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_current_charging_duration/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_dc_charger_current_charging_duration/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_duration/state</td></tr>
 <tr><td>Source</td><td>31507</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
@@ -4680,14 +4680,14 @@ DC Charger Current Charging Duration
 </details>
 <details>
 <summary>
-DC Charger Output Power
+Output Power
 </summary>
 <table>
 <tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_dc_charger_output_power/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_dc_charger_output_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_output_power/state</td></tr>
 <tr><td>Source</td><td>31502</td></tr>
 </table>
@@ -4701,7 +4701,7 @@ Vehicle Battery Voltage
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
 <tr><td>Source</td><td>31500</td></tr>
 </table>
@@ -4715,7 +4715,7 @@ Vehicle Charging Current
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_charging_current/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_vehicle_charging_current/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_charging_current/state</td></tr>
 <tr><td>Source</td><td>31501</td></tr>
 </table>
@@ -4729,7 +4729,7 @@ Vehicle SoC
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
-<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_dccharger/sigen_0_plant_vehicle_soc/state</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_vehicle_soc/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_soc/state</td></tr>
 <tr><td>Source</td><td>31504</td></tr>
 </table>
@@ -5115,8 +5115,8 @@ Remote EMS Dispatch
 Output Current
 </summary>
 <table>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_output_current/state</td></tr>
-<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_output_current/set</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/set</td></tr>
 </table>
 </details>
 <details>
@@ -5124,8 +5124,8 @@ Output Current
 Power On/Off
 </summary>
 <table>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_status/state</td></tr>
-<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_3_status/set</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_status/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_status/set</td></tr>
 </table>
 </details>
 
@@ -5135,7 +5135,7 @@ Power On/Off
 DC Charger Status
 </summary>
 <table>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_2_status/state</td></tr>
-<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_2_status/set</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_status/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_status/set</td></tr>
 </table>
 </details>
