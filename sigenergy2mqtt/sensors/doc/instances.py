@@ -16,8 +16,8 @@ from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, Plan
 async def get_sensor_instances(hass: bool = False):
     plant_index = 0
     inverter_device_address = 1
-    dc_charger_device_address = 2
-    ac_charger_device_address = 3
+    dc_charger_device_address = 1
+    ac_charger_device_address = 2
 
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
