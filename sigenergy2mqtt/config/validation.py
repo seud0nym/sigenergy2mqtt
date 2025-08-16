@@ -131,7 +131,7 @@ def check_port(value, source):
     return check_int(value, source, min=1, max=65535)
 
 
-def check_string(value, source, allow_none: bool = True, allow_empty: bool = True, hex_chars_only: bool = False, starts_with: str = None, *valid_values):
+def check_string(value, source, *valid_values, allow_none: bool = True, allow_empty: bool = True, hex_chars_only: bool = False, starts_with: str = None):
     if value is None:
         if allow_none:
             return value
