@@ -38,19 +38,29 @@ async def run_async_server() -> None:
             if sensor._device_address not in context:
                 context[sensor._device_address] = CustomDataBlock.create()
             if sensor._data_type == ModbusClientMixin.DATATYPE.STRING:
-                byte_data = "string value".encode("utf-8")
-                if len(byte_data) % 2 != 0:
-                    byte_data += b"\x00"  # Pad with a null byte
-                registers = []
-                for i in range(0, len(byte_data), 2):
-                    register = (byte_data[i] << 8) + byte_data[i + 1]  # Combine two bytes into a 16-bit integer
-                    registers.append(register)
+                match sensor._address:
+                    case 30500:
+                        value = "SigenStor EC 12.0 TP"
+                    case 30515:
+                        value = "CMU123A45BP678"
+                    case 30525:
+                        value = "V100R001C00SPC108B088F"
+                    case _:
+                        value = "string value"
+                registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
                 if len(registers) < sensor._count:
                     registers.extend([0] * (sensor._count - len(registers)))  # Pad with zeros
                 elif len(registers) > sensor._count:
                     registers = registers[: sensor._count]  # Truncate to the required length
             else:
-                registers = ModbusClientMixin.convert_to_registers(randint(0, 16), sensor._data_type)
+                match sensor._address:
+                    case 31025:
+                        value = 16
+                    case 31026:
+                        value = 4
+                    case _:
+                        value = randint(0,255)
+                registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
             context[sensor._device_address].setValues(sensor._address, registers)
     cancel_sensor_futures()
     _logger.info("Starting ASYNC Modbus TCP Testing Server...")
