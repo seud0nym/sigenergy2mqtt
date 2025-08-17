@@ -37,11 +37,14 @@ class DeviceConfig:
 
     smartport = SmartPortConfig()
 
-    def configure(self, config: dict, override: bool = False) -> None:
+    def configure(self, config: dict, override: bool = False, auto_discovered: bool = False) -> None:
         if isinstance(config, dict):
             for field, value in config.items():
                 if field != "smart-port":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: modbus.{field} = {value}")
+                    if auto_discovered and (field == "host" or field == "port" or field == "inverters" or field == "ac-chargers" or field == "dc-chargers"):
+                        logging.info(f"Applying auto-discovery: modbus.{field} = {value}")
+                    else:
+                        logging.log(logging.INFO if auto_discovered else logging.DEBUG, f"Applying {'override from env/cli' if override else 'configuration'}: modbus.{field} = {value}")
                 match field:
                     case "host":
                         self.host = check_host(value, f"modbus.{field}")
