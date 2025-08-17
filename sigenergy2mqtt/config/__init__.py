@@ -430,9 +430,11 @@ _parser.add_argument(
 )
 _parser.add_argument(
     "--pvoutput-consumption",
-    action="store_true",
+    nargs="?",
+    action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION,
-    help="Enable sending consumption status to PVOutput.",
+    const="true",
+    help="Enable to send consumption data to PVOutput. If specified without a value, or with a value of 'true' or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from the grid will be sent. If not specified, no consumption data is sent.",
 )
 _parser.add_argument(
     "--pvoutput-interval",

@@ -222,7 +222,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_PVOUTPUT_ENABLED` | Set to 'true' to enable status updates to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_API_KEY` | The API Key for PVOutput |
 | `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
-| `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | Set to 'true' to enable sending consumption status to PVOutput. |
+| `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | If specified with a value of 'true' or 'consumption', consumption data will be sent to PVOutput. With a value of 'imported', the energy imported from the grid will be sent. If not specified, no consumption data is sent. |
 | `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC` | An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 
@@ -337,8 +337,10 @@ Command line options override both environment variables and the configuration f
                         The API Key for PVOutput
   --pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]
                         The PVOutput System ID
-  --pvoutput-consumption
-                        Enable sending consumption status to PVOutput.
+  --pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]
+                        Enable consumption data to be sent to PVOutput. If specified without a value, or with a value of 'true'
+                        or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from  
+                        the grid will be sent. If not specified, no consumption data is sent.
   --pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]
                         An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. 
                         If not specified, the temperature will not be sent to PVOutput.

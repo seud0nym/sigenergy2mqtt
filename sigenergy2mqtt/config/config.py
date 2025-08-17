@@ -205,7 +205,7 @@ class Config:
                         case const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
                             overrides["pvoutput"]["system-id"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
-                            overrides["pvoutput"]["consumption"] = check_bool(os.environ[key], key)
+                            overrides["pvoutput"]["consumption"] = check_string(os.environ[key], key, "false", "true", "consumption", "imported", allow_empty=False, allow_none=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
                             pass  # Deprecated
                         case const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
