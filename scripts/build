@@ -14,7 +14,7 @@ fi
 python3 -c '
 import asyncio
 import logging
-from sigenergy2mqtt.sensors.doc import instances
+from test import instances
 logging.getLogger("root").setLevel(logging.WARNING)
 async def check():
     print("Checking sensors")
