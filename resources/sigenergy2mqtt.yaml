@@ -117,6 +117,19 @@ mqtt:
   #   description:  The MQTT interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: WARNING
+# modbus
+#   default: [ ]
+#   description:  The array of Modbus device configurations. Each device
+#                 configuration must contain a host, and may optionally
+#                 contain the port, inverters, ac-chargers, dc-chargers,
+#                 log-level, read-only, read-write, write-only, no-remote-ems,
+#                 scan-interval-low, scan-interval-medium, scan-interval-high,
+#                 scan-interval-realtime, and smart-port configurations.
+#                 If you have multiple Sigenergy devices, you may specify
+#                 multiple host/port configurations. You can also automatically
+#                 discover Sigenergy devices on your network, using either the
+#                 command line option --modbus-auto-discovery=once or the 
+#                 environment variable SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY=once.
 modbus:
     # host
     #   default: ""

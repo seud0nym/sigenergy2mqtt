@@ -8,8 +8,8 @@ from sigenergy2mqtt.main.thread_config import ThreadConfig
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import PVVoltageSensor
-from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
-from sigenergy2mqtt.sensors.plant_read_only import PlantPVPower, TotalLoadConsumption, TotalLoadDailyConsumption
+from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
+from sigenergy2mqtt.sensors.plant_read_only import PlantPVPower, PlantTotalImportedEnergy, TotalLoadConsumption, TotalLoadDailyConsumption
 import logging
 
 
@@ -31,11 +31,15 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
         ]:
             if isinstance(sensor, TotalLifetimePVEnergy):
                 status.register_generation(sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, TotalLoadConsumption) and Config.pvoutput.consumption:
+            elif isinstance(sensor, TotalLoadConsumption) and Config.pvoutput.consumption == "consumption":
+                status.register_consumption(sensor.state_topic, unit2gain(sensor))
+            elif isinstance(sensor, PlantTotalImportedEnergy) and Config.pvoutput.consumption == "imported":
                 status.register_consumption(sensor.state_topic, unit2gain(sensor))
             elif isinstance(sensor, TotalDailyPVEnergy):
                 output.register_generation(sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, TotalLoadDailyConsumption) and Config.pvoutput.consumption:
+            elif isinstance(sensor, TotalLoadDailyConsumption) and Config.pvoutput.consumption == "consumption":
+                output.register_consumption(sensor.state_topic, unit2gain(sensor))
+            elif isinstance(sensor, GridSensorDailyImportEnergy) and Config.pvoutput.consumption == "imported":
                 output.register_consumption(sensor.state_topic, unit2gain(sensor))
             elif isinstance(sensor, GridSensorDailyExportEnergy) and Config.pvoutput.exports:
                 output.register_exports(sensor.state_topic, unit2gain(sensor))

@@ -11,6 +11,7 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 1. It can publish the appropriate messages to allow Home Assistant to automatically discover the Sigenergy devices, simplifying Home Assistant configuration. 
 1. Production and consumption data can automatically be uploaded to PVOutput. 
+1. It can auto-discover Sigenergy devices and their device IDs.
 
 `sigenergy2mqtt` was inspired the Home Assistant integrations developed by [TypQxQ](https://github.com/TypQxQ/).
 
@@ -79,6 +80,12 @@ Notes:
 - If your MQTT broker does not require authentication, add the option `anonymous: true` under `mqtt`.
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
 - The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
+
+#### Modbus Auto-Discovery
+
+You can automatically discover Sigenergy devices on your network, using either the command line option `--modbus-auto-discovery` or the  environment variable `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`. Both of these take a value of either `once` or `force`:  If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
+
+Auto-discovery is a lengthy process because your local network has to be scanned for potential Modbus hosts, and once detected there are 247 potential device IDs to be scanned on each host. Expect it to to take 3-5 minutes.
 
 <details>
 <summary>
@@ -189,6 +196,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MQTT_USERNAME` | A valid username for the MQTT broker |
 | `SIGENERGY2MQTT_MQTT_PASSWORD` | A valid password for the MQTT broker username |
 | `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY` | Controls auto-discovery of Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled. |
 | `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device |
 | `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: 502) |
 | `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID` | The Sigenergy device Modbus Device ID. May be specified as a space-separated list (e.g. "1 2"). (default: 1) |
@@ -214,7 +222,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_PVOUTPUT_ENABLED` | Set to 'true' to enable status updates to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_API_KEY` | The API Key for PVOutput |
 | `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
-| `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | Set to 'true' to enable sending consumption status to PVOutput. |
+| `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | If specified with a value of 'true' or 'consumption', consumption data will be sent to PVOutput. With a value of 'imported', the energy imported from the grid will be sent. If not specified, no consumption data is sent. |
 | `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC` | An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 
@@ -249,8 +257,8 @@ Command line options override both environment variables and the configuration f
                          (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in 
                          Home Assistant.
   --hass-use-simplified-topics
-                        Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure
-                        (homeassistant/platform/device_id/object_id/state)
+                        Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic
+                        structure (homeassistant/platform/device_id/object_id/state)
   --hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]
                         The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names 
                         (default: '')
@@ -260,11 +268,13 @@ Command line options override both environment variables and the configuration f
   -b [SIGENERGY2MQTT_MQTT_BROKER], --mqtt-broker [SIGENERGY2MQTT_MQTT_BROKER]
                         The hostname or IP address of an MQTT broker (default: 127.0.0.1)
   --mqtt-port [SIGENERGY2MQTT_MQTT_PORT]
-                        The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)
+                        The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default 
+                        is 8883)
   --mqtt-tls            Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.
-  --mqtt-tls-insecure   Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. 
-                        Ignored unless --mqtt-tls is also specified.
-  --mqtt-anonymous      Connect to MQTT anonymously (i.e. without username/password).  If specified, the --mqtt-username and --mqtt-password options are ignored.
+  --mqtt-tls-insecure   Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this 
+                        option. Ignored unless --mqtt-tls is also specified.
+  --mqtt-anonymous      Connect to MQTT anonymously (i.e. without username/password).  If specified, the --mqtt-username and 
+                        --mqtt-password options are ignored.
   -u [SIGENERGY2MQTT_MQTT_USERNAME], --mqtt-username [SIGENERGY2MQTT_MQTT_USERNAME]
                         A valid username for the MQTT broker
   -p [SIGENERGY2MQTT_MQTT_PASSWORD], --mqtt-password [SIGENERGY2MQTT_MQTT_PASSWORD]
@@ -272,6 +282,10 @@ Command line options override both environment variables and the configuration f
   --mqtt-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
                         Default is WARNING (warnings, errors and critical failures)
+  --modbus-auto-discovery {once,force}
+                        Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only 
+                        occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously 
+                        discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
   -m [SIGENERGY2MQTT_MODBUS_HOST], --modbus-host [SIGENERGY2MQTT_MODBUS_HOST]
                         The hostname or IP address of the Sigenergy device
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]
@@ -291,13 +305,17 @@ Command line options override both environment variables and the configuration f
                         Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
                         Default is WARNING (warnings, errors and critical failures)
   --scan-interval-low [SIGENERGY2MQTT_SCAN_INTERVAL_LOW]
-                        The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300.
+                        The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600, 
+                        and the minimum value is 300.
   --scan-interval-medium [SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM]
-                        The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30.
+                        The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60, 
+                        and the minimum value is 30.
   --scan-interval-high [SIGENERGY2MQTT_SCAN_INTERVAL_HIGH]
-                        The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5.
+                        The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10, 
+                        and the minimum value is 5.
   --scan-interval-realtime [SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME]
-                        The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
+                        The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5, 
+                        and the minimum value is 1.
   --smartport-enabled   Enable interrogation of a third-party device for production data.
   --smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]
                         The name of the module which will be used to obtain third-party device production data.
@@ -319,10 +337,13 @@ Command line options override both environment variables and the configuration f
                         The API Key for PVOutput
   --pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]
                         The PVOutput System ID
-  --pvoutput-consumption
-                        Enable sending consumption status to PVOutput.
+  --pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]
+                        Enable consumption data to be sent to PVOutput. If specified without a value, or with a value of 'true'
+                        or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from  
+                        the grid will be sent. If not specified, no consumption data is sent.
   --pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]
-                        An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.
+                        An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. 
+                        If not specified, the temperature will not be sent to PVOutput.
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
                         (warnings, errors and critical failures)

@@ -34,6 +34,12 @@ for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
 if Config.persistent_state_path == ".":
     _logger.critical("Unable to create persistent state path!")
     sys.exit(1)
+persistent_state_path = Path(Config.persistent_state_path)
+threshold_time = time.time() - (7 * 86400)
+for file in persistent_state_path.iterdir():
+    if file.is_file() and file.name != "auto-discovery.yaml" and not file.name.endswith(".publishable") and not file.name.endswith(".token") and file.stat().st_mtime < threshold_time:
+        _logger.debug(f"Removing stale state file: {file}")
+        file.unlink()
 
 # region Arguments
 _parser = argparse.ArgumentParser(
@@ -199,6 +205,13 @@ _parser.add_argument(
 )
 # endregion
 # region Modbus Configuration
+_parser.add_argument(
+    "--modbus-auto-discovery",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY,
+    choices=["once", "force"],
+    help="Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.",
+)
 _parser.add_argument(
     "-m",
     "--modbus-host",
@@ -417,9 +430,11 @@ _parser.add_argument(
 )
 _parser.add_argument(
     "--pvoutput-consumption",
-    action="store_true",
+    nargs="?",
+    action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION,
-    help="Enable sending consumption status to PVOutput.",
+    const="true",
+    help="Enable to send consumption data to PVOutput. If specified without a value, or with a value of 'true' or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from the grid will be sent. If not specified, no consumption data is sent.",
 )
 _parser.add_argument(
     "--pvoutput-interval",
@@ -544,10 +559,3 @@ try:
 except Exception as e:
     _logger.critical(f"Error processing configuration: {e}")
     sys.exit(1)
-
-directory = Path(Config.persistent_state_path)
-threshold_time = time.time() - (7 * 86400)
-for file in directory.iterdir():
-    if file.is_file() and not file.name.endswith(".publishable") and not file.name.endswith(".token") and file.stat().st_mtime < threshold_time:
-        _logger.debug(f"Removing stale state file: {file}")
-        file.unlink()

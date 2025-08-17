@@ -7,7 +7,7 @@ import logging
 class PVOutputConfiguration:
     enabled: bool = False
 
-    consumption: bool = False
+    consumption: str | None = None
     exports: bool = False
     peak_power: bool = True
 
@@ -36,7 +36,15 @@ class PVOutputConfiguration:
                         case "api-key":
                             self.api_key = check_string(value, "pvoutput.api-key", allow_none=(not self.enabled), allow_empty=(not self.enabled), hex_chars_only=True)
                         case "consumption":
-                            self.consumption = check_bool(value, f"pvoutput.{field}")
+                            match value:
+                                case False | "false":
+                                    self.consumption = None
+                                case True | "true" | "consumption":
+                                    self.consumption = "consumption"
+                                case "imported":
+                                    self.consumption = "imported"
+                                case _:
+                                    raise ValueError(f"pvoutput.consumption must be 'true', 'false', or 'imports', got '{value}'")
                         case "exports":
                             self.exports = check_bool(value, f"pvoutput.{field}")
                         case "interval-minutes":
