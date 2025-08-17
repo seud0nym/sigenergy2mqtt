@@ -8,6 +8,9 @@ services:
       # Configure the environment variables for sigenergy2mqtt e.g.
       - SIGENERGY2MQTT_LOG_LEVEL=DEBUG
       - SIGENERGY2MQTT_MODBUS_HOST=sigenergy.local
+      - SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1
+      - SIGENERGY2MQTT_MQTT_USERNAME=user
+      - SIGENERGY2MQTT_MQTT_PASSWORD=password
     volumes:
       # Mount the data directory to persist data
       - ./data:/data
