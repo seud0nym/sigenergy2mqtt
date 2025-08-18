@@ -1,6 +1,7 @@
 from pymodbus import FramerType, ModbusException
-from pymodbus.client import ModbusTcpClient
+from pymodbus.client import AsyncModbusTcpClient
 from scapy.all import ARP, Ether, srp, IP, ICMP, sr1
+import asyncio
 import ipaddress
 import logging
 import psutil
@@ -66,14 +67,54 @@ def ping_scan(ip_list, threads=100, timeout=1) -> list[str]:
     return result_list
 
 
-def register_scan(client: ModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
+async def probe_worker(client: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
     try:
-        result = client.read_input_registers(address=address, count=count, device_id=device_id)
+        result = await client.read_input_registers(address=address, count=count, device_id=device_id)
         if result and not result.isError():
             return True
-    except ModbusException:
+    except ModbusException as e:
+        logging.debug(f"Modbus probe failed for {client.comm_params.host}:{client.comm_params.port} at address {address} with device_id {device_id}: {e}")
+        pass
+    except Exception as e:
+        logging.debug(f"Unexpected error during Modbus probe for {client.comm_params.host}:{client.comm_params.port} at address {address} with device_id {device_id}: {e}")
         pass
     return False
+
+
+async def register_probe(ip: str, port: int, results: list) -> None:
+    client = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=0.25, retries=0)
+    try:
+        await client.connect()
+        if client.connected:
+            try:
+                logging.info(f"Found Modbus device at {ip}")
+                device = {"host": ip, "port": port, "ac-chargers": [], "dc-chargers": [], "inverters": []}
+                if await probe_worker(client, address=30051, device_id=247):  # Plant running state
+                    for device_id in range(1, 247):
+                        logging.debug(f"Scanning {ip} for device_id {device_id}...")
+                        if await probe_worker(client, address=31501, device_id=device_id):  # [DC Charger] Charging current
+                            logging.info(f"Found Inverter and DC-Charger at {ip}: Device ID={device_id}")
+                            device["dc-chargers"].append(device_id)
+                            device["inverters"].append(device_id)
+                            continue
+                        if await probe_worker(client, address=30578, device_id=device_id):  # Inverter Running state
+                            logging.info(f"Found Inverter at {ip}: Device ID={device_id}")
+                            device["inverters"].append(device_id)
+                            continue
+                        if await probe_worker(client, address=32000, device_id=device_id):  # AC Charger System state
+                            logging.info(f"Found AC-Charger at {ip}: Device ID={device_id}")
+                            device["ac-chargers"].append(device_id)
+                            continue
+                    if len(device["inverters"]) == 0 and len(device["dc-chargers"]) == 0 and len(device["ac-chargers"]) == 0:
+                        logging.info(f"Ignored Modbus device at {ip}: no inverters or chargers found")
+                    else:
+                        results.append(device)
+                else:
+                    logging.info(f"Ignored Modbus device at {ip}: no Plant running state found")
+            finally:
+                client.close()
+    except ModbusException:
+        pass
 
 
 def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]]]:
@@ -94,9 +135,11 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
     network_scan_elapsed = time.perf_counter() - started
     logging.info(f"Network scan completed in {network_scan_elapsed:.2f} seconds. Found: {networks=}")
 
+    loop = asyncio.get_event_loop()
     results = []
     for addr, subnet in networks.items():
         logging.info(f"Scanning {subnet.with_prefixlen}...")
+
         arp_results = arp_scan(subnet.with_netmask, timeout=0.5)
         all_ips = [str(ip) for ip in subnet.hosts()]
         missing_ips = [ip for ip in all_ips if ip not in arp_results and ip != addr]
@@ -105,37 +148,17 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
         active_ips = list(set([addr]) | set(arp_results.keys()) | set(ping_results))
 
         for ip in active_ips:
-            with ModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=0.25, retries=0) as client:
-                try:
-                    client.connect()
-                    if client.connected:
-                        logging.info(f"Found Modbus device at {ip}")
-                        if register_scan(client, address=30051, device_id=247):  # Plant running state
-                            device = {"host": ip, "port": port, "ac-chargers": [], "dc-chargers": [], "inverters": []}
-                            for device_id in range(1, 247):
-                                logging.info(f"Scanning {ip} for device_id {device_id}...")
-                                if register_scan(client, address=31501, device_id=device_id):  # [DC Charger] Charging current
-                                    device["dc-chargers"].append(device_id)
-                                    device["inverters"].append(device_id)
-                                    continue
-                                if register_scan(client, address=30578, device_id=device_id):  # Inverter Running state
-                                    device["inverters"].append(device_id)
-                                    continue
-                                if register_scan(client, address=32000, device_id=device_id):  # AC Charger System state
-                                    device["ac-chargers"].append(device_id)
-                                    continue
-                            if len(device["inverters"]) == 0 and len(device["dc-chargers"]) == 0 and len(device["ac-chargers"]) == 0:
-                                logging.info(f"Ignored Modbus device at {ip}: no inverters or chargers found")
-                            else:
-                                results.append(device)
-                        else:
-                            logging.info(f"Ignored Modbus device at {ip}: no Plant running state found")
-                        client.close()
-                except ModbusException:
-                    pass
+            loop.run_until_complete(register_probe(ip, port, results))
+    loop.close()
 
     elapsed = time.perf_counter() - started
     print(f"Scan completed in {elapsed:.2f} seconds. Found {len(results)} Sigenergy Modbus device(s)")
     sorted_ips = sorted(results, key=lambda result: ipaddress.ip_address(result["host"]))
 
     return sorted_ips
+
+
+if __name__ == "__main__":
+    logging.getLogger("root").setLevel(logging.INFO)
+    results = scan(port=502)
+    logging.info(f"Auto-discovered: {results}")
