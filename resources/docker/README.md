@@ -24,7 +24,7 @@ docker run -it \
 ```
 
 > [!IMPORTANT]
-> You must provide persistent storage via the `-v` option to preserve the state  of calculated accumulation sensors across executions. You can also place your [configuration file](../../README.md#configuration-file) in the root of this directory, rather than configuring via environment variables.
+> You must provide persistent storage via the `-v` option to preserve the state of some sensors across executions. You can also place your [configuration file](../../README.md#configuration-file) in the root of this directory (i.e. `/data/sigenergy2mqtt.yaml`), rather than configuring via environment variables.
 
 
 If you want to utilise the auto-discovery feature to find existing Sigenergy Modbus devices and device IDs, you _must_ specify host networking. e.g.

@@ -176,7 +176,7 @@ Environment variables override the configuration file, but *not* command line op
 
 | Name | Description |
 |------|-------------|
-| `SIGENERGY2MQTT_CONFIG` | The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml) |
+| `SIGENERGY2MQTT_CONFIG` | The path to the JSON configuration file (defaults: `/etc/sigenergy2mqtt.yaml` for Linux, `/data/sigenergy2mqtt.yaml` for Docker and `/config/sigenergy2mqtt.yaml` for Home Assistant) |
 | `SIGENERGY2MQTT_LOG_LEVEL` | Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 | `SIGENERGY2MQTT_DEBUG_SENSOR` | Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG |
 | `SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW` | The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored. |
