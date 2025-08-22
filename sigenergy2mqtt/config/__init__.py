@@ -28,17 +28,19 @@ for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
         path = Path(_storage_base_path, "sigenergy2mqtt")
         Config.persistent_state_path = path.resolve()
         if not path.is_dir():
+            _logger.info(f"Persistent state folder '{Config.persistent_state_path}' created")
             path.mkdir()
-        logging.info(f"{Config.persistent_state_path=}")
+        else:
+            _logger.info(f"Persistent state folder '{Config.persistent_state_path}' already exists")
         break
 if Config.persistent_state_path == ".":
-    _logger.critical("Unable to create persistent state path!")
+    _logger.critical("Unable to create persistent state folder!")
     sys.exit(1)
 persistent_state_path = Path(Config.persistent_state_path)
 threshold_time = time.time() - (7 * 86400)
 for file in persistent_state_path.iterdir():
     if file.is_file() and not file.name.endswith(".yaml") and not file.name.endswith(".publishable") and not file.name.endswith(".token") and file.stat().st_mtime < threshold_time:
-        _logger.debug(f"Removing stale state file: {file}")
+        _logger.info(f"Removing stale state file: {file} (last modified: {time.ctime(file.stat().st_mtime)})")
         file.unlink()
 
 # region Arguments
