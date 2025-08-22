@@ -25,6 +25,7 @@
         "EVDC",
         "HACS",
         "HASS",
+        "hassio",
         "homeassistant",
         "hwsrc",
         "inet_pton",

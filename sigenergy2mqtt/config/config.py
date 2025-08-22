@@ -226,22 +226,22 @@ class Config:
                             if defined.host == "":
                                 defined.host = device.get("host")
                                 defined.port = device.get("port")
-                                logging.info(f"Using default device to configure {device.get('host')}:{device.get('port')} with auto-discovered device IDs")
+                                logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
                             else:
-                                logging.info(f"Host {device.get('host')}:{device.get('port')} already configured, updating with auto-discovered device IDs")
+                                logging.info(f"Auto-discovered found configured Modbus device: {device.get('host')}:{device.get('port')}, updating with discovered device IDs")
                             defined.configure(device, override=True, auto_discovered=True)
                             updated = True
                             break
                     if not updated:
-                        logging.info(f"Auto-discovered new modbus device: {device.get('host')}:{device.get('port')}")
+                        logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
                         new_device = DeviceConfig()
                         new_device.configure(device, override=True, auto_discovered=True)
                         Config.devices.append(new_device)
             else:
-                raise ValueError("Auto-discovery results must be a list of modbus device configurations.")
+                raise ValueError("Auto-discovery results must be a list of modbus device configurations")
 
         if len(Config.devices) == 0:
-            raise ValueError("No modbus devices found.")
+            raise ValueError("No Modbus devices configured")
 
     @staticmethod
     def _configure(data: dict, override: bool = False) -> None:
