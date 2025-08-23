@@ -1715,7 +1715,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision
         )
         self._state_at_midnight_lock = asyncio.Lock()
-        self._state_at_midnight: float = source.latest_raw_state
+        self._state_at_midnight: float = None
         self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")
         if self._persistent_state_file.is_file():
             fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
@@ -1740,9 +1740,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
             logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
-        self._state_now: float = max(0.0, source.latest_raw_state - self._state_at_midnight) if source.latest_raw_state else 0.0
-        logging.debug(f"{self.__class__.__name__} Setting latest state = {self._state_now} (max(0.0, {source.latest_raw_state=} - {self._state_at_midnight=}))")
-        self.set_latest_state(self._state_now)
         if not self._persistent_state_file.is_file():
             self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
 
@@ -1780,14 +1777,20 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             if was.tm_year != now.tm_year or was.tm_mon != now.tm_mon or was.tm_mday != now.tm_mday:
                 asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_running_loop())
 
-        self._state_now = now_state - (self._state_at_midnight if self._state_at_midnight else now_state)
+        if not self._state_at_midnight:
+            self._state_at_midnight = now_state
+
+        self._state_now = now_state - self._state_at_midnight
         self.set_latest_state(self._state_now)
 
     async def _update_state_at_midnight(self, midnight_state: float) -> None:
-        async with self._state_at_midnight_lock:
-            with self._persistent_state_file.open("w") as f:
-                f.write(str(midnight_state))
-            self._state_at_midnight = midnight_state
+        if midnight_state:
+            async with self._state_at_midnight_lock:
+                with self._persistent_state_file.open("w") as f:
+                    f.write(str(midnight_state))
+                self._state_at_midnight = midnight_state
+        else:
+            logging.warning(f"{self.__class__.__name__} Ignored attempt to update midnight state to {midnight_state}")
 
 
 class PVPowerSensor:
