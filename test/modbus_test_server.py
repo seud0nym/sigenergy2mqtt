@@ -4,13 +4,13 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from test import get_sensor_instances, cancel_sensor_futures
 from pymodbus import __version__ as pymodbus_version
 from pymodbus import FramerType, ModbusDeviceIdentification
 from pymodbus.client.base import ModbusClientMixin
 from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
 from random import randint
+from test import get_sensor_instances, cancel_sensor_futures
 
 _logger = logging.getLogger(__file__)
 _logger.setLevel(logging.INFO)
@@ -28,6 +28,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
 
     async def async_getValues(self, fc_as_hex: int, address: int, count=1):
         return super().getValues(address, count)
+
+    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]):
+        return super().setValues(address, values)
 
 
 async def run_async_server() -> None:
@@ -54,12 +57,14 @@ async def run_async_server() -> None:
                     registers = registers[: sensor._count]  # Truncate to the required length
             else:
                 match sensor._address:
-                    case 31025:
+                    case 30027 | 30028 | 30029 | 30030 | 30072 | 30605 | 30606 | 30607 | 30608 | 30609 | 32012 | 32013 | 32014: # Alarms
+                        value = 0
+                    case 31025: # PVStringCount
                         value = 16
-                    case 31026:
+                    case 31026: # MPTTCount
                         value = 4
                     case _:
-                        value = randint(0,255)
+                        value = randint(0, 255)
                 registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
             context[sensor._device_address].setValues(sensor._address, registers)
     cancel_sensor_futures()
