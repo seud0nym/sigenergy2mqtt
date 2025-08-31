@@ -1270,12 +1270,13 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             if not active_alarms:
                 return f"Unknown Alarm {value}"
             else:
-                max_length = 255 if not ("max_length" in kwargs and isinstance(kwargs["max_length"], int) and int(kwargs["max_length"]) > 0) else int(kwargs["max_length"])
                 alarms = ", ".join(active_alarms)
-                if len(alarms) > max_length:
-                    alarms = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", alarms)).strip()
+                if Config.home_assistant.enabled:
+                    max_length = 255 if not ("max_length" in kwargs and isinstance(kwargs["max_length"], int) and int(kwargs["max_length"]) > 0) else int(kwargs["max_length"])
                     if len(alarms) > max_length:
-                        alarms = alarms[: (max_length - 3)] + "..."
+                        alarms = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", alarms)).strip()
+                        if len(alarms) > max_length:
+                            alarms = alarms[: (max_length - 3)] + "..."
                 return alarms
 
 
@@ -1514,7 +1515,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
                         result = state
                     else:
                         result = ", ".join([result, state])
-                        if len(result) > 255:
+                        if len(result) > 255 and Config.home_assistant.enabled:
                             result = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", result)).strip()
                             if len(result) > 255:
                                 result = result[:252] + "..."
