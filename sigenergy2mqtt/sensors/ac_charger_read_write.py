@@ -11,13 +11,18 @@ class ACChargerStatus(WriteOnlySensor):
     # 0:Stop 1:Start
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_status",
+            name="AC Charger Stop/Start",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}",
             plant_index=plant_index,
             device_address=device_address,
             address=42000,
+            payload_off="stop",
+            payload_on="start",
+            name_off="Stop",
+            name_on="Start",
+            icon_off="mdi:stop",
+            icon_on="mdi:play",
         )
-        self["icon"] = "mdi:ev-station"
 
 
 class ACChargerOutputCurrent(NumericSensor):

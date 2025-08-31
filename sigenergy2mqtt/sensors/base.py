@@ -946,8 +946,12 @@ class WriteOnlySensor(WritableSensorMixin):
         plant_index: int,
         device_address: int,
         address: int,
-        icon_on: str = "mdi:power-on",
+        payload_off: str = "off",
+        payload_on: str = "on",
+        name_off: str = "Power Off",
+        name_on: str = "Power On",
         icon_off: str = "mdi:power-off",
+        icon_on: str = "mdi:power-on",
     ):
         super().__init__(
             name,
@@ -969,35 +973,38 @@ class WriteOnlySensor(WritableSensorMixin):
         assert icon_off is not None and icon_off.startswith("mdi:"), f"{self.__class__.__name__} off icon {icon_off} does not start with 'mdi:'"
         self["platform"] = "button"
         self["enabled_by_default"] = True
-        self._icons = {"Off": icon_off, "On": icon_on}
+        self._payloads = {"off": payload_off, "on": payload_on}
+        self._names = {"off": name_off, "on": name_on}
+        self._icons = {"off": icon_off, "on": icon_on}
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components = {}
-        for action in ["On", "Off"]:
-            lower_action = action.lower()
+        for action in ["On", "Off"]:  # Remove legacy entities first
+            components[f"{self.unique_id}_{action}"] = {"p": "button"}
+        for action in ["on", "off"]:
             config = {}
             for k, v in self.items():
                 if v is not None:
                     if k == "name":
-                        config[k] = f"{v} {action}"
+                        config[k] = self._names[action]
                     elif k == "object_id" or k == "unique_id":
-                        config[k] = f"{v}_{lower_action}"
+                        config[k] = f"{v}_{self._payloads[action]}"
                     else:
                         config[k] = v
             config["icon"] = self._icons[action]
-            config["payload_press"] = action
+            config["payload_press"] = self._payloads[action]
             components[f"{self.unique_id}_{action}"] = config
         if self._debug_logging:
             logging.debug(f"{self.__class__.__name__} Discovered {components=}")
         return components
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if value == "Off":
+        if value == self._payloads["off"]:
             return await super().set_value(modbus, mqtt, 0, source, handler)
-        elif value == "On":
+        elif value == self._payloads["on"]:
             return await super().set_value(modbus, mqtt, 1, source, handler)
         else:
-            logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either 'On' or 'Off'")
+            logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
         return False
 
 

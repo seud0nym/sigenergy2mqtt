@@ -45,13 +45,18 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
     # 0:Stop 1:Start
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="DC Charger Status",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_status",
+            name="DC Charger Stop/Start",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}",
             plant_index=plant_index,
             device_address=device_address,
             address=41000,
+            payload_off="stop",
+            payload_on="start",
+            name_off="Stop",
+            name_on="Start",
+            icon_off="mdi:stop",
+            icon_on="mdi:play",
         )
-        self["icon"] = "mdi:ev-station"
 
 
 class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):
