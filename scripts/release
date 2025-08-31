@@ -1,5 +1,10 @@
 #!/bin/bash
 
+cd "$(cd $(dirname $0)/..; pwd)"
+
+git restore sigenergy2mqtt/config/version.py
+. $(dirname $0)/build docker
+
 read -p "Confirm version bump? (y/n): " confirm
 if [[ "$confirm" != "y" ]]; then
     echo "Version bump cancelled."
@@ -7,11 +12,6 @@ if [[ "$confirm" != "y" ]]; then
 fi
 
 echo "Bumping version..."
-
-cd "$(cd $(dirname $0)/..; pwd)"
-
-git restore sigenergy2mqtt/config/version.py
-. $(dirname $0)/build docker
 
 git add sigenergy2mqtt/config/version.py
 git commit -m "Bump version to $new_version"
