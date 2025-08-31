@@ -16,6 +16,7 @@ import datetime
 import html
 import json
 import logging
+import re
 import sys
 import time
 
@@ -1269,7 +1270,13 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             if not active_alarms:
                 return f"Unknown Alarm {value}"
             else:
-                return ", ".join(active_alarms)
+                max_length = 255 if not ("max_length" in kwargs and isinstance(kwargs["max_length"], int) and int(kwargs["max_length"]) > 0) else int(kwargs["max_length"])
+                alarms = ", ".join(active_alarms)
+                if len(alarms) > max_length:
+                    alarms = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", alarms)).strip()
+                    if len(alarms) > max_length:
+                        alarms = alarms[: (max_length - 3)] + "..."
+                return alarms
 
 
 class Alarm1Sensor(AlarmSensor):
@@ -1501,12 +1508,16 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         else:
             result = AlarmSensor.NO_ALARM
             for alarm in self._alarms:
-                state = await alarm.get_state(raw=False, republish=False, **kwargs)
+                state = await alarm.get_state(raw=False, republish=False, max_length=sys.maxsize, **kwargs)
                 if state != AlarmSensor.NO_ALARM:
                     if result == AlarmSensor.NO_ALARM:
                         result = state
                     else:
                         result = ", ".join([result, state])
+                        if len(result) > 255:
+                            result = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", result)).strip()
+                            if len(result) > 255:
+                                result = result[:252] + "..."
             self.set_state(result)
             return self._apply_gain_and_precision(self._states[-1][1], raw)
 
