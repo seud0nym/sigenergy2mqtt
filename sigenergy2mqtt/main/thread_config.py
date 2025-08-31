@@ -17,10 +17,10 @@ class ThreadConfig:
     name: str = ""
 
     _devices: list[DeviceIndex] = field(default_factory=list)
-    
+
     @property
     def description(self) -> str:
-        return self.name if self.name and not self.name.isspace() else f"{self.host}:{self.port}"
+        return self.name if self.name and not self.name.isspace() else f"Modbus@{self.host}:{self.port}"
 
     @property
     def devices(self) -> list[Device]:

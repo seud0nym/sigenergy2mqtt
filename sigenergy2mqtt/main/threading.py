@@ -9,10 +9,13 @@ from typing import Awaitable, Callable, Iterable, List
 import asyncio
 import concurrent.futures
 import logging
+import threading
 import uuid
 
 
 async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop):
+    threading.current_thread().name = f"{config.description}Thread"
+
     device: Device = None
     modbus_client: ModbusClient = None
     tasks: List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]] = []
