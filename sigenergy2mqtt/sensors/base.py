@@ -1660,7 +1660,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
             with self._persistent_state_file.open("r") as f:
                 try:
                     content = f.read()
-                    if content is not None and content != "None" and content.isdecimal():
+                    if content is not None and content != "None":
                         self._current_total = float(content)
                         logging.info(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
@@ -1743,7 +1743,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 with self._persistent_state_file.open("r") as f:
                     try:
                         content = f.read()
-                        if content is not None and content != "None" and content.isdecimal():
+                        if content is not None and content != "None":
                             value = float(content)
                             if value <= 0.0:
                                 logging.debug(f"{self.__class__.__name__} Ignored negative last midnight state from {self._persistent_state_file} ({value})")
@@ -1759,8 +1759,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 self._persistent_state_file.unlink(missing_ok=True)
         else:
             logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
-        if not self._persistent_state_file.is_file():
-            self.futures.add(asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(self._state_at_midnight), asyncio.get_running_loop()))
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
