@@ -3,19 +3,19 @@
 cd "$(cd $(dirname $0)/..; pwd)"
 
 for spec in \
-        "paho-mqtt (>=2.1.0,<3.0.0)" \
-        "psutil (>=7.0.0,<8.0.0)" \
-        "pymodbus (>=3.9.2,<4.0.0)" \
-        "requests (>=2.32.4,<3.0.0)" \
-        "ruamel.yaml (>=0.18.14,<0.19.0)" \
-        "scapy (>=2.6.1,<3.0.0)" \
+        "paho-mqtt(>=2.1.0,<3.0.0)" \
+        "psutil(>=7.0.0,<8.0.0)" \
+        "pymodbus(>=3.9.2,<4.0.0)" \
+        "requests(>=2.32.4,<3.0.0)" \
+        "ruamel.yaml(>=0.18.14,<0.19.0)" \
+        "scapy(>=2.6.1,<3.0.0)" \
 ; do
-  pkg="${spec%%[= (]*}"
+  pkg="${spec%%[=(]*}"
   echo ">>> Checking $pkg..."
   if ! pip freeze | grep -q "^${pkg}=="; then
     pip install $spec --root-user-action=ignore
   else
     pip install "$spec" --upgrade --root-user-action=ignore
   fi
-  sed -e "s/$pkg[= (][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
+  sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
 done
