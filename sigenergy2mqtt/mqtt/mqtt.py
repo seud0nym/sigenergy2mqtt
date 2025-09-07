@@ -7,6 +7,7 @@ import logging
 import os
 import paho.mqtt.client as mqtt
 import ssl
+import threading
 import time
 
 logger = logging.getLogger("paho.mqtt")
@@ -19,6 +20,29 @@ class MqttHandler:
         self._topics: Dict[str, list[Callable[[mqtt.Client, str], None]]] = {}
         self._modbus = modbus
         self._loop = loop
+        self._connected = False
+        self._reconnect_lock = threading.Lock()
+
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
+    @connected.setter
+    def connected(self, value) -> None:
+        self._connected = value
+
+    def on_reconnect(self, client: mqtt.Client) -> None:
+        if not self._connected:
+            with self._reconnect_lock:
+                if not self._connected:
+                    self._connected = True
+                    for topic in self._topics.keys():
+                        logger.info(f"MqttHandler handling reconnection: Unsubscribing from topic {topic}")
+                        result = client.unsubscribe(topic)
+                        logger.debug(f"MqttHandler handling reconnection: unsubscribe({topic}) returned {result}")
+                        logger.info(f"MqttHandler handling reconnection: Subscribing to topic {topic}")
+                        result = client.subscribe(topic)
+                        logger.debug(f"MqttHandler handling reconnection: subscribe({topic}) returned {result}")
 
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
         value = str(payload).strip()
@@ -93,26 +117,30 @@ class MqttHandler:
 def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     if reason_code == 0:
         logger.debug(f"Connected to MQTT broker {Config.mqtt.broker} (port {Config.mqtt.port}) with username {Config.mqtt.username}")
+        userdata.on_reconnect(client)
     else:
         logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} REFUSED - {reason_code}")
         os._exit(2)
 
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
+    userdata.connected = False
     if reason_code == 0:
         logger.info(f"Disconnected from {Config.mqtt.broker} (Reason Code = {reason_code})")
     else:
-        logger.error(f"Failed to disconnected from {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.error(f"Failed to disconnect from {Config.mqtt.broker} (Reason Code = {reason_code})")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
     logger.debug(f"Received message from {Config.mqtt.broker} for topic {message.topic}: Payload = {message.payload}")
     userdata.on_message(client, message.topic, str(message.payload, "utf-8"))
+    userdata.on_reconnect(client)
 
 
 def on_publish(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes, properties) -> None:
     logger.debug(f"Acknowledged publish MID={mid}")
     userdata.on_response(mid, "publish", client)
+    userdata.on_reconnect(client)
 
 
 def on_subscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes, properties) -> None:
