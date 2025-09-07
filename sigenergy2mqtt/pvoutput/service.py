@@ -135,20 +135,29 @@ class ServiceTopics(dict[str, Topic]):
         assert isinstance(value, bool), "Enabled must be a boolean value"
         self._enabled = value
 
-    def check_is_updating(self, interval_minutes: int, now: time.struct_time) -> None:
+    def check_is_updating(self, interval_minutes: int, now: time.struct_time) -> bool:
         if self.enabled:
+            interval_seconds = interval_minutes * 60
+            topics = 0
+            updated = 0
             for value in self.values():
+                topics += 1
                 if value.timestamp is not None:
                     seconds = int(time.mktime(now) - time.mktime(value.timestamp))
                     minutes = int(seconds / 60.0)
-                    if minutes > interval_minutes and (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600):
-                        self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has not been updated for {minutes}m???")
-                        self._last_update_warning = time.time()
+                    if seconds < interval_seconds:
+                        updated += 1
+                        self._logger.debug(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} last updated {seconds}s ago (interval={interval_seconds}s)")
                     else:
-                        self._logger.debug(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} last updated {seconds}s ago")
+                        if self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
+                            self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has not been updated for {minutes}m???")
+                            self._last_update_warning = time.time()
                 elif self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
                     self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has never been updated???")
                     self._last_update_warning = time.time()
+            return topics == updated
+        else:
+            return False
 
     def register(self, topic: str, gain: float) -> bool:
         if self.enabled:

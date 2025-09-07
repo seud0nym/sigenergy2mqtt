@@ -67,17 +67,13 @@ class PVOutputStatusService(Service):
             self.logger.debug(f"{self.__class__.__name__} Creating payload...")
             payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
             async with self.lock(timeout=5):
-                if self._generation.enabled:
-                    self._generation.check_is_updating(self._interval, now)
+                if self._generation.enabled and self._generation.check_is_updating(self._interval, now):
                     self._generation.sum_into(payload, "v1")
-                if self._consumption.enabled:
-                    self._consumption.check_is_updating(self._interval, now)
+                if self._consumption.enabled and self._consumption.check_is_updating(self._interval, now):
                     self._consumption.sum_into(payload, "v3")
-                if self._temperature.enabled:
-                    self._temperature.check_is_updating(self._interval, now)
+                if self._temperature.enabled and self._temperature.check_is_updating(self._interval, now):
                     self._temperature.average_into(payload, "v5")
-                if self._voltage.enabled:
-                    self._voltage.check_is_updating(self._interval, now)
+                if self._voltage.enabled and self._voltage.check_is_updating(self._interval, now):
                     self._voltage.average_into(payload, "v6")
             if ("v1" in payload and payload["v1"]) or ("v3" in payload and payload["v3"]):  # At least one of the values v1, v2, v3 or v4 must be present
                 await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
