@@ -1801,13 +1801,13 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self.set_latest_state(self._state_now)
 
     async def _update_state_at_midnight(self, midnight_state: float) -> None:
-        if midnight_state:
+        if midnight_state is not None:
             async with self._state_at_midnight_lock:
                 with self._persistent_state_file.open("w") as f:
                     f.write(str(midnight_state))
                 self._state_at_midnight = midnight_state
         else:
-            logging.warning(f"{self.__class__.__name__} Ignored attempt to update midnight state to {midnight_state}")
+            logging.debug(f"{self.__class__.__name__} Ignored attempt to update midnight state to {midnight_state}")
 
 
 class PVPowerSensor:
