@@ -36,13 +36,13 @@ class MqttHandler:
             with self._reconnect_lock:
                 if not self._connected:
                     self._connected = True
-                    for topic in self._topics.keys():
-                        logger.info(f"MqttHandler handling reconnection: Unsubscribing from topic {topic}")
-                        result = client.unsubscribe(topic)
-                        logger.debug(f"MqttHandler handling reconnection: unsubscribe({topic}) returned {result}")
-                        logger.info(f"MqttHandler handling reconnection: Subscribing to topic {topic}")
-                        result = client.subscribe(topic)
-                        logger.debug(f"MqttHandler handling reconnection: subscribe({topic}) returned {result}")
+                    if len(self._topics) > 0:
+                        logger.info(f"Reconnected to MQTT broker {Config.mqtt.broker}")
+                        for topic in self._topics.keys():
+                            result = client.unsubscribe(topic)
+                            logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result}")
+                            result = client.subscribe(topic)
+                            logger.debug(f"on_reconnect: subscribe('{topic}') -> {result}")
 
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
         value = str(payload).strip()
@@ -51,7 +51,7 @@ class MqttHandler:
         else:
             if topic in self._topics:
                 for method in self._topics[topic]:
-                    logger.debug(f"MqttHandler handling topic {topic} with {method}")
+                    logger.debug(f"MqttHandler handling topic {topic} with {method} ({payload=})")
                     asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
             else:
                 logger.warning(f"MqttHandler did not find a handler for topic {topic}")
@@ -126,9 +126,9 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     userdata.connected = False
     if reason_code == 0:
-        logger.info(f"Disconnected from {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.info(f"Disconnected from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
     else:
-        logger.error(f"Failed to disconnect from {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.error(f"Failed to disconnect from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
