@@ -24,7 +24,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
         modbus_client = None
     else:
         modbus_client = await ClientFactory.get_client(config.host, config.port)
-    mqtt_client_id = f"sigenergy2mqtt_{uuid.uuid4()}_{config.description}"
+    mqtt_client_id = f"sigenergy2mqtt_{uuid.uuid4().hex[:8]}_{config.description}"
 
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 

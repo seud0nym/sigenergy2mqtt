@@ -13,7 +13,7 @@ def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.Abstract
 
     logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for {Config.mqtt.broker}:{Config.mqtt.port}")
 
-    mqtt_handler = MqttHandler(modbus, loop)
+    mqtt_handler = MqttHandler(mqtt_client_id, modbus, loop)
     mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler)
 
     if Config.mqtt.anonymous:

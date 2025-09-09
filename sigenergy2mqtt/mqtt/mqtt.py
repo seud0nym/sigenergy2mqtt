@@ -15,7 +15,8 @@ MqttResponse = namedtuple("MqttResponse", ["now", "handler"])
 
 
 class MqttHandler:
-    def __init__(self, modbus: ModbusClient, loop: asyncio.AbstractEventLoop):
+    def __init__(self, client_id: str, modbus: ModbusClient, loop: asyncio.AbstractEventLoop):
+        self._client_id = client_id
         self._mids: Dict[Any, MqttResponse] = {}
         self._topics: Dict[str, list[Callable[[mqtt.Client, str], None]]] = {}
         self._modbus = modbus
@@ -23,6 +24,10 @@ class MqttHandler:
         self._connected = False
         self._reconnect_lock = threading.Lock()
 
+    @property
+    def client_id(self) -> str:
+        return self._client_id
+    
     @property
     def connected(self) -> bool:
         return self._connected
@@ -37,29 +42,29 @@ class MqttHandler:
                 if not self._connected:
                     self._connected = True
                     if len(self._topics) > 0:
-                        logger.info(f"Reconnected to MQTT broker {Config.mqtt.broker}")
+                        logger.info(f"[{self._client_id}] Reconnected to MQTT broker {Config.mqtt.broker}")
                         for topic in self._topics.keys():
                             result = client.unsubscribe(topic)
-                            logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result}")
+                            logger.debug(f"[{self._client_id}] on_reconnect: unsubscribe('{topic}') -> {result}")
                             result = client.subscribe(topic)
-                            logger.debug(f"on_reconnect: subscribe('{topic}') -> {result}")
+                            logger.debug(f"[{self._client_id}] on_reconnect: subscribe('{topic}') -> {result}")
 
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
         value = str(payload).strip()
         if not value:
-            logger.info(f"MqttHandler IGNORED empty payload from topic {topic}")
+            logger.info(f"[{self._client_id}] IGNORED empty payload from topic {topic}")
         else:
             if topic in self._topics:
                 for method in self._topics[topic]:
-                    logger.debug(f"MqttHandler handling topic {topic} with {method} ({payload=})")
+                    logger.debug(f"[{self._client_id}] Handling topic {topic} with {method} ({payload=})")
                     asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
             else:
-                logger.warning(f"MqttHandler did not find a handler for topic {topic}")
+                logger.warning(f"[{self._client_id}] No handler found for topic {topic}")
 
     def on_response(self, mid: Any, source: str, client: mqtt.Client) -> None:
         if mid in self._mids:
             method = self._mids[mid].handler
-            logger.debug(f"MqttHandler handling {source} response for MID={mid} with method {method}")
+            logger.debug(f"[{self._client_id}] Handling {source} response for MID={mid} with method {method}")
             if method is not None:
                 method(client, source)
             del self._mids[mid]
@@ -68,7 +73,7 @@ class MqttHandler:
         expires = time.time() - 60
         for mid in list(self._mids.keys()):
             if self._mids[mid].now < expires:
-                logger.debug(f"MqttHandler removing expired MID={mid}")
+                logger.debug(f"[{self._client_id}] Removing expired MID={mid}")
                 del self._mids[mid]
 
     def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str, Self], Awaitable[bool]]) -> tuple[int, int]:
@@ -116,29 +121,29 @@ class MqttHandler:
 
 def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     if reason_code == 0:
-        logger.debug(f"Connected to MQTT broker {Config.mqtt.broker} (port {Config.mqtt.port}) with username {Config.mqtt.username}")
+        logger.debug(f"[{userdata.client_id}] Connected to MQTT broker {Config.mqtt.broker} (port {Config.mqtt.port}) with username {Config.mqtt.username}")
         userdata.on_reconnect(client)
     else:
-        logger.critical(f"Connection to MQTT broker {Config.mqtt.broker} REFUSED - {reason_code}")
+        logger.critical(f"[{userdata.client_id}] Connection to MQTT broker {Config.mqtt.broker} REFUSED - {reason_code}")
         os._exit(2)
 
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     userdata.connected = False
     if reason_code == 0:
-        logger.info(f"Disconnected from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.info(f"[{userdata.client_id}] Disconnected from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
     else:
-        logger.error(f"Failed to disconnect from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.error(f"[{userdata.client_id}] Failed to disconnect from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
-    logger.debug(f"Received message from {Config.mqtt.broker} for topic {message.topic}: Payload = {message.payload}")
+    logger.debug(f"[{userdata.client_id}] Received message from {Config.mqtt.broker} for topic {message.topic}: Payload = {message.payload}")
     userdata.on_message(client, message.topic, str(message.payload, "utf-8"))
     userdata.on_reconnect(client)
 
 
 def on_publish(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes, properties) -> None:
-    logger.debug(f"Acknowledged publish MID={mid}")
+    logger.debug(f"[{userdata.client_id}] Acknowledged publish MID={mid}")
     userdata.on_response(mid, "publish", client)
     userdata.on_reconnect(client)
 
@@ -149,9 +154,9 @@ def on_subscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes, 
     else:
         for result in reason_codes:
             if result >= 128:
-                logger.error(f"Subscribe FAILED message from {Config.mqtt.broker} for mid {mid} (Reason Code = {result})")
+                logger.error(f"[{userdata.client_id}] Subscribe FAILED message from {Config.mqtt.broker} for mid {mid} (Reason Code = {result})")
             else:
-                logger.debug(f"Acknowledged subscribe MID={mid} (Reason Code = {result})")
+                logger.debug(f"[{userdata.client_id}] Acknowledged subscribe MID={mid} (Reason Code = {result})")
                 userdata.on_response(mid, "subscribe", client)
 
 
@@ -161,9 +166,9 @@ def on_unsubscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes
     else:
         for result in reason_codes:
             if result >= 128:
-                logger.error(f"Unsubscribe FAILED message from {Config.mqtt.broker} for mid {mid} (Reason Code = {result})")
+                logger.error(f"[{userdata.client_id}] Unsubscribe FAILED message from {Config.mqtt.broker} for mid {mid} (Reason Code = {result})")
             else:
-                logger.debug(f"Acknowledged unsubscribe MID={mid} (Reason Code = {result})")
+                logger.debug(f"[{userdata.client_id}] Acknowledged unsubscribe MID={mid} (Reason Code = {result})")
                 userdata.on_response(mid, "unsubscribe", client)
 
 
