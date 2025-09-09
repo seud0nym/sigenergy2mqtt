@@ -63,7 +63,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
     if modbus_client is not None:
         logging.info(f"Closing Modbus connection to {config.description}")
         modbus_client.close()
-    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to broker {Config.mqtt.broker}:{Config.mqtt.port}")
+    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 

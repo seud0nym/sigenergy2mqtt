@@ -27,7 +27,7 @@ class MqttHandler:
     @property
     def client_id(self) -> str:
         return self._client_id
-    
+
     @property
     def connected(self) -> bool:
         return self._connected
@@ -42,7 +42,7 @@ class MqttHandler:
                 if not self._connected:
                     self._connected = True
                     if len(self._topics) > 0:
-                        logger.info(f"[{self._client_id}] Reconnected to MQTT broker {Config.mqtt.broker}")
+                        logger.info(f"[{self._client_id}] Reconnected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
                         for topic in self._topics.keys():
                             result = client.unsubscribe(topic)
                             logger.debug(f"[{self._client_id}] on_reconnect: unsubscribe('{topic}') -> {result}")
@@ -56,10 +56,10 @@ class MqttHandler:
         else:
             if topic in self._topics:
                 for method in self._topics[topic]:
-                    logger.debug(f"[{self._client_id}] Handling topic {topic} with {method} ({payload=})")
+                    logger.debug(f"[{self._client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
                     asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
             else:
-                logger.warning(f"[{self._client_id}] No handler found for topic {topic}")
+                logger.warning(f"[{self._client_id}] No registered handler found for topic {topic}")
 
     def on_response(self, mid: Any, source: str, client: mqtt.Client) -> None:
         if mid in self._mids:
@@ -80,6 +80,7 @@ class MqttHandler:
         if topic not in self._topics:
             self._topics[topic] = []
         self._topics[topic].append(handler)
+        logger.debug(f"[{self._client_id}] Registered handler {handler.__self__.__class__.__name__}.{getattr(handler, '__name__', '[Unknown method]')} for topic {topic}")
         return client.subscribe(topic)
 
     async def wait_for(self, seconds: float, prefix: str, method: Callable | Awaitable, *args, **kwargs) -> bool:
@@ -121,23 +122,23 @@ class MqttHandler:
 
 def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     if reason_code == 0:
-        logger.debug(f"[{userdata.client_id}] Connected to MQTT broker {Config.mqtt.broker} (port {Config.mqtt.port}) with username {Config.mqtt.username}")
+        logger.debug(f"[{userdata.client_id}] Connected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} with username {Config.mqtt.username}")
         userdata.on_reconnect(client)
     else:
-        logger.critical(f"[{userdata.client_id}] Connection to MQTT broker {Config.mqtt.broker} REFUSED - {reason_code}")
+        logger.critical(f"[{userdata.client_id}] Connection to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} REFUSED - {reason_code}")
         os._exit(2)
 
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     userdata.connected = False
     if reason_code == 0:
-        logger.info(f"[{userdata.client_id}] Disconnected from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.info(f"[{userdata.client_id}] Disconnected from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (Reason Code = {reason_code})")
     else:
-        logger.error(f"[{userdata.client_id}] Failed to disconnect from MQTT broker {Config.mqtt.broker} (Reason Code = {reason_code})")
+        logger.error(f"[{userdata.client_id}] Failed to disconnect from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (Reason Code = {reason_code})")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
-    logger.debug(f"[{userdata.client_id}] Received message from {Config.mqtt.broker} for topic {message.topic}: Payload = {message.payload}")
+    logger.debug(f"[{userdata.client_id}] Received message for topic {message.topic} (payload={message.payload})")
     userdata.on_message(client, message.topic, str(message.payload, "utf-8"))
     userdata.on_reconnect(client)
 
@@ -154,7 +155,7 @@ def on_subscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes, 
     else:
         for result in reason_codes:
             if result >= 128:
-                logger.error(f"[{userdata.client_id}] Subscribe FAILED message from {Config.mqtt.broker} for mid {mid} (Reason Code = {result})")
+                logger.error(f"[{userdata.client_id}] Subscribe FAILED for mid {mid} (Reason Code = {result})")
             else:
                 logger.debug(f"[{userdata.client_id}] Acknowledged subscribe MID={mid} (Reason Code = {result})")
                 userdata.on_response(mid, "subscribe", client)
@@ -166,7 +167,7 @@ def on_unsubscribe(client: mqtt.Client, userdata: MqttHandler, mid, reason_codes
     else:
         for result in reason_codes:
             if result >= 128:
-                logger.error(f"[{userdata.client_id}] Unsubscribe FAILED message from {Config.mqtt.broker} for mid {mid} (Reason Code = {result})")
+                logger.error(f"[{userdata.client_id}] Unsubscribe FAILED for mid {mid} (Reason Code = {result})")
             else:
                 logger.debug(f"[{userdata.client_id}] Acknowledged unsubscribe MID={mid} (Reason Code = {result})")
                 userdata.on_response(mid, "unsubscribe", client)
@@ -200,11 +201,11 @@ class MqttClient(mqtt.Client):
             if Config.mqtt.tls_insecure:
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
-                logging.warning(f"Using insecure TLS connection (not recommended) to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{client_id}'")
+                logging.warning(f"[{client_id}] Using insecure TLS connection (not recommended) to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}:{Config.mqtt.port}")
             else:
                 ssl_context.check_hostname = True
                 ssl_context.verify_mode = ssl.CERT_REQUIRED
-                logging.info(f"Using secure TLS connection to MQTT broker {Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{client_id}'")
+                logging.info(f"[{client_id}] Using secure TLS connection to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}:{Config.mqtt.port}")
             self.tls_set_context(ssl_context)
             self.tls_insecure_set(Config.mqtt.tls_insecure)
 
