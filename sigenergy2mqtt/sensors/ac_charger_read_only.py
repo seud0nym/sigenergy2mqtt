@@ -28,6 +28,16 @@ class ACChargerRunningState(ReadOnlySensor):
             precision=None,
         )
         self["enabled_by_default"] = True
+        self["options"] = [
+            "Initialising",  # 0
+            "EV not connected",  # 1
+            "Charger and EV not ready",  # 2
+            "Charger ready; EV not ready",  # 3
+            "Charger not ready; EV ready",  # 4
+            "Charging",  # 5
+            "Fault",  # 6
+            "Error",  # 7
+        ]
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -45,26 +55,10 @@ class ACChargerRunningState(ReadOnlySensor):
             return value
         elif value is None:
             return None
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
         else:
-            match value:
-                case 0:
-                    return "Initialising"
-                case 1:
-                    return "EV not connected"
-                case 2:
-                    return "Charger and EV not ready"
-                case 3:
-                    return "Charger ready; EV not ready"
-                case 4:
-                    return "Charger not ready; EV ready"
-                case 5:
-                    return "Charging"
-                case 6:
-                    return "Fault"
-                case 7:
-                    return "Error"
-                case _:
-                    return f"Unknown State code: {value}"
+            return f"Unknown State code: {value}"
 
 
 class ACChargerTotalEnergyConsumed(ReadOnlySensor):

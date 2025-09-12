@@ -348,7 +348,10 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         return components
 
     def get_discovery_components(self) -> Dict[str, Dict[str, Any]]:
-        return {self.unique_id: dict(dict((k, v) for k, v in self.items() if v is not None))}
+        components = dict((k, v) for k, v in self.items() if v is not None)
+        if "options" in components and self["platform"] != "select":
+            del components["options"]
+        return {self.unique_id: dict(components)}
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Gets the state of this sensor.
@@ -468,6 +471,34 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             self._states.append((time.time(), state))
             if len(self._states) > self._max_states:
                 self._states = self._states[-self._max_states :]
+
+    def state2raw(self, state: float | int | str) -> float | int | str:
+        """Converts a processed state back to its raw value.
+
+        Args:
+            state:      The processed state.
+
+        Returns:
+            The raw state.
+        """
+        if state is None:
+            return None
+        elif isinstance(state, str):
+            if self._data_type == ModbusClient.DATATYPE.STRING:
+                return state
+            elif "options" in self and state in self["options"]:
+                return self["options"].index(state)
+        try:
+            value = float(state) if "." in state else int(state)
+            logging.info(f"{self.__class__.__name__} state2raw converted state '{state}' to float or int {value}")
+        except ValueError:
+            logging.error(f"{self.__class__.__name__} state2raw failed to convert string '{state}' to float or int")
+            value = state
+        if isinstance(value, (float, int)):
+            if self.gain is not None and self.gain != 1:
+                value *= self.gain
+                logging.info(f"{self.__class__.__name__} state2raw applied gain '{self.gain}' to {value}")
+        return int(value)
 
 
 class RequisiteSensor(Sensor):
@@ -1552,6 +1583,16 @@ class RunningStateSensor(ReadOnlySensor):
             precision=None,
         )
         self["enabled_by_default"] = True
+        self["options"] = [
+            "Standby",  # 0
+            "Normal",  # 1
+            "Fault",  # 2
+            "Power-Off",  # 3
+            None,  # 4
+            None,  # 5
+            None,  # 6
+            "Environmental Abnormality",  # 7
+        ]
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Gets the state of this sensor.
@@ -1569,16 +1610,8 @@ class RunningStateSensor(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif value == 0:
-            return "Standby"
-        elif value == 1:
-            return "Normal"
-        elif value == 2:
-            return "Fault"
-        elif value == 3:
-            return "Power-Off"
-        elif value == 7:
-            return "Environmental Abnormality"
+        elif 0 <= value <= (len(self["options"]) - 1) and self["options"][value] is not None:
+            return self["options"][value]
         else:
             return f"Unknown State code: {value}"
 
@@ -1662,7 +1695,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                     content = f.read()
                     if content is not None and content != "None":
                         self._current_total = float(content)
-                        logging.info(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
+                        logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
                     logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
         else:

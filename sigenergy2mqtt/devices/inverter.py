@@ -56,16 +56,17 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.GridFrequency(plant_index, device_address))
         self._add_read_sensor(ro.InverterTemperature(plant_index, device_address))
         self._add_read_sensor(output_type)
-        self._add_read_sensor(ro.PhaseAVoltage(plant_index, device_address, power_phases))
-        self._add_read_sensor(ro.PhaseACurrent(plant_index, device_address, power_phases))
+        self._add_read_sensor(ro.PhaseVoltage(plant_index, device_address, "A", power_phases), "Voltage/Current")
+        self._add_read_sensor(ro.PhaseCurrent(plant_index, device_address, "A", power_phases), "Voltage/Current")
+        if power_phases > 1:
+            self._add_read_sensor(ro.PhaseVoltage(plant_index, device_address, "B", power_phases), "Voltage/Current")
+            self._add_read_sensor(ro.PhaseCurrent(plant_index, device_address, "B", power_phases), "Voltage/Current")
         if power_phases > 2:
-            self._add_read_sensor(ro.PhaseBVoltage(plant_index, device_address))
-            self._add_read_sensor(ro.PhaseCVoltage(plant_index, device_address))
-            self._add_read_sensor(ro.PhaseBCurrent(plant_index, device_address))
-            self._add_read_sensor(ro.PhaseCCurrent(plant_index, device_address))
-            self._add_read_sensor(ro.ABLineVoltage(plant_index, device_address))
-            self._add_read_sensor(ro.BCLineVoltage(plant_index, device_address))
-            self._add_read_sensor(ro.CALineVoltage(plant_index, device_address))
+            self._add_read_sensor(ro.PhaseVoltage(plant_index, device_address, "C", power_phases), "Voltage/Current")
+            self._add_read_sensor(ro.PhaseCurrent(plant_index, device_address, "C", power_phases), "Voltage/Current")
+            self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "A-B"), "Voltage/Current")
+            self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "B-C"), "Voltage/Current")
+            self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "C-A"), "Voltage/Current")
         self._add_read_sensor(ro.PowerFactor(plant_index, device_address))
         self._add_read_sensor(ro.PACKBCUCount(plant_index, device_address))
         self._add_read_sensor(ro.MPTTCount(plant_index, device_address))
@@ -85,7 +86,6 @@ class Inverter(ModbusDevice):
             address += 2
         # endregion
 
-        self._add_read_sensor(rw.GridCode(plant_index, device_address))
         self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
         self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))
         self._add_read_sensor(rw.InverterReactivePowerFixedValueAdjustment(plant_index, device_address))

@@ -93,6 +93,18 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             gain=None,
             precision=None,
         )
+        self["options"] = [
+            "Max Self Consumption",  # 0
+            "Sigen AI",  # 1
+            "Time of Use",  # 2
+            None,  # 3
+            None,  # 4
+            "Full Feed-in to Grid",  # 5
+            None,  # 6
+            "Remote EMS",  # 7
+            None,  # 8
+            "Time-Based Control",  # 9
+        ]
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -100,18 +112,8 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif value == 0:
-            return "Max Self Consumption"
-        elif value == 1:
-            return "Sigen AI"
-        elif value == 2:
-            return "Time of Use"
-        elif value == 5:
-            return "Full Feed-in to Grid"
-        elif value == 7:
-            return "Remote EMS"
-        elif value == 9:
-            return "Time-Based Control"
+        elif 0 <= value <= (len(self["options"]) - 1) and self["options"][value] is not None:
+            return self["options"][value]
         else:
             return f"Unknown Mode: {value}"
 
@@ -136,6 +138,10 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
         )
         self["enabled_by_default"] = True
+        self["options"] = [
+            "Not Connected",  # 0
+            "Connected",  # 1
+        ]
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -143,10 +149,8 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif value == 0:
-            return "Not Connected"
-        elif value == 1:
-            return "Connected"
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
         else:
             return f"Unknown Status: {value}"
 
@@ -231,6 +235,11 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             precision=None,
         )
         self["enabled_by_default"] = True
+        self["options"] = [
+            "On Grid",  # 0
+            "Off Grid (auto)",  # 1
+            "Off Grid (manual)",  # 2
+        ]
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -238,12 +247,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             return value
         elif value is None:
             return None
-        elif value == 0:
-            return "On Grid"
-        elif value == 1:
-            return "Off Grid (auto)"
-        elif value == 2:
-            return "Off Grid (manual)"
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
         else:
             return f"Unknown Status: {value}"
 
@@ -324,18 +329,27 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
         self["enabled_by_default"] = True
 
 
-class PlantPhaseAActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
+class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30015
+            case "B":
+                address = 30017
+            case "C":
+                address = 30019
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name="Phase A Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_a_active_power",
+            name=f"Phase {phase} Active Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=247,
-            address=30015,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -345,102 +359,27 @@ class PlantPhaseAActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class PlantPhaseBActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
+class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30021
+            case "B":
+                address = 30023
+            case "C":
+                address = 30025
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name="Phase B Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_b_active_power",
+            name=f"Phase {phase} Reactive Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=247,
-            address=30017,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-
-class PlantPhaseCActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase C Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_c_active_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30019,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-
-class PlantPhaseAReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase A Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_a_reactive_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30021,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
-            device_class=None,
-            state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-
-class PlantPhaseBReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase B Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_b_reactive_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30023,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
-            device_class=None,
-            state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-
-class PlantPhaseCReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase C Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_c_reactive_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30025,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,

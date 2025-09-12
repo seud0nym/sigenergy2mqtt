@@ -1135,6 +1135,12 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
         )
         self["entity_category"] = "diagnostic"
+        self["options"] = [
+            "L/N",  # 0
+            "L1/L2/L3",  # 1
+            "L1/L2/L3/N",  # 2
+            "L1/L2/N",  # 3
+        ]
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1142,30 +1148,31 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
         else:
-            match value:
-                case 0:
-                    return "L/N"
-                case 1:
-                    return "L1/L2/L3"
-                case 2:
-                    return "L1/L2/L3/N"
-                case 3:
-                    return "L1/L2/N"
-                case _:
-                    return f"Unknown Output Type: {value}"
+            return f"Unknown Output Type: {value}"
 
 
-class ABLineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, phase: str):
+        match phase:
+            case "A-B":
+                address = 31005
+            case "B-C":
+                address = 31007
+            case "C-A":
+                address = 31009
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name="A-B Line Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_a_b_line_voltage",
+            name=f"{phase} Line Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_{phase.lower().replace('-', '_')}_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=31005,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
@@ -1178,16 +1185,24 @@ class ABLineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class BCLineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
+class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, phase: str, power_phases: int):
+        match phase:
+            case "A":
+                address = 31011
+            case "B":
+                address = 31013
+            case "C":
+                address = 31015
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name="B-C Line Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_b_c_line_voltage",
+            name="Phase Voltage" if (power_phases == 1 and phase == "A") else f"Phase {phase} Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_{phase.lower()}_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=31007,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
@@ -1200,148 +1215,24 @@ class BCLineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class CALineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
+class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, phase: str, power_phases: int):
+        match phase:
+            case "A":
+                address = 31017
+            case "B":
+                address = 31019
+            case "C":
+                address = 31021
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name="C-A Line Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_c_a_line_voltage",
+            name="Phase Current" if power_phases == 1 else f"Phase {phase} Current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_{phase.lower()}_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=31009,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=UnitOfElectricPotential.VOLT,
-            device_class=DeviceClass.VOLTAGE,
-            state_class=None,
-            icon="mdi:flash",
-            gain=100,
-            precision=2,
-        )
-
-
-class PhaseAVoltage(ReadOnlySensor, HybridInverter, PVInverter):
-    # When Output Type is L/N, refers to “Phase Voltage”
-    def __init__(self, plant_index: int, device_address: int, power_phases: int):
-        super().__init__(
-            name="Phase Voltage" if power_phases == 1 else "Phase A Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_a_voltage",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=31011,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=UnitOfElectricPotential.VOLT,
-            device_class=DeviceClass.VOLTAGE,
-            state_class=None,
-            icon="mdi:flash",
-            gain=100,
-            precision=2,
-        )
-
-
-class PhaseBVoltage(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
-        super().__init__(
-            name="Phase B Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_b_voltage",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=31013,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=UnitOfElectricPotential.VOLT,
-            device_class=DeviceClass.VOLTAGE,
-            state_class=None,
-            icon="mdi:flash",
-            gain=100,
-            precision=2,
-        )
-
-
-class PhaseCVoltage(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
-        super().__init__(
-            name="Phase C Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_c_voltage",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=31015,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=UnitOfElectricPotential.VOLT,
-            device_class=DeviceClass.VOLTAGE,
-            state_class=None,
-            icon="mdi:flash",
-            gain=100,
-            precision=2,
-        )
-
-
-class PhaseACurrent(ReadOnlySensor, HybridInverter, PVInverter):
-    # When Output Type is L/N, refers to “Phase Current”
-    def __init__(self, plant_index: int, device_address: int, power_phases: int):
-        super().__init__(
-            name="Phase Current" if power_phases == 1 else "Phase A Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_a_current",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=31017,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=UnitOfElectricCurrent.AMPERE,
-            device_class=DeviceClass.CURRENT,
-            state_class=None,
-            icon="mdi:current-ac",
-            gain=100,
-            precision=2,
-        )
-
-
-class PhaseBCurrent(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
-        super().__init__(
-            name="Phase B Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_b_current",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=31019,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=UnitOfElectricCurrent.AMPERE,
-            device_class=DeviceClass.CURRENT,
-            state_class=None,
-            icon="mdi:current-ac",
-            gain=100,
-            precision=2,
-        )
-
-
-class PhaseCCurrent(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
-    def __init__(self, plant_index: int, device_address: int):
-        super().__init__(
-            name="Phase C Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_c_current",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=31021,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
