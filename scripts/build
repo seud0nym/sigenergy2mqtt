@@ -21,12 +21,13 @@ async def check():
     await instances.get_sensor_instances(hass=True)
     await instances.get_sensor_instances(hass=False)
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(check())
     instances.cancel_sensor_futures()
     loop.close()
 ' || exit
 
+git restore sigenergy2mqtt/config/version.py
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
 
 if [[ $changed_files = n ]]; then
@@ -75,6 +76,7 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     fi
 fi
 
+python3 sigenergy2mqtt/sensors/__update_readme.py
 
 echo -e "\033[1;32mBuild successful\033[0m"
 echo -e "New version: \033[1;32m$new_version\033[0m"
