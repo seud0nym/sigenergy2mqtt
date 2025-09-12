@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor
+from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
@@ -29,7 +29,7 @@ async def get_sensor_instances(hass: bool = False):
 
     Config.home_assistant.enabled = hass
 
-    logging.info(f"Instantiating Power Plant ({hass=})")
+    logging.debug(f"Instantiating Power Plant ({hass=})")
     plant = PowerPlant(
         plant_index=plant_index,
         device_type=HybridInverter(),
@@ -43,7 +43,7 @@ async def get_sensor_instances(hass: bool = False):
     remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
-    logging.info(f"Instantiating Hybrid Inverter ({hass=})")
+    logging.debug(f"Instantiating Hybrid Inverter ({hass=})")
     hybrid_inverter = Inverter(
         plant_index=plant_index,
         device_address=inverter_device_address,
@@ -57,7 +57,7 @@ async def get_sensor_instances(hass: bool = False):
         output_type=OutputType(plant_index, inverter_device_address),
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
     )
-    logging.info(f"Instantiating PV Inverter ({hass=})")
+    logging.debug(f"Instantiating PV Inverter ({hass=})")
     pv_inverter = Inverter(
         plant_index=plant_index,
         device_address=inverter_device_address,
@@ -72,10 +72,10 @@ async def get_sensor_instances(hass: bool = False):
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
     )
 
-    logging.info(f"Instantiating DC Charger ({hass=})")
+    logging.debug(f"Instantiating DC Charger ({hass=})")
     dc_charger = DCCharger(plant_index, dc_charger_device_address, remote_ems)
 
-    logging.info(f"Instantiating AC Charger ({hass=})")
+    logging.debug(f"Instantiating AC Charger ({hass=})")
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
     ac_charger = ACCharger(plant_index, ac_charger_device_address, remote_ems, 1.0, 2.0, rated_current, input_breaker)
@@ -85,13 +85,16 @@ async def get_sensor_instances(hass: bool = False):
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
-            if len(c.__subclasses__()) == 0:
-                if c.__name__ != "RequisiteSensor":
-                    sensor_count[c.__name__] = 0
-            else:
-                find_concrete_classes(c)
+            if c.__name__ != "ReservedSensor":
+                if len(c.__subclasses__()) == 0:
+                    if c.__name__ != "RequisiteSensor":
+                        sensor_count[c.__name__] = 0
+                else:
+                    find_concrete_classes(c)
 
     def add_sensor_instance(s):
+        if isinstance(s, ReservedSensor):
+            return
         key = s.unique_id
         if key not in sensor_instances:
             sensor_instances[key] = s
@@ -129,7 +132,7 @@ def cancel_sensor_futures():
 
 if __name__ == "__main__":
     logging.getLogger("root").setLevel(logging.DEBUG)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(get_sensor_instances())
     cancel_sensor_futures()
     loop.close()
