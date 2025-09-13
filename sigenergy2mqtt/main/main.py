@@ -167,6 +167,6 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
         rdp_value = await rated_discharging_power.get_state(modbus=modbus)
         plant = PowerPlant(plant_index, device_type, output_type_state, power_phases, rcp_value, rdp_value, rated_charging_power, rated_discharging_power)
 
-    inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware)
+    inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
     inverter.via_device = plant.unique_id
     return inverter, plant

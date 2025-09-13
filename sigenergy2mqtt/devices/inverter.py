@@ -21,6 +21,8 @@ class Inverter(ModbusDevice):
         pv_string_count: ro.PVStringCount,
         output_type: ro.OutputType,
         firmware_version: ro.InverterFirmwareVersion,
+        model: ro.InverterModel,
+        serial_number: ro.InverterSerialNumber
     ):
         assert 2 <= strings <= 16, f"Invalid PV String Count ({strings} - must be between 2 and 16)"
         match = re.match(r"^[^\d]*", model_id)
@@ -33,6 +35,8 @@ class Inverter(ModbusDevice):
         pv_power = ro.InverterPVPower(plant_index, device_address)
 
         # region read sensors
+        self._add_read_sensor(model)
+        self._add_read_sensor(serial_number)
         self._add_read_sensor(firmware_version)
         self._add_read_sensor(ro.RatedActivePower(plant_index, device_address))
         self._add_read_sensor(ro.MaxRatedApparentPower(plant_index, device_address))

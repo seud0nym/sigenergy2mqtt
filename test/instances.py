@@ -56,6 +56,8 @@ async def get_sensor_instances(hass: bool = False):
         pv_string_count=PVStringCount(plant_index, inverter_device_address),
         output_type=OutputType(plant_index, inverter_device_address),
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
+        model=InverterModel(plant_index, inverter_device_address),
+        serial_number=InverterSerialNumber(plant_index, inverter_device_address),
     )
     logging.debug(f"Instantiating PV Inverter ({hass=})")
     pv_inverter = Inverter(
@@ -70,6 +72,8 @@ async def get_sensor_instances(hass: bool = False):
         pv_string_count=PVStringCount(plant_index, inverter_device_address),
         output_type=OutputType(plant_index, inverter_device_address),
         firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
+        model=InverterModel(plant_index, inverter_device_address),
+        serial_number=InverterSerialNumber(plant_index, inverter_device_address),
     )
 
     logging.debug(f"Instantiating DC Charger ({hass=})")
