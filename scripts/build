@@ -27,7 +27,6 @@ if __name__ == "__main__":
     loop.close()
 ' || exit
 
-git restore sigenergy2mqtt/config/version.py
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
 
 if [[ $changed_files = n ]]; then
