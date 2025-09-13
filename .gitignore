@@ -1,7 +1,7 @@
 # Project
+.*.yaml
 .debug.env
 .debug.py
-.debug.yaml
 .vscode/launch.json
 data/
 protocol/
