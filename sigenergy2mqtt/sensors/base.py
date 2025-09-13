@@ -893,6 +893,9 @@ class TimestampSensor(ReadOnlySensor):
             dt_object = datetime.datetime.fromtimestamp(value, datetime.timezone.utc)
             return dt_object.isoformat()
 
+    def state2raw(self, state) -> float | int | str:
+        return int(datetime.datetime.fromisoformat(state).timestamp())
+
 
 class ObservableMixin(abc.ABC):
     @abc.abstractmethod

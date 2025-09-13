@@ -15,7 +15,7 @@ from .base import (
     RunningStateSensor,
     TimestampSensor,
 )
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -38,9 +38,6 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
         )
-
-    def state2raw(self, state):
-        return int(datetime.fromisoformat(state).timestamp())
 
 
 class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
@@ -75,6 +72,13 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             tz = timezone(offset)
             formatted_offset = tz.tzname(None)
             return formatted_offset
+
+    def state2raw(self, state) -> float | int | str:
+        offset = state.replace("UTC", "")
+        sign = 1 if offset[0] == "+" else -1
+        hours, minutes = map(int, offset[1:].split(":"))
+        total_minutes = sign * (hours * 60 + minutes)
+        return int(total_minutes)
 
 
 class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
@@ -480,7 +484,7 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             address=30033,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,

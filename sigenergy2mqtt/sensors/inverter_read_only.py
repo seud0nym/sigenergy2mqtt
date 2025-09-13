@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from .base import (
     AlarmCombinedSensor,
     AlarmSensor,
@@ -31,6 +29,7 @@ from sigenergy2mqtt.sensors.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
+from typing import Any, Dict
 
 
 # 5.3 Hybrid inverter running information address definition (read-only register)
