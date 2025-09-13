@@ -33,7 +33,7 @@ async def sensor_index():
                 f.write(f"{sensor['name']}\n")
                 f.write("</summary>\n")
                 f.write("<table>\n")
-                f.write("<tr>\n")
+                f.write(f"<tr><td>Sensor Class</td><td>{sensor.__class__.__name__}</td></tr>\n")
                 if hasattr(sensor, "scan_interval"):
                     f.write(f"<tr><td>Scan Interval</td><td>{sensor.scan_interval}s</td></tr>\n")
                 if sensor.unit:
@@ -143,7 +143,7 @@ async def sensor_index():
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(sensor_index())
     cancel_sensor_futures()
     loop.close()

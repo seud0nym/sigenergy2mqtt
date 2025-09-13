@@ -20,7 +20,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantActivePower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -34,7 +34,7 @@ Active Power
 Active Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ActivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -48,7 +48,7 @@ Active Power Fixed Adjustment Target Value
 Active Power Percentage Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ActivePowerPercentageAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -63,7 +63,7 @@ Active Power Percentage Adjustment Target Value
 Available Max Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMaxActivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -78,7 +78,7 @@ Available Max Active Power
 Available Max Charging Capacity
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMaxChargingCapacity</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -93,7 +93,7 @@ Available Max Charging Capacity
 Available Max Charging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMaxChargingPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -108,7 +108,7 @@ Available Max Charging Power
 Available Max Discharging Capacity
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMaxDischargingCapacity</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -123,7 +123,7 @@ Available Max Discharging Capacity
 Available Max Discharging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMaxDischargingPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -138,7 +138,7 @@ Available Max Discharging Power
 Available Max Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMaxReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -153,7 +153,7 @@ Available Max Reactive Power
 Available Min Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMinActivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -168,7 +168,7 @@ Available Min Active Power
 Available Min Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableMinReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -183,7 +183,7 @@ Available Min Reactive Power
 Backup SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ESSBackupSOC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -198,7 +198,7 @@ Backup SoC
 Battery Charging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>BatteryChargingPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_charging_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_battery_charging_power/state</td></tr>
@@ -210,7 +210,7 @@ Battery Charging Power
 Battery Discharging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>BatteryDischargingPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_discharging_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_battery_discharging_power/state</td></tr>
@@ -222,7 +222,7 @@ Battery Discharging Power
 Battery Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>BatteryPower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_power/state</td></tr>
@@ -236,7 +236,7 @@ Battery Power
 Battery SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantBatterySoC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -250,7 +250,7 @@ Battery SoC
 Battery SoH
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantBatterySoH</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -265,7 +265,7 @@ Battery SoH
 Charge Cut-Off SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ChargeCutOffSoC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -279,7 +279,7 @@ Charge Cut-Off SoC
 Charge Cut-Off SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ESSChargeCutOffSOC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -294,7 +294,7 @@ Charge Cut-Off SoC
 Consumed Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantConsumedPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_consumed_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_consumed_power/state</td></tr>
@@ -306,7 +306,7 @@ Consumed Power
 DC Charger Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GeneralAlarm5</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_5/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_5/state</td></tr>
@@ -319,7 +319,7 @@ DC Charger Alarms
 Daily Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantDailyChargeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_charge_energy/state</td></tr>
@@ -332,7 +332,7 @@ Daily Charge Energy
 Daily Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>TotalLoadDailyConsumption</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -346,7 +346,7 @@ Daily Consumption
 Daily Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantDailyDischargeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_discharge_energy/state</td></tr>
@@ -359,7 +359,7 @@ Daily Discharge Energy
 Daily PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantDailyPVEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_pv_energy/state</td></tr>
@@ -372,7 +372,7 @@ Daily PV Production
 Daily Total PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>TotalDailyPVEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_daily_pv_energy/state</td></tr>
@@ -385,7 +385,7 @@ Daily Total PV Production
 Discharge Cut-Off SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>DischargeCutOffSoC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -399,7 +399,7 @@ Discharge Cut-Off SoC
 Discharge Cut-Off SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ESSDischargeCutOffSOC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -414,7 +414,7 @@ Discharge Cut-Off SoC
 EMS Work Mode
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EMSWorkMode</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_ems_work_mode/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_ems_work_mode/state</td></tr>
@@ -426,7 +426,7 @@ EMS Work Mode
 ESS Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GeneralAlarm3</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_3/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_3/state</td></tr>
@@ -439,7 +439,7 @@ ESS Alarms
 Gateway Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GeneralAlarm4</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_alarm_4/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_4/state</td></tr>
@@ -452,7 +452,7 @@ Gateway Alarms
 Grid Max Export Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridMaxExportLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -467,7 +467,7 @@ Grid Max Export Limit
 Grid Max Import Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridMaxImportLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -482,7 +482,7 @@ Grid Max Import Limit
 Independent Phase Power Control
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>IndependentPhasePowerControl</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_independent_phase_power_control/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state</td></tr>
@@ -495,7 +495,7 @@ Independent Phase Power Control
 Lifetime Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ESSTotalChargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -509,7 +509,7 @@ Lifetime Charge Energy
 Lifetime Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>TotalLoadConsumption</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -523,7 +523,7 @@ Lifetime Consumption
 Lifetime DC EV Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EVDCTotalChargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -537,7 +537,7 @@ Lifetime DC EV Charge Energy
 Lifetime DC EV Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EVDCTotalDischargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -551,7 +551,7 @@ Lifetime DC EV Discharge Energy
 Lifetime Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ESSTotalDischargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -565,7 +565,7 @@ Lifetime Discharge Energy
 Lifetime Generator Output Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantTotalGeneratorOutputEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -579,7 +579,7 @@ Lifetime Generator Output Energy
 Lifetime PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantPVTotalGeneration</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -593,7 +593,7 @@ Lifetime PV Production
 Lifetime Third-Party PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ThirdPartyLifetimePVEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -607,7 +607,7 @@ Lifetime Third-Party PV Production
 Lifetime Total PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>TotalLifetimePVEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_pv_energy/state</td></tr>
@@ -620,7 +620,7 @@ Lifetime Total PV Production
 Max Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxActivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -635,7 +635,7 @@ Max Active Power
 Max Apparent Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxApparentPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -650,7 +650,7 @@ Max Apparent Power
 Max Charging Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxChargingLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -665,7 +665,7 @@ Max Charging Limit
 Max Discharging Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxDischargingLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -680,7 +680,7 @@ Max Discharging Limit
 PCS Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GeneralPCSAlarm</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_pcs_alarm/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_pcs_alarm/state</td></tr>
@@ -693,7 +693,7 @@ PCS Alarms
 PCS Max Export Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PCSMaxExportLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -708,7 +708,7 @@ PCS Max Export Limit
 PCS Max Import Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PCSMaxImportLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -723,7 +723,7 @@ PCS Max Import Limit
 PV Max Power Limit
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVMaxPowerLimit</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -738,7 +738,7 @@ PV Max Power Limit
 PV Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantPVPower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_pv_power/state</td></tr>
@@ -751,8 +751,8 @@ PV Power
 Phase A Active Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantPhaseActivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power/state</td></tr>
@@ -765,7 +765,7 @@ Phase A Active Power
 Phase A Active Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseActivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -780,7 +780,7 @@ Phase A Active Power Fixed Adjustment Target Value
 Phase A Active Power Percentage Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseActivePowerPercentageAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -795,7 +795,7 @@ Phase A Active Power Percentage Adjustment Target Value
 Phase A Q/S Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseQSAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -810,8 +810,8 @@ Phase A Q/S Fixed Adjustment Target Value
 Phase A Reactive Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantPhaseReactivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power/state</td></tr>
@@ -824,7 +824,7 @@ Phase A Reactive Power
 Phase A Reactive Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseReactivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -839,8 +839,8 @@ Phase A Reactive Power Fixed Adjustment Target Value
 Phase B Active Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantPhaseActivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power/state</td></tr>
@@ -853,7 +853,7 @@ Phase B Active Power
 Phase B Active Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseActivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -868,7 +868,7 @@ Phase B Active Power Fixed Adjustment Target Value
 Phase B Active Power Percentage Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseActivePowerPercentageAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -883,7 +883,7 @@ Phase B Active Power Percentage Adjustment Target Value
 Phase B Q/S Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseQSAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -898,8 +898,8 @@ Phase B Q/S Fixed Adjustment Target Value
 Phase B Reactive Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantPhaseReactivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power/state</td></tr>
@@ -912,7 +912,7 @@ Phase B Reactive Power
 Phase B Reactive Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseReactivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -927,8 +927,8 @@ Phase B Reactive Power Fixed Adjustment Target Value
 Phase C Active Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantPhaseActivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power/state</td></tr>
@@ -941,7 +941,7 @@ Phase C Active Power
 Phase C Active Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseActivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -956,7 +956,7 @@ Phase C Active Power Fixed Adjustment Target Value
 Phase C Active Power Percentage Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseActivePowerPercentageAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -971,7 +971,7 @@ Phase C Active Power Percentage Adjustment Target Value
 Phase C Q/S Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseQSAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -986,8 +986,8 @@ Phase C Q/S Fixed Adjustment Target Value
 Phase C Reactive Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantPhaseReactivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power/state</td></tr>
@@ -1000,7 +1000,7 @@ Phase C Reactive Power
 Phase C Reactive Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseReactivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1015,7 +1015,7 @@ Phase C Reactive Power Fixed Adjustment Target Value
 Power Factor Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PowerFactorAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
@@ -1029,7 +1029,7 @@ Power Factor Adjustment Target Value
 Q/S Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>QSAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1044,7 +1044,7 @@ Q/S Adjustment Target Value
 Rated Charging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantRatedChargingPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1058,7 +1058,7 @@ Rated Charging Power
 Rated Discharging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantRatedDischargingPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1072,7 +1072,7 @@ Rated Discharging Power
 Rated Energy Capacity
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantRatedEnergyCapacity</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1086,8 +1086,8 @@ Rated Energy Capacity
 Reactive Power
 </summary>
 <table>
-<tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Sensor Class</td><td>PlantReactivePower</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_reactive_power/state</td></tr>
@@ -1100,7 +1100,7 @@ Reactive Power
 Reactive Power Fixed Adjustment Target Value
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ReactivePowerFixedAdjustmentTargetValue</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1115,7 +1115,7 @@ Reactive Power Fixed Adjustment Target Value
 Remote EMS
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RemoteEMS</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/state</td></tr>
@@ -1128,7 +1128,7 @@ Remote EMS
 Remote EMS Control Mode
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RemoteEMSControlMode</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
@@ -1140,7 +1140,7 @@ Remote EMS Control Mode
 Running State
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantRunningState</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_running_state/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_running_state/state</td></tr>
@@ -1152,7 +1152,7 @@ Running State
 Smart Load 01 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1166,7 +1166,7 @@ Smart Load 01 Power
 Smart Load 01 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1180,7 +1180,7 @@ Smart Load 01 Total Consumption
 Smart Load 02 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1194,7 +1194,7 @@ Smart Load 02 Power
 Smart Load 02 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1208,7 +1208,7 @@ Smart Load 02 Total Consumption
 Smart Load 03 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1222,7 +1222,7 @@ Smart Load 03 Power
 Smart Load 03 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1236,7 +1236,7 @@ Smart Load 03 Total Consumption
 Smart Load 04 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1250,7 +1250,7 @@ Smart Load 04 Power
 Smart Load 04 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1264,7 +1264,7 @@ Smart Load 04 Total Consumption
 Smart Load 05 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1278,7 +1278,7 @@ Smart Load 05 Power
 Smart Load 05 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1292,7 +1292,7 @@ Smart Load 05 Total Consumption
 Smart Load 06 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1306,7 +1306,7 @@ Smart Load 06 Power
 Smart Load 06 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1320,7 +1320,7 @@ Smart Load 06 Total Consumption
 Smart Load 07 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1334,7 +1334,7 @@ Smart Load 07 Power
 Smart Load 07 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1348,7 +1348,7 @@ Smart Load 07 Total Consumption
 Smart Load 08 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1362,7 +1362,7 @@ Smart Load 08 Power
 Smart Load 08 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1376,7 +1376,7 @@ Smart Load 08 Total Consumption
 Smart Load 09 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1390,7 +1390,7 @@ Smart Load 09 Power
 Smart Load 09 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1404,7 +1404,7 @@ Smart Load 09 Total Consumption
 Smart Load 10 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1418,7 +1418,7 @@ Smart Load 10 Power
 Smart Load 10 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1432,7 +1432,7 @@ Smart Load 10 Total Consumption
 Smart Load 11 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1446,7 +1446,7 @@ Smart Load 11 Power
 Smart Load 11 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1460,7 +1460,7 @@ Smart Load 11 Total Consumption
 Smart Load 12 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1474,7 +1474,7 @@ Smart Load 12 Power
 Smart Load 12 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1488,7 +1488,7 @@ Smart Load 12 Total Consumption
 Smart Load 13 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1502,7 +1502,7 @@ Smart Load 13 Power
 Smart Load 13 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1516,7 +1516,7 @@ Smart Load 13 Total Consumption
 Smart Load 14 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1530,7 +1530,7 @@ Smart Load 14 Power
 Smart Load 14 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1544,7 +1544,7 @@ Smart Load 14 Total Consumption
 Smart Load 15 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1558,7 +1558,7 @@ Smart Load 15 Power
 Smart Load 15 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1572,7 +1572,7 @@ Smart Load 15 Total Consumption
 Smart Load 16 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1586,7 +1586,7 @@ Smart Load 16 Power
 Smart Load 16 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1600,7 +1600,7 @@ Smart Load 16 Total Consumption
 Smart Load 17 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1614,7 +1614,7 @@ Smart Load 17 Power
 Smart Load 17 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1628,7 +1628,7 @@ Smart Load 17 Total Consumption
 Smart Load 18 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1642,7 +1642,7 @@ Smart Load 18 Power
 Smart Load 18 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1656,7 +1656,7 @@ Smart Load 18 Total Consumption
 Smart Load 19 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1670,7 +1670,7 @@ Smart Load 19 Power
 Smart Load 19 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1684,7 +1684,7 @@ Smart Load 19 Total Consumption
 Smart Load 20 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1698,7 +1698,7 @@ Smart Load 20 Power
 Smart Load 20 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1712,7 +1712,7 @@ Smart Load 20 Total Consumption
 Smart Load 21 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1726,7 +1726,7 @@ Smart Load 21 Power
 Smart Load 21 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1740,7 +1740,7 @@ Smart Load 21 Total Consumption
 Smart Load 22 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1754,7 +1754,7 @@ Smart Load 22 Power
 Smart Load 22 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1768,7 +1768,7 @@ Smart Load 22 Total Consumption
 Smart Load 23 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1782,7 +1782,7 @@ Smart Load 23 Power
 Smart Load 23 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1796,7 +1796,7 @@ Smart Load 23 Total Consumption
 Smart Load 24 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -1810,7 +1810,7 @@ Smart Load 24 Power
 Smart Load 24 Total Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SmartLoadTotalConsumption</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1824,7 +1824,7 @@ Smart Load 24 Total Consumption
 System Time
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SystemTime</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time/state</td></tr>
@@ -1836,7 +1836,7 @@ System Time
 System Time Zone
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SystemTimeZone</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time_zone/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time_zone/state</td></tr>
@@ -1848,7 +1848,7 @@ System Time Zone
 Third-Party PV Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ThirdPartyPVPower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_power/state</td></tr>
@@ -1861,7 +1861,7 @@ Third-Party PV Power
 Total PV Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>TotalPVPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_pv_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_total_pv_power/state</td></tr>
@@ -1875,7 +1875,7 @@ Total PV Power
 Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorActivePower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_active_power/state</td></tr>
@@ -1889,7 +1889,7 @@ Active Power
 Daily Exported Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorDailyExportEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_export_energy/state</td></tr>
@@ -1902,7 +1902,7 @@ Daily Exported Energy
 Daily Imported Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorDailyImportEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_import_energy/state</td></tr>
@@ -1915,7 +1915,7 @@ Daily Imported Energy
 Export Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorExportPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_export_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_export_power/state</td></tr>
@@ -1927,7 +1927,7 @@ Export Power
 Grid Sensor Status
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorStatus</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_status/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_status/state</td></tr>
@@ -1940,7 +1940,7 @@ Grid Sensor Status
 Grid Status
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridStatus</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_status/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_status/state</td></tr>
@@ -1952,7 +1952,7 @@ Grid Status
 Import Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorImportPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_import_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_import_power/state</td></tr>
@@ -1964,7 +1964,7 @@ Import Power
 Lifetime Exported Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantTotalExportedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1978,7 +1978,7 @@ Lifetime Exported Energy
 Lifetime Imported Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PlantTotalImportedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -1992,7 +1992,7 @@ Lifetime Imported Energy
 Phase A Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridPhaseAActivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2007,7 +2007,7 @@ Phase A Active Power
 Phase A Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridPhaseAReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2022,7 +2022,7 @@ Phase A Reactive Power
 Phase B Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridPhaseBActivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2037,7 +2037,7 @@ Phase B Active Power
 Phase B Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridPhaseBReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2052,7 +2052,7 @@ Phase B Reactive Power
 Phase C Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridPhaseCActivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2067,7 +2067,7 @@ Phase C Active Power
 Phase C Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridPhaseCReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2082,7 +2082,7 @@ Phase C Reactive Power
 Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridSensorReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>var</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_reactive_power/state</td></tr>
@@ -2098,7 +2098,7 @@ Reactive Power
 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphaseCurrent</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>1</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_current/state</td></tr>
@@ -2111,7 +2111,7 @@ Current
 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphaseDailyPVEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
@@ -2124,7 +2124,7 @@ Daily Production
 Frequency
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphaseFrequency</td></tr>
 <tr><td>Unit of Measurement</td><td>Hz</td></tr>
 <tr><td>Gain</td><td>1</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_frequency/state</td></tr>
@@ -2137,7 +2137,7 @@ Frequency
 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphaseLifetimePVEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
@@ -2150,7 +2150,7 @@ Lifetime Production
 PV Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphasePVPower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_active_power/state</td></tr>
@@ -2163,7 +2163,7 @@ PV Power
 Power Factor
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphasePowerFactor</td></tr>
 <tr><td>Gain</td><td>1</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_power_factor/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_power_factor/state</td></tr>
@@ -2175,7 +2175,7 @@ Power Factor
 Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphaseReactivePower</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
@@ -2188,7 +2188,7 @@ Reactive Power
 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>EnphaseVoltage</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>1</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_voltage/state</td></tr>
@@ -2203,7 +2203,7 @@ Voltage
 Total AC EV Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalEVACChargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2218,7 +2218,7 @@ Total AC EV Charge Energy
 Total Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalChargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2233,7 +2233,7 @@ Total Charge Energy
 Total Common Load Consumption
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalCommonLoadConsumption</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2248,7 +2248,7 @@ Total Common Load Consumption
 Total DC EV Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalEVDCChargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2263,7 +2263,7 @@ Total DC EV Charge Energy
 Total DC EV Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalEVDCDischargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2278,7 +2278,7 @@ Total DC EV Discharge Energy
 Total Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalDischargedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2293,7 +2293,7 @@ Total Discharge Energy
 Total Exported Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalExportedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2308,7 +2308,7 @@ Total Exported Energy
 Total Generator Output Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalGeneratorOutputEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2323,7 +2323,7 @@ Total Generator Output Energy
 Total Imported Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalImportedEnergy</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2338,7 +2338,7 @@ Total Imported Energy
 Total PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalSelfPVGeneration</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2353,7 +2353,7 @@ Total PV Production
 Total Third-Party PV Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>SITotalThirdPartyPVGeneration</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2370,7 +2370,7 @@ Total Third-Party PV Production
 A-B Line Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>LineVoltage</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2385,7 +2385,7 @@ A-B Line Voltage
 Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ActivePower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2400,7 +2400,7 @@ Active Power
 Active Power Fixed Value Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterActivePowerFixedValueAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2415,7 +2415,7 @@ Active Power Fixed Value Adjustment
 Active Power Fixed Value Adjustment Feedback
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterActivePowerFixedValueAdjustmentFeedback</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2430,7 +2430,7 @@ Active Power Fixed Value Adjustment Feedback
 Active Power Percentage Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterActivePowerPercentageAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2445,7 +2445,7 @@ Active Power Percentage Adjustment
 Active Power Percentage Adjustment Feedback
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterActivePowerPercentageAdjustmentFeedback</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2460,7 +2460,7 @@ Active Power Percentage Adjustment Feedback
 B-C Line Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>LineVoltage</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2475,7 +2475,7 @@ B-C Line Voltage
 C-A Line Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>LineVoltage</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2490,7 +2490,7 @@ C-A Line Voltage
 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterPVDailyGeneration</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2505,7 +2505,7 @@ Daily Production
 Firmware Version
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterFirmwareVersion</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_firmware_version/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_firmware_version/state</td></tr>
@@ -2518,7 +2518,7 @@ Firmware Version
 Gateway Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterAlarm4</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_alarm_4/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_4/state</td></tr>
@@ -2531,7 +2531,7 @@ Gateway Alarms
 Grid Frequency
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>GridFrequency</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>Hz</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2546,7 +2546,7 @@ Grid Frequency
 Insulation Resistance
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InsulationResistance</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>MΩ</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2561,7 +2561,7 @@ Insulation Resistance
 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterPVLifetimeGeneration</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2576,7 +2576,7 @@ Lifetime Production
 MPTT Count
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MPTTCount</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_mptt_count/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_mptt_count/state</td></tr>
@@ -2589,7 +2589,7 @@ MPTT Count
 Max Absorption Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxAbsorptionPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2604,7 +2604,7 @@ Max Absorption Power
 Max Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterMaxActivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2619,7 +2619,7 @@ Max Active Power
 Max Active Power Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxActivePowerAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2634,7 +2634,7 @@ Max Active Power Adjustment
 Max Rated Apparent Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxRatedApparentPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kVA</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2649,7 +2649,7 @@ Max Rated Apparent Power
 Max Reactive Power Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxReactivePowerAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2664,7 +2664,7 @@ Max Reactive Power Adjustment
 Min Active Power Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MinActivePowerAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2679,7 +2679,7 @@ Min Active Power Adjustment
 Min Reactive Power Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MinReactivePowerAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2694,7 +2694,7 @@ Min Reactive Power Adjustment
 Output Type
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>OutputType</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_output_type/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_output_type/state</td></tr>
@@ -2707,7 +2707,7 @@ Output Type
 PACK/BCU Count
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PACKBCUCount</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pack_bcu_count/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pack_bcu_count/state</td></tr>
@@ -2720,7 +2720,7 @@ PACK/BCU Count
 PCS Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterPCSAlarm</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pcs_alarm/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pcs_alarm/state</td></tr>
@@ -2733,7 +2733,7 @@ PCS Alarms
 PV Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterPVPower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pv_power/state</td></tr>
@@ -2747,7 +2747,7 @@ PV Power
 PV String Count
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringCount</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pv_string_count/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv_string_count/state</td></tr>
@@ -2760,7 +2760,7 @@ PV String Count
 Phase A Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseCurrent</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2775,7 +2775,7 @@ Phase A Current
 Phase A Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseVoltage</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2790,7 +2790,7 @@ Phase A Voltage
 Phase B Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseCurrent</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2805,7 +2805,7 @@ Phase B Current
 Phase B Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseVoltage</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2820,7 +2820,7 @@ Phase B Voltage
 Phase C Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseCurrent</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2835,7 +2835,7 @@ Phase C Current
 Phase C Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PhaseVoltage</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2850,7 +2850,7 @@ Phase C Voltage
 Power Factor
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PowerFactor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_power_factor/state</td></tr>
@@ -2864,7 +2864,7 @@ Power Factor
 Power Factor Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterPowerFactorAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_power_factor_adjustment/state</td></tr>
@@ -2878,7 +2878,7 @@ Power Factor Adjustment
 Rated Active Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RatedActivePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2893,7 +2893,7 @@ Rated Active Power
 Rated Grid Frequency
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RatedGridFrequency</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>Hz</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2908,7 +2908,7 @@ Rated Grid Frequency
 Rated Grid Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RatedGridVoltage</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -2923,7 +2923,7 @@ Rated Grid Voltage
 Reactive Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ReactivePower</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2938,7 +2938,7 @@ Reactive Power
 Reactive Power Fixed Value Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterReactivePowerFixedValueAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2953,7 +2953,7 @@ Reactive Power Fixed Value Adjustment
 Reactive Power Fixed Value Adjustment Feedback
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterReactivePowerFixedValueAdjustmentFeedback</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2968,7 +2968,7 @@ Reactive Power Fixed Value Adjustment Feedback
 Reactive Power Percentage Adjustment Feedback
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterReactivePowerPercentageAdjustmentFeedback</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2983,7 +2983,7 @@ Reactive Power Percentage Adjustment Feedback
 Reactive Power Q/S Adjustment
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterReactivePowerQSAdjustment</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -2998,7 +2998,7 @@ Reactive Power Q/S Adjustment
 Remote EMS Dispatch
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterRemoteEMSDispatch</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
@@ -3011,7 +3011,7 @@ Remote EMS Dispatch
 Running State
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterRunningState</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_running_state/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_running_state/state</td></tr>
@@ -3024,7 +3024,7 @@ Running State
 Shutdown Time
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ShutdownTime</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_shutdown_time/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_shutdown_time/state</td></tr>
@@ -3037,7 +3037,7 @@ Shutdown Time
 Startup Time
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>StartupTime</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_startup_time/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_startup_time/state</td></tr>
@@ -3050,7 +3050,7 @@ Startup Time
 Temperature
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterTemperature</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>°C</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -3067,7 +3067,7 @@ Temperature
 Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterAlarm3</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_alarm_3/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_3/state</td></tr>
@@ -3080,7 +3080,7 @@ Alarms
 Available Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableBatteryChargeEnergy</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3095,7 +3095,7 @@ Available Charge Energy
 Available Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AvailableBatteryDischargeEnergy</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3110,7 +3110,7 @@ Available Discharge Energy
 Average Cell Temperature
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AverageCellTemperature</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>°C</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -3125,7 +3125,7 @@ Average Cell Temperature
 Average Cell Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AverageCellVoltage</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -3140,7 +3140,7 @@ Average Cell Voltage
 Battery Charging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterBatteryChargingPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_charging_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_charging_power/state</td></tr>
@@ -3153,7 +3153,7 @@ Battery Charging Power
 Battery Discharging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterBatteryDischargingPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_battery_discharging_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_discharging_power/state</td></tr>
@@ -3166,7 +3166,7 @@ Battery Discharging Power
 Battery Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ChargeDischargePower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_charge_discharge_power/state</td></tr>
@@ -3180,7 +3180,7 @@ Battery Power
 Battery SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterBatterySoC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -3195,7 +3195,7 @@ Battery SoC
 Battery SoH
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterBatterySoH</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -3210,7 +3210,7 @@ Battery SoH
 Daily Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>DailyChargeEnergy</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3225,7 +3225,7 @@ Daily Charge Energy
 Daily Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>DailyDischargeEnergy</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3240,7 +3240,7 @@ Daily Discharge Energy
 Lifetime Charge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AccumulatedChargeEnergy</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3255,7 +3255,7 @@ Lifetime Charge Energy
 Lifetime Discharge Energy
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>AccumulatedDischargeEnergy</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3270,7 +3270,7 @@ Lifetime Discharge Energy
 Max Battery Temperature
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterMaxBatteryTemperature</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>°C</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -3285,7 +3285,7 @@ Max Battery Temperature
 Max Charge Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxBatteryChargePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -3300,7 +3300,7 @@ Max Charge Power
 Max Discharge Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>MaxBatteryDischargePower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -3315,7 +3315,7 @@ Max Discharge Power
 Min Battery Temperature
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterMinBatteryTemperature</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>°C</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -3330,7 +3330,7 @@ Min Battery Temperature
 Rated Battery Capacity
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RatedBatteryCapacity</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3345,7 +3345,7 @@ Rated Battery Capacity
 Rated Charging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RatedChargingPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -3360,7 +3360,7 @@ Rated Charging Power
 Rated Discharging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>RatedDischargingPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -3379,7 +3379,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 PV String 1 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3394,7 +3394,7 @@ PV String 1 Current
 PV String 2 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3409,7 +3409,7 @@ PV String 2 Current
 PV String 3 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3424,7 +3424,7 @@ PV String 3 Current
 PV String 4 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3439,7 +3439,7 @@ PV String 4 Current
 PV String 5 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3454,7 +3454,7 @@ PV String 5 Current
 PV String 6 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3469,7 +3469,7 @@ PV String 6 Current
 PV String 7 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3484,7 +3484,7 @@ PV String 7 Current
 PV String 8 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3499,7 +3499,7 @@ PV String 8 Current
 PV String 9 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3514,7 +3514,7 @@ PV String 9 Current
 PV String 10 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3529,7 +3529,7 @@ PV String 10 Current
 PV String 11 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3544,7 +3544,7 @@ PV String 11 Current
 PV String 12 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3559,7 +3559,7 @@ PV String 12 Current
 PV String 13 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3574,7 +3574,7 @@ PV String 13 Current
 PV String 14 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3589,7 +3589,7 @@ PV String 14 Current
 PV String 15 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3604,7 +3604,7 @@ PV String 15 Current
 PV String 16 Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVCurrentSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -3619,7 +3619,7 @@ PV String 16 Current
 PV String 1 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_daily_energy/state</td></tr>
@@ -3633,7 +3633,7 @@ PV String 1 Daily Production
 PV String 2 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_daily_energy/state</td></tr>
@@ -3647,7 +3647,7 @@ PV String 2 Daily Production
 PV String 3 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_daily_energy/state</td></tr>
@@ -3661,7 +3661,7 @@ PV String 3 Daily Production
 PV String 4 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_daily_energy/state</td></tr>
@@ -3675,7 +3675,7 @@ PV String 4 Daily Production
 PV String 5 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_daily_energy/state</td></tr>
@@ -3689,7 +3689,7 @@ PV String 5 Daily Production
 PV String 6 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_daily_energy/state</td></tr>
@@ -3703,7 +3703,7 @@ PV String 6 Daily Production
 PV String 7 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_daily_energy/state</td></tr>
@@ -3717,7 +3717,7 @@ PV String 7 Daily Production
 PV String 8 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_daily_energy/state</td></tr>
@@ -3731,7 +3731,7 @@ PV String 8 Daily Production
 PV String 9 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_daily_energy/state</td></tr>
@@ -3745,7 +3745,7 @@ PV String 9 Daily Production
 PV String 10 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_daily_energy/state</td></tr>
@@ -3759,7 +3759,7 @@ PV String 10 Daily Production
 PV String 11 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_daily_energy/state</td></tr>
@@ -3773,7 +3773,7 @@ PV String 11 Daily Production
 PV String 12 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_daily_energy/state</td></tr>
@@ -3787,7 +3787,7 @@ PV String 12 Daily Production
 PV String 13 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_daily_energy/state</td></tr>
@@ -3801,7 +3801,7 @@ PV String 13 Daily Production
 PV String 14 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_daily_energy/state</td></tr>
@@ -3815,7 +3815,7 @@ PV String 14 Daily Production
 PV String 15 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_daily_energy/state</td></tr>
@@ -3829,7 +3829,7 @@ PV String 15 Daily Production
 PV String 16 Daily Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringDailyEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_daily_energy/state</td></tr>
@@ -3843,7 +3843,7 @@ PV String 16 Daily Production
 PV String 1 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_lifetime_energy/state</td></tr>
@@ -3857,7 +3857,7 @@ PV String 1 Lifetime Production
 PV String 2 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_lifetime_energy/state</td></tr>
@@ -3871,7 +3871,7 @@ PV String 2 Lifetime Production
 PV String 3 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_lifetime_energy/state</td></tr>
@@ -3885,7 +3885,7 @@ PV String 3 Lifetime Production
 PV String 4 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_lifetime_energy/state</td></tr>
@@ -3899,7 +3899,7 @@ PV String 4 Lifetime Production
 PV String 5 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_lifetime_energy/state</td></tr>
@@ -3913,7 +3913,7 @@ PV String 5 Lifetime Production
 PV String 6 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_lifetime_energy/state</td></tr>
@@ -3927,7 +3927,7 @@ PV String 6 Lifetime Production
 PV String 7 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_lifetime_energy/state</td></tr>
@@ -3941,7 +3941,7 @@ PV String 7 Lifetime Production
 PV String 8 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_lifetime_energy/state</td></tr>
@@ -3955,7 +3955,7 @@ PV String 8 Lifetime Production
 PV String 9 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_lifetime_energy/state</td></tr>
@@ -3969,7 +3969,7 @@ PV String 9 Lifetime Production
 PV String 10 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_lifetime_energy/state</td></tr>
@@ -3983,7 +3983,7 @@ PV String 10 Lifetime Production
 PV String 11 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_lifetime_energy/state</td></tr>
@@ -3997,7 +3997,7 @@ PV String 11 Lifetime Production
 PV String 12 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_lifetime_energy/state</td></tr>
@@ -4011,7 +4011,7 @@ PV String 12 Lifetime Production
 PV String 13 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_lifetime_energy/state</td></tr>
@@ -4025,7 +4025,7 @@ PV String 13 Lifetime Production
 PV String 14 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_lifetime_energy/state</td></tr>
@@ -4039,7 +4039,7 @@ PV String 14 Lifetime Production
 PV String 15 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_lifetime_energy/state</td></tr>
@@ -4053,7 +4053,7 @@ PV String 15 Lifetime Production
 PV String 16 Lifetime Production
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringLifetimeEnergy</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_lifetime_energy/state</td></tr>
@@ -4067,7 +4067,7 @@ PV String 16 Lifetime Production
 PV String 1 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring1/sigen_0_inverter_1_pv1_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_power/state</td></tr>
@@ -4080,7 +4080,7 @@ PV String 1 Power
 PV String 2 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring2/sigen_0_inverter_1_pv2_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_power/state</td></tr>
@@ -4093,7 +4093,7 @@ PV String 2 Power
 PV String 3 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring3/sigen_0_inverter_1_pv3_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_power/state</td></tr>
@@ -4106,7 +4106,7 @@ PV String 3 Power
 PV String 4 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring4/sigen_0_inverter_1_pv4_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_power/state</td></tr>
@@ -4119,7 +4119,7 @@ PV String 4 Power
 PV String 5 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring5/sigen_0_inverter_1_pv5_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_power/state</td></tr>
@@ -4132,7 +4132,7 @@ PV String 5 Power
 PV String 6 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring6/sigen_0_inverter_1_pv6_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_power/state</td></tr>
@@ -4145,7 +4145,7 @@ PV String 6 Power
 PV String 7 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring7/sigen_0_inverter_1_pv7_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_power/state</td></tr>
@@ -4158,7 +4158,7 @@ PV String 7 Power
 PV String 8 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring8/sigen_0_inverter_1_pv8_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_power/state</td></tr>
@@ -4171,7 +4171,7 @@ PV String 8 Power
 PV String 9 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring9/sigen_0_inverter_1_pv9_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_power/state</td></tr>
@@ -4184,7 +4184,7 @@ PV String 9 Power
 PV String 10 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring10/sigen_0_inverter_1_pv10_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_power/state</td></tr>
@@ -4197,7 +4197,7 @@ PV String 10 Power
 PV String 11 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring11/sigen_0_inverter_1_pv11_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_power/state</td></tr>
@@ -4210,7 +4210,7 @@ PV String 11 Power
 PV String 12 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring12/sigen_0_inverter_1_pv12_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_power/state</td></tr>
@@ -4223,7 +4223,7 @@ PV String 12 Power
 PV String 13 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring13/sigen_0_inverter_1_pv13_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_power/state</td></tr>
@@ -4236,7 +4236,7 @@ PV String 13 Power
 PV String 14 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring14/sigen_0_inverter_1_pv14_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_power/state</td></tr>
@@ -4249,7 +4249,7 @@ PV String 14 Power
 PV String 15 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring15/sigen_0_inverter_1_pv15_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_power/state</td></tr>
@@ -4262,7 +4262,7 @@ PV String 15 Power
 PV String 16 Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVStringPower</td></tr>
 <tr><td>Unit of Measurement</td><td>W</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring16/sigen_0_inverter_1_pv16_power/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_power/state</td></tr>
@@ -4275,7 +4275,7 @@ PV String 16 Power
 PV String 1 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4290,7 +4290,7 @@ PV String 1 Voltage
 PV String 2 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4305,7 +4305,7 @@ PV String 2 Voltage
 PV String 3 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4320,7 +4320,7 @@ PV String 3 Voltage
 PV String 4 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4335,7 +4335,7 @@ PV String 4 Voltage
 PV String 5 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4350,7 +4350,7 @@ PV String 5 Voltage
 PV String 6 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4365,7 +4365,7 @@ PV String 6 Voltage
 PV String 7 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4380,7 +4380,7 @@ PV String 7 Voltage
 PV String 8 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4395,7 +4395,7 @@ PV String 8 Voltage
 PV String 9 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4410,7 +4410,7 @@ PV String 9 Voltage
 PV String 10 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4425,7 +4425,7 @@ PV String 10 Voltage
 PV String 11 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4440,7 +4440,7 @@ PV String 11 Voltage
 PV String 12 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4455,7 +4455,7 @@ PV String 12 Voltage
 PV String 13 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4470,7 +4470,7 @@ PV String 13 Voltage
 PV String 14 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4485,7 +4485,7 @@ PV String 14 Voltage
 PV String 15 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4500,7 +4500,7 @@ PV String 15 Voltage
 PV String 16 Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>PVVoltageSensor</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4517,7 +4517,7 @@ PV String 16 Voltage
 Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerAlarms</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_alarm/state</td></tr>
@@ -4529,7 +4529,7 @@ Alarms
 Charging Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerChargingPower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -4543,7 +4543,7 @@ Charging Power
 Input Breaker
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerInputBreaker</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -4557,7 +4557,7 @@ Input Breaker
 Output Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerOutputCurrent</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -4571,7 +4571,7 @@ Output Current
 Rated Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerRatedCurrent</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -4585,7 +4585,7 @@ Rated Current
 Rated Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerRatedPower</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -4599,7 +4599,7 @@ Rated Power
 Rated Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerRatedVoltage</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4613,7 +4613,7 @@ Rated Voltage
 Running State
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerRunningState</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_running_state/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_running_state/state</td></tr>
@@ -4625,7 +4625,7 @@ Running State
 Total Energy Consumed
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>ACChargerTotalEnergyConsumed</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -4641,7 +4641,7 @@ Total Energy Consumed
 Alarms
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>InverterAlarm5</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_inverter_1_alarm_5/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_5/state</td></tr>
@@ -4653,7 +4653,7 @@ Alarms
 Current Charging Capacity
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>DCChargerCurrentChargingCapacity</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>kWh</td></tr>
 <tr><td>Gain</td><td>100</td></tr>
@@ -4668,7 +4668,7 @@ Current Charging Capacity
 Current Charging Duration
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>DCChargerCurrentChargingDuration</td></tr>
 <tr><td>Scan Interval</td><td>600s</td></tr>
 <tr><td>Unit of Measurement</td><td>s</td></tr>
 <tr><td>Gain</td><td>1</td></tr>
@@ -4683,7 +4683,7 @@ Current Charging Duration
 Output Power
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>DCChargerOutputPower</td></tr>
 <tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Unit of Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -4697,7 +4697,7 @@ Output Power
 Vehicle Battery Voltage
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>VehicleBatteryVoltage</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>V</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4711,7 +4711,7 @@ Vehicle Battery Voltage
 Vehicle Charging Current
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>VehicleChargingCurrent</td></tr>
 <tr><td>Scan Interval</td><td>10s</td></tr>
 <tr><td>Unit of Measurement</td><td>A</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -4725,7 +4725,7 @@ Vehicle Charging Current
 Vehicle SoC
 </summary>
 <table>
-<tr>
+<tr><td>Sensor Class</td><td>VehicleSoC</td></tr>
 <tr><td>Scan Interval</td><td>60s</td></tr>
 <tr><td>Unit of Measurement</td><td>%</td></tr>
 <tr><td>Gain</td><td>10</td></tr>
@@ -5112,6 +5112,15 @@ Remote EMS Dispatch
 ### AC Charger
 <details>
 <summary>
+AC Charger Stop/Start
+</summary>
+<table>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2/set</td></tr>
+</table>
+</details>
+<details>
+<summary>
 Output Current
 </summary>
 <table>
@@ -5119,23 +5128,14 @@ Output Current
 <tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/set</td></tr>
 </table>
 </details>
-<details>
-<summary>
-Power On/Off
-</summary>
-<table>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_status/state</td></tr>
-<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_status/set</td></tr>
-</table>
-</details>
 
 ### DC Charger
 <details>
 <summary>
-DC Charger Status
+DC Charger Stop/Start
 </summary>
 <table>
-<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_status/state</td></tr>
-<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_status/set</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1/state</td></tr>
+<tr><td>Simplified Update Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1/set</td></tr>
 </table>
 </details>
