@@ -490,14 +490,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 return self["options"].index(state)
         try:
             value = float(state) if "." in state else int(state)
-            logging.info(f"{self.__class__.__name__} state2raw converted state '{state}' to float or int {value}")
         except ValueError:
-            logging.error(f"{self.__class__.__name__} state2raw failed to convert string '{state}' to float or int")
             value = state
         if isinstance(value, (float, int)):
             if self.gain is not None and self.gain != 1:
                 value *= self.gain
-                logging.info(f"{self.__class__.__name__} state2raw applied gain '{self.gain}' to {value}")
         return int(value)
 
 
