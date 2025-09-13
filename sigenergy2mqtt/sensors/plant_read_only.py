@@ -15,7 +15,7 @@ from .base import (
     RunningStateSensor,
     TimestampSensor,
 )
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -38,6 +38,9 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
         )
+
+    def state2raw(self, state):
+        return int(datetime.fromisoformat(state).timestamp())
 
 
 class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
