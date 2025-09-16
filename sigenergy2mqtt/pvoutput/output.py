@@ -15,11 +15,14 @@ class PVOutputOutputService(Service):
     def __init__(self, logger: logging.Logger):
         super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
-        self._consumption: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.consumption, "consumption", logger)
-        self._exports: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.exports, "exports", logger)
-        self._generation: ServiceTopics[str, Topic] = ServiceTopics(self, True, "generation", logger)
-        self._power: ServiceTopics[str, Topic] = ServiceTopics(self, Config.pvoutput.peak_power, "peak power", logger)
-        self._power.update = self.set_power
+        self._service_topics: dict[str, ServiceTopics] = {
+            "generation": ServiceTopics(self, True, "generation", logger, value_key="g"),
+            "exports": ServiceTopics(self, True, "exports", logger, value_key="e"),
+            "power": ServiceTopics(self, True, "peak power", logger, value_key="pp", datetime_key="pt", averaged=False, bypass_updating_check=True),
+            "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, value_key="c"),
+        }
+        self._service_topics["power"].update = self.set_power
+        self._latest_peak_at: str = None
 
         obsolete = Path(Config.persistent_state_path, "pvoutput_output_9-peak_power.state")
         if obsolete.is_file():
@@ -32,11 +35,17 @@ class PVOutputOutputService(Service):
             if fmt.tm_year == now.tm_year and fmt.tm_mon == now.tm_mon and fmt.tm_mday == now.tm_mday:
                 with self._persistent_state_file.open("r") as f:
                     try:
+                        total: float = 0.0
                         power = json.load(f, object_hook=Topic.json_decoder)
                         self.logger.debug(f"{self.__class__.__name__} Loaded {self._persistent_state_file}")
                         for topic in power.values():
-                            self._power[topic.topic] = topic
+                            self._service_topics["power"][topic.topic] = topic
                             self.logger.debug(f"{self.__class__.__name__} Registered power topic: {topic.topic} (gain={topic.gain}) with {topic.state=}")
+                            if topic.state is not None and topic.state > 0.0:
+                                total += topic.state
+                                self._latest_peak_at = time.strftime("%H:%M", topic.timestamp)
+                        if self._latest_peak_at is not None:
+                            self._logger.info(f"{self.__class__.__name__} Peak Power {total}W recorded at {self._latest_peak_at} restored from {self._persistent_state_file}")
                     except ValueError as error:
                         self.logger.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
             else:
@@ -45,84 +54,67 @@ class PVOutputOutputService(Service):
         else:
             self.logger.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
 
-    # region Registrations
-
-    def register_consumption(self, topic: str, gain: float) -> None:
-        self._consumption.register(topic, gain)
-        self.logger.debug(f"{self.__class__.__name__} Registered consumption topic: {topic} ({gain=})")
-
-    def register_exports(self, topic: str, gain: float) -> None:
-        self._exports.register(topic, gain)
-        self.logger.debug(f"{self.__class__.__name__} Registered exports topic: {topic} ({gain=})")
-
-    def register_generation(self, topic: str, gain: float) -> None:
-        self._generation.register(topic, gain)
-        self.logger.debug(f"{self.__class__.__name__} Registered generation topic: {topic} ({gain=})")
-
-    def register_power(self, topic: str, gain: float) -> None:
-        if len(self._power) == 0:
-            self._power.register(topic, gain)
-            self.logger.debug(f"{self.__class__.__name__} Registered power topic: {topic} ({gain=})")
-        elif topic in self._power:
-            self.logger.debug(f"{self.__class__.__name__} IGNORED power topic: {topic} - Already registered")
+    def register(self, key: str, topic: str, gain: float = 1.0) -> None:
+        if key == "power":
+            if len(self._service_topics["power"]) == 0:
+                self._service_topics["power"].register(topic, gain)
+                self.logger.debug(f"{self.__class__.__name__} Registered power topic: {topic} ({gain=})")
+            elif topic in self._service_topics["power"]:
+                self.logger.debug(f"{self.__class__.__name__} IGNORED power topic: {topic} - Already registered")
+            else:
+                self.logger.warning(f"{self.__class__.__name__} IGNORED power topic: {topic} - Too many sources? (topics={self._service_topics['power'].keys()})")
+                self._service_topics["power"].enabled = False
+                self.logger.warning(f"{self.__class__.__name__} DISABLED peak power reporting - Cannot determine peak power from multiple systems")
         else:
-            self.logger.warning(f"{self.__class__.__name__} IGNORED power topic: {topic} - Too many sources? (topics={self._power.keys()})")
-            self._power.enabled = False
-            self.logger.warning(f"{self.__class__.__name__} DISABLED peak power reporting - Cannot determine peak power from multiple systems")
-
-    # endregion
+            self._service_topics[key].register(topic, gain)
+            self.logger.debug(f"{self.__class__.__name__} Registered {key} topic: {topic} ({gain=})")
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
-            self.logger.debug(f"{self.__class__.__name__} Commenced (Updating at {Config.pvoutput.output_hour}:45)")
-            wait = self.seconds_until_daily_output_upload()
+            minute: int = randint(51, 58)
+            self.logger.info(f"{self.__class__.__name__} Commenced (Updating at {Config.pvoutput.output_hour}:{minute:02d})")
+            wait: float = self.seconds_until_daily_output_upload(minute)
             while self.online:
-                if Config.pvoutput.peak_power or Config.pvoutput.consumption or Config.pvoutput.exports:
-                    try:
-                        if wait <= 0:
-                            await update_pvoutput()
-                            wait = self.seconds_until_daily_output_upload()
-                        elif int(wait) % (30 if Config.pvoutput.testing else 900) == 0:
-                            now = time.localtime()
-                            self._consumption.check_is_updating(5, now)
-                            self._exports.check_is_updating(5, now)
-                            self._generation.check_is_updating(5, now)
-                        sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
-                        wait -= sleep
-                        if wait > 0:
-                            await asyncio.sleep(sleep)
-                    except asyncio.CancelledError:
-                        self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
-                    except asyncio.TimeoutError:
-                        self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
-                    except Exception as e:
-                        self.logger.error(f"{self.__class__.__name__} {e}")
-                else:
-                    self.logger.info(f"{self.__class__.__name__} No data to publish ({Config.pvoutput.consumption=} {Config.pvoutput.exports=} {Config.pvoutput.peak_power=})")
-                    self.online = False
-                    break
-            self.logger.debug(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
+                try:
+                    if wait <= 0:
+                        await update_pvoutput()
+                        wait = self.seconds_until_daily_output_upload(minute)
+                    elif int(wait) % (30 if Config.pvoutput.testing else 900) == 0:
+                        now = time.localtime()
+                        for topic in [t for k, t in self._service_topics.items() if t.enabled and k != "power"]:
+                            topic.check_is_updating(5, now)
+                        total, at, _ = self._service_topics['power'].aggregate(exclude_zero=False)
+                        if total is not None and total > 0 and self._latest_peak_at != at:
+                            self._latest_peak_at = at
+                            self._logger.info(f"{self.__class__.__name__} Peak Power {total}W recorded at {at}")
+                    sleep: float = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+                    wait -= sleep
+                    if wait > 0:
+                        await asyncio.sleep(sleep)
+                except asyncio.CancelledError:
+                    self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
+                except asyncio.TimeoutError:
+                    self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
+                except Exception as e:
+                    self.logger.error(f"{self.__class__.__name__} {e}")
+                    if wait <= 0:
+                        wait = 60
+            self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
             return
 
-        async def update_pvoutput():
-            self.logger.debug(f"{self.__class__.__name__} Creating payload...")
-            now = time.localtime()
+        async def update_pvoutput() -> None:
+            now: time.struct_time = time.localtime()
             payload = {"d": time.strftime("%Y%m%d", now)}
             async with self.lock(timeout=5):
-                has_generation = self._generation.sum_into(payload, "g")
-                if self._exports.enabled:
-                    self._exports.sum_into(payload, "e")
-                if self._consumption.enabled:
-                    self._consumption.sum_into(payload, "c")
-                if self._power.enabled:
-                    self._power.sum_into(payload, "pp", "pt")
-            if has_generation:
+                for topic in [t for t in self._service_topics.values() if t.enabled]:
+                    topic.add_to_payload(payload, 5, now)
+            if "g" in payload and payload["g"]:
                 await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             else:
                 self.logger.warning(f"{self.__class__.__name__} No generation data to upload, skipping...")
             self.logger.debug(f"{self.__class__.__name__} Resetting peak power history to 0.0...")
             async with self.lock(timeout=5):
-                for topic in self._power.values():
+                for topic in self._service_topics["power"].values():
                     topic.state = 0.0
                     topic.timestamp = None
                 self._persistent_state_file.unlink(missing_ok=True)
@@ -130,10 +122,10 @@ class PVOutputOutputService(Service):
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
 
-    def seconds_until_daily_output_upload(self) -> float:
+    def seconds_until_daily_output_upload(self, minute: int = 58) -> float:
         t = time.localtime()
         now = time.mktime(t)
-        next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, 45, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
+        next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, minute, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
         if next <= now:
             today = datetime.fromtimestamp(next)
             tomorrow = today + timedelta(days=1, seconds=randint(0, 15))  # Add a random offset of up to 15 seconds for variability
@@ -143,26 +135,23 @@ class PVOutputOutputService(Service):
         return seconds
 
     async def set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, mqtt_handler: MqttHandler) -> None:
-        if Config.pvoutput.peak_power:
-            now = time.localtime()
-            if now.tm_hour < 5 or now.tm_hour > 22:
+        now = time.localtime()
+        if now.tm_hour < 5 or now.tm_hour > 22:
+            if Config.pvoutput.update_debug_logging:
+                self.logger.debug(f"{self.__class__.__name__} Ignored power from '{topic}' {value=} (Outside of daylight hours)")
+        else:
+            power = value if isinstance(value, float) else float(value)
+            if power > 0 and self._service_topics["power"][topic].state < power:
                 if Config.pvoutput.update_debug_logging:
-                    self.logger.debug(f"{self.__class__.__name__} Ignored set_power from '{topic}' {value=} (Outside of daylight hours)")
-            else:
-                power = value if isinstance(value, float) else float(value)
-                if power > 0 and self._power[topic].state < power:
-                    if Config.pvoutput.update_debug_logging:
-                        self.logger.debug(f"{self.__class__.__name__} set_power from '{topic}' {value=} (Previous peak={self._power[topic].state})")
-                    async with self.lock(timeout=1):
-                        self._power[topic].state = power
-                        self._power[topic].timestamp = time.localtime()
-                        with self._persistent_state_file.open("w") as f:
-                            json.dump(self._power, f, default=Topic.json_encoder)
-                elif Config.pvoutput.update_debug_logging:
-                    self.logger.debug(f"{self.__class__.__name__} Ignored set_power from '{topic}': {value} < {self._power[topic].state}")
+                    self.logger.debug(f"{self.__class__.__name__} Updating power from '{topic}' {power=} (Previous peak={self._service_topics['power'][topic].state})")
+                async with self.lock(timeout=1):
+                    self._service_topics["power"][topic].state = power
+                    self._service_topics["power"][topic].timestamp = time.localtime()
+                    with self._persistent_state_file.open("w") as f:
+                        json.dump(self._service_topics["power"], f, default=Topic.json_encoder)
+            elif Config.pvoutput.update_debug_logging:
+                self.logger.debug(f"{self.__class__.__name__} Ignored power from '{topic}': {power=} (<= Previous peak={self._service_topics['power'][topic].state})")
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
-        self._consumption.subscribe(mqtt, mqtt_handler)
-        self._exports.subscribe(mqtt, mqtt_handler)
-        self._generation.subscribe(mqtt, mqtt_handler)
-        self._power.subscribe(mqtt, mqtt_handler)
+        for topic in [t for t in self._service_topics.values() if t.enabled]:
+            topic.subscribe(mqtt, mqtt_handler)
