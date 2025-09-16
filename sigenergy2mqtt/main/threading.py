@@ -35,14 +35,14 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
         if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
             logging.info(f"{device.name} - Configured for {'clean' if Config.clean else 'discovery'} only - shutting down...")
         else:
-            logging.info(f"{device.name} - Registering MQTT subscriptions")
+            logging.debug(f"{device.name} - Registering MQTT subscriptions")
             device.subscribe(mqtt_client, mqtt_handler)
 
             if Config.home_assistant.enabled:
-                logging.info(f"{device.name} - Publishing online availability")
+                logging.debug(f"{device.name} - Publishing online availability")
                 device.publish_availability(mqtt_client, "online")
 
-            logging.info(f"{device.name} - Scheduling sensor updates")
+            logging.debug(f"{device.name} - Scheduling sensor updates")
             device_tasks = device.schedule(modbus_client, mqtt_client)
             tasks.extend(device_tasks)
 

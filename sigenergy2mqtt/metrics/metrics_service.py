@@ -196,7 +196,7 @@ class MetricsService(Device):
             return f"{value:.2f}" if isinstance(value, float) else str(value)
 
         async def publish_updates(modbus: Any, mqtt: MqttClient) -> None:
-            logging.debug(f"{self.name} - Commenced")
+            logging.info(f"{self.name} - Commenced")
             while self.online:
                 mqtt.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
                 try:
@@ -212,13 +212,13 @@ class MetricsService(Device):
                 except Exception as e:
                     logging.error(f"{self.name} - Error during metrics publish: {repr(e)}")
             mqtt.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
-            logging.debug(f"{self.name} - Completed: Flagged as offline ({self.online=})")
+            logging.info(f"{self.name} - Completed: Flagged as offline ({self.online=})")
             return
 
         if Config.metrics_enabled:
-            logging.info(f"{self.name} - Scheduling metrics updates")
+            logging.debug(f"{self.name} - Scheduling metrics updates")
             tasks = [publish_updates(modbus, mqtt)]
         else:
-            logging.info(f"{self.name} - Metrics disabled, no tasks scheduled")
+            logging.debug(f"{self.name} - Metrics disabled, no tasks scheduled")
             tasks = []
         return tasks

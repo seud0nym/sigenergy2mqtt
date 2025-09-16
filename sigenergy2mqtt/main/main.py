@@ -90,7 +90,6 @@ async def async_main() -> None:
     signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGUSR1, configure_for_restart)
 
-    logging.info("Starting up...")
     await start(configs)
     logging.info("Shutdown completed")
 
