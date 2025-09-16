@@ -68,6 +68,8 @@ class CustomDataBlock(ModbusSparseDataBlock):
         self._topics = {}
         if mqtt_client:
             self._mqtt_client = mqtt_client
+        self._total_sleep_time: int = 0
+        self._read_count: int = 0
 
     @classmethod
     def create(cls, device_address: int, mqtt_client: MqttClient) -> "CustomDataBlock":
@@ -125,6 +127,13 @@ class CustomDataBlock(ModbusSparseDataBlock):
         super().setValues(sensor._address, registers)
 
     async def async_getValues(self, fc_as_hex: int, address: int, count=1):
+        self._read_count += count
+        if (self._total_sleep_time + 10) / self._read_count > 17:
+            sleep_time = 10
+        else:
+            sleep_time = randint(10,200)  # Simulate variable response times between 10ms and 200ms
+        self._total_sleep_time += sleep_time
+        await asyncio.sleep(sleep_time / 1000)
         return super().getValues(address, count)
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]):
