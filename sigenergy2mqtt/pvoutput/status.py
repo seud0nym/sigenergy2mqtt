@@ -14,16 +14,16 @@ class PVOutputStatusService(Service):
         super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
 
         self._service_topics: dict[str, ServiceTopics] = {
-            "generation": ServiceTopics(self, True, "generation", logger, value_key="v1"),
-            "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, value_key="v3"),
-            "temperature": ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, "temperature", logger, averaged=True, value_key="v5"),
-            "voltage": ServiceTopics(self, True, "voltage", logger, averaged=True, value_key="v6"),
-            "v7": ServiceTopics(self, True if Config.pvoutput.extended["v7"] else False, "v7", logger, averaged=True, value_key="v7", requires_donation=True),
-            "v8": ServiceTopics(self, True if Config.pvoutput.extended["v8"] else False, "v8", logger, averaged=True, value_key="v8", requires_donation=True),
-            "v9": ServiceTopics(self, True if Config.pvoutput.extended["v9"] else False, "v9", logger, averaged=True, value_key="v9", requires_donation=True),
-            "v10": ServiceTopics(self, True if Config.pvoutput.extended["v10"] else False, "v10", logger, averaged=True, value_key="v10", requires_donation=True),
-            "v11": ServiceTopics(self, True if Config.pvoutput.extended["v11"] else False, "v11", logger, averaged=True, value_key="v11", requires_donation=True),
-            "v12": ServiceTopics(self, True if Config.pvoutput.extended["v12"] else False, "v12", logger, averaged=True, value_key="v12", requires_donation=True),
+            "generation": ServiceTopics(self, True, "generation", logger, value_key="v1", decimals=0),
+            "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, value_key="v3", decimals=0),
+            "temperature": ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, "temperature", logger, averaged=True, value_key="v5", decimals=1),
+            "voltage": ServiceTopics(self, True, "voltage", logger, averaged=True, value_key="v6", decimals=1),
+            "v7": ServiceTopics(self, True if Config.pvoutput.extended["v7"] else False, "v7", logger, averaged=True, value_key="v7", requires_donation=True, decimals=0),
+            "v8": ServiceTopics(self, True if Config.pvoutput.extended["v8"] else False, "v8", logger, averaged=True, value_key="v8", requires_donation=True, decimals=0),
+            "v9": ServiceTopics(self, True if Config.pvoutput.extended["v9"] else False, "v9", logger, averaged=True, value_key="v9", requires_donation=True, decimals=0),
+            "v10": ServiceTopics(self, True if Config.pvoutput.extended["v10"] else False, "v10", logger, averaged=True, value_key="v10", requires_donation=True, decimals=0),
+            "v11": ServiceTopics(self, True if Config.pvoutput.extended["v11"] else False, "v11", logger, averaged=True, value_key="v11", requires_donation=True, decimals=0),
+            "v12": ServiceTopics(self, True if Config.pvoutput.extended["v12"] else False, "v12", logger, averaged=True, value_key="v12", requires_donation=True, decimals=0),
         }
 
         self._interval: int = None  # Interval in minutes for PVOutput status updates

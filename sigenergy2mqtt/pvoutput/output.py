@@ -16,10 +16,10 @@ class PVOutputOutputService(Service):
         super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
         self._service_topics: dict[str, ServiceTopics] = {
-            "generation": ServiceTopics(self, True, "generation", logger, value_key="g"),
-            "exports": ServiceTopics(self, True, "exports", logger, value_key="e"),
-            "power": ServiceTopics(self, True, "peak power", logger, value_key="pp", datetime_key="pt", averaged=False, bypass_updating_check=True),
-            "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, value_key="c"),
+            "generation": ServiceTopics(self, True, "generation", logger, value_key="g", decimals=0),
+            "exports": ServiceTopics(self, True, "exports", logger, value_key="e", decimals=0),
+            "power": ServiceTopics(self, True, "peak power", logger, value_key="pp", datetime_key="pt", averaged=False, bypass_updating_check=True, decimals=0),
+            "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, value_key="c", decimals=0),
         }
         self._service_topics["power"].update = self.set_power
         self._latest_peak_at: str = None
@@ -45,7 +45,7 @@ class PVOutputOutputService(Service):
                                 total += topic.state
                                 self._latest_peak_at = time.strftime("%H:%M", topic.timestamp)
                         if self._latest_peak_at is not None:
-                            self._logger.info(f"{self.__class__.__name__} Peak Power {total}W recorded at {self._latest_peak_at} restored from {self._persistent_state_file}")
+                            self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {self._latest_peak_at} restored from {self._persistent_state_file}")
                     except ValueError as error:
                         self.logger.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
             else:
@@ -86,7 +86,7 @@ class PVOutputOutputService(Service):
                         total, at, _ = self._service_topics['power'].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
-                            self._logger.info(f"{self.__class__.__name__} Peak Power {total}W recorded at {at}")
+                            self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")
                     sleep: float = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
                     if wait > 0:

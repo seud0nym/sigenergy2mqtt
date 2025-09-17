@@ -180,10 +180,11 @@ class ServiceTopics(dict[str, Topic]):
         else:
             return None, None, count
 
-    def _average_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None, decimals: int = 1) -> bool:
+    def _average_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None) -> bool:
         total, at, count = self.aggregate(exclude_zero=True)
         if count > 0 and total is not None:
-            payload[value_key] = round(total / count, decimals)
+            value = round(total / count, self._decimals)
+            payload[value_key] = int(value) if self._decimals == 0 else value
             if datetime_key is not None:
                 payload[datetime_key] = at
                 self._logger.debug(f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key]} into {value_key=} ({datetime_key}={at})")
@@ -199,7 +200,7 @@ class ServiceTopics(dict[str, Topic]):
     def _sum_into(self, payload: dict[str, any], value_key: str, datetime_key: str = None) -> bool:
         total, at, count = self.aggregate(exclude_zero=False)
         if count > 0 and total is not None:
-            payload[value_key] = round(total)
+            payload[value_key] = int(total) if self._decimals == 0 else round(total, self._decimals)
             if datetime_key is not None:
                 payload[datetime_key] = at
                 self._logger.debug(f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key=} ({datetime_key}={at})")
@@ -215,7 +216,7 @@ class ServiceTopics(dict[str, Topic]):
     def add_to_payload(self, payload: dict[str, any], interval_minutes: int, now: time.struct_time) -> bool:
         if self._bypass_updating_check or self.check_is_updating(interval_minutes, now):
             if self._averaged:
-                return self._average_into(payload, self._value_key, self._datetime_key, self._decimals)
+                return self._average_into(payload, self._value_key, self._datetime_key)
             else:
                 return self._sum_into(payload, self._value_key, self._datetime_key)
         else:
