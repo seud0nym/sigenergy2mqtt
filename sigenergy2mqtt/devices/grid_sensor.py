@@ -15,7 +15,7 @@ class GridSensor(ModbusDevice):
         super().__init__(device_type, name, plant_index, 247, "Grid Sensor")
 
         self._add_read_sensor(ro.GridSensorStatus(plant_index))
-        self._add_read_sensor(active_power, "consumption")
+        self._add_read_sensor(active_power, "Consumption")
         self._add_read_sensor(ro.GridSensorReactivePower(plant_index))
         self._add_read_sensor(ro.GridPhaseAActivePower(plant_index))
         self._add_read_sensor(ro.GridPhaseAReactivePower(plant_index))
