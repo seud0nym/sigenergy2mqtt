@@ -135,7 +135,7 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
                         logging.info(f"Found network '{iface_name}' {networks[ip]} via {network}")
                         break
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     results = []
     for addr, subnet in networks.items():
         logging.info(f"Scanning for active devices in network {subnet.with_prefixlen}...")
