@@ -1273,6 +1273,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self._sanity.min_value = 0  # 0.0
         self._sanity.max_value = 1000  # 1.0
+        self._max_failures_retry_interval = 300
 
 
 class PACKBCUCount(ReadOnlySensor, HybridInverter):
