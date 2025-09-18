@@ -188,6 +188,11 @@ modbus:
     #                 Management System (EMS) integration will NOT be published
     #                 to MQTT. Ignored if read-write option is false.
     no-remote-ems: false
+    # disable-chunking
+    #   default: false
+    #   description:  If true, Modbus read chunking will be disabled and each
+    #                 register will be read individually. This may impact
+    #                 performance.
     # scan-interval-low
     #   default: 600
     #   description:  The scan interval in seconds for Modbus registers that

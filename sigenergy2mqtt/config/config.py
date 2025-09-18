@@ -144,6 +144,8 @@ class Config:
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["write-only"] = overrides["modbus"][0]["write-only"]
+                        case const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
+                            overrides["modbus"][0]["disable-chunking"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
                             overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=300)
                             if auto_discovered:
@@ -155,7 +157,7 @@ class Config:
                                 for device in auto_discovered:
                                     device["scan-interval-medium"] = overrides["modbus"][0]["scan-interval-medium"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
-                            overrides["modbus"][0]["scan-interval-high"] = check_int(os.environ[key], key, min=5)
+                            overrides["modbus"][0]["scan-interval-high"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["scan-interval-high"] = overrides["modbus"][0]["scan-interval-high"]

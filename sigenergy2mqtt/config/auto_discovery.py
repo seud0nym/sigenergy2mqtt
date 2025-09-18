@@ -88,7 +88,7 @@ async def register_probe(ip: str, port: int, results: list) -> None:
                 logging.info(f"Found Modbus device at {ip}:{port}")
                 device = {"host": ip, "port": port, "ac-chargers": [], "dc-chargers": [], "inverters": []}
                 if await probe_worker(client, address=30051, device_id=247):  # Plant running state
-                    logging.info(f" -> Found Sigenergy Plant at {ip}:{port}")
+                    logging.info(f"-> Found Sigenergy Plant at {ip}:{port}")
                     for device_id in range(1, 247):
                         logging.debug(f" -> Scanning {ip}:{port} for device_id {device_id}...")
                         if await probe_worker(client, address=31501, device_id=device_id):  # [DC Charger] Charging current

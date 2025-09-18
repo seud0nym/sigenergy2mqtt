@@ -206,6 +206,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MODBUS_READ_ONLY` | If false, read-only entities will not be published to MQTT. Default is true. |
 | `SIGENERGY2MQTT_MODBUS_READ_WRITE` | If false, read-write entities will not be published to MQTT. Default is true. |
 | `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` | If false, write-only entities will not be published to MQTT. Default is true. |
+| `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING` | If true, chunking of Modbus reads will be disabled and each register will be read individually. |
 | `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 | `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Enable interrogation of a third-party device for production data. |
 | `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` | The name of the module which will be used to obtain third-party device production data. |
@@ -285,6 +286,8 @@ Command line options override both environment variables and the configuration f
                         A valid username for the MQTT broker
   -p [SIGENERGY2MQTT_MQTT_PASSWORD], --mqtt-password [SIGENERGY2MQTT_MQTT_PASSWORD]
                         A valid password for the MQTT broker username
+  --modbus-disable-chunking
+                        Disable Modbus chunking when reading registers and read each register individually.
   --mqtt-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
                         Default is WARNING (warnings, errors and critical failures)
