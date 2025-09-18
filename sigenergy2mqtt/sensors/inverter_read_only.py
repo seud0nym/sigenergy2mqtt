@@ -759,6 +759,8 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = -400 # -40.0 °C
+        self._sanity.max_value = 2000 # 200.0 °C  
 
 
 class AverageCellVoltage(ReadOnlySensor, HybridInverter):
@@ -957,6 +959,8 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = -400 # -40.0 °C
+        self._sanity.max_value = 2000 # 200.0 °C  
 
 
 class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
@@ -979,6 +983,8 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = -400 # -40.0 °C
+        self._sanity.max_value = 2000 # 200.0 °C  
 
 
 class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1112,6 +1118,8 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
+        self._sanity.min_value = -400 # -40.0 °C
+        self._sanity.max_value = 2000 # 200.0 °C  
 
 
 class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1263,6 +1271,8 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
         )
+        self._sanity.min_value = 0  # 0.0
+        self._sanity.max_value = 1000  # 1.0
 
 
 class PACKBCUCount(ReadOnlySensor, HybridInverter):
