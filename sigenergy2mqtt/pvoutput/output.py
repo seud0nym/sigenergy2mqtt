@@ -83,7 +83,7 @@ class PVOutputOutputService(Service):
                         now = time.localtime()
                         for topic in [t for k, t in self._service_topics.items() if t.enabled and k != "power"]:
                             topic.check_is_updating(5, now)
-                        total, at, _ = self._service_topics['power'].aggregate(exclude_zero=False)
+                        total, at, _ = self._service_topics["power"].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
                             self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")
@@ -128,7 +128,11 @@ class PVOutputOutputService(Service):
         next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, minute, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
         if next <= now:
             today = datetime.fromtimestamp(next)
-            tomorrow = today + timedelta(days=1, seconds=randint(0, 15))  # Add a random offset of up to 15 seconds for variability
+            total, at, _ = self._service_topics["power"].aggregate(exclude_zero=False)
+            if total is not None and total > 0:
+                tomorrow = today + timedelta(minutes=2)  # If we have a peak power record, schedule the upload 2 minutes later
+            else:
+                tomorrow = today + timedelta(days=1, seconds=randint(0, 15))  # Add a random offset of up to 15 seconds for variability
             next = tomorrow.timestamp()
         seconds = 60 if Config.pvoutput.testing else (next - now)
         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({seconds}s)")
