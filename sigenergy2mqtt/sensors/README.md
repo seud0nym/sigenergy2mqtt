@@ -681,7 +681,7 @@ PCS Alarms
 </summary>
 <table>
 <tr><td>Sensor Class</td><td>GeneralPCSAlarm</td></tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_general_pcs_alarm/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_general_pcs_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30027 and 30028</td></tr>
@@ -2721,7 +2721,7 @@ PCS Alarms
 </summary>
 <table>
 <tr><td>Sensor Class</td><td>InverterPCSAlarm</td></tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_pcs_alarm/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pcs_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30605 and 30606</td></tr>
@@ -4518,7 +4518,7 @@ Alarms
 </summary>
 <table>
 <tr><td>Sensor Class</td><td>ACChargerAlarms</td></tr>
-<tr><td>Scan Interval</td><td>10s</td></tr>
+<tr><td>Scan Interval</td><td>5s</td></tr>
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 32012, 32013, and 32014</td></tr>
