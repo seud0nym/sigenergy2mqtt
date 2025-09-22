@@ -42,6 +42,8 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                 output.register("consumption", sensor.state_topic, unit2gain(sensor))
             elif isinstance(sensor, GridSensorDailyExportEnergy):
                 output.register("exports", sensor.state_topic, unit2gain(sensor))
+            elif isinstance(sensor, GridSensorDailyImportEnergy):
+                output.register("imports", sensor.state_topic, unit2gain(sensor))
             elif isinstance(sensor, PlantPVPower):
                 plant_pv_power = sensor
             elif isinstance(sensor, TotalPVPower):

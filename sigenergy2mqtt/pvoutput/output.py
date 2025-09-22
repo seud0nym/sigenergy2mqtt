@@ -18,6 +18,7 @@ class PVOutputOutputService(Service):
         self._service_topics: dict[str, ServiceTopics] = {
             "generation": ServiceTopics(self, True, "generation", logger, value_key="g", decimals=0),
             "exports": ServiceTopics(self, True, "exports", logger, value_key="e", decimals=0),
+            "imports": ServiceTopics(self, True, "imports", logger, value_key="ip", decimals=0),
             "power": ServiceTopics(self, True, "peak power", logger, value_key="pp", datetime_key="pt", averaged=False, bypass_updating_check=True, decimals=0),
             "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, value_key="c", decimals=0),
         }
