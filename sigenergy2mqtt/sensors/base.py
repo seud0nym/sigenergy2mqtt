@@ -987,6 +987,8 @@ class WriteOnlySensor(WritableSensorMixin):
         name_on: str = "Power On",
         icon_off: str = "mdi:power-off",
         icon_on: str = "mdi:power-on",
+        value_off: int = 0,
+        value_on: int = 1,
     ):
         super().__init__(
             name,
@@ -1011,6 +1013,7 @@ class WriteOnlySensor(WritableSensorMixin):
         self._payloads = {"off": payload_off, "on": payload_on}
         self._names = {"off": name_off, "on": name_on}
         self._icons = {"off": icon_off, "on": icon_on}
+        self._values = {"off": value_off, "on": value_on}
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components = {}
@@ -1035,9 +1038,9 @@ class WriteOnlySensor(WritableSensorMixin):
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value == self._payloads["off"]:
-            return await super().set_value(modbus, mqtt, 0, source, handler)
+            return await super().set_value(modbus, mqtt, self._values["off"], source, handler)
         elif value == self._payloads["on"]:
-            return await super().set_value(modbus, mqtt, 1, source, handler)
+            return await super().set_value(modbus, mqtt, self._values["on"], source, handler)
         else:
             logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
         return False
