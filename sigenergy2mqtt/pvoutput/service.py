@@ -76,11 +76,13 @@ class Service(Device):
 
     # endregion
 
-    async def upload_payload(self, url: str, payload: dict[str, any]) -> None:
+    async def upload_payload(self, url: str, payload: dict[str, any]) -> bool:
         self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
+        uploaded = False
         for i in range(1, 4, 1):
             try:
                 if Config.pvoutput.testing:
+                    uploaded = True
                     self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
                     break
                 else:
@@ -91,6 +93,7 @@ class Service(Device):
                         at = float(response.headers["X-Rate-Limit-Reset"])
                         reset = round(at - time.time())
                         if response.status_code == 200:
+                            uploaded = True
                             self.logger.debug(
                                 f"{self.__class__.__name__} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                             )
@@ -116,6 +119,7 @@ class Service(Device):
                 await asyncio.sleep(10)
         else:
             self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after 3 attempts")
+        return uploaded
 
 
 class ServiceTopics(dict[str, Topic]):

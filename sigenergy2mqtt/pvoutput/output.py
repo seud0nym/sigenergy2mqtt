@@ -8,6 +8,8 @@ from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
 import json
 import logging
+import re
+import requests
 import time
 
 
@@ -110,7 +112,66 @@ class PVOutputOutputService(Service):
                 for topic in [t for t in self._service_topics.values() if t.enabled]:
                     topic.add_to_payload(payload, 5, now)
             if "g" in payload and payload["g"]:
-                await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
+                for _ in range(1, 6, 1):
+                    if await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload):
+                        self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
+                        url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}"
+                        for validate in range(1, 6, 1):
+                            matches = True
+                            self.logger.debug(f"{self.__class__.__name__} Waiting for 60s before checking that the upload has been processed successfully...")
+                            await asyncio.sleep(0.1 if Config.pvoutput.testing else 60)
+                            try:
+                                if Config.pvoutput.testing:
+                                    self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
+                                    if validate > 1:
+                                        v = re.split(
+                                            r"[,]",
+                                            f"{payload['d']},{payload.get('g', 'NaN')},{payload.get('c', 'NaN')},{payload.get('e', 'NaN')},0,{payload.get('pp', 'NaN')},{payload.get('pt', '')},Showers,12,16,{payload.get('ip', 'NaN')},0,0,0",
+                                        )
+                                    else:
+                                        self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation FAILED")
+                                        matches = False
+                                else:
+                                    self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} to {url=}...")
+                                    with requests.get(url, headers=self.request_headers, timeout=10) as response:
+                                        if response.status_code == 200:
+                                            self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} OKAY status_code={response.status_code} response={response.text}")
+                                            v = re.split(r"[,]", response.text)
+                                        else:
+                                            self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
+                                            matches = False
+                                if matches:
+                                    result = {}
+                                    result["d"] = v[0]
+                                    result["g"] = int(v[1]) if len(v) > 1 and v[1] != "NaN" else None
+                                    result["e"] = int(v[3]) if len(v) > 3 and v[3] != "NaN" else None
+                                    result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
+                                    result["ip"] = int(v[10]) if len(v) > 10 and v[10] != "NaN" else None
+                                    for topic in [t for t in self._service_topics.values() if t.enabled]:
+                                        if topic._value_key in payload and topic._value_key in result:
+                                            if payload[topic._value_key] == result[topic._value_key]:
+                                                self.logger.debug(f"{self.__class__.__name__} Verified payload['{topic._value_key}']={payload[topic._value_key]} == result['{topic._value_key}']={result[topic._value_key]}")
+                                            else:
+                                                self.logger.debug(
+                                                    f"{self.__class__.__name__} Verification failure: payload['{topic._value_key}']={payload[topic._value_key]} != result['{topic._value_key}']={result[topic._value_key]}"
+                                                )
+                                                matches = False
+                                                break
+                                if matches:
+                                    self.logger.debug(f"{self.__class__.__name__} Verified uploaded {payload=}")
+                                    break
+                                elif validate < 5:
+                                    self.logger.warning(f"{self.__class__.__name__} Verification attempt #{validate} FAILED, retrying...")
+                            except requests.exceptions.HTTPError as exc:
+                                self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
+                            except requests.exceptions.ConnectionError as exc:
+                                self.logger.error(f"{self.__class__.__name__} Error Connecting: {exc}")
+                            except requests.exceptions.Timeout as exc:
+                                self.logger.error(f"{self.__class__.__name__} Timeout Error: {exc}")
+                            except Exception as exc:
+                                self.logger.error(f"{self.__class__.__name__} {exc}")
+                        if matches:
+                            break
             else:
                 self.logger.warning(f"{self.__class__.__name__} No generation data to upload, skipping...")
             self.logger.debug(f"{self.__class__.__name__} Resetting peak power history to 0.0...")
