@@ -150,7 +150,9 @@ class PVOutputOutputService(Service):
                                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                                         if topic._value_key in payload and topic._value_key in result:
                                             if payload[topic._value_key] == result[topic._value_key]:
-                                                self.logger.debug(f"{self.__class__.__name__} Verified payload['{topic._value_key}']={payload[topic._value_key]} == result['{topic._value_key}']={result[topic._value_key]}")
+                                                self.logger.debug(
+                                                    f"{self.__class__.__name__} Verified payload['{topic._value_key}']={payload[topic._value_key]} == result['{topic._value_key}']={result[topic._value_key]}"
+                                                )
                                             else:
                                                 self.logger.debug(
                                                     f"{self.__class__.__name__} Verification failure: payload['{topic._value_key}']={payload[topic._value_key]} != result['{topic._value_key}']={result[topic._value_key]}"
@@ -161,7 +163,7 @@ class PVOutputOutputService(Service):
                                     self.logger.debug(f"{self.__class__.__name__} Verified uploaded {payload=}")
                                     break
                                 elif validate < 5:
-                                    self.logger.warning(f"{self.__class__.__name__} Verification attempt #{validate} FAILED, retrying...")
+                                    self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED, retrying...")
                             except requests.exceptions.HTTPError as exc:
                                 self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
                             except requests.exceptions.ConnectionError as exc:
