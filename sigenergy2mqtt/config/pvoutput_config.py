@@ -22,7 +22,7 @@ class PVOutputConfiguration:
     api_key: str = ""
     system_id: str = ""
 
-    output_hour: int = 21
+    output_hour: int = 23
 
     log_level: int = logging.WARNING
     update_debug_logging: bool = False

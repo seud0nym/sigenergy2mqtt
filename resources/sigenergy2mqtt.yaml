@@ -400,12 +400,12 @@ pvoutput:
   #                 at end of day.
   consumption: false
   # output-hour
-  #   default: 21
+  #   default: 23
   #   description:  The hour of the day (20-23) at which the daily totals
-  #                 are sent to PVOutput. The default is 21 (9pm). Valid
+  #                 are sent to PVOutput. The default is 23 (11pm). Valid
   #                 values are 20 to 23. The minute is randomly chosen
   #                 between 51 and 58.
-  output-hour: 21
+  output-hour: 23
   # temperature-topic
   #   default: ""
   #   description:  An MQTT topic from which the current temperature can be
