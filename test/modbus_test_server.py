@@ -127,11 +127,14 @@ class CustomDataBlock(ModbusSparseDataBlock):
         super().setValues(sensor._address, registers)
 
     async def async_getValues(self, fc_as_hex: int, address: int, count=1):
+        delay_avg: int = 15
+        delay_min: int = 5
+        delay_max: int = 50
         self._read_count += count
-        if (self._total_sleep_time + 10) / self._read_count > 17:
-            sleep_time = 10
+        if (self._total_sleep_time + delay_min) / self._read_count > delay_avg:
+            sleep_time = delay_min
         else:
-            sleep_time = randint(10,200)  # Simulate variable response times between 10ms and 200ms
+            sleep_time = randint(delay_min, delay_max)  # Simulate variable response times
         self._total_sleep_time += sleep_time
         await asyncio.sleep(sleep_time / 1000)
         return super().getValues(address, count)
