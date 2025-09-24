@@ -72,8 +72,8 @@ async def probe_worker(modbus: AsyncModbusTcpClient, address: int, count: int = 
         result = await modbus.read_input_registers(address=address, count=count, device_id=device_id)
         if result and not result.isError():
             return True
-    except ModbusException as e:
-        logging.debug(f"Modbus probe failed for {modbus.comm_params.host}:{modbus.comm_params.port} at address {address} with device_id {device_id}: {e}")
+    except ModbusException:  # as e:
+        # logging.debug(f"Modbus probe failed for {modbus.comm_params.host}:{modbus.comm_params.port} at address {address} with device_id {device_id}: {e}")
         while not modbus.connected:
             modbus.close()
             await modbus.connect()

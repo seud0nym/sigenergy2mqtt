@@ -2691,6 +2691,19 @@ Min Reactive Power Adjustment
 </details>
 <details>
 <summary>
+Model
+</summary>
+<table>
+<tr><td>Sensor Class</td><td>InverterModel</td></tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_model/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_model/state</td></tr>
+<tr><td>Source</td><td>30500</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
 Output Type
 </summary>
 <table>
@@ -3016,6 +3029,19 @@ Running State
 <tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_running_state/state</td></tr>
 <tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_running_state/state</td></tr>
 <tr><td>Source</td><td>30578</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+</table>
+</details>
+<details>
+<summary>
+Serial Number
+</summary>
+<table>
+<tr><td>Sensor Class</td><td>InverterSerialNumber</td></tr>
+<tr><td>Scan Interval</td><td>600s</td></tr>
+<tr><td>Home Assistant State Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_serial_number/state</td></tr>
+<tr><td>Simplified State Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_serial_number/state</td></tr>
+<tr><td>Source</td><td>30515</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 </table>
 </details>

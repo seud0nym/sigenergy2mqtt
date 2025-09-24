@@ -13,12 +13,14 @@ from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, I
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
 
 
-async def get_sensor_instances(hass: bool = False):
-    plant_index = 0
-    inverter_device_address = 1
-    dc_charger_device_address = 1
-    ac_charger_device_address = 2
-
+async def get_sensor_instances(
+    hass: bool = False,
+    plant_index: int = 0,
+    hybrid_inverter_device_address: int = 1,
+    pv_inverter_device_address: int = 1,
+    dc_charger_device_address: int = 1,
+    ac_charger_device_address: int = 2,
+):
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
 
@@ -44,36 +46,57 @@ async def get_sensor_instances(hass: bool = False):
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
     logging.debug(f"Instantiating Hybrid Inverter ({hass=})")
+    hybrid_model = InverterModel(plant_index, hybrid_inverter_device_address)
+    hybrid_serial = InverterSerialNumber(plant_index, hybrid_inverter_device_address)
+    hybrid_firmware = InverterFirmwareVersion(plant_index, hybrid_inverter_device_address)
+    hybrid_pv_strings = PVStringCount(plant_index, hybrid_inverter_device_address)
+    hybrid_output_type = OutputType(plant_index, hybrid_inverter_device_address)
+    hybrid_model.set_state("SigenStor EC 12.0 TP")
+    hybrid_serial.set_state("CMU123A45BP678")
+    hybrid_firmware.set_state("V100R001C00SPC108B088F")
+    hybrid_pv_strings.set_state(16)
+    hybrid_output_type.set_state(3)
     hybrid_inverter = Inverter(
         plant_index=plant_index,
-        device_address=inverter_device_address,
+        device_address=hybrid_inverter_device_address,
         device_type=HybridInverter(),
-        model_id="SigenStor EC 12.0 TP",
-        serial="CMU123A45BP678",
-        firmware="V100R001C00SPC108B088F",
-        strings=16,
+        model_id=hybrid_model.latest_raw_state,
+        serial=hybrid_serial.latest_raw_state,
+        firmware=hybrid_firmware.latest_raw_state,
+        strings=hybrid_pv_strings.latest_raw_state,
         power_phases=3,
-        pv_string_count=PVStringCount(plant_index, inverter_device_address),
-        output_type=OutputType(plant_index, inverter_device_address),
-        firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
-        model=InverterModel(plant_index, inverter_device_address),
-        serial_number=InverterSerialNumber(plant_index, inverter_device_address),
+        pv_string_count=hybrid_pv_strings,
+        output_type=hybrid_output_type,
+        firmware_version=hybrid_firmware,
+        model=hybrid_model,
+        serial_number=hybrid_serial,
     )
+
     logging.debug(f"Instantiating PV Inverter ({hass=})")
+    pv_model = InverterModel(plant_index, pv_inverter_device_address)
+    pv_serial = InverterSerialNumber(plant_index, pv_inverter_device_address)
+    pv_firmware = InverterFirmwareVersion(plant_index, pv_inverter_device_address)
+    pv_pv_strings = PVStringCount(plant_index, pv_inverter_device_address)
+    pv_output_type = OutputType(plant_index, pv_inverter_device_address)
+    pv_model.set_state("Sigen PV Max 5.0 TP")
+    pv_serial.set_state("CMU876A65BP321")
+    pv_firmware.set_state("V100R001C00SPC108B088F")
+    pv_pv_strings.set_state(16)
+    pv_output_type.set_state(3)
     pv_inverter = Inverter(
         plant_index=plant_index,
-        device_address=inverter_device_address,
+        device_address=pv_inverter_device_address,
         device_type=PVInverter(),
-        model_id="Sigen PV Max 5.0 TP",
-        serial="CMU876A65BP321",
-        firmware="V100R001C00SPC108B088F",
-        strings=16,
+        model_id=pv_model.latest_raw_state,
+        serial=pv_serial.latest_raw_state,
+        firmware=pv_firmware.latest_raw_state,
+        strings=pv_pv_strings.latest_raw_state,
         power_phases=3,
-        pv_string_count=PVStringCount(plant_index, inverter_device_address),
-        output_type=OutputType(plant_index, inverter_device_address),
-        firmware_version=InverterFirmwareVersion(plant_index, inverter_device_address),
-        model=InverterModel(plant_index, inverter_device_address),
-        serial_number=InverterSerialNumber(plant_index, inverter_device_address),
+        pv_string_count=pv_pv_strings,
+        output_type=pv_output_type,
+        firmware_version=pv_firmware,
+        model=pv_model,
+        serial_number=pv_serial,
     )
 
     logging.debug(f"Instantiating DC Charger ({hass=})")
@@ -109,8 +132,10 @@ async def get_sensor_instances(hass: bool = False):
             add_sensor_instance(d)
 
     find_concrete_classes(Sensor)
-    add_sensor_instance(InverterModel(plant_index, inverter_device_address))
-    add_sensor_instance(InverterSerialNumber(plant_index, inverter_device_address))
+    # add_sensor_instance(hybrid_model)
+    # add_sensor_instance(hybrid_serial)
+    # add_sensor_instance(pv_model)
+    # add_sensor_instance(pv_serial)
     for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
         devices = [parent]
         devices.extend(parent._children)
