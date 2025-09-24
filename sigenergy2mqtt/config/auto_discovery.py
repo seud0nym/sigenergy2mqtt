@@ -67,28 +67,31 @@ def ping_scan(ip_list, threads=100, timeout=1) -> list[str]:
     return result_list
 
 
-async def probe_worker(client: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
+async def probe_worker(modbus: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
     try:
-        result = await client.read_input_registers(address=address, count=count, device_id=device_id)
+        result = await modbus.read_input_registers(address=address, count=count, device_id=device_id)
         if result and not result.isError():
             return True
     except ModbusException as e:
-        logging.debug(f"Modbus probe failed for {client.comm_params.host}:{client.comm_params.port} at address {address} with device_id {device_id}: {e}")
+        logging.debug(f"Modbus probe failed for {modbus.comm_params.host}:{modbus.comm_params.port} at address {address} with device_id {device_id}: {e}")
+        while not modbus.connected:
+            modbus.close()
+            await modbus.connect()
     except Exception as e:
-        logging.debug(f"Unexpected error during Modbus probe for {client.comm_params.host}:{client.comm_params.port} at address {address} with device_id {device_id}: {e}")
+        logging.debug(f"Unexpected error during Modbus probe for {modbus.comm_params.host}:{modbus.comm_params.port} at address {address} with device_id {device_id}: {e}")
     return False
 
 
-async def get_serial_number(client: AsyncModbusTcpClient, device_id: int = 1) -> str | None:
+async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) -> str | None:
     try:
-        rr = await client.read_input_registers(address=30515, count=10, device_id=device_id)
+        rr = await modbus.read_input_registers(address=30515, count=10, device_id=device_id)
         if rr and not rr.isError() and not isinstance(rr, ExceptionResponse):
-            serial = client.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING)
+            serial = modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING)
             return serial
     except ModbusException as e:
-        logging.debug(f"Failed to retrieve serial number for {client.comm_params.host}:{client.comm_params.port} device_id {device_id}: {e}")
+        logging.debug(f"Failed to retrieve serial number for {modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
     except Exception as e:
-        logging.debug(f"Unexpected error when acquiring serial number for {client.comm_params.host}:{client.comm_params.port} device_id {device_id}: {e}")
+        logging.debug(f"Unexpected error when acquiring serial number for {modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
     return None
 
 
@@ -96,19 +99,18 @@ serial_numbers = []
 
 
 async def register_probe(ip: str, port: int, results: list) -> None:
-    client = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=0.25, retries=0)
+    modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=0.25, retries=0)
     try:
-        await client.connect()
-        if client.connected:
+        await modbus.connect()
+        if modbus.connected:
             try:
                 logging.info(f"Found Modbus device at {ip}:{port}")
                 device = {"host": ip, "port": port, "ac-chargers": [], "dc-chargers": [], "inverters": []}
-                if await probe_worker(client, address=30051, device_id=247):  # Plant running state
+                if await probe_worker(modbus, address=30051, device_id=247):  # Plant running state
                     logging.info(f" -> Found Sigenergy Plant at {ip}:{port}")
                     for device_id in range(1, 247):
-                        logging.debug(f" -> Scanning {ip}:{port} for device_id {device_id}...")
-                        if await probe_worker(client, address=31501, device_id=device_id):  # [DC Charger] Charging current
-                            serial = await get_serial_number(client, device_id=device_id)
+                        if await probe_worker(modbus, address=31501, device_id=device_id):  # [DC Charger] Charging current
+                            serial = await get_serial_number(modbus, device_id=device_id)
                             if serial and serial not in serial_numbers:
                                 serial_numbers.append(serial)
                                 logging.info(f" -> Found Inverter {device_id} ({serial}) and DC-Charger at {ip}:{port}: Device ID={device_id}")
@@ -117,8 +119,8 @@ async def register_probe(ip: str, port: int, results: list) -> None:
                             else:
                                 logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
                             continue
-                        if await probe_worker(client, address=30578, device_id=device_id):  # Inverter Running state
-                            serial = await get_serial_number(client, device_id=device_id)
+                        if await probe_worker(modbus, address=30578, device_id=device_id):  # Inverter Running state
+                            serial = await get_serial_number(modbus, device_id=device_id)
                             if serial and serial not in serial_numbers:
                                 serial_numbers.append(serial)
                                 logging.info(f" -> Found Inverter {device_id} ({serial}) at {ip}:{port}: Device ID={device_id}")
@@ -126,18 +128,18 @@ async def register_probe(ip: str, port: int, results: list) -> None:
                             else:
                                 logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
                             continue
-                        if len(device["inverters"]) > 0 and await probe_worker(client, address=32000, device_id=device_id):  # AC Charger System state
+                        if len(device["inverters"]) > 0 and await probe_worker(modbus, address=32000, device_id=device_id):  # AC Charger System state
                             logging.info(f" -> Found AC-Charger at {ip}:{port}: Device ID={device_id}")
                             device["ac-chargers"].append(device_id)
                             continue
                     if len(device["inverters"]) == 0 and len(device["dc-chargers"]) == 0 and len(device["ac-chargers"]) == 0:
-                        logging.info(f" -> Ignored Modbus device at {ip}:{port}: No inverters or chargers found")
+                        logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found")
                     else:
                         results.append(device)
                 else:
                     logging.info(f" -> Ignored Modbus device at {ip}: No Plant running state found")
             finally:
-                client.close()
+                modbus.close()
     except ModbusException as e:
         logging.debug(f"Modbus connection to {ip}:{port} failed: {e}")
 
