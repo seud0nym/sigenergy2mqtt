@@ -68,6 +68,8 @@ class CustomDataBlock(ModbusSparseDataBlock):
         self._topics = {}
         if mqtt_client:
             self._mqtt_client = mqtt_client
+        self._total_sleep_time: int = 0
+        self._read_count: int = 0
 
     @classmethod
     def create(cls, device_address: int, mqtt_client: MqttClient) -> "CustomDataBlock":
@@ -75,15 +77,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
 
     def add_sensor(self, sensor) -> None:
         if sensor._data_type == ModbusClientMixin.DATATYPE.STRING:
-            match sensor._address:
-                case 30500:
-                    value = "SigenStor EC 12.0 TP"
-                case 30515:
-                    value = "CMU123A45BP678"
-                case 30525:
-                    value = "V100R001C00SPC108B088F"
-                case _:
-                    value = "string value"
+            value = "string value" if not sensor.latest_raw_state else sensor.latest_raw_state
             registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
             if len(registers) < sensor._count:
                 registers.extend([0] * (sensor._count - len(registers)))  # Pad with zeros
@@ -93,16 +87,12 @@ class CustomDataBlock(ModbusSparseDataBlock):
             match sensor._address:
                 case 30027 | 30028 | 30029 | 30030 | 30072 | 30605 | 30606 | 30607 | 30608 | 30609 | 32012 | 32013 | 32014:  # Alarms
                     value = 0
-                case 31004:  # OutputType
-                    value = 2
-                case 31025:  # PVStringCount
-                    value = 16
                 case 31026:  # MPTTCount
                     value = 4
                 case 40029:  # RemoteEMS
                     value = 1
                 case _:
-                    value = randint(0, 255)
+                    value = randint(0, 255) if not sensor.latest_raw_state else sensor.latest_raw_state
             registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
         self.setValues(sensor._address, registers)
         if self._mqtt_client and sensor._address and sensor._address not in (31004, 31025, 31026, 30027, 30028, 30029, 30030, 30072, 30605, 30606, 30607, 30608, 30609, 32012, 32013, 32014, 40029):
@@ -125,6 +115,16 @@ class CustomDataBlock(ModbusSparseDataBlock):
         super().setValues(sensor._address, registers)
 
     async def async_getValues(self, fc_as_hex: int, address: int, count=1):
+        delay_avg: int = 15
+        delay_min: int = 5
+        delay_max: int = 50
+        self._read_count += count
+        if (self._total_sleep_time + delay_min) / self._read_count > delay_avg:
+            sleep_time = delay_min
+        else:
+            sleep_time = randint(delay_min, delay_max)  # Simulate variable response times
+        self._total_sleep_time += sleep_time
+        await asyncio.sleep(sleep_time / 1000)
         return super().getValues(address, count)
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]):
@@ -133,7 +133,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
 
 async def run_async_server(mqtt_client: MqttClient, use_simplified_topics: bool) -> None:
     context: dict[int, CustomDataBlock] = {}
-    sensors = await get_sensor_instances(hass=not use_simplified_topics)
+    sensors = await get_sensor_instances(hass=not use_simplified_topics, pv_inverter_device_address=3)
     for sensor in sensors.values():
         if hasattr(sensor, "_device_address"):
             if sensor._device_address not in context:

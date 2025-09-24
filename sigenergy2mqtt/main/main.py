@@ -69,7 +69,7 @@ async def async_main() -> None:
 
     def configure_for_restart(caught, frame):
         logging.info(f"Signal {caught} received - reconfiguring for restart")
-        Config.home_assistant.enabled = False # Disable publishing Home Assistant offline availability since we are going to restart
+        Config.home_assistant.enabled = False  # Disable publishing Home Assistant offline availability since we are going to restart
         exit_on_signal(caught, frame)
 
     def exit_on_signal(caught, frame):
@@ -134,15 +134,23 @@ async def make_dc_charger(plant_index, device_address, inverter_unique_id, remot
     return charger
 
 
+serial_numbers = []
+
+
 async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, HybridInverter | PVInverter, PowerPlant, any]:
-    model = InverterModel(plant_index, device_address)
     serial = InverterSerialNumber(plant_index, device_address)
+    serial_number = await serial.get_state(modbus=modbus)
+
+    if serial_number in serial_numbers:
+        logging.info(f"Inverter serial number {serial_number} has already been detected - ignoring")
+        return None, None
+
+    model = InverterModel(plant_index, device_address)
     firmware = InverterFirmwareVersion(plant_index, device_address)
     strings = PVStringCount(plant_index, device_address)
     output_type = OutputType(plant_index, device_address)
 
     model_id = await model.get_state(modbus=modbus)
-    serial_number = await serial.get_state(modbus=modbus)
     firmware_version = await firmware.get_state(modbus=modbus)
     pv_string_count = await strings.get_state(modbus=modbus)
     output_type_state = await output_type.get_state(raw=True, modbus=modbus)
@@ -168,4 +176,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
 
     inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
     inverter.via_device = plant.unique_id
+
+    serial_numbers.append(serial_number)
+
     return inverter, plant

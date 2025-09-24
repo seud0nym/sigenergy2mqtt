@@ -30,6 +30,8 @@ class DeviceConfig:
     dc_chargers: List[int] = field(default_factory=list)
     inverters: List[int] = field(default_factory=list)
 
+    disable_chunking: bool = False
+
     log_level: int = logging.WARNING
 
     registers = RegisterAccess()
@@ -60,6 +62,8 @@ class DeviceConfig:
                         self.registers.read_write = check_bool(value, f"modbus.{field}")
                     case "write-only":
                         self.registers.write_only = check_bool(value, f"modbus.{field}")
+                    case "disable-chunking":
+                        self.disable_chunking = check_bool(value, f"modbus.{field}")
                     case "ac-chargers":
                         self.ac_chargers = check_int_list(value, f"modbus.{field}")
                     case "dc-chargers":
@@ -73,7 +77,7 @@ class DeviceConfig:
                     case "scan-interval-medium":
                         self.scan_interval.medium = check_int(value, f"modbus.{field}", min=30)
                     case "scan-interval-high":
-                        self.scan_interval.high = check_int(value, f"modbus.{field}", min=5)
+                        self.scan_interval.high = check_int(value, f"modbus.{field}", min=1)
                     case "scan-interval-realtime":
                         self.scan_interval.realtime = check_int(value, f"modbus.{field}", min=1)
                     case _:

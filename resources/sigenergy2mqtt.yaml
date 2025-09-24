@@ -188,6 +188,11 @@ modbus:
     #                 Management System (EMS) integration will NOT be published
     #                 to MQTT. Ignored if read-write option is false.
     no-remote-ems: false
+    # disable-chunking
+    #   default: false
+    #   description:  If true, Modbus read chunking will be disabled and each
+    #                 register will be read individually. This may impact
+    #                 performance.
     # scan-interval-low
     #   default: 600
     #   description:  The scan interval in seconds for Modbus registers that
@@ -380,7 +385,7 @@ pvoutput:
   #   default: ""
   #   description:  The PVOutput System ID (create/find your System id 
   #                 under https://pvoutput.org/account.jsp)
-  system-id: 93768
+  system-id: ""
   # consumption
   #   default: false
   #   description:  If specified with a value of 'true' or 'consumption', 
@@ -388,11 +393,83 @@ pvoutput:
   #                 of 'imported', the energy imported from the grid will 
   #                 be sent as consumption. If not specified, or the value
   #                 is 'false', no consumption data will be sent.
-  consumption: true
+  #                 WARNING: If you enable consumption uploading, PVOutput
+  #                 will automatically (and incorrectly) calculate your
+  #                 daily exports with taking battery charging into account.
+  #                 Disable consumption to have the daily exports uploaded
+  #                 at end of day.
+  consumption: false
+  # output-hour
+  #   default: 23
+  #   description:  The hour of the day (20-23) at which the daily totals
+  #                 are sent to PVOutput. The default is 23 (11pm). Valid
+  #                 values are 20 to 23. The minute is randomly chosen
+  #                 between 51 and 58.
+  output-hour: 23
   # temperature-topic
-  #   default: null
+  #   default: ""
   #   description:  An MQTT topic from which the current temperature can be
   #                 read. This is used to send the temperature to PVOutput.
   #                 If not specified, the temperature will not be sent to
   #                 PVOutput.
-  temperature_topic: null
+  temperature_topic: ""
+  # v7
+  #   default: ""
+  #   description:  A sensor class name that will be used to populate the
+  #                 v7 extended field in PVOutput. If not specified, OR
+  #                 your donation status is not current, this field will
+  #                 not be sent to PVOutput. You can use any sensor with
+  #                 a numeric value. Classes that can be used for multiple
+  #                 sensors (e.g. PVVoltageSensor) will be averaged to
+  #                 determine a single value.
+  v7: ""
+  # v8
+  #   default: ""
+  #   description:  A sensor class name that will be used to populate the
+  #                 v8 extended field in PVOutput. If not specified, OR
+  #                 your donation status is not current, this field will
+  #                 not be sent to PVOutput. You can use any sensor with
+  #                 a numeric value. Classes that can be used for multiple
+  #                 sensors (e.g. PVVoltageSensor) will be averaged to
+  #                 determine a single value.
+  v8: ""
+  # v9
+  #   default: ""
+  #   description:  A sensor class name that will be used to populate the
+  #                 v9 extended field in PVOutput. If not specified, OR
+  #                 your donation status is not current, this field will
+  #                 not be sent to PVOutput. You can use any sensor with
+  #                 a numeric value. Classes that can be used for multiple
+  #                 sensors (e.g. PVVoltageSensor) will be averaged to
+  #                 determine a single value.
+  v9: ""
+  # v10
+  #   default: ""
+  #   description:  A sensor class name that will be used to populate the
+  #                 v10 extended field in PVOutput. If not specified, OR
+  #                 your donation status is not current, this field will
+  #                 not be sent to PVOutput. You can use any sensor with
+  #                 a numeric value. Classes that can be used for multiple
+  #                 sensors (e.g. PVVoltageSensor) will be averaged to
+  #                 determine a single value.
+  v10: ""
+  # v11
+  #   default: ""
+  #   description:  A sensor class name that will be used to populate the
+  #                 v11 extended field in PVOutput. If not specified, OR
+  #                 your donation status is not current, this field will
+  #                 not be sent to PVOutput. You can use any sensor with
+  #                 a numeric value. Classes that can be used for multiple
+  #                 sensors (e.g. PVVoltageSensor) will be averaged to
+  #                 determine a single value.
+  v11: ""
+  # v12
+  #   default: ""
+  #   description:  A sensor class name that will be used to populate the
+  #                 v12 extended field in PVOutput. If not specified, OR
+  #                 your donation status is not current, this field will
+  #                 not be sent to PVOutput. You can use any sensor with
+  #                 a numeric value. Classes that can be used for multiple
+  #                 sensors (e.g. PVVoltageSensor) will be averaged to
+  #                 determine a single value.
+  v12: ""

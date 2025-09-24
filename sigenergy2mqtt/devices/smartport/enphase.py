@@ -410,7 +410,7 @@ class SmartPort(Device):
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
         lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)
-        self._add_read_sensor(pv_power, "consumption")
+        self._add_read_sensor(pv_power, "Consumption")
         self._add_derived_sensor(lifetime_pv_energy, pv_power)
         self._add_derived_sensor(EnphaseDailyPVEnergy(plant_index, sn, lifetime_pv_energy), lifetime_pv_energy)
         self._add_derived_sensor(EnphaseCurrent(plant_index, sn), pv_power)

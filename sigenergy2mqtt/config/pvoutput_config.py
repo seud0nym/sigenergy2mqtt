@@ -1,5 +1,5 @@
 from .validation import check_bool, check_int, check_log_level, check_string
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 
 
@@ -8,13 +8,21 @@ class PVOutputConfiguration:
     enabled: bool = False
 
     consumption: str | None = None
-    exports: bool = False
-    peak_power: bool = True
+    extended: dict[str, str] = field(
+        default_factory=lambda: {
+            "v7": "",
+            "v8": "",
+            "v9": "",
+            "v10": "",
+            "v11": "",
+            "v12": "",
+        }
+    )
 
     api_key: str = ""
     system_id: str = ""
 
-    output_hour: int = 21
+    output_hour: int = 23
 
     log_level: int = logging.WARNING
     update_debug_logging: bool = False
@@ -27,7 +35,7 @@ class PVOutputConfiguration:
         if isinstance(config, dict):
             if "enabled" in config:
                 logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.enabled = {config['enabled']}")
-                self.enabled = check_bool(config['enabled'], "pvoutput.enabled")
+                self.enabled = check_bool(config["enabled"], "pvoutput.enabled")
             if self.enabled:
                 for field, value in config.items():
                     if field != "enabled":
@@ -44,9 +52,9 @@ class PVOutputConfiguration:
                                 case "imported":
                                     self.consumption = "imported"
                                 case _:
-                                    raise ValueError(f"pvoutput.consumption must be 'true', 'false', or 'imports', got '{value}'")
+                                    raise ValueError(f"pvoutput.consumption must be 'true', 'false', 'consumption', or 'imports', got '{value}'")
                         case "exports":
-                            self.exports = check_bool(value, f"pvoutput.{field}")
+                            logging.warning("The 'exports' option is deprecated and will be removed in a future version.")
                         case "interval-minutes":
                             logging.warning(
                                 "The 'interval-minutes' option is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org."
@@ -55,8 +63,6 @@ class PVOutputConfiguration:
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
                         case "output-hour":
                             self.output_hour = check_int(value, f"pvoutput.{field}", min=0 if self.testing else 20, max=23)
-                        case "peak-power":
-                            self.peak_power = check_bool(value, f"pvoutput.{field}")
                         case "system-id":
                             self.system_id = check_string(str(value), f"pvoutput.{field}", allow_none=(not self.enabled), allow_empty=(not self.enabled))
                             if self.system_id == "testing":
@@ -66,6 +72,8 @@ class PVOutputConfiguration:
                                 )
                         case "temperature-topic":
                             self.temperature_topic = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                        case "v7" | "v8" | "v9" | "v10" | "v11" | "v12":
+                            self.extended[field] = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
                         case "update-debug-logging":
                             self.update_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case _:

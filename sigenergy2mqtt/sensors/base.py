@@ -395,7 +395,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                             logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: State is None?")
                     else:
                         if self._failures > 0:
-                            logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0")
+                            logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0 because valid state acquired ({state=})")
                             self._failures = 0
                             self._next_retry = None
                         if self.debug_logging:
@@ -751,17 +751,16 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
             )
 
         try:
-            async with ModbusLockFactory.get(modbus).lock():
-                start = time.monotonic()
-                if self._input_type == InputType.HOLDING:
-                    rr = await modbus.read_holding_registers(self._address, count=self._count, device_id=self._device_address)
-                elif self._input_type == InputType.INPUT:
-                    rr = await modbus.read_input_registers(self._address, count=self._count, device_id=self._device_address)
-                else:
-                    logging.error(f"{self.__class__.__name__} Unknown input type '{self._input_type}'")
-                    raise Exception(f"Unknown input type '{self._input_type}'")
-                elapsed = time.monotonic() - start
-                await Metrics.modbus_read(self._count, elapsed)
+            start = time.monotonic()
+            if self._input_type == InputType.HOLDING:
+                rr = await modbus.read_holding_registers(self._address, count=self._count, device_id=self._device_address)
+            elif self._input_type == InputType.INPUT:
+                rr = await modbus.read_input_registers(self._address, count=self._count, device_id=self._device_address)
+            else:
+                logging.error(f"{self.__class__.__name__} Unknown input type '{self._input_type}'")
+                raise Exception(f"Unknown input type '{self._input_type}'")
+            elapsed = time.monotonic() - start
+            await Metrics.modbus_read(self._count, elapsed)
             result = self._check_register_response(rr, f"read_{self._input_type}_registers")
             if result:
                 self.set_latest_state(modbus.convert_from_registers(rr.registers, self._data_type))
@@ -775,6 +774,10 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
             await Metrics.modbus_read_error()
             raise
 
+        if self.debug_logging:
+            logging.debug(
+                f"{self.__class__.__name__} read_{self._input_type}_registers({self._address}, count={self._count}, device_id={self._device_address}) plant_index={self._plant_index} interval={self._scan_interval}s actual={None if len(self._states) == 0 else str(round(time.time() - self._states[-1][0], 2)) + 's'} elapsed={(elapsed / 1000):.2f}ms {result=}"
+            )
         return result
 
     def get_attributes(self) -> dict[str, Any]:
@@ -984,6 +987,8 @@ class WriteOnlySensor(WritableSensorMixin):
         name_on: str = "Power On",
         icon_off: str = "mdi:power-off",
         icon_on: str = "mdi:power-on",
+        value_off: int = 0,
+        value_on: int = 1,
     ):
         super().__init__(
             name,
@@ -1008,6 +1013,7 @@ class WriteOnlySensor(WritableSensorMixin):
         self._payloads = {"off": payload_off, "on": payload_on}
         self._names = {"off": name_off, "on": name_on}
         self._icons = {"off": icon_off, "on": icon_on}
+        self._values = {"off": value_off, "on": value_on}
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components = {}
@@ -1032,9 +1038,9 @@ class WriteOnlySensor(WritableSensorMixin):
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value == self._payloads["off"]:
-            return await super().set_value(modbus, mqtt, 0, source, handler)
+            return await super().set_value(modbus, mqtt, self._values["off"], source, handler)
         elif value == self._payloads["on"]:
-            return await super().set_value(modbus, mqtt, 1, source, handler)
+            return await super().set_value(modbus, mqtt, self._values["on"], source, handler)
         else:
             logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
         return False
@@ -1520,9 +1526,21 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             gain=None,
             precision=None,
         )
+        device_addresses = set([a._device_address for a in alarms])
+        first_address = min([a._address for a in alarms])
+        last_address = max([a._address + a._count - 1 for a in alarms])
+        count = sum([a._count for a in alarms])
+        assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
+        assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a._address for a in alarms]})"
         ReadableSensorMixin.__init__(self, scan_interval=10)
         self["enabled_by_default"] = True
         self._alarms = list(alarms)
+        self._address = min([a._address for a in alarms])
+        self._device_address = device_addresses.pop()
+        self._scan_interval = min([a._scan_interval for a in alarms])
+        self._count = count
+        self._input_type = alarms[0]._input_type
+        self._data_type = alarms[0]._data_type
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Gets the state of this sensor.
@@ -1839,8 +1857,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 with self._persistent_state_file.open("w") as f:
                     f.write(str(midnight_state))
                 self._state_at_midnight = midnight_state
-        else:
-            logging.debug(f"{self.__class__.__name__} Ignored attempt to update midnight state to {midnight_state}")
 
 
 class PVPowerSensor:

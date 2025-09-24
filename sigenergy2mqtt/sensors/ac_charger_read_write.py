@@ -8,7 +8,7 @@ from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
 
 
 class ACChargerStatus(WriteOnlySensor):
-    # 0:Stop 1:Start
+    # 0:Start 1:Stop
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="AC Charger Stop/Start",
@@ -22,6 +22,8 @@ class ACChargerStatus(WriteOnlySensor):
             name_on="Start",
             icon_off="mdi:stop",
             icon_on="mdi:play",
+            value_off=1,
+            value_on=0,
         )
 
 

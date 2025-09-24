@@ -144,6 +144,8 @@ class Config:
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["write-only"] = overrides["modbus"][0]["write-only"]
+                        case const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
+                            overrides["modbus"][0]["disable-chunking"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
                             overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=300)
                             if auto_discovered:
@@ -155,7 +157,7 @@ class Config:
                                 for device in auto_discovered:
                                     device["scan-interval-medium"] = overrides["modbus"][0]["scan-interval-medium"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
-                            overrides["modbus"][0]["scan-interval-high"] = check_int(os.environ[key], key, min=5)
+                            overrides["modbus"][0]["scan-interval-high"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["scan-interval-high"] = overrides["modbus"][0]["scan-interval-high"]
@@ -200,6 +202,8 @@ class Config:
                             overrides["pvoutput"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
                             overrides["pvoutput"]["log-level"] = check_log_level(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING:
+                            overrides["pvoutput"]["update-debug-logging"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_API_KEY:
                             overrides["pvoutput"]["api-key"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False, hex_chars_only=True)
                         case const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
@@ -210,6 +214,18 @@ class Config:
                             pass  # Deprecated
                         case const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
                             overrides["pvoutput"]["temperature-topic"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
+                            overrides["pvoutput"]["v7"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
+                            overrides["pvoutput"]["v8"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
+                            overrides["pvoutput"]["v9"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
+                            overrides["pvoutput"]["v10"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
+                            overrides["pvoutput"]["v11"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
+                            overrides["pvoutput"]["v12"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
                         case _:
                             logging.warning(f"UNKNOWN env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 except Exception as e:

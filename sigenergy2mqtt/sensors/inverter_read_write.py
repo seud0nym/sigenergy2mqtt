@@ -42,7 +42,7 @@ class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v
 
 
 class DCChargerStatus(WriteOnlySensor, HybridInverter):
-    # 0:Stop 1:Start
+    # 0:Start 1:Stop
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="DC Charger Stop/Start",
@@ -56,6 +56,8 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
             name_on="Start",
             icon_off="mdi:stop",
             icon_on="mdi:play",
+            value_off=1,
+            value_on=0,
         )
 
 
