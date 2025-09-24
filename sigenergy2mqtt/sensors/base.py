@@ -1857,8 +1857,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 with self._persistent_state_file.open("w") as f:
                     f.write(str(midnight_state))
                 self._state_at_midnight = midnight_state
-        else:
-            logging.debug(f"{self.__class__.__name__} Ignored attempt to update midnight state to {midnight_state}")
 
 
 class PVPowerSensor:
