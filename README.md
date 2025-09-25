@@ -300,7 +300,7 @@ Command line options override both environment variables and the configuration f
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]
                         The Sigenergy device Modbus port number (default: 502)
   --modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID]
-                        The Sigenergy Inverter Modbus Device ID. May be specified multiple times.
+                        The Sigenergy Inverter Modbus Device ID. Multiple device IDS may be specified, separated by spaces.
   --modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID]
                         The Sigenergy AC Charger Modbus Device ID.
   --modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID]

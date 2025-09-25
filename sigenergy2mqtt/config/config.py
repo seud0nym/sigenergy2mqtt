@@ -81,7 +81,7 @@ class Config:
 
         for key, value in os.environ.items():
             if key.startswith("SIGENERGY2MQTT_") and key != "SIGENERGY2MQTT_CONFIG" and value is not None and value != "None":
-                logging.debug(f"Found env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
+                logging.debug(f"Found env/cli override: {key} = {'[REDACTED]' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 try:
                     match key:
                         case const.SIGENERGY2MQTT_LOG_LEVEL:

@@ -247,7 +247,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID, None),
-    help="**The Sigenergy Inverter Modbus Device ID. May be specified multiple times.",
+    help="**The Sigenergy Inverter Modbus Device ID. Multiple device IDS may be specified, separated by spaces.",
 )
 _parser.add_argument(
     "--modbus-accharger-slave",
@@ -543,7 +543,8 @@ def apply_cli_to_env(variable: str, value: str) -> None:
     if value is not None:
         if value != was:
             os.environ[variable] = str(value)
-            _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{value}' (was '{was}')")
+            if was is not None:
+                _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{'[REDACTED]' if 'PASSWORD' in variable or 'API_KEY' in variable else value}' (was '{was}')")
     else:
         if was is not None:
             os.environ[variable] = ""
