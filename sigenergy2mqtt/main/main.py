@@ -1,11 +1,11 @@
 from .thread_config import ThreadConfig, ThreadConfigFactory
 from .threading import start
-from pymodbus import FramerType, pymodbus_apply_logging_config
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+from pymodbus import pymodbus_apply_logging_config
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
@@ -17,13 +17,14 @@ import signal
 
 
 async def async_main() -> None:
+    pymodbus_apply_logging_config(Config.get_modbus_log_level())
     configure_logging()
 
     for plant_index in range(len(Config.devices)):
         device = Config.devices[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
             config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port)
-            modbus = ModbusClient(device.host, port=device.port, framer=FramerType.SOCKET)
+            modbus = ModbusClient(device.host, port=device.port)
             async with modbus:
                 logging.info(f"Connected to Modbus interface at {device.host}:{device.port} for register probing")
                 plant: PowerPlant = None  # Make sure plant is only created with first inverter
@@ -107,7 +108,7 @@ def configure_logging():
         if pymodbus.level != logging.NOTSET:
             pymodbus.log(root.level, f"pymodbus log-level changed to {logging.getLevelName(Config.get_modbus_log_level())}")
         pymodbus.propagate = False
-        pymodbus_apply_logging_config(Config.get_modbus_log_level())
+        pymodbus.setLevel(Config.get_modbus_log_level())
     if paho_mqtt.level != Config.mqtt.log_level:
         if paho_mqtt.level != logging.NOTSET:
             paho_mqtt.log(root.level, f"paho.mqtt log-level changed to {logging.getLevelName(Config.mqtt.log_level)}")

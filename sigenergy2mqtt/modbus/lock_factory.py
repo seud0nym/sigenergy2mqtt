@@ -1,5 +1,5 @@
-from .custom_lock import ModbusLock
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+from .client import ModbusClient
+from .lock import ModbusLock
 import logging
 
 

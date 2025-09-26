@@ -2,12 +2,11 @@ from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 from .sanity_check import SanityCheck
 from concurrent.futures import Future
 from pathlib import Path
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.config import Config, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics import Metrics
-from sigenergy2mqtt.modbus import ModbusLockFactory
+from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any, Coroutine, Dict, Final
 import abc
@@ -232,7 +231,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
     def apply_sensor_overrides(self, registers: RegisterAccess):
         for identifier in Config.sensor_overrides.keys():
-            if identifier in self.__class__.__name__ or identifier in self["object_id"]:
+            if identifier in self.__class__.__name__ or identifier in self["object_id"] or identifier in self.unique_id:
                 overrides = Config.sensor_overrides[identifier]
                 if "debug-logging" in overrides and self._debug_logging != overrides["debug-logging"]:
                     self._debug_logging = overrides["debug-logging"]
@@ -753,9 +752,9 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         try:
             start = time.monotonic()
             if self._input_type == InputType.HOLDING:
-                rr = await modbus.read_holding_registers(self._address, count=self._count, device_id=self._device_address)
+                rr = await modbus.read_holding_registers(self._address, count=self._count, device_id=self._device_address, trace=self.debug_logging)
             elif self._input_type == InputType.INPUT:
-                rr = await modbus.read_input_registers(self._address, count=self._count, device_id=self._device_address)
+                rr = await modbus.read_input_registers(self._address, count=self._count, device_id=self._device_address, trace=self.debug_logging)
             else:
                 logging.error(f"{self.__class__.__name__} Unknown input type '{self._input_type}'")
                 raise Exception(f"Unknown input type '{self._input_type}'")
