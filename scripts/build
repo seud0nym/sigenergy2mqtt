@@ -70,7 +70,7 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
     if echo "$*" | grep -qe "docker"; then
-        docker image rm local/home-assistant-addon-sigenergy2mqtt-amd64:$old_version 
+        docker rmi $(docker images --filter=reference='local/home-assistant-addon-sigenergy2mqtt-amd64:*' -q)
         docker run --rm -it --privileged -v ../home-assistant-addons/sigenergy2mqtt:/data -v /var/run/docker.sock:/var/run/docker.sock:ro ghcr.io/home-assistant/amd64-builder:latest --target /data --test --no-latest -d local --amd64 || exit
     fi
 fi
