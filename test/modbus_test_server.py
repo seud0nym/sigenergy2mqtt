@@ -87,6 +87,10 @@ class CustomDataBlock(ModbusSparseDataBlock):
             match sensor._address:
                 case 30027 | 30028 | 30029 | 30030 | 30072 | 30605 | 30606 | 30607 | 30608 | 30609 | 32012 | 32013 | 32014:  # Alarms
                     value = 0
+                case 31004:  # OutputType
+                    value = 2
+                case 31025:  # PVStringCount
+                    value = 16
                 case 31026:  # MPTTCount
                     value = 4
                 case 40029:  # RemoteEMS
