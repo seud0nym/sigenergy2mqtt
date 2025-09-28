@@ -54,12 +54,13 @@ class MqttHandler:
         if not value:
             logger.info(f"[{self._client_id}] IGNORED empty payload from topic {topic}")
         else:
-            if topic in self._topics:
-                for method in self._topics[topic]:
-                    logger.debug(f"[{self._client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
-                    asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
-            else:
-                logger.warning(f"[{self._client_id}] No registered handler found for topic {topic}")
+            with self._reconnect_lock:
+                if topic in self._topics:
+                    for method in self._topics[topic]:
+                        logger.debug(f"[{self._client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
+                        asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
+                else:
+                    logger.warning(f"[{self._client_id}] No registered handler found for topic {topic}")
 
     def on_response(self, mid: Any, source: str, client: mqtt.Client) -> None:
         if mid in self._mids:
@@ -77,9 +78,10 @@ class MqttHandler:
                 del self._mids[mid]
 
     def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str, Self], Awaitable[bool]]) -> tuple[int, int]:
-        if topic not in self._topics:
-            self._topics[topic] = []
-        self._topics[topic].append(handler)
+        with self._reconnect_lock:
+            if topic not in self._topics:
+                self._topics[topic] = []
+            self._topics[topic].append(handler)
         logger.debug(f"[{self._client_id}] Registered handler {handler.__self__.__class__.__name__}.{getattr(handler, '__name__', '[Unknown method]')} for topic {topic}")
         return client.subscribe(topic)
 
