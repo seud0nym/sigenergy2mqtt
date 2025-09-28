@@ -58,6 +58,7 @@
         "tm_mday",
         "tm_wday",
         "tm_yday",
+        "veth",
         "wordorder",
         "writeonly"
     ]

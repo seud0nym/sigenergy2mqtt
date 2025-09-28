@@ -152,7 +152,7 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
 
     networks = {}
     for iface_name, iface_info in psutil.net_if_addrs().items():
-        if "docker" not in iface_name and iface_name not in ("lo", "hassio"):
+        if "docker" not in iface_name and iface_name not in ("lo", "hassio") and not iface_name.startswith("br-") and not iface_name.startswith("veth"):
             for addr in iface_info:
                 if addr.family.name == "AF_INET" and not addr.address.startswith("127."):
                     ip = addr.address
