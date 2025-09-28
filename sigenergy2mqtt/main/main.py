@@ -36,8 +36,9 @@ async def async_main() -> None:
                         config.add_device(plant_index, plant)
                         remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
                         assert remote_ems is not None, "Failed to find RemoteEMS instance"
-                    inverters[device_address] = inverter.unique_id
-                    config.add_device(plant_index, inverter)
+                    if inverter is not None:
+                        inverters[device_address] = inverter.unique_id
+                        config.add_device(plant_index, inverter)
                 if plant and len(device.dc_chargers) == 0:
                     logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
                     plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30252", search_children=True).publishable = False
