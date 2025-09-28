@@ -30,33 +30,32 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
         for sensor in [sensor for sensor in device.get_all_sensors().values() if sensor.publishable and sensor.state_topic is not None]:
             if isinstance(sensor, TotalLifetimePVEnergy):
                 status.register("generation", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, TotalLoadConsumption) and Config.pvoutput.consumption == "consumption":
+            if isinstance(sensor, TotalLoadConsumption) and Config.pvoutput.consumption == "consumption":
                 status.register("consumption", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, PlantTotalImportedEnergy) and Config.pvoutput.consumption == "imported":
+            if isinstance(sensor, PlantTotalImportedEnergy) and Config.pvoutput.consumption == "imported":
                 status.register("consumption", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, TotalDailyPVEnergy):
+            if isinstance(sensor, TotalDailyPVEnergy):
                 output.register("generation", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, TotalLoadDailyConsumption) and Config.pvoutput.consumption == "consumption":
+            if isinstance(sensor, TotalLoadDailyConsumption) and Config.pvoutput.consumption == "consumption":
                 output.register("consumption", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, GridSensorDailyImportEnergy) and Config.pvoutput.consumption == "imported":
-                output.register("consumption", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, GridSensorDailyExportEnergy):
-                output.register("exports", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, GridSensorDailyImportEnergy):
+            if isinstance(sensor, GridSensorDailyImportEnergy):
+                if Config.pvoutput.consumption == "imported":
+                    output.register("consumption", sensor.state_topic, unit2gain(sensor))
                 output.register("imports", sensor.state_topic, unit2gain(sensor))
-            elif isinstance(sensor, PlantPVPower):
+            if isinstance(sensor, GridSensorDailyExportEnergy):
+                output.register("exports", sensor.state_topic, unit2gain(sensor))
+            if isinstance(sensor, PlantPVPower):
                 plant_pv_power = sensor
-            elif isinstance(sensor, TotalPVPower):
+            if isinstance(sensor, TotalPVPower):
                 total_pv_power = sensor
-            elif isinstance(sensor, (PVVoltageSensor, EnphaseVoltage)):
+            if isinstance(sensor, (PVVoltageSensor, EnphaseVoltage)):
                 status.register("voltage", sensor.state_topic)
-            else:
-                for k, v in donation.items():
-                    if sensor.__class__.__name__.lower() == v.lower():
-                        if sensor._data_type == ModbusClient.DATATYPE.STRING:
-                            logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
-                        else:
-                            status.register(k, sensor.state_topic, 1.0)
+            for k, v in donation.items():
+                if sensor.__class__.__name__.lower() == v.lower():
+                    if sensor._data_type == ModbusClient.DATATYPE.STRING:
+                        logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
+                    else:
+                        status.register(k, sensor.state_topic, 1.0)
 
     if total_pv_power is not None:
         output.register("power", total_pv_power.state_topic, unit2gain(total_pv_power))
