@@ -1,0 +1,24 @@
+services:
+  emqx:
+    image: emqx/emqx:latest
+    container_name: emqx
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 5s
+      timeout: 25s
+      retries: 5
+  sigenergy2mqtt:
+    image: sigenergy2mqtt:latest
+    container_name: sigenergy2mqtt
+    environment:
+      - SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY=once
+      - SIGENERGY2MQTT_MQTT_BROKER=127.0.0.1
+      - SIGENERGY2MQTT_MQTT_ANONYMOUS=true
+      - SIGENERGY2MQTT_LOG_LEVEL=DEBUG
+      - TZ=Australia/Melbourne
+    network_mode: host
+    restart: always
+    depends_on:
+      emqx:
+        condition: service_healthy
