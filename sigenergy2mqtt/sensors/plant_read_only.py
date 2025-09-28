@@ -1155,7 +1155,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
-            state_class=StateClass.TOTAL,
+            state_class=StateClass.TOTAL_INCREASING,
             icon="mdi:lightning-bolt-circle",
             gain=100,
             precision=2,
