@@ -1,6 +1,6 @@
 from pymodbus import ExceptionResponse, FramerType, ModbusException
 from pymodbus.client import AsyncModbusTcpClient
-from scapy.all import ARP, Ether, srp, IP, ICMP, sr1
+from scapy.all import IP, ICMP, sr1
 import asyncio
 import ipaddress
 import logging
@@ -10,70 +10,40 @@ import threading
 import time
 
 
-def arp_worker(ip_chunk, result_dict, lock, timeout=2) -> None:
-    arp = ARP(pdst=ip_chunk)
-    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
-    packet = ether / arp
-
-    responses = srp(packet, timeout=timeout, verbose=0)[0]
-    with lock:
-        for _, received in responses:
-            result_dict[received.psrc] = received.hwsrc
-
-
-def arp_scan(network_cidr, threads=10, timeout=1) -> list[dict[str, str]]:
-    ip_list = [str(ip) for ip in ipaddress.IPv4Network(network_cidr, strict=False).hosts()]
-    chunk_size = len(ip_list) // threads + 1
-    chunks = [ip_list[i : i + chunk_size] for i in range(0, len(ip_list), chunk_size)]
-
-    result_dict = {}
-    lock = threading.Lock()
-    thread_list = []
-
-    for chunk in chunks:
-        t = threading.Thread(target=arp_worker, args=(chunk, result_dict, lock, timeout))
-        t.start()
-        thread_list.append(t)
-
-    for t in thread_list:
-        t.join()
-
-    return result_dict
-
-
-def ping_worker(ip_queue, result_list, timeout=0.5) -> None:
+def ping_worker(ip_queue, found_hosts, timeout=0.5) -> None:
     while not ip_queue.empty():
         ip = ip_queue.get()
         pkt = IP(dst=ip) / ICMP()
-        reply = sr1(pkt, timeout=timeout, verbose=0)
-        if reply:
-            result_list.append(ip)
+        ans = sr1(pkt, timeout=timeout, verbose=0)
+        if ans:
+            rx = ans[0][1]
+            tx = ans[0][0]
+            found_hosts[ip] = rx.time - (tx.sent_time if tx.sent_time is not None else tx.time)
         ip_queue.task_done()
 
 
-def ping_scan(ip_list, threads=100, timeout=1) -> list[str]:
+def ping_scan(ip_list, threads=100, timeout=1) -> dict[float, str]:
     ip_queue = queue.Queue()
-    result_list = []
+    found_hosts = {}
 
     for ip in ip_list:
         ip_queue.put(ip)
 
     for _ in range(threads):
-        t = threading.Thread(target=ping_worker, args=(ip_queue, result_list))
+        t = threading.Thread(target=ping_worker, args=(ip_queue, found_hosts))
         t.daemon = True
         t.start()
 
     ip_queue.join()
-    return result_list
+    return found_hosts
 
 
-async def probe_worker(modbus: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
+async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
     try:
         result = await modbus.read_input_registers(address=address, count=count, device_id=device_id)
         if result and not result.isError():
             return True
-    except ModbusException:  # as e:
-        # logging.debug(f"Modbus probe failed for {modbus.comm_params.host}:{modbus.comm_params.port} at address {address} with device_id {device_id}: {e}")
+    except ModbusException:
         while not modbus.connected:
             modbus.close()
             await modbus.connect()
@@ -98,7 +68,7 @@ async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) ->
 serial_numbers = []
 
 
-async def register_probe(ip: str, port: int, results: list) -> None:
+async def scan_host(ip: str, port: int, results: list) -> None:
     modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=0.25, retries=0)
     try:
         await modbus.connect()
@@ -106,10 +76,10 @@ async def register_probe(ip: str, port: int, results: list) -> None:
             try:
                 logging.info(f"Found Modbus device at {ip}:{port}")
                 device = {"host": ip, "port": port, "ac-chargers": [], "dc-chargers": [], "inverters": []}
-                if await probe_worker(modbus, address=30051, device_id=247):  # Plant running state
+                if await probe_register(modbus, address=30051, device_id=247):  # Plant running state
                     logging.info(f" -> Found Sigenergy Plant at {ip}:{port}")
                     for device_id in range(1, 247):
-                        if await probe_worker(modbus, address=31501, device_id=device_id):  # [DC Charger] Charging current
+                        if await probe_register(modbus, address=31501, device_id=device_id):  # [DC Charger] Charging current
                             serial = await get_serial_number(modbus, device_id=device_id)
                             if serial and serial not in serial_numbers:
                                 serial_numbers.append(serial)
@@ -119,7 +89,7 @@ async def register_probe(ip: str, port: int, results: list) -> None:
                             else:
                                 logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
                             continue
-                        if await probe_worker(modbus, address=30578, device_id=device_id):  # Inverter Running state
+                        if await probe_register(modbus, address=30578, device_id=device_id):  # Inverter Running state
                             serial = await get_serial_number(modbus, device_id=device_id)
                             if serial and serial not in serial_numbers:
                                 serial_numbers.append(serial)
@@ -128,7 +98,7 @@ async def register_probe(ip: str, port: int, results: list) -> None:
                             else:
                                 logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
                             continue
-                        if len(device["inverters"]) > 0 and await probe_worker(modbus, address=32000, device_id=device_id):  # AC Charger System state
+                        if len(device["inverters"]) > 0 and await probe_register(modbus, address=32000, device_id=device_id):  # AC Charger System state
                             logging.info(f" -> Found AC-Charger at {ip}:{port}: Device ID={device_id}")
                             device["ac-chargers"].append(device_id)
                             continue
@@ -163,27 +133,26 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
                         logging.info(f"Found network '{iface_name}' {networks[ip]} via {network}")
                         break
 
-    loop = asyncio.new_event_loop()
-    results = []
+    active_ips: dict[str, float] = {}
     for addr, subnet in networks.items():
         logging.info(f"Scanning for active devices in network {subnet.with_prefixlen}...")
-
-        arp_results = arp_scan(subnet.with_netmask, timeout=0.5)
         all_ips = [str(ip) for ip in subnet.hosts()]
-        missing_ips = [ip for ip in all_ips if ip not in arp_results and ip != addr]
-
+        missing_ips = [ip for ip in all_ips if ip != addr]
         ping_results = ping_scan(missing_ips, timeout=0.5)
-        active_ips = list(set([addr]) | set(arp_results.keys()) | set(ping_results))
+        active_ips[addr] = 0.0  # Scan localhost first
+        active_ips.update(ping_results)
+    ips_sorted_by_latency = dict(sorted(active_ips.items(), key=lambda item: item[1]))
 
-        for ip in active_ips:
-            loop.run_until_complete(register_probe(ip, port, results))
+    loop = asyncio.new_event_loop()
+    results = []
+    for ip in ips_sorted_by_latency:
+        loop.run_until_complete(scan_host(ip, port, results))
     loop.close()
 
     elapsed = time.perf_counter() - started
-    sorted_ips = sorted(results, key=lambda result: ipaddress.ip_address(result["host"]))
     logging.info(f"Scan completed in {elapsed:.2f} seconds")
 
-    return sorted_ips
+    return results
 
 
 if __name__ == "__main__":
