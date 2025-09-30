@@ -395,16 +395,30 @@ pvoutput:
   #                 is 'false', no consumption data will be sent.
   #                 WARNING: If you enable consumption uploading, PVOutput
   #                 will automatically (and incorrectly) calculate your
-  #                 daily exports with taking battery charging into account.
-  #                 Disable consumption to have the daily exports uploaded
-  #                 at end of day.
+  #                 daily exports and imports without taking battery 
+  #                 charging into account.
   consumption: false
+  # exports
+  #   default: true
+  #   description:  If true, the energy exported to the grid will be sent
+  #                 to PVOutput. If false, exports will not be uploaded.
+  #                 If consumption is enabled, then PVOutput will ignore
+  #                 uploaded exports.
+  exports: true
+  # imports
+  #   default: true
+  #   description:  If true, the energy imported from the grid will be
+  #                 sent to PVOutput. If false, imports will not be
+  #                 uploaded. If consumption is enabled, then PVOutput
+  #                 will ignore uploaded imports.
+  imports: true
   # output-hour
   #   default: 23
   #   description:  The hour of the day (20-23) at which the daily totals
   #                 are sent to PVOutput. The default is 23 (11pm). Valid
   #                 values are 20 to 23. The minute is randomly chosen
-  #                 between 51 and 58.
+  #                 between 51 and 58. If you specify -1, daily uploads
+  #                 will be sent at the same frequency as status updates.
   output-hour: 23
   # temperature-topic
   #   default: ""

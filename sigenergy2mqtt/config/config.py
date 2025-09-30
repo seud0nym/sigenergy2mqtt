@@ -107,8 +107,6 @@ class Config:
                             overrides["home-assistant"]["unique-id-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
                             overrides["home-assistant"]["use-simplified-topics"] = check_bool(os.environ[key], key)
-                        case const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-                            check_string(os.environ[key], key, "force", "once", allow_none=True, allow_empty=True)
                         case const.SIGENERGY2MQTT_MODBUS_HOST:
                             overrides["modbus"][0]["host"] = check_host(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_PORT:
@@ -200,8 +198,14 @@ class Config:
                             overrides["mqtt"]["password"] = os.environ[key]
                         case const.SIGENERGY2MQTT_PVOUTPUT_ENABLED:
                             overrides["pvoutput"]["enabled"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
+                            overrides["pvoutput"]["exports"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
+                            overrides["pvoutput"]["imports"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
                             overrides["pvoutput"]["log-level"] = check_log_level(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
+                            overrides["pvoutput"]["output-hour"] = check_int(os.environ[key], key, min=-1, max=23)
                         case const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING:
                             overrides["pvoutput"]["update-debug-logging"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_API_KEY:
