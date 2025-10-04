@@ -170,7 +170,7 @@ class MetricsService(Device):
             logging.debug(f"{self.name} - Publishing empty discovery ({Config.metrics_enabled=} {clean=})")
             info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
         if Config.metrics_enabled:
-            logging.info(f"{self.name} - Publishing discovery")
+            logging.debug(f"{self.name} - Publishing discovery")
             discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         return info
