@@ -81,7 +81,14 @@ class Service(Device):
 
     # endregion
 
-    async def seconds_until_status_upload(self) -> float:
+    def get_response_headers(self, response: requests.Response) -> tuple[int, int, float, float]:
+        limit = int(response.headers["X-Rate-Limit-Limit"])
+        remaining = int(response.headers["X-Rate-Limit-Remaining"])
+        at = float(response.headers["X-Rate-Limit-Reset"])
+        reset = round(at - time.time())
+        return limit, remaining, at, reset
+
+    async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> float:
         url = "https://pvoutput.org/service/r2/getsystem.jsp"
         donator = 0
         current_time = time.time()  # Current time in seconds since epoch
@@ -92,18 +99,27 @@ class Service(Device):
                         Service._interval = 5
                         Service._interval_updated = current_time
                         donator = 1
-                    self.logger.info(f"{self.__class__.__name__} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {donator}")
+                    self.logger.info(
+                        f"{self.__class__.__name__} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {donator}"
+                    )
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Acquiring Status Interval from PVOutput ({url=})")
                     try:
                         with requests.get(url, headers=self.request_headers, timeout=10) as response:
-                            section = re.split(r"[;]", response.text)
-                            interval = int(re.split(r"[,]", section[0])[15])
-                            if interval != Service._interval:
-                                self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
-                                Service._interval = interval
+                            limit, remaining, at, reset = self.get_response_headers(response)
+                            if response.status_code == 200:
+                                section = re.split(r"[;]", response.text)
+                                interval = int(re.split(r"[,]", section[0])[15])
+                                if interval != Service._interval:
+                                    self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
+                                    Service._interval = interval
                                 Service._interval_updated = current_time
-                            donator = int(section[2])
+                                donator = int(section[2])
+                                self.logger.debug(
+                                    f"{self.__class__.__name__} Acquired Status Interval OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                                )
+                            else:
+                                self.logger.warning(f"{self.__class__.__name__} FAILED to acquire Status Interval status_code={response.status_code} reason={response.reason}")
                     except Exception as exc:
                         if Service._interval is None:
                             Service._interval = 5  # Default interval in minutes if not set
@@ -112,7 +128,7 @@ class Service(Device):
                         )
         minutes = int(current_time // 60)  # Total minutes since epoch
         next_boundary = (minutes // Service._interval + 1) * Service._interval  # Next interval boundary
-        next_time = (next_boundary * 60) + randint(0, 15)  # Convert back to seconds with a random offset of up to 15 seconds for variability
+        next_time = (next_boundary * 60) + randint(rand_min, rand_max)  # Convert back to seconds with a random offset for variability
         seconds = 60 if Config.pvoutput.testing else float(next_time - current_time)
         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, donator != 0
@@ -129,10 +145,7 @@ class Service(Device):
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")
                     with requests.post(url, headers=self.request_headers, data=payload, timeout=10) as response:
-                        limit = int(response.headers["X-Rate-Limit-Limit"])
-                        remaining = int(response.headers["X-Rate-Limit-Remaining"])
-                        at = float(response.headers["X-Rate-Limit-Reset"])
-                        reset = round(at - time.time())
+                        limit, remaining, at, reset = self.get_response_headers(response)
                         if response.status_code == 200:
                             uploaded = True
                             self.logger.debug(
@@ -209,9 +222,13 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key] = int(value) if self._decimals == 0 else value
             if datetime_key is not None:
                 payload[datetime_key] = at
-                self._logger.debug(f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key]} into {value_key=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}")
+                self._logger.debug(
+                    f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key]} into {value_key=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                )
             else:
-                self._logger.debug(f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key]} into {value_key=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}")
+                self._logger.debug(
+                    f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key]} into {value_key=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                )
             return True
         else:
             if value_key in payload:
@@ -225,9 +242,13 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key] = int(total) if self._decimals == 0 else round(total, self._decimals)
             if datetime_key is not None:
                 payload[datetime_key] = at
-                self._logger.debug(f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}")
+                self._logger.debug(
+                    f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                )
             else:
-                self._logger.debug(f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}")
+                self._logger.debug(
+                    f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                )
             return True
         else:
             if value_key in payload:
