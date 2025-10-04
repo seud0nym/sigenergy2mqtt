@@ -8,8 +8,8 @@ class PVOutputConfiguration:
     enabled: bool = False
 
     consumption: str | None = None
-    exports: bool = True
-    imports: bool = True
+    exports: bool = False
+    imports: bool = False
 
     extended: dict[str, str] = field(
         default_factory=lambda: {
