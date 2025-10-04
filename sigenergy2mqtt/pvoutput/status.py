@@ -10,6 +10,7 @@ class PVOutputStatusService(Service):
     def __init__(self, logger: logging.Logger):
         super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
 
+        self._previous_payload: dict = None
         self._service_topics: dict[str, ServiceTopics] = {
             "generation": ServiceTopics(self, True, "generation", logger, value_key="v1", averaged=False, decimals=0),
             "consumption": ServiceTopics(self, True if Config.pvoutput.consumption in ("consumption", "imported") else False, "consumption", logger, averaged=False, value_key="v3", decimals=0),
@@ -33,7 +34,15 @@ class PVOutputStatusService(Service):
             while self.online:
                 try:
                     if wait <= 0:
-                        await update_pvoutput(donator)
+                        now = time.localtime()
+                        payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
+                        async with self.lock(timeout=5):
+                            for topic in [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or donator)]:
+                                topic.add_to_payload(payload, self._interval, now)
+                        if ("v1" in payload and payload["v1"]) or ("v3" in payload and payload["v3"]):  # At least one of the values v1, v2, v3 or v4 must be present
+                            await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
+                        else:
+                            self.logger.warning(f"{self.__class__.__name__} No generation or consumption data to upload, skipping...")
                         wait, donator = await self.seconds_until_status_upload()
                     sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
@@ -49,17 +58,6 @@ class PVOutputStatusService(Service):
                         wait = 60
             self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
             return
-
-        async def update_pvoutput(donator: bool = False) -> None:
-            now = time.localtime()
-            payload = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now), "c1": 1}
-            async with self.lock(timeout=5):
-                for topic in [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or donator)]:
-                    topic.add_to_payload(payload, self._interval, now)
-            if ("v1" in payload and payload["v1"]) or ("v3" in payload and payload["v3"]):  # At least one of the values v1, v2, v3 or v4 must be present
-                await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
-            else:
-                self.logger.warning(f"{self.__class__.__name__} No generation or consumption data to upload, skipping...")
 
         tasks = [publish_updates(modbus, mqtt)]
         return tasks
