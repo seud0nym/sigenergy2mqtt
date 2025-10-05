@@ -3,6 +3,7 @@ __all__ = ["MqttClient", "MqttHandler", "mqtt_setup"]
 from .mqtt import MqttClient, MqttHandler
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
+from time import sleep
 from typing import Tuple
 import asyncio
 import logging
@@ -22,12 +23,19 @@ def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.Abstract
         logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} with username {Config.mqtt.username}")
         mqtt_client.username_pw_set(Config.mqtt.username, Config.mqtt.password)
 
-    try:
-        mqtt_client.connect(Config.mqtt.broker, port=Config.mqtt.port)
-        mqtt_client.loop_start()
+    connect_attempts: int = 0
+    while True:
+        connect_attempts += 1
+        try:
+            mqtt_client.connect(Config.mqtt.broker, port=Config.mqtt.port)
+            mqtt_client.loop_start()
 
-        logging.info(f"Connected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}'")
-        return mqtt_client, mqtt_handler
-    except Exception as e:
-        logging.critical(f"Failed to connect to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}': {repr(e)}")
-        raise
+            logging.info(f"Connected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}'")
+            return mqtt_client, mqtt_handler
+        except Exception as e:
+            if connect_attempts < 3:
+                logging.error(f"Error connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)} - Retrying in 30s")
+                sleep(30)
+            else:
+                logging.critical(f"Failed to connect to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)}")
+                raise

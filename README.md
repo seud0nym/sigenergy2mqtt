@@ -78,14 +78,14 @@ Notes:
 - Configure your MQTT broker IP address/host name and Sigenergy IP address/host name as appropriate for your environment. 
 - The number in square brackets after `inverters` is the Device ID as advised by your installer. It is usually `1`. If you have multiple inverters, separate them with commas (e.g. `[ 1,2 ]`)
 - If your MQTT broker does not require authentication, add the option `anonymous: true` under `mqtt`.
-- By default, only entities relating to production, consumption and battery charging/discharging are enabled (all other entities will still appear in Home Assistant, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
-- The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
+- By default, only entities relating to production, consumption and battery charging/discharging are enabled in Home Assistant (all other published entities will still appear, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
+- The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`, and for the Home Assistant add-on, it should be placed in `/config/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
 
 #### Modbus Auto-Discovery
 
 You can automatically discover Sigenergy devices on your network, using either the command line option `--modbus-auto-discovery` or the  environment variable `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`. Both of these take a value of either `once` or `force`:  If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
 
-Auto-discovery is a lengthy process because your local network has to be scanned for potential Modbus hosts, and once detected there are 247 potential device IDs to be scanned on each host. Expect it to to take 3-5 minutes.
+Auto-discovery is a lengthy process because your local network has to be scanned for potential Modbus hosts, and once detected there are 247 potential device IDs to be scanned on each host.
 
 <details>
 <summary>
@@ -174,6 +174,8 @@ Notes:
 
 Environment variables override the configuration file, but *not* command line options.
 
+#### General Configuration Variables
+
 | Name | Description |
 |------|-------------|
 | `SIGENERGY2MQTT_CONFIG` | The path to the JSON configuration file (defaults: `/etc/sigenergy2mqtt.yaml` for Linux, `/data/sigenergy2mqtt.yaml` for Docker and `/config/sigenergy2mqtt.yaml` for Home Assistant) |
@@ -181,6 +183,11 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_DEBUG_SENSOR` | Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG |
 | `SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW` | The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored. |
 | `SIGENERGY2MQTT_NO_METRICS` | Set to 'true' to prevent sigenergy2mqtt from publishing metrics to MQTT. |
+
+#### Home Assistant Configuration Variables
+
+| Name | Description |
+|------|-------------|
 | `SIGENERGY2MQTT_HASS_ENABLED` | Set to 'true' to enable auto-discovery in Home Assistant. |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` | The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant) |
 | `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` | The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen) |
@@ -188,6 +195,11 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` | Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state) |
 | `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` | The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '') |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`| Set to 'true' to e xit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration. |
+
+#### MQTT Configuration Variables
+
+| Name | Description |
+|------|-------------|
 | `SIGENERGY2MQTT_MQTT_BROKER` | The hostname or IP address of an MQTT broker (default: 127.0.0.1) |
 | `SIGENERGY2MQTT_MQTT_PORT` | The listening port of the MQTT broker (default is 1883, unless `--mqtt-tls` or `SIGENERGY2MQTT_MQTT_TLS` is specified, in which case the default is 8883) |
 | `SIGENERGY2MQTT_MQTT_TLS` | Set to 'true' to enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883. |
@@ -196,6 +208,11 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MQTT_USERNAME` | A valid username for the MQTT broker |
 | `SIGENERGY2MQTT_MQTT_PASSWORD` | A valid password for the MQTT broker username |
 | `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+
+#### Modbus Configuration Variables
+
+| Name | Description |
+|------|-------------|
 | `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY` | Controls auto-discovery of Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled. |
 | `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device |
 | `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: 502) |
@@ -208,22 +225,22 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` | If false, write-only entities will not be published to MQTT. Default is true. |
 | `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING` | If true, chunking of Modbus reads will be disabled and each register will be read individually. |
 | `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
-| `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Enable interrogation of a third-party device for production data. |
-| `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` | The name of the module which will be used to obtain third-party device production data. |
-| `SIGENERGY2MQTT_SMARTPORT_HOST` | The IP address or hostname of the third-party device. |
-| `SIGENERGY2MQTT_SMARTPORT_USERNAME` | The username to authenticate to the third-party device. |
-| `SIGENERGY2MQTT_SMARTPORT_PASSWORD` | The password to authenticate to the third-party device. |
-| `SIGENERGY2MQTT_SMARTPORT_PV_POWER` | The sensor class to hold the production data obtained from the third-party device. |
-| `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` | The MQTT topic to which to subscribe to obtain the production data for the third-party device. |
-| `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` | The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts). |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300. |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30. |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` | The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5. |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` | The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1. |
+
+#### PVOutput Configuration Variables
+
+| Name | Description |
+|------|-------------|
 | `SIGENERGY2MQTT_PVOUTPUT_ENABLED` | Set to 'true' to enable status updates to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_API_KEY` | The API Key for PVOutput |
 | `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
 | `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | If specified with a value of 'true' or 'consumption', consumption data will be sent to PVOutput. With a value of 'imported', the energy imported from the grid will be sent as consumption. If not specified or the value is 'false', no consumption data will be sent. |
+| `SIGENERGY2MQTT_PVOUTPUT_EXPORTS` | Set to 'true' to upload export data to PVOutput. |
+| `SIGENERGY2MQTT_PVOUTPUT_IMPORTS` | Set to 'true' to upload import data to PVOutput. |
+| `SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR` | The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 51 and 58. If you specify -1, daily uploads will be sent at the same frequency as status updates. |
 | `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC` | An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput. |
 | `SIGENERGY2MQTT_PVOUTPUT_EXT_V7` | A sensor class name that will be used to populate the v7 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
 | `SIGENERGY2MQTT_PVOUTPUT_EXT_V8` | A sensor class name that will be used to populate the v8 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
@@ -232,6 +249,19 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_PVOUTPUT_EXT_V11` | A sensor class name that will be used to populate the v11 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
 | `SIGENERGY2MQTT_PVOUTPUT_EXT_V12` | A sensor class name that will be used to populate the v12 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
 | `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+
+#### Third Party PV Production Configuration Variables
+
+| Name | Description |
+|------|-------------|
+| `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Enable interrogation of a third-party device for production data. |
+| `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` | The name of the module which will be used to obtain third-party device production data. |
+| `SIGENERGY2MQTT_SMARTPORT_HOST` | The IP address or hostname of the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_USERNAME` | The username to authenticate to the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_PASSWORD` | The password to authenticate to the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_PV_POWER` | The sensor class to hold the production data obtained from the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` | The MQTT topic to which to subscribe to obtain the production data for the third-party device. |
+| `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` | The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts). |
 
 ### Command Line Options
 
@@ -350,6 +380,12 @@ Command line options override both environment variables and the configuration f
                         Enable consumption data to be sent to PVOutput. If specified without a value, or with a value of 'true'
                         or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from  
                         the grid will be sent. If not specified, no consumption data is sent.
+  --pvoutput-exports    Enable to send export data to PVOutput.
+  --pvoutput-imports    Enable to send import data to PVOutput.
+  --pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]
+                        The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). 
+                        Valid values are 20 to 23. The minute is randomly chosen between 51 and 58. If you specify -1, daily 
+                        uploads will be sent at the same frequency as status updates.
   --pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]
                         An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. 
                         If not specified, the temperature will not be sent to PVOutput.

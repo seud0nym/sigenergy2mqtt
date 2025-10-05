@@ -8,6 +8,9 @@ class PVOutputConfiguration:
     enabled: bool = False
 
     consumption: str | None = None
+    exports: bool = False
+    imports: bool = False
+
     extended: dict[str, str] = field(
         default_factory=lambda: {
             "v7": "",
@@ -54,7 +57,9 @@ class PVOutputConfiguration:
                                 case _:
                                     raise ValueError(f"pvoutput.consumption must be 'true', 'false', 'consumption', or 'imports', got '{value}'")
                         case "exports":
-                            logging.warning("The 'exports' option is deprecated and will be removed in a future version.")
+                            self.exports = check_bool(value, f"pvoutput.{field}")
+                        case "imports":
+                            self.imports = check_bool(value, f"pvoutput.{field}")
                         case "interval-minutes":
                             logging.warning(
                                 "The 'interval-minutes' option is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org."
@@ -62,7 +67,7 @@ class PVOutputConfiguration:
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
                         case "output-hour":
-                            self.output_hour = check_int(value, f"pvoutput.{field}", min=0 if self.testing else 20, max=23)
+                            self.output_hour = check_int(value, f"pvoutput.{field}", min=20, max=23, allowed=-1)
                         case "system-id":
                             self.system_id = check_string(str(value), f"pvoutput.{field}", allow_none=(not self.enabled), allow_empty=(not self.enabled))
                             if self.system_id == "testing":

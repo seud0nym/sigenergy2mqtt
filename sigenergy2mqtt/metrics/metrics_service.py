@@ -27,6 +27,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_reads_sec": {
                 "platform": "sensor",
                 "name": "Modbus Reads/second",
+                "default_entity_id": "sigenergy2mqtt_modbus_reads_sec",
                 "object_id": "sigenergy2mqtt_modbus_reads_sec",
                 "unique_id": "sigenergy2mqtt_modbus_reads_sec",
                 "icon": "mdi:timer-play-outline",
@@ -36,6 +37,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_read_errors": {
                 "platform": "sensor",
                 "name": "Modbus Read Errors",
+                "default_entity_id": "sigenergy2mqtt_modbus_read_errors",
                 "object_id": "sigenergy2mqtt_modbus_read_errors",
                 "unique_id": "sigenergy2mqtt_modbus_read_errors",
                 "icon": "mdi:counter",
@@ -45,6 +47,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_read_max": {
                 "platform": "sensor",
                 "name": "Modbus Read Max",
+                "default_entity_id": "sigenergy2mqtt_modbus_read_max",
                 "object_id": "sigenergy2mqtt_modbus_read_max",
                 "unique_id": "sigenergy2mqtt_modbus_read_max",
                 "icon": "mdi:timer-plus-outline",
@@ -56,6 +59,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_read_mean": {
                 "platform": "sensor",
                 "name": "Modbus Read Mean",
+                "default_entity_id": "sigenergy2mqtt_modbus_read_mean",
                 "object_id": "sigenergy2mqtt_modbus_read_mean",
                 "unique_id": "sigenergy2mqtt_modbus_read_mean",
                 "icon": "mdi:timer-outline",
@@ -67,6 +71,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_read_min": {
                 "platform": "sensor",
                 "name": "Modbus Read Min",
+                "default_entity_id": "sigenergy2mqtt_modbus_read_min",
                 "object_id": "sigenergy2mqtt_modbus_read_min",
                 "unique_id": "sigenergy2mqtt_modbus_read_min",
                 "icon": "mdi:timer-minus-outline",
@@ -78,6 +83,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_write_errors": {
                 "platform": "sensor",
                 "name": "Modbus Write Errors",
+                "default_entity_id": "sigenergy2mqtt_modbus_write_errors",
                 "object_id": "sigenergy2mqtt_modbus_write_errors",
                 "unique_id": "sigenergy2mqtt_modbus_write_errors",
                 "icon": "mdi:counter",
@@ -87,6 +93,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_write_max": {
                 "platform": "sensor",
                 "name": "Modbus Write Max",
+                "default_entity_id": "sigenergy2mqtt_modbus_write_max",
                 "object_id": "sigenergy2mqtt_modbus_write_max",
                 "unique_id": "sigenergy2mqtt_modbus_write_max",
                 "icon": "mdi:timer-plus-outline",
@@ -98,6 +105,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_write_mean": {
                 "platform": "sensor",
                 "name": "Modbus Write Mean",
+                "default_entity_id": "sigenergy2mqtt_modbus_write_mean",
                 "object_id": "sigenergy2mqtt_modbus_write_mean",
                 "unique_id": "sigenergy2mqtt_modbus_write_mean",
                 "icon": "mdi:timer-outline",
@@ -109,6 +117,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_write_min": {
                 "platform": "sensor",
                 "name": "Modbus Write Min",
+                "default_entity_id": "sigenergy2mqtt_modbus_write_min",
                 "object_id": "sigenergy2mqtt_modbus_write_min",
                 "unique_id": "sigenergy2mqtt_modbus_write_min",
                 "icon": "mdi:timer-minus-outline",
@@ -120,6 +129,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_locks": {
                 "platform": "sensor",
                 "name": "Modbus Active Locks",
+                "default_entity_id": "sigenergy2mqtt_modbus_locks",
                 "object_id": "sigenergy2mqtt_modbus_locks",
                 "unique_id": "sigenergy2mqtt_modbus_locks",
                 "icon": "mdi:eye-lock",
@@ -129,6 +139,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_started": {
                 "platform": "sensor",
                 "name": "Started",
+                "default_entity_id": "sigenergy2mqtt_started",
                 "object_id": "sigenergy2mqtt_started",
                 "unique_id": "sigenergy2mqtt_started",
                 "device_class": "timestamp",
@@ -140,6 +151,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_protocol": {
                 "platform": "sensor",
                 "name": "Protocol Version",
+                "default_entity_id": "sigenergy2mqtt_modbus_protocol",
                 "object_id": "sigenergy2mqtt_modbus_protocol",
                 "unique_id": "sigenergy2mqtt_modbus_protocol",
                 "entity_category": "diagnostic",
@@ -149,6 +161,7 @@ class MetricsService(Device):
             "sigenergy2mqtt_modbus_protocol_published": {
                 "platform": "sensor",
                 "name": "Protocol Published",
+                "default_entity_id": "sigenergy2mqtt_modbus_protocol_published",
                 "object_id": "sigenergy2mqtt_modbus_protocol_published",
                 "unique_id": "sigenergy2mqtt_modbus_protocol_published",
                 "entity_category": "diagnostic",
@@ -170,7 +183,7 @@ class MetricsService(Device):
             logging.debug(f"{self.name} - Publishing empty discovery ({Config.metrics_enabled=} {clean=})")
             info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
         if Config.metrics_enabled:
-            logging.info(f"{self.name} - Publishing discovery")
+            logging.debug(f"{self.name} - Publishing discovery")
             discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         return info
@@ -196,7 +209,7 @@ class MetricsService(Device):
             return f"{value:.2f}" if isinstance(value, float) else str(value)
 
         async def publish_updates(modbus: Any, mqtt: MqttClient) -> None:
-            logging.info(f"{self.name} - Commenced")
+            logging.info(f"{self.name} Service Commenced")
             while self.online:
                 mqtt.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
                 try:
@@ -210,15 +223,15 @@ class MetricsService(Device):
                 except asyncio.TimeoutError:
                     logging.warning(f"{self.name} - Failed to acquire lock within timeout")
                 except Exception as e:
-                    logging.error(f"{self.name} - Error during metrics publish: {repr(e)}")
+                    logging.error(f"{self.name} - Error during publish: {repr(e)}")
             mqtt.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
-            logging.info(f"{self.name} - Completed: Flagged as offline ({self.online=})")
+            logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
             return
 
         if Config.metrics_enabled:
-            logging.debug(f"{self.name} - Scheduling metrics updates")
+            logging.debug(f"{self.name} - Scheduling updates")
             tasks = [publish_updates(modbus, mqtt)]
         else:
-            logging.debug(f"{self.name} - Metrics disabled, no tasks scheduled")
+            logging.debug(f"{self.name} - Disabled, no tasks scheduled")
             tasks = []
         return tasks

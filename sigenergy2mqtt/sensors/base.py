@@ -52,7 +52,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
         self["platform"] = "sensor"
         self["name"] = name
-        self["object_id"] = object_id
+        self["default_entity_id"] = object_id # Replaces object_id which will stop working in Home Assistant Core 2026.4
+        self["object_id"] = object_id # Deprecated in Home Assistant Core 2025.10
         self["unique_id"] = unique_id
         self["device_class"] = device_class
         self["icon"] = icon

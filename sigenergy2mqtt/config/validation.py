@@ -68,7 +68,7 @@ def check_host(value, source):
         raise ValueError(f"{source} does not appear to be a valid IP address or hostname")
 
 
-def check_int(value, source, min: int = None, max: int = None, allow_none: bool = False):
+def check_int(value, source, min: int = None, max: int = None, allowed: int = None, allow_none: bool = False):
     if allow_none and value is None:
         return value
     if isinstance(value, str):
@@ -76,12 +76,9 @@ def check_int(value, source, min: int = None, max: int = None, allow_none: bool 
             value = int(value)
         except ValueError:
             raise ValueError(f"{source} must be an integer")
-        if min is not None and value < min:
-            raise ValueError(f"{source} must be an integer greater than or equal to {min}")
-        if max is not None and value > max:
-            raise ValueError(f"{source} must be an integer less than or equal to {max}")
-        return value
-    elif isinstance(value, int):
+    if isinstance(value, int):
+        if allowed is not None and value == allowed:
+            return value
         if min is not None and value < min:
             raise ValueError(f"{source} must be an integer greater than or equal to {min}")
         if max is not None and value > max:

@@ -445,6 +445,27 @@ _parser.add_argument(
     help="Enable to send consumption data to PVOutput. If specified without a value, or with a value of 'true' or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from the grid will be sent as consumption. If not specified, no consumption data is sent.",
 )
 _parser.add_argument(
+    "--pvoutput-exports",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS,
+    help="Enable to send export data to PVOutput.",
+)
+_parser.add_argument(
+    "--pvoutput-imports",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS,
+    help="Enable to send import data to PVOutput.",
+)
+_parser.add_argument(
+    "--pvoutput-output-hour",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR, None),
+    help="The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 51 and 58. If you specify -1, daily uploads will be sent at the same frequency as status updates.",
+)
+_parser.add_argument(
     "--pvoutput-interval",
     nargs="?",
     action="store",
@@ -578,6 +599,8 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_MQTT_TLS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS_INSECURE
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
+        or arg == const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS
+        or arg == const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
         or arg == const.SIGENERGY2MQTT_NO_METRICS
         or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
