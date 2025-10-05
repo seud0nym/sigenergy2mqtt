@@ -209,7 +209,7 @@ class MetricsService(Device):
             return f"{value:.2f}" if isinstance(value, float) else str(value)
 
         async def publish_updates(modbus: Any, mqtt: MqttClient) -> None:
-            logging.info(f"{self.name} - Commenced")
+            logging.info(f"{self.name} Service Commenced")
             while self.online:
                 mqtt.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
                 try:
@@ -223,15 +223,15 @@ class MetricsService(Device):
                 except asyncio.TimeoutError:
                     logging.warning(f"{self.name} - Failed to acquire lock within timeout")
                 except Exception as e:
-                    logging.error(f"{self.name} - Error during metrics publish: {repr(e)}")
+                    logging.error(f"{self.name} - Error during publish: {repr(e)}")
             mqtt.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
-            logging.info(f"{self.name} - Completed: Flagged as offline ({self.online=})")
+            logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
             return
 
         if Config.metrics_enabled:
-            logging.debug(f"{self.name} - Scheduling metrics updates")
+            logging.debug(f"{self.name} - Scheduling updates")
             tasks = [publish_updates(modbus, mqtt)]
         else:
-            logging.debug(f"{self.name} - Metrics disabled, no tasks scheduled")
+            logging.debug(f"{self.name} - Disabled, no tasks scheduled")
             tasks = []
         return tasks

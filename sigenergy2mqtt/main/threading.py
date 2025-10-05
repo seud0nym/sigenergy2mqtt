@@ -47,7 +47,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
             tasks.extend(device_tasks)
 
     if len(tasks) > 0:
-        logging.info(f"{config.description} - Sensor updates commenced")
+        logging.info(f"{config.description} - Sensor updates commenced ({len(tasks)} asyncio {'task' if len(tasks) == 1 else 'tasks'} scheduled)")
         result = asyncio.gather(*tasks, return_exceptions=True)
         config.online(result)
         try:
