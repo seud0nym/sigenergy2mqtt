@@ -1,4 +1,6 @@
-from .service import Service, ServiceTopics, Topic
+from .service import Service
+from .service_topics import ServiceTopics
+from .topic import Topic
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import randint

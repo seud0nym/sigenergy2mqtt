@@ -1,4 +1,5 @@
-from .service import Service, ServiceTopics
+from .service_topics import ServiceTopics
+from .service import Service
 from sigenergy2mqtt.config import Config
 from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
