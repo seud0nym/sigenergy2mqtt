@@ -1,9 +1,10 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED"]
+__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED", "CONSUMPTION", "IMPORTED", "OutputField", "StatusField"]
 
 
 from . import const
 from .config import Config
 from .modbus_config import RegisterAccess, SmartPortConfig
+from .pvoutput_config import CONSUMPTION, IMPORTED, OutputField, StatusField
 from .version import SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
 from pathlib import Path
 import argparse

@@ -3,7 +3,7 @@ __all__ = ["get_pvoutput_services"]
 from .output import PVOutputOutputService
 from .status import PVOutputStatusService
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, CONSUMPTION, IMPORTED, OutputField, StatusField
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.main.thread_config import ThreadConfig
 from sigenergy2mqtt.sensors.base import Sensor
@@ -28,28 +28,32 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
 
     for device in [device for config in configs for device in config.devices]:
         for sensor in [sensor for sensor in device.get_all_sensors().values() if sensor.publishable and sensor.state_topic is not None]:
-            if isinstance(sensor, TotalLifetimePVEnergy):
-                status.register("generation", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, TotalLoadConsumption) and Config.pvoutput.consumption == "consumption":
-                status.register("consumption", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, PlantTotalImportedEnergy) and Config.pvoutput.consumption == "imported":
-                status.register("consumption", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, TotalDailyPVEnergy):
-                output.register("generation", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, TotalLoadDailyConsumption) and Config.pvoutput.consumption == "consumption":
-                output.register("consumption", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, GridSensorDailyImportEnergy):
-                if Config.pvoutput.consumption == "imported":
-                    output.register("consumption", sensor.state_topic, unit2gain(sensor))
-                output.register("imports", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, GridSensorDailyExportEnergy):
-                output.register("exports", sensor.state_topic, unit2gain(sensor))
-            if isinstance(sensor, PlantPVPower):
-                plant_pv_power = sensor
-            if isinstance(sensor, TotalPVPower):
-                total_pv_power = sensor
-            if isinstance(sensor, (PVVoltageSensor, EnphaseVoltage)):
-                status.register("voltage", sensor.state_topic)
+            match sensor:
+                case GridSensorDailyExportEnergy():
+                    output.register(OutputField.EXPORTS, sensor.state_topic, unit2gain(sensor))
+                case GridSensorDailyImportEnergy():
+                    if Config.pvoutput.consumption == IMPORTED:
+                        output.register(OutputField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                    output.register(OutputField.IMPORTS, sensor.state_topic, unit2gain(sensor))
+                case PlantPVPower():
+                    plant_pv_power = sensor
+                case PlantTotalImportedEnergy():
+                    if Config.pvoutput.consumption == IMPORTED:
+                        status.register(StatusField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                case PVVoltageSensor() | EnphaseVoltage():
+                    status.register(StatusField.VOLTAGE, sensor.state_topic)
+                case TotalDailyPVEnergy():
+                    output.register(OutputField.GENERATION, sensor.state_topic, unit2gain(sensor))
+                case TotalLifetimePVEnergy():
+                    status.register(StatusField.GENERATION, sensor.state_topic, unit2gain(sensor))
+                case TotalLoadConsumption():
+                    if Config.pvoutput.consumption == CONSUMPTION:
+                        status.register(StatusField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                case TotalLoadDailyConsumption():
+                    if Config.pvoutput.consumption == CONSUMPTION:
+                        output.register(OutputField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                case TotalPVPower():
+                    total_pv_power = sensor
             for k, v in donation.items():
                 if sensor.__class__.__name__.lower() == v.lower():
                     if sensor._data_type == ModbusClient.DATATYPE.STRING:
@@ -58,12 +62,12 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                         status.register(k, sensor.state_topic, 1.0)
 
     if total_pv_power is not None:
-        output.register("power", total_pv_power.state_topic, unit2gain(total_pv_power))
+        output.register(OutputField.POWER, total_pv_power.state_topic, unit2gain(total_pv_power))
     elif plant_pv_power is not None:
-        output.register("power", plant_pv_power.state_topic, unit2gain(plant_pv_power))
+        output.register(OutputField.POWER, plant_pv_power.state_topic, unit2gain(plant_pv_power))
 
     if Config.pvoutput.temperature_topic:
-        status.register("temperature", Config.pvoutput.temperature_topic)
+        status.register(StatusField.TEMPERATURE, Config.pvoutput.temperature_topic)
 
     return [status, output]
 
