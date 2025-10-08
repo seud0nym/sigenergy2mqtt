@@ -10,7 +10,7 @@ from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import PVVoltageSensor
 from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
-from sigenergy2mqtt.sensors.plant_read_only import PlantPVPower, PlantTotalImportedEnergy, TotalLoadConsumption, TotalLoadDailyConsumption
+from sigenergy2mqtt.sensors.plant_read_only import ESSTotalChargedEnergy, ESSTotalDischargedEnergy, PlantBatterySoC, PlantPVPower, PlantRatedEnergyCapacity, PlantTotalImportedEnergy, TotalLoadConsumption, TotalLoadDailyConsumption
 import logging
 
 
@@ -29,14 +29,22 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     for device in [device for config in configs for device in config.devices]:
         for sensor in [sensor for sensor in device.get_all_sensors().values() if sensor.publishable and sensor.state_topic is not None]:
             match sensor:
+                case ESSTotalChargedEnergy():
+                    status.register(StatusField.BATTERY_CHARGED, sensor.state_topic, unit2gain(sensor))
+                case ESSTotalDischargedEnergy():
+                    status.register(StatusField.BATTERY_DISCHARGED, sensor.state_topic, unit2gain(sensor))
                 case GridSensorDailyExportEnergy():
                     output.register(OutputField.EXPORTS, sensor.state_topic, unit2gain(sensor))
                 case GridSensorDailyImportEnergy():
                     if Config.pvoutput.consumption == IMPORTED:
                         output.register(OutputField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
                     output.register(OutputField.IMPORTS, sensor.state_topic, unit2gain(sensor))
+                case PlantBatterySoC():
+                    status.register(StatusField.BATTERY_SOC, sensor.state_topic)
                 case PlantPVPower():
                     plant_pv_power = sensor
+                case PlantRatedEnergyCapacity():
+                    status.register(StatusField.BATTERY_CAPACITY, sensor.state_topic, unit2gain(sensor))
                 case PlantTotalImportedEnergy():
                     if Config.pvoutput.consumption == IMPORTED:
                         status.register(StatusField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))

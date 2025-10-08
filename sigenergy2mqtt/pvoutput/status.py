@@ -23,6 +23,11 @@ class PVOutputStatusService(Service):
             StatusField.V10: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V10.value] else False, "v10", logger, value_key=StatusField.V10, requires_donation=True),
             StatusField.V11: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V11.value] else False, "v11", logger, value_key=StatusField.V11, requires_donation=True),
             StatusField.V12: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V12.value] else False, "v12", logger, value_key=StatusField.V12, requires_donation=True),
+            StatusField.BATTERY_SOC: ServiceTopics(self, True, "SoC", logger, value_key=StatusField.BATTERY_SOC, decimals=1),
+            StatusField.BATTERY_CAPACITY: ServiceTopics(self, True, "capacity", logger, averaged=False, value_key=StatusField.BATTERY_CAPACITY),
+            StatusField.BATTERY_CHARGED: ServiceTopics(self, True, "charged", logger, averaged=False, value_key=StatusField.BATTERY_CHARGED),
+            StatusField.BATTERY_DISCHARGED: ServiceTopics(self, True, "discharged", logger, averaged=False, value_key=StatusField.BATTERY_DISCHARGED),
+            # StatusField.BATTERY_STATUS: ServiceTopics(self, True, "status", logger, value_key=StatusField.BATTERY_STATUS.value), # values 0-4?? https://forum.pvoutput.org/t/batteries-on-pvo/8287/8
         }
 
     def register(self, key: StatusField | str, topic: str, gain: float = 1.0) -> None:
