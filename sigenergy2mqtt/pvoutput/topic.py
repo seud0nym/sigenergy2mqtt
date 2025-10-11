@@ -8,6 +8,8 @@ class Topic:
     gain: float
     state: float = 0.0
     timestamp: time.struct_time = None
+    previous_state: float = None
+    previous_timestamp: time.struct_time = None
 
     @staticmethod
     def json_decoder(obj):

@@ -10,6 +10,7 @@ IMPORTED: Final = "imported"
 
 
 class StatusField(StrEnum):
+    BATTERY_POWER = "b1"
     BATTERY_SOC = "b2"
     BATTERY_CAPACITY = "b3"
     BATTERY_CHARGED = "b4"

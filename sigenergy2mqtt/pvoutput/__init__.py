@@ -2,6 +2,7 @@ __all__ = ["get_pvoutput_services"]
 
 from .output import PVOutputOutputService
 from .status import PVOutputStatusService
+from .topic import Topic
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, CONSUMPTION, IMPORTED, OutputField, StatusField
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
@@ -17,49 +18,49 @@ import logging
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     logger = logging.getLogger("pvoutput")
     logger.setLevel(Config.pvoutput.log_level)
-
-    status = PVOutputStatusService(logger)
-    output = PVOutputOutputService(logger)
-
+    
     plant_pv_power: PlantPVPower = None
     total_pv_power: TotalPVPower = None
 
     donation = {k: v for k, v in Config.pvoutput.extended.items() if v != ""}
 
+    status_topics: dict[StatusField, list[Topic]] = {field: [] for field in StatusField}
+    output_topics: dict[OutputField, list[Topic]] = {field: [] for field in OutputField}
+
     for device in [device for config in configs for device in config.devices]:
         for sensor in [sensor for sensor in device.get_all_sensors().values() if sensor.publishable and sensor.state_topic is not None]:
             match sensor:
                 case ESSTotalChargedEnergy():
-                    status.register(StatusField.BATTERY_CHARGED, sensor.state_topic, unit2gain(sensor))
+                    status_topics[StatusField.BATTERY_CHARGED].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case ESSTotalDischargedEnergy():
-                    status.register(StatusField.BATTERY_DISCHARGED, sensor.state_topic, unit2gain(sensor))
+                    status_topics[StatusField.BATTERY_DISCHARGED].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case GridSensorDailyExportEnergy():
-                    output.register(OutputField.EXPORTS, sensor.state_topic, unit2gain(sensor))
+                    output_topics[OutputField.EXPORTS].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case GridSensorDailyImportEnergy():
                     if Config.pvoutput.consumption == IMPORTED:
-                        output.register(OutputField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
-                    output.register(OutputField.IMPORTS, sensor.state_topic, unit2gain(sensor))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
+                    output_topics[OutputField.IMPORTS].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case PlantBatterySoC():
-                    status.register(StatusField.BATTERY_SOC, sensor.state_topic)
+                    status_topics[StatusField.BATTERY_SOC].append(Topic(sensor.state_topic))
                 case PlantPVPower():
                     plant_pv_power = sensor
                 case PlantRatedEnergyCapacity():
-                    status.register(StatusField.BATTERY_CAPACITY, sensor.state_topic, unit2gain(sensor))
+                    status_topics[StatusField.BATTERY_CAPACITY].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case PlantTotalImportedEnergy():
                     if Config.pvoutput.consumption == IMPORTED:
-                        status.register(StatusField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                        status_topics[StatusField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case PVVoltageSensor() | EnphaseVoltage():
-                    status.register(StatusField.VOLTAGE, sensor.state_topic)
+                    status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic))
                 case TotalDailyPVEnergy():
-                    output.register(OutputField.GENERATION, sensor.state_topic, unit2gain(sensor))
+                    output_topics[OutputField.GENERATION].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case TotalLifetimePVEnergy():
-                    status.register(StatusField.GENERATION, sensor.state_topic, unit2gain(sensor))
+                    status_topics[StatusField.GENERATION].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case TotalLoadConsumption():
                     if Config.pvoutput.consumption == CONSUMPTION:
-                        status.register(StatusField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                        status_topics[StatusField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case TotalLoadDailyConsumption():
                     if Config.pvoutput.consumption == CONSUMPTION:
-                        output.register(OutputField.CONSUMPTION, sensor.state_topic, unit2gain(sensor))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case TotalPVPower():
                     total_pv_power = sensor
             for k, v in donation.items():
@@ -67,15 +68,18 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if sensor._data_type == ModbusClient.DATATYPE.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
-                        status.register(k, sensor.state_topic, 1.0)
+                        status_topics[k].append(Topic(sensor.state_topic, 1.0))
 
     if total_pv_power is not None:
-        output.register(OutputField.POWER, total_pv_power.state_topic, unit2gain(total_pv_power))
+        output_topics[OutputField.POWER].append(Topic(total_pv_power.state_topic, unit2gain(total_pv_power)))
     elif plant_pv_power is not None:
-        output.register(OutputField.POWER, plant_pv_power.state_topic, unit2gain(plant_pv_power))
+        output_topics[OutputField.POWER].append(Topic(plant_pv_power.state_topic, unit2gain(plant_pv_power)))
 
     if Config.pvoutput.temperature_topic:
-        status.register(StatusField.TEMPERATURE, Config.pvoutput.temperature_topic)
+        status_topics[StatusField.TEMPERATURE].append(Topic(Config.pvoutput.temperature_topic))
+
+    status = PVOutputStatusService(logger, status_topics)
+    output = PVOutputOutputService(logger, output_topics)
 
     return [status, output]
 

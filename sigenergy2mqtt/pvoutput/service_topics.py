@@ -1,10 +1,20 @@
 from .service import Service
 from .topic import Topic
+from enum import Flag, auto
+from pathlib import Path
 from sigenergy2mqtt.config import Config, OutputField, StatusField
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any
+import json
 import logging
 import time
+
+
+class Calculation(Flag):
+    SUM = auto()
+    AVERAGE = auto()
+    DIFFERENCE = auto()
+    PEAK = auto()
 
 
 class ServiceTopics(dict[str, Topic]):
@@ -14,24 +24,50 @@ class ServiceTopics(dict[str, Topic]):
         enabled: bool,
         name: str,
         logger: logging.Logger,
-        requires_donation: bool = False,
-        averaged: bool = True,
         value_key: str = None,
         datetime_key: str = None,
+        calculation: Calculation = Calculation.SUM,
         decimals: int = 0,
-        bypass_updating_check: bool = False,
+        requires_donation: bool = False,
     ):
-        self._last_update_warning: float = None
-        self._service = service
-        self._enabled = enabled
-        self._name = name
-        self._logger = logger
-        self._requires_donation = requires_donation
-        self._averaged = averaged
-        self._value_key = value_key
+        self._bypass_updating_check = Calculation.PEAK in calculation
+        self._calculation = calculation
         self._datetime_key = datetime_key
         self._decimals = decimals
-        self._bypass_updating_check = bypass_updating_check
+        self._enabled = enabled
+        self._last_update_warning: float = None
+        self._logger = logger
+        self._name = name
+        self._requires_donation = requires_donation
+        self._service = service
+        self._value_key = value_key
+
+        if calculation & (Calculation.DIFFERENCE | Calculation.PEAK):
+            self._persistent_state_file = Path(Config.persistent_state_path, f"{service.unique_id}-{name}.state")
+            if self._persistent_state_file.is_file():
+                fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
+                now = time.localtime()
+                if fmt.tm_yday == now.tm_yday:
+                    with self._persistent_state_file.open("r") as f:
+                        try:
+                            saved: ServiceTopics = json.load(f, object_hook=Topic.json_decoder)
+                            logger.debug(f"{service.__class__.__name__} Loaded {self._persistent_state_file}")
+                            for topic in saved.values():
+                                if topic.topic is not None:
+                                    if topic.topic not in self:
+                                        logger.warning(f"{self.__class__.__name__} IGNORED saved {name} topic {topic.topic} - not registered")
+                                    else:
+                                        self[topic.topic] = topic
+                                        logger.debug(
+                                            f"{self.__class__.__name__} Restored {name} topic {topic.topic} (gain={topic.gain}) with {topic.state=} at {time.strftime('%H:%M', topic.timestamp) if topic.timestamp else 'None'}"
+                                        )
+                        except ValueError as error:
+                            logger.warning(f"{service.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
+                else:
+                    logger.debug(f"{service.__class__.__name__} Ignored {self._persistent_state_file} because it is stale ({fmt})")
+                    self._persistent_state_file.unlink(missing_ok=True)
+            else:
+                logger.debug(f"{service.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
 
     @property
     def enabled(self) -> bool:
@@ -89,9 +125,9 @@ class ServiceTopics(dict[str, Topic]):
 
     def add_to_payload(self, payload: dict[str, any], interval_minutes: int, now: time.struct_time) -> bool:
         if self._bypass_updating_check or self.check_is_updating(interval_minutes, now):
-            if self._averaged:
+            if Calculation.AVERAGE in self._calculation:
                 return self._average_into(payload, self._value_key, self._datetime_key)
-            else:
+            else:  # SUM
                 return self._sum_into(payload, self._value_key, self._datetime_key)
         else:
             return False
@@ -107,7 +143,16 @@ class ServiceTopics(dict[str, Topic]):
         total: float = 0.0
         for value in self.values():
             if value.timestamp is not None and (not exclude_zero or value.state > 0.0):
-                total += value.state * value.gain
+                if Calculation.DIFFERENCE in self._calculation:
+                    if value.previous_state is not None and value.previous_timestamp is not None and value.timestamp.tm_yday == value.previous_timestamp.tm_yday:
+                        state = value.state - value.previous_state
+                        value.previous_state = value.state
+                        value.previous_timestamp = value.timestamp
+                    else:
+                        continue
+                else:
+                    state = value.state
+                total += state * value.gain
                 at = time.strftime("%H:%M", value.timestamp)
                 count += 1
         if count > 0:
@@ -138,20 +183,24 @@ class ServiceTopics(dict[str, Topic]):
         else:
             return False
 
-    def register(self, topic: str, gain: float) -> bool:
+    def register(self, topic: Topic) -> None:
         if self.enabled:
-            if topic is None or topic == "" or topic.isspace():
-                self._logger.debug(f"{self._service.__class__.__name__} Ignored subscription request for empty topic")
-            elif topic not in self:
-                self[topic] = Topic(topic, gain)
-                self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic} ({'averaged' if self._averaged else 'summed'} {gain=})")
+            if topic is None or topic.topic == "" or topic.topic.isspace():
+                self._logger.warning(f"{self._service.__class__.__name__} IGNORED subscription request for empty topic")
+            elif topic.topic in self:
+                self[topic.topic] = topic
+                self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic.topic} ({self._calculation} {topic.gain=})")
+            else:
+                self._logger.warning(f"{self._service.__class__.__name__} IGNORED {self._name} topic: {topic.topic} ({self._calculation} {topic.gain=}) because it is not registered")
         else:
-            self._logger.debug(f"{self._service.__class__.__name__} Ignored subscription request for '{topic}' because {self._name} uploading is disabled")
+            self._logger.debug(f"{self._service.__class__.__name__} IGNORED subscription request for '{topic}' because {self._name} uploading is disabled")
 
     def reset(self) -> None:
         for value in self.values():
             value.state = 0.0
             value.timestamp = time.localtime()
+            value.previous_state = None
+            value.previous_timestamp = None
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
         for topic in self.keys():
@@ -163,13 +212,18 @@ class ServiceTopics(dict[str, Topic]):
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if self.enabled:
-            if Config.pvoutput.update_debug_logging:
-                self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from '{topic}' {value=}")
             state = value if isinstance(value, float) else float(value)
-            if state >= 0.0:
+            if state and (Calculation.PEAK not in self._calculation or state > self[topic].state):
+                if Config.pvoutput.update_debug_logging:
+                    self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from '{topic}' {value=}")
                 async with self._service.lock(timeout=1):
                     self[topic].state = state
                     self[topic].timestamp = time.localtime()
+                    if self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK):
+                        with self._persistent_state_file.open("w") as f:
+                            json.dump(self, f, default=Topic.json_encoder)
+            elif Config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
+                self._logger.debug(f"{self._service.__class__.__name__} Ignored {self._name} from '{topic}': {state=} (<= Previous peak={self[topic].state})")
             return True
         else:
             return False
