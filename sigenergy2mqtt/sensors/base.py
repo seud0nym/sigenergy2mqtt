@@ -52,8 +52,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
         self["platform"] = "sensor"
         self["name"] = name
-        self["default_entity_id"] = object_id # Replaces object_id which will stop working in Home Assistant Core 2026.4
-        self["object_id"] = object_id # Deprecated in Home Assistant Core 2025.10
+        self["object_id"] = object_id
         self["unique_id"] = unique_id
         self["device_class"] = device_class
         self["icon"] = icon
@@ -325,6 +324,9 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         if self._debug_logging:
             logging.debug(f"{self.__class__.__name__} Getting discovery")
         components = self.get_discovery_components()
+        for config in components.values():
+            if "object_id" in config:
+                config["default_entity_id"] = f"{config['platform']}.{config['object_id']}"
         if self.publishable and not Config.clean:
             if self._persistent_publish_state_file.exists():
                 self._persistent_publish_state_file.unlink(missing_ok=True)

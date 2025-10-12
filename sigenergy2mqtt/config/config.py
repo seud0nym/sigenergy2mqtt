@@ -230,6 +230,8 @@ class Config:
                             overrides["pvoutput"]["v11"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
                         case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
                             overrides["pvoutput"]["v12"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
+                            pass  # Handled above
                         case _:
                             logging.warning(f"UNKNOWN env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 except Exception as e:
