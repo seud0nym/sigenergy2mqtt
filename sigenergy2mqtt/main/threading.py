@@ -9,8 +9,9 @@ from typing import Awaitable, Callable, Iterable, List
 import asyncio
 import concurrent.futures
 import logging
+import secrets
+import string
 import threading
-import uuid
 
 
 async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop):
@@ -24,7 +25,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
         modbus_client = None
     else:
         modbus_client = await ModbusClientFactory.get_client(config.host, config.port)
-    mqtt_client_id = f"sigenergy2mqtt_{uuid.uuid4().hex[:8]}_{config.description}"
+    mqtt_client_id = f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))}_{config.description}"
 
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
