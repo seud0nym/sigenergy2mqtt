@@ -14,22 +14,24 @@ class PVOutputStatusService(Service):
 
         self._previous_payload: dict = None
         self._service_topics: dict[str, ServiceTopics] = {
-            StatusField.GENERATION: ServiceTopics(self, True, "generation", logger, value_key=StatusField.GENERATION),
-            StatusField.CONSUMPTION: ServiceTopics(self, Config.pvoutput.consumption_enabled, "consumption", logger, value_key=StatusField.CONSUMPTION),
-            StatusField.TEMPERATURE: ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, "temperature", logger, value_key=StatusField.TEMPERATURE, calculation=Calculation.AVERAGE, decimals=1),
-            StatusField.VOLTAGE: ServiceTopics(self, True, "voltage", logger, value_key=StatusField.VOLTAGE, calculation=Calculation.AVERAGE, decimals=1),
-            StatusField.V7: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V7.value] else False, "v7", logger, value_key=StatusField.V7, calculation=Calculation.AVERAGE, requires_donation=True),
-            StatusField.V8: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V8.value] else False, "v8", logger, value_key=StatusField.V8, calculation=Calculation.AVERAGE, requires_donation=True),
-            StatusField.V9: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V9.value] else False, "v9", logger, value_key=StatusField.V9, calculation=Calculation.AVERAGE, requires_donation=True),
-            StatusField.V10: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V10.value] else False, "v10", logger, value_key=StatusField.V10, calculation=Calculation.AVERAGE, requires_donation=True),
-            StatusField.V11: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V11.value] else False, "v11", logger, value_key=StatusField.V11, calculation=Calculation.AVERAGE, requires_donation=True),
-            StatusField.V12: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V12.value] else False, "v12", logger, value_key=StatusField.V12, calculation=Calculation.AVERAGE, requires_donation=True),
-            StatusField.BATTERY_POWER: ServiceTopics(self, True, "battery_power", logger, value_key=StatusField.BATTERY_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE),
-            StatusField.BATTERY_SOC: ServiceTopics(self, True, "battery_soc", logger, value_key=StatusField.BATTERY_SOC),
-            StatusField.BATTERY_CAPACITY: ServiceTopics(self, True, "battery_capacity", logger, value_key=StatusField.BATTERY_CAPACITY),
-            StatusField.BATTERY_CHARGED: ServiceTopics(self, True, "battery_charged", logger, value_key=StatusField.BATTERY_CHARGED),
-            StatusField.BATTERY_DISCHARGED: ServiceTopics(self, True, "battery_discharged", logger, value_key=StatusField.BATTERY_DISCHARGED),
-            # StatusField.BATTERY_STATUS: ServiceTopics(self, True, "status", logger, value_key=StatusField.BATTERY_STATUS.value), # values 0-4?? https://forum.pvoutput.org/t/batteries-on-pvo/8287/8
+            StatusField.GENERATION_ENERGY: ServiceTopics(self, True, logger, value_key=StatusField.GENERATION_ENERGY),
+            StatusField.GENERATION_POWER: ServiceTopics(self, True, logger, value_key=StatusField.GENERATION_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS),
+            StatusField.CONSUMPTION_ENERGY: ServiceTopics(self, Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_ENERGY),
+            StatusField.CONSUMPTION_POWER: ServiceTopics(self, True, logger, value_key=StatusField.CONSUMPTION_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS),
+            StatusField.TEMPERATURE: ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, logger, value_key=StatusField.TEMPERATURE, calculation=Calculation.AVERAGE, decimals=1),
+            StatusField.VOLTAGE: ServiceTopics(self, True, logger, value_key=StatusField.VOLTAGE, calculation=Calculation.AVERAGE, decimals=1),
+            StatusField.V7: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V7.value] else False, logger, value_key=StatusField.V7, calculation=Calculation.AVERAGE, requires_donation=True),
+            StatusField.V8: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V8.value] else False, logger, value_key=StatusField.V8, calculation=Calculation.AVERAGE, requires_donation=True),
+            StatusField.V9: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V9.value] else False, logger, value_key=StatusField.V9, calculation=Calculation.AVERAGE, requires_donation=True),
+            StatusField.V10: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V10.value] else False, logger, value_key=StatusField.V10, calculation=Calculation.AVERAGE, requires_donation=True),
+            StatusField.V11: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V11.value] else False, logger, value_key=StatusField.V11, calculation=Calculation.AVERAGE, requires_donation=True),
+            StatusField.V12: ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V12.value] else False, logger, value_key=StatusField.V12, calculation=Calculation.AVERAGE, requires_donation=True),
+            StatusField.BATTERY_POWER: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS),
+            StatusField.BATTERY_SOC: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_SOC),
+            StatusField.BATTERY_CAPACITY: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CAPACITY),
+            StatusField.BATTERY_CHARGED: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CHARGED),
+            StatusField.BATTERY_DISCHARGED: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_DISCHARGED),
+            # StatusField.BATTERY_STATUS: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_STATUS.value), # values 0-4?? https://forum.pvoutput.org/t/batteries-on-pvo/8287/8
         }
         for field, topic_list in topics.items():
             if field in self._service_topics:
@@ -37,9 +39,6 @@ class PVOutputStatusService(Service):
                     self._service_topics[field].register(topic)
             else:
                 self.logger.warning(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
-
-    def register(self, key: StatusField | str, topic: str, gain: float = 1.0) -> None:
-        self._service_topics[key].register(topic, gain)
 
     def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:

@@ -11,14 +11,23 @@ from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import PVVoltageSensor
 from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
-from sigenergy2mqtt.sensors.plant_read_only import ESSTotalChargedEnergy, ESSTotalDischargedEnergy, PlantBatterySoC, PlantPVPower, PlantRatedEnergyCapacity, PlantTotalImportedEnergy, TotalLoadConsumption, TotalLoadDailyConsumption
+from sigenergy2mqtt.sensors.plant_read_only import (
+    ESSTotalChargedEnergy,
+    ESSTotalDischargedEnergy,
+    PlantBatterySoC,
+    PlantPVPower,
+    PlantRatedEnergyCapacity,
+    PlantTotalImportedEnergy,
+    TotalLoadConsumption,
+    TotalLoadDailyConsumption,
+)
 import logging
 
 
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     logger = logging.getLogger("pvoutput")
     logger.setLevel(Config.pvoutput.log_level)
-    
+
     plant_pv_power: PlantPVPower = None
     total_pv_power: TotalPVPower = None
 
@@ -32,8 +41,10 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
             match sensor:
                 case ESSTotalChargedEnergy():
                     status_topics[StatusField.BATTERY_CHARGED].append(Topic(sensor.state_topic, unit2gain(sensor)))
+                    status_topics[StatusField.BATTERY_POWER].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case ESSTotalDischargedEnergy():
                     status_topics[StatusField.BATTERY_DISCHARGED].append(Topic(sensor.state_topic, unit2gain(sensor)))
+                    status_topics[StatusField.BATTERY_POWER].append(Topic(sensor.state_topic, unit2gain(sensor, negate=True)))
                 case GridSensorDailyExportEnergy():
                     output_topics[OutputField.EXPORTS].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case GridSensorDailyImportEnergy():
@@ -48,16 +59,20 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     status_topics[StatusField.BATTERY_CAPACITY].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case PlantTotalImportedEnergy():
                     if Config.pvoutput.consumption == IMPORTED:
-                        status_topics[StatusField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
+                        status_topics[StatusField.CONSUMPTION_ENERGY].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case PVVoltageSensor() | EnphaseVoltage():
                     status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic))
                 case TotalDailyPVEnergy():
                     output_topics[OutputField.GENERATION].append(Topic(sensor.state_topic, unit2gain(sensor)))
                 case TotalLifetimePVEnergy():
-                    status_topics[StatusField.GENERATION].append(Topic(sensor.state_topic, unit2gain(sensor)))
+                    topic = Topic(sensor.state_topic, unit2gain(sensor))
+                    status_topics[StatusField.GENERATION_ENERGY].append(topic)
+                    status_topics[StatusField.GENERATION_POWER].append(topic)
                 case TotalLoadConsumption():
                     if Config.pvoutput.consumption == CONSUMPTION:
-                        status_topics[StatusField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
+                        topic = Topic(sensor.state_topic, unit2gain(sensor))
+                        status_topics[StatusField.CONSUMPTION_ENERGY].append(topic)
+                        status_topics[StatusField.CONSUMPTION_POWER].append(topic)
                 case TotalLoadDailyConsumption():
                     if Config.pvoutput.consumption == CONSUMPTION:
                         output_topics[OutputField.CONSUMPTION].append(Topic(sensor.state_topic, unit2gain(sensor)))
@@ -71,9 +86,9 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                         status_topics[k].append(Topic(sensor.state_topic, 1.0))
 
     if total_pv_power is not None:
-        output_topics[OutputField.POWER].append(Topic(total_pv_power.state_topic, unit2gain(total_pv_power)))
+        output_topics[OutputField.PEAK_POWER].append(Topic(total_pv_power.state_topic, unit2gain(total_pv_power)))
     elif plant_pv_power is not None:
-        output_topics[OutputField.POWER].append(Topic(plant_pv_power.state_topic, unit2gain(plant_pv_power)))
+        output_topics[OutputField.PEAK_POWER].append(Topic(plant_pv_power.state_topic, unit2gain(plant_pv_power)))
 
     if Config.pvoutput.temperature_topic:
         status_topics[StatusField.TEMPERATURE].append(Topic(Config.pvoutput.temperature_topic))
@@ -84,7 +99,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     return [status, output]
 
 
-def unit2gain(sensor: Sensor) -> float:
+def unit2gain(sensor: Sensor, negate: bool = False) -> float:
     match sensor.unit:
         case UnitOfEnergy.WATT_HOUR | UnitOfPower.WATT:
             gain = 1.0
@@ -94,4 +109,4 @@ def unit2gain(sensor: Sensor) -> float:
             gain = 1000000.0
         case _:
             gain = sensor.gain
-    return gain
+    return gain if negate is False else gain * -1.0

@@ -20,11 +20,11 @@ class PVOutputOutputService(Service):
         self._latest_peak_at: str = None
         self._previous_payload: dict = None
         self._service_topics: dict[str, ServiceTopics] = {
-            OutputField.GENERATION: ServiceTopics(self, False, "generation", logger, value_key=OutputField.GENERATION),
-            OutputField.EXPORTS: ServiceTopics(self, Config.pvoutput.exports, "exports", logger, value_key=OutputField.EXPORTS),
-            OutputField.POWER: ServiceTopics(self, True, "peak_power", logger, value_key=OutputField.POWER, datetime_key="pt", calculation=Calculation.SUM | Calculation.PEAK),
-            OutputField.IMPORTS: ServiceTopics(self, Config.pvoutput.imports, "imports", logger, value_key=OutputField.IMPORTS),
-            OutputField.CONSUMPTION: ServiceTopics(self, Config.pvoutput.consumption_enabled, "consumption", logger, value_key=OutputField.CONSUMPTION),
+            OutputField.GENERATION: ServiceTopics(self, False, logger, value_key=OutputField.GENERATION),
+            OutputField.EXPORTS: ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS),
+            OutputField.PEAK_POWER: ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calculation=Calculation.SUM | Calculation.PEAK),
+            OutputField.IMPORTS: ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS),
+            OutputField.CONSUMPTION: ServiceTopics(self, Config.pvoutput.consumption_enabled, logger, value_key=OutputField.CONSUMPTION),
         }
         for field, topic_list in topics.items():
             if field in self._service_topics:
@@ -130,19 +130,6 @@ class PVOutputOutputService(Service):
                     if matches:
                         break
 
-    def register(self, key: OutputField, topic: str, gain: float = 1.0) -> None:
-        if key == OutputField.POWER:
-            if len(self._service_topics[OutputField.POWER]) == 0:
-                self._service_topics[OutputField.POWER].register(topic, gain)
-            elif topic in self._service_topics[OutputField.POWER]:
-                self.logger.debug(f"{self.__class__.__name__} IGNORED power topic: {topic} - Already registered")
-            else:
-                self.logger.warning(f"{self.__class__.__name__} IGNORED power topic: {topic} - Too many sources? (topics={self._service_topics[OutputField.POWER].keys()})")
-                self._service_topics[OutputField.POWER].enabled = False
-                self.logger.warning(f"{self.__class__.__name__} DISABLED peak power reporting - Cannot determine peak power from multiple systems")
-        else:
-            self._service_topics[key].register(topic, gain)
-
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
             minute: int = randint(51, 58)
@@ -169,9 +156,9 @@ class PVOutputOutputService(Service):
                             self.logger.info(f"{self.__class__.__name__} SKIPPED uploading {payload=} - Unchanged from last update")
                         next = tomorrow
                     elif int(now) % (30 if Config.pvoutput.testing else 900) == 0:
-                        for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.POWER]:
+                        for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.PEAK_POWER]:
                             topic.check_is_updating(5, now_struct)
-                        total, at, _ = self._service_topics[OutputField.POWER].aggregate(exclude_zero=False)
+                        total, at, _ = self._service_topics[OutputField.PEAK_POWER].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
                             self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")

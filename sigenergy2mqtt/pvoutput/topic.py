@@ -5,7 +5,7 @@ import time
 @dataclass
 class Topic:
     topic: str
-    gain: float
+    gain: float = 1.0
     state: float = 0.0
     timestamp: time.struct_time = None
     previous_state: float = None

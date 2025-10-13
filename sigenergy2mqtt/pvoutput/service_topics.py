@@ -15,6 +15,7 @@ class Calculation(Flag):
     AVERAGE = auto()
     DIFFERENCE = auto()
     PEAK = auto()
+    CONVERT_TO_WATTS = auto()
 
 
 class ServiceTopics(dict[str, Topic]):
@@ -22,9 +23,8 @@ class ServiceTopics(dict[str, Topic]):
         self,
         service: Service,
         enabled: bool,
-        name: str,
         logger: logging.Logger,
-        value_key: str = None,
+        value_key: OutputField | StatusField = None,
         datetime_key: str = None,
         calculation: Calculation = Calculation.SUM,
         decimals: int = 0,
@@ -37,13 +37,17 @@ class ServiceTopics(dict[str, Topic]):
         self._enabled = enabled
         self._last_update_warning: float = None
         self._logger = logger
-        self._name = name
+        self._name = value_key.name
         self._requires_donation = requires_donation
         self._service = service
         self._value_key = value_key
 
         if calculation & (Calculation.DIFFERENCE | Calculation.PEAK):
-            self._persistent_state_file = Path(Config.persistent_state_path, f"{service.unique_id}-{name}.state")
+            self._persistent_state_file = Path(Config.persistent_state_path, f"{service.unique_id}-{self._name}.state")
+            if value_key == OutputField.PEAK_POWER:
+                obsolete = Path(Config.persistent_state_path, "pvoutput_output-peak_power.state")
+                if obsolete.is_file() and not self._persistent_state_file.is_file():
+                    obsolete.rename(self._persistent_state_file.resolve())
             if self._persistent_state_file.is_file():
                 fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
                 now = time.localtime()
@@ -55,11 +59,11 @@ class ServiceTopics(dict[str, Topic]):
                             for topic in saved.values():
                                 if topic.topic is not None:
                                     if topic.topic not in self:
-                                        logger.warning(f"{self.__class__.__name__} IGNORED saved {name} topic {topic.topic} - not registered")
+                                        logger.warning(f"{self.__class__.__name__} IGNORED saved {self._name} topic {topic.topic} - not registered")
                                     else:
                                         self[topic.topic] = topic
                                         logger.debug(
-                                            f"{self.__class__.__name__} Restored {name} topic {topic.topic} (gain={topic.gain}) with {topic.state=} at {time.strftime('%H:%M', topic.timestamp) if topic.timestamp else 'None'}"
+                                            f"{self.__class__.__name__} Restored {self._name} topic {topic.topic} (gain={topic.gain}) with {topic.state=} at {time.strftime('%H:%M', topic.timestamp) if topic.timestamp else 'None'}"
                                         )
                         except ValueError as error:
                             logger.warning(f"{service.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
@@ -100,7 +104,7 @@ class ServiceTopics(dict[str, Topic]):
         else:
             if value_key in payload:
                 del payload[value_key.value]
-                self._logger.warning(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=}")
+            self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=}")
             return False
 
     def _sum_into(self, payload: dict[str, any], value_key: OutputField | StatusField, datetime_key: str = None) -> bool:
@@ -120,7 +124,7 @@ class ServiceTopics(dict[str, Topic]):
         else:
             if value_key in payload:
                 del payload[value_key.value]
-                self._logger.warning(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=}")
+            self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=}")
             return False
 
     def add_to_payload(self, payload: dict[str, any], interval_minutes: int, now: time.struct_time) -> bool:
@@ -139,19 +143,24 @@ class ServiceTopics(dict[str, Topic]):
             self._logger.debug(f"{self._service.__class__.__name__} No {self._name} topics registered, skipping aggregation")
             return None, None, 0
         at: str = "00:00"
-        count: int = 0
+        count: float = 0.0
         total: float = 0.0
         for value in self.values():
-            if value.timestamp is not None and (not exclude_zero or value.state > 0.0):
+            if value.timestamp is not None and (not exclude_zero or value.state > 0.0 or Calculation.DIFFERENCE in self._calculation):
+                state: float = value.state
                 if Calculation.DIFFERENCE in self._calculation:
-                    if value.previous_state is not None and value.previous_timestamp is not None and value.timestamp.tm_yday == value.previous_timestamp.tm_yday:
-                        state = value.state - value.previous_state
-                        value.previous_state = value.state
-                        value.previous_timestamp = value.timestamp
+                    state_was: float = value.previous_state
+                    time_was: time.struct_time = value.previous_timestamp
+                    value.previous_state = value.state
+                    value.previous_timestamp = value.timestamp
+                    if state_was is not None and time_was is not None and value.timestamp.tm_yday == time_was.tm_yday:
+                        state -= state_was
+                        if Calculation.CONVERT_TO_WATTS in self._calculation:
+                            hours = (time.mktime(value.timestamp) - time.mktime(time_was)) / 3600.0
+                            if hours > 0:
+                                state /= hours
                     else:
                         continue
-                else:
-                    state = value.state
                 total += state * value.gain
                 at = time.strftime("%H:%M", value.timestamp)
                 count += 1
@@ -187,11 +196,9 @@ class ServiceTopics(dict[str, Topic]):
         if self.enabled:
             if topic is None or topic.topic == "" or topic.topic.isspace():
                 self._logger.warning(f"{self._service.__class__.__name__} IGNORED subscription request for empty topic")
-            elif topic.topic in self:
+            else:
                 self[topic.topic] = topic
                 self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic.topic} ({self._calculation} {topic.gain=})")
-            else:
-                self._logger.warning(f"{self._service.__class__.__name__} IGNORED {self._name} topic: {topic.topic} ({self._calculation} {topic.gain=}) because it is not registered")
         else:
             self._logger.debug(f"{self._service.__class__.__name__} IGNORED subscription request for '{topic}' because {self._name} uploading is disabled")
 

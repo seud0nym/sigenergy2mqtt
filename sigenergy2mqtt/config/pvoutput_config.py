@@ -16,8 +16,10 @@ class StatusField(StrEnum):
     BATTERY_CHARGED = "b4"
     BATTERY_DISCHARGED = "b5"
     BATTERY_STATUS = "b6"
-    GENERATION = "v1"
-    CONSUMPTION = "v3"
+    GENERATION_ENERGY = "v1"
+    GENERATION_POWER = "v2"
+    CONSUMPTION_ENERGY = "v3"
+    CONSUMPTION_POWER = "v4"
     TEMPERATURE = "v5"
     VOLTAGE = "v6"
     V7 = "v7"
@@ -32,7 +34,7 @@ class OutputField(StrEnum):
     GENERATION = "g"
     EXPORTS = "e"
     IMPORTS = "ip"
-    POWER = "pp"
+    PEAK_POWER = "pp"
     CONSUMPTION = "c"
 
 
