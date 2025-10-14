@@ -223,7 +223,9 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MODBUS_READ_ONLY` | If false, read-only entities will not be published to MQTT. Default is true. |
 | `SIGENERGY2MQTT_MODBUS_READ_WRITE` | If false, read-write entities will not be published to MQTT. Default is true. |
 | `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` | If false, write-only entities will not be published to MQTT. Default is true. |
-| `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING` | If true, chunking of Modbus reads will be disabled and each register will be read individually. |
+| `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING` | If true, chunking of Modbus reads will be disabled and each register will be read individually. This is NOT recommended for production use. |
+| `SIGENERGY2MQTT_MODBUS_RETRIES` | The maximum number of times to retry a Modbus operation if it fails. The default is 3. |
+| `SIGENERGY2MQTT_MODBUS_TIMEOUT` | The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0. |
 | `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300. |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30. |
@@ -340,6 +342,12 @@ Command line options override both environment variables and the configuration f
   --modbus-no-remote-ems
                         Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. 
                         Ignored if --modbus-read-only is specified.
+  --modbus-disable-chunking
+                        Disable Modbus chunking when reading registers and read each register individually.
+  --modbus-retries [SIGENERGY2MQTT_MODBUS_RETRIES]
+                        The maximum number of times to retry a Modbus operation if it fails. The default is 3.
+  --modbus-timeout [SIGENERGY2MQTT_MODBUS_TIMEOUT]
+                        The timeout for connecting and receiving Modbus data, in seconds. The default is 1.0.
   --modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. 
                         Default is WARNING (warnings, errors and critical failures)

@@ -1,5 +1,5 @@
 from .smart_port_config import SmartPortConfig
-from .validation import check_bool, check_host, check_int, check_int_list, check_log_level, check_port
+from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port
 from dataclasses import dataclass, field
 from typing import List
 import logging
@@ -31,6 +31,8 @@ class DeviceConfig:
     inverters: List[int] = field(default_factory=list)
 
     disable_chunking: bool = False
+    retries: int = 3
+    timeout: float = 1.0
 
     log_level: int = logging.WARNING
 
@@ -64,6 +66,10 @@ class DeviceConfig:
                         self.registers.write_only = check_bool(value, f"modbus.{field}")
                     case "disable-chunking":
                         self.disable_chunking = check_bool(value, f"modbus.{field}")
+                    case "retries":
+                        self.retries = check_int(value, f"modbus.{field}", min=0)
+                    case "timeout":
+                        self.timeout = check_float(value, f"modbus.{field}", min=0.25)
                     case "ac-chargers":
                         self.ac_chargers = check_int_list(value, f"modbus.{field}")
                     case "dc-chargers":

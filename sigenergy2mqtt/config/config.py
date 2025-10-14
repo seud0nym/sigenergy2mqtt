@@ -144,6 +144,10 @@ class Config:
                                     device["write-only"] = overrides["modbus"][0]["write-only"]
                         case const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
                             overrides["modbus"][0]["disable-chunking"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MODBUS_RETRIES:
+                            overrides["modbus"][0]["retries"] = check_int(os.environ[key], key, min=0)
+                        case const.SIGENERGY2MQTT_MODBUS_TIMEOUT:
+                            overrides["modbus"][0]["timeout"] = check_float(os.environ[key], key, min=0.25)
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
                             overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=300)
                             if auto_discovered:

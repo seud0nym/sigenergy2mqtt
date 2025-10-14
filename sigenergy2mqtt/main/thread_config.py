@@ -1,7 +1,8 @@
-import asyncio
 from dataclasses import dataclass, field
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.sensors.base import Sensor
+import asyncio
+import ipaddress
 
 
 @dataclass
@@ -14,13 +15,15 @@ class DeviceIndex:
 class ThreadConfig:
     host: str
     port: int
+    timeout: float = 1.0
+    retries: int = 3
     name: str = ""
 
     _devices: list[DeviceIndex] = field(default_factory=list)
 
     @property
     def description(self) -> str:
-        return self.name if self.name and not self.name.isspace() else f"Modbus@{self.host}:{self.port}"
+        return self.name if self.name and not self.name.isspace() else f"modbus://{self.host}:{self.port}"
 
     @property
     def devices(self) -> list[Device]:
@@ -49,10 +52,16 @@ class ThreadConfigFactory:
     _configs: dict[tuple[str, int], ThreadConfig] = {}
 
     @classmethod
-    def get_config(self, host, port) -> ThreadConfig:
+    def get_config(self, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ThreadConfig:
         key = (host, port)
         if key not in ThreadConfigFactory._configs:
-            self._configs[key] = ThreadConfig(host, port)
+            try:
+                ipaddress.IPv4Address(host)
+                octets = host.split(".")
+                hostname = "".join(f"{int(octet):02X}" for octet in octets)
+            except ipaddress.AddressValueError:
+                hostname = host
+            self._configs[key] = ThreadConfig(host, port, timeout, retries, name=f"Modbus@{hostname}" if port == 502 else f"Modbus@{hostname}:{port:02X}")
         return self._configs[key]
 
     @classmethod

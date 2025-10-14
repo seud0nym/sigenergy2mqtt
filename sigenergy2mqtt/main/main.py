@@ -23,10 +23,10 @@ async def async_main() -> None:
     for plant_index in range(len(Config.devices)):
         device = Config.devices[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
-            config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port)
-            modbus = ModbusClient(device.host, port=device.port)
+            config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
+            modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
             async with modbus:
-                logging.info(f"Connected to Modbus interface at {device.host}:{device.port} for register probing")
+                logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
                 plant: PowerPlant = None  # Make sure plant is only created with first inverter
                 inverters: dict[int, str] = {}
                 for device_address in device.inverters:
@@ -54,13 +54,13 @@ async def async_main() -> None:
                     for device_address in device.ac_chargers:
                         charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
                         config.add_device(plant_index, charger)
-                logging.info(f"Disconnecting from Modbus interface at {device.host}:{device.port} - register probing complete")
+                logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
         else:
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
 
     configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
 
-    svc_thread_cfg = ThreadConfig(None, None, "Services")
+    svc_thread_cfg = ThreadConfig(None, None, name="Services")
     svc_thread_cfg.add_device(-1, MetricsService())
 
     if Config.pvoutput.enabled and not Config.clean:

@@ -141,6 +141,23 @@ modbus:
     #   default: 502
     #   description:  The port number used by the Sigenergy Modbus interface.
     port: 502
+    # timeout
+    #   default: 1
+    #   description:  The timeout for connecting and receiving Modbus data, 
+    #                 in seconds (use decimals for milliseconds). 
+    #                 The default is 1.0.
+    timeout: 1.0
+    # retries
+    #   default: 3
+    #   description:  The maximum number of times to retry a Modbus operation
+    #                 if it fails. The default is 3.
+    retries: 3
+    # disable-chunking
+    #   default: false
+    #   description:  If true, chunking of Modbus reads will be disabled and 
+    #                 each register will be read individually. This is NOT
+    #                 recommended for production use.
+    disable-chunking: false
     # inverters
     #   default: [ ]
     #   description:  The array of device ids to access the inverter

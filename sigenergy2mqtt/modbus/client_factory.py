@@ -1,5 +1,4 @@
 from .client import ModbusClient
-from typing import Final
 import asyncio
 import logging
 
@@ -7,21 +6,20 @@ import logging
 class ModbusClientFactory:
     _clients: dict[tuple[str, int], ModbusClient] = {}
     _hosts: dict[ModbusClient, asyncio.Lock] = {}
-    _logger: Final = logging.getLogger("pymodbus")
 
     @classmethod
-    async def get_client(self, host: str, port: int) -> ModbusClient:
+    async def get_client(self, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClient:
         key = (host, port)
         if key not in self._clients:
-            self._logger.info(f"Creating Modbus client for {host}:{port}")
-            modbus = ModbusClient(host, port=port)
+            logging.debug(f"Creating Modbus client for {host}:{port} ({timeout=}s {retries=})")
+            modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
             self._clients[key] = modbus
             self._hosts[modbus] = f"{host}:{port}"
         client = self._clients[key]
         if not client.connected:
             await client.connect()
             assert client.connected
-            self._logger.info(f"Connected to Modbus interface at {host}:{port}")
+            logging.info(f"Connected to modbus://{host}:{port} ({timeout=}s {retries=})")
         return client
 
     @classmethod

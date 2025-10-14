@@ -13,7 +13,6 @@ import time
 class ModbusClient(AsyncModbusTcpClient):
     def __init__(self, *args, **kwargs):
         kwargs["framer"] = FramerType.SOCKET
-        kwargs["timeout"] = 1
         kwargs["trace_packet"] = self._trace_packet_handler
         super().__init__(*args, **kwargs)
         self._read_ahead_pdu: dict[int, ReadAhead] = {}
