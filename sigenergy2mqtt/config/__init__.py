@@ -507,7 +507,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7, None),
-    help="A sensor class name that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v8",
@@ -515,7 +515,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8, None),
-    help="A sensor class name that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v9",
@@ -523,7 +523,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9, None),
-    help="A sensor class name that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v10",
@@ -531,7 +531,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10, None),
-    help="A sensor class name that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v11",
@@ -539,7 +539,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11, None),
-    help="A sensor class name that will be used to populate the v11 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v11 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v12",
@@ -547,7 +547,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12, None),
-    help="A sensor class name that will be used to populate the v12 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v12 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
 )
 _parser.add_argument(
     "--pvoutput-log-level",

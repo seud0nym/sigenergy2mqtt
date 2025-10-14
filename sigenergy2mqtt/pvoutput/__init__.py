@@ -79,7 +79,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                 case TotalPVPower():
                     total_pv_power = sensor
             for k, v in donation.items():
-                if sensor.__class__.__name__.lower() == v.lower():
+                if sensor.__class__.__name__.lower() == v.lower() or sensor["object_id"] == v:
                     if sensor._data_type == ModbusClient.DATATYPE.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
