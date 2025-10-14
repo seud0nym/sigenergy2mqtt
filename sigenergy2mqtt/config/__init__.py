@@ -297,6 +297,24 @@ _parser.add_argument(
     help="Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.",
 )
 _parser.add_argument(
+    "--modbus-timeout",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_TIMEOUT,
+    type=float,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_TIMEOUT, None),
+    help="The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0.",
+)
+_parser.add_argument(
+    "--modbus-retries",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_RETRIES,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_RETRIES, None),
+    help="The maximum number of times to retry a Modbus operation if it fails. The default is 3.",
+)
+_parser.add_argument(
     "--modbus-disable-chunking",
     action="store_true",
     dest=const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING,

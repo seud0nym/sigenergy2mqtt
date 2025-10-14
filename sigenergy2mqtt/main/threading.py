@@ -24,7 +24,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
     if config.host is None or Config.clean:
         modbus_client = None
     else:
-        modbus_client = await ModbusClientFactory.get_client(config.host, config.port)
+        modbus_client = await ModbusClientFactory.get_client(config.host, config.port, config.timeout, config.retries)
     mqtt_client_id = f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))}_{config.description}"
 
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
