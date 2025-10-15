@@ -163,6 +163,15 @@ _parser.add_argument(
     help="The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)",
 )
 _parser.add_argument(
+    "--mqtt-keepalive",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_KEEPALIVE,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_MQTT_KEEPALIVE, None),
+    help="The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker. Default is 60 and minimum is 1.",
+)
+_parser.add_argument(
     "--mqtt-tls",
     action="store_true",
     dest=const.SIGENERGY2MQTT_MQTT_TLS,
@@ -337,7 +346,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW, None),
-    help="The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300.",
+    help="The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 1.",
 )
 _parser.add_argument(
     "--scan-interval-medium",
@@ -346,7 +355,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM, None),
-    help="The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30.",
+    help="The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.",
 )
 _parser.add_argument(
     "--scan-interval-high",
@@ -355,7 +364,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH, None),
-    help="The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5.",
+    help="The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.",
 )
 _parser.add_argument(
     "--scan-interval-realtime",
@@ -581,7 +590,7 @@ if _args.show_version:
 def apply_cli_to_env(variable: str, value: str) -> None:
     was = os.getenv(variable)
     if value is not None:
-        if value != was:
+        if str(value) != was:
             os.environ[variable] = str(value)
             if was is not None:
                 _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{'[REDACTED]' if 'PASSWORD' in variable or 'API_KEY' in variable else value}' (was '{was}')")

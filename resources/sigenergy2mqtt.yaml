@@ -85,6 +85,13 @@ mqtt:
   #   default: 1883 unless tls:true then 8883
   #   description:  The port number used by the MQTT broker.
   port: 1883
+  # keepalive
+  #   default: 60
+  #   description:  The maximum period in seconds between communications with
+  #                 the broker. If no other messages are being exchanged, this 
+  #                 controls the rate at which the client will send ping 
+  #                 messages to the broker. Default is 60 and minimum is 1.
+  keepalive: 60
   # tls
   #   default: false
   #   description: If true, secure communication to the broker over TLS/SSL
@@ -214,19 +221,19 @@ modbus:
     #   default: 600
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned at a low frequency. Default is 600
-    #                 (seconds), and the minimum value is 300.
+    #                 (seconds), and the minimum value is 1.
     scan-interval-low: 600
     # scan-interval-medium
     #   default: 60
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned at a medium frequency. Default is 60
-    #                 (seconds), and the minimum value is 30.
+    #                 (seconds), and the minimum value is 1.
     scan-interval-medium: 60
     # scan-interval-high
     #   default: 10
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned at a high frequency. Default is 10
-    #                 (seconds), and the minimum value is 5.
+    #                 (seconds), and the minimum value is 1.
     scan-interval-high: 10
     # scan-interval-realtime
     #   default: 5

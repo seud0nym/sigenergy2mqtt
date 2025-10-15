@@ -71,9 +71,10 @@ class Config:
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
             logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=})...")
             auto_discovered = auto_discovery_scan(port)
-            with open(auto_discovery_cache, "w") as f:
-                _yaml = YAML(typ="safe", pure=True)
-                _yaml.dump(auto_discovered, f)
+            if len(auto_discovered) > 0:
+                with open(auto_discovery_cache, "w") as f:
+                    _yaml = YAML(typ="safe", pure=True)
+                    _yaml.dump(auto_discovered, f)
         elif auto_discovery == "once" and auto_discovery_cache.is_file():
             logging.info("Auto-discovery already completed, using cached results.")
             with open(auto_discovery_cache, "r") as f:
@@ -149,12 +150,12 @@ class Config:
                         case const.SIGENERGY2MQTT_MODBUS_TIMEOUT:
                             overrides["modbus"][0]["timeout"] = check_float(os.environ[key], key, min=0.25)
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
-                            overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=300)
+                            overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["scan-interval-low"] = overrides["modbus"][0]["scan-interval-low"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
-                            overrides["modbus"][0]["scan-interval-medium"] = check_int(os.environ[key], key, min=30)
+                            overrides["modbus"][0]["scan-interval-medium"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["scan-interval-medium"] = overrides["modbus"][0]["scan-interval-medium"]
@@ -188,6 +189,8 @@ class Config:
                             overrides["mqtt"]["broker"] = check_host(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_PORT:
                             overrides["mqtt"]["port"] = check_port(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MQTT_KEEPALIVE:
+                            overrides["mqtt"]["keepalive"] = check_int(os.environ[key], key, min=1)
                         case const.SIGENERGY2MQTT_MQTT_TLS:
                             overrides["mqtt"]["tls"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_TLS_INSECURE:
@@ -266,8 +269,11 @@ class Config:
             else:
                 raise ValueError("Auto-discovery results must be a list of modbus device configurations")
 
-        if len(Config.devices) == 0:
-            raise ValueError("No Modbus devices configured")
+        if len(Config.devices) == 0 or (len(Config.devices) == 1 and not getattr(Config.devices[0], "host", None)):
+            if auto_discovery in ("once", "force"):
+                raise ValueError("No Modbus devices configured and auto-discovery did not find any Sigenergy devices; please check that the devices are powered on and reachable over the network")
+            else:
+                raise ValueError("No Modbus devices configured")
 
     @staticmethod
     def _configure(data: dict, override: bool = False) -> None:

@@ -27,10 +27,10 @@ def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.Abstract
     while True:
         connect_attempts += 1
         try:
-            mqtt_client.connect(Config.mqtt.broker, port=Config.mqtt.port)
+            mqtt_client.connect(Config.mqtt.broker, port=Config.mqtt.port, keepalive=Config.mqtt.keepalive)
             mqtt_client.loop_start()
 
-            logging.info(f"Connected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}'")
+            logging.info(f"Connected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} as Client ID '{mqtt_client_id}' (keepalive={Config.mqtt.keepalive}s)")
             return mqtt_client, mqtt_handler
         except Exception as e:
             if connect_attempts < 3:

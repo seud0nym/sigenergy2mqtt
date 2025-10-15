@@ -1,4 +1,4 @@
-from .validation import check_bool, check_host, check_log_level, check_port
+from .validation import check_bool, check_host, check_int, check_log_level, check_port
 from dataclasses import dataclass
 import logging
 
@@ -7,6 +7,9 @@ import logging
 class MqttConfiguration:
     broker: str = "127.0.0.1"
     port: int = 1883
+
+    keepalive: int = 60
+
     tls: bool = False
     tls_insecure: bool = False  # Allow insecure TLS connections (not recommended)
 
@@ -31,6 +34,8 @@ class MqttConfiguration:
                         self.broker = check_host(value, f"mqtt.{field}")
                     case "port":
                         self.port = check_port(value, f"mqtt.{field}")
+                    case "keepalive":
+                        self.keepalive = check_int(value, f"mqtt.{field}", min=1)
                     case "anonymous":
                         self.anonymous = check_bool(value, f"mqtt.{field}")
                     case "username":

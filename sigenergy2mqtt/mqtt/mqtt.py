@@ -133,10 +133,7 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     userdata.connected = False
-    if reason_code == 0:
-        logger.info(f"[{userdata.client_id}] Disconnected from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (Reason Code = {reason_code})")
-    else:
-        logger.error(f"[{userdata.client_id}] Failed to disconnect from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (Reason Code = {reason_code})")
+    logger.info(f"[{userdata.client_id}] Disconnected from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} - {reason_code}")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
@@ -203,11 +200,11 @@ class MqttClient(mqtt.Client):
             if Config.mqtt.tls_insecure:
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
-                logging.warning(f"[{client_id}] Using insecure TLS connection (not recommended) to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}:{Config.mqtt.port}")
+                logging.warning(f"[{client_id}] Using insecure TLS connection (not recommended) to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
             else:
                 ssl_context.check_hostname = True
                 ssl_context.verify_mode = ssl.CERT_REQUIRED
-                logging.info(f"[{client_id}] Using secure TLS connection to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}:{Config.mqtt.port}")
+                logging.info(f"[{client_id}] Using secure TLS connection to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
             self.tls_set_context(ssl_context)
             self.tls_insecure_set(Config.mqtt.tls_insecure)
 
