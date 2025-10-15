@@ -71,9 +71,10 @@ class Config:
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
             logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=})...")
             auto_discovered = auto_discovery_scan(port)
-            with open(auto_discovery_cache, "w") as f:
-                _yaml = YAML(typ="safe", pure=True)
-                _yaml.dump(auto_discovered, f)
+            if len(auto_discovered) > 0:
+                with open(auto_discovery_cache, "w") as f:
+                    _yaml = YAML(typ="safe", pure=True)
+                    _yaml.dump(auto_discovered, f)
         elif auto_discovery == "once" and auto_discovery_cache.is_file():
             logging.info("Auto-discovery already completed, using cached results.")
             with open(auto_discovery_cache, "r") as f:
@@ -268,8 +269,11 @@ class Config:
             else:
                 raise ValueError("Auto-discovery results must be a list of modbus device configurations")
 
-        if len(Config.devices) == 0:
-            raise ValueError("No Modbus devices configured")
+        if len(Config.devices) == 0 or (len(Config.devices) == 1 and not getattr(Config.devices[0], "host", None)):
+            if auto_discovery in ("once", "force"):
+                raise ValueError("No Modbus devices configured and auto-discovery did not find any Sigenergy devices; please check that the devices are powered on and reachable over the network")
+            else:
+                raise ValueError("No Modbus devices configured")
 
     @staticmethod
     def _configure(data: dict, override: bool = False) -> None:
