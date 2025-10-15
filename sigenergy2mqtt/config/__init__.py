@@ -590,7 +590,7 @@ if _args.show_version:
 def apply_cli_to_env(variable: str, value: str) -> None:
     was = os.getenv(variable)
     if value is not None:
-        if value != was:
+        if str(value) != was:
             os.environ[variable] = str(value)
             if was is not None:
                 _logger.debug(f"Environment variable '{variable}' overridden from command line: set to '{'[REDACTED]' if 'PASSWORD' in variable or 'API_KEY' in variable else value}' (was '{was}')")
