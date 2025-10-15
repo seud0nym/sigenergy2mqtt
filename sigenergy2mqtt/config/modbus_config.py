@@ -79,9 +79,9 @@ class DeviceConfig:
                     case "smart-port":
                         self.smartport.configure(value, override)
                     case "scan-interval-low":
-                        self.scan_interval.low = check_int(value, f"modbus.{field}", min=300)
+                        self.scan_interval.low = check_int(value, f"modbus.{field}", min=1)
                     case "scan-interval-medium":
-                        self.scan_interval.medium = check_int(value, f"modbus.{field}", min=30)
+                        self.scan_interval.medium = check_int(value, f"modbus.{field}", min=1)
                     case "scan-interval-high":
                         self.scan_interval.high = check_int(value, f"modbus.{field}", min=1)
                     case "scan-interval-realtime":
