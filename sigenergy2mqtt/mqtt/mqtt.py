@@ -133,10 +133,7 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
 
 def on_disconnect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, properties) -> None:
     userdata.connected = False
-    if reason_code == 0:
-        logger.info(f"[{userdata.client_id}] Disconnected from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (Reason Code = {reason_code})")
-    else:
-        logger.error(f"[{userdata.client_id}] Failed to disconnect from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (Reason Code = {reason_code})")
+    logger.info(f"[{userdata.client_id}] Disconnected from mqtt://{Config.mqtt.broker}:{Config.mqtt.port} - {reason_code}")
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:

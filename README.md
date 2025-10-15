@@ -202,6 +202,7 @@ Environment variables override the configuration file, but *not* command line op
 |------|-------------|
 | `SIGENERGY2MQTT_MQTT_BROKER` | The hostname or IP address of an MQTT broker (default: 127.0.0.1) |
 | `SIGENERGY2MQTT_MQTT_PORT` | The listening port of the MQTT broker (default is 1883, unless `--mqtt-tls` or `SIGENERGY2MQTT_MQTT_TLS` is specified, in which case the default is 8883) |
+| `SIGENERGY2MQTT_MQTT_KEEPALIVE` | The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker. Default is 60 and minimum is 1. |
 | `SIGENERGY2MQTT_MQTT_TLS` | Set to 'true' to enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883. |
 | `SIGENERGY2MQTT_MQTT_TLS_INSECURE` | If 'true', allows insecure communication over TLS. If your broker is using a self-signed certificate, you _must_ set this to 'true'. If you are using a valid certificate, set this to 'false' (or do not set at all). Ignored unless `SIGENERGY2MQTT_MQTT_TLS` is also 'true'. |
 | `SIGENERGY2MQTT_MQTT_ANONYMOUS` | Set to 'true' to connect to MQTT anonymously (i.e. without username/password). |
@@ -227,9 +228,9 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MODBUS_RETRIES` | The maximum number of times to retry a Modbus operation if it fails. The default is 3. |
 | `SIGENERGY2MQTT_MODBUS_TIMEOUT` | The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0. |
 | `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 300. |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 30. |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` | The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 5. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 1. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` | The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1. |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` | The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1. |
 
 #### PVOutput Configuration Variables
@@ -309,6 +310,10 @@ Command line options override both environment variables and the configuration f
   --mqtt-port [SIGENERGY2MQTT_MQTT_PORT]
                         The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default 
                         is 8883)
+  --mqtt-keepalive [SIGENERGY2MQTT_MQTT_KEEPALIVE]
+                        The maximum period in seconds between communications with the broker. If no other messages are being exchanged, 
+                        this controls the rate at which the client will send ping messages to the broker.
+                        Default is 60 and minimum is 1.
   --mqtt-tls            Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.
   --mqtt-tls-insecure   Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this 
                         option. Ignored unless --mqtt-tls is also specified.
@@ -353,13 +358,13 @@ Command line options override both environment variables and the configuration f
                         Default is WARNING (warnings, errors and critical failures)
   --scan-interval-low [SIGENERGY2MQTT_SCAN_INTERVAL_LOW]
                         The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600, 
-                        and the minimum value is 300.
+                        and the minimum value is 1.
   --scan-interval-medium [SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM]
                         The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60, 
-                        and the minimum value is 30.
+                        and the minimum value is 1.
   --scan-interval-high [SIGENERGY2MQTT_SCAN_INTERVAL_HIGH]
                         The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10, 
-                        and the minimum value is 5.
+                        and the minimum value is 1.
   --scan-interval-realtime [SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME]
                         The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5, 
                         and the minimum value is 1.

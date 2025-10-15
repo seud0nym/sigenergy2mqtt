@@ -31,6 +31,7 @@
         "homeassistant",
         "hwsrc",
         "inet_pton",
+        "keepalive",
         "levelname",
         "MAINPID",
         "mktime",

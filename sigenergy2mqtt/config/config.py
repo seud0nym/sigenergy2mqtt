@@ -149,12 +149,12 @@ class Config:
                         case const.SIGENERGY2MQTT_MODBUS_TIMEOUT:
                             overrides["modbus"][0]["timeout"] = check_float(os.environ[key], key, min=0.25)
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
-                            overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=300)
+                            overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["scan-interval-low"] = overrides["modbus"][0]["scan-interval-low"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
-                            overrides["modbus"][0]["scan-interval-medium"] = check_int(os.environ[key], key, min=30)
+                            overrides["modbus"][0]["scan-interval-medium"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["scan-interval-medium"] = overrides["modbus"][0]["scan-interval-medium"]
@@ -188,6 +188,8 @@ class Config:
                             overrides["mqtt"]["broker"] = check_host(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_PORT:
                             overrides["mqtt"]["port"] = check_port(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MQTT_KEEPALIVE:
+                            overrides["mqtt"]["keepalive"] = check_int(os.environ[key], key, min=1)
                         case const.SIGENERGY2MQTT_MQTT_TLS:
                             overrides["mqtt"]["tls"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_TLS_INSECURE:
