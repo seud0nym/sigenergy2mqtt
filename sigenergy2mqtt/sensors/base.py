@@ -70,6 +70,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self._debug_logging: bool = Config.sensor_debug_logging
 
         self._force_publish: bool = False
+        self._publish_raw: bool = False
         self._publishable: bool = True
         self._persistent_publish_state_file: Path = Path(Config.persistent_state_path, f"{unique_id}.publishable")
 
@@ -148,6 +149,25 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         else:
             self._publishable = value
             logging.debug(f"{self.__class__.__name__}.publishable set to {value}")
+
+    @property
+    def publish_raw(self) -> bool:
+        return self._publish_raw
+
+    @publish_raw.setter
+    def publish_raw(self, value: bool):
+        if not isinstance(value, bool):
+            raise ValueError(f"{self.__class__.__name__}.publish_raw must be a bool")
+        if self._publish_raw == value:
+            if self._debug_logging:
+                logging.debug(f"{self.__class__.__name__}.publish_raw unchanged ({value})")
+        else:
+            self._publish_raw = value
+            logging.debug(f"{self.__class__.__name__}.publish_raw set to {value}")
+
+    @property
+    def raw_state_topic(self) -> str:
+        return self["raw_state_topic"]
 
     @property
     def sleeper_task(self) -> Coroutine[Any, Any, None]:
@@ -255,6 +275,9 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 if "publishable" in overrides and self.publishable != overrides["publishable"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'publishable' override ({overrides['publishable']})")
                     self.publishable = overrides["publishable"]
+                if "publish-raw" in overrides and self.publish_raw != overrides["publish-raw"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'publish-raw' override ({overrides['publish-raw']})")
+                    self.publish_raw = overrides["publish-raw"]
                 if "sanity-check-delta" in overrides and self._sanity.delta != overrides["sanity-check-delta"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
                     self._sanity.delta = overrides["sanity-check-delta"]
@@ -293,6 +316,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             else f"sigenergy2mqtt/{self['object_id']}"
         )
         self["state_topic"] = f"{base}/state"
+        self["raw_state_topic"] = f"{base}/raw"
         self["json_attributes_topic"] = f"{base}/attributes"
         self["availability_mode"] = "all"
         self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
@@ -403,6 +427,10 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         if self.debug_logging:
                             logging.debug(f"{self.__class__.__name__} Publishing {state=}")
                         mqtt.publish(self["state_topic"], f"{state}", self._qos, self._retain)
+                        if self.publish_raw:
+                            if self.debug_logging:
+                                logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state}")
+                            mqtt.publish(self["raw_state_topic"], f"{self.latest_raw_state}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
             except Exception as e:
