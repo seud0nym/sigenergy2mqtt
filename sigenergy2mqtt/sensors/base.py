@@ -422,11 +422,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                     self.publish_attributes(mqtt, failures=self._failures, exception=f"{repr(e)}")
                 if self._failures >= self._max_failures:
                     logging.warning(
-                        f"{self.__class__.__name__} Publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
+                        f"{self.__class__.__name__} Publishing DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
                     )
                     for sensor in self._derived_sensors.values():
                         logging.warning(
-                            f"{sensor.__class__.__name__} Publish DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
+                            f"{sensor.__class__.__name__} Publishing DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
                         )
             finally:
                 self.force_publish = False
