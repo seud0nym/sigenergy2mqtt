@@ -64,9 +64,9 @@ class Service(Device):
         reset = round(at - time.time())
         return limit, remaining, at, reset
 
-    async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, bool]:
+    async def seconds_until_status_upload(self, donator: bool = False, rand_min: int = 1, rand_max: int = 15) -> tuple[float, bool]:
         url = "https://pvoutput.org/service/r2/getsystem.jsp?donations=1"
-        donations = 0
+        donations = 1 if donator else 0
         current_time = time.time()  # Current time in seconds since epoch
         async with self._lock:
             if Service._interval is None or Service._interval_updated is None or (Service._interval_updated + (Service._interval * 60)) < current_time:
@@ -94,13 +94,15 @@ class Service(Device):
                                     self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
                                     Service._interval = interval
                                 Service._interval_updated = current_time
+                                if donator != (donations != 0):
+                                    self.logger.info(f"{self.__class__.__name__} Donation Status changed from {donator} to {donations != 0}")
                             else:
                                 self.logger.warning(f"{self.__class__.__name__} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
                     except Exception as exc:
                         if Service._interval is None:
                             Service._interval = 5  # Default interval in minutes if not set
                         self.logger.warning(
-                            f"{self.__class__.__name__} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {Service._interval} minutes and donator status {donations}"
+                            f"{self.__class__.__name__} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {Service._interval} minutes and donator status {donations != 0}"
                         )
         minutes = int(current_time // 60)  # Total minutes since epoch
         next_boundary = (minutes // Service._interval + 1) * Service._interval  # Next interval boundary
