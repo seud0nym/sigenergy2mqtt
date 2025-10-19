@@ -139,7 +139,13 @@ class Service(Device):
                             response.raise_for_status()
                             break
             except requests.exceptions.HTTPError as exc:
-                self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
+                response = exc.response
+                limit, remaining, at, reset = self.get_response_headers(response)
+                if response.status_code == 400:
+                    self.logger.error(f"{self.__class__.__name__} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                    break
+                else:
+                    self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
             except requests.exceptions.ConnectionError as exc:
                 self.logger.error(f"{self.__class__.__name__} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
