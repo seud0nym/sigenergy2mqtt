@@ -17,6 +17,8 @@ class Topic:
             topic = Topic(**obj)
             if isinstance(topic.timestamp, list):
                 topic.timestamp = time.struct_time(topic.timestamp)
+            if isinstance(topic.previous_timestamp, list):
+                topic.previous_timestamp = time.struct_time(topic.previous_timestamp)
             return topic
         return obj
 
