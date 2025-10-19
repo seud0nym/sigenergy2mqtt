@@ -31,7 +31,7 @@ class PVOutputOutputService(Service):
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
             else:
-                self.logger.warning(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
+                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
 
     def _is_payload_changed(self, payload: dict[str, str | int]) -> bool:
         if payload and self._previous_payload and len(payload) == len(self._previous_payload):
@@ -171,7 +171,6 @@ class PVOutputOutputService(Service):
                             async with self.lock(timeout=5):
                                 for topic in self._service_topics.values():
                                     topic.reset()
-                                self._persistent_state_file.unlink(missing_ok=True)
                     last = now
                     sleep: float = min(next - now, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     if sleep > 0:
