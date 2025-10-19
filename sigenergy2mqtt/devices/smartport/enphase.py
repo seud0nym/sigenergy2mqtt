@@ -39,7 +39,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             gain=None,
             precision=2,
         )
-        ReadableSensorMixin.__init__(self, 5)
+        ReadableSensorMixin.__init__(self, Config.devices[0].scan_interval.realtime)
         self["enabled_by_default"] = True
 
         if Config.log_level == logging.DEBUG and not self._debug_logging:
