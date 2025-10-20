@@ -4,7 +4,7 @@ from .auto_discovery import scan as auto_discovery_scan
 from .home_assistant_config import HomeAssistantConfiguration
 from .modbus_config import DeviceConfig
 from .mqtt_config import MqttConfiguration
-from .pvoutput_config import CONSUMPTION, IMPORTED, PVOutputConfiguration
+from .pvoutput_config import ConsumptionSource, PVOutputConfiguration
 from .validation import check_bool, check_host, check_float, check_int, check_int_list, check_log_level, check_port, check_string
 from pathlib import Path
 from ruamel.yaml import YAML
@@ -220,7 +220,9 @@ class Config:
                         case const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
                             overrides["pvoutput"]["system-id"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
-                            overrides["pvoutput"]["consumption"] = check_string(os.environ[key], key, "false", "true", CONSUMPTION, IMPORTED, allow_empty=False, allow_none=False)
+                            overrides["pvoutput"]["consumption"] = check_string(
+                                os.environ[key], key, "false", "true", ConsumptionSource.CONSUMPTION.value, ConsumptionSource.IMPORTED.value, ConsumptionSource.NET_OF_BATTERY.value, allow_empty=False, allow_none=False
+                            )
                         case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
                             pass  # Deprecated
                         case const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:

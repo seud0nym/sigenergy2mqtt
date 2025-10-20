@@ -5,9 +5,11 @@ import time
 @dataclass
 class Topic:
     topic: str
-    gain: float
+    gain: float = 1.0
     state: float = 0.0
     timestamp: time.struct_time = None
+    previous_state: float = None
+    previous_timestamp: time.struct_time = None
 
     @staticmethod
     def json_decoder(obj):
@@ -15,6 +17,8 @@ class Topic:
             topic = Topic(**obj)
             if isinstance(topic.timestamp, list):
                 topic.timestamp = time.struct_time(topic.timestamp)
+            if isinstance(topic.previous_timestamp, list):
+                topic.previous_timestamp = time.struct_time(topic.previous_timestamp)
             return topic
         return obj
 

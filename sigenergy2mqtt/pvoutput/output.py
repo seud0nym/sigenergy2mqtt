@@ -1,14 +1,12 @@
 from .service import Service
-from .service_topics import ServiceTopics
+from .service_topics import Calculation, ServiceTopics
 from .topic import Topic
 from datetime import datetime, timedelta
-from pathlib import Path
 from random import randint
 from sigenergy2mqtt.config import Config, OutputField
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
-import json
 import logging
 import re
 import requests
@@ -16,45 +14,24 @@ import time
 
 
 class PVOutputOutputService(Service):
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, topics: dict[OutputField, list[Topic]]):
         super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
         self._latest_peak_at: str = None
         self._previous_payload: dict = None
         self._service_topics: dict[str, ServiceTopics] = {
-            OutputField.GENERATION: ServiceTopics(self, False, "generation", logger, value_key=OutputField.GENERATION, averaged=False),
-            OutputField.EXPORTS: ServiceTopics(self, Config.pvoutput.exports, "exports", logger, value_key=OutputField.EXPORTS, averaged=False),
-            OutputField.POWER: ServiceTopics(self, True, "peak power", logger, value_key=OutputField.POWER, datetime_key="pt", averaged=False, bypass_updating_check=True),
-            OutputField.IMPORTS: ServiceTopics(self, Config.pvoutput.imports, "imports", logger, value_key=OutputField.IMPORTS, averaged=False),
-            OutputField.CONSUMPTION: ServiceTopics(self, Config.pvoutput.consumption_enabled, "consumption", logger, value_key=OutputField.CONSUMPTION, averaged=False),
+            OutputField.GENERATION: ServiceTopics(self, False, logger, value_key=OutputField.GENERATION),
+            OutputField.EXPORTS: ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS),
+            OutputField.PEAK_POWER: ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calculation=Calculation.SUM | Calculation.PEAK),
+            OutputField.IMPORTS: ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS),
+            OutputField.CONSUMPTION: ServiceTopics(self, Config.pvoutput.consumption_enabled, logger, value_key=OutputField.CONSUMPTION),
         }
-        self._service_topics[OutputField.POWER].update = self._set_power
-
-        self._persistent_state_file = Path(Config.persistent_state_path, "pvoutput_output-peak_power.state")
-        if self._persistent_state_file.is_file():
-            fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
-            now = time.localtime()
-            if fmt.tm_yday == now.tm_yday:
-                with self._persistent_state_file.open("r") as f:
-                    try:
-                        total: float = 0.0
-                        power = json.load(f, object_hook=Topic.json_decoder)
-                        self.logger.debug(f"{self.__class__.__name__} Loaded {self._persistent_state_file}")
-                        for topic in power.values():
-                            self._service_topics[OutputField.POWER][topic.topic] = topic
-                            self.logger.debug(f"{self.__class__.__name__} Registered power topic: {topic.topic} (gain={topic.gain}) with {topic.state=}")
-                            if topic.state is not None and topic.state > 0.0:
-                                total += topic.state
-                                self._latest_peak_at = time.strftime("%H:%M", topic.timestamp)
-                        if self._latest_peak_at is not None:
-                            self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {self._latest_peak_at} restored from {self._persistent_state_file}")
-                    except ValueError as error:
-                        self.logger.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
+        for field, topic_list in topics.items():
+            if field in self._service_topics:
+                for topic in topic_list:
+                    self._service_topics[field].register(topic)
             else:
-                self.logger.debug(f"{self.__class__.__name__} Ignored {self._persistent_state_file} because it is stale ({fmt})")
-                self._persistent_state_file.unlink(missing_ok=True)
-        else:
-            self.logger.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
+                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
 
     def _is_payload_changed(self, payload: dict[str, str | int]) -> bool:
         if payload and self._previous_payload and len(payload) == len(self._previous_payload):
@@ -82,20 +59,6 @@ class PVOutputOutputService(Service):
                     next = tomorrow.timestamp()
             self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({next - now}s)")
         return next
-
-    async def _set_power(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, mqtt_handler: MqttHandler) -> None:
-        power = value if isinstance(value, float) else float(value)
-        if power > 0:
-            if power > self._service_topics[OutputField.POWER][topic].state:
-                if Config.pvoutput.update_debug_logging:
-                    self.logger.debug(f"{self.__class__.__name__} Updating power from '{topic}' {power=} (Previous peak={self._service_topics[OutputField.POWER][topic].state})")
-                async with self.lock(timeout=1):
-                    self._service_topics[OutputField.POWER][topic].state = power
-                    self._service_topics[OutputField.POWER][topic].timestamp = time.localtime()
-                    with self._persistent_state_file.open("w") as f:
-                        json.dump(self._service_topics[OutputField.POWER], f, default=Topic.json_encoder)
-            elif Config.pvoutput.update_debug_logging:
-                self.logger.debug(f"{self.__class__.__name__} Ignored power from '{topic}': {power=} (<= Previous peak={self._service_topics[OutputField.POWER][topic].state})")
 
     async def _upload_and_verify(self, payload: dict[str, int | str], bypass_verify: bool = False) -> None:
         for _ in range(1, 6, 1):
@@ -167,19 +130,6 @@ class PVOutputOutputService(Service):
                     if matches:
                         break
 
-    def register(self, key: OutputField, topic: str, gain: float = 1.0) -> None:
-        if key == OutputField.POWER:
-            if len(self._service_topics[OutputField.POWER]) == 0:
-                self._service_topics[OutputField.POWER].register(topic, gain)
-            elif topic in self._service_topics[OutputField.POWER]:
-                self.logger.debug(f"{self.__class__.__name__} IGNORED power topic: {topic} - Already registered")
-            else:
-                self.logger.warning(f"{self.__class__.__name__} IGNORED power topic: {topic} - Too many sources? (topics={self._service_topics[OutputField.POWER].keys()})")
-                self._service_topics[OutputField.POWER].enabled = False
-                self.logger.warning(f"{self.__class__.__name__} DISABLED peak power reporting - Cannot determine peak power from multiple systems")
-        else:
-            self._service_topics[key].register(topic, gain)
-
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
             minute: int = randint(51, 58)
@@ -206,9 +156,9 @@ class PVOutputOutputService(Service):
                             self.logger.info(f"{self.__class__.__name__} SKIPPED uploading {payload=} - Unchanged from last update")
                         next = tomorrow
                     elif int(now) % (30 if Config.pvoutput.testing else 900) == 0:
-                        for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.POWER]:
+                        for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.PEAK_POWER]:
                             topic.check_is_updating(5, now_struct)
-                        total, at, _ = self._service_topics[OutputField.POWER].aggregate(exclude_zero=False)
+                        total, at, _ = self._service_topics[OutputField.PEAK_POWER].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
                             self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")
@@ -221,7 +171,6 @@ class PVOutputOutputService(Service):
                             async with self.lock(timeout=5):
                                 for topic in self._service_topics.values():
                                     topic.reset()
-                                self._persistent_state_file.unlink(missing_ok=True)
                     last = now
                     sleep: float = min(next - now, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     if sleep > 0:

@@ -346,6 +346,13 @@ sensor-overrides:
     #   description:  If false, the sensor will not be published to MQTT
     #                 and will not appear in Home Assistant at all.
     publishable: false
+    # publish-raw
+    #   default: There is no default
+    #   description:  If true, the raw state will be published in addition
+    #                 to the state with gain and precision applied. The 
+    #                 raw state topic is NOT included in Home Assistant 
+    #                 discovery. Ignored if the sensor is not publishable.
+    publish-raw: false
     # sanity-check-max-value
     #   default: There is no default
     #   description:  Sets a maximum allowable value for this sensor to

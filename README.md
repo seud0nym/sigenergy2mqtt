@@ -235,23 +235,32 @@ Environment variables override the configuration file, but *not* command line op
 
 #### PVOutput Configuration Variables
 
-| Name | Description |
-|------|-------------|
-| `SIGENERGY2MQTT_PVOUTPUT_ENABLED` | Set to 'true' to enable status updates to PVOutput. |
-| `SIGENERGY2MQTT_PVOUTPUT_API_KEY` | The API Key for PVOutput |
-| `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID` | The PVOutput System ID |
-| `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION` | If specified with a value of 'true' or 'consumption', consumption data will be sent to PVOutput. With a value of 'imported', the energy imported from the grid will be sent as consumption. If not specified or the value is 'false', no consumption data will be sent. |
-| `SIGENERGY2MQTT_PVOUTPUT_EXPORTS` | Set to 'true' to upload export data to PVOutput. |
-| `SIGENERGY2MQTT_PVOUTPUT_IMPORTS` | Set to 'true' to upload import data to PVOutput. |
-| `SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR` | The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 51 and 58. If you specify -1, daily uploads will be sent at the same frequency as status updates. |
-| `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC` | An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput. |
-| `SIGENERGY2MQTT_PVOUTPUT_EXT_V7` | A sensor class name that will be used to populate the v7 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
-| `SIGENERGY2MQTT_PVOUTPUT_EXT_V8` | A sensor class name that will be used to populate the v8 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
-| `SIGENERGY2MQTT_PVOUTPUT_EXT_V9` | A sensor class name that will be used to populate the v9 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
- | `SIGENERGY2MQTT_PVOUTPUT_EXT_V10` | A sensor class name that will be used to populate the v10 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
-| `SIGENERGY2MQTT_PVOUTPUT_EXT_V11` | A sensor class name that will be used to populate the v11 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
-| `SIGENERGY2MQTT_PVOUTPUT_EXT_V12` | A sensor class name that will be used to populate the v12 extended data field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. |
-| `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL` | Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures) |
+<table>
+  <thead><tr><th>Name</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_ENABLED</code></td><td>Set to 'true' to enable status updates to PVOutput.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_API_KEY</code></td><td>The API Key for PVOutput</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID</code></td><td>The PVOutput System ID</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION</code></td><td><ul>
+      <li>If specified with a value of 'true' or 'consumption', raw consumption data will be sent to PVOutput.</li>
+      <li>If specified with a value of 'net-of-battery', consumption will be calculated as:<br><i>consumption + battery charge - battery discharge</i>.<br>WARNING: This could cause consumption to go negative (e.g. if exporting to take advantage of time-based Feed-In Tariffs). Negative consumption is not allowed by PVOutput, so it will be uploaded as 0.</li>
+      <li>If specified with a value of 'imported', the energy imported from the grid will be sent as consumption.</li>
+      <li>If not specified or the value is 'false', no consumption data will be sent.</ul></td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXPORTS</code></td><td>Set to 'true' to upload export data to PVOutput.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_IMPORTS</code></td><td>Set to 'true' to upload import data to PVOutput.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR</code></td><td>The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 51 and 58.<br><br>If you specify -1, daily uploads will be sent at the same frequency as status updates.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC</code></td><td>An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V7</code></td><td rowspan=6>A sensor class name, or entity_id without the 'sensor.' prefix, that will be used to populate the associated extended data field in PVOutput. If not specified, OR your donation status is not current, the field will not be sent to PVOutput. You can use any sensor with a numeric value.<br><br>If you specify an Energy sensor class, the value sent to PVOutput will be the <i>power</i> value over the Status Interval.<br><br>You can use any sensor that shows a numeric value. If a sensor class is used for multiple sensors (e.g. the `PhaseVoltage` sensor class is used for phases A, B and C), the sensor values will be averaged and a single value sent to PVOutput.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V8</code></td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V9</code></td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V10</code></td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V11</code></td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V12</code></td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL</code></td><td>Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)</td></tr>
+  </tbody>
+</table>
+
+
 
 #### Third Party PV Production Configuration Variables
 
@@ -390,9 +399,9 @@ Command line options override both environment variables and the configuration f
   --pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]
                         The PVOutput System ID
   --pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]
-                        Enable consumption data to be sent to PVOutput. If specified without a value, or with a value of 'true'
-                        or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from  
-                        the grid will be sent. If not specified, no consumption data is sent.
+                        Enable to send consumption data to PVOutput. May be specified without a value (in which case defaults to 
+                        'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption 
+                        data is sent.
   --pvoutput-exports    Enable to send export data to PVOutput.
   --pvoutput-imports    Enable to send import data to PVOutput.
   --pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]
@@ -403,29 +412,29 @@ Command line options override both environment variables and the configuration f
                         An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. 
                         If not specified, the temperature will not be sent to PVOutput.
   --pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]
-                        An sensor class name that will be used to populate the v7 extended data field in PVOutput. If not specified,
-                        OR your donation status is not current, this field will not be sent to PVOutput. 
-                        You can use any sensor with a numeric value.
+                        A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v7 
+                        extended data field in PVOutput. If not specified, OR your donation status is not current, this field
+                        will not be sent to PVOutput. You can use any sensor with a numeric value.
   --pvoutput-ext-v8 [SIGENERGY2MQTT_PVOUTPUT_EXT_V8]
-                        An sensor class name that will be used to populate the v8 extended data field in PVOutput. If not specified,
-                        OR your donation status is not current, this field will not be sent to PVOutput. 
-                        You can use any sensor with a numeric value.
+                        A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v8 
+                        extended data field in PVOutput. If not specified, OR your donation status is not current, this field
+                        will not be sent to PVOutput. You can use any sensor with a numeric value.
   --pvoutput-ext-v9 [SIGENERGY2MQTT_PVOUTPUT_EXT_V9]
-                        An sensor class name that will be used to populate the v9 extended data field in PVOutput. If not specified,
-                        OR your donation status is not current, this field will not be sent to PVOutput. 
-                        You can use any sensor with a numeric value.
+                        A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 
+                        extended data field in PVOutput. If not specified, OR your donation status is not current, this field
+                        will not be sent to PVOutput. You can use any sensor with a numeric value.
   --pvoutput-ext-v10 [SIGENERGY2MQTT_PVOUTPUT_EXT_V10]
-                        An sensor class name that will be used to populate the v10 extended data field in PVOutput. If not specified,
-                        OR your donation status is not current, this field will not be sent to PVOutput. 
-                        You can use any sensor with a numeric value.
+                        A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v10 
+                        extended data field in PVOutput. If not specified, OR your donation status is not current, this field
+                        will not be sent to PVOutput. You can use any sensor with a numeric value.
   --pvoutput-ext-v11 [SIGENERGY2MQTT_PVOUTPUT_EXT_V11]
-                        An sensor class name that will be used to populate the v11 extended data field in PVOutput. If not specified,
-                        OR your donation status is not current, this field will not be sent to PVOutput. 
-                        You can use any sensor with a numeric value.
+                        A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v11 
+                        extended data field in PVOutput. If not specified, OR your donation status is not current, this field
+                        will not be sent to PVOutput. You can use any sensor with a numeric value.
   --pvoutput-ext-v12 [SIGENERGY2MQTT_PVOUTPUT_EXT_V12]
-                        An sensor class name that will be used to populate the v12 extended data field in PVOutput. If not specified,
-                        OR your donation status is not current, this field will not be sent to PVOutput. 
-                        You can use any sensor with a numeric value.
+                        A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v12 
+                        extended data field in PVOutput. If not specified, OR your donation status is not current, this field
+                        will not be sent to PVOutput. You can use any sensor with a numeric value.
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING 
                         (warnings, errors and critical failures)
