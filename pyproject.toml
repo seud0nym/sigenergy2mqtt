@@ -7,7 +7,7 @@ name = "sigenergy2mqtt"
 dynamic = ["version"]
 dependencies = [
     "paho-mqtt==2.1.0",
-    "psutil==7.1.0",
+    "psutil==7.1.1",
     "pymodbus==3.11.3",
     "requests==2.32.5",
     "ruamel.yaml==0.18.15",
