@@ -1,10 +1,10 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED", "CONSUMPTION", "IMPORTED", "OutputField", "StatusField"]
+__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED", "ConsumptionSource", "OutputField", "StatusField"]
 
 
 from . import const
 from .config import Config
 from .modbus_config import RegisterAccess, SmartPortConfig
-from .pvoutput_config import CONSUMPTION, IMPORTED, OutputField, StatusField
+from .pvoutput_config import ConsumptionSource, OutputField, StatusField
 from .version import SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
 from pathlib import Path
 import argparse
@@ -470,7 +470,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION,
     const="true",
-    help="Enable to send consumption data to PVOutput. If specified without a value, or with a value of 'true' or 'consumption', consumption data will be sent. With a value of 'imported', the energy imported from the grid will be sent as consumption. If not specified, no consumption data is sent.",
+    help="Enable to send consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.",
 )
 _parser.add_argument(
     "--pvoutput-exports",

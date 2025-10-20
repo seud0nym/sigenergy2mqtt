@@ -1,12 +1,13 @@
 from .validation import check_bool, check_int, check_log_level, check_string
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Final
 import logging
 
 
-CONSUMPTION: Final = "consumption"
-IMPORTED: Final = "imported"
+class ConsumptionSource(StrEnum):
+    CONSUMPTION = "consumption"
+    IMPORTED = "imported"
+    NET_OF_BATTERY = "net-of-battery"
 
 
 class StatusField(StrEnum):
@@ -15,7 +16,7 @@ class StatusField(StrEnum):
     BATTERY_CAPACITY = "b3"
     BATTERY_CHARGED = "b4"
     BATTERY_DISCHARGED = "b5"
-    BATTERY_STATUS = "b6"
+    BATTERY_STATE = "b6"
     GENERATION_ENERGY = "v1"
     GENERATION_POWER = "v2"
     CONSUMPTION_ENERGY = "v3"
@@ -71,7 +72,7 @@ class PVOutputConfiguration:
 
     @property
     def consumption_enabled(self) -> bool:
-        return self.consumption in (CONSUMPTION, IMPORTED)
+        return self.consumption in (ConsumptionSource.CONSUMPTION, ConsumptionSource.IMPORTED, ConsumptionSource.NET_OF_BATTERY)
 
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
@@ -89,12 +90,16 @@ class PVOutputConfiguration:
                             match value:
                                 case False | "false":
                                     self.consumption = None
-                                case True | "true" | "consumption":
-                                    self.consumption = CONSUMPTION
-                                case "imported":
-                                    self.consumption = IMPORTED
+                                case True | "true" | ConsumptionSource.CONSUMPTION.value:
+                                    self.consumption = ConsumptionSource.CONSUMPTION
+                                case ConsumptionSource.IMPORTED.value:
+                                    self.consumption = ConsumptionSource.IMPORTED
+                                case ConsumptionSource.NET_OF_BATTERY.value:
+                                    self.consumption = ConsumptionSource.NET_OF_BATTERY
                                 case _:
-                                    raise ValueError(f"pvoutput.consumption must be 'true', 'false', '{CONSUMPTION}', or '{IMPORTED}', got '{value}'")
+                                    raise ValueError(
+                                        f"pvoutput.consumption must be 'true', 'false', '{ConsumptionSource.CONSUMPTION.value}', '{ConsumptionSource.IMPORTED.value}', or '{ConsumptionSource.NET_OF_BATTERY.value}', got '{value}'"
+                                    )
                         case "exports":
                             self.exports = check_bool(value, f"pvoutput.{field}")
                         case "imports":
