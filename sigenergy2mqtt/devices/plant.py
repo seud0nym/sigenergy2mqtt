@@ -160,7 +160,8 @@ class PowerPlant(ModbusDevice):
         self._add_derived_sensor(total_pv_power, plant_3rd_party_pv_power)
 
         plant_consumed_power = derived.PlantConsumedPower(plant_index)
-        self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, search_children=True)
+        grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)
+        self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, grid_status, search_children=True)
 
         plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(plant_index)
