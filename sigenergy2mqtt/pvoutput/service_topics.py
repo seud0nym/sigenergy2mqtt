@@ -219,7 +219,7 @@ class ServiceTopics(dict[str, Topic]):
             topic.timestamp = time.localtime()
             topic.previous_state = None
             topic.previous_timestamp = None
-        if hasattr(self, "_persistent_state_file") and self._persistent_state_file.is_file():
+        if hasattr(self, "_persistent_state_file") and self._persistent_state_file is not None and self._persistent_state_file.is_file():
             self._persistent_state_file.unlink(missing_ok=True)
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
