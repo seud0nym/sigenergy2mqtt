@@ -38,6 +38,7 @@ class ServiceTopics(dict[str, Topic]):
         self._last_update_warning: float = None
         self._logger = logger
         self._name = value_key.name
+        self._persistent_state_file: Path = None
         self._requires_donation = requires_donation
         self._service = service
         self._value_key = value_key

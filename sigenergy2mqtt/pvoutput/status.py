@@ -53,13 +53,12 @@ class PVOutputStatusService(Service):
         }
         for field, topic_list in topics.items():
             if field in self._service_topics:
+                if field in extended_data and extended_data[field] == "energy":
+                    self._service_topics[field].calculation = Calculation.SUM | Calculation.DIFFERENCE
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
             else:
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
-        for field, device_class in extended_data.items():
-            if device_class == "energy" and field in self._service_topics:
-                self._service_topics[field].calculation = Calculation.SUM | Calculation.DIFFERENCE
 
     def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
