@@ -10,7 +10,7 @@ dependencies = [
     "psutil==7.1.1",
     "pymodbus==3.11.3",
     "requests==2.32.5",
-    "ruamel.yaml==0.18.15",
+    "ruamel.yaml==0.18.16",
     "scapy==2.6.1",
 ]
 description = "Publish Modbus data from Sigenergy to MQTT, with optional Home Assistant Auto-Discovery and PVOutput updating"
