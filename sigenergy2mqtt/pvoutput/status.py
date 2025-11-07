@@ -62,22 +62,22 @@ class PVOutputStatusService(Service):
 
     def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
-            wait, donator = await self.seconds_until_status_upload()
-            self.logger.info(f"{self.__class__.__name__} Commenced (Interval = {self._interval} minutes)")
+            wait = await self.seconds_until_status_upload()
+            self.logger.info(f"{self.__class__.__name__} Commenced (Interval = {Service._interval} minutes)")
             while self.online:
                 try:
                     if wait <= 0:
                         now = time.localtime()
                         payload: dict[str, any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
-                        topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or donator)]
+                        topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or Service._donator)]
                         async with self.lock(timeout=5):
                             snapshot: dict[str, dict[str, tuple[float | int, time.struct_time]]] = {
                                 st.value: {t.topic: [(t.previous_state, t.previous_timestamp)] for t in topics.values()}
                                 for st, topics in self._service_topics.items()
-                                if topics.enabled and (not topics.requires_donation or donator)
+                                if topics.enabled and (not topics.requires_donation or Service._donator)
                             }
                             for topic in topics:
-                                topic.add_to_payload(payload, self._interval, now)
+                                topic.add_to_payload(payload, Service._interval, now)
                         if (  # At least one of the values v1, v2, v3 or v4 must be present
                             payload.get(StatusField.GENERATION_ENERGY.value) is not None
                             or payload.get(StatusField.GENERATION_POWER.value) is not None
@@ -105,7 +105,7 @@ class PVOutputStatusService(Service):
                                                 topic.previous_state, topic.previous_timestamp = snapshot[st.value][topic.topic][0]
                         else:
                             self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
-                        wait, donator = await self.seconds_until_status_upload(donator=donator)
+                        wait = await self.seconds_until_status_upload()
                     sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
                     if wait > 0:
