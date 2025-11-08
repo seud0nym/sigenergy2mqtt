@@ -67,8 +67,8 @@ class PVOutputStatusService(Service):
 
     def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
+            self.logger.info(f"{self.__class__.__name__} Commenced")
             wait, _ = await self.seconds_until_status_upload()
-            self.logger.info(f"{self.__class__.__name__} Commenced (Interval = {Service._interval} minutes)")
             while self.online:
                 try:
                     if wait <= 0:
