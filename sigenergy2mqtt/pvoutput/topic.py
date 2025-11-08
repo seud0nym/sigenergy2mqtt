@@ -5,6 +5,7 @@ import time
 @dataclass
 class Topic:
     topic: str
+    scan_interval: int = None
     gain: float = 1.0
     state: float = 0.0
     timestamp: time.struct_time = None

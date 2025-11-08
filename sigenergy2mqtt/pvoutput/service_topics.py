@@ -165,18 +165,21 @@ class ServiceTopics(dict[str, Topic]):
         if self.enabled:
             interval_seconds = interval_minutes * 60
             updated = 0
-            for value in self.values():
-                if value.timestamp is not None:
-                    seconds = int(time.mktime(now) - time.mktime(value.timestamp))
+            for topic in self.values():
+                scan_interval = topic.scan_interval if topic.scan_interval is not None else interval_seconds
+                if topic.timestamp is not None:
+                    seconds = int(time.mktime(now) - time.mktime(topic.timestamp))
                     minutes = int(seconds / 60.0)
-                    if seconds < interval_seconds:
+                    if seconds < scan_interval:
+                        if Config.pvoutput.update_debug_logging:
+                            self._logger.debug(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
                         updated += 1
                     else:
                         if self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
-                            self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has not been updated for {minutes}m???")
+                            self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
                             self._last_update_warning = time.time()
                 elif self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
-                    self._logger.warning(f"{self._service.__class__.__name__} Topic '{value.topic}' for {self._name} has never been updated???")
+                    self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has never been updated??? ({scan_interval=}s)")
                     self._last_update_warning = time.time()
             return updated > 0
         else:
@@ -188,7 +191,7 @@ class ServiceTopics(dict[str, Topic]):
                 self._logger.warning(f"{self._service.__class__.__name__} IGNORED subscription request for empty topic")
             else:
                 self[topic.topic] = topic
-                self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic.topic} ({self._calculation} {topic.gain=})")
+                self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic.topic} ({self._calculation} gain={topic.gain} scan_interval={topic.scan_interval})")
                 if self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK):
                     self._persistent_state_file = Path(Config.persistent_state_path, f"{self._service.unique_id}-{self._name}.state")
                     if self._value_key == OutputField.PEAK_POWER:

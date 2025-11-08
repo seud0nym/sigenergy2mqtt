@@ -43,14 +43,14 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                 case DailyChargeEnergy():
                     if Config.pvoutput.consumption == ConsumptionSource.NET_OF_BATTERY:
                         sensor.publish_raw = True
-                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
                 case DailyDischargeEnergy():
                     if Config.pvoutput.consumption == ConsumptionSource.NET_OF_BATTERY:
                         sensor.publish_raw = True
-                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, get_gain(sensor, negate=True)))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor, negate=True)))
                 case ESSTotalChargedEnergy():
                     sensor.publish_raw = True
-                    topic = Topic(sensor.raw_state_topic, get_gain(sensor))
+                    topic = Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor))
                     status_topics[StatusField.BATTERY_CHARGED].append(topic)
                     status_topics[StatusField.BATTERY_POWER].append(topic)
                     if Config.pvoutput.consumption == ConsumptionSource.NET_OF_BATTERY:
@@ -58,51 +58,51 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                         status_topics[StatusField.CONSUMPTION_POWER].append(topic)
                 case ESSTotalDischargedEnergy():
                     sensor.publish_raw = True
-                    negative = Topic(sensor.raw_state_topic, get_gain(sensor, negate=True))
-                    status_topics[StatusField.BATTERY_DISCHARGED].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                    negative = Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor, negate=True))
+                    status_topics[StatusField.BATTERY_DISCHARGED].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
                     status_topics[StatusField.BATTERY_POWER].append(negative)
                     if Config.pvoutput.consumption == ConsumptionSource.NET_OF_BATTERY:
                         status_topics[StatusField.CONSUMPTION_ENERGY].append(negative)
                         status_topics[StatusField.CONSUMPTION_POWER].append(negative)
                 case GridSensorDailyExportEnergy():
                     sensor.publish_raw = True
-                    output_topics[OutputField.EXPORTS].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                    output_topics[OutputField.EXPORTS].append(Topic(sensor.raw_state_topic, None, get_gain(sensor)))
                 case GridSensorDailyImportEnergy():
                     sensor.publish_raw = True
                     if Config.pvoutput.consumption == ConsumptionSource.IMPORTED:
-                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
-                    output_topics[OutputField.IMPORTS].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
+                    output_topics[OutputField.IMPORTS].append(Topic(sensor.raw_state_topic, None, get_gain(sensor)))
                 case PlantBatterySoC():
-                    status_topics[StatusField.BATTERY_SOC].append(Topic(sensor.state_topic))  # Need percentage, not raw
+                    status_topics[StatusField.BATTERY_SOC].append(Topic(sensor.state_topic, sensor.scan_interval))  # Need percentage, not raw
                 case PlantPVPower():
                     plant_pv_power = sensor
                 case PlantRatedEnergyCapacity():
                     sensor.publish_raw = True
-                    status_topics[StatusField.BATTERY_CAPACITY].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                    status_topics[StatusField.BATTERY_CAPACITY].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
                 case PlantTotalImportedEnergy():
                     if Config.pvoutput.consumption == ConsumptionSource.IMPORTED:
                         sensor.publish_raw = True
-                        status_topics[StatusField.CONSUMPTION_ENERGY].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                        status_topics[StatusField.CONSUMPTION_ENERGY].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
                 case PVVoltageSensor() | EnphaseVoltage():
-                    status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic))  # Need voltage, not raw
+                    status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Need voltage, not raw
                 case TotalDailyPVEnergy():
                     sensor.publish_raw = True
-                    output_topics[OutputField.GENERATION].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                    output_topics[OutputField.GENERATION].append(Topic(sensor.raw_state_topic, None, get_gain(sensor)))
                 case TotalLifetimePVEnergy():
                     sensor.publish_raw = True
-                    topic = Topic(sensor.raw_state_topic, get_gain(sensor))
+                    topic = Topic(sensor.raw_state_topic, None, get_gain(sensor))
                     status_topics[StatusField.GENERATION_ENERGY].append(topic)
                     status_topics[StatusField.GENERATION_POWER].append(topic)
                 case TotalLoadConsumption():
                     if Config.pvoutput.consumption in (ConsumptionSource.CONSUMPTION, ConsumptionSource.NET_OF_BATTERY):
                         sensor.publish_raw = True
-                        topic = Topic(sensor.raw_state_topic, get_gain(sensor))
+                        topic = Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor))
                         status_topics[StatusField.CONSUMPTION_ENERGY].append(topic)
                         status_topics[StatusField.CONSUMPTION_POWER].append(topic)
                 case TotalLoadDailyConsumption():
                     if Config.pvoutput.consumption in (ConsumptionSource.CONSUMPTION, ConsumptionSource.NET_OF_BATTERY):
                         sensor.publish_raw = True
-                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, get_gain(sensor)))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
                 case TotalPVPower():
                     total_pv_power = sensor
             for k, v in donation.items():
@@ -110,18 +110,18 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if sensor._data_type == ModbusClient.DATATYPE.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
-                        status_topics[k].append(Topic(sensor.state_topic))  # Used displayed value, not raw
+                        status_topics[k].append(Topic(sensor.state_topic, sensor.scan_interval))  # Used displayed value, not raw
                         extended_data[k] = sensor.device_class
 
     if total_pv_power is not None:
         total_pv_power.publish_raw = True
-        output_topics[OutputField.PEAK_POWER].append(Topic(total_pv_power.raw_state_topic, get_gain(total_pv_power)))
+        output_topics[OutputField.PEAK_POWER].append(Topic(total_pv_power.raw_state_topic, None, get_gain(total_pv_power)))
     elif plant_pv_power is not None:
         plant_pv_power.publish_raw = True
-        output_topics[OutputField.PEAK_POWER].append(Topic(plant_pv_power.raw_state_topic, get_gain(plant_pv_power)))
+        output_topics[OutputField.PEAK_POWER].append(Topic(plant_pv_power.raw_state_topic, plant_pv_power.scan_interval, get_gain(plant_pv_power)))
 
     if Config.pvoutput.temperature_topic:
-        status_topics[StatusField.TEMPERATURE].append(Topic(Config.pvoutput.temperature_topic))
+        status_topics[StatusField.TEMPERATURE].append(Topic(Config.pvoutput.temperature_topic, scan_interval=None))
 
     status = PVOutputStatusService(logger, status_topics, extended_data)
     output = PVOutputOutputService(logger, output_topics)
