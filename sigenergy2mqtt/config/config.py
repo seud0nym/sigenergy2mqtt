@@ -213,6 +213,8 @@ class Config:
                             overrides["pvoutput"]["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
                             overrides["pvoutput"]["output-hour"] = check_int(os.environ[key], key, min=-1, max=23)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING:
+                            overrides["pvoutput"]["calc-debug-logging"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING:
                             overrides["pvoutput"]["update-debug-logging"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_API_KEY:

@@ -64,6 +64,7 @@ class PVOutputConfiguration:
     output_hour: int = 23
 
     log_level: int = logging.WARNING
+    calc_debug_logging: bool = False
     update_debug_logging: bool = False
 
     temperature_topic: str = ""
@@ -123,6 +124,8 @@ class PVOutputConfiguration:
                             self.temperature_topic = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
                         case StatusField.V7.value | StatusField.V8.value | StatusField.V9.value | StatusField.V10.value | StatusField.V11.value | StatusField.V12.value:
                             self.extended[field] = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                        case "calc-debug-logging":
+                            self.calc_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case "update-debug-logging":
                             self.update_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case _:

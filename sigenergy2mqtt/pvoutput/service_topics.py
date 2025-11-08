@@ -71,10 +71,11 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key.value] = round(total / count, self._decimals if self._decimals > 0 else None)
             if datetime_key is not None:
                 payload[datetime_key] = at
-                self._logger.debug(
-                    f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key.value]} into {value_key.value=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
-                )
-            else:
+                if Config.pvoutput.calc_debug_logging:
+                    self._logger.debug(
+                        f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key.value]} into {value_key.value=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                    )
+            elif Config.pvoutput.calc_debug_logging:
                 self._logger.debug(
                     f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key.value]} into {value_key.value=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                 )
@@ -91,10 +92,11 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key.value] = round(total, self._decimals if self._decimals > 0 else None)
             if datetime_key is not None:
                 payload[datetime_key] = at
-                self._logger.debug(
-                    f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key.value=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
-                )
-            else:
+                if Config.pvoutput.calc_debug_logging:
+                    self._logger.debug(
+                        f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key.value=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                    )
+            elif Config.pvoutput.calc_debug_logging:
                 self._logger.debug(
                     f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key.value=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                 )
@@ -132,23 +134,27 @@ class ServiceTopics(dict[str, Topic]):
                     topic.previous_state = topic.state
                     topic.previous_timestamp = topic.timestamp
                     if state_was is not None and time_was is not None and topic.timestamp.tm_yday == time_was.tm_yday:
-                        self._logger.debug(
-                            f"{self._service.__class__.__name__} Calculated difference for {self._name}: (current-previous=state) {state}-{state_was}={state - state_was} ({topic.topic})"
-                        )
+                        if Config.pvoutput.calc_debug_logging:
+                            self._logger.debug(
+                                f"{self._service.__class__.__name__} Calculated difference for {self._name}: (current-previous=state) {state}-{state_was}={state - state_was} ({topic.topic})"
+                            )
                         state -= state_was
                         if Calculation.CONVERT_TO_WATTS in self._calculation:
                             hours = (time.mktime(topic.timestamp) - time.mktime(time_was)) / 3600.0
                             if hours > 0:
-                                self._logger.debug(f"{self._service.__class__.__name__} Converted {self._name}: (energy/hours=power) {state}/{hours:.3f}={state / hours} ({topic.topic})")
+                                if Config.pvoutput.calc_debug_logging:
+                                    self._logger.debug(f"{self._service.__class__.__name__} Converted {self._name}: (energy/hours=power) {state}/{hours:.3f}={state / hours} ({topic.topic})")
                                 state /= hours
-                            else:
+                            elif Config.pvoutput.calc_debug_logging:
                                 self._logger.warning(f"{self._service.__class__.__name__} Skipped converting {self._name} energy to power: {hours:.3f} ({topic.topic}) ????")
                     else:
                         continue
-                self._logger.debug(f"{self._service.__class__.__name__} Applying gain to {self._name}: {state}*{topic.gain}={state * topic.gain} ({topic.topic}) and adding to running {total=}")
+                if Config.pvoutput.calc_debug_logging:
+                    self._logger.debug(f"{self._service.__class__.__name__} Applying gain to {self._name}: {state}*{topic.gain}={state * topic.gain} ({topic.topic}) and adding to running {total=}")
                 total += state * topic.gain
                 at = time.strftime("%H:%M", topic.timestamp)
-                self._logger.debug(f"{self._service.__class__.__name__} Running total for {self._name}: {total=} ({count=} {at=})")
+                if Config.pvoutput.calc_debug_logging:
+                    self._logger.debug(f"{self._service.__class__.__name__} Running total for {self._name}: {total=} ({count=} {at=})")
                 count += 1
         if count > 0:
             return total, at, count
