@@ -65,16 +65,18 @@ class Service(Device):
         reset = round(at - time.time())
         return limit, remaining, at, reset
 
-    async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, bool]:
+    async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:
         url = "https://pvoutput.org/service/r2/getsystem.jsp?donations=1"
         current_time = time.time()  # Current time in seconds since epoch
         async with self._lock:
-            if Service._interval is None or Service._interval_updated is None or (Service._interval_updated + (Service._interval * 60)) < current_time:
+            if Service._interval is None or Service._interval_updated is None or (Service._interval_updated + 3600) < current_time:
+                self.logger.debug(
+                    f"{self.__class__.__name__} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None and Service._interval is not None else current_time}"
+                )
                 if Config.pvoutput.testing:
-                    if not hasattr(self, "_interval") or Service._interval is None:
-                        Service._interval = 5
-                        Service._interval_updated = current_time
-                        Service._donator = 1
+                    Service._interval = 5
+                    Service._interval_updated = current_time
+                    Service._donator = 1
                     self.logger.info(
                         f"{self.__class__.__name__} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
                     )
@@ -90,10 +92,10 @@ class Service(Device):
                                 self.logger.debug(
                                     f"{self.__class__.__name__} Acquired {interval=} {donations=} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                                 )
+                                Service._interval_updated = current_time
                                 if Service._interval != interval:
                                     self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
                                     Service._interval = interval
-                                Service._interval_updated = current_time
                                 if Service._donator != (donations != 0):
                                     self.logger.info(f"{self.__class__.__name__} Donation Status changed from {Service._donator} to {donations != 0}")
                                     Service._donator = donations != 0
@@ -111,8 +113,7 @@ class Service(Device):
         next_boundary = (minutes // Service._interval + 1) * Service._interval  # Next interval boundary
         next_time = (next_boundary * 60) + randint(rand_min, rand_max)  # Convert back to seconds with a random offset for variability
         seconds = 60 if Config.pvoutput.testing else float(next_time - current_time)
-        self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
-        return seconds
+        return seconds, next_time
 
     async def upload_payload(self, url: str, payload: dict[str, any]) -> bool:
         self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")

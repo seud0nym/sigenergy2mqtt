@@ -60,9 +60,14 @@ class PVOutputStatusService(Service):
             else:
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
 
+    async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:
+        seconds, next_time = await super().seconds_until_status_upload(rand_min, rand_max)
+        self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
+        return seconds, next_time
+
     def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
-            wait = await self.seconds_until_status_upload()
+            wait, _ = await self.seconds_until_status_upload()
             self.logger.info(f"{self.__class__.__name__} Commenced (Interval = {Service._interval} minutes)")
             while self.online:
                 try:
@@ -105,7 +110,7 @@ class PVOutputStatusService(Service):
                                                 topic.previous_state, topic.previous_timestamp = snapshot[st.value][topic.topic][0]
                         else:
                             self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
-                        wait = await self.seconds_until_status_upload()
+                        wait, _ = await self.seconds_until_status_upload()
                     sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                     wait -= sleep
                     if wait > 0:
