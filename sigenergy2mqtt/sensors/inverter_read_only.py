@@ -1135,7 +1135,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
             unit=None,
-            device_class=None,
+            device_class=DeviceClass.ENUM,
             state_class=None,
             icon="mdi:home-lightning-bolt",
             gain=None,

@@ -388,7 +388,7 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             unit=None,
-            device_class=None,
+            device_class=DeviceClass.ENUM,
             state_class=None,
             icon="mdi:list-status",
             gain=None,

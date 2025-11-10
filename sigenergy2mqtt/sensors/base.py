@@ -375,8 +375,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
     def get_discovery_components(self) -> Dict[str, Dict[str, Any]]:
         components = dict((k, v) for k, v in self.items() if v is not None)
-        if "options" in components and self["platform"] != "select":
-            del components["options"]
+        if "options" in self:
+            components["options"] = [x for x in self["options"] if x is not None]
         return {self.unique_id: dict(components)}
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
@@ -1624,7 +1624,7 @@ class RunningStateSensor(ReadOnlySensor):
             data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
             unit=None,
-            device_class=None,
+            device_class=DeviceClass.ENUM,
             state_class=None,
             icon="mdi:power-settings",
             gain=None,
