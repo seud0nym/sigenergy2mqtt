@@ -110,7 +110,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if sensor._data_type == ModbusClient.DATATYPE.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
-                        status_topics[k].append(Topic(sensor.state_topic, sensor.scan_interval))  # Used displayed value, not raw
+                        status_topics[k].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Used displayed value, not raw
                         extended_data[k] = sensor.device_class
 
     if total_pv_power is not None:

@@ -582,6 +582,7 @@ class DerivedSensor(Sensor):
         name: str,
         unique_id: str,
         object_id: str,
+        data_type: ModbusClient.DATATYPE,
         unit: str,
         device_class: DeviceClass,
         state_class: StateClass,
@@ -600,6 +601,8 @@ class DerivedSensor(Sensor):
             gain,
             precision,
         )
+        assert data_type in ModbusClient.DATATYPE, f"Invalid data type {data_type}"
+        self._data_type = data_type
         self["enabled_by_default"] = True
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
@@ -1673,6 +1676,7 @@ class ResettableAccumulationSensor(DerivedSensor, ObservableMixin):
         unique_id: str,
         object_id: str,
         source: Sensor,
+        data_type: ModbusClient.DATATYPE,
         unit: str,
         device_class: DeviceClass,
         state_class: StateClass,
@@ -1680,7 +1684,18 @@ class ResettableAccumulationSensor(DerivedSensor, ObservableMixin):
         gain: float,
         precision: int,
     ):
-        super().__init__(name, unique_id, object_id, unit, device_class, state_class, icon, gain, precision)
+        super().__init__(
+            name,
+            unique_id,
+            object_id,
+            data_type,
+            unit,
+            device_class,
+            state_class,
+            icon,
+            gain,
+            precision,
+        )
         self._source = source
         self._reset_topic = f"sigenergy2mqtt/{self['object_id']}/reset"
 
@@ -1727,6 +1742,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         unique_id: str,
         object_id: str,
         source: Sensor,
+        data_type=ModbusClient.DATATYPE.UINT32,
         unit=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=DeviceClass.ENERGY,
         state_class=StateClass.TOTAL_INCREASING,
@@ -1734,7 +1750,19 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         gain=1000,
         precision=2,
     ):
-        super().__init__(name, unique_id, object_id, source, unit=unit, device_class=device_class, state_class=state_class, icon=icon, gain=gain, precision=precision)
+        super().__init__(
+            name,
+            unique_id,
+            object_id,
+            source,
+            data_type=data_type,
+            unit=unit,
+            device_class=device_class,
+            state_class=state_class,
+            icon=icon,
+            gain=gain,
+            precision=precision,
+        )
         self._current_total: float = 0.0
         self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
         if self._persistent_state_file.is_file():
@@ -1809,10 +1837,20 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         name: str,
         unique_id: str,
         object_id: str,
-        source: Sensor,
+        source: ModbusSensor,
     ):
         super().__init__(
-            name, unique_id, object_id, source, unit=source.unit, device_class=source.device_class, state_class=source["state_class"], icon=source["icon"], gain=source.gain, precision=source.precision
+            name,
+            unique_id,
+            object_id,
+            source,
+            data_type=source._data_type,
+            unit=source.unit,
+            device_class=source.device_class,
+            state_class=source["state_class"],
+            icon=source["icon"],
+            gain=source.gain,
+            precision=source.precision,
         )
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float = None
