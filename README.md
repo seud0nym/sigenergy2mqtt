@@ -215,6 +215,9 @@ Environment variables override the configuration file, but *not* command line op
 | Name | Description |
 |------|-------------|
 | `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY` | Controls auto-discovery of Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled. |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT` | The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds. |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT` | The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds. |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES` | The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0. |
 | `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device |
 | `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: 502) |
 | `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID` | The Sigenergy device Modbus Device ID. May be specified as a space-separated list (e.g. "1 2"). (default: 1) |
@@ -257,6 +260,8 @@ Environment variables override the configuration file, but *not* command line op
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V11</code></td></tr>
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V12</code></td></tr>
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL</code></td><td>Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING</code></td><td>If true, the aggregation of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL is set to DEBUG.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING</code></td><td>If true, the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL is set to DEBUG.</td></tr>
   </tbody>
 </table>
 
@@ -341,6 +346,15 @@ Command line options override both environment variables and the configuration f
                         Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only 
                         occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously 
                         discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
+  --modbus-auto-discovery-ping-timeout [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT]
+                        The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. 
+                        The default is 0.5 seconds.
+  --modbus-auto-discovery-timeout [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT]
+                        The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. 
+                        The default is 0.25 seconds.
+  --modbus-auto-discovery-retries [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES]
+                        The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. 
+                        The default is 0.
   -m [SIGENERGY2MQTT_MODBUS_HOST], --modbus-host [SIGENERGY2MQTT_MODBUS_HOST]
                         The hostname or IP address of the Sigenergy device
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]

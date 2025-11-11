@@ -402,11 +402,6 @@ pvoutput:
   #   description:  If true, sigenergy2mqtt will update the system status
   #                 in PVOutput.
   enabled: false
-  # log-level
-  #   default: CRITICAL
-  #   description:  The PVOutput interface logging level. Must be one of:
-  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
-  log-level: DEBUG
   # api-key
   #   default: ""
   #   description:  The PVOutput API key (create/find your key under 
@@ -518,3 +513,20 @@ pvoutput:
   #                 sensors (e.g. PVVoltageSensor) will be averaged to
   #                 determine a single value.
   v12: ""
+  # log-level
+  #   default: CRITICAL
+  #   description:  The PVOutput interface logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: CRITICAL
+  # calc-debug-logging
+  #   default: false
+  #   description:  If true, the aggregation of values for uploading to
+  #                 PVOutput will be logged at the DEBUG level. Only
+  #                 applicable if PVOUTPUT log-level is set to DEBUG. 
+  calc-debug-logging: false
+  # update-debug-logging
+  #   default: false
+  #   description:  If true, the updating of values for uploading to
+  #                 PVOutput will be logged at the DEBUG level. Only
+  #                 applicable if PVOUTPUT log-level is set to DEBUG. 
+  update-debug-logging: false
