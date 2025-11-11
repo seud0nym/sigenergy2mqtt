@@ -5,12 +5,13 @@ import time
 @dataclass
 class Topic:
     topic: str
-    scan_interval: int = None
+    scan_interval: int | None = None
     gain: float = 1.0
-    state: float = 0.0
-    timestamp: time.struct_time = None
-    previous_state: float = None
-    previous_timestamp: time.struct_time = None
+    precision: int | None = None
+    state: float | None = 0.0
+    timestamp: time.struct_time | None = None
+    previous_state: float | None = None
+    previous_timestamp: time.struct_time | None = None
 
     @staticmethod
     def json_decoder(obj):

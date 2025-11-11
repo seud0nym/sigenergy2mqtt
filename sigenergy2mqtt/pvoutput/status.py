@@ -57,6 +57,8 @@ class PVOutputStatusService(Service):
                     self._service_topics[field].calculation = Calculation.SUM | Calculation.DIFFERENCE
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
+                    if topic.precision is not None:
+                        self._service_topics[field].decimals = topic.precision
             else:
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
 
