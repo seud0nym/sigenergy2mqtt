@@ -69,8 +69,11 @@ class Config:
         auto_discovered = None
         if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
-            logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=})...")
-            auto_discovered = auto_discovery_scan(port)
+            ping_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT, "0.5"))
+            modbus_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, "0.25"))
+            modbus_retries = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, "0"))
+            logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_timeout=})...")
+            auto_discovered = auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries)
             if len(auto_discovered) > 0:
                 with open(auto_discovery_cache, "w") as f:
                     _yaml = YAML(typ="safe", pure=True)
@@ -223,7 +226,15 @@ class Config:
                             overrides["pvoutput"]["system-id"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
                             overrides["pvoutput"]["consumption"] = check_string(
-                                os.environ[key], key, "false", "true", ConsumptionSource.CONSUMPTION.value, ConsumptionSource.IMPORTED.value, ConsumptionSource.NET_OF_BATTERY.value, allow_empty=False, allow_none=False
+                                os.environ[key],
+                                key,
+                                "false",
+                                "true",
+                                ConsumptionSource.CONSUMPTION.value,
+                                ConsumptionSource.IMPORTED.value,
+                                ConsumptionSource.NET_OF_BATTERY.value,
+                                allow_empty=False,
+                                allow_none=False,
                             )
                         case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
                             pass  # Deprecated

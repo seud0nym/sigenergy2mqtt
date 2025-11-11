@@ -225,6 +225,33 @@ _parser.add_argument(
     help="Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.",
 )
 _parser.add_argument(
+    "--modbus-auto-discovery-ping-timeout",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT,
+    type=float,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT, None),
+    help="The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds.",
+)
+_parser.add_argument(
+    "--modbus-auto-discovery-timeout",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT,
+    type=float,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, None),
+    help="The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds.",
+)
+_parser.add_argument(
+    "--modbus-auto-discovery-retries",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, None),
+    help="The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.",
+)
+_parser.add_argument(
     "-m",
     "--modbus-host",
     nargs="?",

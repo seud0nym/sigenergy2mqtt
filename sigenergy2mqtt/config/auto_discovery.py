@@ -1,16 +1,16 @@
 from pymodbus import ExceptionResponse, FramerType, ModbusException
 from pymodbus.client import AsyncModbusTcpClient
+from queue import Queue
 from scapy.all import IP, ICMP, sr1
 import asyncio
 import ipaddress
 import logging
 import psutil
-import queue
 import threading
 import time
 
 
-def ping_worker(ip_queue, found_hosts, timeout=0.5) -> None:
+def ping_worker(ip_queue: Queue, found_hosts: dict[float, str], timeout: float) -> None:
     while not ip_queue.empty():
         ip = ip_queue.get()
         pkt = IP(dst=ip) / ICMP()
@@ -22,15 +22,15 @@ def ping_worker(ip_queue, found_hosts, timeout=0.5) -> None:
         ip_queue.task_done()
 
 
-def ping_scan(ip_list, threads=100, timeout=1) -> dict[float, str]:
-    ip_queue = queue.Queue()
-    found_hosts = {}
+def ping_scan(ip_list: list[str], threads=100, timeout=0.5) -> dict[float, str]:
+    ip_queue: Queue = Queue()
+    found_hosts: dict[float, str] = {}
 
     for ip in ip_list:
         ip_queue.put(ip)
 
     for _ in range(threads):
-        t = threading.Thread(target=ping_worker, args=(ip_queue, found_hosts))
+        t = threading.Thread(target=ping_worker, args=(ip_queue, found_hosts, timeout))
         t.daemon = True
         t.start()
 
@@ -68,8 +68,8 @@ async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) ->
 serial_numbers = []
 
 
-async def scan_host(ip: str, port: int, results: list) -> None:
-    modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=0.25, retries=0)
+async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0) -> None:
+    modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=timeout, retries=retries)
     try:
         await modbus.connect()
         if modbus.connected:
@@ -114,7 +114,7 @@ async def scan_host(ip: str, port: int, results: list) -> None:
         logging.debug(f"Modbus connection to {ip}:{port} failed: {e}")
 
 
-def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]]]:
+def scan(port: int = 502, ping_timeout:float = 0.5, modbus_timeout:float = 0.25, modbus_retries: int = 0) -> list[dict[str, int, list[int], list[int], list[int]]]:
     logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.CRITICAL)
 
@@ -136,9 +136,9 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
     active_ips: dict[str, float] = {}
     for addr, subnet in networks.items():
         logging.info(f"Scanning for active devices in network {subnet.with_prefixlen}...")
-        all_ips = [str(ip) for ip in subnet.hosts()]
-        missing_ips = [ip for ip in all_ips if ip != addr]
-        ping_results = ping_scan(missing_ips, timeout=0.5)
+        all_ips: list[str] = [str(ip) for ip in subnet.hosts()]
+        missing_ips: list[str] = [ip for ip in all_ips if ip != addr]
+        ping_results: dict[float, str] = ping_scan(missing_ips, timeout=ping_timeout)
         active_ips[addr] = 0.0  # Scan localhost first
         active_ips.update(ping_results)
     ips_sorted_by_latency = dict(sorted(active_ips.items(), key=lambda item: item[1]))
@@ -146,7 +146,7 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
     loop = asyncio.new_event_loop()
     results = []
     for ip in ips_sorted_by_latency:
-        loop.run_until_complete(scan_host(ip, port, results))
+        loop.run_until_complete(scan_host(ip, port, results, modbus_timeout, modbus_retries))
     loop.close()
 
     elapsed = time.perf_counter() - started
@@ -156,6 +156,6 @@ def scan(port: int = 502) -> list[dict[str, int, list[int], list[int], list[int]
 
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.INFO)
-    results = scan(port=502)
+    logging.getLogger("root").setLevel(logging.DEBUG)
+    results = scan(502, 0.5, 0.25, 0)
     logging.info(f"Auto-discovered: {results}")
