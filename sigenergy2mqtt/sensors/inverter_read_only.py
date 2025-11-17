@@ -1293,8 +1293,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
     def calculated(self) -> tuple[int, float] | None:
         if self._active_power.value is not None and self._reactive_power.value is not None:
             apparent_power = math.sqrt(self._active_power.value**2 + self._reactive_power.value**2)
-            if apparent_power != 0:
-                return round((self._active_power.value / apparent_power) * self.gain), apparent_power
+            return round((abs(self._active_power.value) / apparent_power) * self.gain) if apparent_power != 0 else 0, apparent_power
         return None, None
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
