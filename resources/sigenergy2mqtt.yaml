@@ -1,3 +1,7 @@
+#################################################################################
+# Any elements (or parent elements) with an added date later than the current   #
+# release number are only applicable to future releases and should be ignored.  #
+#################################################################################
 # log-level
 #   default: WARNING
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
@@ -592,35 +596,20 @@ pvoutput:
   #                                 The default is All.
   #                 If the specified time periods do not cover the
   #                 entire day, the remaining time will be treated as
-  #                 off-peak. If time periods overlap, the first matching
+  #                 shoulder. If time periods overlap, the first matching
   #                 period in the list will take precedence.
   time-periods:
   - name: Standard Rates
-    from-date: 2024-01-01
+    from-date: 2025-11-17
     periods:
-      - type: shoulder
-        start: 0:00
-        end: 10:00
-        days: 
-          - All
       - type: off-peak
         start: 10:00
         end: 14:00
         days: 
           - All
-      - type: shoulder
-        start: 14:00
-        end: 15:00
-        days: 
-          - All
       - type: peak
         start: 15:00
         end: 21:00
-        days: 
-          - All
-      - type: shoulder
-        start: 21:00
-        end: 24:00
         days: 
           - All
 

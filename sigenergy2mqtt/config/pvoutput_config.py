@@ -120,9 +120,9 @@ class PVOutputConfiguration:
                             or (dow in ("Mon", "Tue", "Wed", "Thu", "Fri") and "Weekdays" in period.days)
                             or (dow in ("Sat", "Sun") and "Weekends" in period.days)
                         ):
-                            # Set a default export if date matched but time outside of defined periods
-                            export_default = OutputField.EXPORT_OFF_PEAK
-                            import_default = OutputField.IMPORT_OFF_PEAK
+                            # Set a default export if date and day matched but time outside of defined periods
+                            export_default = OutputField.EXPORT_SHOULDER
+                            import_default = OutputField.IMPORT_SHOULDER
                             if period.start <= now < period.end:
                                 if self.update_debug_logging:
                                     logging.debug(
