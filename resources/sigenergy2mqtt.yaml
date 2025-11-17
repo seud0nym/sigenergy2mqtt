@@ -566,22 +566,25 @@ pvoutput:
   #   default: [ ]
   #   description:  An array of time periods that describe the peak,
   #                 shoulder, high-shoulder and off-peak periods for
-  #                 a specific data range.
-  #                 Each item will have the following attributes:
-  #                   - name:     An optional name for the time period
-  #                     from-date:The start date for the time period
+  #                 a specific date range. THE TIME PERIODS SPECIFIED
+  #                 MUST MATCH THE TIME PERIODS CONFIGURED IN YOUR
+  #                 PVOUTPUT TARIFF DEFINITIONS.
+  #                 Multiple data ranges may be specified, and each 
+  #                 will have the following attributes:
+  #                   - name:      An optional name for the time period
+  #                     from-date: The start date for the time period
   #                                 in YYYY-MM-DD format. If not specified,
   #                                 the time period is effective immediately.
-  #                     to-date:  The end date for the time period
+  #                     to-date:   The end date for the time period
   #                                 in YYYY-MM-DD format. If not specified,
   #                                 the time period is effective indefinitely.
-  #                 - periods:    An array of time period definitions. Each period
+  #                     - periods: An array of time period definitions. Each period
   #                                 definition has the following attributes:
-  #                     - type:   One of off-peak, peak, shoulder, 
+  #                       - type:  One of off-peak, peak, shoulder, 
   #                                 or high-shoulder
-  #                       start:  The period start time (0:00-24:00)
-  #                       end:    The period end time (0:00-24:00)
-  #                       days:   The array of days to which the 
+  #                         start: The period start time (0:00-24:00)
+  #                         end:   The period end time (0:00-24:00)
+  #                         days:  The array of days to which the 
   #                                 period applies. Valid values are:
   #                                 - Mon
   #                                 - Tue

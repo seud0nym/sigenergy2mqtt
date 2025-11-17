@@ -9,6 +9,7 @@ from .validation import check_bool, check_host, check_float, check_int, check_in
 from pathlib import Path
 from ruamel.yaml import YAML
 from typing import List
+import json
 import logging
 import os
 
@@ -216,6 +217,8 @@ class Config:
                             overrides["pvoutput"]["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
                             overrides["pvoutput"]["output-hour"] = check_int(os.environ[key], key, min=-1, max=23)
+                        case const.SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON:
+                            overrides["pvoutput"]["time-periods"] = json.loads(os.environ[key])
                         case const.SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING:
                             overrides["pvoutput"]["calc-debug-logging"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING:
