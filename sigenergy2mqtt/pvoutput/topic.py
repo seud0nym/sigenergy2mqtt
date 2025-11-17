@@ -12,11 +12,13 @@ class Topic:
     timestamp: time.struct_time | None = None
     previous_state: float | None = None
     previous_timestamp: time.struct_time | None = None
+    restore_timestamp: time.struct_time | None = None
 
     @staticmethod
     def json_decoder(obj):
         if "topic" in obj and "gain" in obj and "state" in obj and "timestamp" in obj:
             topic = Topic(**obj)
+            topic.restore_timestamp = time.localtime()
             if isinstance(topic.timestamp, list):
                 topic.timestamp = time.struct_time(topic.timestamp)
             if isinstance(topic.previous_timestamp, list):

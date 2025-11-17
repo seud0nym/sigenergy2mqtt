@@ -170,7 +170,7 @@ class ServiceTopics(dict[str, Topic]):
             for topic in self.values():
                 scan_interval = topic.scan_interval if topic.scan_interval is not None else interval_seconds
                 if topic.timestamp is not None:
-                    seconds = int(time.mktime(now) - time.mktime(topic.timestamp))
+                    seconds = int(time.mktime(now) - time.mktime(topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp))
                     minutes = int(seconds / 60.0)
                     if seconds < scan_interval:
                         if Config.pvoutput.update_debug_logging:
