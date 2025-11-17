@@ -110,7 +110,7 @@ class ServiceTopics(dict[str, Topic]):
             return False
 
     def add_to_payload(self, payload: dict[str, any], interval_minutes: int, now: time.struct_time) -> bool:
-        if self._value_key is not None and (self._bypass_updating_check or self.check_is_updating(interval_minutes, now)):
+        if self._value_key not in (None, "") and (self._bypass_updating_check or self.check_is_updating(interval_minutes, now)):
             if Calculation.AVERAGE in self._calculation:
                 return self._average_into(payload, self._value_key, self._datetime_key)
             else:  # SUM
@@ -180,7 +180,7 @@ class ServiceTopics(dict[str, Topic]):
                         if self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
                             self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
                             self._last_update_warning = time.time()
-                elif self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
+                elif not isinstance(self, TimePeriodServiceTopics) and (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600):
                     self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has never been updated??? ({scan_interval=}s)")
                     self._last_update_warning = time.time()
             return updated > 0
