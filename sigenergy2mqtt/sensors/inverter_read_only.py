@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 from .base import (
     AlarmCombinedSensor,
     AlarmSensor,
     DeviceClass,
     InputType,
+    ObservableMixin,
     ReservedSensor,
     StateClass,
     Alarm1Sensor,
@@ -17,6 +19,7 @@ from .base import (
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.const import (
     PERCENTAGE,
     UnitOfApparentPower,
@@ -30,6 +33,8 @@ from sigenergy2mqtt.sensors.const import (
     UnitOfTime,
 )
 from typing import Any, Dict
+import logging
+import math
 
 
 # 5.3 Hybrid inverter running information address definition (read-only register)
@@ -577,7 +582,7 @@ class ReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             address=30589,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -759,8 +764,8 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400 # -40.0 °C
-        self._sanity.max_value = 2000 # 200.0 °C  
+        self._sanity.min_value = -400  # -40.0 °C
+        self._sanity.max_value = 2000  # 200.0 °C
 
 
 class AverageCellVoltage(ReadOnlySensor, HybridInverter):
@@ -959,8 +964,8 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400 # -40.0 °C
-        self._sanity.max_value = 2000 # 200.0 °C  
+        self._sanity.min_value = -400  # -40.0 °C
+        self._sanity.max_value = 2000  # 200.0 °C
 
 
 class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
@@ -983,8 +988,8 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400 # -40.0 °C
-        self._sanity.max_value = 2000 # 200.0 °C  
+        self._sanity.min_value = -400  # -40.0 °C
+        self._sanity.max_value = 2000  # 200.0 °C
 
 
 class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1118,8 +1123,8 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             precision=1,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400 # -40.0 °C
-        self._sanity.max_value = 2000 # 200.0 °C  
+        self._sanity.min_value = -400  # -40.0 °C
+        self._sanity.max_value = 2000  # 200.0 °C
 
 
 class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1252,7 +1257,14 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
+class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
+    @dataclass
+    class Power:
+        topic: str
+        gain: float
+        active: bool
+        value: float | int | None = None
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Power Factor",
@@ -1263,7 +1275,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
             address=31023,
             count=1,
             data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=None,
             device_class=DeviceClass.POWER_FACTOR,
             state_class=None,
@@ -1274,6 +1286,53 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         self._sanity.min_value = 0  # 0.0
         self._sanity.max_value = 1000  # 1.0
         self._max_failures_retry_interval = 300
+        self._active_power: PowerFactor.Power = None
+        self._reactive_power: PowerFactor.Power = None
+
+    @property
+    def calculated(self) -> tuple[int, float] | None:
+        if self._active_power.value is not None and self._reactive_power.value is not None:
+            apparent_power = math.sqrt(self._active_power.value**2 + self._reactive_power.value**2)
+            if apparent_power != 0:
+                return round((self._active_power.value / apparent_power) * self.gain), apparent_power
+        return None, None
+
+    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        if source == self._active_power.topic:
+            self._active_power.value = float(value) * self._active_power.gain
+        elif source == self._reactive_power.topic:
+            self._reactive_power.value = float(value) * self._reactive_power.gain
+        else:
+            return False
+        return True
+
+    def observable_topics(self) -> set[str]:
+        topics: set[str] = set()
+        for sensor in self.parent_device.get_all_sensors().values():
+            if isinstance(sensor, ActivePower) and sensor.state_topic is not None:
+                self._active_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
+                topics.add(sensor.state_topic)
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
+            elif isinstance(sensor, ReactivePower) and sensor.state_topic is not None:
+                self._reactive_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
+                topics.add(sensor.state_topic)
+                if self._debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
+            if self._active_power is not None and self._reactive_power is not None:
+                break
+        return topics
+
+    def set_state(self, state: float | int | str) -> None:
+        try:
+            super().set_state(state)
+        except ValueError as e:
+            power_factor, apparent_power = self.calculated
+            if power_factor is not None:
+                logging.info(f"{self.__class__.__name__} Applying Value {power_factor} (Active={self._active_power.value} Reactive={self._reactive_power.value} Apparent={apparent_power}) because {e}")
+                super().set_state(power_factor)
+            else:
+                raise e
 
 
 class PACKBCUCount(ReadOnlySensor, HybridInverter):
