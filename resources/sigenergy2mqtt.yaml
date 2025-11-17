@@ -4,6 +4,7 @@
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
 # sanity-check-default-kw
+#   added: 2025.7.9
 #   default: 100.0
 #   description:  The default value used for sanity checks to validate the
 #                 maximum and minimum values for power and energy sensors.
@@ -69,6 +70,7 @@ home-assistant:
   #                 after initial discovery has been published.
   unique-id-prefix: sigen
   # use-simplified-topics
+  #   added: 2025.7.26
   #   default: false
   #   description:  If true, sigenergy2mqtt will use a simplified topic
   #                 structure for Home Assistant entities. The topic will be
@@ -86,6 +88,7 @@ mqtt:
   #   description:  The port number used by the MQTT broker.
   port: 1883
   # keepalive
+  #   added: 2025.10.15
   #   default: 60
   #   description:  The maximum period in seconds between communications with
   #                 the broker. If no other messages are being exchanged, this 
@@ -93,11 +96,13 @@ mqtt:
   #                 messages to the broker. Default is 60 and minimum is 1.
   keepalive: 60
   # tls
+  #   added: 2025.8.11
   #   default: false
   #   description: If true, secure communication to the broker over TLS/SSL
   #                is enabled.
   tls: false
   # tls-insecure
+  #   added: 2025.8.12
   #   default: false
   #   description: If true, allows insecure communication over TLS. If your 
   #                broker is using a self-signed certificate, you must set
@@ -149,17 +154,20 @@ modbus:
     #   description:  The port number used by the Sigenergy Modbus interface.
     port: 502
     # timeout
+    #   added: 2025.10.14
     #   default: 1
     #   description:  The timeout for connecting and receiving Modbus data, 
     #                 in seconds (use decimals for milliseconds). 
     #                 The default is 1.0.
     timeout: 1.0
     # retries
+    #   added: 2025.10.14
     #   default: 3
     #   description:  The maximum number of times to retry a Modbus operation
     #                 if it fails. The default is 3.
     retries: 3
     # disable-chunking
+    #   added: 2025.9.19
     #   default: false
     #   description:  If true, chunking of Modbus reads will be disabled and 
     #                 each register will be read individually. This is NOT
@@ -207,6 +215,7 @@ modbus:
     #                 disable write-only entities.
     write-only: true
     # no-remote-ems
+    #   added: 2025.5.31
     #   default: false
     #   description:  If true, read-write entities related to remote Energy
     #                 Management System (EMS) integration will NOT be published
@@ -217,25 +226,30 @@ modbus:
     #   description:  If true, Modbus read chunking will be disabled and each
     #                 register will be read individually. This may impact
     #                 performance.
+    disable-chunking: false
     # scan-interval-low
+    #   added: 2025.6.11
     #   default: 600
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned at a low frequency. Default is 600
     #                 (seconds), and the minimum value is 1.
     scan-interval-low: 600
     # scan-interval-medium
+    #   added: 2025.6.11
     #   default: 60
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned at a medium frequency. Default is 60
     #                 (seconds), and the minimum value is 1.
     scan-interval-medium: 60
     # scan-interval-high
+    #   added: 2025.6.11
     #   default: 10
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned at a high frequency. Default is 10
     #                 (seconds), and the minimum value is 1.
     scan-interval-high: 10
     # scan-interval-realtime
+    #   added: 2025.6.11
     #   default: 5
     #   description:  The scan interval in seconds for Modbus registers that
     #                 are to be scanned in near-real time. Default is 5
@@ -347,6 +361,7 @@ sensor-overrides:
     #                 and will not appear in Home Assistant at all.
     publishable: false
     # publish-raw
+    #   added: 2025.10.18
     #   default: There is no default
     #   description:  If true, the raw state will be published in addition
     #                 to the state with gain and precision applied. The 
@@ -354,6 +369,7 @@ sensor-overrides:
     #                 discovery. Ignored if the sensor is not publishable.
     publish-raw: false
     # sanity-check-max-value
+    #   added: 2025.5.29
     #   default: There is no default
     #   description:  Sets a maximum allowable value for this sensor to
     #                 allow anomalous readings to be ignored. This value
@@ -361,6 +377,7 @@ sensor-overrides:
     #                 Modbus interface, BEFORE the gain is applied.
     sanity-check-max-value: 100000
     # sanity-check-min-value
+    #   added: 2025.5.29
     #   default: There is no default
     #   description:  Sets a minimum allowable value for this sensor to
     #                 allow anomalous readings to be ignored. This value
@@ -368,6 +385,7 @@ sensor-overrides:
     #                 Modbus interface, BEFORE the gain is applied.
     sanity-check-min-value: -100000
     # sanity-check-delta
+    #   added: 2025.7.9
     #   default: false
     #   description:  If true, the sanity check will be applied to the
     #                 change in value since the last reading, rather than
@@ -415,16 +433,14 @@ pvoutput:
   # consumption
   #   default: false
   #   description:  If specified with a value of 'true' or 'consumption', 
-  #                 consumption data will be sent to PVOutput. With a value 
-  #                 of 'imported', the energy imported from the grid will 
-  #                 be sent as consumption. If not specified, or the value
-  #                 is 'false', no consumption data will be sent.
-  #                 WARNING: If you enable consumption uploading, PVOutput
-  #                 will automatically (and incorrectly) calculate your
-  #                 daily exports and imports without taking battery 
-  #                 charging into account.
+  #                 consumption data will be sent to PVOutput. 
+  #                 (2025.8.31) With a value of 'imported', the energy
+  #                 imported from the grid will be sent as consumption.
+  #                 If not specified, or the value is 'false', no 
+  #                 consumption data will be sent.
   consumption: false
   # exports
+  #   added: 2025.10.1
   #   default: true
   #   description:  If true, the energy exported to the grid will be sent
   #                 to PVOutput. If false, exports will not be uploaded.
@@ -432,6 +448,7 @@ pvoutput:
   #                 uploaded exports.
   exports: true
   # imports
+  #   added: 2025.10.1
   #   default: true
   #   description:  If true, the energy imported from the grid will be
   #                 sent to PVOutput. If false, imports will not be
@@ -443,10 +460,12 @@ pvoutput:
   #   description:  The hour of the day (20-23) at which the daily totals
   #                 are sent to PVOutput. The default is 23 (11pm). Valid
   #                 values are 20 to 23. The minute is randomly chosen
-  #                 between 51 and 58. If you specify -1, daily uploads
-  #                 will be sent at the same frequency as status updates.
+  #                 between 51 and 58. 
+  #                 (2025.10.1) If you specify -1, daily uploads will be
+  #                 sent at the same frequency as status updates.
   output-hour: 23
   # temperature-topic
+  #   added: 2025.7.19
   #   default: ""
   #   description:  An MQTT topic from which the current temperature can be
   #                 read. This is used to send the temperature to PVOutput.
@@ -454,6 +473,7 @@ pvoutput:
   #                 PVOutput.
   temperature_topic: ""
   # v7
+  #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
   #                 v7 extended field in PVOutput. If not specified, OR
@@ -464,6 +484,7 @@ pvoutput:
   #                 determine a single value.
   v7: ""
   # v8
+  #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
   #                 v8 extended field in PVOutput. If not specified, OR
@@ -474,6 +495,7 @@ pvoutput:
   #                 determine a single value.
   v8: ""
   # v9
+  #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
   #                 v9 extended field in PVOutput. If not specified, OR
@@ -484,6 +506,7 @@ pvoutput:
   #                 determine a single value.
   v9: ""
   # v10
+  #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
   #                 v10 extended field in PVOutput. If not specified, OR
@@ -494,6 +517,7 @@ pvoutput:
   #                 determine a single value.
   v10: ""
   # v11
+  #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
   #                 v11 extended field in PVOutput. If not specified, OR
@@ -504,6 +528,7 @@ pvoutput:
   #                 determine a single value.
   v11: ""
   # v12
+  #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
   #                 v12 extended field in PVOutput. If not specified, OR
@@ -519,14 +544,83 @@ pvoutput:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: CRITICAL
   # calc-debug-logging
+  #   added: 2025.11.11
   #   default: false
   #   description:  If true, the aggregation of values for uploading to
   #                 PVOutput will be logged at the DEBUG level. Only
   #                 applicable if PVOUTPUT log-level is set to DEBUG. 
   calc-debug-logging: false
   # update-debug-logging
+  #   added: 2025.11.11
   #   default: false
   #   description:  If true, the updating of values for uploading to
   #                 PVOutput will be logged at the DEBUG level. Only
   #                 applicable if PVOUTPUT log-level is set to DEBUG. 
   update-debug-logging: false
+  # time-periods
+  #   added: 2025.11.17
+  #   default: [ ]
+  #   description:  An array of time periods that describe the peak,
+  #                 shoulder, high-shoulder and off-peak periods for
+  #                 a specific data range.
+  #                 Each item will have the following attributes:
+  #                   - name:     An optional name for the time period
+  #                     from-date:The start date for the time period
+  #                                 in YYYY-MM-DD format. If not specified,
+  #                                 the time period is effective immediately.
+  #                     to-date:  The end date for the time period
+  #                                 in YYYY-MM-DD format. If not specified,
+  #                                 the time period is effective indefinitely.
+  #                 - periods:    An array of time period definitions. Each period
+  #                                 definition has the following attributes:
+  #                     - type:   One of off-peak, peak, shoulder, 
+  #                                 or high-shoulder
+  #                       start:  The period start time (0:00-24:00)
+  #                       end:    The period end time (0:00-24:00)
+  #                       days:   The array of days to which the 
+  #                                 period applies. Valid values are:
+  #                                 - Mon
+  #                                 - Tue
+  #                                 - Wed
+  #                                 - Thu
+  #                                 - Fri
+  #                                 - Sat
+  #                                 - Sun
+  #                                 - Weekdays
+  #                                 - Weekends
+  #                                 - All
+  #                                 The default is All.
+  #                 If the specified time periods do not cover the
+  #                 entire day, the remaining time will be treated as
+  #                 off-peak. If time periods overlap, the first matching
+  #                 period in the list will take precedence.
+  time-periods:
+  - name: Standard Rates
+    from-date: 2024-01-01
+    periods:
+      - type: shoulder
+        start: 0:00
+        end: 10:00
+        days: 
+          - All
+      - type: off-peak
+        start: 10:00
+        end: 14:00
+        days: 
+          - All
+      - type: shoulder
+        start: 14:00
+        end: 15:00
+        days: 
+          - All
+      - type: peak
+        start: 15:00
+        end: 21:00
+        days: 
+          - All
+      - type: shoulder
+        start: 21:00
+        end: 24:00
+        days: 
+          - All
+

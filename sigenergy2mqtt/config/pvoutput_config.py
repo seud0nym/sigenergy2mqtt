@@ -1,5 +1,6 @@
-from .validation import check_bool, check_int, check_log_level, check_string
+from .validation import check_bool, check_date, check_int, check_log_level, check_string, check_time
 from dataclasses import dataclass, field
+from datetime import date, datetime, time
 from enum import StrEnum
 import logging
 
@@ -8,6 +9,22 @@ class ConsumptionSource(StrEnum):
     CONSUMPTION = "consumption"
     IMPORTED = "imported"
     NET_OF_BATTERY = "net-of-battery"
+
+
+class OutputField(StrEnum):
+    GENERATION = "g"
+    EXPORTS = "e"
+    EXPORT_PEAK = "ep"
+    EXPORT_OFF_PEAK = "eo"
+    EXPORT_SHOULDER = "es"
+    EXPORT_HIGH_SHOULDER = "eh"
+    IMPORTS = ""
+    IMPORT_PEAK = "ip"
+    IMPORT_OFF_PEAK = "io"
+    IMPORT_SHOULDER = "is"
+    IMPORT_HIGH_SHOULDER = "ih"
+    PEAK_POWER = "pp"
+    CONSUMPTION = "c"
 
 
 class StatusField(StrEnum):
@@ -31,12 +48,20 @@ class StatusField(StrEnum):
     V12 = "v12"
 
 
-class OutputField(StrEnum):
-    GENERATION = "g"
-    EXPORTS = "e"
-    IMPORTS = "ip"
-    PEAK_POWER = "pp"
-    CONSUMPTION = "c"
+@dataclass
+class TimePeriod:
+    type: str
+    start: time
+    end: time
+    days: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Tariff:
+    name: str | None = None
+    from_date: date | None = None
+    to_date: date | None = None
+    periods: list[TimePeriod] = field(default_factory=list)
 
 
 @dataclass
@@ -46,6 +71,8 @@ class PVOutputConfiguration:
     consumption: str | None = None
     exports: bool = False
     imports: bool = False
+
+    tariffs: list[Tariff] = field(default_factory=list)
 
     extended: dict[str, str] = field(
         default_factory=lambda: {
@@ -74,6 +101,43 @@ class PVOutputConfiguration:
     @property
     def consumption_enabled(self) -> bool:
         return self.consumption in (ConsumptionSource.CONSUMPTION, ConsumptionSource.IMPORTED, ConsumptionSource.NET_OF_BATTERY)
+
+    @property
+    def current_time_period(self) -> tuple[OutputField, OutputField]:
+        export_default = None  # No export default if completely unmatched, because total exports is always reported, but time periods may not be defined
+        import_default = OutputField.IMPORT_PEAK  # Import default prior to introduction of time periods was peak
+        if self.tariffs:
+            now_date_time = datetime.now()
+            today = now_date_time.date()
+            now = now_date_time.time()
+            dow = now_date_time.strftime("%a")  # 'Mon', 'Tue', etc.
+            for tariff in self.tariffs:
+                if (tariff.from_date is None or tariff.from_date <= today) and (tariff.to_date is None or tariff.to_date >= today):
+                    for period in tariff.periods:
+                        if (
+                            "All" in period.days
+                            or dow in period.days
+                            or (dow in ("Mon", "Tue", "Wed", "Thu", "Fri") and "Weekdays" in period.days)
+                            or (dow in ("Sat", "Sun") and "Weekends" in period.days)
+                        ):
+                            # Set a default export if date matched but time outside of defined periods
+                            export_default = OutputField.EXPORT_OFF_PEAK
+                            import_default = OutputField.IMPORT_OFF_PEAK
+                            if period.start <= now < period.end:
+                                if self.update_debug_logging:
+                                    logging.debug(
+                                        f"Current date matched '{tariff.name}' (from: {tariff.from_date} to: {tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}"
+                                    )
+                                match period.type:
+                                    case "off-peak":
+                                        return (OutputField.EXPORT_OFF_PEAK, OutputField.IMPORT_OFF_PEAK)
+                                    case "peak":
+                                        return (OutputField.EXPORT_PEAK, OutputField.IMPORT_PEAK)
+                                    case "shoulder":
+                                        return (OutputField.EXPORT_SHOULDER, OutputField.IMPORT_SHOULDER)
+                                    case "high-shoulder":
+                                        return (OutputField.EXPORT_HIGH_SHOULDER, OutputField.IMPORT_HIGH_SHOULDER)
+        return (export_default, import_default)
 
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
@@ -128,8 +192,80 @@ class PVOutputConfiguration:
                             self.calc_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case "update-debug-logging":
                             self.update_debug_logging = check_bool(value, f"pvoutput.{field}")
+                        case "time-periods":
+                            if isinstance(value, list):
+                                tariffs: list[Tariff] = []
+                                index = 0
+                                for tariff in value:
+                                    if isinstance(tariff, dict):
+                                        name: str | None = None
+                                        from_date: date | None = datetime.min.date()
+                                        to_date: date | None = datetime.max.date()
+                                        periods: list[TimePeriod] | None = None
+                                        for key in tariff.keys():
+                                            if key not in ("name", "from-date", "to-date", "periods"):
+                                                raise ValueError(f"pvoutput.time-periods[{index}] contains unknown option '{key}'")
+                                            match key:
+                                                case "name":
+                                                    name = check_string(tariff["name"], f"pvoutput.time-periods[{index}].name", allow_none=True, allow_empty=True)
+                                                case "from-date":
+                                                    from_date = check_date(tariff["from-date"], f"pvoutput.time-periods[{index}].from-date")
+                                                case "to-date":
+                                                    to_date = check_date(tariff["to-date"], f"pvoutput.time-periods[{index}].to-date")
+                                                case "periods":
+                                                    periods = self._parse_time_periods(tariff["periods"])
+                                        if periods is None:
+                                            raise ValueError(f"pvoutput.time-periods[{index}] must contain a 'periods' element")
+                                        else:
+                                            tariffs.append(Tariff(name=f"Unknown-{index}" if name is None else name, from_date=from_date, to_date=to_date, periods=periods))
+                                        index += 1
+                                self.tariffs = sorted(tariffs, key=lambda t: (t.from_date or datetime.min, t.to_date or datetime.max), reverse=True)
                         case _:
                             if field != "enabled":
                                 raise ValueError(f"pvoutput configuration element contains unknown option '{field}'")
         else:
             raise ValueError("pvoutput configuration element must contain options and their values")
+
+    def _parse_time_periods(self, value: dict[str, any]) -> list[TimePeriod]:
+        periods: list[TimePeriod] = []
+        if isinstance(value, list):
+            index = 0
+            for period in value:
+                if isinstance(period, dict):
+                    if "type" in period and "start" in period and "end" in period:
+                        type = check_string(period["type"], f"pvoutput.time-periods[{index}].type", "off-peak", "peak", "shoulder", "high-shoulder")
+                        start = check_time(period["start"], f"pvoutput.time-periods[{index}].start")
+                        end = check_time(period["end"], f"pvoutput.time-periods[{index}].end")
+                        days: list[str] = []
+                        if "days" in period:
+                            if isinstance(period["days"], list):
+                                for day in period["days"]:
+                                    days.append(
+                                        check_string(
+                                            day.capitalize(),
+                                            f"pvoutput.time-periods[{period['type']}:{period['start']}-{period['end']}].days",
+                                            "Mon",
+                                            "Tue",
+                                            "Wed",
+                                            "Thu",
+                                            "Fri",
+                                            "Sat",
+                                            "Sun",
+                                            "Weekdays",
+                                            "Weekends",
+                                            "All",
+                                        ),
+                                    )
+                            else:
+                                raise ValueError(f"pvoutput.time-periods.periods[{index}].days must be a list of days, or Weekdays, Weekends, or All")
+                        else:
+                            days.append("All")
+                        periods.append(TimePeriod(type=type, start=start, end=end, days=days))
+                    else:
+                        raise ValueError(f"pvoutput.time-periods.periods[{index}] must contain 'type', 'start', and 'end' elements")
+                else:
+                    raise ValueError(f"pvoutput.time-periods.periods[{index}] must be a time period definition")
+                index += 1
+            return periods
+        else:
+            raise ValueError("pvoutput time-periods.periods configuration element must contain a list of time period definitions")

@@ -2,6 +2,9 @@ import importlib
 import logging
 import re
 import socket
+from datetime import date, datetime, time
+
+PATTERN_24H = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 
 
 def is_valid_ipv4(ip):
@@ -36,6 +39,15 @@ def check_bool(value, source):
         return value
     else:
         raise ValueError(f"{source} must be a either true or false")
+
+
+def check_date(value, source) -> date:
+    if isinstance(value, date):
+        return value
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        raise ValueError(f"{source} must be in the format YYYY-MM-DD and not null")
 
 
 def check_float(value, source, min: float = None, max: float = None, allow_none: bool = False):
@@ -149,3 +161,14 @@ def check_string(value, source, *valid_values, allow_none: bool = True, allow_em
         return value
     else:
         raise ValueError(f"{source} must be a valid string")
+
+
+def check_time(value, source) -> time:
+    if isinstance(value, time):
+        return value
+    try:
+        if value == "24:00" or value == "23:59":
+            return time(23, 59, 59, 999999)
+        return datetime.strptime(value, "%H:%M").time()
+    except ValueError:
+        raise ValueError(f"{source} must be in the format HH:MM and not null")

@@ -1,5 +1,5 @@
 from .service import Service
-from .service_topics import Calculation, ServiceTopics
+from .service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
 from .topic import Topic
 from datetime import datetime, timedelta
 from random import randint
@@ -17,14 +17,36 @@ class PVOutputOutputService(Service):
     def __init__(self, logger: logging.Logger, topics: dict[OutputField, list[Topic]]):
         super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
+        _c = ServiceTopics(self, False, logger, value_key=OutputField.CONSUMPTION)  # Disable EoD consumption update because it is updated via the status service
+        _eh = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_HIGH_SHOULDER)
+        _eo = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_OFF_PEAK)
+        _ep = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_PEAK)
+        _es = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_SHOULDER)
+        _e = ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, time_periods=(_eh, _eo, _ep, _es))
+        _g = ServiceTopics(self, False, logger, value_key=OutputField.GENERATION)  # Disable EoD generation update because it is updated via the status service
+        _ih = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_HIGH_SHOULDER)
+        _io = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_OFF_PEAK)
+        _ip = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_PEAK)
+        _is = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_SHOULDER)
+        _i = ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, time_periods=(_ih, _io, _ip, _is))  # Dummy parent for import periods
+        _pp = ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calculation=Calculation.SUM | Calculation.PEAK)
+
         self._latest_peak_at: str = None
         self._previous_payload: dict = None
         self._service_topics: dict[str, ServiceTopics] = {
-            OutputField.GENERATION: ServiceTopics(self, False, logger, value_key=OutputField.GENERATION),  # Disable EoD generation update because it is updated via the status service
-            OutputField.IMPORTS: ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS),
-            OutputField.EXPORTS: ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS),
-            OutputField.PEAK_POWER: ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calculation=Calculation.SUM | Calculation.PEAK),
-            OutputField.CONSUMPTION: ServiceTopics(self, False, logger, value_key=OutputField.CONSUMPTION),  # Disable EoD consumption update because it is updated via the status service
+            OutputField.GENERATION: _g,
+            OutputField.IMPORTS: _i,
+            OutputField.EXPORTS: _e,
+            OutputField.PEAK_POWER: _pp,
+            OutputField.CONSUMPTION: _c,
+            OutputField.IMPORT_PEAK: _ip,
+            OutputField.IMPORT_OFF_PEAK: _io,
+            OutputField.IMPORT_SHOULDER: _is,
+            OutputField.IMPORT_HIGH_SHOULDER: _ih,
+            OutputField.EXPORT_PEAK: _ep,
+            OutputField.EXPORT_OFF_PEAK: _eo,
+            OutputField.EXPORT_SHOULDER: _es,
+            OutputField.EXPORT_HIGH_SHOULDER: _eh,
         }
         for field, topic_list in topics.items():
             if field in self._service_topics:
