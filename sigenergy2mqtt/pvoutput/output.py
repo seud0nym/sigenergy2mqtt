@@ -107,7 +107,7 @@ class PVOutputOutputService(Service):
 
     async def _verify(self, payload: dict[str, int | str], force: bool = False) -> bool:
         self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
-        url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}"
+        url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if Config.pvoutput.exports else ''}"
         verify_retries: int = 3 if force else 1
         initial_wait: float = 0.1 if not force or Config.pvoutput.testing else 120.0
         subsequent_wait: float = 0.1 if Config.pvoutput.testing else 60.0
@@ -122,7 +122,7 @@ class PVOutputOutputService(Service):
                     if validate > 1:
                         v = re.split(
                             r"[,]",
-                            f"{payload['d']},{payload.get('g', 'NaN')},{payload.get('c', 'NaN')},{payload.get('e', 'NaN')},0,{payload.get('pp', 'NaN')},{payload.get('pt', '')},Showers,12,16,{payload.get('ip', 'NaN')},0,0,0",
+                            f"{payload['d']},{payload.get('g', 'NaN')},{payload.get('c', 'NaN')},{payload.get('e', 'NaN')},0,{payload.get('pp', 'NaN')},{payload.get('pt', '')},Showers,12,16,{payload.get('ip', 'NaN')},{payload.get('io', 'NaN')},{payload.get('is', 'NaN')},{payload.get('ih', 'NaN')},{payload.get('ep', 'NaN')},{payload.get('eo', 'NaN')},{payload.get('es', 'NaN')},{payload.get('eh', 'NaN')}",
                         )
                     else:
                         self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation FAILED")
@@ -142,23 +142,25 @@ class PVOutputOutputService(Service):
                 if matches:
                     result = {}
                     result["d"] = v[0]
-                    result["e"] = int(v[3]) if len(v) > 3 and v[3] != "NaN" else None
+                    result["e"] = int(v[3]) if Config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
                     result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
-                    result["ip"] = int(v[10]) if len(v) > 10 and v[10] != "NaN" else None
+                    result["ip"] = int(v[10]) if Config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
+                    result["io"] = int(v[11]) if Config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
+                    result["is"] = int(v[12]) if Config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
+                    result["ih"] = int(v[13]) if Config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
+                    result["ep"] = int(v[14]) if Config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
+                    result["eo"] = int(v[15]) if Config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
+                    result["es"] = int(v[16]) if Config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
+                    result["eh"] = int(v[17]) if Config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                         if topic._value_key in payload and topic._value_key in result:
-                            if payload[topic._value_key] == result[topic._value_key]:
+                            if payload[topic._value_key] != result[topic._value_key]:
                                 self.logger.debug(
-                                    f"{self.__class__.__name__} Verified payload['{topic._value_key}']={payload[topic._value_key]} == result['{topic._value_key}']={result[topic._value_key]}"
-                                )
-                            else:
-                                self.logger.debug(
-                                    f"{self.__class__.__name__} Verification failure: payload['{topic._value_key}']={payload[topic._value_key]} != result['{topic._value_key}']={result[topic._value_key]}"
+                                    f"{self.__class__.__name__} Verification FAILED: payload['{topic._value_key}']={payload[topic._value_key]} != result['{topic._value_key}']={result[topic._value_key]}"
                                 )
                                 matches = False
-                                break
                 if matches:
-                    self.logger.info(f"{self.__class__.__name__} Verified uploaded {payload=} downloaded={result} ({response.text})")
+                    self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")
                     break
                 elif validate < verify_retries:
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
