@@ -268,7 +268,7 @@ class ServiceTopics(dict[str, Topic]):
                 if Config.pvoutput.update_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Current time period for {self._name} is {current_period}")
                 for child in self._time_periods:
-                    await child.update_time_period(topic, previous_state, state, current_export_period=current_period[0].value, current_import_period=current_period[1].value)
+                    await child.update_time_period(topic, previous_state, state, current_export_period=current_period[0], current_import_period=current_period[1])
             return True
         else:
             return False
