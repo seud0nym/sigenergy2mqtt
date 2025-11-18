@@ -183,7 +183,7 @@ def on_message(client: MqttClient, userdata: CustomMqttHandler, message) -> None
 
 async def async_helper() -> None:
     _yaml = YAML(typ="safe", pure=True)
-    with open(".modbus_test_server.yaml", "r") as f:
+    with open("test/.modbus_test_server.yaml", "r") as f:
         config = _yaml.load(f)
         mqtt_client = MqttClient(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop()))
         mqtt_client.username_pw_set(config.get("mqtt", {}).get("username"), config.get("mqtt", {}).get("password"))
