@@ -1,3 +1,4 @@
+from typing import Final
 from .validation import check_bool, check_date, check_int, check_log_level, check_string, check_time
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
@@ -48,9 +49,16 @@ class StatusField(StrEnum):
     V12 = "v12"
 
 
+class TariffType(StrEnum):
+    OFF_PEAK = "off-peak"
+    PEAK = "peak"
+    SHOULDER = "shoulder"
+    HIGH_SHOULDER = "high-shoulder"
+
+
 @dataclass
 class TimePeriod:
-    type: str
+    type: TariffType
     start: time
     end: time
     days: list[str] = field(default_factory=list)
@@ -58,10 +66,15 @@ class TimePeriod:
 
 @dataclass
 class Tariff:
-    name: str | None = None
+    plan: str | None = None
     from_date: date | None = None
     to_date: date | None = None
+    default: TariffType = TariffType.SHOULDER
     periods: list[TimePeriod] = field(default_factory=list)
+
+
+WEEKDAYS: Final = ("Mon", "Tue", "Wed", "Thu", "Fri")
+WEEKENDS: Final = ("Sat", "Sun")
 
 
 @dataclass
@@ -104,8 +117,8 @@ class PVOutputConfiguration:
 
     @property
     def current_time_period(self) -> tuple[OutputField, OutputField]:
-        export_default = None  # No export default if completely unmatched, because total exports is always reported, but time periods may not be defined
-        import_default = OutputField.IMPORT_PEAK  # Import default prior to introduction of time periods was peak
+        export_type = None  # No export default if completely unmatched, because total exports is always reported, but time periods may not be defined
+        import_type = OutputField.IMPORT_PEAK  # Import default prior to introduction of time periods was peak
         if self.tariffs:
             now_date_time = datetime.now()
             today = now_date_time.date()
@@ -114,30 +127,33 @@ class PVOutputConfiguration:
             for tariff in self.tariffs:
                 if (tariff.from_date is None or tariff.from_date <= today) and (tariff.to_date is None or tariff.to_date >= today):
                     for period in tariff.periods:
-                        if (
-                            "All" in period.days
-                            or dow in period.days
-                            or (dow in ("Mon", "Tue", "Wed", "Thu", "Fri") and "Weekdays" in period.days)
-                            or (dow in ("Sat", "Sun") and "Weekends" in period.days)
-                        ):
-                            # Set a default export if date and day matched but time outside of defined periods
-                            export_default = OutputField.EXPORT_SHOULDER
-                            import_default = OutputField.IMPORT_SHOULDER
+                        if "All" in period.days or dow in period.days or ("Weekdays" in period.days and dow in WEEKDAYS) or ("Weekends" in period.days and dow in WEEKENDS):
                             if period.start <= now < period.end:
                                 if self.update_debug_logging:
-                                    logging.debug(
-                                        f"Current date matched '{tariff.name}' (from: {tariff.from_date} to: {tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}"
-                                    )
-                                match period.type:
-                                    case "off-peak":
-                                        return (OutputField.EXPORT_OFF_PEAK, OutputField.IMPORT_OFF_PEAK)
-                                    case "peak":
-                                        return (OutputField.EXPORT_PEAK, OutputField.IMPORT_PEAK)
-                                    case "shoulder":
-                                        return (OutputField.EXPORT_SHOULDER, OutputField.IMPORT_SHOULDER)
-                                    case "high-shoulder":
-                                        return (OutputField.EXPORT_HIGH_SHOULDER, OutputField.IMPORT_HIGH_SHOULDER)
-        return (export_default, import_default)
+                                    logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date}-{tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}")
+                                export_type, import_type = self._type_to_output_fields(period.type)
+                                break
+                    else:
+                        if self.update_debug_logging:
+                            logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date}-{tariff.to_date}) but no time matched so using default '{tariff.default}'")
+                        export_type, import_type = self._type_to_output_fields(tariff.default)  # Set the default types if date matched but time outside of defined periods
+        return (export_type, import_type)
+
+    def _type_to_output_fields(self, type: TariffType) -> tuple[OutputField, OutputField]:
+        match type:
+            case TariffType.OFF_PEAK:
+                export_type = OutputField.EXPORT_OFF_PEAK
+                import_type = OutputField.IMPORT_OFF_PEAK
+            case TariffType.PEAK:
+                export_type = OutputField.EXPORT_PEAK
+                import_type = OutputField.IMPORT_PEAK
+            case TariffType.SHOULDER:
+                export_type = OutputField.EXPORT_SHOULDER
+                import_type = OutputField.IMPORT_SHOULDER
+            case TariffType.HIGH_SHOULDER:
+                export_type = OutputField.EXPORT_HIGH_SHOULDER
+                import_type = OutputField.IMPORT_HIGH_SHOULDER
+        return (export_type, import_type)
 
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):
@@ -198,26 +214,29 @@ class PVOutputConfiguration:
                                 index = 0
                                 for tariff in value:
                                     if isinstance(tariff, dict):
-                                        name: str | None = None
-                                        from_date: date | None = datetime.min.date()
-                                        to_date: date | None = datetime.max.date()
+                                        plan: str | None = None
+                                        from_date: date = datetime.min.date()
+                                        to_date: date = datetime.max.date()
+                                        default: str = "shoulder"
                                         periods: list[TimePeriod] | None = None
                                         for key in tariff.keys():
-                                            if key not in ("name", "from-date", "to-date", "periods"):
+                                            if key not in ("plan", "from-date", "to-date", "default", "periods"):
                                                 raise ValueError(f"pvoutput.time-periods[{index}] contains unknown option '{key}'")
                                             match key:
-                                                case "name":
-                                                    name = check_string(tariff["name"], f"pvoutput.time-periods[{index}].name", allow_none=True, allow_empty=True)
+                                                case "plan":
+                                                    plan = check_string(tariff[key], f"pvoutput.time-periods[{index}].{key}", allow_none=True, allow_empty=True)
                                                 case "from-date":
-                                                    from_date = check_date(tariff["from-date"], f"pvoutput.time-periods[{index}].from-date")
+                                                    from_date = check_date(tariff[key], f"pvoutput.time-periods[{index}].{key}")
                                                 case "to-date":
-                                                    to_date = check_date(tariff["to-date"], f"pvoutput.time-periods[{index}].to-date")
+                                                    to_date = check_date(tariff[key], f"pvoutput.time-periods[{index}].{key}")
+                                                case "default":
+                                                    default = check_string(tariff[key], f"pvoutput.time-periods[{index}].{key}", "off-peak", "peak", "shoulder", "high-shoulder")
                                                 case "periods":
-                                                    periods = self._parse_time_periods(tariff["periods"])
+                                                    periods = self._parse_time_periods(tariff[key])
                                         if periods is None:
                                             raise ValueError(f"pvoutput.time-periods[{index}] must contain a 'periods' element")
                                         else:
-                                            tariffs.append(Tariff(name=f"Unknown-{index}" if name is None else name, from_date=from_date, to_date=to_date, periods=periods))
+                                            tariffs.append(Tariff(plan=f"Unknown-{index}" if plan is None else plan, from_date=from_date, to_date=to_date, default=default, periods=periods))
                                         index += 1
                                 self.tariffs = sorted(tariffs, key=lambda t: (t.from_date or datetime.min, t.to_date or datetime.max), reverse=True)
                         case _:

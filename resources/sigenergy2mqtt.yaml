@@ -569,22 +569,28 @@ pvoutput:
   #                 a specific date range. THE TIME PERIODS SPECIFIED
   #                 MUST MATCH THE TIME PERIODS CONFIGURED IN YOUR
   #                 PVOUTPUT TARIFF DEFINITIONS.
-  #                 Multiple data ranges may be specified, and each 
+  #                 Multiple date ranges may be specified, and each 
   #                 will have the following attributes:
-  #                   - name:      An optional name for the time period
+  #                   - plan:      An optional name for the time period.
+  #                                 Duplicates are permitted.
   #                     from-date: The start date for the time period
   #                                 in YYYY-MM-DD format. If not specified,
   #                                 the time period is effective immediately.
   #                     to-date:   The end date for the time period
   #                                 in YYYY-MM-DD format. If not specified,
   #                                 the time period is effective indefinitely.
-  #                     - periods: An array of time period definitions. Each period
-  #                                 definition has the following attributes:
+  #                     default:   One of off-peak, peak, shoulder, or
+  #                                 high-shoulder that will be used for all
+  #                                 other times not specifically defined in
+  #                                 the periods array. If not specified, the
+  #                                 default is shoulder.
+  #                     - periods: An array of time period definitions. Each 
+  #                                 period has the following attributes:
   #                       - type:  One of off-peak, peak, shoulder, 
   #                                 or high-shoulder
   #                         start: The period start time (0:00-24:00)
   #                         end:   The period end time (0:00-24:00)
-  #                         days:  The array of days to which the 
+  #                         days:  The optional array of days to which the 
   #                                 period applies. Valid values are:
   #                                 - Mon
   #                                 - Tue
@@ -596,13 +602,11 @@ pvoutput:
   #                                 - Weekdays
   #                                 - Weekends
   #                                 - All
-  #                                 The default is All.
-  #                 If the specified time periods do not cover the
-  #                 entire day, the remaining time will be treated as
-  #                 shoulder. If time periods overlap, the first matching
-  #                 period in the list will take precedence.
+  #                                 The default is [All].
+  #                 If plans or time periods overlap, the first match will
+  #                 be used.
   time-periods:
-  - name: Standard Rates
+  - plan: Standard Rates
     from-date: 2025-11-17
     periods:
       - type: off-peak
