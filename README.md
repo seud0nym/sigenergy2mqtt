@@ -23,6 +23,7 @@ In addition, `sigenergy2mqtt` has several optional features:
   - [Configuration File](#configuration-file)
   - [Command Line Options](#command-line-options)
   - [Environment Variables](#environment-variables)
+- [Modbus Auto-Discovery](#modbus-auto-discovery)
 - [MQTT Publish and Subscribe Topics](#mqtt-publish-and-subscribe-topics)
 
 ## Disclaimer
@@ -81,13 +82,76 @@ Notes:
 - By default, only entities relating to production, consumption and battery charging/discharging are enabled in Home Assistant (all other published entities will still appear, but will be disabled). All other entities are disabled by default. If you want _all_ entities to be initially enabled, set `sensors-enabled-by-default` to `true`. This setting _only_ applies the first time that Home Assistant auto-discovers devices and entities; changing this configuration after first discovery will have no effect. Entities can be enabled and disabled through the Home Assistant user interface.
 - The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`, and for the Home Assistant add-on, it should be placed in `/config/`. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
 
-#### Modbus Auto-Discovery
-
-You can automatically discover Sigenergy devices on your network, using either the command line option `--modbus-auto-discovery` or the  environment variable `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`. Both of these take a value of either `once` or `force`:  If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
-
-Auto-discovery is a lengthy process because your local network has to be scanned for potential Modbus hosts, and once detected there are 247 potential device IDs to be scanned on each host.
-
 <details>
+<summary>
+<h4>Configuring PVOutput Time Periods</h4>
+</summary>
+
+You can define time periods so that `sigenergy2mqtt` can upload exports and imports into their correct tariff time slot (peak, off-peak, shoulder and high-shoulder). The following is a basic example of the `time-periods` configuration:
+
+```yaml
+...
+pvoutput:
+  enabled: true
+  ...
+  time-periods:
+  - plan: Zero Hero
+    to-date: 2026-05-31
+    periods:
+      - type: off-peak
+        start: 11:00
+        end: 14:00
+      - type: peak
+        start: 15:00
+        end: 21:00
+  - plan: Four Free
+    from-date: 2026-06-01
+    default: peak
+    periods:
+      - type: off-peak
+        start: 10:00
+        end: 14:00
+```
+
+This example configuration defines two time periods:
+  - The first will be active until 2026-05-31, and defines off-peak and peak time ranges. At all other times, shoulder will be applied.
+  - The second takes effect from 2026.06.01, and defines only the off-peak period. At all other times, the overridden default of peak will be applied.
+
+The `time-periods` element contains an array of time periods that describe the peak, shoulder, high-shoulder and off-peak periods for a specific date range. THE TIME PERIODS SPECIFIED MUST MATCH THE TIME PERIODS CONFIGURED IN YOUR PVOUTPUT TARIFF DEFINITIONS. Multiple date ranges may be specified, and each can have the following attributes:
+
+- plan:      
+  - An optional name for the time period. Duplicates are permitted.
+- from-date: 
+  - The start date for the time period in YYYY-MM-DD format. If not specified, the time period is effective immediately.
+  - **NOTE**: When initially configuring time-periods, it is _strongly_ recommended that you configure the from-date as _tomorrows date_, so that there is no mismatch between the total exports and the sum of the off-peak/peak/shoulder/high-shoulder export figures today.
+- to-date:
+  - The end date for the time period in YYYY-MM-DD format. If not specified, the time period is effective indefinitely.
+- default:
+  - One of off-peak, peak, shoulder, or high-shoulder that will be used for all other times not specifically defined in the `periods` array (below). If not specified, the default is `shoulder`.
+- periods: 
+  - An array of time period definitions. At least one must be specified. Each period has the following attributes:
+    - type:  
+      - One of off-peak, peak, shoulder, or high-shoulder.
+    - start: 
+      - The period start time in H:MM format.
+    - end:
+      - The period end time in H:MM format. 24:00 may be specified for the end of the day.
+    - days:
+      - The optional array of days to which the period applies. The default is `[All]`. Valid values are:
+          - Mon
+          - Tue
+          - Wed
+          - Thu
+          - Fri
+          - Sat
+          - Sun
+          - Weekdays
+          - Weekends
+          - All
+                                   
+If plans or time periods overlap, the first match will be used.
+</details>
+ <details>
 <summary>
 <h4>Configuring Smart-Port Production</h4>
 </summary>
@@ -262,6 +326,7 @@ Environment variables override the configuration file, but *not* command line op
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL</code></td><td>Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)</td></tr>
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING</code></td><td>If true, the aggregation of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL is set to DEBUG.</td></tr>
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING</code></td><td>If true, the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL is set to DEBUG.</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON</code></td><td>A string of JSON containing an array of date ranges with time periods that describe the peak, shoulder, high-shoulder and off-peak periods. THE TIME PERIODS SPECIFIED MUST MATCH THE TIME PERIODS CONFIGURED IN YOUR PVOUTPUT TARIFF DEFINITIONS. e.g.<pre>[{"from-date":"2025-11-18T00:00:00.000Z","periods":[{"type":"off-peak","start":"11:00","end":"14:00"},{"type":"peak","start":"15:00","end":"21:00"}]}]</pre> See <a href='resources/sigenergy2mqtt.yaml'>sigenergy2mqtt.yaml</a> for the element names and further details.</td></tr>
   </tbody>
 </table>
 
@@ -455,6 +520,12 @@ Command line options override both environment variables and the configuration f
   --clean               Publish empty discovery to delete existing devices, then exits immediately.
   -v, --version         Shows the version number, then exits immediately.
 ```
+
+## Modbus Auto-Discovery
+
+You can automatically discover Sigenergy devices on your network, using either the command line option `--modbus-auto-discovery` or the  environment variable `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`. Both of these take a value of either `once` or `force`:  If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
+
+Auto-discovery is a lengthy process because your local network has to be scanned for potential Modbus hosts, and once detected there are 247 potential device IDs to be scanned on each host.
 
 ## MQTT Publish and Subscribe Topics
 
