@@ -110,6 +110,7 @@ class PVOutputConfiguration:
     temperature_topic: str = ""
 
     testing: bool = False
+    started = datetime.now().timestamp()
 
     @property
     def consumption_enabled(self) -> bool:

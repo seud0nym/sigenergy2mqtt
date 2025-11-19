@@ -163,14 +163,18 @@ class ServiceTopics(dict[str, Topic]):
         else:
             return None, None, count
 
-    def check_is_updating(self, interval_minutes: int, now: time.struct_time) -> bool:
+    def check_is_updating(self, interval_minutes: int, now_struct: time.struct_time) -> bool:
         if self.enabled:
+            now = time.mktime(now_struct)
+            if now - Config.pvoutput.started < 120:
+                self._logger.debug(f"{self._service.__class__.__name__} Skipping updating check for {self._name} because service just started")
+                return True
             interval_seconds = interval_minutes * 60
             updated = 0
             for topic in self.values():
                 scan_interval = topic.scan_interval if topic.scan_interval is not None else interval_seconds
                 if topic.timestamp is not None:
-                    seconds = int(time.mktime(now) - time.mktime(topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp))
+                    seconds = int(now - time.mktime(topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp))
                     minutes = int(seconds / 60.0)
                     if seconds < scan_interval:
                         if Config.pvoutput.update_debug_logging:
