@@ -176,10 +176,9 @@ class ServiceTopics(dict[str, Topic]):
                         if Config.pvoutput.update_debug_logging:
                             self._logger.debug(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
                         updated += 1
-                    else:
-                        if self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600:
-                            self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
-                            self._last_update_warning = time.time()
+                    elif (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600) and minutes > 0:
+                        self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
+                        self._last_update_warning = time.time()
                 elif not isinstance(self, TimePeriodServiceTopics) and (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600):
                     self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has never been updated??? ({scan_interval=}s)")
                     self._last_update_warning = time.time()
