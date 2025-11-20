@@ -895,9 +895,9 @@ class TimestampSensor(ReadOnlySensor):
             plant_index,
             device_address,
             address,
+            2,  # count
+            ModbusClient.DATATYPE.UINT32,
             scan_interval,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
             unit=None,
             device_class=DeviceClass.TIMESTAMP,
             state_class=None,
