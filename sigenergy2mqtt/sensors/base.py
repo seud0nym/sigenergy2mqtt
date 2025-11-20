@@ -886,8 +886,6 @@ class TimestampSensor(ReadOnlySensor):
         plant_index: int,
         device_address: int,
         address: int,
-        count: int,
-        data_type: ModbusClient.DATATYPE,
         scan_interval: int,
     ):
         super().__init__(
@@ -897,9 +895,9 @@ class TimestampSensor(ReadOnlySensor):
             plant_index,
             device_address,
             address,
-            count,
-            data_type,
             scan_interval,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
             unit=None,
             device_class=DeviceClass.TIMESTAMP,
             state_class=None,

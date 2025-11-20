@@ -34,8 +34,6 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=30000,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
         )
 

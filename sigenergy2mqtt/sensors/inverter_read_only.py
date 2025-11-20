@@ -1518,8 +1518,6 @@ class StartupTime(TimestampSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=31038,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
         )
 
@@ -1533,8 +1531,6 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=31040,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
         )
 
