@@ -105,5 +105,6 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.InverterReactivePowerFixedValueAdjustmentFeedback(plant_index, device_address))
         self._add_read_sensor(ro.InverterActivePowerPercentageAdjustmentFeedback(plant_index, device_address))
         self._add_read_sensor(ro.InverterReactivePowerPercentageAdjustmentFeedback(plant_index, device_address))
+        self._add_read_sensor(ro.InverterPowerFactorAdjustmentFeedback(plant_index, device_address))
 
         self._add_child_device(ESS(plant_index, device_address, device_type, model_id, serial))

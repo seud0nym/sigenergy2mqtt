@@ -944,6 +944,27 @@ class InverterReactivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridIn
         )
 
 
+class InverterPowerFactorAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Power Factor Adjustment Feedback",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor_adjustment_feedback",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30619,
+            count=1,
+            data_type=ModbusClient.DATATYPE.INT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:adjust",
+            gain=1000,
+            precision=None,
+        )
+
+
 class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
