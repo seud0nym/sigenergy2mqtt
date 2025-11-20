@@ -1267,7 +1267,7 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
+            data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
