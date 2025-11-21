@@ -1,7 +1,7 @@
 from .service_topics import Calculation, ServiceTopics
 from .service import Service
 from .topic import Topic
-from sigenergy2mqtt.config import Config, StatusField
+from sigenergy2mqtt.config import Config, StatusField, VoltageSource
 from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
 import logging
@@ -23,7 +23,9 @@ class PVOutputStatusService(Service):
                 self, Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS
             ),
             StatusField.TEMPERATURE: ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, logger, value_key=StatusField.TEMPERATURE, calculation=Calculation.AVERAGE, decimals=1),
-            StatusField.VOLTAGE: ServiceTopics(self, True, logger, value_key=StatusField.VOLTAGE, calculation=Calculation.AVERAGE, decimals=1),
+            StatusField.VOLTAGE: ServiceTopics(
+                self, True, logger, value_key=StatusField.VOLTAGE, calculation=Calculation.L_L_AVG if Config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1
+            ),
             StatusField.V7: ServiceTopics(
                 self, True if Config.pvoutput.extended[StatusField.V7.value] else False, logger, value_key=StatusField.V7, calculation=Calculation.AVERAGE, requires_donation=True
             ),

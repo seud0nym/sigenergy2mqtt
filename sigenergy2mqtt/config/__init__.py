@@ -1,10 +1,10 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED", "ConsumptionSource", "OutputField", "StatusField"]
+__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource"]
 
 
 from . import const
 from .config import Config
 from .modbus_config import RegisterAccess, SmartPortConfig
-from .pvoutput_config import ConsumptionSource, OutputField, StatusField
+from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
 from .version import SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
 from pathlib import Path
 import argparse
@@ -32,7 +32,7 @@ for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
             _logger.info(f"Persistent state folder '{Config.persistent_state_path}' created")
             path.mkdir()
         else:
-            _logger.info(f"Persistent state folder '{Config.persistent_state_path}' already exists")
+            _logger.debug(f"Persistent state folder '{Config.persistent_state_path}' already exists")
         break
 if Config.persistent_state_path == ".":
     _logger.critical("Unable to create persistent state folder!")
@@ -536,6 +536,15 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC, None),
     help="An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.",
+)
+_parser.add_argument(
+    "--pvoutput-voltage",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE,
+    choices=["phase-a", "phase-b", "phase-c", "l/n-avg", "l/l-avg"],
+    default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE, None),
+    help="The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average, l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v7",

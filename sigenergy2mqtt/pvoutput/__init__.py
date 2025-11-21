@@ -4,12 +4,12 @@ from .output import PVOutputOutputService
 from .status import PVOutputStatusService
 from .topic import Topic
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, ConsumptionSource, OutputField, StatusField
+from sigenergy2mqtt.config import Config, ConsumptionSource, OutputField, StatusField, VoltageSource
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.main.thread_config import ThreadConfig
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
-from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PVVoltageSensor
+from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
 from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
 from sigenergy2mqtt.sensors.plant_read_only import (
     ESSTotalChargedEnergy,
@@ -71,6 +71,15 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if Config.pvoutput.consumption == ConsumptionSource.IMPORTED:
                         output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, sensor.scan_interval, gain))
                     output_topics[OutputField.IMPORTS].append(Topic(sensor.raw_state_topic, None, gain))
+                case PhaseVoltage():
+                    if (
+                        Config.pvoutput.voltage == VoltageSource.L_N_AVG
+                        or Config.pvoutput.voltage == VoltageSource.L_L_AVG
+                        or (Config.pvoutput.voltage == VoltageSource.PHASE_A and sensor.phase == "A")
+                        or (Config.pvoutput.voltage == VoltageSource.PHASE_B and sensor.phase == "B")
+                        or (Config.pvoutput.voltage == VoltageSource.PHASE_C and sensor.phase == "C")
+                    ):
+                        status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Need voltage, not raw
                 case PlantBatterySoC():
                     status_topics[StatusField.BATTERY_SOC].append(Topic(sensor.state_topic, sensor.scan_interval))  # Need percentage, not raw
                 case PlantPVPower():
@@ -83,7 +92,8 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                         sensor.publish_raw = True
                         status_topics[StatusField.CONSUMPTION_ENERGY].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
                 case PVVoltageSensor() | EnphaseVoltage():
-                    status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Need voltage, not raw
+                    if Config.pvoutput.voltage == VoltageSource.PV:
+                        status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Need voltage, not raw
                 case TotalDailyPVEnergy():
                     sensor.publish_raw = True
                     output_topics[OutputField.GENERATION].append(Topic(sensor.raw_state_topic, None, get_gain(sensor)))

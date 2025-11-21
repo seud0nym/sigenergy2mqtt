@@ -56,6 +56,15 @@ class TariffType(StrEnum):
     HIGH_SHOULDER = "high-shoulder"
 
 
+class VoltageSource(StrEnum):
+    PHASE_A = "phase-a"
+    PHASE_B = "phase-b"
+    PHASE_C = "phase-c"
+    L_N_AVG = "l/n-avg"  # line to neutral average
+    L_L_AVG = "l/l-avg"  # line to line average
+    PV = "pv"  # average across PV strings
+
+
 @dataclass
 class TimePeriod:
     type: TariffType
@@ -108,6 +117,7 @@ class PVOutputConfiguration:
     update_debug_logging: bool = False
 
     temperature_topic: str = ""
+    voltage: VoltageSource = VoltageSource.L_N_AVG
 
     testing: bool = False
     started = datetime.now().timestamp()
@@ -203,6 +213,8 @@ class PVOutputConfiguration:
                                 )
                         case "temperature-topic":
                             self.temperature_topic = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                        case "voltage":
+                            self.voltage = VoltageSource(check_string(value, f"pvoutput.{field}", *[v.value for v in VoltageSource]))
                         case StatusField.V7.value | StatusField.V8.value | StatusField.V9.value | StatusField.V10.value | StatusField.V11.value | StatusField.V12.value:
                             self.extended[field] = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
                         case "calc-debug-logging":

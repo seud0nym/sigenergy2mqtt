@@ -7,6 +7,7 @@ from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from typing import Any
 import json
 import logging
+import math
 import time
 
 
@@ -16,6 +17,7 @@ class Calculation(Flag):
     DIFFERENCE = auto()
     PEAK = auto()
     CONVERT_TO_WATTS = auto()
+    L_L_AVG = auto()
 
 
 class ServiceTopics(dict[str, Topic]):
@@ -88,6 +90,27 @@ class ServiceTopics(dict[str, Topic]):
             self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=}")
             return False
 
+    def _squared_root_into(self, payload: dict[str, any], value_key: OutputField | StatusField, datetime_key: str = None) -> bool:
+        total, at, count = self.aggregate(exclude_zero=False, square=True)
+        if count > 0 and total is not None:
+            payload[value_key.value] = round(math.sqrt(total) / math.sqrt(3), self._decimals if self._decimals > 0 else None)
+            if datetime_key is not None:
+                payload[datetime_key] = at
+                if Config.pvoutput.calc_debug_logging:
+                    self._logger.debug(
+                        f"{self._service.__class__.__name__} L-L Averaged {self._name}: √{total} / √3 = {payload[value_key.value]} into {value_key.value=} ({datetime_key}={at}) {[(f'{v.state}^2', time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                    )
+            elif Config.pvoutput.calc_debug_logging:
+                self._logger.debug(
+                    f"{self._service.__class__.__name__} L-L Averaged {self._name}: √{total} / √3 = {payload[value_key.value]} into {value_key.value=} {[(f'{v.state}^2', time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
+                )
+            return True
+        else:
+            if value_key in payload:
+                del payload[value_key.value]
+            self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=}")
+            return False
+
     def _sum_into(self, payload: dict[str, any], value_key: OutputField | StatusField, datetime_key: str = None) -> bool:
         total, at, count = self.aggregate(exclude_zero=False)
         if count > 0 and total is not None:
@@ -113,12 +136,14 @@ class ServiceTopics(dict[str, Topic]):
         if self._value_key not in (None, "") and (self._bypass_updating_check or self.check_is_updating(interval_minutes, now)):
             if Calculation.AVERAGE in self._calculation:
                 return self._average_into(payload, self._value_key, self._datetime_key)
+            elif Calculation.L_L_AVG in self._calculation:
+                return self._squared_root_into(payload, self._value_key, self._datetime_key)
             else:  # SUM
                 return self._sum_into(payload, self._value_key, self._datetime_key)
         else:
             return False
 
-    def aggregate(self, exclude_zero: bool) -> tuple[float, str, int]:
+    def aggregate(self, exclude_zero: bool, square: bool = False) -> tuple[float, str, int]:
         if not self.enabled:
             return None, None, 0
         if len(self) == 0:
@@ -153,7 +178,10 @@ class ServiceTopics(dict[str, Topic]):
                         continue
                 if Config.pvoutput.calc_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Applying gain to {self._name}: {state}*{topic.gain}={state * topic.gain} ({topic.topic}) and adding to running {total=}")
-                total += state * topic.gain
+                if square:
+                    total += state**2 * topic.gain
+                else:
+                    total += state * topic.gain
                 at = time.strftime("%H:%M", topic.timestamp)
                 if Config.pvoutput.calc_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Running total for {self._name}: {total=} ({count=} {at=})")

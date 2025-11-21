@@ -1246,6 +1246,11 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
         )
+        self._phase = phase
+
+    @property
+    def phase(self) -> str:
+        return self._phase
 
 
 class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
