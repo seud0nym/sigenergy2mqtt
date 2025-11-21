@@ -57,6 +57,15 @@ class ServiceTopics(dict[str, Topic]):
         self._calculation = value
 
     @property
+    def decimals(self) -> int:
+        return self._decimals
+
+    @decimals.setter
+    def decimals(self, value: int) -> None:
+        assert isinstance(value, int), "Decimals must be an integer value"
+        self._decimals = value
+
+    @property
     def enabled(self) -> bool:
         return self._enabled
 
