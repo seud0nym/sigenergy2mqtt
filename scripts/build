@@ -75,7 +75,18 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     fi
 fi
 
-python3 sigenergy2mqtt/sensors/__update_readme.py
+echo -e "\033[1;32mUpdating documentation...\033[0m"
+python3 -c '
+print("# Command Line Options")
+print("```")
+import sys
+from sigenergy2mqtt.__main__ import main
+sys.exit(main())
+print("```")
+' --help > resources/configuration/CLI.md
+date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 resources/configuration/CLI.md updated"
+cd resources
+python3 update_md.py
 
 echo -e "\033[1;32mBuild successful\033[0m"
 echo -e "New version: \033[1;32m$new_version\033[0m"
