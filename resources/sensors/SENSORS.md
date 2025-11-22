@@ -27,11 +27,6 @@ and the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenerg
 - _ separator
 - The sensor description.
 
-
-<style>
-td{font-size:small;}
-</style>
-
 | Sigenergy-Local-Modbus | `sigenergy2mqtt` |
 |------------------------|------------------|
 | sigen_ac_charger_alarm1 | <a href='./TOPICS.md#sigen_0_ac_charger_2_alarm'>sigen_0_ac_charger_2_alarm (Combined Alarm)</a><br><a href='./TOPICS.md#sigen_0_002_32012'>sigen_0_ac_charger_2_alarm_1</a><br> |

@@ -317,7 +317,6 @@ async def compare_sensor_instances():
         f.write("\nThe following is a list of the Modbus sensors published by the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ Sigenergy-Local-Modbus</a> HACS integration,")
         f.write("\nand the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenergy2mqtt` sensor for more information.\n\n")
         write_naming_convention(f)
-        f.write("\n<style>\ntd{font-size:small;}\n</style>\n\n")
         f.write("| Sigenergy-Local-Modbus | `sigenergy2mqtt` |\n")
         f.write("|------------------------|------------------|\n")
 
