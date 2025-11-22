@@ -23,24 +23,29 @@ SENSORS: Path = Path("sensors/SENSORS.md")
 
 
 async def sensor_index():
-    def metrics_topics(index_only: bool = False):
+    def metrics_topics(index_only: bool = False) -> int:
+        count = 0
         if not index_only:
             f.write("| Metric | Interval | Unit | State Topic|\n")
             f.write("|--------|---------:|------|-------------|\n")
         metrics = MetricsService._discovery["cmps"]
         for metric in sorted(metrics.values(), key=lambda x: x["name"]):
+            count += 1
             if index_only:
-                f.write(f"<li><a href='#{metric['unique_id']}'>{metric['name']}</a></li>\n")
+                f.write(f"<a href='#{metric['unique_id']}'>{metric['name']}</a><br>\n")
             else:
                 f.write(f"| {metric['name']} | 1 | {metric['unit_of_measurement'] if 'unit_of_measurement' in metric else ''} | {metric['state_topic']} |\n")
+        return count
 
-    def published_topics(device: str, index_only: bool = False):
+    def published_topics(device: str, index_only: bool = False) -> int:
+        count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
             sensor: Sensor = mqtt_sensors[key]
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device and sensor.publishable:
+                count += 1
                 if index_only:
-                    f.write(f"<a href='#{sensor.unique_id}' style='font-size:small;'>")
+                    f.write(f"<a href='#{sensor.unique_id}'>")
                     if hasattr(sensor, "string_number"):
                         f.write(f"PV String {sensor.string_number} ")
                     f.write(f"{sensor['name']}</a><br>\n")
@@ -53,16 +58,16 @@ async def sensor_index():
                 f.write(f"{sensor['name']}")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
-                f.write(f"<tr><td>Sensor Class</td><td>{sensor.__class__.__name__}</td></tr>\n")
+                f.write(f"<tr><td>Sensor&nbsp;Class</td><td>{sensor.__class__.__name__}</td></tr>\n")
                 if hasattr(sensor, "scan_interval"):
-                    f.write(f"<tr><td>Scan Interval</td><td>{sensor.scan_interval}s</td></tr>\n")
+                    f.write(f"<tr><td>Scan&nbsp;Interval</td><td>{sensor.scan_interval}s</td></tr>\n")
                 if sensor.unit:
-                    f.write(f"<tr><td>Unit of Measurement</td><td>{sensor.unit}</td></tr>\n")
+                    f.write(f"<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>{sensor.unit}</td></tr>\n")
                 if sensor._gain:
                     f.write(f"<tr><td>Gain</td><td>{sensor.gain}</td></tr>\n")
-                f.write(f"<tr><td>Home Assistant Sensor</td><td>sensor.{sensor['object_id']}</td></tr>\n")
-                f.write(f"<tr><td>Home Assistant State Topic</td><td>{hass_sensors[key].state_topic}</td></tr>\n")
-                f.write(f"<tr><td>Simplified State Topic</td><td>{sensor.state_topic}</td></tr>\n")
+                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.{sensor['object_id']}</td></tr>\n")
+                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>{hass_sensors[key].state_topic}</td></tr>\n")
+                f.write(f"<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>{sensor.state_topic}</td></tr>\n")
                 f.write("<tr><td>Source</td><td>")
                 if "source" in attributes:
                     f.write(f"{attributes['source']}")
@@ -83,26 +88,29 @@ async def sensor_index():
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
                 f.write("</table>\n")
+        return count
 
-    def subscribed_topics(device, index_only: bool = False):
+    def subscribed_topics(device, index_only: bool = False) -> int:
+        count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "command_topic" in value]:
             sensor = mqtt_sensors[key]
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
+                count += 1
                 if index_only:
-                    f.write(f"<a href='#{sensor.unique_id}' style='font-size:small;'>{sensor['name']}</a><br>\n")
+                    f.write(f"<a href='#{sensor.unique_id}'>{sensor['name']}</a><br>\n")
                     continue
                 f.write(f"<h5><a id='{sensor.unique_id}'>")
                 f.write(f"{sensor['name']}")
                 if sensor["name"] == "Power":
-                    f.write(" On/Off")
+                    f.write("&nbsp;On/Off")
                 f.write("\n")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
-                f.write(f"<tr><td>Simplified State Topic</td><td>{sensor.state_topic}</td></tr>\n")
-                f.write(f"<tr><td>Simplified Update Topic</td><td>{sensor.command_topic}</td></tr>\n")
+                f.write(f"<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>{sensor.state_topic}</td></tr>\n")
+                f.write(f"<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>{sensor.command_topic}</td></tr>\n")
                 if sensor_parent in ("Inverter", "ESS", "PVString"):
-                    f.write("<tr><td>Applicable To</td><td>")
+                    f.write("<tr><td>Applicable&nbsp;To</td><td>")
                     if isinstance(sensor, HybridInverter) and isinstance(sensor, PVInverter):
                         f.write(" Hybrid Inverter and PV Inverter ")
                     elif isinstance(sensor, HybridInverter):
@@ -111,6 +119,7 @@ async def sensor_index():
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
                 f.write("</table>\n")
+        return count
 
     hass_sensors = await get_sensor_instances(hass=True)
     mqtt_sensors = await get_sensor_instances(hass=False)
@@ -126,38 +135,42 @@ async def sensor_index():
         f.write("\nDefault Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.\n")
         write_naming_convention(f)
         # Index
+        published = 0
+        subscribed = 0
         f.write("<table>\n")
         f.write("<tr><th>Published Topics</th><th>Subscribed Topics</th></tr>\n")
         f.write("<tr><td>\n")
         f.write("\n<h6>Plant</h6>\n")
-        published_topics("PowerPlant", index_only=True)
+        published += 2 + published_topics("PowerPlant", index_only=True)
         f.write("\n<h6>Grid Sensor</h6>\n")
-        published_topics("GridSensor", index_only=True)
+        published += 2 + published_topics("GridSensor", index_only=True)
         f.write("\n<h6>Statistics</h6>\n")
-        published_topics("PlantStatistics", index_only=True)
+        published += 2 + published_topics("PlantStatistics", index_only=True)
         f.write("\n<h6>Inverter</h6>\n")
-        published_topics("Inverter", index_only=True)
+        published += 2 + published_topics("Inverter", index_only=True)
         f.write("\n<h6>Energy Storage System</h6>\n")
-        published_topics("ESS", index_only=True)
+        published += 2 + published_topics("ESS", index_only=True)
         f.write("\n<h6>PV String</h6>\n")
-        published_topics("PVString", index_only=True)
+        published += 2 + published_topics("PVString", index_only=True)
         f.write("\n<h6>AC Charger</h6>\n")
-        published_topics("ACCharger", index_only=True)
+        published += 2 + published_topics("ACCharger", index_only=True)
         f.write("\n<h6>DC Charger</h6>\n")
-        published_topics("DCCharger", index_only=True)
+        published += 2 + published_topics("DCCharger", index_only=True)
         f.write("\n<h6>Smart-Port (Enphase Envoy only)</h6>\n")
-        published_topics("SmartPort", index_only=True)
+        published += 2 + published_topics("SmartPort", index_only=True)
         f.write("\n<h6>Metrics</h6>\n")
-        metrics_topics(index_only=True)
-        f.write("</td><td style='vertical-align: top;'>\n")
+        published += metrics_topics(index_only=True)
+        f.write("</td><td>\n")
         f.write("\n<h6>Plant</h6>\n")
-        subscribed_topics("PowerPlant", index_only=True)
+        subscribed += 2 + subscribed_topics("PowerPlant", index_only=True)
         f.write("\n<h6>Inverter</h6>\n")
-        subscribed_topics("Inverter", index_only=True)
+        subscribed += 1 + subscribed_topics("Inverter", index_only=True)
         f.write("\n<h6>AC Charger</h6>\n")
-        subscribed_topics("ACCharger", index_only=True)
+        subscribed += 1 + subscribed_topics("ACCharger", index_only=True)
         f.write("\n<h6>DC Charger</h6>\n")
-        subscribed_topics("DCCharger", index_only=True)
+        subscribed += 1 + subscribed_topics("DCCharger", index_only=True)
+        for _ in range(subscribed, published):
+            f.write("<br>")
         f.write("</td></tr>\n")
         f.write("</table>\n")
         # Details
