@@ -14,16 +14,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 
 - Sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.
 - _ separator
-- The index of the Modbus host from the configuration file (or auto-discovery), starting from 0.
+- The index of the Modbus host from the configuration file (or auto-discovery), starting from 0. (This is to prevent clashes with the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ Sigenergy-Local-Modbus</a> HACS integration.)
 - _ separator
-##### Plant Sensors
+##### _Followed by:_
+###### Plant Sensors
 
 
 - The sensor description.
   - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity.
   - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`).
   - The description for Statistics Interface sensors will be prefixed by `si_` (not `plant_`).
-##### Device Sensors
+##### _OR:_
+###### Device Sensors
 
 
 - The device type (inverter, ac_charger, or dc_charger).
