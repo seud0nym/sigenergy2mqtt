@@ -28,7 +28,9 @@ and the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenerg
 - The sensor description.
 
 
-<style>td{font-size:small;}</style>
+<style>
+td{font-size:small;}
+</style>
 
 | Sigenergy-Local-Modbus | `sigenergy2mqtt` |
 |------------------------|------------------|
