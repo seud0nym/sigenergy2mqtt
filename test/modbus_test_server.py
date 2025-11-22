@@ -117,6 +117,13 @@ class CustomDataBlock(ModbusSparseDataBlock):
         else:
             registers = ModbusClientMixin.convert_to_registers(sensor.state2raw(value), sensor._data_type)
         super().setValues(sensor._address, registers)
+        if sensor._address == 31011:
+            super().setValues(31013, registers)
+            super().setValues(31015, registers)
+        elif sensor._address == 31017:
+            super().setValues(31019, registers)
+            super().setValues(31021, registers)
+
 
     async def async_getValues(self, fc_as_hex: int, address: int, count=1):
         delay_avg: int = 15
