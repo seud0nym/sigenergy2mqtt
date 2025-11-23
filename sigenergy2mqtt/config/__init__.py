@@ -518,7 +518,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR,
     type=int,
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR, None),
-    help="The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 51 and 58. If you specify -1, daily uploads will be sent at the same frequency as status updates.",
+    help="The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 56 and 59. If you specify -1, daily uploads will be sent at the same frequency as status updates.",
 )
 _parser.add_argument(
     "--pvoutput-interval",
@@ -544,7 +544,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE,
     choices=["phase-a", "phase-b", "phase-c", "l/n-avg", "l/l-avg"],
     default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE, None),
-    help="The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average, l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'.",
+    help="The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'.",
 )
 _parser.add_argument(
     "--pvoutput-ext-v7",

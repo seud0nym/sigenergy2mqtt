@@ -178,7 +178,7 @@ class PVOutputOutputService(Service):
 
     def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
-            minute: int = randint(51, 58)
+            minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
             last: float = None
             self.logger.info(f"{self.__class__.__name__} Commenced (Updating at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))})")
