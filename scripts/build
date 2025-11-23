@@ -87,6 +87,7 @@ print("```")
 date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 resources/configuration/CLI.md updated"
 cd resources
 python3 update_md.py
+cd -
 
 echo -e "\033[1;32mBuild successful\033[0m"
 echo -e "New version: \033[1;32m$new_version\033[0m"
