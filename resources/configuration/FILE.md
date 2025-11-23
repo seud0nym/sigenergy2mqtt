@@ -2,6 +2,8 @@
 
 The default location for `sigenergy2mqtt.yaml` is in `/etc/`. However, it will also be found in `/data/`, and for the Home Assistant add-on, it should be placed in the `addon_configs/4cee8162_sigenergy2mqtt/` directory. You can also use the `-c` command line option or the `SIGENERGY2MQTT_CONFIG` environment variable to specify a different location and/or filename.
 
+The configuration file can be overridden by environment variables and command line parameters.
+
 The complete list of configuration options with associated comments can be found in [sigenergy2mqtt.yaml](sigenergy2mqtt.yaml).
 
 Example:

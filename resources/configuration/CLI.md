@@ -54,6 +54,7 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [--pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]]
           [--pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]]
           [--pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]]
+          [--pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]]
           [--pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]]
           [--pvoutput-ext-v8 [SIGENERGY2MQTT_PVOUTPUT_EXT_V8]]
           [--pvoutput-ext-v9 [SIGENERGY2MQTT_PVOUTPUT_EXT_V9]]
@@ -262,7 +263,7 @@ options:
                         The hour of the day (20-23) at which the daily totals
                         are sent to PVOutput. The default is 23 (11pm). Valid
                         values are 20 to 23. The minute is randomly chosen
-                        between 51 and 58. If you specify -1, daily uploads
+                        between 56 and 59. If you specify -1, daily uploads
                         will be sent at the same frequency as status updates.
   --pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]
                         ** DEPRECATED ** The Status Interval is now determined
@@ -272,6 +273,12 @@ options:
                         be read. This is used to send the temperature to
                         PVOutput. If not specified, the temperature will not
                         be sent to PVOutput.
+  --pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]
+                        The source of the voltage value to be sent to
+                        PVOutput. Valid values are: phase-a, phase-b, phase-c,
+                        l/n-avg (line to neutral average), l/l-avg (line to
+                        line average) or pv (average across PV strings). If
+                        not specified, defaults to 'l/n-avg'.
   --pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]
                         A sensor class name, or entity id without the
                         'sensor.' prefix, that will be used to populate the v7
