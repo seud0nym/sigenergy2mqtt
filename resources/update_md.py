@@ -68,6 +68,8 @@ async def sensor_index():
                 f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.{sensor['object_id']}</td></tr>\n")
                 f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>{hass_sensors[key].state_topic}</td></tr>\n")
                 f.write(f"<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>{sensor.state_topic}</td></tr>\n")
+                if sensor.publish_raw:
+                    f.write(f"<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>{sensor['raw_state_topic']}</td></tr>\n")
                 f.write("<tr><td>Source</td><td>")
                 if "source" in attributes:
                     f.write(f"{attributes['source']}")
@@ -76,6 +78,12 @@ async def sensor_index():
                 else:
                     logging.getLogger("root").error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("</td></tr>\n")
+                if "options" in sensor:
+                    f.write("<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'>")
+                    for i in range(0, len(sensor["options"])):
+                        if sensor['options'][i] is not None:
+                            f.write(f"<li value='{i}'>{sensor['options'][i]}</li>")
+                    f.write("</ol></td></tr>\n")
                 if "comment" in attributes:
                     f.write(f"<tr><td>Comment</td><td>{attributes['comment']}</td></tr>\n")
                 if sensor_parent in ("Inverter", "ESS", "PVString"):

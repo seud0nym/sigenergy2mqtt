@@ -779,6 +779,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_ems_work_mode/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ems_work_mode/state</td></tr>
 <tr><td>Source</td><td>30003</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Max Self Consumption</li><li value='1'>Sigen AI</li><li value='2'>Time of Use</li><li value='5'>Full Feed-in to Grid</li><li value='7'>Remote EMS</li><li value='9'>Time-Based Control</li></ol></td></tr>
 </table>
 <h5><a id='sigen_0_247_30029'>ESS Alarms</a></h5>
 <table>
@@ -1343,6 +1344,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
 <tr><td>Source</td><td>40031</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>PCS remote control</li><li value='1'>Standby</li><li value='2'>Maximum Self-consumption (Default)</li><li value='3'>Command Charging (Consume power from the grid first)</li><li value='4'>Command Charging (Consume power from the PV first)</li><li value='5'>Command Discharging (Output power from PV first)</li><li value='6'>Command Discharging (Output power from the battery first)</li></ol></td></tr>
 </table>
 <h5><a id='sigen_0_247_30051'>Running State</a></h5>
 <table>
@@ -1352,6 +1354,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_running_state/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_running_state/state</td></tr>
 <tr><td>Source</td><td>30051</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Standby</li><li value='1'>Normal</li><li value='2'>Fault</li><li value='3'>Power-Off</li><li value='7'>Environmental Abnormality</li></ol></td></tr>
 </table>
 <h5><a id='sigen_0_247_30146'>Smart Load 01 Power</a></h5>
 <table>
@@ -1968,6 +1971,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_sensor_status/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_status/state</td></tr>
 <tr><td>Source</td><td>30004</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Not Connected</li><li value='1'>Connected</li></ol></td></tr>
 <tr><td>Comment</td><td>Gateway or meter connection status</td></tr>
 </table>
 <h5><a id='sigen_0_247_30009'>Grid Status</a></h5>
@@ -1978,6 +1982,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_status/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_status/state</td></tr>
 <tr><td>Source</td><td>30009</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>On Grid</li><li value='1'>Off Grid (auto)</li><li value='2'>Off Grid (manual)</li></ol></td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_import_power'>Import Power</a></h5>
 <table>
@@ -2505,6 +2510,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_output_type/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_output_type/state</td></tr>
 <tr><td>Source</td><td>31004</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>L/N</li><li value='1'>L1/L2/L3</li><li value='2'>L1/L2/L3/N</li><li value='3'>L1/L2/N</li></ol></td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 </table>
 <h5><a id='sigen_0_001_31024'>PACK/BCU Count</a></h5>
@@ -2767,6 +2773,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_running_state/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_running_state/state</td></tr>
 <tr><td>Source</td><td>30578</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Standby</li><li value='1'>Normal</li><li value='2'>Fault</li><li value='3'>Power-Off</li><li value='7'>Environmental Abnormality</li></ol></td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 </table>
 <h5><a id='sigen_0_001_30515'>Serial Number</a></h5>
@@ -4043,6 +4050,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_running_state/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_running_state/state</td></tr>
 <tr><td>Source</td><td>32000</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Initialising</li><li value='1'>EV not connected</li><li value='2'>Charger and EV not ready</li><li value='3'>Charger ready; EV not ready</li><li value='4'>Charger not ready; EV ready</li><li value='5'>Charging</li><li value='6'>Fault</li><li value='7'>Error</li></ol></td></tr>
 </table>
 <h5><a id='sigen_0_002_32001'>Total Energy Consumed</a></h5>
 <table>
