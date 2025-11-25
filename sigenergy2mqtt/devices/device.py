@@ -31,15 +31,7 @@ class SensorGroup(List[ReadableSensorMixin]):
 
 
 class Device(Dict[str, any], metaclass=abc.ABCMeta):
-    def __init__(
-        self,
-        name: str,
-        plant_index: int,
-        unique_id: str,
-        manufacturer: str,
-        model: str,
-        **kwargs,
-    ):
+    def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, **kwargs):
         self._plant_index = plant_index
         self._registers = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
 
@@ -73,24 +65,6 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     def online(self) -> bool:
         return self._online
 
-    @property
-    def rediscover(self) -> bool:
-        return self._rediscover
-
-    @rediscover.setter
-    def rediscover(self, value: bool) -> None:
-        if not isinstance(value, bool):
-            raise ValueError("rediscover must be a boolean")
-        self._rediscover = value
-        if value:
-            logging.info(f"{self.name} set to rediscover")
-        else:
-            logging.debug(f"{self.name} no longer set to rediscover")
-
-    @property
-    def registers(self) -> RegisterAccess:
-        return self._registers
-
     @online.setter
     def online(self, value: bool | asyncio.Future) -> None:
         if isinstance(value, bool):
@@ -109,6 +83,24 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             self._online = value
         else:
             raise ValueError("online must be a Future or False")
+
+    @property
+    def rediscover(self) -> bool:
+        return self._rediscover
+
+    @rediscover.setter
+    def rediscover(self, value: bool) -> None:
+        if not isinstance(value, bool):
+            raise ValueError("rediscover must be a boolean")
+        self._rediscover = value
+        if value:
+            logging.info(f"{self.name} set to rediscover")
+        else:
+            logging.debug(f"{self.name} no longer set to rediscover")
+
+    @property
+    def registers(self) -> RegisterAccess:
+        return self._registers
 
     @property
     def sensors(self) -> Dict[str, Sensor]:
