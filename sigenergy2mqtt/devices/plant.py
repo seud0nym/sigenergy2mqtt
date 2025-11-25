@@ -131,6 +131,7 @@ class PowerPlant(ModbusDevice):
         plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index)
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
         self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
+        smartport = None
         if Config.devices[plant_index].smartport.enabled:
             smartport_config = Config.devices[plant_index].smartport
             if smartport_config.module.name:
@@ -141,19 +142,18 @@ class PowerPlant(ModbusDevice):
                     smartport = SmartPort(plant_index, module_config)
                     smartport.via_device = self.unique_id
                     self._add_child_device(smartport)
-
                     if module_config.pv_power and not module_config.pv_power.isspace():
                         for sensor in smartport.sensors.values():
                             if sensor.__class__.__name__ == module_config.pv_power:
                                 total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
                                 self._add_derived_sensor(total_pv_power, sensor, search_children=True)
                                 break
+                    self._add_read_sensor(plant_3rd_party_pv_power)
+                    total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
                 except Exception as e:
-                    logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {repr(e)}")
-                    raise
-            self._add_read_sensor(plant_3rd_party_pv_power)
-            total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
-        else:
+                    logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {e}")
+                    smartport = None
+        if smartport is None:
             self._add_read_sensor(plant_3rd_party_pv_power, "Consumption")
             total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
 

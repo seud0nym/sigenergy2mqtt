@@ -11,6 +11,7 @@ from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+from time import sleep
 from typing import Any
 import asyncio
 import json
@@ -396,6 +397,9 @@ class EnphaseVoltage(DerivedSensor):
 
 class SmartPort(Device):
     def __init__(self, plant_index: int, config: ModuleConfig):
+        fw: str = None
+        sn: str = None
+        pn: str = None
         if config.testing:
             logging.debug(f"SmartPort {plant_index} testing mode enabled")
             fw = "D7.0.0"
@@ -403,14 +407,24 @@ class SmartPort(Device):
             pn = "Envoy-S"
         else:
             url = f"http://{config.host}/info"
-            with requests.Session() as session:
-                with session.get(url, timeout=20, verify=False) as response:
-                    assert response.status_code == 200, f"Failed to connect to {url} - Response code was {response.status_code}"
-                    root = xml.fromstring(response.content)
-                    sn = root.find("./device/sn").text
-                    pn = root.find("./device/pn").text
-                    fw = root.find("./device/software").text
-        assert fw.startswith("D7") or fw.startswith("D8"), f"Unsupported Enphase Envoy firmware {fw}"
+            for i in range(1, 4, 1):
+                with requests.Session() as session:
+                    try:
+                        with session.get(url, timeout=20, verify=False) as response:
+                            if response.status_code == 200:
+                                root = xml.fromstring(response.content)
+                                sn = root.find("./device/sn").text
+                                pn = root.find("./device/pn").text
+                                fw = root.find("./device/software").text
+                                assert fw.startswith("D7") or fw.startswith("D8"), f"Unsupported Enphase Envoy firmware {fw}"
+                                break
+                            else:
+                                logging.error(f"SmartPort Failed to initialise from {url} (Attempt #{i}) - Response code was {response.status_code}")
+                    except requests.exceptions.ConnectionError as e:
+                        logging.error(f"SmartPort Failed to initialise from {url} (Attempt #{i}): {e}")
+                sleep(10)
+            else:
+                raise Exception(f"Unable to initialise from {url} after {i} attempts")
         unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Smart-Port"
         super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", mdl_id=pn, sn=sn, hw=fw)
@@ -425,6 +439,13 @@ class SmartPort(Device):
         self._add_derived_sensor(EnphasePowerFactor(plant_index, sn), pv_power)
         self._add_derived_sensor(EnphaseReactivePower(plant_index, sn), pv_power)
         self._add_derived_sensor(EnphaseVoltage(plant_index, sn), pv_power)
+
+    def _init_from_enphase_info(self, config):
+        return None, None, None
+
+    @property
+    def online(self) -> bool:
+        return super()._online
 
 
 if __name__ == "__main__":
