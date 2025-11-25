@@ -513,7 +513,7 @@ class PVMaxPowerLimit(NumericSensor, HybridInverter):
             gain=1000,
             precision=2,
             min=0,
-            max=4294967.0,
+            max=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -542,7 +542,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             min=0,
-            max=4294967.0,
+            max=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -571,7 +571,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             min=0,
-            max=4294967.0,
+            max=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -600,7 +600,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             min=0,
-            max=4294967.0,
+            max=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -638,7 +638,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             min=0,
-            max=4294967.0,
+            max=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
