@@ -81,8 +81,9 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.TotalLoadDailyConsumption(plant_index))
 
         remote_ems = rw.RemoteEMS(plant_index)
+        remote_ems_mode = rw.RemoteEMSControlMode(plant_index, remote_ems)
         self._add_read_sensor(remote_ems)
-        self._add_read_sensor(rw.RemoteEMSControlMode(plant_index, remote_ems))
+        self._add_read_sensor(remote_ems_mode)
         self._add_read_sensor(rw.ActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems))
         self._add_read_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(plant_index))
         self._add_read_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
@@ -102,9 +103,9 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type, "C"))
             self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, remote_ems, output_type, "C"))
             self._add_read_sensor(rw.IndependentPhasePowerControl(plant_index, remote_ems, output_type))
-        self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, rcp_value))
-        self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, rdp_value))
-        self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems))
+        self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, remote_ems_mode, rcp_value))
+        self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, remote_ems_mode, rdp_value))
+        self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems, remote_ems_mode))
 
         address = 30098
         for n in range(1, 25):

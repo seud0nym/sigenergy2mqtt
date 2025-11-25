@@ -405,6 +405,13 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             "Command Discharging (Output power from the battery first)",
         ]
 
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        self.is_charging_mode_topic = f"{base}/is_charging_mode"
+        self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
+        self.is_charging_discharging_topic = f"{base}/is_command_mode"
+        return base
+
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw:
@@ -415,6 +422,22 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             return self["options"][value]
         else:
             return f"Unknown Mode: {value}"
+
+    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> bool:
+        if await super().publish(mqtt, modbus, republish=republish):
+            match self.latest_raw_state:
+                case 3 | 4:
+                    mqtt.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
+                    mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
+                    mqtt.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
+                case 5 | 6:
+                    mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
+                    mqtt.publish(self.is_discharging_mode_topic, "1", self._qos, self._retain)
+                    mqtt.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
+                case _:
+                    mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
+                    mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
+                    mqtt.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
         result = False
@@ -435,26 +458,67 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
         return result
 
 
-class MaxChargingLimit(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, rated_charging_power: float):
+class RemoteEMSLimit(NumericSensor, HybridInverter):
+    def __init__(
+        self,
+        remote_ems: RemoteEMSMixin,
+        remote_ems_mode: RemoteEMSControlMode,
+        charging: bool,
+        discharging: bool,
+        name: str,
+        object_id: str,
+        plant_index: int,
+        address: int,
+        icon: str,
+        max: float,
+    ):
         super().__init__(
             remote_ems=remote_ems,
-            name="Max Charging Limit",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_charging_limit",
+            name=name,
+            object_id=object_id,
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=247,
-            address=40032,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
-            icon="mdi:battery-charging-high",
+            icon=icon,
             gain=1000,
             precision=2,
             min=0,
+            max=max,
+        )
+        self._remote_ems_mode = remote_ems_mode
+        self._charging = charging
+        self._discharging = discharging
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if self._charging and self._discharging:
+            self["availability"].append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
+        elif self._charging:
+            self["availability"].append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+        elif self._discharging:
+            self["availability"].append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+        return base
+
+
+class MaxChargingLimit(RemoteEMSLimit):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
+        super().__init__(
+            remote_ems=remote_ems,
+            remote_ems_mode=remote_ems_mode,
+            charging=True,
+            discharging=False,
+            name="Max Charging Limit",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_charging_limit",
+            plant_index=plant_index,
+            address=40032,
+            icon="mdi:battery-charging-high",
             max=rated_charging_power,
         )
 
@@ -464,26 +528,18 @@ class MaxChargingLimit(NumericSensor, HybridInverter):
         return attributes
 
 
-class MaxDischargingLimit(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, rated_discharging_power: float):
+class MaxDischargingLimit(RemoteEMSLimit):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
         super().__init__(
             remote_ems=remote_ems,
+            remote_ems_mode=remote_ems_mode,
             name="Max Discharging Limit",
+            charging=False,
+            discharging=True,
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_discharging_limit",
-            input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
             address=40034,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:battery-charging-low",
-            gain=1000,
-            precision=2,
-            min=0,
             max=rated_discharging_power,
         )
 
@@ -493,26 +549,18 @@ class MaxDischargingLimit(NumericSensor, HybridInverter):
         return attributes
 
 
-class PVMaxPowerLimit(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin):
+class PVMaxPowerLimit(RemoteEMSLimit):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
             remote_ems=remote_ems,
+            remote_ems_mode=remote_ems_mode,
+            charging=True,
+            discharging=True,
             name="PV Max Power Limit",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_pv_max_power_limit",
-            input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
             address=40036,
-            count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:solar-power",
-            gain=1000,
-            precision=2,
-            min=0,
             max=4294967.295,
         )
 
