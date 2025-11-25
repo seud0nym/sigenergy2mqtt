@@ -403,7 +403,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 state = self._states[-1][1]
         return self._apply_gain_and_precision(state, raw)
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
+    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> bool:
         """Publishes this sensor.
 
         Args:
@@ -411,6 +411,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             modbus:     The Modbus client for determining the current state.
             republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
         """
+        published: bool = False
         now = time.time()
         if self._failures < self._max_failures or (self._next_retry and self._next_retry <= now):
             try:
@@ -427,6 +428,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                         if self.debug_logging:
                             logging.debug(f"{self.__class__.__name__} Publishing {state=}")
                         mqtt.publish(self["state_topic"], f"{state}", self._qos, self._retain)
+                        published = True
                         if self.publish_raw:
                             if self.debug_logging:
                                 logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state}")
@@ -460,6 +462,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 self.force_publish = False
         elif self.debug_logging:
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
+        return published
 
     def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
         """Publishes the attributes for this sensor.
