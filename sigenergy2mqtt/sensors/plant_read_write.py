@@ -407,9 +407,10 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        self.is_charging_mode_topic = f"{base}/is_charging_mode"
-        self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
-        self.is_charging_discharging_topic = f"{base}/is_command_mode"
+        if Config.home_assistant.enabled:
+            self.is_charging_mode_topic = f"{base}/is_charging_mode"
+            self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
+            self.is_charging_discharging_topic = f"{base}/is_command_mode"
         return base
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
@@ -424,7 +425,8 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             return f"Unknown Mode: {value}"
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> bool:
-        if await super().publish(mqtt, modbus, republish=republish):
+        result = await super().publish(mqtt, modbus, republish=republish)
+        if result and Config.home_assistant.enabled:
             match self.latest_raw_state:
                 case 3 | 4:
                     mqtt.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
@@ -438,6 +440,8 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
                     mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
                     mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
                     mqtt.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
+            return True
+        return result
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
         result = False
@@ -498,12 +502,13 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if self._charging and self._discharging:
-            self["availability"].append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
-        elif self._charging:
-            self["availability"].append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
-        elif self._discharging:
-            self["availability"].append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+        if Config.home_assistant.enabled:
+            if self._charging and self._discharging:
+                self["availability"].append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
+            elif self._charging:
+                self["availability"].append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+            elif self._discharging:
+                self["availability"].append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
 

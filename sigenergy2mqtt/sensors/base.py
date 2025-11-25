@@ -318,8 +318,9 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self["state_topic"] = f"{base}/state"
         self["raw_state_topic"] = f"{base}/raw"
         self["json_attributes_topic"] = f"{base}/attributes"
-        self["availability_mode"] = "all"
-        self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
+        if Config.home_assistant.enabled:
+            self["availability_mode"] = "all"
+            self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
         return base
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1131,7 +1132,7 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if self._remote_ems is not None:
+        if self._remote_ems is not None and Config.home_assistant.enabled:
             assert self._remote_ems.state_topic and not self._remote_ems.state_topic.isspace(), "RemoteEMS state_topic has not been configured"
             self["availability"].append({"topic": self._remote_ems.state_topic, "payload_available": 1, "payload_not_available": 0})
         return base

@@ -387,8 +387,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         return tasks
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
-        result = mqtt_handler.register(mqtt, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
-        logging.debug(f"{self.name} subscribed to topic {Config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
+        if Config.home_assistant.enabled:
+            result = mqtt_handler.register(mqtt, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
+            logging.debug(f"{self.name} subscribed to topic {Config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
         for sensor in self.sensors.values():
             if isinstance(sensor, WritableSensorMixin):
                 try:
