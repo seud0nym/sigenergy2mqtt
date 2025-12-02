@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
-from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor
+from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, ReservedSensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
@@ -113,16 +113,13 @@ async def get_sensor_instances(
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
-            if c.__name__ != "ReservedSensor":
-                if len(c.__subclasses__()) == 0:
-                    if c.__name__ != "RequisiteSensor":
-                        sensor_count[c.__name__] = 0
-                else:
-                    find_concrete_classes(c)
+            if len(c.__subclasses__()) == 0:
+                if c.__name__ != "RequisiteSensor":
+                    sensor_count[c.__name__] = 0
+            else:
+                find_concrete_classes(c)
 
     def add_sensor_instance(s):
-        if isinstance(s, ReservedSensor):
-            return
         key = s.unique_id
         if key not in sensor_instances:
             sensor_instances[key] = s
@@ -149,8 +146,14 @@ async def get_sensor_instances(
                 else:
                     add_sensor_instance(s)
     for sensor, count in sensor_count.items():
-        if count == 0:
-            logging.warning(f"Sensor {sensor} has not been used?")
+        if isinstance(sensor, ReservedSensor):
+            logging.info(f"ReservedSensor {sensor} has {count=}")
+        else:
+            if count == 0:
+                if isinstance(sensor, ReservedSensor):
+                    logging.info(f"ReservedSensor {sensor} has not been used?")
+                else:
+                    logging.warning(f"Sensor {sensor} has not been used?")
 
     return sensor_instances
 

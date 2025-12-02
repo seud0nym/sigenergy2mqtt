@@ -22,7 +22,7 @@ class Inverter(ModbusDevice):
         output_type: ro.OutputType,
         firmware_version: ro.InverterFirmwareVersion,
         model: ro.InverterModel,
-        serial_number: ro.InverterSerialNumber
+        serial_number: ro.InverterSerialNumber,
     ):
         assert 2 <= strings <= 16, f"Invalid PV String Count ({strings} - must be between 2 and 16)"
         match = re.match(r"^[^\d]*", model_id)
@@ -90,6 +90,7 @@ class Inverter(ModbusDevice):
             address += 2
         # endregion
 
+        self._add_read_sensor(rw.GridCode(plant_index, device_address))
         self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
         self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))
         self._add_read_sensor(rw.InverterReactivePowerFixedValueAdjustment(plant_index, device_address))

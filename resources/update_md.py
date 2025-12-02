@@ -15,7 +15,7 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
-from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import Sensor, ReservedSensor, WriteOnlySensor
 from test import get_sensor_instances, cancel_sensor_futures
 
 TOPICS: Path = Path("sensors/TOPICS.md")
@@ -41,6 +41,8 @@ async def sensor_index():
         count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
             sensor: Sensor = mqtt_sensors[key]
+            if isinstance(sensor, ReservedSensor):
+                continue
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device and sensor.publishable:
                 count += 1
@@ -102,6 +104,8 @@ async def sensor_index():
         count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "command_topic" in value]:
             sensor = mqtt_sensors[key]
+            if isinstance(sensor, ReservedSensor):
+                continue
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
                 count += 1
@@ -334,7 +338,10 @@ async def compare_sensor_instances():
 
     for k, v in registers.items():
         if isinstance(k, int) and k not in typqxq_instances:
-            logging.warning(f"Register {k} ({v}) found in sensor instances but not defined in TypQxQ")
+            for i in v:
+                if isinstance(sensor_instances[i], ReservedSensor):
+                    continue
+                logging.warning(f"Register {k} ({sensor_instances[i].name}) found in sensor instances but not defined in TypQxQ")
 
     with SENSORS.open("w") as f:
         f.write("# Home Assistant Sensors\n")
