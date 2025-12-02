@@ -7,7 +7,7 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
@@ -35,7 +35,7 @@ async def get_sensor_instances(
     logging.debug(f"Instantiating Power Plant ({hass=})")
     plant = PowerPlant(
         plant_index=plant_index,
-        device_type=HybridInverter(),
+        device_type=DeviceType.create("SigenStor EC 12.0 TP"),
         output_type=2,
         power_phases=3,
         rcp_value=12.6,
@@ -60,7 +60,7 @@ async def get_sensor_instances(
     hybrid_inverter = Inverter(
         plant_index=plant_index,
         device_address=hybrid_inverter_device_address,
-        device_type=HybridInverter(),
+        device_type=DeviceType.create(hybrid_model.latest_raw_state),
         model_id=hybrid_model.latest_raw_state,
         serial=hybrid_serial.latest_raw_state,
         firmware=hybrid_firmware.latest_raw_state,
@@ -87,7 +87,7 @@ async def get_sensor_instances(
     pv_inverter = Inverter(
         plant_index=plant_index,
         device_address=pv_inverter_device_address,
-        device_type=PVInverter(),
+        device_type=DeviceType.create(pv_model.latest_raw_state),
         model_id=pv_model.latest_raw_state,
         serial=pv_serial.latest_raw_state,
         firmware=pv_firmware.latest_raw_state,

@@ -3,7 +3,7 @@ from .threading import start
 from pymodbus import pymodbus_apply_logging_config
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
@@ -12,7 +12,6 @@ from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, I
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
 from typing import Tuple
 import logging
-import re
 import signal
 
 
@@ -139,7 +138,7 @@ async def make_dc_charger(plant_index, device_address, inverter_unique_id, remot
 serial_numbers = []
 
 
-async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, HybridInverter | PVInverter, PowerPlant, any]:
+async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, PowerPlant]:
     serial = InverterSerialNumber(plant_index, device_address)
     serial_number = await serial.get_state(modbus=modbus)
 
@@ -153,6 +152,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
     output_type = OutputType(plant_index, device_address)
 
     model_id = await model.get_state(modbus=modbus)
+    device_type = DeviceType.create(model_id)
     firmware_version = await firmware.get_state(modbus=modbus)
     pv_string_count = await strings.get_state(modbus=modbus)
     output_type_state = await output_type.get_state(raw=True, modbus=modbus)
@@ -163,11 +163,6 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             power_phases = 2
         case _:
             power_phases = 3
-
-    if re.search(r"EC|Hybrid|PG|PV.*M1-HYA", model_id):
-        device_type = HybridInverter()
-    else:
-        device_type = PVInverter()
 
     if plant is None:
         rated_charging_power = PlantRatedChargingPower(plant_index)
