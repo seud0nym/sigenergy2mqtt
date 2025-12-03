@@ -13,7 +13,6 @@ import logging
 
 
 class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
-    # 0:Stop 1:Start
     def __init__(self, plant_index: int):
         super().__init__(
             name="Power",
@@ -22,6 +21,11 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=40000,
         )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "0:Stop 1:Start"
+        return attributes
 
 
 class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -65,6 +69,8 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            min=-60.0,
+            max=60.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -157,7 +163,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: (-1, -0.8] U [0.8, 1]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = "Range: [(-1, -0.8) U (0.8, 1)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
 
 

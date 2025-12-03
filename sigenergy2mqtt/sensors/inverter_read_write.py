@@ -9,7 +9,6 @@ from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactive
 
 
 class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
-    # 0:Stop 1:Start
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Power",
@@ -19,6 +18,10 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
             address=40500,
         )
 
+    def get_attributes(self) -> dict[str, any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "0:Stop 1:Start"
+        return attributes
 
 class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v2.7 2025-05-23
     def __init__(self, plant_index: int, device_address: int):
@@ -42,7 +45,6 @@ class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v
 
 
 class DCChargerStatus(WriteOnlySensor, HybridInverter):
-    # 0:Start 1:Stop
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="DC Charger Stop/Start",
@@ -59,6 +61,11 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
             value_off=1,
             value_on=0,
         )
+
+    def get_attributes(self) -> dict[str, any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "0:Start 1:Stop"
+        return attributes
 
 
 class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):

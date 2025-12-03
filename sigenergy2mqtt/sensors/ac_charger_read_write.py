@@ -8,7 +8,6 @@ from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
 
 
 class ACChargerStatus(WriteOnlySensor):
-    # 0:Start 1:Stop
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="AC Charger Stop/Start",
@@ -26,6 +25,10 @@ class ACChargerStatus(WriteOnlySensor):
             value_on=0,
         )
 
+    def get_attributes(self) -> dict[str, any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "0:Start 1:Stop"
+        return attributes
 
 class ACChargerOutputCurrent(NumericSensor):
     # Range [6, X]
