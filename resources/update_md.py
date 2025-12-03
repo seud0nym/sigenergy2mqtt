@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 import asyncio
 import logging
+import re
 import requests
 import sys
 import os
@@ -15,14 +16,68 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
-from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, WriteOnlySensor
 from test import get_sensor_instances, cancel_sensor_futures
 
 TOPICS: Path = Path("sensors/TOPICS.md")
 SENSORS: Path = Path("sensors/SENSORS.md")
 
+regex_pattern = r"Range:\s*\[(.*?)\]"
+
 
 async def sensor_index():
+    def extract_min_max(range_string: str, precision: int, gain: float):
+        """
+        Isolates the range content and then programmatically extracts the
+        first (min) and last (max) potential values, including hex and formulas.
+        """
+        match = re.search(regex_pattern, range_string, re.DOTALL)
+        if match:
+            content = match.group(1).strip()
+
+            # The pattern below identifies potential "values" (numbers, formulas, hex)
+            # It looks for sequences of characters that form numbers, hex, or formula components:
+            # [-\w\d.*]+ covers negative signs, words (like 'base value'), digits, hex letters, periods, and asterisks.
+
+            # We look for sequences that are either simple numbers/formulas OR hex numbers
+            # This is a general approach to capture the *components* of the range definition.
+
+            # Refined pattern to capture potential values/formulas more accurately:
+            # Captures:
+            # 1. Standard decimal/formula part (potentially negative, includes words/ops)
+            #    [-\w\d\s.*]+?
+            #    OR
+            # 2. Hex numbers starting with 0x (case-insensitive for a-f)
+            #    0x[0-9a-fA-F]+
+
+            # A simple non-greedy pattern to find components separated by , or U
+            # For simplicity, we capture the entire component string
+
+            # Use simple string splitting and stripping for better control than complex regex here
+
+            # Split by the delimiters we expect to separate values
+            components = re.split(r",|\s*U\s*", content)
+
+            # Strip extraneous parentheses and whitespace from components
+            cleaned_components = [comp.strip("() \t\n") for comp in components if comp.strip("() \t\n")]
+
+            if cleaned_components:
+                try:
+                    min_val = round(float(cleaned_components[0]), precision)
+                except ValueError:
+                    min_val = cleaned_components[0]
+                try:
+                    if cleaned_components[-1] == "0xFFFFFFFE":
+                        max_val = 4294967.295
+                    else:
+                        max_val = round(float(cleaned_components[-1]), precision)
+                except ValueError:
+                    max_val = cleaned_components[-1]
+                return (min_val, max_val)
+            else:
+                logging.error(f"Could not parse min/max values from {range_string}")
+        return None, None
+
     def metrics_topics(index_only: bool = False) -> int:
         count = 0
         if not index_only:
@@ -81,7 +136,7 @@ async def sensor_index():
                 if "options" in sensor:
                     f.write("<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'>")
                     for i in range(0, len(sensor["options"])):
-                        if sensor['options'][i] is not None:
+                        if sensor["options"][i] is not None:
                             f.write(f"<li value='{i}'>{sensor['options'][i]}</li>")
                     f.write("</ol></td></tr>\n")
                 if "comment" in attributes:
@@ -101,7 +156,9 @@ async def sensor_index():
     def subscribed_topics(device, index_only: bool = False) -> int:
         count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "command_topic" in value]:
-            sensor = mqtt_sensors[key]
+            sensor: Sensor = mqtt_sensors[key]
+            if isinstance(sensor, ReservedSensor):
+                continue
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
                 count += 1
@@ -115,8 +172,27 @@ async def sensor_index():
                 f.write("\n")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
-                f.write(f"<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>{sensor.state_topic}</td></tr>\n")
+                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>{hass_sensors[key].command_topic}</td></tr>\n")
                 f.write(f"<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>{sensor.command_topic}</td></tr>\n")
+                attributes = sensor.get_attributes()
+                min, max = None, None
+                if "comment" in attributes:
+                    comment: str = attributes["comment"]
+                    if re.match(r"0:(Start|Stop)\s+1:(Start|Stop)", comment):
+                        f.write(f"<tr><td>Valid&nbsp;Values</td><td>{comment}</td></tr>\n")
+                    else:
+                        f.write(f"<tr><td>Comment</td><td>{comment}</td></tr>\n")
+                        min, max = extract_min_max(comment, sensor.precision, sensor.gain)
+                if "min" in sensor:
+                    f.write(f"<tr><td>Minimum&nbsp;Value</td><td>{min if min is not None else sensor['min']}</td></tr>\n")
+                if "max" in sensor:
+                    f.write(f"<tr><td>Maximum&nbsp;Value</td><td>{max if max is not None else sensor['max']}</td></tr>\n")
+                if "options" in sensor:
+                    f.write("<tr><td>Valid&nbsp;Values</td><td><ul>")
+                    for i in range(0, len(sensor["options"])):
+                        if sensor["options"][i] is not None:
+                            f.write(f"<li value='{i}'>\"{sensor['options'][i]}\"</li>")
+                    f.write("</ol></td></tr>\n")
                 if sensor_parent in ("Inverter", "ESS", "PVString"):
                     f.write("<tr><td>Applicable&nbsp;To</td><td>")
                     if isinstance(sensor, HybridInverter) and isinstance(sensor, PVInverter):

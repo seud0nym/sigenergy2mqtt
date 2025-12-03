@@ -1256,7 +1256,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40007</td></tr>
-<tr><td>Comment</td><td>Range: (-1, -0.8] U [0.8, 1]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [(-1, -0.8) U (0.8, 1)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 </table>
 <h5><a id='sigen_0_247_40006'>Q/S Adjustment Target Value</a></h5>
 <table>
@@ -4249,237 +4249,332 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <h5><a id='sigen_0_247_40001'>Active Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40005'>Active Power Percentage Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40046'>Backup SoC
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_backup_soc/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_backup_soc/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_backup_soc/set</td></tr>
+<tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40047'>Charge Cut-Off SoC
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_charge_cut_off_soc/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/set</td></tr>
+<tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40048'>Discharge Cut-Off SoC
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_ess_discharge_cut_off_soc/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/set</td></tr>
+<tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40038'>Grid Max Export Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_export_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/set</td></tr>
+<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 </table>
 <h5><a id='sigen_0_247_40040'>Grid Max Import Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_import_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/set</td></tr>
+<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 </table>
 <h5><a id='sigen_0_247_40030'>Independent Phase Power Control
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_independent_phase_power_control/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled</td></tr>
 </table>
 <h5><a id='sigen_0_247_40032'>Max Charging Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/set</td></tr>
+<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>Rated ESS charging power</td></tr>
 </table>
 <h5><a id='sigen_0_247_40034'>Max Discharging Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/set</td></tr>
+<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>Rated ESS charging power</td></tr>
 </table>
 <h5><a id='sigen_0_247_40042'>PCS Max Export Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_export_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/set</td></tr>
+<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 </table>
 <h5><a id='sigen_0_247_40044'>PCS Max Import Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_import_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/set</td></tr>
+<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 </table>
 <h5><a id='sigen_0_247_40036'>PV Max Power Limit
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/set</td></tr>
+<tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 </table>
 <h5><a id='sigen_0_247_40008'>Phase A Active Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40020'>Phase A Active Power Percentage Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40023'>Phase A Q/S Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 </table>
 <h5><a id='sigen_0_247_40014'>Phase A Reactive Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40010'>Phase B Active Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40021'>Phase B Active Power Percentage Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40024'>Phase B Q/S Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 </table>
 <h5><a id='sigen_0_247_40016'>Phase B Reactive Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40012'>Phase C Active Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40022'>Phase C Active Power Percentage Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 </table>
 <h5><a id='sigen_0_247_40025'>Phase C Q/S Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 </table>
 <h5><a id='sigen_0_247_40018'>Phase C Reactive Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40000'>Power&nbsp;On/Off
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_status/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_247_powerplant/sigen_0_plant_status/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_status/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td>0:Stop 1:Start</td></tr>
 </table>
 <h5><a id='sigen_0_247_40007'>Power Factor Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Range: [(-1, -0.8) U (0.8, 1)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-1.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_40006'>Q/S Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_q_s_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 </table>
 <h5><a id='sigen_0_247_40003'>Reactive Power Fixed Adjustment Target Value
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-60.00 * base value</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>60.00 * base value</td></tr>
 </table>
 <h5><a id='sigen_0_247_40029'>Remote EMS
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/set</td></tr>
+<tr><td>Comment</td><td>When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS</td></tr>
 </table>
 <h5><a id='sigen_0_247_40031'>Remote EMS Control Mode
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"PCS remote control"</li><li value='1'>"Standby"</li><li value='2'>"Maximum Self-consumption (Default)"</li><li value='3'>"Command Charging (Consume power from the grid first)"</li><li value='4'>"Command Charging (Consume power from the PV first)"</li><li value='5'>"Command Discharging (Output power from PV first)"</li><li value='6'>"Command Discharging (Output power from the battery first)"</li></ol></td></tr>
 </table>
 
 ### Inverter
 <h5><a id='sigen_0_001_41501'>Active Power Fixed Value Adjustment
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_fixed_value_adjustment/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 </table>
 <h5><a id='sigen_0_001_41505'>Active Power Percentage Adjustment
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_active_power_percentage_adjustment/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-100.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 </table>
 <h5><a id='sigen_0_001_40500'>Power&nbsp;On/Off
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_status/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_001_inverter/sigen_0_inverter_1_status/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_status/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td>0:Stop 1:Start</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 </table>
 <h5><a id='sigen_0_001_41507'>Power Factor Adjustment
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_power_factor_adjustment/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-1.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 </table>
 <h5><a id='sigen_0_001_41503'>Reactive Power Fixed Value Adjustment
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 </table>
 <h5><a id='sigen_0_001_41506'>Reactive Power Q/S Adjustment
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_inverter/sigen_0_inverter_1_reactive_power_q_s_adjustment/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-60.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>60.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 </table>
 <h5><a id='sigen_0_001_41500'>Remote EMS Dispatch
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/set</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 </table>
@@ -4488,20 +4583,24 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <h5><a id='sigen_0_002_42000'>AC Charger Stop/Start
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_002_accharger/sigen_0_ac_charger_2/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td>0:Start 1:Stop</td></tr>
 </table>
 <h5><a id='sigen_0_002_42001'>Output Current
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_002_accharger/sigen_0_ac_charger_2_output_current/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>6.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
 </table>
 
 ### DC Charger
 <h5><a id='sigen_0_001_41000'>DC Charger Stop/Start
 </a></h5>
 <table>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_001_dccharger/sigen_0_dc_charger_1/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td>0:Start 1:Stop</td></tr>
 </table>

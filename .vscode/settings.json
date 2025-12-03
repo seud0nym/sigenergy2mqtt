@@ -33,6 +33,7 @@
         "inet_pton",
         "keepalive",
         "kvar",
+        "lastindex",
         "levelname",
         "MAINPID",
         "mktime",
