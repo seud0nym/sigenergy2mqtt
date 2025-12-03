@@ -1,6 +1,7 @@
 from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 from .sanity_check import SanityCheck
 from concurrent.futures import Future
+from enum import Enum
 from pathlib import Path
 from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.config import Config, RegisterAccess
@@ -20,6 +21,17 @@ import sys
 import time
 
 
+class Protocol(float, Enum):
+    N_A = 9999.99
+    V1_8 = 1.8
+    V2_0 = 2.0
+    V2_4 = 2.4
+    V2_5 = 2.5
+    V2_6 = 2.6
+    V2_7 = 2.7
+    V2_8 = 2.8
+
+
 class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
     """Base superclass of all sensor definitions"""
 
@@ -37,6 +49,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol = Protocol.V2_4,
     ):
         assert unique_id not in self._used_unique_ids or self._used_unique_ids[unique_id] == self.__class__.__name__, (
             f"{self.__class__.__name__} unique_id {unique_id} has already been used for class {self._used_unique_ids[unique_id]}"
@@ -47,8 +60,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         )
         assert object_id.startswith(Config.home_assistant.entity_id_prefix), f"{self.__class__.__name__} object_id {object_id} does not start with '{Config.home_assistant.entity_id_prefix}'"
         assert icon is None or icon.startswith("mdi:"), f"{self.__class__.__name__} icon {icon} does not start with 'mdi:'"
+        assert isinstance(protocol_version, Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
         self._used_unique_ids[unique_id] = self.__class__.__name__
         self._used_object_ids[object_id] = self.__class__.__name__
+
+        self._protocol_version = protocol_version
 
         self["platform"] = "sensor"
         self["name"] = name
@@ -134,6 +150,15 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
     @property
     def precision(self) -> int:
         return self["display_precision"]
+
+    @property
+    def protocol_version(self) -> float:
+        return self._protocol_version.value
+
+    @protocol_version.setter
+    def protocol_version(self, protocol_version: Protocol):
+        assert isinstance(protocol_version, Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
+        self._protocol_version = protocol_version
 
     @property
     def publishable(self) -> bool:
@@ -593,6 +618,7 @@ class DerivedSensor(Sensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol = Protocol.N_A,
     ):
         super().__init__(
             name,
@@ -604,6 +630,7 @@ class DerivedSensor(Sensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         assert data_type in ModbusClient.DATATYPE, f"Invalid data type {data_type}"
         self._data_type = data_type
@@ -655,6 +682,7 @@ class ModbusSensor(Sensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         unique_id_override: str = None,
     ):
         assert device_address is not None and 1 <= device_address <= 247, f"Invalid device address {device_address}"
@@ -674,6 +702,7 @@ class ModbusSensor(Sensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         self._address = address
         self._count = count
@@ -762,10 +791,27 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         unique_id_override: str = None,
     ):
         ModbusSensor.__init__(
-            self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision, unique_id_override=unique_id_override
+            self,
+            name,
+            object_id,
+            input_type,
+            plant_index,
+            device_address,
+            address,
+            count,
+            data_type,
+            unit,
+            device_class,
+            state_class,
+            icon,
+            gain,
+            precision,
+            protocol_version,
+            unique_id_override=unique_id_override,
         )
         ReadableSensorMixin.__init__(self, scan_interval)
 
@@ -846,7 +892,9 @@ class ReservedSensor(ReadOnlySensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         unique_id_override: str = None,
+        remote_ems = None,
     ):
         super().__init__(
             name,
@@ -864,6 +912,7 @@ class ReservedSensor(ReadOnlySensor):
             icon,
             gain,
             precision,
+            protocol_version,
             unique_id_override=unique_id_override,
         )
         self._publishable = False  # Reserved sensors are not published
@@ -891,6 +940,7 @@ class TimestampSensor(ReadOnlySensor):
         device_address: int,
         address: int,
         scan_interval: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             name,
@@ -908,6 +958,7 @@ class TimestampSensor(ReadOnlySensor):
             icon="mdi:calendar-clock",
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         self["entity_category"] = "diagnostic"
 
@@ -1016,6 +1067,7 @@ class WriteOnlySensor(WritableSensorMixin):
         plant_index: int,
         device_address: int,
         address: int,
+        protocol_version: Protocol,
         payload_off: str = "off",
         payload_on: str = "on",
         name_off: str = "Power Off",
@@ -1040,6 +1092,7 @@ class WriteOnlySensor(WritableSensorMixin):
             icon=None,
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         assert icon_on is not None and icon_on.startswith("mdi:"), f"{self.__class__.__name__} on icon {icon_on} does not start with 'mdi:'"
         assert icon_off is not None and icon_off.startswith("mdi:"), f"{self.__class__.__name__} off icon {icon_off} does not start with 'mdi:'"
@@ -1108,6 +1161,7 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             name,
@@ -1125,6 +1179,7 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         assert remote_ems is None or isinstance(remote_ems, RemoteEMSMixin), f"{self.__class__.__name__} remote_ems is not an instance of RemoteEMSMixin"
         self._remote_ems = remote_ems
@@ -1159,6 +1214,7 @@ class NumericSensor(ReadWriteSensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         min: float = 0.0,
         max: float = 100.0,
     ):
@@ -1179,6 +1235,7 @@ class NumericSensor(ReadWriteSensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         self["platform"] = "number"
         self["min"] = min
@@ -1236,6 +1293,7 @@ class SwitchSensor(ReadWriteSensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             remote_ems,
@@ -1254,6 +1312,7 @@ class SwitchSensor(ReadWriteSensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         self["platform"] = "switch"
         self["payload_off"] = "0"
@@ -1274,6 +1333,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         plant_index: int,
         device_address: int,
         address: int,
+        protocol_version: Protocol,
         alarm_type: str,
     ):
         super().__init__(
@@ -1292,6 +1352,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             icon="mdi:flash-triangle",
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         self.alarm_type = alarm_type
 
@@ -1355,8 +1416,8 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 class Alarm1Sensor(AlarmSensor):
     """Superclass of all Alarm 1 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "PCS")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "PCS")
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1407,8 +1468,8 @@ class Alarm1Sensor(AlarmSensor):
 class Alarm2Sensor(AlarmSensor):
     """Superclass of all Alarm 2 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "PCS")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "PCS")
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1445,8 +1506,8 @@ class Alarm2Sensor(AlarmSensor):
 class Alarm3Sensor(AlarmSensor):
     """Superclass of all Alarm 3 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "ESS")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "ESS")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1480,8 +1541,16 @@ class Alarm3Sensor(AlarmSensor):
 class Alarm4Sensor(AlarmSensor):
     """Superclass of all Alarm 4 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "GW")
+    def __init__(
+        self,
+        name: str,
+        object_id: str,
+        plant_index: int,
+        device_address: int,
+        address: int,
+        protocol_version: Protocol,
+    ):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "GW")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1517,8 +1586,8 @@ class Alarm4Sensor(AlarmSensor):
 class Alarm5Sensor(AlarmSensor):
     """Superclass of all Alarm 5 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "EVDC")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "EVDC")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1560,6 +1629,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             icon="mdi:flash-triangle",
             gain=None,
             precision=None,
+            protocol_version=Protocol.N_A,
         )
         device_addresses = set([a._device_address for a in alarms])
         first_address = min([a._address for a in alarms])
@@ -1617,6 +1687,7 @@ class RunningStateSensor(ReadOnlySensor):
         plant_index: int,
         device_address: int,
         address: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             name,
@@ -1634,6 +1705,7 @@ class RunningStateSensor(ReadOnlySensor):
             icon="mdi:power-settings",
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         self["enabled_by_default"] = True
         self["options"] = [

@@ -1,5 +1,6 @@
 from .device import ModbusDevice, DeviceType
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.sensors.base import Protocol
 from sigenergy2mqtt.sensors.inverter_derived import PVStringPower, PVStringDailyEnergy, PVStringLifetimeEnergy
 from sigenergy2mqtt.sensors.inverter_read_only import PVCurrentSensor, PVVoltageSensor
 
@@ -15,6 +16,7 @@ class PVString(ModbusDevice):
         string_number: int,
         voltage_address: int,
         current_address: int,
+        protocol_version: Protocol,
     ):
         name = f"{model_id.split()[0]} {serial_number} PV String {string_number}"
         super().__init__(
@@ -26,11 +28,11 @@ class PVString(ModbusDevice):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}{string_number}",
         )
 
-        voltage = PVVoltageSensor(plant_index, device_address, voltage_address, string_number)
-        current = PVCurrentSensor(plant_index, device_address, current_address, string_number)
-        power = PVStringPower(plant_index, device_address, string_number, voltage, current)
-        lifetime_energy = PVStringLifetimeEnergy(plant_index, device_address, string_number, power)
-        daily_energy = PVStringDailyEnergy(plant_index, device_address, string_number, lifetime_energy)
+        voltage = PVVoltageSensor(plant_index, device_address, voltage_address, string_number, protocol_version)
+        current = PVCurrentSensor(plant_index, device_address, current_address, string_number, protocol_version)
+        power = PVStringPower(plant_index, device_address, string_number, protocol_version, voltage, current)
+        lifetime_energy = PVStringLifetimeEnergy(plant_index, device_address, string_number, protocol_version, power)
+        daily_energy = PVStringDailyEnergy(plant_index, device_address, string_number, protocol_version, lifetime_energy)
 
         self._add_read_sensor(voltage, f"pv{string_number}")
         self._add_read_sensor(current, f"pv{string_number}")

@@ -1,4 +1,4 @@
-from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, SwitchSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, Protocol, ReservedSensor, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -16,12 +16,14 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=40500,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, any]:
         attributes = super().get_attributes()
         attributes["comment"] = "0:Stop 1:Start"
         return attributes
+
 
 class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v2.7 2025-05-23
     def __init__(self, plant_index: int, device_address: int):
@@ -41,6 +43,7 @@ class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v
             icon="mdi:earth",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -52,6 +55,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=41000,
+            protocol_version=Protocol.V1_8,
             payload_off="stop",
             payload_on="start",
             name_off="Stop",
@@ -68,7 +72,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
         return attributes
 
 
-class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):
+class InverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             remote_ems=None,
@@ -87,6 +91,7 @@ class InverterRemoteEMSDispatch(SwitchSensor, PVInverter):
             icon="mdi:toggle-switch",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V2_5,
         )
 
 
@@ -109,6 +114,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
         )
 
 
@@ -131,6 +137,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
         )
 
 
@@ -153,6 +160,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             icon="mdi:percent",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V2_5,
             min=-100.00,
             max=100.00,
         )
@@ -177,6 +185,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V2_5,
             min=-60.0,
             max=60.0,
         )
@@ -201,6 +210,7 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
             min=-1.0,
             max=1.0,
         )

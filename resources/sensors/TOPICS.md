@@ -249,7 +249,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_001_30615'>Reactive Power Fixed Value Adjustment Feedback</a><br>
 <a href='#sigen_0_001_30618'>Reactive Power Percentage Adjustment Feedback</a><br>
 <a href='#sigen_0_001_41506'>Reactive Power Q/S Adjustment</a><br>
-<a href='#sigen_0_001_41500'>Remote EMS Dispatch</a><br>
 <a href='#sigen_0_001_30578'>Running State</a><br>
 <a href='#sigen_0_001_30515'>Serial Number</a><br>
 <a href='#sigen_0_001_31040'>Shutdown Time</a><br>
@@ -447,7 +446,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_001_41507'>Power Factor Adjustment</a><br>
 <a href='#sigen_0_001_41503'>Reactive Power Fixed Value Adjustment</a><br>
 <a href='#sigen_0_001_41506'>Reactive Power Q/S Adjustment</a><br>
-<a href='#sigen_0_001_41500'>Remote EMS Dispatch</a><br>
 
 <h6>AC Charger</h6>
 <a href='#sigen_0_002_42000'>AC Charger Stop/Start</a><br>
@@ -471,6 +469,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_active_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power/state</td></tr>
 <tr><td>Source</td><td>30031</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40001'>Active Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -482,6 +481,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40001</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40005'>Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -494,6 +494,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40005</td></tr>
 <tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30039'>Available Max Active Power</a></h5>
 <table>
@@ -506,6 +507,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_active_power/state</td></tr>
 <tr><td>Source</td><td>30039</td></tr>
 <tr><td>Comment</td><td>Feed to the AC terminal. Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30064'>Available Max Charging Capacity</a></h5>
 <table>
@@ -518,6 +520,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_charging_capacity/state</td></tr>
 <tr><td>Source</td><td>30064</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30047'>Available Max Charging Power</a></h5>
 <table>
@@ -530,6 +533,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_charging_power/state</td></tr>
 <tr><td>Source</td><td>30047</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30066'>Available Max Discharging Capacity</a></h5>
 <table>
@@ -542,6 +546,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_discharging_capacity/state</td></tr>
 <tr><td>Source</td><td>30066</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30049'>Available Max Discharging Power</a></h5>
 <table>
@@ -554,6 +559,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_discharging_power/state</td></tr>
 <tr><td>Source</td><td>30049</td></tr>
 <tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30043'>Available Max Reactive Power</a></h5>
 <table>
@@ -566,6 +572,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_max_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30043</td></tr>
 <tr><td>Comment</td><td>Feed to the AC terminal. Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30041'>Available Min Active Power</a></h5>
 <table>
@@ -578,6 +585,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_min_active_power/state</td></tr>
 <tr><td>Source</td><td>30041</td></tr>
 <tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30045'>Available Min Reactive Power</a></h5>
 <table>
@@ -590,6 +598,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_available_min_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30045</td></tr>
 <tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40046'>Backup SoC</a></h5>
 <table>
@@ -602,6 +611,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_backup_soc/state</td></tr>
 <tr><td>Source</td><td>40046</td></tr>
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_battery_charging_power'>Battery Charging Power</a></h5>
 <table>
@@ -611,6 +621,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_charging_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_battery_charging_power/state</td></tr>
 <tr><td>Source</td><td>BatteryPower &gt; 0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_battery_discharging_power'>Battery Discharging Power</a></h5>
 <table>
@@ -620,6 +631,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_discharging_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_battery_discharging_power/state</td></tr>
 <tr><td>Source</td><td>BatteryPower &lt; 0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_247_30037'>Battery Power</a></h5>
 <table>
@@ -631,6 +643,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_battery_power/state</td></tr>
 <tr><td>Source</td><td>30037</td></tr>
 <tr><td>Comment</td><td>ESS Power: <0 = discharging >0 = charging</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30014'>Battery SoC</a></h5>
 <table>
@@ -642,6 +655,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_battery_soc/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_battery_soc/state</td></tr>
 <tr><td>Source</td><td>30014</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30087'>Battery SoH</a></h5>
 <table>
@@ -654,6 +668,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_battery_soh/state</td></tr>
 <tr><td>Source</td><td>30087</td></tr>
 <tr><td>Comment</td><td>This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_30085'>Charge Cut-Off SoC</a></h5>
 <table>
@@ -665,6 +680,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_charge_cut_off_soc/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_charge_cut_off_soc/state</td></tr>
 <tr><td>Source</td><td>30085</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40047'>Charge Cut-Off SoC</a></h5>
 <table>
@@ -677,6 +693,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_charge_cut_off_soc/state</td></tr>
 <tr><td>Source</td><td>40047</td></tr>
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_consumed_power'>Consumed Power</a></h5>
 <table>
@@ -686,6 +703,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_consumed_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_consumed_power/state</td></tr>
 <tr><td>Source</td><td>TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_247_30072'>DC Charger Alarms</a></h5>
 <table>
@@ -696,6 +714,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_5/state</td></tr>
 <tr><td>Source</td><td>30072</td></tr>
 <tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_daily_charge_energy'>Daily Charge Energy</a></h5>
 <table>
@@ -706,6 +725,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_charge_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_charge_energy/state</td></tr>
 <tr><td>Source</td><td>&sum; of DailyChargeEnergy across all Inverters associated with the Plant</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_daily_consumed_energy'>Daily Consumption</a></h5>
 <table>
@@ -717,6 +737,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_consumed_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_consumed_energy/state</td></tr>
 <tr><td>Source</td><td>30092</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_daily_discharge_energy'>Daily Discharge Energy</a></h5>
 <table>
@@ -727,6 +748,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_discharge_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>&sum; of DailyDischargeEnergy across all Inverters associated with the Plant</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_daily_pv_energy'>Daily PV Production</a></h5>
 <table>
@@ -737,6 +759,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_pv_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_total_daily_pv_energy'>Daily Total PV Production</a></h5>
 <table>
@@ -747,6 +770,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_daily_pv_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_total_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_247_30086'>Discharge Cut-Off SoC</a></h5>
 <table>
@@ -758,6 +782,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_discharge_cut_off_soc/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_discharge_cut_off_soc/state</td></tr>
 <tr><td>Source</td><td>30086</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40048'>Discharge Cut-Off SoC</a></h5>
 <table>
@@ -770,6 +795,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ess_discharge_cut_off_soc/state</td></tr>
 <tr><td>Source</td><td>40048</td></tr>
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30003'>EMS Work Mode</a></h5>
 <table>
@@ -780,6 +806,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ems_work_mode/state</td></tr>
 <tr><td>Source</td><td>30003</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Max Self Consumption</li><li value='1'>Sigen AI</li><li value='2'>Time of Use</li><li value='5'>Full Feed-in to Grid</li><li value='7'>Remote EMS</li><li value='9'>Time-Based Control</li></ol></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30029'>ESS Alarms</a></h5>
 <table>
@@ -790,6 +817,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_3/state</td></tr>
 <tr><td>Source</td><td>30029</td></tr>
 <tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30030'>Gateway Alarms</a></h5>
 <table>
@@ -800,6 +828,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_general_alarm_4/state</td></tr>
 <tr><td>Source</td><td>30030</td></tr>
 <tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40038'>Grid Max Export Limit</a></h5>
 <table>
@@ -812,6 +841,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state</td></tr>
 <tr><td>Source</td><td>40038</td></tr>
 <tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40040'>Grid Max Import Limit</a></h5>
 <table>
@@ -824,6 +854,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state</td></tr>
 <tr><td>Source</td><td>40040</td></tr>
 <tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40030'>Independent Phase Power Control</a></h5>
 <table>
@@ -834,6 +865,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/state</td></tr>
 <tr><td>Source</td><td>40030</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_accumulated_charge_energy'>Lifetime Charge Energy</a></h5>
 <table>
@@ -845,6 +877,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_accumulated_charge_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_accumulated_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30200</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_lifetime_consumed_energy'>Lifetime Consumption</a></h5>
 <table>
@@ -856,6 +889,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_consumed_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_lifetime_consumed_energy/state</td></tr>
 <tr><td>Source</td><td>30094</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30208'>Lifetime DC EV Charge Energy</a></h5>
 <table>
@@ -867,6 +901,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_evdc_total_charge_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_evdc_total_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30208</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30212'>Lifetime DC EV Discharge Energy</a></h5>
 <table>
@@ -878,6 +913,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_evdc_total_discharge_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_evdc_total_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30212</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_accumulated_discharge_energy'>Lifetime Discharge Energy</a></h5>
 <table>
@@ -889,6 +925,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_accumulated_discharge_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_accumulated_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30204</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30224'>Lifetime Generator Output Energy</a></h5>
 <table>
@@ -900,6 +937,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_total_generator_output_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_total_generator_output_energy/state</td></tr>
 <tr><td>Source</td><td>30224</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30088'>Lifetime PV Production</a></h5>
 <table>
@@ -911,6 +949,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_lifetime_pv_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>30088</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30196'>Lifetime Third-Party PV Production</a></h5>
 <table>
@@ -922,6 +961,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_lifetime_production/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_third_party_pv_lifetime_production/state</td></tr>
 <tr><td>Source</td><td>30196</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_lifetime_pv_energy'>Lifetime Total PV Production</a></h5>
 <table>
@@ -932,6 +972,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_lifetime_pv_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_247_30010'>Max Active Power</a></h5>
 <table>
@@ -944,6 +985,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_active_power/state</td></tr>
 <tr><td>Source</td><td>30010</td></tr>
 <tr><td>Comment</td><td>This should be the base value of all active power adjustment actions</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30012'>Max Apparent Power</a></h5>
 <table>
@@ -956,6 +998,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_apparent_power/state</td></tr>
 <tr><td>Source</td><td>30012</td></tr>
 <tr><td>Comment</td><td>This should be the base value of all reactive power adjustment actions</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40032'>Max Charging Limit</a></h5>
 <table>
@@ -968,6 +1011,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/state</td></tr>
 <tr><td>Source</td><td>40032</td></tr>
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40034'>Max Discharging Limit</a></h5>
 <table>
@@ -980,6 +1024,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state</td></tr>
 <tr><td>Source</td><td>40034</td></tr>
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_general_pcs_alarm'>PCS Alarms</a></h5>
 <table>
@@ -990,6 +1035,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_general_pcs_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30027 and 30028</td></tr>
 <tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_247_40042'>PCS Max Export Limit</a></h5>
 <table>
@@ -1002,6 +1048,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state</td></tr>
 <tr><td>Source</td><td>40042</td></tr>
 <tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40044'>PCS Max Import Limit</a></h5>
 <table>
@@ -1014,6 +1061,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state</td></tr>
 <tr><td>Source</td><td>40044</td></tr>
 <tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40036'>PV Max Power Limit</a></h5>
 <table>
@@ -1026,6 +1074,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state</td></tr>
 <tr><td>Source</td><td>40036</td></tr>
 <tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30035'>PV Power</a></h5>
 <table>
@@ -1036,6 +1085,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_pv_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_power/state</td></tr>
 <tr><td>Source</td><td>30035</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30015'>Phase A Active Power</a></h5>
 <table>
@@ -1047,6 +1097,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power/state</td></tr>
 <tr><td>Source</td><td>30015</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40008'>Phase A Active Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1059,6 +1110,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40008</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40020'>Phase A Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1071,6 +1123,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40020</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40023'>Phase A Q/S Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1083,6 +1136,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40023</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30021'>Phase A Reactive Power</a></h5>
 <table>
@@ -1094,6 +1148,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30021</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40014'>Phase A Reactive Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1106,6 +1161,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40014</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30017'>Phase B Active Power</a></h5>
 <table>
@@ -1117,6 +1173,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power/state</td></tr>
 <tr><td>Source</td><td>30017</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40010'>Phase B Active Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1129,6 +1186,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40010</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40021'>Phase B Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1141,6 +1199,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40021</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40024'>Phase B Q/S Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1153,6 +1212,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40024</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30023'>Phase B Reactive Power</a></h5>
 <table>
@@ -1164,6 +1224,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30023</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40016'>Phase B Reactive Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1176,6 +1237,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40016</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30019'>Phase C Active Power</a></h5>
 <table>
@@ -1187,6 +1249,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power/state</td></tr>
 <tr><td>Source</td><td>30019</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40012'>Phase C Active Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1199,6 +1262,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40012</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40022'>Phase C Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1211,6 +1275,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40022</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40025'>Phase C Q/S Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1223,6 +1288,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40025</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30025'>Phase C Reactive Power</a></h5>
 <table>
@@ -1234,6 +1300,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30025</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40018'>Phase C Reactive Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1246,6 +1313,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40018</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40007'>Power Factor Adjustment Target Value</a></h5>
 <table>
@@ -1257,6 +1325,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40007</td></tr>
 <tr><td>Comment</td><td>Range: [(-1, -0.8) U (0.8, 1)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40006'>Q/S Adjustment Target Value</a></h5>
 <table>
@@ -1269,6 +1338,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40006</td></tr>
 <tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30068'>Rated Charging Power</a></h5>
 <table>
@@ -1280,6 +1350,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_charging_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_charging_power/state</td></tr>
 <tr><td>Source</td><td>30068</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30070'>Rated Discharging Power</a></h5>
 <table>
@@ -1291,6 +1362,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_discharging_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_discharging_power/state</td></tr>
 <tr><td>Source</td><td>30070</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30083'>Rated Energy Capacity</a></h5>
 <table>
@@ -1302,6 +1374,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_rated_energy_capacity/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state</td></tr>
 <tr><td>Source</td><td>30083</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_30033'>Reactive Power</a></h5>
 <table>
@@ -1313,6 +1386,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_reactive_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30033</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40003'>Reactive Power Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1325,6 +1399,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40003</td></tr>
 <tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40029'>Remote EMS</a></h5>
 <table>
@@ -1335,6 +1410,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/state</td></tr>
 <tr><td>Source</td><td>40029</td></tr>
 <tr><td>Comment</td><td>When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40031'>Remote EMS Control Mode</a></h5>
 <table>
@@ -1345,6 +1421,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
 <tr><td>Source</td><td>40031</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>PCS remote control</li><li value='1'>Standby</li><li value='2'>Maximum Self-consumption (Default)</li><li value='3'>Command Charging (Consume power from the grid first)</li><li value='4'>Command Charging (Consume power from the PV first)</li><li value='5'>Command Discharging (Output power from PV first)</li><li value='6'>Command Discharging (Output power from the battery first)</li></ol></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30051'>Running State</a></h5>
 <table>
@@ -1355,6 +1432,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_running_state/state</td></tr>
 <tr><td>Source</td><td>30051</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Standby</li><li value='1'>Normal</li><li value='2'>Fault</li><li value='3'>Power-Off</li><li value='7'>Environmental Abnormality</li></ol></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30146'>Smart Load 01 Power</a></h5>
 <table>
@@ -1366,6 +1444,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_01_power/state</td></tr>
 <tr><td>Source</td><td>30146</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30098'>Smart Load 01 Total Consumption</a></h5>
 <table>
@@ -1377,6 +1456,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_01_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_01_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30098</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30148'>Smart Load 02 Power</a></h5>
 <table>
@@ -1388,6 +1468,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_02_power/state</td></tr>
 <tr><td>Source</td><td>30148</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30100'>Smart Load 02 Total Consumption</a></h5>
 <table>
@@ -1399,6 +1480,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_02_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_02_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30150'>Smart Load 03 Power</a></h5>
 <table>
@@ -1410,6 +1492,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_03_power/state</td></tr>
 <tr><td>Source</td><td>30150</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30102'>Smart Load 03 Total Consumption</a></h5>
 <table>
@@ -1421,6 +1504,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_03_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_03_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30102</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30152'>Smart Load 04 Power</a></h5>
 <table>
@@ -1432,6 +1516,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_04_power/state</td></tr>
 <tr><td>Source</td><td>30152</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30104'>Smart Load 04 Total Consumption</a></h5>
 <table>
@@ -1443,6 +1528,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_04_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_04_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30104</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30154'>Smart Load 05 Power</a></h5>
 <table>
@@ -1454,6 +1540,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_05_power/state</td></tr>
 <tr><td>Source</td><td>30154</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30106'>Smart Load 05 Total Consumption</a></h5>
 <table>
@@ -1465,6 +1552,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_05_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_05_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30106</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30156'>Smart Load 06 Power</a></h5>
 <table>
@@ -1476,6 +1564,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_06_power/state</td></tr>
 <tr><td>Source</td><td>30156</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30108'>Smart Load 06 Total Consumption</a></h5>
 <table>
@@ -1487,6 +1576,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_06_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_06_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30108</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30158'>Smart Load 07 Power</a></h5>
 <table>
@@ -1498,6 +1588,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_07_power/state</td></tr>
 <tr><td>Source</td><td>30158</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30110'>Smart Load 07 Total Consumption</a></h5>
 <table>
@@ -1509,6 +1600,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_07_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_07_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30110</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30160'>Smart Load 08 Power</a></h5>
 <table>
@@ -1520,6 +1612,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_08_power/state</td></tr>
 <tr><td>Source</td><td>30160</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30112'>Smart Load 08 Total Consumption</a></h5>
 <table>
@@ -1531,6 +1624,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_08_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_08_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30112</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30162'>Smart Load 09 Power</a></h5>
 <table>
@@ -1542,6 +1636,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_09_power/state</td></tr>
 <tr><td>Source</td><td>30162</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30114'>Smart Load 09 Total Consumption</a></h5>
 <table>
@@ -1553,6 +1648,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_09_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_09_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30114</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30164'>Smart Load 10 Power</a></h5>
 <table>
@@ -1564,6 +1660,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_10_power/state</td></tr>
 <tr><td>Source</td><td>30164</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30116'>Smart Load 10 Total Consumption</a></h5>
 <table>
@@ -1575,6 +1672,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_10_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_10_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30116</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30166'>Smart Load 11 Power</a></h5>
 <table>
@@ -1586,6 +1684,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_11_power/state</td></tr>
 <tr><td>Source</td><td>30166</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30118'>Smart Load 11 Total Consumption</a></h5>
 <table>
@@ -1597,6 +1696,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_11_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_11_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30118</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30168'>Smart Load 12 Power</a></h5>
 <table>
@@ -1608,6 +1708,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_12_power/state</td></tr>
 <tr><td>Source</td><td>30168</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30120'>Smart Load 12 Total Consumption</a></h5>
 <table>
@@ -1619,6 +1720,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_12_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_12_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30120</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30170'>Smart Load 13 Power</a></h5>
 <table>
@@ -1630,6 +1732,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_13_power/state</td></tr>
 <tr><td>Source</td><td>30170</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30122'>Smart Load 13 Total Consumption</a></h5>
 <table>
@@ -1641,6 +1744,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_13_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_13_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30122</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30172'>Smart Load 14 Power</a></h5>
 <table>
@@ -1652,6 +1756,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_14_power/state</td></tr>
 <tr><td>Source</td><td>30172</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30124'>Smart Load 14 Total Consumption</a></h5>
 <table>
@@ -1663,6 +1768,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_14_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_14_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30124</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30174'>Smart Load 15 Power</a></h5>
 <table>
@@ -1674,6 +1780,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_15_power/state</td></tr>
 <tr><td>Source</td><td>30174</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30126'>Smart Load 15 Total Consumption</a></h5>
 <table>
@@ -1685,6 +1792,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_15_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_15_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30126</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30176'>Smart Load 16 Power</a></h5>
 <table>
@@ -1696,6 +1804,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_16_power/state</td></tr>
 <tr><td>Source</td><td>30176</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30128'>Smart Load 16 Total Consumption</a></h5>
 <table>
@@ -1707,6 +1816,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_16_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_16_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30128</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30178'>Smart Load 17 Power</a></h5>
 <table>
@@ -1718,6 +1828,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_17_power/state</td></tr>
 <tr><td>Source</td><td>30178</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30130'>Smart Load 17 Total Consumption</a></h5>
 <table>
@@ -1729,6 +1840,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_17_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_17_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30130</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30180'>Smart Load 18 Power</a></h5>
 <table>
@@ -1740,6 +1852,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_18_power/state</td></tr>
 <tr><td>Source</td><td>30180</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30132'>Smart Load 18 Total Consumption</a></h5>
 <table>
@@ -1751,6 +1864,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_18_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_18_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30132</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30182'>Smart Load 19 Power</a></h5>
 <table>
@@ -1762,6 +1876,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_19_power/state</td></tr>
 <tr><td>Source</td><td>30182</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30134'>Smart Load 19 Total Consumption</a></h5>
 <table>
@@ -1773,6 +1888,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_19_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_19_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30134</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30184'>Smart Load 20 Power</a></h5>
 <table>
@@ -1784,6 +1900,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_20_power/state</td></tr>
 <tr><td>Source</td><td>30184</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30136'>Smart Load 20 Total Consumption</a></h5>
 <table>
@@ -1795,6 +1912,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_20_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_20_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30136</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30186'>Smart Load 21 Power</a></h5>
 <table>
@@ -1806,6 +1924,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_21_power/state</td></tr>
 <tr><td>Source</td><td>30186</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30138'>Smart Load 21 Total Consumption</a></h5>
 <table>
@@ -1817,6 +1936,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_21_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_21_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30138</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30188'>Smart Load 22 Power</a></h5>
 <table>
@@ -1828,6 +1948,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_22_power/state</td></tr>
 <tr><td>Source</td><td>30188</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30140'>Smart Load 22 Total Consumption</a></h5>
 <table>
@@ -1839,6 +1960,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_22_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_22_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30140</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30190'>Smart Load 23 Power</a></h5>
 <table>
@@ -1850,6 +1972,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_23_power/state</td></tr>
 <tr><td>Source</td><td>30190</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30142'>Smart Load 23 Total Consumption</a></h5>
 <table>
@@ -1861,6 +1984,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_23_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_23_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30142</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30192'>Smart Load 24 Power</a></h5>
 <table>
@@ -1872,6 +1996,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_24_power/state</td></tr>
 <tr><td>Source</td><td>30192</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30144'>Smart Load 24 Total Consumption</a></h5>
 <table>
@@ -1883,6 +2008,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_smart_load_24_total_consumption/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_24_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30144</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_30000'>System Time</a></h5>
 <table>
@@ -1892,6 +2018,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time/state</td></tr>
 <tr><td>Source</td><td>30000</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30002'>System Time Zone</a></h5>
 <table>
@@ -1901,6 +2028,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_system_time_zone/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time_zone/state</td></tr>
 <tr><td>Source</td><td>30002</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30194'>Third-Party PV Power</a></h5>
 <table>
@@ -1911,6 +2039,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_third_party_pv_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_third_party_pv_power/state</td></tr>
 <tr><td>Source</td><td>30194</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_total_pv_power'>Total PV Power</a></h5>
 <table>
@@ -1920,6 +2049,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_total_pv_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_total_pv_power/state</td></tr>
 <tr><td>Source</td><td>PV Power + (sum of all Smart-Port PV Power sensors)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 
 #### Grid Sensor
@@ -1933,6 +2063,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_active_power/state</td></tr>
 <tr><td>Source</td><td>30005</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_daily_export_energy'>Daily Exported Energy</a></h5>
 <table>
@@ -1943,6 +2074,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_export_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_daily_export_energy/state</td></tr>
 <tr><td>Source</td><td>PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_daily_import_energy'>Daily Imported Energy</a></h5>
 <table>
@@ -1953,6 +2085,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_daily_import_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_daily_import_energy/state</td></tr>
 <tr><td>Source</td><td>PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_export_power'>Export Power</a></h5>
 <table>
@@ -1962,6 +2095,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_export_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_export_power/state</td></tr>
 <tr><td>Source</td><td>GridSensorActivePower &lt; 0 &times; -1</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_247_30004'>Grid Sensor Status</a></h5>
 <table>
@@ -1973,6 +2107,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30004</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Not Connected</li><li value='1'>Connected</li></ol></td></tr>
 <tr><td>Comment</td><td>Gateway or meter connection status</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30009'>Grid Status</a></h5>
 <table>
@@ -1983,6 +2118,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_status/state</td></tr>
 <tr><td>Source</td><td>30009</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>On Grid</li><li value='1'>Off Grid (auto)</li><li value='2'>Off Grid (manual)</li></ol></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_import_power'>Import Power</a></h5>
 <table>
@@ -1992,6 +2128,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_import_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_import_power/state</td></tr>
 <tr><td>Source</td><td>GridSensorActivePower &gt; 0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_lifetime_export_energy'>Lifetime Exported Energy</a></h5>
 <table>
@@ -2003,6 +2140,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_lifetime_export_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_lifetime_export_energy/state</td></tr>
 <tr><td>Source</td><td>30220</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_lifetime_import_energy'>Lifetime Imported Energy</a></h5>
 <table>
@@ -2014,10 +2152,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_sensor_lifetime_import_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_lifetime_import_energy/state</td></tr>
 <tr><td>Source</td><td>30216</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30052'>Phase A Active Power</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>GridPhaseAActivePower</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseActivePower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
 <tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2026,10 +2165,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_active_power/state</td></tr>
 <tr><td>Source</td><td>30052</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30058'>Phase A Reactive Power</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>GridPhaseAReactivePower</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
 <tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2038,10 +2178,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30058</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30054'>Phase B Active Power</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>GridPhaseBActivePower</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseActivePower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
 <tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2050,10 +2191,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_active_power/state</td></tr>
 <tr><td>Source</td><td>30054</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30060'>Phase B Reactive Power</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>GridPhaseBReactivePower</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
 <tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2062,10 +2204,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30060</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30056'>Phase C Active Power</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCActivePower</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseActivePower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
 <tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2074,10 +2217,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_active_power/state</td></tr>
 <tr><td>Source</td><td>30056</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30062'>Phase C Reactive Power</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCReactivePower</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
 <tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
@@ -2086,6 +2230,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30062</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30007'>Reactive Power</a></h5>
 <table>
@@ -2097,6 +2242,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_sensor_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30007</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 
 #### Statistics
@@ -2111,6 +2257,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_ev_ac_charged_energy/state</td></tr>
 <tr><td>Source</td><td>30232</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30244'>Total Charge Energy</a></h5>
 <table>
@@ -2123,6 +2270,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_charged_energy/state</td></tr>
 <tr><td>Source</td><td>30244</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30228'>Total Common Load Consumption</a></h5>
 <table>
@@ -2135,6 +2283,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_common_load_consumption/state</td></tr>
 <tr><td>Source</td><td>30228</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30252'>Total DC EV Charge Energy</a></h5>
 <table>
@@ -2147,6 +2296,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_evdc_total_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30252</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30256'>Total DC EV Discharge Energy</a></h5>
 <table>
@@ -2159,6 +2309,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_evdc_total_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30256</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30248'>Total Discharge Energy</a></h5>
 <table>
@@ -2171,6 +2322,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_discharged_energy/state</td></tr>
 <tr><td>Source</td><td>30248</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30264'>Total Exported Energy</a></h5>
 <table>
@@ -2183,6 +2335,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_exported_energy/state</td></tr>
 <tr><td>Source</td><td>30264</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30268'>Total Generator Output Energy</a></h5>
 <table>
@@ -2195,6 +2348,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_generator_output_energy/state</td></tr>
 <tr><td>Source</td><td>30268</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30260'>Total Imported Energy</a></h5>
 <table>
@@ -2207,6 +2361,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_imported_energy/state</td></tr>
 <tr><td>Source</td><td>30260</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30236'>Total PV Production</a></h5>
 <table>
@@ -2219,6 +2374,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_self_pv_generation/state</td></tr>
 <tr><td>Source</td><td>30236</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 <h5><a id='sigen_0_247_30240'>Total Third-Party PV Production</a></h5>
 <table>
@@ -2231,6 +2387,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_si_total_third_party_pv_generation/state</td></tr>
 <tr><td>Source</td><td>30240</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 </table>
 
 ### Inverter
@@ -2245,6 +2402,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_a_b_line_voltage/state</td></tr>
 <tr><td>Source</td><td>31005</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30587'>Active Power</a></h5>
 <table>
@@ -2257,6 +2415,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power/state</td></tr>
 <tr><td>Source</td><td>30587</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_41501'>Active Power Fixed Value Adjustment</a></h5>
 <table>
@@ -2269,6 +2428,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment/state</td></tr>
 <tr><td>Source</td><td>41501</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_30613'>Active Power Fixed Value Adjustment Feedback</a></h5>
 <table>
@@ -2281,6 +2441,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_fixed_value_adjustment_feedback/state</td></tr>
 <tr><td>Source</td><td>30613</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_41505'>Active Power Percentage Adjustment</a></h5>
 <table>
@@ -2293,6 +2454,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment/state</td></tr>
 <tr><td>Source</td><td>41505</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_30617'>Active Power Percentage Adjustment Feedback</a></h5>
 <table>
@@ -2305,6 +2467,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_active_power_percentage_adjustment_feedback/state</td></tr>
 <tr><td>Source</td><td>30617</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_31007'>B-C Line Voltage</a></h5>
 <table>
@@ -2317,6 +2480,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_b_c_line_voltage/state</td></tr>
 <tr><td>Source</td><td>31007</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31009'>C-A Line Voltage</a></h5>
 <table>
@@ -2329,6 +2493,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_c_a_line_voltage/state</td></tr>
 <tr><td>Source</td><td>31009</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_daily_pv_energy'>Daily Production</a></h5>
 <table>
@@ -2341,6 +2506,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>31509</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_30525'>Firmware Version</a></h5>
 <table>
@@ -2351,6 +2517,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_firmware_version/state</td></tr>
 <tr><td>Source</td><td>30525</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30608'>Gateway Alarms</a></h5>
 <table>
@@ -2361,6 +2528,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_4/state</td></tr>
 <tr><td>Source</td><td>30608</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31002'>Grid Frequency</a></h5>
 <table>
@@ -2373,6 +2541,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_grid_frequency/state</td></tr>
 <tr><td>Source</td><td>31002</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31037'>Insulation Resistance</a></h5>
 <table>
@@ -2385,6 +2554,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_insulation_resistance/state</td></tr>
 <tr><td>Source</td><td>31037</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_lifetime_pv_energy'>Lifetime Production</a></h5>
 <table>
@@ -2397,6 +2567,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>31511</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_31026'>MPTT Count</a></h5>
 <table>
@@ -2407,6 +2578,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_mptt_count/state</td></tr>
 <tr><td>Source</td><td>31026</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30546'>Max Absorption Power</a></h5>
 <table>
@@ -2419,6 +2591,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_absorption_power/state</td></tr>
 <tr><td>Source</td><td>30546</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30544'>Max Active Power</a></h5>
 <table>
@@ -2431,6 +2604,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_active_power/state</td></tr>
 <tr><td>Source</td><td>30544</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30579'>Max Active Power Adjustment</a></h5>
 <table>
@@ -2443,6 +2617,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_active_power_adjustment/state</td></tr>
 <tr><td>Source</td><td>30579</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30542'>Max Rated Apparent Power</a></h5>
 <table>
@@ -2455,6 +2630,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_rated_apparent_power/state</td></tr>
 <tr><td>Source</td><td>30542</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30583'>Max Reactive Power Adjustment</a></h5>
 <table>
@@ -2467,6 +2643,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_reactive_power_adjustment/state</td></tr>
 <tr><td>Source</td><td>30583</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30581'>Min Active Power Adjustment</a></h5>
 <table>
@@ -2479,6 +2656,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_active_power_adjustment/state</td></tr>
 <tr><td>Source</td><td>30581</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30585'>Min Reactive Power Adjustment</a></h5>
 <table>
@@ -2491,6 +2669,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_reactive_power_adjustment/state</td></tr>
 <tr><td>Source</td><td>30585</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30500'>Model</a></h5>
 <table>
@@ -2501,6 +2680,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_model/state</td></tr>
 <tr><td>Source</td><td>30500</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31004'>Output Type</a></h5>
 <table>
@@ -2512,6 +2692,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>31004</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>L/N</li><li value='1'>L1/L2/L3</li><li value='2'>L1/L2/L3/N</li><li value='3'>L1/L2/N</li></ol></td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31024'>PACK/BCU Count</a></h5>
 <table>
@@ -2522,6 +2703,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pack_bcu_count/state</td></tr>
 <tr><td>Source</td><td>31024</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pcs_alarm'>PCS Alarms</a></h5>
 <table>
@@ -2532,6 +2714,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pcs_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30605 and 30606</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_001_31035'>PV Power</a></h5>
 <table>
@@ -2543,6 +2726,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv_power/state</td></tr>
 <tr><td>Source</td><td>31035</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31025'>PV String Count</a></h5>
 <table>
@@ -2553,6 +2737,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv_string_count/state</td></tr>
 <tr><td>Source</td><td>31025</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31017'>Phase A Current</a></h5>
 <table>
@@ -2565,6 +2750,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_a_current/state</td></tr>
 <tr><td>Source</td><td>31017</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31011'>Phase A Voltage</a></h5>
 <table>
@@ -2577,6 +2763,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_a_voltage/state</td></tr>
 <tr><td>Source</td><td>31011</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31019'>Phase B Current</a></h5>
 <table>
@@ -2589,6 +2776,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_b_current/state</td></tr>
 <tr><td>Source</td><td>31019</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31013'>Phase B Voltage</a></h5>
 <table>
@@ -2601,6 +2789,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_b_voltage/state</td></tr>
 <tr><td>Source</td><td>31013</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31021'>Phase C Current</a></h5>
 <table>
@@ -2613,6 +2802,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_c_current/state</td></tr>
 <tr><td>Source</td><td>31021</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31015'>Phase C Voltage</a></h5>
 <table>
@@ -2625,6 +2815,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_phase_c_voltage/state</td></tr>
 <tr><td>Source</td><td>31015</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31023'>Power Factor</a></h5>
 <table>
@@ -2636,6 +2827,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor/state</td></tr>
 <tr><td>Source</td><td>31023</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_41507'>Power Factor Adjustment</a></h5>
 <table>
@@ -2647,6 +2839,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment/state</td></tr>
 <tr><td>Source</td><td>41507</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_30619'>Power Factor Adjustment Feedback</a></h5>
 <table>
@@ -2658,6 +2851,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_power_factor_adjustment_feedback/state</td></tr>
 <tr><td>Source</td><td>30619</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_30540'>Rated Active Power</a></h5>
 <table>
@@ -2670,6 +2864,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_active_power/state</td></tr>
 <tr><td>Source</td><td>30540</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31001'>Rated Grid Frequency</a></h5>
 <table>
@@ -2682,6 +2877,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_grid_frequency/state</td></tr>
 <tr><td>Source</td><td>31001</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31000'>Rated Grid Voltage</a></h5>
 <table>
@@ -2694,6 +2890,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_grid_voltage/state</td></tr>
 <tr><td>Source</td><td>31000</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30589'>Reactive Power</a></h5>
 <table>
@@ -2706,6 +2903,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power/state</td></tr>
 <tr><td>Source</td><td>30589</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_41503'>Reactive Power Fixed Value Adjustment</a></h5>
 <table>
@@ -2718,6 +2916,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment/state</td></tr>
 <tr><td>Source</td><td>41503</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_30615'>Reactive Power Fixed Value Adjustment Feedback</a></h5>
 <table>
@@ -2730,6 +2929,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_fixed_value_adjustment_feedback/state</td></tr>
 <tr><td>Source</td><td>30615</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_30618'>Reactive Power Percentage Adjustment Feedback</a></h5>
 <table>
@@ -2742,6 +2942,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_percentage_adjustment_feedback/state</td></tr>
 <tr><td>Source</td><td>30618</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_001_41506'>Reactive Power Q/S Adjustment</a></h5>
 <table>
@@ -2754,16 +2955,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_reactive_power_q_s_adjustment/state</td></tr>
 <tr><td>Source</td><td>41506</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
-</table>
-<h5><a id='sigen_0_001_41500'>Remote EMS Dispatch</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>InverterRemoteEMSDispatch</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_remote_ems_dispatch</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/state</td></tr>
-<tr><td>Source</td><td>41500</td></tr>
-<tr><td>Applicable To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_30578'>Running State</a></h5>
 <table>
@@ -2775,6 +2967,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30578</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Standby</li><li value='1'>Normal</li><li value='2'>Fault</li><li value='3'>Power-Off</li><li value='7'>Environmental Abnormality</li></ol></td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30515'>Serial Number</a></h5>
 <table>
@@ -2785,6 +2978,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_serial_number/state</td></tr>
 <tr><td>Source</td><td>30515</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31040'>Shutdown Time</a></h5>
 <table>
@@ -2795,6 +2989,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_shutdown_time/state</td></tr>
 <tr><td>Source</td><td>31040</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31038'>Startup Time</a></h5>
 <table>
@@ -2805,6 +3000,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_startup_time/state</td></tr>
 <tr><td>Source</td><td>31038</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31003'>Temperature</a></h5>
 <table>
@@ -2817,6 +3013,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_temperature/state</td></tr>
 <tr><td>Source</td><td>31003</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 
 #### Energy Storage System
@@ -2829,6 +3026,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_3/state</td></tr>
 <tr><td>Source</td><td>30607</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30595'>Available Charge Energy</a></h5>
 <table>
@@ -2841,6 +3039,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_available_battery_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30595</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30597'>Available Discharge Energy</a></h5>
 <table>
@@ -2853,6 +3052,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_available_battery_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30597</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30603'>Average Cell Temperature</a></h5>
 <table>
@@ -2865,6 +3065,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state</td></tr>
 <tr><td>Source</td><td>30603</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30604'>Average Cell Voltage</a></h5>
 <table>
@@ -2877,6 +3078,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_average_cell_voltage/state</td></tr>
 <tr><td>Source</td><td>30604</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_battery_charging_power'>Battery Charging Power</a></h5>
 <table>
@@ -2887,6 +3089,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_charging_power/state</td></tr>
 <tr><td>Source</td><td>ChargeDischargePower &gt; 0</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_battery_discharging_power'>Battery Discharging Power</a></h5>
 <table>
@@ -2897,6 +3100,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_discharging_power/state</td></tr>
 <tr><td>Source</td><td>ChargeDischargePower &lt; 0 &times; -1</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_001_30599'>Battery Power</a></h5>
 <table>
@@ -2908,6 +3112,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_charge_discharge_power/state</td></tr>
 <tr><td>Source</td><td>30599</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30601'>Battery SoC</a></h5>
 <table>
@@ -2920,6 +3125,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_soc/state</td></tr>
 <tr><td>Source</td><td>30601</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30602'>Battery SoH</a></h5>
 <table>
@@ -2932,6 +3138,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_battery_soh/state</td></tr>
 <tr><td>Source</td><td>30602</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30566'>Daily Charge Energy</a></h5>
 <table>
@@ -2944,6 +3151,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_daily_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30566</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30572'>Daily Discharge Energy</a></h5>
 <table>
@@ -2956,6 +3164,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_daily_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30572</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30568'>Lifetime Charge Energy</a></h5>
 <table>
@@ -2968,6 +3177,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_accumulated_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30568</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30574'>Lifetime Discharge Energy</a></h5>
 <table>
@@ -2980,6 +3190,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_accumulated_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30574</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30620'>Max Battery Temperature</a></h5>
 <table>
@@ -2992,6 +3203,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_battery_temperature/state</td></tr>
 <tr><td>Source</td><td>30620</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30591'>Max Charge Power</a></h5>
 <table>
@@ -3004,6 +3216,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_battery_charge_power/state</td></tr>
 <tr><td>Source</td><td>30591</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30593'>Max Discharge Power</a></h5>
 <table>
@@ -3016,6 +3229,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_battery_discharge_power/state</td></tr>
 <tr><td>Source</td><td>30593</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30621'>Min Battery Temperature</a></h5>
 <table>
@@ -3028,6 +3242,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_battery_temperature/state</td></tr>
 <tr><td>Source</td><td>30621</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30548'>Rated Battery Capacity</a></h5>
 <table>
@@ -3040,6 +3255,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_battery_capacity/state</td></tr>
 <tr><td>Source</td><td>30548</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30550'>Rated Charging Power</a></h5>
 <table>
@@ -3052,6 +3268,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_charging_power/state</td></tr>
 <tr><td>Source</td><td>30550</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_30552'>Rated Discharging Power</a></h5>
 <table>
@@ -3064,6 +3281,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_rated_discharging_power/state</td></tr>
 <tr><td>Source</td><td>30552</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 
 #### PV String
@@ -3080,6 +3298,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_current/state</td></tr>
 <tr><td>Source</td><td>31028</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31030'>PV String 2 Current</a></h5>
 <table>
@@ -3092,6 +3311,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_current/state</td></tr>
 <tr><td>Source</td><td>31030</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31032'>PV String 3 Current</a></h5>
 <table>
@@ -3104,6 +3324,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_current/state</td></tr>
 <tr><td>Source</td><td>31032</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31034'>PV String 4 Current</a></h5>
 <table>
@@ -3116,6 +3337,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_current/state</td></tr>
 <tr><td>Source</td><td>31034</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31043'>PV String 5 Current</a></h5>
 <table>
@@ -3128,6 +3350,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_current/state</td></tr>
 <tr><td>Source</td><td>31043</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31045'>PV String 6 Current</a></h5>
 <table>
@@ -3140,6 +3363,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_current/state</td></tr>
 <tr><td>Source</td><td>31045</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31047'>PV String 7 Current</a></h5>
 <table>
@@ -3152,6 +3376,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_current/state</td></tr>
 <tr><td>Source</td><td>31047</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31049'>PV String 8 Current</a></h5>
 <table>
@@ -3164,6 +3389,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_current/state</td></tr>
 <tr><td>Source</td><td>31049</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31051'>PV String 9 Current</a></h5>
 <table>
@@ -3176,6 +3402,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_current/state</td></tr>
 <tr><td>Source</td><td>31051</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31053'>PV String 10 Current</a></h5>
 <table>
@@ -3188,6 +3415,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_current/state</td></tr>
 <tr><td>Source</td><td>31053</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31055'>PV String 11 Current</a></h5>
 <table>
@@ -3200,6 +3428,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_current/state</td></tr>
 <tr><td>Source</td><td>31055</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31057'>PV String 12 Current</a></h5>
 <table>
@@ -3212,6 +3441,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_current/state</td></tr>
 <tr><td>Source</td><td>31057</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31059'>PV String 13 Current</a></h5>
 <table>
@@ -3224,6 +3454,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_current/state</td></tr>
 <tr><td>Source</td><td>31059</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31061'>PV String 14 Current</a></h5>
 <table>
@@ -3236,6 +3467,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_current/state</td></tr>
 <tr><td>Source</td><td>31061</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31063'>PV String 15 Current</a></h5>
 <table>
@@ -3248,6 +3480,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_current/state</td></tr>
 <tr><td>Source</td><td>31063</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31065'>PV String 16 Current</a></h5>
 <table>
@@ -3260,6 +3493,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_current/state</td></tr>
 <tr><td>Source</td><td>31065</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_daily_energy'>PV String 1 Daily Production</a></h5>
 <table>
@@ -3271,6 +3505,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv2_daily_energy'>PV String 2 Daily Production</a></h5>
 <table>
@@ -3282,6 +3517,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv3_daily_energy'>PV String 3 Daily Production</a></h5>
 <table>
@@ -3293,6 +3529,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv4_daily_energy'>PV String 4 Daily Production</a></h5>
 <table>
@@ -3304,6 +3541,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv5_daily_energy'>PV String 5 Daily Production</a></h5>
 <table>
@@ -3315,6 +3553,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv6_daily_energy'>PV String 6 Daily Production</a></h5>
 <table>
@@ -3326,6 +3565,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv7_daily_energy'>PV String 7 Daily Production</a></h5>
 <table>
@@ -3337,6 +3577,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv8_daily_energy'>PV String 8 Daily Production</a></h5>
 <table>
@@ -3348,6 +3589,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv9_daily_energy'>PV String 9 Daily Production</a></h5>
 <table>
@@ -3359,6 +3601,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv10_daily_energy'>PV String 10 Daily Production</a></h5>
 <table>
@@ -3370,6 +3613,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv11_daily_energy'>PV String 11 Daily Production</a></h5>
 <table>
@@ -3381,6 +3625,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv12_daily_energy'>PV String 12 Daily Production</a></h5>
 <table>
@@ -3392,6 +3637,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv13_daily_energy'>PV String 13 Daily Production</a></h5>
 <table>
@@ -3403,6 +3649,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv14_daily_energy'>PV String 14 Daily Production</a></h5>
 <table>
@@ -3414,6 +3661,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv15_daily_energy'>PV String 15 Daily Production</a></h5>
 <table>
@@ -3425,6 +3673,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv16_daily_energy'>PV String 16 Daily Production</a></h5>
 <table>
@@ -3436,6 +3685,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_daily_energy/state</td></tr>
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_lifetime_energy'>PV String 1 Lifetime Production</a></h5>
 <table>
@@ -3447,6 +3697,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv2_lifetime_energy'>PV String 2 Lifetime Production</a></h5>
 <table>
@@ -3458,6 +3709,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv3_lifetime_energy'>PV String 3 Lifetime Production</a></h5>
 <table>
@@ -3469,6 +3721,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv4_lifetime_energy'>PV String 4 Lifetime Production</a></h5>
 <table>
@@ -3480,6 +3733,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv5_lifetime_energy'>PV String 5 Lifetime Production</a></h5>
 <table>
@@ -3491,6 +3745,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv6_lifetime_energy'>PV String 6 Lifetime Production</a></h5>
 <table>
@@ -3502,6 +3757,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv7_lifetime_energy'>PV String 7 Lifetime Production</a></h5>
 <table>
@@ -3513,6 +3769,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv8_lifetime_energy'>PV String 8 Lifetime Production</a></h5>
 <table>
@@ -3524,6 +3781,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv9_lifetime_energy'>PV String 9 Lifetime Production</a></h5>
 <table>
@@ -3535,6 +3793,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv10_lifetime_energy'>PV String 10 Lifetime Production</a></h5>
 <table>
@@ -3546,6 +3805,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv11_lifetime_energy'>PV String 11 Lifetime Production</a></h5>
 <table>
@@ -3557,6 +3817,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv12_lifetime_energy'>PV String 12 Lifetime Production</a></h5>
 <table>
@@ -3568,6 +3829,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv13_lifetime_energy'>PV String 13 Lifetime Production</a></h5>
 <table>
@@ -3579,6 +3841,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv14_lifetime_energy'>PV String 14 Lifetime Production</a></h5>
 <table>
@@ -3590,6 +3853,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv15_lifetime_energy'>PV String 15 Lifetime Production</a></h5>
 <table>
@@ -3601,6 +3865,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv16_lifetime_energy'>PV String 16 Lifetime Production</a></h5>
 <table>
@@ -3612,6 +3877,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_lifetime_energy/state</td></tr>
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_power'>PV String 1 Power</a></h5>
 <table>
@@ -3622,6 +3888,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv2_power'>PV String 2 Power</a></h5>
 <table>
@@ -3632,6 +3899,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv3_power'>PV String 3 Power</a></h5>
 <table>
@@ -3642,6 +3910,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv4_power'>PV String 4 Power</a></h5>
 <table>
@@ -3652,6 +3921,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv5_power'>PV String 5 Power</a></h5>
 <table>
@@ -3662,6 +3932,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv6_power'>PV String 6 Power</a></h5>
 <table>
@@ -3672,6 +3943,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv7_power'>PV String 7 Power</a></h5>
 <table>
@@ -3682,6 +3954,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv8_power'>PV String 8 Power</a></h5>
 <table>
@@ -3692,6 +3965,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv9_power'>PV String 9 Power</a></h5>
 <table>
@@ -3702,6 +3976,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv10_power'>PV String 10 Power</a></h5>
 <table>
@@ -3712,6 +3987,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv11_power'>PV String 11 Power</a></h5>
 <table>
@@ -3722,6 +3998,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv12_power'>PV String 12 Power</a></h5>
 <table>
@@ -3732,6 +4009,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv13_power'>PV String 13 Power</a></h5>
 <table>
@@ -3742,6 +4020,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv14_power'>PV String 14 Power</a></h5>
 <table>
@@ -3752,6 +4031,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv15_power'>PV String 15 Power</a></h5>
 <table>
@@ -3762,6 +4042,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv16_power'>PV String 16 Power</a></h5>
 <table>
@@ -3772,6 +4053,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_power/state</td></tr>
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31027'>PV String 1 Voltage</a></h5>
 <table>
@@ -3784,6 +4066,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv1_voltage/state</td></tr>
 <tr><td>Source</td><td>31027</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31029'>PV String 2 Voltage</a></h5>
 <table>
@@ -3796,6 +4079,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv2_voltage/state</td></tr>
 <tr><td>Source</td><td>31029</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31031'>PV String 3 Voltage</a></h5>
 <table>
@@ -3808,6 +4092,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv3_voltage/state</td></tr>
 <tr><td>Source</td><td>31031</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31033'>PV String 4 Voltage</a></h5>
 <table>
@@ -3820,6 +4105,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv4_voltage/state</td></tr>
 <tr><td>Source</td><td>31033</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31042'>PV String 5 Voltage</a></h5>
 <table>
@@ -3832,6 +4118,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv5_voltage/state</td></tr>
 <tr><td>Source</td><td>31042</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31044'>PV String 6 Voltage</a></h5>
 <table>
@@ -3844,6 +4131,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv6_voltage/state</td></tr>
 <tr><td>Source</td><td>31044</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31046'>PV String 7 Voltage</a></h5>
 <table>
@@ -3856,6 +4144,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv7_voltage/state</td></tr>
 <tr><td>Source</td><td>31046</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31048'>PV String 8 Voltage</a></h5>
 <table>
@@ -3868,6 +4157,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv8_voltage/state</td></tr>
 <tr><td>Source</td><td>31048</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31050'>PV String 9 Voltage</a></h5>
 <table>
@@ -3880,6 +4170,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv9_voltage/state</td></tr>
 <tr><td>Source</td><td>31050</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31052'>PV String 10 Voltage</a></h5>
 <table>
@@ -3892,6 +4183,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv10_voltage/state</td></tr>
 <tr><td>Source</td><td>31052</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31054'>PV String 11 Voltage</a></h5>
 <table>
@@ -3904,6 +4196,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv11_voltage/state</td></tr>
 <tr><td>Source</td><td>31054</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31056'>PV String 12 Voltage</a></h5>
 <table>
@@ -3916,6 +4209,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv12_voltage/state</td></tr>
 <tr><td>Source</td><td>31056</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31058'>PV String 13 Voltage</a></h5>
 <table>
@@ -3928,6 +4222,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv13_voltage/state</td></tr>
 <tr><td>Source</td><td>31058</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31060'>PV String 14 Voltage</a></h5>
 <table>
@@ -3940,6 +4235,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv14_voltage/state</td></tr>
 <tr><td>Source</td><td>31060</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31062'>PV String 15 Voltage</a></h5>
 <table>
@@ -3952,6 +4248,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv15_voltage/state</td></tr>
 <tr><td>Source</td><td>31062</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_001_31064'>PV String 16 Voltage</a></h5>
 <table>
@@ -3964,6 +4261,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv16_voltage/state</td></tr>
 <tr><td>Source</td><td>31064</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 
 ### AC Charger
@@ -3975,6 +4273,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 32012, 32013, and 32014</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_002_32003'>Charging Power</a></h5>
 <table>
@@ -3986,6 +4285,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_charging_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_charging_power/state</td></tr>
 <tr><td>Source</td><td>32003</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32010'>Input Breaker</a></h5>
 <table>
@@ -3997,6 +4297,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_input_breaker/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_input_breaker/state</td></tr>
 <tr><td>Source</td><td>32010</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_42001'>Output Current</a></h5>
 <table>
@@ -4008,6 +4309,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_002_accharger/sigen_0_ac_charger_2_output_current/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/state</td></tr>
 <tr><td>Source</td><td>42001</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32007'>Rated Current</a></h5>
 <table>
@@ -4019,6 +4321,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_current/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_current/state</td></tr>
 <tr><td>Source</td><td>32007</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32005'>Rated Power</a></h5>
 <table>
@@ -4030,6 +4333,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_power/state</td></tr>
 <tr><td>Source</td><td>32005</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32009'>Rated Voltage</a></h5>
 <table>
@@ -4041,6 +4345,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_rated_voltage/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_rated_voltage/state</td></tr>
 <tr><td>Source</td><td>32009</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32000'>Running State</a></h5>
 <table>
@@ -4051,6 +4356,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_running_state/state</td></tr>
 <tr><td>Source</td><td>32000</td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Initialising</li><li value='1'>EV not connected</li><li value='2'>Charger and EV not ready</li><li value='3'>Charger ready; EV not ready</li><li value='4'>Charger not ready; EV ready</li><li value='5'>Charging</li><li value='6'>Fault</li><li value='7'>Error</li></ol></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32001'>Total Energy Consumed</a></h5>
 <table>
@@ -4062,6 +4368,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_002_accharger/sigen_0_ac_charger_2_total_energy_consumed/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_total_energy_consumed/state</td></tr>
 <tr><td>Source</td><td>32001</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 
 ### DC Charger
@@ -4073,6 +4380,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_inverter_1_alarm_5/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_alarm_5/state</td></tr>
 <tr><td>Source</td><td>30609</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31505'>Current Charging Capacity</a></h5>
 <table>
@@ -4085,6 +4393,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_capacity/state</td></tr>
 <tr><td>Source</td><td>31505</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31507'>Current Charging Duration</a></h5>
 <table>
@@ -4097,6 +4406,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_current_charging_duration/state</td></tr>
 <tr><td>Source</td><td>31507</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31502'>Output Power</a></h5>
 <table>
@@ -4108,6 +4418,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_dc_charger_output_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_dc_charger_output_power/state</td></tr>
 <tr><td>Source</td><td>31502</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31500'>Vehicle Battery Voltage</a></h5>
 <table>
@@ -4119,6 +4430,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_battery_voltage/state</td></tr>
 <tr><td>Source</td><td>31500</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31501'>Vehicle Charging Current</a></h5>
 <table>
@@ -4130,6 +4442,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_vehicle_charging_current/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_charging_current/state</td></tr>
 <tr><td>Source</td><td>31501</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31504'>Vehicle SoC</a></h5>
 <table>
@@ -4141,6 +4454,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_plant_vehicle_soc/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_vehicle_soc/state</td></tr>
 <tr><td>Source</td><td>31504</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 
 #### Smart-Port (Enphase Envoy only)
@@ -4153,6 +4467,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_current/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_current/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_daily_pv_energy'>Daily Production</a></h5>
 <table>
@@ -4163,6 +4478,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_frequency'>Frequency</a></h5>
 <table>
@@ -4173,6 +4489,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_frequency/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_frequency/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_lifetime_pv_energy'>Lifetime Production</a></h5>
 <table>
@@ -4183,6 +4500,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_active_power'>PV Power</a></h5>
 <table>
@@ -4193,6 +4511,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_active_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_active_power/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_power_factor'>Power Factor</a></h5>
 <table>
@@ -4202,6 +4521,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_power_factor/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_power_factor/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_reactive_power'>Reactive Power</a></h5>
 <table>
@@ -4212,6 +4532,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_voltage'>Voltage</a></h5>
 <table>
@@ -4222,6 +4543,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_voltage/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_voltage/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 
 ### Metrics
@@ -4253,6 +4575,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40005'>Active Power Percentage Adjustment Target Value
 </a></h5>
@@ -4262,6 +4585,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40046'>Backup SoC
 </a></h5>
@@ -4271,6 +4595,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_40047'>Charge Cut-Off SoC
 </a></h5>
@@ -4280,6 +4605,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_40048'>Discharge Cut-Off SoC
 </a></h5>
@@ -4289,6 +4615,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 </table>
 <h5><a id='sigen_0_247_40038'>Grid Max Export Limit
 </a></h5>
@@ -4298,6 +4625,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40040'>Grid Max Import Limit
 </a></h5>
@@ -4307,6 +4635,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40030'>Independent Phase Power Control
 </a></h5>
@@ -4314,6 +4643,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_independent_phase_power_control/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_independent_phase_power_control/set</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40032'>Max Charging Limit
 </a></h5>
@@ -4323,6 +4653,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>Rated ESS charging power</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40034'>Max Discharging Limit
 </a></h5>
@@ -4332,6 +4663,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>Rated ESS charging power</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40042'>PCS Max Export Limit
 </a></h5>
@@ -4341,6 +4673,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40044'>PCS Max Import Limit
 </a></h5>
@@ -4350,6 +4683,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_247_40036'>PV Max Power Limit
 </a></h5>
@@ -4359,6 +4693,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40008'>Phase A Active Power Fixed Adjustment Target Value
 </a></h5>
@@ -4368,6 +4703,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40020'>Phase A Active Power Percentage Adjustment Target Value
 </a></h5>
@@ -4377,6 +4713,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40023'>Phase A Q/S Fixed Adjustment Target Value
 </a></h5>
@@ -4386,6 +4723,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40014'>Phase A Reactive Power Fixed Adjustment Target Value
 </a></h5>
@@ -4395,6 +4733,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40010'>Phase B Active Power Fixed Adjustment Target Value
 </a></h5>
@@ -4404,6 +4743,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40021'>Phase B Active Power Percentage Adjustment Target Value
 </a></h5>
@@ -4413,6 +4753,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40024'>Phase B Q/S Fixed Adjustment Target Value
 </a></h5>
@@ -4422,6 +4763,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40016'>Phase B Reactive Power Fixed Adjustment Target Value
 </a></h5>
@@ -4431,6 +4773,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40012'>Phase C Active Power Fixed Adjustment Target Value
 </a></h5>
@@ -4440,6 +4783,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40022'>Phase C Active Power Percentage Adjustment Target Value
 </a></h5>
@@ -4449,6 +4793,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40025'>Phase C Q/S Fixed Adjustment Target Value
 </a></h5>
@@ -4458,6 +4803,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40018'>Phase C Reactive Power Fixed Adjustment Target Value
 </a></h5>
@@ -4467,6 +4813,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40000'>Power&nbsp;On/Off
 </a></h5>
@@ -4474,6 +4821,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_247_powerplant/sigen_0_plant_status/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_status/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td>0:Stop 1:Start</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40007'>Power Factor Adjustment Target Value
 </a></h5>
@@ -4483,6 +4831,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [(-1, -0.8) U (0.8, 1)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-1.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40006'>Q/S Adjustment Target Value
 </a></h5>
@@ -4492,6 +4841,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40003'>Reactive Power Fixed Adjustment Target Value
 </a></h5>
@@ -4501,6 +4851,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60.00 * base value</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60.00 * base value</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40029'>Remote EMS
 </a></h5>
@@ -4508,6 +4859,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems/set</td></tr>
 <tr><td>Comment</td><td>When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40031'>Remote EMS Control Mode
 </a></h5>
@@ -4515,6 +4867,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"PCS remote control"</li><li value='1'>"Standby"</li><li value='2'>"Maximum Self-consumption (Default)"</li><li value='3'>"Command Charging (Consume power from the grid first)"</li><li value='4'>"Command Charging (Consume power from the PV first)"</li><li value='5'>"Command Discharging (Output power from PV first)"</li><li value='6'>"Command Discharging (Output power from the battery first)"</li></ol></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 
 ### Inverter
@@ -4526,6 +4879,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_41505'>Active Power Percentage Adjustment
 </a></h5>
@@ -4535,6 +4889,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Minimum&nbsp;Value</td><td>-100.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_40500'>Power&nbsp;On/Off
 </a></h5>
@@ -4543,6 +4898,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_status/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td>0:Stop 1:Start</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_41507'>Power Factor Adjustment
 </a></h5>
@@ -4552,6 +4908,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Minimum&nbsp;Value</td><td>-1.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_41503'>Reactive Power Fixed Value Adjustment
 </a></h5>
@@ -4561,6 +4918,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 <h5><a id='sigen_0_001_41506'>Reactive Power Q/S Adjustment
 </a></h5>
@@ -4570,13 +4928,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Minimum&nbsp;Value</td><td>-60.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60.0</td></tr>
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
-</table>
-<h5><a id='sigen_0_001_41500'>Remote EMS Dispatch
-</a></h5>
-<table>
-<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_001_inverter/sigen_0_inverter_1_remote_ems_dispatch/set</td></tr>
-<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_remote_ems_dispatch/set</td></tr>
-<tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
 
 ### AC Charger
@@ -4586,6 +4938,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_002_accharger/sigen_0_ac_charger_2/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td>0:Start 1:Stop</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_42001'>Output Current
 </a></h5>
@@ -4594,6 +4947,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/set</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>6.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 
 ### DC Charger
@@ -4603,4 +4957,5 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_001_dccharger/sigen_0_dc_charger_1/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td>0:Start 1:Stop</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>

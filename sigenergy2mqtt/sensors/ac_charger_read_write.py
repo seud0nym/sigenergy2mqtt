@@ -1,4 +1,4 @@
-from .base import DeviceClass, InputType, StateClass, NumericSensor, RemoteEMSMixin, WriteOnlySensor
+from .base import DeviceClass, InputType, StateClass, NumericSensor, Protocol, RemoteEMSMixin, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
@@ -15,6 +15,7 @@ class ACChargerStatus(WriteOnlySensor):
             plant_index=plant_index,
             device_address=device_address,
             address=42000,
+            protocol_version=Protocol.V2_0,
             payload_off="stop",
             payload_on="start",
             name_off="Stop",
@@ -58,6 +59,7 @@ class ACChargerOutputCurrent(NumericSensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_0,
             min=6.0,
             max=min(input_breaker, rated_current),
         )

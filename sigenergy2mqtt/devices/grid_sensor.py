@@ -17,14 +17,14 @@ class GridSensor(ModbusDevice):
         self._add_read_sensor(ro.GridSensorStatus(plant_index))
         self._add_read_sensor(active_power, "Consumption")
         self._add_read_sensor(ro.GridSensorReactivePower(plant_index))
-        self._add_read_sensor(ro.GridPhaseAActivePower(plant_index))
-        self._add_read_sensor(ro.GridPhaseAReactivePower(plant_index))
+        self._add_read_sensor(ro.GridPhaseActivePower(plant_index, "A"))
+        self._add_read_sensor(ro.GridPhaseReactivePower(plant_index, "A"))
         if power_phases > 1:
-            self._add_read_sensor(ro.GridPhaseBActivePower(plant_index))
-            self._add_read_sensor(ro.GridPhaseBReactivePower(plant_index))
+            self._add_read_sensor(ro.GridPhaseActivePower(plant_index, "B"))
+            self._add_read_sensor(ro.GridPhaseReactivePower(plant_index, "B"))
         if power_phases > 2:
-            self._add_read_sensor(ro.GridPhaseCActivePower(plant_index))
-            self._add_read_sensor(ro.GridPhaseCReactivePower(plant_index))
+            self._add_read_sensor(ro.GridPhaseActivePower(plant_index, "C"))
+            self._add_read_sensor(ro.GridPhaseReactivePower(plant_index, "C"))
         self._add_read_sensor(ro.GridStatus(plant_index))
 
         export_power = derived.GridSensorExportPower(plant_index, active_power)

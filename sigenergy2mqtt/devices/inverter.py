@@ -2,6 +2,7 @@ from .device import ModbusDevice
 from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
 from sigenergy2mqtt.devices.types import DeviceType
+from sigenergy2mqtt.sensors.base import Protocol
 import re
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
@@ -42,10 +43,6 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.MaxRatedApparentPower(plant_index, device_address))
         self._add_read_sensor(ro.InverterMaxActivePower(plant_index, device_address))
         self._add_read_sensor(ro.MaxAbsorptionPower(plant_index, device_address))
-        self._add_read_sensor(ro.DailyExportEnergy(plant_index, device_address))
-        self._add_read_sensor(ro.AccumulatedExportEnergy(plant_index, device_address))
-        self._add_read_sensor(ro.DailyImportEnergy(plant_index, device_address))
-        self._add_read_sensor(ro.AccumulatedImportEnergy(plant_index, device_address))
         self._add_read_sensor(ro.InverterRunningState(plant_index, device_address))
         self._add_read_sensor(ro.MaxActivePowerAdjustment(plant_index, device_address))
         self._add_read_sensor(ro.MinActivePowerAdjustment(plant_index, device_address))
@@ -82,16 +79,14 @@ class Inverter(ModbusDevice):
 
         address = 31027
         for n in range(1, min(4, strings) + 1):
-            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1))
+            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V1_8))
             address += 2
         address = 31042
         for n in range(5, strings + 1):
-            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1))
+            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
             address += 2
         # endregion
 
-        self._add_read_sensor(rw.GridCode(plant_index, device_address))
-        self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
         self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))
         self._add_read_sensor(rw.InverterReactivePowerFixedValueAdjustment(plant_index, device_address))
         self._add_read_sensor(rw.InverterActivePowerPercentageAdjustment(plant_index, device_address))
@@ -107,5 +102,15 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.InverterActivePowerPercentageAdjustmentFeedback(plant_index, device_address))
         self._add_read_sensor(ro.InverterReactivePowerPercentageAdjustmentFeedback(plant_index, device_address))
         self._add_read_sensor(ro.InverterPowerFactorAdjustmentFeedback(plant_index, device_address))
+
+        # region reserved registers
+        self._add_read_sensor(ro.DailyExportEnergy(plant_index, device_address))
+        self._add_read_sensor(ro.AccumulatedExportEnergy(plant_index, device_address))
+        self._add_read_sensor(ro.DailyImportEnergy(plant_index, device_address))
+        self._add_read_sensor(ro.AccumulatedImportEnergy(plant_index, device_address))
+
+        self._add_read_sensor(rw.GridCode(plant_index, device_address))
+        self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
+        # endregion
 
         self._add_child_device(ESS(plant_index, device_address, device_type, model_id, serial))

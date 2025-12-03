@@ -1,4 +1,4 @@
-from .base import DeviceClass, InputType, NumericSensor, RemoteEMSMixin, ReadWriteSensor, SwitchSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, Protocol, RemoteEMSMixin, ReadWriteSensor, ReservedSensor, SwitchSensor, WriteOnlySensor
 from pymodbus import ExceptionResponse
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
@@ -20,6 +20,7 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40000,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -47,6 +48,7 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -69,6 +71,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
             min=-60.0,
             max=60.0,
         )
@@ -98,6 +101,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             icon="mdi:percent",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V1_8,
             min=-100.00,
             max=100.00,
         )
@@ -127,6 +131,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V1_8,
             min=-60.0,
             max=60.0,
         )
@@ -157,6 +162,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
             min=-1.0,
             max=1.0,
         )
@@ -195,6 +201,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -233,6 +240,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -271,6 +279,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             icon="mdi:percent",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V1_8,
             min=-100.00,
             max=100.00,
         )
@@ -311,6 +320,7 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             icon="mdi:percent",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V1_8,
             min=-60.00,
             max=60.00,
         )
@@ -321,6 +331,28 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
         return attributes
+
+
+class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_reserved_40026",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=40026,
+            count=3,
+            data_type=ModbusClient.DATATYPE.STRING,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_5,
+        )
 
 
 class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
@@ -342,6 +374,7 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
             icon="mdi:toggle-switch",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -370,6 +403,7 @@ class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
             icon="mdi:toggle-switch",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -399,6 +433,7 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             icon="mdi:list-status",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["platform"] = "select"
         self["options"] = [
@@ -481,6 +516,8 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         address: int,
         icon: str,
         max: float,
+        protocol_version:Protocol,
+
     ):
         super().__init__(
             remote_ems=remote_ems,
@@ -499,6 +536,7 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
             icon=icon,
             gain=1000,
             precision=2,
+            protocol_version=protocol_version,
             min=0,
             max=max,
         )
@@ -531,6 +569,7 @@ class MaxChargingLimit(RemoteEMSLimit):
             address=40032,
             icon="mdi:battery-charging-high",
             max=rated_charging_power,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -552,6 +591,7 @@ class MaxDischargingLimit(RemoteEMSLimit):
             address=40034,
             icon="mdi:battery-charging-low",
             max=rated_discharging_power,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -573,6 +613,7 @@ class PVMaxPowerLimit(RemoteEMSLimit):
             address=40036,
             icon="mdi:solar-power",
             max=4294967.295,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -600,6 +641,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower-export",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
             min=0,
             max=4294967.295,
         )
@@ -629,6 +671,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower-import",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
             min=0,
             max=4294967.295,
         )
@@ -658,6 +701,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             icon="mdi:battery-negative",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
             min=0,
             max=4294967.295,
         )
@@ -696,6 +740,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             icon="mdi:battery-positive",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_5,
             min=0,
             max=4294967.295,
         )
@@ -725,6 +770,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             icon="mdi:percent-box-outline",
             gain=10,
             precision=None,
+            protocol_version=Protocol.V2_6,
             min=0.00,
             max=100.00,
         )
@@ -755,6 +801,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             icon="mdi:percent-box-outline",
             gain=10,
             precision=None,
+            protocol_version=Protocol.V2_6,
             min=0.00,
             max=100.00,
         )
@@ -785,6 +832,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             icon="mdi:percent-box-outline",
             gain=10,
             precision=None,
+            protocol_version=Protocol.V2_6,
             min=0.00,
             max=100.00,
         )

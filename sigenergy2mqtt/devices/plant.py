@@ -172,3 +172,8 @@ class PowerPlant(ModbusDevice):
         self._add_derived_sensor(total_lifetime_pv_energy, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
         self._add_derived_sensor(derived.TotalDailyPVEnergy(plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
+
+        # region reserved registers
+        self._add_read_sensor(ro.Reserved30073(plant_index))
+        self._add_read_sensor(rw.Reserved40026(plant_index))
+        # endregion
