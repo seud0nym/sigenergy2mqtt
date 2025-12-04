@@ -1,5 +1,5 @@
 from .device import ModbusDevice
-from sigenergy2mqtt.config.protocol import Protocol
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
 from sigenergy2mqtt.devices.types import DeviceType
@@ -81,10 +81,11 @@ class Inverter(ModbusDevice):
         for n in range(1, min(4, strings) + 1):
             self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V1_8))
             address += 2
-        address = 31042
-        for n in range(5, strings + 1):
-            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
-            address += 2
+        if Config.protocol_version >= Protocol.V2_4:
+            address = 31042
+            for n in range(5, strings + 1):
+                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
+                address += 2
         # endregion
 
         self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))

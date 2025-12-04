@@ -14,7 +14,7 @@ if not os.getcwd().endswith("resources"):
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from sigenergy2mqtt.config.protocol import Protocol
+from sigenergy2mqtt.config import Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, WriteOnlySensor
