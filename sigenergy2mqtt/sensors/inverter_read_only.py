@@ -900,6 +900,28 @@ class InverterAlarm5(Alarm5Sensor, HybridInverter):
         )
 
 
+class Reserved30610(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_reserved_30610",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30610,
+            count=3,
+            data_type=ModbusClient.DATATYPE.STRING,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_5,
+        )
+
+
 class InverterActivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(

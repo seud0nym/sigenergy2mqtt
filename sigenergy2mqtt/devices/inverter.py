@@ -108,7 +108,7 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.AccumulatedExportEnergy(plant_index, device_address))
         self._add_read_sensor(ro.DailyImportEnergy(plant_index, device_address))
         self._add_read_sensor(ro.AccumulatedImportEnergy(plant_index, device_address))
-
+        self._add_read_sensor(ro.Reserved30610(plant_index, device_address))
         self._add_read_sensor(rw.GridCode(plant_index, device_address))
         self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
         # endregion
