@@ -122,8 +122,12 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
 
     def _add_child_device(self, device: Self) -> None:
         assert device != self, "Cannot add self as a child device"
-        device.via_device = self.unique_id
-        self._children.append(device)
+        sensors = device.get_all_sensors(search_children=True)
+        if any(s for s in sensors.values() if s.publishable):
+            device.via_device = self.unique_id
+            self._children.append(device)
+        else:
+            logging.debug(f"{self.name} - Cannot add child device {device.name} - No publishable sensors defined")
 
     def _add_derived_sensor(self, sensor: DerivedSensor, *source_sensors: Sensor, search_children: bool = False) -> None:
         if len(source_sensors) == 0:
@@ -132,7 +136,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             for to_sensor in source_sensors:
                 found = self.get_sensor(to_sensor.unique_id, search_children=search_children)
                 if not found:
-                    logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.__class__.__name__}")
+                    logging.warning(f"{self.name} - Cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.__class__.__name__}")
                 else:
                     if issubclass(type(sensor), DerivedSensor):
                         to_sensor.add_derived_sensor(sensor)
