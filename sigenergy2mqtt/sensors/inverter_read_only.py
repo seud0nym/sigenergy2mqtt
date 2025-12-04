@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from .base import (
     Alarm1Sensor,
     Alarm2Sensor,
@@ -10,7 +11,6 @@ from .base import (
     DeviceClass,
     InputType,
     ObservableMixin,
-    Protocol,
     ReadOnlySensor,
     ReservedSensor,
     RunningStateSensor,
@@ -18,7 +18,7 @@ from .base import (
     TimestampSensor,
 )
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.const import (

@@ -1,4 +1,5 @@
 from typing import Any, Dict
+
 from .base import (
     Alarm1Sensor,
     Alarm2Sensor,
@@ -9,7 +10,6 @@ from .base import (
     AlarmSensor,
     DeviceClass,
     InputType,
-    Protocol,
     PVPowerSensor,
     ReadOnlySensor,
     ReservedSensor,
@@ -19,7 +19,7 @@ from .base import (
 )
 from datetime import timedelta, timezone
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfEnergy, UnitOfPower, UnitOfReactivePower
 

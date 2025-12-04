@@ -450,6 +450,10 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
             return False
+        elif sensor.protocol_version > Config.protocol_version:
+            if sensor.debug_logging:
+                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {Config.protocol_version}")
+            return False
         else:
             return super()._add_read_sensor(sensor, group)
 
@@ -457,6 +461,9 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         if self._type is not None and not isinstance(sensor, self._type.__class__):
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
+        elif sensor.protocol_version > Config.protocol_version:
+            if sensor.debug_logging:
+                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {Config.protocol_version}")
         else:
             super()._add_writeonly_sensor(sensor)
 

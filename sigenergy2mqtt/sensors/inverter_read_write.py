@@ -1,6 +1,6 @@
-from .base import DeviceClass, InputType, NumericSensor, Protocol, ReservedSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
 

@@ -1,8 +1,8 @@
-from .base import DeviceClass, EnergyDailyAccumulationSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor, Protocol
+from .base import DeviceClass, EnergyDailyAccumulationSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor
 from .const import UnitOfPower
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.mqtt import MqttClient
 from typing import Any
 import logging

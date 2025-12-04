@@ -5,7 +5,7 @@ import os
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
@@ -22,6 +22,7 @@ async def get_sensor_instances(
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
 ):
+    Config.set_max_protocol_version(None, override=list(Protocol)[-1].value)
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
 

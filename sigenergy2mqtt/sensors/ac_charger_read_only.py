@@ -1,6 +1,6 @@
-from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, Protocol, ReadOnlySensor
+from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from typing import Any
 

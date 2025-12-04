@@ -1,5 +1,5 @@
 from .metrics import Metrics
-from sigenergy2mqtt.config import Config, SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
+from sigenergy2mqtt.config import Config, ProtocolApplies
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient
@@ -196,9 +196,9 @@ class MetricsService(Device):
                 case "sigenergy2mqtt_modbus_reads_sec":
                     value = Metrics.sigenergy2mqtt_modbus_reads / (time.monotonic() - Metrics._started)
                 case "sigenergy2mqtt_modbus_protocol":
-                    value = SIGENERGY_MODBUS_PROTOCOL
+                    value = Config.protocol_version
                 case "sigenergy2mqtt_modbus_protocol_published":
-                    value = SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
+                    value = ProtocolApplies(Config.protocol_version)
                 case _:
                     value = getattr(Metrics, object_id, None)
                     if value == float("inf"):

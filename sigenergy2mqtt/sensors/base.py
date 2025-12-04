@@ -1,10 +1,9 @@
 from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 from .sanity_check import SanityCheck
 from concurrent.futures import Future
-from enum import Enum
 from pathlib import Path
 from pymodbus.pdu import ExceptionResponse
-from sigenergy2mqtt.config import Config, RegisterAccess
+from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
@@ -19,17 +18,6 @@ import logging
 import re
 import sys
 import time
-
-
-class Protocol(float, Enum):
-    N_A = 9999.99
-    V1_8 = 1.8
-    V2_0 = 2.0
-    V2_4 = 2.4
-    V2_5 = 2.5
-    V2_6 = 2.6
-    V2_7 = 2.7
-    V2_8 = 2.8
 
 
 class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
@@ -894,7 +882,7 @@ class ReservedSensor(ReadOnlySensor):
         precision: int,
         protocol_version: Protocol,
         unique_id_override: str = None,
-        remote_ems = None,
+        remote_ems=None,
     ):
         super().__init__(
             name,

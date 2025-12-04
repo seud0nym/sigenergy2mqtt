@@ -165,6 +165,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             power_phases = 3
 
     if plant is None:
+        Config.set_max_protocol_version(firmware_version)
         rated_charging_power = PlantRatedChargingPower(plant_index)
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)

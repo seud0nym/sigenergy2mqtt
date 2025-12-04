@@ -2,7 +2,7 @@ from .device import ModbusDevice
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
 from .types import DeviceType
-from sigenergy2mqtt.config import Config, SIGENERGY_MODBUS_PROTOCOL
+from sigenergy2mqtt.config import Config
 import importlib
 import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -23,7 +23,7 @@ class PowerPlant(ModbusDevice):
         rated_discharging_power: ro.PlantRatedDischargingPower,
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
-        super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw=f"Modbus Protocol {SIGENERGY_MODBUS_PROTOCOL}")
+        super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw=f"Modbus Protocol V{Config.protocol_version}")
         battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)

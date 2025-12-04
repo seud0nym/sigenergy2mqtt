@@ -1,6 +1,6 @@
-from .base import DeviceClass, InputType, StateClass, NumericSensor, Protocol, RemoteEMSMixin, WriteOnlySensor
+from .base import DeviceClass, InputType, StateClass, NumericSensor, RemoteEMSMixin, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
 
 
