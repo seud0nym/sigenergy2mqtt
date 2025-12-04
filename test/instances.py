@@ -4,11 +4,11 @@ import sys
 import os
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
-from sigenergy2mqtt.sensors.base import Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, ReservedSensor
+from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
@@ -108,6 +108,7 @@ async def get_sensor_instances(
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
     ac_charger = ACCharger(plant_index, ac_charger_device_address, remote_ems, 1.0, 2.0, rated_current, input_breaker)
 
+    registers = {}
     sensor_count = {}
     sensor_instances = {}
 
@@ -121,6 +122,17 @@ async def get_sensor_instances(
 
     def add_sensor_instance(s):
         key = s.unique_id
+        if hasattr(s, "_address"):
+            if (
+                s._address in registers
+                and s._device_address == registers[s._address]._device_address
+                and s.__class__.__name__ != registers[s._address].__class__.__name__
+                and not (isinstance(s, AlarmSensor) and isinstance(registers[s._address], AlarmCombinedSensor))
+                and not (isinstance(s, AlarmCombinedSensor) and isinstance(registers[s._address], AlarmSensor))
+            ):
+                logging.warning(f"Register {s._address} in {s.__class__.__name__} already defined in {registers[s._address].__class__.__name__}")
+            else:
+                registers[s._address] = s
         if key not in sensor_instances:
             sensor_instances[key] = s
         elif s.__class__.__name__ != sensor_instances[key].__class__.__name__:
@@ -145,15 +157,23 @@ async def get_sensor_instances(
                         add_sensor_instance(alarm)
                 else:
                     add_sensor_instance(s)
+
+    previous = None
+    for address in sorted(registers.keys()):
+        count = registers[address]._count
+        if previous:
+            last_address, last_count = previous
+            if address not in (30500, 31000, 31500, 32000, 40000, 40500, 41000, 41500, 42000) and last_address + last_count < address:
+                logging.warning(
+                    f"Gap detected between register {last_address} (count={last_count} class={registers[last_address].__class__.__name__}) and register {address} (class={registers[address].__class__.__name__})"
+                )
+        for i in range(address + 1, address + count):
+            if i in registers:
+                logging.warning(f"Register {i} in {s.__class__.__name__} overlaps {registers[i].__class__.__name__}")
+        previous = (address, count)
     for sensor, count in sensor_count.items():
-        if isinstance(sensor, ReservedSensor):
-            logging.info(f"ReservedSensor {sensor} has {count=}")
-        else:
-            if count == 0:
-                if isinstance(sensor, ReservedSensor):
-                    logging.info(f"ReservedSensor {sensor} has not been used?")
-                else:
-                    logging.warning(f"Sensor {sensor} has not been used?")
+        if count == 0:
+            logging.warning(f"Sensor {sensor} has not been used?")
 
     return sensor_instances
 
@@ -164,7 +184,7 @@ def cancel_sensor_futures():
 
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.DEBUG)
+    logging.getLogger("root").setLevel(logging.INFO)
     loop = asyncio.new_event_loop()
     loop.run_until_complete(get_sensor_instances())
     cancel_sensor_futures()
