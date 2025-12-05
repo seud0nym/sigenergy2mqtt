@@ -1,10 +1,9 @@
-from .base import DeviceClass, InputType, NumericSensor, RemoteEMSMixin, ReadWriteSensor, ReservedSensor, SwitchSensor, WriteOnlySensor
-from pymodbus import ExceptionResponse
+from .base import DeviceClass, InputType, NumericSensor, RemoteEMSMixin, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
+from .const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.mqtt import MqttClient
 from typing import Any
 import logging
 
@@ -361,19 +360,10 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
             remote_ems=None,
             name="Remote EMS",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems",
-            input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=247,
             address=40029,
-            count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=None,
-            device_class=None,
-            state_class=None,
-            icon="mdi:toggle-switch",
-            gain=None,
-            precision=None,
             protocol_version=Protocol.V1_8,
         )
 
@@ -390,19 +380,10 @@ class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
             remote_ems=remote_ems,
             name="Independent Phase Power Control",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
-            input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=247,
             address=40030,
-            count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=None,
-            device_class=None,
-            state_class=None,
-            icon="mdi:toggle-switch",
-            gain=None,
-            precision=None,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
             protocol_version=Protocol.V1_8,
         )
         if output_type != 2:  # L1/L2/L3/N
@@ -414,37 +395,27 @@ class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
         return attributes
 
 
-class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
+class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin):
         super().__init__(
             remote_ems=remote_ems,
             name="Remote EMS Control Mode",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems_control_mode",
-            input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=247,
             address=40031,
-            count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
-            unit=None,
-            device_class=DeviceClass.ENUM,
-            state_class=None,
-            icon="mdi:list-status",
-            gain=None,
-            precision=None,
+            options=[
+                "PCS remote control",
+                "Standby",
+                "Maximum Self-consumption (Default)",
+                "Command Charging (Consume power from the grid first)",
+                "Command Charging (Consume power from the PV first)",
+                "Command Discharging (Output power from PV first)",
+                "Command Discharging (Output power from the battery first)",
+            ],
             protocol_version=Protocol.V1_8,
         )
-        self["platform"] = "select"
-        self["options"] = [
-            "PCS remote control",
-            "Standby",
-            "Maximum Self-consumption (Default)",
-            "Command Charging (Consume power from the grid first)",
-            "Command Charging (Consume power from the PV first)",
-            "Command Discharging (Output power from PV first)",
-            "Command Discharging (Output power from the battery first)",
-        ]
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
@@ -453,17 +424,6 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
         return base
-
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
-            return value
-        elif value is None:
-            return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
-        else:
-            return f"Unknown Mode: {value}"
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> bool:
         result = await super().publish(mqtt, modbus, republish=republish)
@@ -484,24 +444,6 @@ class RemoteEMSControlMode(ReadWriteSensor, HybridInverter, PVInverter):
             return True
         return result
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
-        result = False
-        index = None
-        try:
-            index = self["options"].index(value)
-        except ValueError:
-            try:
-                index = int(value)
-            except ValueError:
-                pass
-        if index is not None and 0 <= index <= 6:
-            result = await super().set_value(modbus, mqtt, index, source, handler)
-        else:
-            logging.warning(f"{self.name} - Ignored attempt to set value to '{value}': Not a valid mode")
-        if result:
-            pass
-        return result
-
 
 class RemoteEMSLimit(NumericSensor, HybridInverter):
     def __init__(
@@ -516,8 +458,7 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         address: int,
         icon: str,
         max: float,
-        protocol_version:Protocol,
-
+        protocol_version: Protocol,
     ):
         super().__init__(
             remote_ems=remote_ems,

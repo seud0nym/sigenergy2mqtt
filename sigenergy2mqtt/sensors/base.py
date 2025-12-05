@@ -1260,6 +1260,72 @@ class NumericSensor(ReadWriteSensor):
         return False
 
 
+class SelectSensor(ReadWriteSensor):
+    def __init__(
+        self,
+        remote_ems: RemoteEMSMixin,
+        name: str,
+        object_id: str,
+        plant_index: int,
+        device_address: int,
+        address: int,
+        scan_interval: int,
+        options: list[str],
+        protocol_version: Protocol,
+    ):
+        assert options is not None and isinstance(options, list) and len(options) > 0 and not any(o for o in options if not isinstance(o, str)), "options must be a non-empty list of strings"
+        super().__init__(
+            remote_ems=remote_ems,
+            name=name,
+            object_id=object_id,
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=scan_interval,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:list-status",
+            gain=None,
+            precision=None,
+            protocol_version=protocol_version,
+        )
+        self["platform"] = "select"
+        self["options"] = options
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if raw:
+            return value
+        elif value is None:
+            return None
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
+        else:
+            return f"Unknown Mode: {value}"
+
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
+        result = False
+        index = None
+        try:
+            index = self["options"].index(value)
+        except ValueError:
+            try:
+                index = int(value)
+            except ValueError:
+                pass
+        if index is not None and 0 <= index <= len(self["options"]):
+            result = await super().set_value(modbus, mqtt, index, source, handler)
+        else:
+            logging.warning(f"{self.name} - Ignored attempt to set value to '{value}': Not a valid mode")
+        if result:
+            pass
+        return result
+
+
 class SwitchSensor(ReadWriteSensor):
     """Superclass of all enabled/disabled read-write sensor definitions"""
 
@@ -1268,39 +1334,30 @@ class SwitchSensor(ReadWriteSensor):
         remote_ems: RemoteEMSMixin,
         name: str,
         object_id: str,
-        input_type: InputType,
         plant_index: int,
         device_address: int,
         address: int,
-        count: int,
-        data_type: ModbusClient.DATATYPE,
         scan_interval: int,
-        unit: str,
-        device_class: DeviceClass,
-        state_class: StateClass,
-        icon: str,
-        gain: float,
-        precision: int,
         protocol_version: Protocol,
     ):
         super().__init__(
-            remote_ems,
-            name,
-            object_id,
-            input_type,
-            plant_index,
-            device_address,
-            address,
-            count,
-            data_type,
-            scan_interval,
-            unit,
-            device_class,
-            state_class,
-            icon,
-            gain,
-            precision,
-            protocol_version,
+            remote_ems=remote_ems,
+            name=name,
+            object_id=object_id,
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=scan_interval,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:toggle-switch",
+            gain=None,
+            precision=None,
+            protocol_version=protocol_version,
         )
         self["platform"] = "switch"
         self["payload_off"] = "0"
