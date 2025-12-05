@@ -1629,14 +1629,11 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
         )
 
 
-# region DC Charger
-
-
-class VehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle Battery Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_vehicle_battery_voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_vehicle_battery_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1654,11 +1651,11 @@ class VehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class VehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle Charging Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_vehicle_charging_current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_vehicle_charging_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1680,7 +1677,7 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Output Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_output_power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_output_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1698,11 +1695,11 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class VehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle SoC",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_vehicle_soc",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_vehicle_soc",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1724,7 +1721,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Current Charging Capacity",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_current_charging_capacity",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_current_charging_capacity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1751,7 +1748,7 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Current Charging Duration",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_current_charging_duration",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_current_charging_duration",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1772,9 +1769,6 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
         attributes = super().get_attributes()
         attributes["comment"] = "Single time"
         return attributes
-
-
-# endregion
 
 
 class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
