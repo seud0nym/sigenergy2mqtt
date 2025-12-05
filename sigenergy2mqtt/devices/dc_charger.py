@@ -12,9 +12,9 @@ class DCCharger(ModbusDevice):
         self._add_read_sensor(ro.DCChargerOutputPower(plant_index, device_address))
         self._add_read_sensor(ro.DCChargerCurrentChargingCapacity(plant_index, device_address))
         self._add_read_sensor(ro.DCChargerCurrentChargingDuration(plant_index, device_address))
-        self._add_read_sensor(ro.VehicleBatteryVoltage(plant_index, device_address))
-        self._add_read_sensor(ro.VehicleChargingCurrent(plant_index, device_address))
-        self._add_read_sensor(ro.VehicleSoC(plant_index, device_address))
+        self._add_read_sensor(ro.DCChargerVehicleBatteryVoltage(plant_index, device_address))
+        self._add_read_sensor(ro.DCChargerVehicleChargingCurrent(plant_index, device_address))
+        self._add_read_sensor(ro.DCChargerVehicleSoC(plant_index, device_address))
         self._add_read_sensor(ro.InverterAlarm5(plant_index, device_address))
         # endregion
 
