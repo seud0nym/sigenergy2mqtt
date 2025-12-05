@@ -11,7 +11,7 @@ from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
-from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
+from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 
 
 async def get_sensor_instances(
@@ -41,8 +41,10 @@ async def get_sensor_instances(
         power_phases=3,
         rcp_value=12.6,
         rdp_value=13.68,
+        rf_value=50.0,
         rated_charging_power=PlantRatedChargingPower(plant_index),
         rated_discharging_power=PlantRatedDischargingPower(plant_index),
+        rated_frequency=GridCodeRatedFrequency(plant_index)
     )
     remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"

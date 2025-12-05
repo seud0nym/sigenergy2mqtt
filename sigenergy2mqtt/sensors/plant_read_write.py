@@ -1,5 +1,5 @@
 from .base import DeviceClass, InputType, NumericSensor, RemoteEMSMixin, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
-from .const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
+from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
@@ -782,4 +782,468 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
+        return attributes
+
+
+class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Active Power Regulation Gradient",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_regulation_gradient",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40049,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit="%/s",
+            device_class=None,
+            state_class=None,
+            icon="mdi:gradient-horizontal",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+            min=0,
+            max=5000,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[0,5000]。Percentage of rated power adjusted per second"
+        return attributes
+
+
+class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Low Voltage Ride Through",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt",
+            plant_index=plant_index,
+            device_address=247,
+            address=40051,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+
+
+class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="LVRT Reactive Power Compensation Factor",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_reactive_power_compensation_factor",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40052,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:counter",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.0,
+            max=10.0,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0,10.0]"
+        return attributes
+
+
+class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="LVRT Negative Sequence Reactive Power Compensation Factor",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_negative_sequence_reactive_power_compensation_factor",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40053,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:counter",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.0,
+            max=10.0,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0,10.0]"
+        return attributes
+
+
+class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="LVRT Mode",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_mode",
+            plant_index=plant_index,
+            device_address=247,
+            address=40054,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            options=[
+                "Reactive power compensation current, active zero-current mode",  # 0
+                None,  # 1
+                "Zero-current mode",  # 2
+                "Constant current mode",  # 3
+                "Reactive dynamic current, active zero-current mode",  # 4
+                "Reactive power compensation current, active constant-current mode",  # 5
+            ],
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+
+
+class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="LVRT Grid Voltage Protection Blocking",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_grid_voltage_protection_blocking",
+            plant_index=plant_index,
+            device_address=247,
+            address=40055,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="High Voltage Ride Through",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt",
+            plant_index=plant_index,
+            device_address=247,
+            address=40056,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+
+
+class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="HVRT Reactive Power Compensation Factor",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_reactive_power_compensation_factor",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40057,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:counter",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.0,
+            max=10.0,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0,10.0]"
+        return attributes
+
+
+class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="HVRT Negative Sequence Reactive Power Compensation Factor",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_negative_sequence_reactive_power_compensation_factor",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40058,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:counter",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.0,
+            max=10.0,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0,10.0]"
+        return attributes
+
+
+class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="HVRT Mode",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_mode",
+            plant_index=plant_index,
+            device_address=247,
+            address=40059,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            options=[
+                "Reactive power compensation current, active zero-current mode",  # 0
+                None,  # 1
+                "Zero-current mode",  # 2
+                "Constant current mode",  # 3
+                "Reactive dynamic current, active hold mode",  # 4
+                "Reactive power compensation current, active constant-current mode",  # 5
+            ],
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+
+
+class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="HVRT Grid Voltage Protection Blocking",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_grid_voltage_protection_blocking",
+            plant_index=plant_index,
+            device_address=247,
+            address=40060,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Over Frequency Derating",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_over_frequency_derating",
+            plant_index=plant_index,
+            device_address=247,
+            address=40061,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+
+
+class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Over Frequency Derating Power Ramp Rate",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_power_ramp_rate",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40062,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent-box-outline",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.0,
+            max=100.0,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0,100.0]"
+        return attributes
+
+
+class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int, rated_frequency: float):
+        super().__init__(
+            remote_ems=None,
+            name="Over Frequency Derating Trigger Frequency",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_trigger_frequency",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40063,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfFrequency.HERTZ,
+            device_class=DeviceClass.FREQUENCY,
+            state_class=None,
+            icon="mdi:sine-wave",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=1.0 * rated_frequency,
+            max=1.2 * rated_frequency,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
+        return attributes
+
+
+class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int, rated_frequency: float):
+        super().__init__(
+            remote_ems=None,
+            name="Over Frequency Derating Cut-Off Frequency",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_cut_off_frequency",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40064,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfFrequency.HERTZ,
+            device_class=DeviceClass.FREQUENCY,
+            state_class=None,
+            icon="mdi:sine-wave",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=1.0 * rated_frequency,
+            max=1.2 * rated_frequency,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
+        return attributes
+
+
+class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Under-Frequency Power Boost",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost",
+            plant_index=plant_index,
+            device_address=247,
+            address=40065,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+
+
+class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            remote_ems=None,
+            name="Under-Frequency Power Boost Power Ramp Rate",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_power_ramp_rate",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40066,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent-box-outline",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.0,
+            max=100.0,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [0,100.0]"
+        return attributes
+
+
+class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int, rated_frequency: float):
+        super().__init__(
+            remote_ems=None,
+            name="Under-Frequency Power Boost Trigger Frequency",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_trigger_frequency",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40067,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfFrequency.HERTZ,
+            device_class=DeviceClass.FREQUENCY,
+            state_class=None,
+            icon="mdi:sine-wave",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.8 * rated_frequency,
+            max=1.0 * rated_frequency,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
+        return attributes
+
+
+class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInverter):
+    def __init__(self, plant_index: int, rated_frequency: float):
+        super().__init__(
+            remote_ems=None,
+            name="Under-Frequency Power Boost Cut-Off Frequency",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_cut_off_frequency",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=247,
+            address=40068,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            unit=UnitOfFrequency.HERTZ,
+            device_class=DeviceClass.FREQUENCY,
+            state_class=None,
+            icon="mdi:sine-wave",
+            gain=100,
+            precision=1,
+            protocol_version=Protocol.V2_8,
+            min=0.8 * rated_frequency,
+            max=1.0 * rated_frequency,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes

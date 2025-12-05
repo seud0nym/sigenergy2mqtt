@@ -9,7 +9,7 @@ from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
-from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
+from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 from typing import Tuple
 import logging
 import signal
@@ -170,7 +170,13 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)
         rdp_value = await rated_discharging_power.get_state(modbus=modbus)
-        plant = PowerPlant(plant_index, device_type, output_type_state, power_phases, rcp_value, rdp_value, rated_charging_power, rated_discharging_power)
+        if device_type.has_grid_code_interface:
+            rated_frequency = GridCodeRatedFrequency(plant_index)
+            rf_value = await rated_frequency.get_state(modbus=modbus)
+        else:
+            rated_frequency, rf_value = (None, None)
+
+        plant = PowerPlant(plant_index, device_type, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
 
     inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
     inverter.via_device = plant.unique_id

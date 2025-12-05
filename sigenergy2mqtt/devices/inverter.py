@@ -83,8 +83,13 @@ class Inverter(ModbusDevice):
             address += 2
         if Config.protocol_version >= Protocol.V2_4:
             address = 31042
-            for n in range(5, strings + 1):
+            for n in range(5, min(16, strings) + 1):
                 self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
+                address += 2
+        if Config.protocol_version >= Protocol.V2_8:
+            address = 31066
+            for n in range(17, min(36, strings) + 1):
+                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_8))
                 address += 2
         # endregion
 

@@ -1828,3 +1828,45 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
+
+
+class DCChargerRunningState(ReadOnlySensor):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Running State",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_running_state",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=31513,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:ev-station",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+        self["options"] = [
+            "Idle",  # 0
+            "Occupied (Charging Gun plugged in but not detected)",  # 1
+            "Preparing (Establishing communication)",  # 2
+            "Charging",  # 3
+            "Fault",  # 4
+            "Scheduled",  # 5
+        ]
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if raw:
+            return value
+        elif value is None:
+            return None
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
+        else:
+            return f"Unknown State code: {value}"

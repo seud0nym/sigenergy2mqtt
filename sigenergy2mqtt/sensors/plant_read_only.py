@@ -21,7 +21,7 @@ from datetime import timedelta, timezone
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfEnergy, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 
 # 5.1 Plant running information address definition(read-only register)
@@ -1610,3 +1610,309 @@ class SITotalGeneratorOutputEnergy(StatisticsInterfaceSensor):
 
 
 # endregion
+
+
+class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="PV Total Generation Today",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_pv_total_generation_today",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30272,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:solar-power-variant",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="PV Total Generation Yesterday",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_pv_total_generation_yesterday",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30274,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:solar-power-variant",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Grid Code Rated Frequency",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_frequency",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30276,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=UnitOfFrequency.HERTZ,
+            device_class=DeviceClass.FREQUENCY,
+            state_class=None,
+            icon="mdi:sine-wave",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+        self["entity_category"] = "diagnostic"
+
+class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Grid Code Rated Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_voltage",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30277,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=UnitOfElectricPotential.VOLT,
+            device_class=DeviceClass.VOLTAGE,
+            state_class=None,
+            icon="mdi:flash",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+        self["entity_category"] = "diagnostic"
+
+
+class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Current Control Command Value",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_current_control_command_value",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30279,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Use of Remote Output Control in Japan"
+        return attributes
+
+
+class Alarm6(AlarmSensor):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Alarm 6",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_6",
+            plant_index=plant_index,
+            device_address=247,
+            address=30280,
+            alarm_type="Plant",
+            protocol_version=Protocol.V2_8,
+        )
+
+    def decode_alarm_bit(self, bit_position: int):
+        """Decodes the alarm bit.
+
+        Args:
+            bit_position:     The set bit in the alarm register value.
+
+        Returns:
+            The alarm description or None if not found.
+        """
+        match bit_position:
+            case 0:
+                return "Gateway communication abnormal"
+            case 1:
+                return "Meter communication abnormal"
+            case 2:
+                return "AC power sensor communication abnormal"
+            case 6:
+                return "Hard protection against grid-feed power limit exceeding"
+            case 8:
+                return "Generator failure to start"
+            case 10:
+                return "CLS fault"
+            case _:
+                return None
+
+
+class Alarm7(AlarmSensor):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Alarm 7",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_7",
+            plant_index=plant_index,
+            device_address=247,
+            address=30281,
+            alarm_type="Plant",
+            protocol_version=Protocol.V2_8,
+        )
+
+    def decode_alarm_bit(self, bit_position: int):
+        """Decodes the alarm bit.
+
+        Args:
+            bit_position:     The set bit in the alarm register value.
+
+        Returns:
+            The alarm description or None if not found.
+        """
+        match bit_position:
+            case 0:
+                return "OVGR fault"
+            case 1:
+                return "RPR Fault"
+            case _:
+                return None
+
+
+class PlantAlarms(AlarmCombinedSensor):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            "Plant Alarms",
+            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_plant_alarms",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_alarms",
+            Alarm6(plant_index),
+            Alarm7(plant_index),
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Modbus Registers 30280 and 30281"
+        return attributes
+
+
+class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="General Load Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_load_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30282,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Load Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_load_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30284,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridPhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30286
+            case "B":
+                address = 30288
+            case "C":
+                address = 30290
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_voltage",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=address,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfElectricPotential.VOLT,
+            device_class=DeviceClass.VOLTAGE,
+            state_class=None,
+            icon="mdi:flash",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30292
+            case "B":
+                address = 30294
+            case "C":
+                address = 30296
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_current",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=address,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfElectricCurrent.AMPERE,
+            device_class=DeviceClass.CURRENT,
+            state_class=None,
+            icon="mdi:current-ac",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
