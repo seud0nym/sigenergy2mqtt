@@ -24,6 +24,7 @@ class PVString(ModbusDevice):
             plant_index,
             device_address,
             "PV String",
+            protocol_version,
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}{string_number}",
         )
 

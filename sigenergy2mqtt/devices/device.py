@@ -2,7 +2,7 @@ from .types import DeviceType
 from pathlib import Path
 from pymodbus import ModbusException
 from random import randint, uniform
-from sigenergy2mqtt.config import Config, RegisterAccess
+from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
@@ -31,8 +31,9 @@ class SensorGroup(List[ReadableSensorMixin]):
 
 
 class Device(Dict[str, any], metaclass=abc.ABCMeta):
-    def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, **kwargs):
+    def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
         self._plant_index = plant_index
+        self._protocol = protocol_version
         self._registers = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
 
         self._children: List[Device] = []
@@ -83,6 +84,10 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             self._online = value
         else:
             raise ValueError("online must be a Future or False")
+
+    @property
+    def protocol_version(self) -> Protocol:
+        return self._protocol
 
     @property
     def rediscover(self) -> bool:
@@ -424,6 +429,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         plant_index: int,
         device_address: int,
         model: str,
+        protocol_version: Protocol,
         **kwargs,
     ):
         assert 1 <= device_address <= 247, f"Invalid device address {device_address}"
@@ -437,7 +443,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         else:
             unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}"
 
-        super().__init__(name, plant_index, unique_id, "Sigenergy", model, **kwargs)
+        super().__init__(name, plant_index, unique_id, "Sigenergy", model, protocol_version, **kwargs)
 
         self._device_address = device_address
         self._type = type
@@ -454,7 +460,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
             return False
-        elif sensor.protocol_version > Config.protocol_version:
+        elif sensor.protocol_version > self.protocol_version:
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {Config.protocol_version}")
             return False
@@ -465,7 +471,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         if self._type is not None and not isinstance(sensor, self._type.__class__):
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
-        elif sensor.protocol_version > Config.protocol_version:
+        elif sensor.protocol_version > self.protocol_version:
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {Config.protocol_version}")
         else:

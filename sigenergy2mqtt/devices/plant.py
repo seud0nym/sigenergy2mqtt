@@ -3,7 +3,7 @@ from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
 from .types import DeviceType
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 import importlib
 import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -16,6 +16,7 @@ class PowerPlant(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
+        protocol_version: Protocol,
         output_type: int,
         power_phases: int,
         rcp_value: float,
@@ -26,7 +27,15 @@ class PowerPlant(ModbusDevice):
         rated_frequency: ro.GridCodeRatedFrequency,
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
-        super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw=f"Modbus Protocol V{Config.protocol_version}")
+        super().__init__(
+            device_type,
+            name,
+            plant_index,
+            247,
+            "Energy Management System",
+            protocol_version,
+            sw=f"Modbus Protocol V{protocol_version}",
+        )
         battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
@@ -129,10 +138,10 @@ class PowerPlant(ModbusDevice):
 
         self._add_writeonly_sensor(rw.PlantStatus(plant_index))
 
-        self._add_child_device(GridSensor(plant_index, device_type, power_phases, grid_sensor_active_power))
-        self._add_child_device(PlantStatistics(plant_index, device_type))
-        if device_type.has_grid_code_interface:
-            self._add_child_device(GridCode(plant_index, device_type, rf_value, rated_frequency))
+        self._add_child_device(GridSensor(plant_index, device_type, protocol_version, power_phases, grid_sensor_active_power))
+        self._add_child_device(PlantStatistics(plant_index, device_type, protocol_version))
+        if device_type.has_grid_code_interface and protocol_version >= Protocol.V2_8:
+            self._add_child_device(GridCode(plant_index, device_type, protocol_version, rf_value, rated_frequency))
 
         plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index)
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)

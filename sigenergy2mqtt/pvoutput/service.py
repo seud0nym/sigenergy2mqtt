@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from random import randint
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.mqtt import MqttClient
 from typing import Any
@@ -17,7 +17,7 @@ class Service(Device):
     _interval_updated: float = None
 
     def __init__(self, name: str, unique_id: str, model: str, logger: logging.Logger):
-        super().__init__(name, -1, unique_id, "sigenergy2mqtt", model)
+        super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, Protocol.N_A)
         self._logger = logger
         self._lock = asyncio.Lock()
 

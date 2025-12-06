@@ -1,4 +1,5 @@
 from .device import ModbusDevice
+from sigenergy2mqtt.config import Protocol
 from sigenergy2mqtt.sensors.base import RemoteEMSMixin
 import sigenergy2mqtt.sensors.ac_charger_read_only as ro
 import sigenergy2mqtt.sensors.ac_charger_read_write as rw
@@ -9,13 +10,14 @@ class ACCharger(ModbusDevice):
         self,
         plant_index: int,
         device_address: int,
+        protocol_version: Protocol,
         remote_ems: RemoteEMSMixin,
         ib_value: float,
         rc_value: float,
         input_breaker: ro.ACChargerInputBreaker,
         rated_current: ro.ACChargerRatedCurrent,
     ):
-        super().__init__(None, "Sigenergy AC Charger", plant_index, device_address, "AC Charger")
+        super().__init__(None, "Sigenergy AC Charger", plant_index, device_address, "AC Charger", protocol_version)
 
         self._add_read_sensor(ro.ACChargerRunningState(plant_index, device_address))
         self._add_read_sensor(ro.ACChargerTotalEnergyConsumed(plant_index, device_address))

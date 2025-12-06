@@ -1,4 +1,5 @@
 from .device import ModbusDevice, DeviceType
+from sigenergy2mqtt.config import Protocol
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
 
@@ -8,11 +9,12 @@ class GridCode(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
+        protocol_version: Protocol,
         rf_value: float,
         rated_frequency: ro.GridCodeRatedFrequency,
     ):
         name = "Sigenergy Plant Grid Code" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Grid Code"
-        super().__init__(device_type, name, plant_index, 247, "Grid Code")
+        super().__init__(device_type, name, plant_index, 247, "Grid Code", protocol_version)
 
         self._add_read_sensor(rated_frequency)
         self._add_read_sensor(ro.GridCodeRatedVoltage(plant_index))

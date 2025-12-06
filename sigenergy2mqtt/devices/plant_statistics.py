@@ -1,4 +1,5 @@
 from .device import ModbusDevice, DeviceType
+from sigenergy2mqtt.config import Protocol
 import sigenergy2mqtt.sensors.plant_read_only as ro
 
 
@@ -7,9 +8,10 @@ class PlantStatistics(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
+        protocol_version: Protocol,
     ):
         name = "Sigenergy Plant Statistics" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Statistics"
-        super().__init__(device_type, name, plant_index, 247, "EMS Statistics")
+        super().__init__(device_type, name, plant_index, 247, "EMS Statistics", protocol_version)
 
         self._add_read_sensor(ro.SITotalChargedEnergy(plant_index))
         self._add_read_sensor(ro.SITotalCommonLoadConsumption(plant_index))

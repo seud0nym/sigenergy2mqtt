@@ -1,5 +1,5 @@
 from .metrics import Metrics
-from sigenergy2mqtt.config import Config, ProtocolApplies
+from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient
@@ -171,8 +171,8 @@ class MetricsService(Device):
         },
     }
 
-    def __init__(self):
-        super().__init__("Sigenergy Metrics", -1, MetricsService._unique_id, "sigenergy2mqtt", "Metrics")
+    def __init__(self, protocol_version: Protocol):
+        super().__init__("Sigenergy Metrics", -1, MetricsService._unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
 
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
         pass
@@ -196,9 +196,9 @@ class MetricsService(Device):
                 case "sigenergy2mqtt_modbus_reads_sec":
                     value = Metrics.sigenergy2mqtt_modbus_reads / (time.monotonic() - Metrics._started)
                 case "sigenergy2mqtt_modbus_protocol":
-                    value = Config.protocol_version
+                    value = self.protocol_version.value
                 case "sigenergy2mqtt_modbus_protocol_published":
-                    value = ProtocolApplies(Config.protocol_version)
+                    value = ProtocolApplies(self.protocol_version)
                 case _:
                     value = getattr(Metrics, object_id, None)
                     if value == float("inf"):

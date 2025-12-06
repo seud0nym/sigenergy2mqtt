@@ -4,7 +4,6 @@ from .auto_discovery import scan as auto_discovery_scan
 from .home_assistant_config import HomeAssistantConfiguration
 from .modbus_config import DeviceConfig
 from .mqtt_config import MqttConfiguration
-from .protocol import Protocol, ProtocolApplies
 from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSource
 from .validation import check_bool, check_host, check_float, check_int, check_int_list, check_log_level, check_port, check_string
 from pathlib import Path
@@ -12,7 +11,6 @@ from ruamel.yaml import YAML
 from typing import List
 import json
 import logging
-import re
 import os
 
 
@@ -34,31 +32,7 @@ class Config:
 
     persistent_state_path: str = "."
 
-    protocol_version: float = Protocol.V1_8.value
-
     _source: str = None
-
-    @staticmethod
-    def set_max_protocol_version(firmware_version: str, override: float = None) -> None:
-        if override:
-            Config.protocol_version = override
-        else:
-            match = re.search(r"SPC\s*(\d{3})", firmware_version)
-            if match:
-                version = int(match.group(1))
-                if version <= 107:
-                    Config.protocol_version = Protocol.V1_8.value
-                elif version == 108:
-                    Config.protocol_version = Protocol.V2_0.value
-                elif version == 109:
-                    Config.protocol_version = Protocol.V2_5.value
-                elif version == 110:
-                    Config.protocol_version = Protocol.V2_6.value
-                else:  # if version == 111:
-                    Config.protocol_version = Protocol.V2_7.value
-                    # else:
-                    # Config.protocol_version = Protocol.V2_8.value
-        logging.info(f"Sigenergy Modbus Protocol V{Config.protocol_version} ({ProtocolApplies(Config.protocol_version)})")
 
     @staticmethod
     def get_modbus_log_level() -> int:

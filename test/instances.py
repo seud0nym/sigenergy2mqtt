@@ -5,7 +5,7 @@ import os
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
@@ -17,13 +17,13 @@ from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, Plant
 async def get_sensor_instances(
     hass: bool = False,
     plant_index: int = 0,
-    max_protocol_version: Protocol = list(Protocol)[-1].value,
+    protocol_version: Protocol = list(Protocol)[-1].value,
     hybrid_inverter_device_address: int = 1,
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
 ):
-    Config.set_max_protocol_version(None, override=max_protocol_version)
+    logging.info(f"Sigenergy Modbus Protocol V{protocol_version} ({ProtocolApplies(protocol_version)})")
 
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
@@ -38,6 +38,7 @@ async def get_sensor_instances(
     plant = PowerPlant(
         plant_index=plant_index,
         device_type=DeviceType.create("SigenStor EC 12.0 TP"),
+        protocol_version=protocol_version,
         output_type=2,
         power_phases=3,
         rcp_value=12.6,
@@ -63,6 +64,7 @@ async def get_sensor_instances(
     hybrid_inverter = Inverter(
         plant_index=plant_index,
         device_address=hybrid_inverter_device_address,
+        protocol_version=protocol_version,
         device_type=DeviceType.create(hybrid_model.latest_raw_state),
         model_id=hybrid_model.latest_raw_state,
         serial=hybrid_serial.latest_raw_state,
@@ -89,6 +91,7 @@ async def get_sensor_instances(
     pv_inverter = Inverter(
         plant_index=plant_index,
         device_address=pv_inverter_device_address,
+        protocol_version=protocol_version,
         device_type=DeviceType.create(pv_model.latest_raw_state),
         model_id=pv_model.latest_raw_state,
         serial=pv_serial.latest_raw_state,
@@ -102,11 +105,11 @@ async def get_sensor_instances(
         serial_number=pv_serial,
     )
 
-    dc_charger = DCCharger(plant_index, dc_charger_device_address, remote_ems)
+    dc_charger = DCCharger(plant_index, dc_charger_device_address, protocol_version)
 
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
-    ac_charger = ACCharger(plant_index, ac_charger_device_address, remote_ems, 1.0, 2.0, rated_current, input_breaker)
+    ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, remote_ems, 1.0, 2.0, rated_current, input_breaker)
 
     classes = {}
     registers = {}

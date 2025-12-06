@@ -1,5 +1,5 @@
 from .device import ModbusDevice
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.config import Protocol
 from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
 from sigenergy2mqtt.devices.types import DeviceType
@@ -13,6 +13,7 @@ class Inverter(ModbusDevice):
         self,
         plant_index: int,
         device_address: int,
+        protocol_version: Protocol,
         device_type: DeviceType,
         model_id: str,
         serial: str,
@@ -31,7 +32,17 @@ class Inverter(ModbusDevice):
         words.insert(1, serial)
         name = " ".join(words)
 
-        super().__init__(device_type, name, plant_index, device_address, model=device_type.__str__(), mdl_id=model_id, sn=serial, hw=firmware)  # MUST use hw abbreviation - see InverterFirmwareVersion
+        super().__init__(
+            device_type,
+            name,
+            plant_index,
+            device_address,
+            device_type.__str__(),
+            protocol_version,
+            mdl_id=model_id,
+            sn=serial,
+            hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion
+        )
 
         pv_power = ro.InverterPVPower(plant_index, device_address)
 
@@ -76,21 +87,6 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.InsulationResistance(plant_index, device_address))
         self._add_read_sensor(ro.StartupTime(plant_index, device_address))
         self._add_read_sensor(ro.ShutdownTime(plant_index, device_address))
-
-        address = 31027
-        for n in range(1, min(4, strings) + 1):
-            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V1_8))
-            address += 2
-        if Config.protocol_version >= Protocol.V2_4:
-            address = 31042
-            for n in range(5, min(16, strings) + 1):
-                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
-                address += 2
-        if Config.protocol_version >= Protocol.V2_8:
-            address = 31066
-            for n in range(17, min(36, strings) + 1):
-                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_8))
-                address += 2
         # endregion
 
         self._add_read_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))
@@ -119,4 +115,19 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(rw.InverterRemoteEMSDispatch(plant_index, device_address))
         # endregion
 
-        self._add_child_device(ESS(plant_index, device_address, device_type, model_id, serial))
+        address = 31027
+        for n in range(1, min(4, strings) + 1):
+            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V1_8))
+            address += 2
+        if protocol_version >= Protocol.V2_4:
+            address = 31042
+            for n in range(5, min(16, strings) + 1):
+                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
+                address += 2
+        if protocol_version >= Protocol.V2_8:
+            address = 31066
+            for n in range(17, min(36, strings) + 1):
+                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_8))
+                address += 2
+
+        self._add_child_device(ESS(plant_index, device_address, device_type, protocol_version, model_id, serial))
