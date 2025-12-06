@@ -204,7 +204,8 @@ class ServiceTopics(dict[str, Topic]):
         if self.enabled:
             now = time.mktime(now_struct)
             if now - Config.pvoutput.started < 120:
-                self._logger.debug(f"{self._service.__class__.__name__} Skipping updating check for {self._name} because service just started")
+                if Config.pvoutput.update_debug_logging:
+                    self._logger.debug(f"{self._service.__class__.__name__} Skipping updating check for {self._name} because service just started")
                 return True
             interval_seconds = interval_minutes * 60
             updated = 0
@@ -213,16 +214,18 @@ class ServiceTopics(dict[str, Topic]):
                 if topic.timestamp is not None:
                     seconds = int(now - time.mktime(topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp))
                     minutes = int(seconds / 60.0)
-                    if seconds < scan_interval:
+                    if seconds <= scan_interval:
                         if Config.pvoutput.update_debug_logging:
                             self._logger.debug(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
                         updated += 1
-                    elif (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600) and minutes > 0:
+                    elif (self._last_update_warning is None or (now - self._last_update_warning) > 3600) and minutes > 0:
                         self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
-                        self._last_update_warning = time.time()
-                elif not isinstance(self, TimePeriodServiceTopics) and (self._last_update_warning is None or (time.time() - self._last_update_warning) > 3600):
+                        self._last_update_warning = now
+                elif not isinstance(self, TimePeriodServiceTopics) and (self._last_update_warning is None or (now - self._last_update_warning) > 3600):
                     self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has never been updated??? ({scan_interval=}s)")
-                    self._last_update_warning = time.time()
+                    self._last_update_warning = now
+            if updated == 0 and self._last_update_warning != now:
+                self._logger.debug(f"{self._service.__class__.__name__} {self._name} failed updating check (topics {updated=} now={now_struct} {interval_seconds=}): {self}")
             return updated > 0
         else:
             return False
