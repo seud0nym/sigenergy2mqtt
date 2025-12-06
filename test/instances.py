@@ -17,12 +17,14 @@ from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, Plant
 async def get_sensor_instances(
     hass: bool = False,
     plant_index: int = 0,
+    max_protocol_version: Protocol = list(Protocol)[-1].value,
     hybrid_inverter_device_address: int = 1,
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
 ):
-    Config.set_max_protocol_version(None, override=list(Protocol)[-1].value)
+    Config.set_max_protocol_version(None, override=max_protocol_version)
+
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
 
@@ -33,7 +35,6 @@ async def get_sensor_instances(
 
     Config.home_assistant.enabled = hass
 
-    logging.debug(f"Instantiating Power Plant ({hass=})")
     plant = PowerPlant(
         plant_index=plant_index,
         device_type=DeviceType.create("SigenStor EC 12.0 TP"),
@@ -44,12 +45,11 @@ async def get_sensor_instances(
         rf_value=50.0,
         rated_charging_power=PlantRatedChargingPower(plant_index),
         rated_discharging_power=PlantRatedDischargingPower(plant_index),
-        rated_frequency=GridCodeRatedFrequency(plant_index)
+        rated_frequency=GridCodeRatedFrequency(plant_index),
     )
     remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
-    logging.debug(f"Instantiating Hybrid Inverter ({hass=})")
     hybrid_model = InverterModel(plant_index, hybrid_inverter_device_address)
     hybrid_serial = InverterSerialNumber(plant_index, hybrid_inverter_device_address)
     hybrid_firmware = InverterFirmwareVersion(plant_index, hybrid_inverter_device_address)
@@ -76,7 +76,6 @@ async def get_sensor_instances(
         serial_number=hybrid_serial,
     )
 
-    logging.debug(f"Instantiating PV Inverter ({hass=})")
     pv_model = InverterModel(plant_index, pv_inverter_device_address)
     pv_serial = InverterSerialNumber(plant_index, pv_inverter_device_address)
     pv_firmware = InverterFirmwareVersion(plant_index, pv_inverter_device_address)
@@ -103,23 +102,21 @@ async def get_sensor_instances(
         serial_number=pv_serial,
     )
 
-    logging.debug(f"Instantiating DC Charger ({hass=})")
     dc_charger = DCCharger(plant_index, dc_charger_device_address, remote_ems)
 
-    logging.debug(f"Instantiating AC Charger ({hass=})")
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
     ac_charger = ACCharger(plant_index, ac_charger_device_address, remote_ems, 1.0, 2.0, rated_current, input_breaker)
 
+    classes = {}
     registers = {}
-    sensor_count = {}
-    sensor_instances = {}
+    sensors = {}
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
             if len(c.__subclasses__()) == 0:
                 if c.__name__ != "RequisiteSensor":
-                    sensor_count[c.__name__] = 0
+                    classes[c.__name__] = 0
             else:
                 find_concrete_classes(c)
 
@@ -136,11 +133,11 @@ async def get_sensor_instances(
                 logging.warning(f"Register {s._address} in {s.__class__.__name__} already defined in {registers[s._address].__class__.__name__}")
             else:
                 registers[s._address] = s
-        if key not in sensor_instances:
-            sensor_instances[key] = s
-        elif s.__class__.__name__ != sensor_instances[key].__class__.__name__:
-            logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensor_instances[key].__class__.__name__}")
-        sensor_count[s.__class__.__name__] += 1
+        if key not in sensors:
+            sensors[key] = s
+        elif s.__class__.__name__ != sensors[key].__class__.__name__:
+            logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensors[key].__class__.__name__}")
+        classes[s.__class__.__name__] += 1
         for d in s._derived_sensors.values():
             add_sensor_instance(d)
 
@@ -174,11 +171,11 @@ async def get_sensor_instances(
             if i in registers:
                 logging.warning(f"Register {i} in {s.__class__.__name__} overlaps {registers[i].__class__.__name__}")
         previous = (address, count)
-    for sensor, count in sensor_count.items():
+    for classname, count in classes.items():
         if count == 0:
-            logging.warning(f"Sensor {sensor} has not been used?")
+            logging.warning(f"Class {classname} has not been used?")
 
-    return sensor_instances
+    return sensors
 
 
 def cancel_sensor_futures():
@@ -187,7 +184,7 @@ def cancel_sensor_futures():
 
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.INFO)
+    logging.getLogger("root").setLevel(logging.DEBUG)
     loop = asyncio.new_event_loop()
     loop.run_until_complete(get_sensor_instances())
     cancel_sensor_futures()

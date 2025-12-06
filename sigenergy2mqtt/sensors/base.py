@@ -251,7 +251,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             sensor:     The DerivedSensor instance.
         """
         self._derived_sensors[sensor.__class__.__name__] = sensor
-        logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} derived sensors")
 
     def add_requisite_sensor(self, sensor: "RequisiteSensor") -> None:
         """Adds a requisite sensor on which this sensor depends.
@@ -260,7 +259,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             sensor:     The RequisiteSensor instance.
         """
         self._requisite_sensors[sensor.__class__.__name__] = sensor
-        logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} requisite sensors")
 
     def apply_sensor_overrides(self, registers: RegisterAccess):
         for identifier in Config.sensor_overrides.keys():
@@ -1893,8 +1891,6 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                         logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
                     logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
-        else:
-            logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
         self.set_latest_state(self._current_total)
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
@@ -1995,8 +1991,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             else:
                 logging.debug(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
-        else:
-            logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
