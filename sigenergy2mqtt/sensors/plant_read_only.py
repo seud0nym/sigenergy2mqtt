@@ -1659,7 +1659,7 @@ class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInver
 class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            name="Grid Code Rated Frequency",
+            name="Rated Frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_frequency",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1681,7 +1681,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
 class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            name="Grid Code Rated Voltage",
+            name="Rated Voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
