@@ -491,7 +491,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             **kwargs:   key=value pairs that will be added as attributes.
         """
         if clean:
-            logging.debug(f"{self.name} - Cleaning attributes")
+            if self._debug_logging:
+                logging.debug(f"{self.name} - Cleaning attributes")
             mqtt.publish(self["json_attributes_topic"], None, qos=1, retain=True)  # Clear retained messages
         elif self.publishable:
             attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
