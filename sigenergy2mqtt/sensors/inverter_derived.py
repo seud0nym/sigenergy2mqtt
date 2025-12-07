@@ -22,6 +22,7 @@ class InverterBatteryChargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.protocol_version = battery_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -52,6 +53,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.protocol_version = battery_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -88,6 +90,7 @@ class PVStringPower(DerivedSensor):
         self.current_gain: float = current.gain
         self.voltage: float = None
         self.voltage_gain: float = voltage.gain
+        self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()

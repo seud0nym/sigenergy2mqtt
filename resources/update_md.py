@@ -478,6 +478,7 @@ async def compare_sensor_instances():
 
 
 if __name__ == "__main__":
+    logging.getLogger("root").setLevel(logging.INFO)
     download_latest("custom_components/sigen/modbusregisterdefinitions.py")
     loop = asyncio.new_event_loop()
     loop.run_until_complete(sensor_index())

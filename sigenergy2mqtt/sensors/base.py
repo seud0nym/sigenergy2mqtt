@@ -144,9 +144,13 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         return self._protocol_version.value
 
     @protocol_version.setter
-    def protocol_version(self, protocol_version: Protocol):
-        assert isinstance(protocol_version, Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
-        self._protocol_version = protocol_version
+    def protocol_version(self, protocol_version: Protocol | float):
+        isProtocol = isinstance(protocol_version, Protocol)
+        assert isProtocol or (isinstance(protocol_version, float) and protocol_version in Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
+        if isProtocol:
+            self._protocol_version = protocol_version
+        else:
+            self._protocol_version = {p.value: p for p in Protocol}.get(protocol_version)
 
     @property
     def publishable(self) -> bool:
@@ -342,6 +346,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         """
         attributes = {}
         attributes["sensor-class"] = self.__class__.__name__
+        if self.protocol_version:
+            attributes["since-protocol"] = f"V{self.protocol_version}"
         if self._gain:
             attributes["gain"] = self._gain
         if hasattr(self, "_scan_interval"):
@@ -1689,6 +1695,14 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         self._count = count
         self._input_type = alarms[0]._input_type
         self._data_type = alarms[0]._data_type
+
+    @property
+    def protocol_version(self) -> float:
+        protocol = super().protocol_version
+        for alarm in self._alarms:
+            if alarm.protocol_version > protocol:
+                protocol = alarm.protocol_version
+        return protocol
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Gets the state of this sensor.
