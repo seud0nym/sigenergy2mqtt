@@ -1,5 +1,6 @@
 from .thread_config import ThreadConfig, ThreadConfigFactory
 from .threading import start
+from pathlib import Path
 from pymodbus import pymodbus_apply_logging_config
 from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
@@ -93,7 +94,32 @@ async def async_main() -> None:
     signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGUSR1, configure_for_restart)
 
-    await start(configs)
+    if Config.home_assistant.enabled:
+        current_version_file = Path(Config.persistent_state_path, ".current-version")
+        current_version: str = None
+        if current_version_file.exists():
+            try:
+                with current_version_file.open("r") as f:
+                    current_version = f.read()
+                    logging.debug(f"Loaded '{current_version}' from {current_version_file}")
+            except Exception as error:
+                logging.error(f"Failed to read {current_version_file}: {error}")
+        upgrade_clean_required: bool = current_version != Config.version()
+        if upgrade_clean_required:
+            if current_version:
+                logging.info(f"Upgrade to '{Config.version()}' from '{current_version}' detected - clean required")
+            else:
+                logging.info(f"Upgrade to '{Config.version()}' detected - clean required")
+            logging.debug(f"Writing '{Config.version()}' to {current_version_file}")
+            try:
+                with current_version_file.open("w") as f:
+                    f.write(Config.version())
+            except Exception as error:
+                logging.error(f"Failed to write to {current_version_file}: {error}")
+    else:
+        upgrade_clean_required = False
+
+    await start(configs, upgrade_clean_required)
     logging.info("Shutdown completed")
 
 
@@ -185,7 +211,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
                 pass
         else:
             protocol_version = Protocol.V1_8
-        logging.info(f"Detection on modbus://{modbus.comm_params.host}:{modbus.comm_params.port} found Sigenergy Modbus Protocol V{protocol_version.value} ({ProtocolApplies(protocol_version)})")
+        logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol_version.value} ({ProtocolApplies(protocol_version)})")
         rated_charging_power = PlantRatedChargingPower(plant_index)
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)

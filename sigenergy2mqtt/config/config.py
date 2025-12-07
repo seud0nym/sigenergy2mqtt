@@ -301,6 +301,10 @@ class Config:
                 raise ValueError("No Modbus devices configured")
 
     @staticmethod
+    def version() -> str:
+        return version.__version__
+
+    @staticmethod
     def _configure(data: dict, override: bool = False) -> None:
         for name in data.keys():
             match name:
