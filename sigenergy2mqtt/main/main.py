@@ -43,15 +43,19 @@ async def async_main() -> None:
                         config.add_device(plant_index, inverter)
                 if plant and len(device.dc_chargers) == 0:
                     logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
-                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30252", search_children=True).publishable = False
-                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30256", search_children=True).publishable = False
+                    for register in (30252, 30256):
+                        si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
+                        if si_sensor:
+                            si_sensor.publishable = False
                 else:
                     for device_address in device.dc_chargers:
                         charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
                         config.add_device(plant_index, charger)
                 if plant and len(device.ac_chargers) == 0:
                     logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
-                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True).publishable = False
+                    si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True)
+                    if si_sensor:
+                        si_sensor.publishable = False
                 else:
                     for device_address in device.ac_chargers:
                         charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
