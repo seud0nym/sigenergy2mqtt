@@ -177,12 +177,12 @@ class MetricsService(Device):
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
         pass
 
-    def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
+    def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean or not Config.metrics_enabled:
-            logging.debug(f"{self.name} - Publishing empty discovery ({Config.metrics_enabled=} {clean=})")
-            info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
-        if Config.metrics_enabled:
+            logging.debug(f"{self.name} - Cleaning discovery ({Config.metrics_enabled=} {clean=})")
+            info = mqtt.publish(topic, "", qos=1, retain=True)  # Clear retained messages
+        elif Config.metrics_enabled:
             logging.debug(f"{self.name} - Publishing discovery")
             discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)

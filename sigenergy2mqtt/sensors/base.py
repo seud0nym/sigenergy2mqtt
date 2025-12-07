@@ -467,7 +467,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 else:
                     raise
                 if Config.home_assistant.enabled:
-                    self.publish_attributes(mqtt, failures=self._failures, exception=f"{repr(e)}")
+                    self.publish_attributes(mqtt, clean=False, failures=self._failures, exception=f"{repr(e)}")
                 if self._failures >= self._max_failures:
                     logging.warning(
                         f"{self.__class__.__name__} Publishing DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
@@ -482,23 +482,27 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
         return published
 
-    def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
+    def publish_attributes(self, mqtt: MqttClient, clean: bool = False, **kwargs) -> None:
         """Publishes the attributes for this sensor.
 
         Args:
             mqtt:       The MQTT client for publishing the current state.
+            clean:      True if the attributes are to be cleaned rather than published.
             **kwargs:   key=value pairs that will be added as attributes.
         """
-        if self.publishable and not Config.clean:
+        if clean:
+            logging.debug(f"{self.name} - Cleaning attributes")
+            mqtt.publish(self["json_attributes_topic"], None, qos=1, retain=True)  # Clear retained messages
+        elif self.publishable:
             attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
             for k, v in kwargs.items():
                 attributes[k] = v
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
-            mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), 2, True)
-        self.force_publish = False
+            mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), qos=2, retain=True)
+            self.force_publish = False
         for sensor in self._derived_sensors.values():
-            sensor.publish_attributes(mqtt)
+            sensor.publish_attributes(mqtt, clean=clean)
 
     def set_latest_state(self, state: float | int | str) -> None:
         """Updates the latest state of this sensor, and passes the updated state to any derived sensors.

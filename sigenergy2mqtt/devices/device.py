@@ -219,34 +219,37 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
 
     def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
-        components = {}
-        for sensor in self.sensors.values():
-            components.update(sensor.get_discovery(mqtt))
-        if len(components) > 0:
-            discovery = {}
-            discovery["dev"] = self
-            discovery["o"] = Config.origin
-            discovery["cmps"] = components
-            discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
-            if clean:
-                logging.debug(f"{self.name} - Publishing empty discovery ({clean=})")
-                mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
-            logging.debug(f"{self.name} - Publishing discovery")
-            if logging.getLogger().isEnabledFor(logging.DEBUG):
-                discovery_dump = Path(Config.persistent_state_path, f"{self.unique_id}.discovery.json")
-                with discovery_dump.open("w") as f:
-                    f.write(discovery_json)
-                logging.debug(f"{self.name} - Discovery JSON dumped to {discovery_dump.resolve()}")
-            info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
-        else:
-            logging.debug(f"{self.name} - Publishing empty availability (No components found)")
+        if clean:
+            logging.debug(f"{self.name} - Cleaning availability")
             self.publish_availability(mqtt, None, qos=1)
-            logging.debug(f"{self.name} - Publishing empty discovery (No components found)")
+            logging.debug(f"{self.name} - Cleaning discovery")
             info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
+        else:
+            components = {}
+            for sensor in self.sensors.values():
+                components.update(sensor.get_discovery(mqtt))
+            if len(components) > 0:
+                discovery = {}
+                discovery["dev"] = self
+                discovery["o"] = Config.origin
+                discovery["cmps"] = components
+                discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
+                logging.debug(f"{self.name} - Publishing discovery")
+                if logging.getLogger().isEnabledFor(logging.DEBUG):
+                    discovery_dump = Path(Config.persistent_state_path, f"{self.unique_id}.discovery.json")
+                    with discovery_dump.open("w") as f:
+                        f.write(discovery_json)
+                    logging.debug(f"{self.name} - Discovery JSON dumped to {discovery_dump.resolve()}")
+                info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
+            else:
+                logging.debug(f"{self.name} - Publishing empty availability (No components found)")
+                self.publish_availability(mqtt, None, qos=1)
+                logging.debug(f"{self.name} - Publishing empty discovery (No components found)")
+                info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
+        for sensor in self.sensors.values():
+            sensor.publish_attributes(mqtt, clean=clean)
         for device in self._children:
             device.publish_discovery(mqtt, clean=clean)
-        for sensor in self.sensors.values():
-            sensor.publish_attributes(mqtt)
         return info
 
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
