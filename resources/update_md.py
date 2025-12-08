@@ -420,7 +420,7 @@ async def compare_sensor_instances():
             for i in v:
                 if isinstance(sensor_instances[i], ReservedSensor):
                     continue
-                logging.warning(f"Register {k} ({sensor_instances[i].name}) found in sensor instances but not defined in TypQxQ")
+                logging.warning(f"V{sensor_instances[i].protocol_version} Register {k} ({sensor_instances[i].name}) found in sensor instances but not defined in TypQxQ")
 
     with SENSORS.open("w") as f:
         f.write("# Home Assistant Sensors\n")

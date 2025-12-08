@@ -23,7 +23,7 @@ async def get_sensor_instances(
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
 ):
-    logging.info(f"Sigenergy Modbus Protocol V{protocol_version} ({ProtocolApplies(protocol_version)})")
+    logging.info(f"Sigenergy Modbus Protocol V{protocol_version} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
