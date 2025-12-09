@@ -1962,7 +1962,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
 
 
 class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
-    """Superclass of all sensor definitions that are derived by accumulating a daily total from a power sensor"""
+    """Superclass of all sensor definitions that are derived by accumulating a daily total from an energy sensor"""
 
     futures: set[Future] = set()
 
