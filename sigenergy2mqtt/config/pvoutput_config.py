@@ -140,13 +140,13 @@ class PVOutputConfiguration:
                     for period in tariff.periods:
                         if "All" in period.days or dow in period.days or ("Weekdays" in period.days and dow in WEEKDAYS) or ("Weekends" in period.days and dow in WEEKENDS):
                             if period.start <= now < period.end:
-                                if self.update_debug_logging:
-                                    logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date}-{tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}")
+                                if self.calc_debug_logging:
+                                    logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}")
                                 export_type, import_type = self._type_to_output_fields(period.type)
                                 break
                     else:
-                        if self.update_debug_logging:
-                            logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date}-{tariff.to_date}) but no time matched so using default '{tariff.default}'")
+                        if self.calc_debug_logging:
+                            logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) but no time matched so using default '{tariff.default}'")
                         export_type, import_type = self._type_to_output_fields(tariff.default)  # Set the default types if date matched but time outside of defined periods
         return (export_type, import_type)
 
