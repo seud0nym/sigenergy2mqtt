@@ -22,14 +22,14 @@ class PVOutputOutputService(Service):
         _eo = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_OFF_PEAK)
         _ep = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_PEAK)
         _es = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_SHOULDER)
-        _e = ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, time_periods=(_eh, _eo, _ep, _es))
+        _e = ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, periods=(_eh, _eo, _ep, _es))
         _g = ServiceTopics(self, False, logger, value_key=OutputField.GENERATION)  # Disable EoD generation update because it is updated via the status service
         _ih = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_HIGH_SHOULDER)
         _io = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_OFF_PEAK)
         _ip = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_PEAK)
         _is = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_SHOULDER)
-        _i = ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, time_periods=(_ih, _io, _ip, _is))  # Dummy parent for import periods
-        _pp = ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calculation=Calculation.SUM | Calculation.PEAK)
+        _i = ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, periods=(_ih, _io, _ip, _is))  # Dummy parent for import periods
+        _pp = ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calc=Calculation.SUM | Calculation.PEAK)
 
         self._latest_peak_at: str = None
         self._previous_payload: dict = None
@@ -48,6 +48,7 @@ class PVOutputOutputService(Service):
             OutputField.EXPORT_SHOULDER: _es,
             OutputField.EXPORT_HIGH_SHOULDER: _eh,
         }
+        
         for field, topic_list in topics.items():
             if field in self._service_topics:
                 for topic in topic_list:
