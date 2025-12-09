@@ -311,7 +311,7 @@ class ServiceTopics(dict[str, Topic]):
                         with self._persistent_state_file.open("w") as f:
                             json.dump(self, f, default=Topic.json_encoder)
             elif Config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
-                self._logger.debug(f"{self._service.__class__.__name__} Ignored {self._name} from '{topic}': {state=} (<= Previous peak={self[topic].state})")
+                self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from '{topic}': {state=} (<= Previous peak={self[topic].state})")
             if self._time_periods:
                 current_period = Config.pvoutput.current_time_period
                 other_periods_total = sum(child.aggregate(True, never_return_none=True)[0] for child in self._time_periods if child._value_key not in current_period) / self[topic].gain
