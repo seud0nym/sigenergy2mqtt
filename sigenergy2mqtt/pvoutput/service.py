@@ -123,6 +123,7 @@ class Service(Device):
                 if Config.pvoutput.testing:
                     uploaded = True
                     self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
+                    response = {"status_code": 200, "headers": {"X-Rate-Limit-Remaining": 60}}
                     break
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")
@@ -135,30 +136,28 @@ class Service(Device):
                             )
                             break
                         else:
-                            self.logger.warning(f"{self.__class__.__name__} Attempt #{i} FAILED status_code={response.status_code} reason={response.reason}")
-                        if int(response.headers["X-Rate-Limit-Remaining"]) < 10:
-                            self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
-                            await asyncio.sleep(reset)
-                        else:
                             response.raise_for_status()
                             break
             except requests.exceptions.HTTPError as exc:
                 response = exc.response
                 limit, remaining, at, reset = self.get_response_headers(response)
                 if response.status_code == 400:
-                    self.logger.error(f"{self.__class__.__name__} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                    self.logger.error(f"{self.__class__.__name__} Attempt #{i} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
                     break
                 else:
-                    self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                    self.logger.error(f"{self.__class__.__name__} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
             except requests.exceptions.ConnectionError as exc:
-                self.logger.error(f"{self.__class__.__name__} Error Connecting: {exc}")
+                self.logger.error(f"{self.__class__.__name__} Attempt #{i} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
-                self.logger.error(f"{self.__class__.__name__} Timeout Error: {exc}")
+                self.logger.error(f"{self.__class__.__name__} Attempt #{i} Timeout Error: {exc}")
             except Exception as exc:
                 self.logger.error(f"{self.__class__.__name__} {exc}")
-            if i <= 2:
+            if response and response.status_code != 200 and "headers" in response and "X-Rate-Limit-Remaining" in response.headers and int(response.headers["X-Rate-Limit-Remaining"]) < 10:
+                self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
+                await asyncio.sleep(reset)
+            else:
                 self.logger.info(f"{self.__class__.__name__} Retrying in 10 seconds")
                 await asyncio.sleep(10)
         else:
-            self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after 3 attempts")
+            self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after {i} attempts")
         return uploaded
