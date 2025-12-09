@@ -1,5 +1,5 @@
 {
-    "ruff.lineLength": 200,
+    "ruff.lineLength": 210,
     "python.analysis.extraPaths": [
         "./sigenergy2mqtt"
     ],

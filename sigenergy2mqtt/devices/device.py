@@ -5,7 +5,7 @@ from random import randint, uniform
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.base import ReadableSensorMixin, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadableSensorMixin, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.const import InputType
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Self
 import abc
@@ -254,15 +254,17 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
 
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
         async def publish_updates(modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: Sensor) -> None:
-            multiple = len(sensors) > 1
-            first_address = min([s._address for s in sensors if hasattr(s, "_address")])
-            last_address = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address")])
-            count = sum([s._count for s in sensors if hasattr(s, "_count")])
-            contiguous = multiple and first_address and last_address and (last_address - first_address + 1) == count
-            interval = min([s.scan_interval for s in sensors if isinstance(s, ReadableSensorMixin)])  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor)
-            debug_logging = any(s.debug_logging for s in sensors)
+            multiple: bool = len(sensors) > 1
+            first_address: int = min([s._address for s in sensors if hasattr(s, "_address")])
+            last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address")])
+            count: int = sum([s._count for s in sensors if hasattr(s, "_count")])
+            contiguous: bool = multiple and first_address and last_address and (last_address - first_address + 1) == count
+            interval: int = min([s.scan_interval for s in sensors if isinstance(s, ReadableSensorMixin)])  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor)
+            debug_logging: bool = False
+            daily_sensors: bool = False
             for sensor in sensors:
                 debug_logging = debug_logging or sensor.debug_logging
+                daily_sensors = daily_sensors or isinstance(sensor, EnergyDailyAccumulationSensor)
                 if not contiguous and hasattr(sensor, "_address") and hasattr(sensor, "_count"):
                     modbus.bypass_read_ahead(sensor._address, sensor._count)
                 if sensor.publishable:
@@ -270,19 +272,25 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                         logging.warning(f"Sensor {sensor.__class__.__name__} scan-interval ({sensor.scan_interval}s) ignored - the interval of {self.name} Sensor Group [{name}] is {interval}s")
                     if sensor.latest_raw_state is not None:
                         await sensor.publish(mqtt, modbus, republish=True)
-            last_publish: float = time.monotonic()
+            last_publish: float = time.time()
             next_publish: float = last_publish + uniform(0.5, min(5, interval))
             actual_elapsed: list[float] = []
             if debug_logging:
                 logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced ({interval=}s)")
             lock = ModbusLockFactory.get(modbus)
             while self.online:
-                now = time.monotonic()  # Grab the started time first, so that elapsed contains ALL activity
+                now = time.time()  # Grab the started time first, so that elapsed contains ALL activity
                 if any(sensor for sensor in sensors if sensor.force_publish):
                     if debug_logging:
                         logging.debug(f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because force_publish set on {sensor.__class__.__name__}")
                     next_publish = now  # If any sensor requires a force publish, process all of them now
-                    break
+                elif daily_sensors:
+                    now_struct: time.struct_time = time.localtime(now)
+                    was = time.localtime(last_publish)
+                    if was.tm_yday != now_struct.tm_yday:
+                        if debug_logging:
+                            logging.debug(f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and midnight just passed")
+                        next_publish = now
                 if next_publish <= now:
                     last_publish = now
                     publishable_now = [sensor for sensor in sensors if isinstance(sensor, ReadableSensorMixin) and sensor.publishable]  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor, etc.)
@@ -293,25 +301,25 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                             if multiple and contiguous:
                                 if debug_logging:
                                     logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} ({count} registers)")
-                                    read_ahead_start = time.monotonic()
+                                    read_ahead_start = time.time()
                                 await modbus.read_ahead_registers(first_address, count=count, device_id=sensors[0]._device_address, input_type=sensors[0]._input_type)
                                 if debug_logging:
                                     logging.debug(
-                                        f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} ({count} registers) took {time.monotonic() - read_ahead_start:.2f}s"
+                                        f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s"
                                     )
                             for sensor in publishable_now:
                                 await sensor.publish(mqtt, modbus)
                                 if sensor.latest_interval is not None:
                                     actual_elapsed.append(sensor.latest_interval)
-                            elapsed = time.monotonic() - now
+                            elapsed = time.time() - now
                             average_excess = statistics.fmean(actual_elapsed) - interval if len(actual_elapsed) > 0 else 0
                             if elapsed > interval and modbus.connected:
                                 logging.info(f"{self.name} Sensor Scan Group [{name}] exceeded scan interval ({interval=}s) {elapsed=:.2f}s {average_excess=:.3f}s")
                         if len(actual_elapsed) > 100:
                             actual_elapsed = actual_elapsed[-100:]
-                        next_publish = time.monotonic() + max(interval - elapsed, 0.5)
+                        next_publish = time.time() + max(interval - elapsed, 0.5)
                         if debug_logging:
-                            logging.debug(f"{self.name} Sensor Scan Group [{name}] {interval=}s {elapsed=:.2f}s next={next_publish - time.monotonic():.2f}s {average_excess=:.3f}s")
+                            logging.debug(f"{self.name} Sensor Scan Group [{name}] {interval=}s {elapsed=:.2f}s next={next_publish - time.time():.2f}s {average_excess=:.3f}s")
                         if self.rediscover:
                             logging.debug(f"{self.name} Sensor Scan Group [{name}]: Acquiring lock to republish discovery... ({lock.waiters=})")
                             async with lock.lock(timeout=1):
@@ -331,7 +339,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                                 logging.info(f"{self.name} reconnected to Modbus")
                     except Exception as e:
                         logging.error(f"{self.name} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
-                sleep = min(next_publish - time.monotonic(), 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+                sleep = min(next_publish - time.time(), 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
                 if sleep > 0:
                     task = asyncio.create_task(asyncio.sleep(sleep))
                     for sensor in sensors:
