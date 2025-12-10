@@ -296,17 +296,17 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     publishable_now = [sensor for sensor in sensors if isinstance(sensor, ReadableSensorMixin) and sensor.publishable]  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor, etc.)
                     try:
                         async with lock.lock():
-                            if debug_logging:
-                                logging.debug(f"{self.name} Sensor Scan Group [{name}] publishing sensors (interval={now - last_publish:.2f}s)")
                             if multiple and contiguous:
                                 if debug_logging:
-                                    logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} ({count} registers)")
+                                    logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} (interval={now - last_publish:.2f}s)")
                                     read_ahead_start = time.time()
                                 await modbus.read_ahead_registers(first_address, count=count, device_id=sensors[0]._device_address, input_type=sensors[0]._input_type)
                                 if debug_logging:
                                     logging.debug(
                                         f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s"
                                     )
+                            elif debug_logging:
+                                logging.debug(f"{self.name} Sensor Scan Group [{name}] publishing sensors (interval={now - last_publish:.2f}s)")
                             for sensor in publishable_now:
                                 await sensor.publish(mqtt, modbus)
                                 if sensor.latest_interval is not None:

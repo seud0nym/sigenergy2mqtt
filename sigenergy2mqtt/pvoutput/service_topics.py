@@ -311,13 +311,19 @@ class ServiceTopics(dict[str, Topic]):
                         with self._persistent_state_file.open("w") as f:
                             json.dump(self, f, default=Topic.json_encoder)
             elif Config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
-                self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from '{topic}': {state=} (<= Previous peak={self[topic].state})")
+                seconds = time.localtime() - time.mktime(
+                    self[topic].timestamp if self[topic].restore_timestamp is None or self[topic].timestamp > self[topic].restore_timestamp else self[topic].restore_timestamp
+                )
+                if int(seconds) % 60 == 0:
+                    self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from '{topic}': {state=} (<= Previous peak={self[topic].state})")
             if self._time_periods:
                 current_period = Config.pvoutput.current_time_period
                 other_periods_total = sum(child.aggregate(True, never_return_none=True)[0] for child in self._time_periods if child._value_key not in current_period) / self[topic].gain
                 this_period_state = max(state - other_periods_total, 0.0)
                 if Config.pvoutput.update_debug_logging:
-                    self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} children: {state=} {other_periods_total=} {this_period_state=} current_period={current_period[0].value}/{current_period[1].value} {topic=}")
+                    self._logger.debug(
+                        f"{self._service.__class__.__name__} Updating {self._name} children: {state=} {other_periods_total=} {this_period_state=} current_period={current_period[0].value}/{current_period[1].value} {topic=}"
+                    )
                 for child in self._time_periods:
                     if child._value_key in current_period:
                         await child.update(modbus, mqtt, this_period_state, topic, handler)
