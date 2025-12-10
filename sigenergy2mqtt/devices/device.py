@@ -263,8 +263,8 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             debug_logging: bool = False
             daily_sensors: bool = False
             for sensor in sensors:
-                debug_logging = debug_logging or sensor.debug_logging
-                daily_sensors = daily_sensors or isinstance(sensor, EnergyDailyAccumulationSensor)
+                debug_logging = debug_logging or sensor.debug_logging or any(ds.debug_logging for ds in sensor._derived_sensors.values())
+                daily_sensors = daily_sensors or any(isinstance(ds, EnergyDailyAccumulationSensor) for ds in sensor._derived_sensors.values())
                 if not contiguous and hasattr(sensor, "_address") and hasattr(sensor, "_count"):
                     modbus.bypass_read_ahead(sensor._address, sensor._count)
                 if sensor.publishable:
@@ -276,7 +276,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             next_publish: float = last_publish + uniform(0.5, min(5, interval))
             actual_elapsed: list[float] = []
             if debug_logging:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced ({interval=}s)")
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced (interval={interval}s {daily_sensors=})")
             lock = ModbusLockFactory.get(modbus)
             while self.online:
                 now = time.time()  # Grab the started time first, so that elapsed contains ALL activity
