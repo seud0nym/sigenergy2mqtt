@@ -70,6 +70,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
             self._mqtt_client = mqtt_client
         self._total_sleep_time: int = 0
         self._read_count: int = 0
+        self._written_addresses: list[int] = []
 
     @classmethod
     def create(cls, device_address: int, mqtt_client: MqttClient) -> "CustomDataBlock":
@@ -85,7 +86,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                 registers = registers[: sensor._count]  # Truncate to the required length
         else:
             match sensor._address:
-                case 30027 | 30028 | 30029 | 30030 | 30072 | 30605 | 30606 | 30607 | 30608 | 30609 | 32012 | 32013 | 32014:  # Alarms
+                case 30027 | 30028 | 30029 | 30030 | 30072 | 30280 | 30281 | 30605 | 30606 | 30607 | 30608 | 30609 | 32012 | 32013 | 32014:  # Alarms
                     value = 0
                 case 31004:  # OutputType
                     value = 2
@@ -108,6 +109,8 @@ class CustomDataBlock(ModbusSparseDataBlock):
 
     def _handle_mqtt_message(self, topic: str, value: str) -> None:
         sensor = self._topics.get(topic)
+        if sensor._address in self._written_addresses:
+            return  # Ignore messages for addresses that were just written to
         if sensor._data_type == ModbusClientMixin.DATATYPE.STRING:
             registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
             if len(registers) < sensor._count:
@@ -124,7 +127,6 @@ class CustomDataBlock(ModbusSparseDataBlock):
             super().setValues(31019, registers)
             super().setValues(31021, registers)
 
-
     async def async_getValues(self, fc_as_hex: int, address: int, count=1):
         delay_avg: int = 15
         delay_min: int = 5
@@ -139,6 +141,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
         return super().getValues(address, count)
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]):
+        self._written_addresses.append(address)
         return super().setValues(address, values)
 
 
