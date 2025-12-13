@@ -17,13 +17,13 @@ from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, Plant
 async def get_sensor_instances(
     hass: bool = False,
     plant_index: int = 0,
-    protocol_version: Protocol = list(Protocol)[-1].value,
+    protocol_version: Protocol = list(Protocol)[-1],
     hybrid_inverter_device_address: int = 1,
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
 ):
-    logging.info(f"Sigenergy Modbus Protocol V{protocol_version} [{ProtocolApplies(protocol_version)}] ({hass=})")
+    logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)

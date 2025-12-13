@@ -347,7 +347,7 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
 
 
 class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, phase: str):
+    def __init__(self, plant_index: int, power_phases: int, phase: str):
         match phase:
             case "A":
                 address = 30015
@@ -358,7 +358,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name=f"Phase {phase} Active Power",
+            name=f"Phase {phase} Active Power" if power_phases > 1 else "Phase Active Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -378,7 +378,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, phase: str):
+    def __init__(self, plant_index: int, power_phases: int, phase: str):
         match phase:
             case "A":
                 address = 30021
@@ -389,7 +389,7 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name=f"Phase {phase} Reactive Power",
+            name=f"Phase {phase} Reactive Power" if power_phases > 1 else "Phase Reactive Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1471,9 +1471,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
-        attributes["comment"] = (
-            "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
-        )
+        attributes["comment"] = "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
         return attributes
 
 
@@ -1677,6 +1675,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_8,
         )
         self["entity_category"] = "diagnostic"
+
 
 class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):

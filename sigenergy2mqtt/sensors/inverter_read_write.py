@@ -161,8 +161,8 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             gain=100,
             precision=None,
             protocol_version=Protocol.V2_5,
-            min=-100.00,
-            max=100.00,
+            minimum=-100.00,
+            maximum=100.00,
         )
 
 
@@ -186,8 +186,8 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             gain=100,
             precision=None,
             protocol_version=Protocol.V2_5,
-            min=-60.0,
-            max=60.0,
+            minimum=-60.0,
+            maximum=60.0,
         )
 
 
@@ -211,6 +211,6 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            min=-1.0,
-            max=1.0,
+            minimum=-1.0,
+            maximum=1.0,
         )

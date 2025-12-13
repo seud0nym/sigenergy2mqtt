@@ -71,8 +71,8 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
-            min=-60.0,
-            max=60.0,
+            minimum=-60.0,
+            maximum=60.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -101,8 +101,8 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             gain=100,
             precision=None,
             protocol_version=Protocol.V1_8,
-            min=-100.00,
-            max=100.00,
+            minimum=-100.00,
+            maximum=100.00,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -131,8 +131,8 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             gain=100,
             precision=None,
             protocol_version=Protocol.V1_8,
-            min=-60.0,
-            max=60.0,
+            minimum=-60.0,
+            maximum=60.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -162,8 +162,8 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
-            min=(-1.0, -0.8),
-            max=(0.8, 1.0),
+            minimum=(-1.0, -0.8),
+            maximum=(0.8, 1.0),
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -301,8 +301,8 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             gain=100,
             precision=None,
             protocol_version=Protocol.V1_8,
-            min=-100.00,
-            max=100.00,
+            minimum=-100.00,
+            maximum=100.00,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -342,8 +342,8 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             gain=100,
             precision=None,
             protocol_version=Protocol.V1_8,
-            min=-60.00,
-            max=60.00,
+            minimum=-60.00,
+            maximum=60.00,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -463,7 +463,7 @@ class RemoteEMSLimit(NumericSensor):
         plant_index: int,
         address: int,
         icon: str,
-        max: float,
+        maximum: float,
         protocol_version: Protocol,
     ):
         super().__init__(
@@ -484,7 +484,7 @@ class RemoteEMSLimit(NumericSensor):
             gain=1000,
             precision=2,
             protocol_version=protocol_version,
-            max=max,
+            maximum=maximum,
         )
         self._remote_ems_mode = remote_ems_mode
         self._charging = charging
@@ -520,7 +520,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
             plant_index=plant_index,
             address=40032,
             icon="mdi:battery-charging-high",
-            max=rated_charging_power,
+            maximum=rated_charging_power,
             protocol_version=Protocol.V1_8,
         )
 
@@ -548,7 +548,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
             plant_index=plant_index,
             address=40034,
             icon="mdi:battery-charging-low",
-            max=rated_discharging_power,
+            maximum=rated_discharging_power,
             protocol_version=Protocol.V1_8,
         )
 
@@ -576,7 +576,7 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
             plant_index=plant_index,
             address=40036,
             icon="mdi:solar-power",
-            max=4294967.295,
+            maximum=4294967.295,
             protocol_version=Protocol.V1_8,
         )
 
@@ -612,7 +612,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            max=4294967.295,
+            maximum=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -641,7 +641,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            max=4294967.295,
+            maximum=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -670,7 +670,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            max=4294967.295,
+            maximum=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -708,7 +708,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            max=4294967.295,
+            maximum=4294967.295,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -824,7 +824,7 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_8,
-            max=5000,
+            maximum=5000,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -868,7 +868,7 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            max=10.0,
+            maximum=10.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -897,7 +897,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            max=10.0,
+            maximum=10.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -978,7 +978,7 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            max=10.0,
+            maximum=10.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1007,7 +1007,7 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            max=10.0,
+            maximum=10.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1116,8 +1116,8 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=1.0 * rated_frequency,
-            max=1.2 * rated_frequency,
+            minimum=1.0 * rated_frequency,
+            maximum=1.2 * rated_frequency,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1146,8 +1146,8 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=1.0 * rated_frequency,
-            max=1.2 * rated_frequency,
+            minimum=1.0 * rated_frequency,
+            maximum=1.2 * rated_frequency,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1219,8 +1219,8 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.8 * rated_frequency,
-            max=1.0 * rated_frequency,
+            minimum=0.8 * rated_frequency,
+            maximum=1.0 * rated_frequency,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1249,8 +1249,8 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.8 * rated_frequency,
-            max=1.0 * rated_frequency,
+            minimum=0.8 * rated_frequency,
+            maximum=1.0 * rated_frequency,
         )
 
     def get_attributes(self) -> dict[str, Any]:

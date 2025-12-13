@@ -34,7 +34,7 @@ class PowerPlant(ModbusDevice):
             247,
             "Energy Management System",
             protocol_version,
-            sw=f"Modbus Protocol V{protocol_version}",
+            sw=f"Modbus Protocol V{protocol_version.value}",
         )
         battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
@@ -46,14 +46,14 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.MaxActivePower(plant_index))
         self._add_read_sensor(ro.MaxApparentPower(plant_index))
         self._add_read_sensor(ro.PlantBatterySoC(plant_index))
-        self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, "A"))
-        self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, "A"))
+        self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "A"))
+        self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "A"))
         if power_phases > 1:
-            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, "B"))
-            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, "B"))
+            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "B"))
+            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "B"))
         if power_phases > 2:
-            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, "C"))
-            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, "C"))
+            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "C"))
+            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "C"))
         self._add_read_sensor(ro.GeneralPCSAlarm(plant_index, ro.GeneralAlarm1(plant_index), ro.GeneralAlarm2(plant_index)))
         self._add_read_sensor(ro.GeneralAlarm3(plant_index))
         self._add_read_sensor(ro.GeneralAlarm4(plant_index))

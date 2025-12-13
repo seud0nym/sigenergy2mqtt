@@ -1216,8 +1216,8 @@ class NumericSensor(ReadWriteSensor):
         gain: float,
         precision: int,
         protocol_version: Protocol,
-        min: float | tuple[float] = 0.0,
-        max: float | tuple[float] = 100.0,
+        minimum: float | tuple[float] = 0.0,
+        maximum: float | tuple[float] = 100.0,
     ):
         super().__init__(
             availability_control_sensor,
@@ -1238,9 +1238,15 @@ class NumericSensor(ReadWriteSensor):
             precision,
             protocol_version,
         )
+        assert (isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)) and minimum < maximum) or (
+            isinstance(minimum, (tuple, list))
+            and isinstance(maximum, (tuple, list))
+            and len(minimum) == len(maximum)
+            and all(isinstance(mn, (int, float)) and isinstance(mx, (int, float)) and mn < mx for mn, mx in zip(minimum, maximum))
+        ), f"{self.__class__.__name__} Invalid min/max values: {minimum}/{maximum}"
         self["platform"] = "number"
-        self["min"] = min
-        self["max"] = max
+        self["min"] = minimum
+        self["max"] = maximum
         self["mode"] = "slider" if unit == PERCENTAGE else "box"
         self["step"] = 1 if precision is None else 10**-precision
         self._sanity.min_value = None
@@ -1278,13 +1284,13 @@ class NumericSensor(ReadWriteSensor):
     async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
         try:
             state = float(value)
-            min = self["min"]
-            max = self["max"]
-            if (isinstance(min, (tuple, list)) and not min(min) <= state <= max(min)) or state < min:
-                logging.error(f"{self.name} - Invalid value '{value}': Less than minimum of {min}")
+            minimum = self["min"]
+            maximum = self["max"]
+            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or state < minimum:
+                logging.error(f"{self.name} - Invalid value '{value}': Less than minimum of {minimum}")
                 return False
-            elif (isinstance(max, (tuple, list)) and not min(max) <= state <= max(max)) or state > max:
-                logging.error(f"{self.name} - Invalid value '{value}': Greater than maximum of {max}")
+            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or state > maximum:
+                logging.error(f"{self.name} - Invalid value '{value}': Greater than maximum of {maximum}")
                 return False
             return True
         except ValueError:
