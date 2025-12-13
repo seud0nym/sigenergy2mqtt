@@ -109,7 +109,7 @@ async def get_sensor_instances(
 
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
-    ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, 1.0, 2.0, rated_current, input_breaker)
+    ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, 16.0, 32.0, rated_current, input_breaker)
 
     classes = {}
     registers = {}

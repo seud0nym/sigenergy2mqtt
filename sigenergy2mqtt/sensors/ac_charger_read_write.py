@@ -60,6 +60,11 @@ class ACChargerOutputCurrent(NumericSensor):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_0,
-            min=6.0,
-            max=min(input_breaker, rated_current),
+            minimum=6.0,
+            maximum=min(input_breaker, rated_current),
         )
+
+    def get_attributes(self) -> dict[str, any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']"
+        return attributes

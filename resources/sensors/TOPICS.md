@@ -4454,6 +4454,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_002_accharger/sigen_0_ac_charger_2_output_current/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/state</td></tr>
 <tr><td>Source</td><td>42001</td></tr>
+<tr><td>Comment</td><td>Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 <h5><a id='sigen_0_002_32007'>Rated Current</a></h5>
@@ -5111,8 +5112,9 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_002_accharger/sigen_0_ac_charger_2_output_current/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_output_current/set</td></tr>
+<tr><td>Comment</td><td>Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>6.0</td></tr>
-<tr><td>Maximum&nbsp;Value</td><td>1.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current'</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
 </table>
 
