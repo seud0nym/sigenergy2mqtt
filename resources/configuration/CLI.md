@@ -1,7 +1,5 @@
 # Command Line Options
 
-#### Release 2025.12.13
-
 ```
 usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
