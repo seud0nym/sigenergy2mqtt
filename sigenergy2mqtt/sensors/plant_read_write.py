@@ -1,4 +1,4 @@
-from .base import DeviceClass, InputType, NumericSensor, RemoteEMSMixin, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, AvailabilityMixin, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
 from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
@@ -29,9 +29,9 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
 
 
 class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             name="Active Power Fixed Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -54,7 +54,7 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Reactive Power Fixed Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_reactive_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -82,9 +82,9 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
 
 
 class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             name="Active Power Percentage Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_percentage_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -114,7 +114,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
 class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Q/S Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_q_s_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -145,7 +145,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
     # Range: (-1,-0.8]U[0.8, 1]
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Power Factor Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_power_factor_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -162,18 +162,40 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
-            min=-1.0,
-            max=1.0,
+            min=(-1.0, -0.8),
+            max=(0.8, 1.0),
         )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [(-1, -0.8) U (0.8, 1)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        return attributes
+
+
+class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
+    # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
+    def __init__(self, plant_index: int, output_type: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="Independent Phase Power Control",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
+            plant_index=plant_index,
+            device_address=247,
+            address=40030,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            protocol_version=Protocol.V1_8,
+        )
+        if output_type != 2:  # L1/L2/L3/N
+            self.publishable = False
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
         return attributes
 
 
 class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, output_type: int, phase: str):
+    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40008
@@ -184,7 +206,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=independent_phase_power_control,
             name=f"Phase {phase} Active Power Fixed Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -212,7 +234,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
 
 
 class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, output_type: int, phase: str):
+    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40014
@@ -223,7 +245,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=independent_phase_power_control,
             name=f"Phase {phase} Reactive Power Fixed Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_reactive_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -251,7 +273,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
 
 
 class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, output_type: int, phase: str):
+    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40020
@@ -262,7 +284,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=independent_phase_power_control,
             name=f"Phase {phase} Active Power Percentage Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power_percentage_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -292,7 +314,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
 
 
 class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, output_type: int, phase: str):
+    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40023
@@ -303,7 +325,7 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=independent_phase_power_control,
             name=f"Phase {phase} Q/S Fixed Adjustment Target Value",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_q_s_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -354,10 +376,10 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
         )
 
 
-class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
+class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Remote EMS",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems",
             plant_index=plant_index,
@@ -373,32 +395,10 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, RemoteEMSMixin):
         return attributes
 
 
-class IndependentPhasePowerControl(SwitchSensor, HybridInverter):
-    # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, output_type: int):
-        super().__init__(
-            remote_ems=remote_ems,
-            name="Independent Phase Power Control",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
-            plant_index=plant_index,
-            device_address=247,
-            address=40030,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            protocol_version=Protocol.V1_8,
-        )
-        if output_type != 2:  # L1/L2/L3/N
-            self.publishable = False
-
-    def get_attributes(self) -> dict[str, Any]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
-        return attributes
-
-
 class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             name="Remote EMS Control Mode",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems_control_mode",
             plant_index=plant_index,
@@ -406,13 +406,13 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             address=40031,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             options=[
-                "PCS remote control",
-                "Standby",
-                "Maximum Self-consumption (Default)",
-                "Command Charging (Consume power from the grid first)",
-                "Command Charging (Consume power from the PV first)",
-                "Command Discharging (Output power from PV first)",
-                "Command Discharging (Output power from the battery first)",
+                "PCS remote control",  # 0
+                "Standby",  # 1
+                "Maximum Self-consumption (Default)",  # 2
+                "Command Charging (Consume power from the grid first)",  # 3
+                "Command Charging (Consume power from the PV first)",  # 4
+                "Command Discharging (Output power from PV first)",  # 5
+                "Command Discharging (Output power from the battery first)",  # 6
             ],
             protocol_version=Protocol.V1_8,
         )
@@ -444,11 +444,17 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             return True
         return result
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if self._availability_control_sensor is not None and self._availability_control_sensor.get_state(raw=True, republish=True, modbus=modbus) in (0, "0"):
+            logging.error(f"{self.__class__.__name__} Failed to write '{self['options'][value]}' ({value}): {self._availability_control_sensor.name} is not enabled")
+            return False
+        return await super().value_is_valid(modbus, value)
 
-class RemoteEMSLimit(NumericSensor, HybridInverter):
+
+class RemoteEMSLimit(NumericSensor):
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        remote_ems: AvailabilityMixin,
         remote_ems_mode: RemoteEMSControlMode,
         charging: bool,
         discharging: bool,
@@ -461,7 +467,7 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         protocol_version: Protocol,
     ):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             name=name,
             object_id=object_id,
             input_type=InputType.HOLDING,
@@ -478,7 +484,6 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
             gain=1000,
             precision=2,
             protocol_version=protocol_version,
-            min=0,
             max=max,
         )
         self._remote_ems_mode = remote_ems_mode
@@ -496,9 +501,15 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
                 self["availability"].append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
+            logging.error(f"{self.__class__.__name__} Failed to write value '{value}': {self._availability_control_sensor.name} is not enabled")
+            return False
+        return await super().value_is_valid(modbus, value)
 
-class MaxChargingLimit(RemoteEMSLimit):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
+
+class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
         super().__init__(
             remote_ems=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -518,9 +529,15 @@ class MaxChargingLimit(RemoteEMSLimit):
         attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging"
         return attributes
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4):
+            logging.error(f"{self.__class__.__name__} Failed to write value '{value}': Remote EMS control mode is not set to Command Charging")
+            return False
+        return await super().value_is_valid(modbus, value)
 
-class MaxDischargingLimit(RemoteEMSLimit):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
+
+class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
         super().__init__(
             remote_ems=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -540,9 +557,15 @@ class MaxDischargingLimit(RemoteEMSLimit):
         attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging"
         return attributes
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6):
+            logging.error(f"{self.__class__.__name__} Failed to write value '{value}': Remote EMS control mode is not set to Command Discharging")
+            return False
+        return await super().value_is_valid(modbus, value)
 
-class PVMaxPowerLimit(RemoteEMSLimit):
-    def __init__(self, plant_index: int, remote_ems: RemoteEMSMixin, remote_ems_mode: RemoteEMSControlMode):
+
+class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
             remote_ems=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -562,11 +585,17 @@ class PVMaxPowerLimit(RemoteEMSLimit):
         attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
         return attributes
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6):
+            logging.error(f"{self.__class__.__name__} Failed to write value '{value}': Remote EMS control mode is not set to Command Charging/Discharging")
+            return False
+        return await super().value_is_valid(modbus, value)
+
 
 class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Grid Max Export Limit",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_max_export_limit",
             input_type=InputType.HOLDING,
@@ -583,7 +612,6 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            min=0,
             max=4294967.295,
         )
 
@@ -596,7 +624,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
 class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Grid Max Import Limit",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_max_import_limit",
             input_type=InputType.HOLDING,
@@ -613,7 +641,6 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            min=0,
             max=4294967.295,
         )
 
@@ -626,7 +653,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="PCS Max Export Limit",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcs_max_export_limit",
             input_type=InputType.HOLDING,
@@ -643,7 +670,6 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            min=0,
             max=4294967.295,
         )
 
@@ -665,7 +691,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
 class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="PCS Max Import Limit",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcs_max_import_limit",
             input_type=InputType.HOLDING,
@@ -682,7 +708,6 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            min=0,
             max=4294967.295,
         )
 
@@ -695,7 +720,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 class ESSBackupSOC(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Backup SoC",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_backup_soc",
             input_type=InputType.HOLDING,
@@ -712,8 +737,6 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             gain=10,
             precision=None,
             protocol_version=Protocol.V2_6,
-            min=0.00,
-            max=100.00,
         )
         self["enabled_by_default"] = True
 
@@ -726,7 +749,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
 class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Charge Cut-Off SoC",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_charge_cut_off_soc",
             input_type=InputType.HOLDING,
@@ -743,8 +766,6 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             gain=10,
             precision=None,
             protocol_version=Protocol.V2_6,
-            min=0.00,
-            max=100.00,
         )
         self["enabled_by_default"] = True
 
@@ -757,7 +778,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
 class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Discharge Cut-Off SoC",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_discharge_cut_off_soc",
             input_type=InputType.HOLDING,
@@ -774,8 +795,6 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             gain=10,
             precision=None,
             protocol_version=Protocol.V2_6,
-            min=0.00,
-            max=100.00,
         )
         self["enabled_by_default"] = True
 
@@ -788,7 +807,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
 class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Active Power Regulation Gradient",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_regulation_gradient",
             input_type=InputType.HOLDING,
@@ -805,7 +824,6 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_8,
-            min=0,
             max=5000,
         )
 
@@ -818,7 +836,7 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
 class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Low Voltage Ride Through",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt",
             plant_index=plant_index,
@@ -833,7 +851,7 @@ class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
 class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="LVRT Reactive Power Compensation Factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
@@ -850,7 +868,6 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.0,
             max=10.0,
         )
 
@@ -863,7 +880,7 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
 class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="LVRT Negative Sequence Reactive Power Compensation Factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_negative_sequence_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
@@ -880,7 +897,6 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.0,
             max=10.0,
         )
 
@@ -893,7 +909,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
 class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="LVRT Mode",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_mode",
             plant_index=plant_index,
@@ -916,7 +932,7 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
 class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="LVRT Grid Voltage Protection Blocking",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_grid_voltage_protection_blocking",
             plant_index=plant_index,
@@ -930,7 +946,7 @@ class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
 class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="High Voltage Ride Through",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt",
             plant_index=plant_index,
@@ -945,7 +961,7 @@ class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
 class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="HVRT Reactive Power Compensation Factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
@@ -962,7 +978,6 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.0,
             max=10.0,
         )
 
@@ -975,7 +990,7 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
 class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="HVRT Negative Sequence Reactive Power Compensation Factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_negative_sequence_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
@@ -992,7 +1007,6 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.0,
             max=10.0,
         )
 
@@ -1005,7 +1019,7 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
 class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="HVRT Mode",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_mode",
             plant_index=plant_index,
@@ -1028,7 +1042,7 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
 class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="HVRT Grid Voltage Protection Blocking",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_grid_voltage_protection_blocking",
             plant_index=plant_index,
@@ -1042,7 +1056,7 @@ class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
 class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Over Frequency Derating",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_over_frequency_derating",
             plant_index=plant_index,
@@ -1057,7 +1071,7 @@ class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
 class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Over Frequency Derating Power Ramp Rate",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_power_ramp_rate",
             input_type=InputType.HOLDING,
@@ -1074,8 +1088,6 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.0,
-            max=100.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1087,7 +1099,7 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
 class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Over Frequency Derating Trigger Frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_trigger_frequency",
             input_type=InputType.HOLDING,
@@ -1117,7 +1129,7 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
 class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Over Frequency Derating Cut-Off Frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_cut_off_frequency",
             input_type=InputType.HOLDING,
@@ -1147,7 +1159,7 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
 class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Under-Frequency Power Boost",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost",
             plant_index=plant_index,
@@ -1162,7 +1174,7 @@ class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter)
 class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Under-Frequency Power Boost Power Ramp Rate",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_power_ramp_rate",
             input_type=InputType.HOLDING,
@@ -1179,8 +1191,6 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            min=0.0,
-            max=100.0,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1192,7 +1202,7 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
 class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Under-Frequency Power Boost Trigger Frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_trigger_frequency",
             input_type=InputType.HOLDING,
@@ -1222,7 +1232,7 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
 class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Under-Frequency Power Boost Cut-Off Frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_cut_off_frequency",
             input_type=InputType.HOLDING,

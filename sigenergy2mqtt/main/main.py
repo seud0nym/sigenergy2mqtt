@@ -34,8 +34,8 @@ async def async_main() -> None:
                     inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
                     if plant is None and plant_tmp is not None:
                         plant = plant_tmp
-                        remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
-                        assert remote_ems is not None, "Failed to find RemoteEMS instance"
+                        availability_control_sensor = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
+                        assert availability_control_sensor is not None, "Failed to find RemoteEMS instance"
                         config.add_device(plant_index, plant)
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
                     if inverter is not None:
@@ -58,7 +58,7 @@ async def async_main() -> None:
                         si_sensor.publishable = False
                 else:
                     for device_address in device.ac_chargers:
-                        charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
+                        charger = await make_ac_charger(plant_index, modbus, device_address, plant)
                         config.add_device(plant_index, charger)
                 logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
         else:
@@ -151,12 +151,12 @@ def configure_logging():
         pvoutput.setLevel(Config.pvoutput.log_level)
 
 
-async def make_ac_charger(plant_index, modbus, device_address, plant, remote_ems):
+async def make_ac_charger(plant_index, modbus, device_address, plant):
     input_breaker = ACChargerInputBreaker(plant_index, device_address)
     rated_current = ACChargerRatedCurrent(plant_index, device_address)
     ip_value = await input_breaker.get_state(modbus=modbus)
     rc_value = await rated_current.get_state(modbus=modbus)
-    charger = ACCharger(plant_index, device_address, plant.protocol_version, remote_ems, ip_value, rc_value, input_breaker, rated_current)
+    charger = ACCharger(plant_index, device_address, plant.protocol_version, ip_value, rc_value, input_breaker, rated_current)
     charger.via_device = plant.unique_id
     return charger
 
@@ -228,9 +228,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
 
         plant = PowerPlant(plant_index, device_type, protocol_version, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
 
-    inverter = Inverter(
-        plant_index, device_address, protocol_version, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial
-    )
+    inverter = Inverter(plant_index, device_address, protocol_version, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
     inverter.via_device = plant.unique_id
 
     serial_numbers.append(serial_number)

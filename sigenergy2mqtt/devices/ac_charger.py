@@ -1,6 +1,5 @@
 from .device import ModbusDevice
 from sigenergy2mqtt.config import Protocol
-from sigenergy2mqtt.sensors.base import RemoteEMSMixin
 import sigenergy2mqtt.sensors.ac_charger_read_only as ro
 import sigenergy2mqtt.sensors.ac_charger_read_write as rw
 
@@ -11,7 +10,6 @@ class ACCharger(ModbusDevice):
         plant_index: int,
         device_address: int,
         protocol_version: Protocol,
-        remote_ems: RemoteEMSMixin,
         ib_value: float,
         rc_value: float,
         input_breaker: ro.ACChargerInputBreaker,
@@ -28,9 +26,13 @@ class ACCharger(ModbusDevice):
         self._add_read_sensor(input_breaker)
         self._add_read_sensor(
             ro.ACChargerAlarms(
-                plant_index, device_address, ro.ACChargerAlarm1(plant_index, device_address), ro.ACChargerAlarm2(plant_index, device_address), ro.ACChargerAlarm3(plant_index, device_address)
+                plant_index,
+                device_address,
+                ro.ACChargerAlarm1(plant_index, device_address),
+                ro.ACChargerAlarm2(plant_index, device_address),
+                ro.ACChargerAlarm3(plant_index, device_address),
             )
         )
-        self._add_read_sensor(rw.ACChargerOutputCurrent(remote_ems, plant_index, device_address, ib_value, rc_value))
+        self._add_read_sensor(rw.ACChargerOutputCurrent(plant_index, device_address, ib_value, rc_value))
 
         self._add_writeonly_sensor(rw.ACChargerStatus(plant_index, device_address))

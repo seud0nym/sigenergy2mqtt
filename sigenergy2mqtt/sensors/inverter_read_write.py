@@ -75,7 +75,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
 class InverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Remote EMS Dispatch",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_remote_ems_dispatch",
             input_type=InputType.HOLDING,
@@ -98,7 +98,7 @@ class InverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as 
 class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Active Power Fixed Value Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_fixed_value_adjustment",
             input_type=InputType.HOLDING,
@@ -121,7 +121,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
 class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Reactive Power Fixed Value Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_fixed_value_adjustment",
             input_type=InputType.HOLDING,
@@ -144,7 +144,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
 class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Active Power Percentage Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_percentage_adjustment",
             input_type=InputType.HOLDING,
@@ -169,7 +169,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
 class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Reactive Power Q/S Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_q_s_adjustment",
             input_type=InputType.HOLDING,
@@ -194,7 +194,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
 class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            remote_ems=None,
+            availability_control_sensor=None,
             name="Power Factor Adjustment",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor_adjustment",
             input_type=InputType.HOLDING,

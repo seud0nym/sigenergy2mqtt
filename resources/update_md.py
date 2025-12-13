@@ -169,9 +169,9 @@ async def sensor_index():
             if sensor_parent == device:
                 count += 1
                 if index_only:
-                    f.write(f"<a href='#{sensor.unique_id}'>{sensor['name']}</a><br>\n")
+                    f.write(f"<a href='#{sensor.unique_id}_set'>{sensor['name']}</a><br>\n")
                     continue
-                f.write(f"<h5><a id='{sensor.unique_id}'>")
+                f.write(f"<h5><a id='{sensor.unique_id}_set'>")
                 f.write(f"{sensor['name']}")
                 if sensor["name"] == "Power":
                     f.write("&nbsp;On/Off")
@@ -188,7 +188,8 @@ async def sensor_index():
                         f.write(f"<tr><td>Valid&nbsp;Values</td><td>{comment}</td></tr>\n")
                     else:
                         f.write(f"<tr><td>Comment</td><td>{comment}</td></tr>\n")
-                        min, max = extract_min_max(comment, sensor.precision, sensor.gain)
+                        if "min" in sensor and "max" in sensor and isinstance(sensor["min"], (float, int)) and isinstance(sensor["max"], (float, int)):
+                            min, max = extract_min_max(comment, sensor.precision, sensor.gain)
                 if "min" in sensor:
                     f.write(f"<tr><td>Minimum&nbsp;Value</td><td>{min if min is not None else sensor['min']}</td></tr>\n")
                 if "max" in sensor:
@@ -219,9 +220,7 @@ async def sensor_index():
         f.write("\nTopics prefixed with `homeassistant/` are used when the `home-assistant` configuration `enabled` option in the configuration file,\n")
         f.write("or the `SIGENERGY2MQTT_HASS_ENABLED` environment variable, are set to true, or the `--hass-enabled` command line option is specified\n")
         f.write("Otherwise, the topics prefixed with `sigenergy2mqtt/` are used.\n")
-        f.write(
-            "\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n"
-        )
+        f.write("\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n")
         f.write("or by specifying the `--hass-use-simplified-topics` command line option.\n")
         f.write("\nDefault Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.\n")
         write_naming_convention(f)

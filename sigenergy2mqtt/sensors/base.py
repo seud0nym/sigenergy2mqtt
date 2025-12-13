@@ -458,9 +458,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 if modbus.connected:
                     self._failures += 1
                     self._next_retry = (
-                        None
-                        if self._failures < self._max_failures or self._max_failures_retry_interval == 0
-                        else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
+                        None if self._failures < self._max_failures or self._max_failures_retry_interval == 0 else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
                     )
                     if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
@@ -891,7 +889,7 @@ class ReservedSensor(ReadOnlySensor):
         precision: int,
         protocol_version: Protocol,
         unique_id_override: str = None,
-        remote_ems=None,
+        availability_control_sensor=None,
     ):
         super().__init__(
             name,
@@ -1047,11 +1045,20 @@ class WritableSensorMixin(ModbusSensor):
         return base
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        try:
+            if not await self.value_is_valid(modbus, value):
+                return False
+        except Exception as e:
+            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
+            raise
         if source == self["command_topic"]:
             return await self._write_registers(modbus, value, mqtt)
         else:
-            logging.warning(f"{self.__class__.__name__} Attempt to set_value({value}) from unknown topic {source}")
+            logging.error(f"{self.__class__.__name__} Attempt to set value '{value}' from unknown topic {source}")
             return False
+
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        return True
 
 
 class WriteOnlySensor(WritableSensorMixin):
@@ -1121,17 +1128,14 @@ class WriteOnlySensor(WritableSensorMixin):
             logging.debug(f"{self.__class__.__name__} Discovered {components=}")
         return components
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if value == self._payloads["off"]:
-            return await super().set_value(modbus, mqtt, self._values["off"], source, handler)
-        elif value == self._payloads["on"]:
-            return await super().set_value(modbus, mqtt, self._values["on"], source, handler)
-        else:
-            logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
-        return False
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if value not in (self._payloads["off"], self._payloads["on"]):
+            logging.error(f"{self.__class__.__name__} Invalid value '{value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
+            return False
+        return True
 
 
-class RemoteEMSMixin(Sensor):
+class AvailabilityMixin(Sensor):
     """Mixin to flag the class that will control Read-Write sensor availability"""
 
     pass
@@ -1142,7 +1146,7 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
 
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
         input_type: InputType,
@@ -1178,15 +1182,15 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
             precision,
             protocol_version,
         )
-        assert remote_ems is None or isinstance(remote_ems, RemoteEMSMixin), f"{self.__class__.__name__} remote_ems is not an instance of RemoteEMSMixin"
-        self._remote_ems = remote_ems
+        assert availability_control_sensor is None or isinstance(availability_control_sensor, AvailabilityMixin), f"{self.__class__.__name__} availability_control_sensor is not an instance of AvailabilityMixin"
+        self._availability_control_sensor = availability_control_sensor
         self["enabled_by_default"] = True
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if self._remote_ems is not None and Config.home_assistant.enabled:
-            assert self._remote_ems.state_topic and not self._remote_ems.state_topic.isspace(), "RemoteEMS state_topic has not been configured"
-            self["availability"].append({"topic": self._remote_ems.state_topic, "payload_available": 1, "payload_not_available": 0})
+        if self._availability_control_sensor is not None and Config.home_assistant.enabled:
+            assert self._availability_control_sensor.state_topic and not self._availability_control_sensor.state_topic.isspace(), "RemoteEMS state_topic has not been configured"
+            self["availability"].append({"topic": self._availability_control_sensor.state_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
 
@@ -1195,7 +1199,7 @@ class NumericSensor(ReadWriteSensor):
 
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
         input_type: InputType,
@@ -1212,11 +1216,11 @@ class NumericSensor(ReadWriteSensor):
         gain: float,
         precision: int,
         protocol_version: Protocol,
-        min: float = 0.0,
-        max: float = 100.0,
+        min: float | tuple[float] = 0.0,
+        max: float | tuple[float] = 100.0,
     ):
         super().__init__(
-            remote_ems,
+            availability_control_sensor,
             name,
             object_id,
             input_type,
@@ -1244,16 +1248,19 @@ class NumericSensor(ReadWriteSensor):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
+        value = state
         if isinstance(state, (float, int)):
-            if state < self["min"]:
+            minimum = self["min"]
+            maximum = self["max"]
+            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or state < minimum:
+                value = min(minimum) if isinstance(minimum, (tuple, list)) else minimum
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} {state=} < {self['min']=} so adjusted")
-                state = self["min"]
-            elif state > self["max"]:
+                    logging.debug(f"{self.__class__.__name__} Acquired state {state} < {minimum} so adjusted to {value}")
+            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or state > maximum:
+                value = max(maximum) if isinstance(maximum, (tuple, list)) else maximum
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} {state=} > {self['max']=} so adjusted")
-                state = self["max"]
-        return state
+                    logging.debug(f"{self.__class__.__name__} Acquired state {state} > {maximum} so adjusted to {value}")
+        return value
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value is not None:
@@ -1268,11 +1275,27 @@ class NumericSensor(ReadWriteSensor):
             logging.warning(f"{self.__class__.__name__} Ignored attempt to set None value to {value}")
         return False
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        try:
+            state = float(value)
+            min = self["min"]
+            max = self["max"]
+            if (isinstance(min, (tuple, list)) and not min(min) <= state <= max(min)) or state < min:
+                logging.error(f"{self.name} - Invalid value '{value}': Less than minimum of {min}")
+                return False
+            elif (isinstance(max, (tuple, list)) and not min(max) <= state <= max(max)) or state > max:
+                logging.error(f"{self.name} - Invalid value '{value}': Greater than maximum of {max}")
+                return False
+            return True
+        except ValueError:
+            logging.error(f"{self.name} - Invalid value '{value}': Not a number")
+            return False
+
 
 class SelectSensor(ReadWriteSensor):
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
         plant_index: int,
@@ -1284,7 +1307,7 @@ class SelectSensor(ReadWriteSensor):
     ):
         assert options is not None and isinstance(options, list) and len(options) > 0 and not any(o for o in options if not isinstance(o, str)), "options must be a non-empty list of strings"
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=availability_control_sensor,
             name=name,
             object_id=object_id,
             input_type=InputType.HOLDING,
@@ -1317,22 +1340,24 @@ class SelectSensor(ReadWriteSensor):
             return f"Unknown Mode: {value}"
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
-        result = False
-        index = None
         try:
+            index = int(value)
+        except ValueError:
             index = self["options"].index(value)
+        return await super().set_value(modbus, mqtt, index, source, handler)
+
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        try:
+            if self["options"].index(value) is not None:
+                return True
         except ValueError:
             try:
-                index = int(value)
+                int(value)
+                return True
             except ValueError:
                 pass
-        if index is not None and 0 <= index <= len(self["options"]):
-            result = await super().set_value(modbus, mqtt, index, source, handler)
-        else:
-            logging.warning(f"{self.name} - Ignored attempt to set value to '{value}': Not a valid mode")
-        if result:
-            pass
-        return result
+        logging.error(f"{self.name} - Invalid value '{value}': Not a valid option or index")
+        return False
 
 
 class SwitchSensor(ReadWriteSensor):
@@ -1340,7 +1365,7 @@ class SwitchSensor(ReadWriteSensor):
 
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
         plant_index: int,
@@ -1350,7 +1375,7 @@ class SwitchSensor(ReadWriteSensor):
         protocol_version: Protocol,
     ):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=availability_control_sensor,
             name=name,
             object_id=object_id,
             input_type=InputType.HOLDING,
@@ -1373,6 +1398,12 @@ class SwitchSensor(ReadWriteSensor):
         self["payload_on"] = "1"
         self["state_off"] = "0"
         self["state_on"] = "1"
+
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if value not in (self["payload_off"], self["payload_on"]):
+            logging.error(f"{self.__class__.__name__} Failed to write value '{value}': Must be either '{self['payload_off']}' or '{self['payload_on']}'")
+            return False
+        return True
 
 
 class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
