@@ -1291,8 +1291,8 @@ class NumericSensor(ReadWriteSensor):
     async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
         try:
             state = float(value)
-            minimum = self["min"]
-            maximum = self["max"]
+            minimum = self["min"] * self.gain
+            maximum = self["max"] * self.gain
             if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
                 logging.error(f"{self.name} - Invalid value '{value}': Less than minimum of {minimum}")
                 return False
