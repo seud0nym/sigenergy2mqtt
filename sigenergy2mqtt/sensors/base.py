@@ -212,7 +212,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
     # endregion
 
-    def _apply_gain_and_precision(self, state, raw):
+    def _apply_gain_and_precision(self, state: float | int, raw: bool = False) -> float | int:
         """
         Applies gain and precision adjustments to a given state value if applicable.
 
@@ -542,9 +542,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 return state
             elif "options" in self and state in self["options"]:
                 return self["options"].index(state)
-        try:
-            value = float(state) if "." in state else int(state)
-        except ValueError:
+            try:
+                value = float(state) if "." in state else int(state)
+            except ValueError:
+                value = state
+        else:
             value = state
         if isinstance(value, (float, int)):
             if self.gain is not None and self.gain != 1:
@@ -752,7 +754,7 @@ class ReadableSensorMixin(abc.ABC):
         assert scan_interval is not None and scan_interval >= 1, "Scan interval cannot be less than 1 second"
         self._scan_interval = scan_interval
 
-        self._sanity.init(self["unit_of_measurement"], self["state_class"], self.gain, scan_interval)
+        self._sanity.init(self["unit_of_measurement"], self["state_class"], self.gain, scan_interval, self._data_type if hasattr(self, "_data_type") else None)
 
         for identifier in Config.sensor_overrides.keys():
             if identifier in self.__class__.__name__ or identifier in self["object_id"]:
@@ -978,7 +980,10 @@ class TimestampSensor(ReadOnlySensor):
             return dt_object.isoformat()
 
     def state2raw(self, state) -> float | int | str:
-        return int(datetime.datetime.fromisoformat(state).timestamp())
+        if isinstance(state, (float, int)):
+            return int(state)
+        else:
+            return int(datetime.datetime.fromisoformat(state).timestamp())
 
 
 class ObservableMixin(abc.ABC):
@@ -1002,7 +1007,9 @@ class WritableSensorMixin(ModbusSensor):
         max_wait = 2
         device_id = self._device_address
         no_response_expected = False
-        logging.info(f"{self.__class__.__name__} write_registers {self._address=} {value=} ({self.latest_raw_state=}) {device_id=}")
+        logging.info(
+            f"{self.__class__.__name__} write_registers value={self['options'][value] if hasattr(self, 'options') else round(value / self.gain, self.precision)} (raw={value} latest_raw_state={self.latest_raw_state} address={self._address} {device_id=})"
+        )
         if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [value]
         elif self._data_type == ModbusClient.DATATYPE.STRING:
@@ -1258,11 +1265,11 @@ class NumericSensor(ReadWriteSensor):
         if isinstance(state, (float, int)):
             minimum = self["min"]
             maximum = self["max"]
-            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or state < minimum:
+            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
                 value = min(minimum) if isinstance(minimum, (tuple, list)) else minimum
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Acquired state {state} < {minimum} so adjusted to {value}")
-            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or state > maximum:
+            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or (not isinstance(maximum, (tuple, list)) and state > maximum):
                 value = max(maximum) if isinstance(maximum, (tuple, list)) else maximum
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Acquired state {state} > {maximum} so adjusted to {value}")
@@ -1286,10 +1293,10 @@ class NumericSensor(ReadWriteSensor):
             state = float(value)
             minimum = self["min"]
             maximum = self["max"]
-            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or state < minimum:
+            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
                 logging.error(f"{self.name} - Invalid value '{value}': Less than minimum of {minimum}")
                 return False
-            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or state > maximum:
+            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or (not isinstance(maximum, (tuple, list)) and state > maximum):
                 logging.error(f"{self.name} - Invalid value '{value}': Greater than maximum of {maximum}")
                 return False
             return True
@@ -1473,7 +1480,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw:
             return value
-        elif value is None or value == 0 or (isinstance(value, list) and sum(value) == 0):
+        elif value is None or value == 0 or (isinstance(value, list) and sum(value) == 0) or value == 65535:
             return self.NO_ALARM
         else:
             if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
@@ -1502,6 +1509,11 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                         if len(alarms) > max_length:
                             alarms = alarms[: (max_length - 3)] + "..."
                 return alarms
+
+    def state2raw(self, state):
+        if state == AlarmSensor.NO_ALARM:
+            return 0
+        return super().state2raw(state)
 
 
 class Alarm1Sensor(AlarmSensor):
@@ -1728,15 +1740,15 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         count = sum([a._count for a in alarms])
         assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
         assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a._address for a in alarms]})"
-        ReadableSensorMixin.__init__(self, scan_interval=10)
         self["enabled_by_default"] = True
         self._alarms = list(alarms)
         self._address = min([a._address for a in alarms])
         self._device_address = device_addresses.pop()
         self._scan_interval = min([a._scan_interval for a in alarms])
         self._count = count
-        self._input_type = alarms[0]._input_type
-        self._data_type = alarms[0]._data_type
+        self._input_type = InputType.INPUT
+        self._data_type = ModbusClient.DATATYPE.UINT16
+        ReadableSensorMixin.__init__(self, scan_interval=10)
 
     @property
     def protocol_version(self) -> float:
@@ -1774,6 +1786,11 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
                                 result = result[:252] + "..."
             self.set_state(result)
             return self._apply_gain_and_precision(self._states[-1][1], raw)
+
+    def state2raw(self, state):
+        if state == AlarmSensor.NO_ALARM:
+            return 0
+        return super().state2raw(state)
 
 
 class RunningStateSensor(ReadOnlySensor):

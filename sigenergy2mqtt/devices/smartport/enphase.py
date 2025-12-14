@@ -41,6 +41,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             gain=None,
             precision=2,
         )
+        self._data_type = ModbusClient.DATATYPE.INT32
         ReadableSensorMixin.__init__(self, Config.devices[0].scan_interval.realtime)
         self["enabled_by_default"] = True
 

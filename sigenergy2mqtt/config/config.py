@@ -27,7 +27,7 @@ class Config:
     sensor_debug_logging: bool = False
     sensor_overrides: dict = {}
 
-    sanity_check_default_kw: float = 100.0
+    sanity_check_default_kw: float = 500.0
     metrics_enabled: bool = True
 
     persistent_state_path: str = "."

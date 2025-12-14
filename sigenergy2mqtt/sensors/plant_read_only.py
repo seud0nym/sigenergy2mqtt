@@ -76,10 +76,13 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             return formatted_offset
 
     def state2raw(self, state) -> float | int | str:
-        offset = state.replace("UTC", "")
-        sign = 1 if offset[0] == "+" else -1
-        hours, minutes = map(int, offset[1:].split(":"))
-        total_minutes = sign * (hours * 60 + minutes)
+        if isinstance(state, str):
+            offset = state.replace("UTC", "")
+            sign = 1 if offset[0] == "+" else -1
+            hours, minutes = map(int, offset[1:].split(":"))
+            total_minutes = sign * (hours * 60 + minutes)
+        else:
+            total_minutes = state
         return int(total_minutes)
 
 
