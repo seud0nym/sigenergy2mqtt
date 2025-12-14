@@ -1744,11 +1744,10 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         self._alarms = list(alarms)
         self._address = min([a._address for a in alarms])
         self._device_address = device_addresses.pop()
-        self._scan_interval = min([a._scan_interval for a in alarms])
         self._count = count
         self._input_type = InputType.INPUT
         self._data_type = ModbusClient.DATATYPE.UINT16
-        ReadableSensorMixin.__init__(self, scan_interval=10)
+        ReadableSensorMixin.__init__(self, scan_interval=min([a._scan_interval for a in alarms]))
 
     @property
     def protocol_version(self) -> float:
