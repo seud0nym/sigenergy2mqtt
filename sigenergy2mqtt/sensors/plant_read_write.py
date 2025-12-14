@@ -454,7 +454,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 class RemoteEMSLimit(NumericSensor):
     def __init__(
         self,
-        remote_ems: AvailabilityMixin,
+        availability_control_sensor: AvailabilityMixin,
         remote_ems_mode: RemoteEMSControlMode,
         charging: bool,
         discharging: bool,
@@ -467,7 +467,7 @@ class RemoteEMSLimit(NumericSensor):
         protocol_version: Protocol,
     ):
         super().__init__(
-            availability_control_sensor=remote_ems,
+            availability_control_sensor=availability_control_sensor,
             name=name,
             object_id=object_id,
             input_type=InputType.HOLDING,
@@ -511,7 +511,7 @@ class RemoteEMSLimit(NumericSensor):
 class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
             charging=True,
             discharging=False,
@@ -539,7 +539,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
 class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
             name="Max Discharging Limit",
             charging=False,
@@ -567,7 +567,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
 class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
-            remote_ems=remote_ems,
+            availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
             charging=True,
             discharging=True,
