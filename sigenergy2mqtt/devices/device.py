@@ -288,10 +288,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     now_struct: time.struct_time = time.localtime(now)
                     was = time.localtime(last_publish)
                     if was.tm_yday != now_struct.tm_yday:
-                        if debug_logging:
-                            logging.debug(
-                                f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and midnight just passed"
-                            )
+                        logging.info(
+                            f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and the day has changed ({was.tm_yday} -> {now_struct.tm_yday})"
+                        )
                         next_publish = now
                 if next_publish <= now:
                     last_publish = now
