@@ -208,7 +208,7 @@ class PVOutputOutputService(Service):
                     if last:
                         was = time.localtime(last)
                         if was.tm_yday != now_struct.tm_yday:
-                            self.logger.info(f"{self.__class__.__name__} Resetting service topic states to 0.0...")
+                            self.logger.info(f"{self.__class__.__name__} Resetting service topic states to 0.0 because the day has changed ({was.tm_yday} -> {now_struct.tm_yday})")
                             self._previous_payload = None
                             async with self.lock(timeout=5):
                                 for topic in self._service_topics.values():
