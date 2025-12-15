@@ -6,7 +6,7 @@ from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadableSensorMixin, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
-from sigenergy2mqtt.sensors.const import InputType
+from sigenergy2mqtt.sensors.const import InputType, MAX_MODBUS_REGISTERS_PER_REQUEST
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Self
 import abc
 import asyncio
@@ -258,7 +258,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             first_address: int = min([s._address for s in sensors if hasattr(s, "_address")])
             last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address")])
             count: int = sum([s._count for s in sensors if hasattr(s, "_count")])
-            contiguous: bool = multiple and first_address and last_address and (last_address - first_address + 1) == count
+            contiguous: bool = multiple and first_address and last_address and (((last_address - first_address + 1) == count) or count <= MAX_MODBUS_REGISTERS_PER_REQUEST)
             interval: int = min([s.scan_interval for s in sensors if isinstance(s, ReadableSensorMixin)])  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor)
             debug_logging: bool = False
             daily_sensors: bool = False
@@ -289,7 +289,9 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                     was = time.localtime(last_publish)
                     if was.tm_yday != now_struct.tm_yday:
                         if debug_logging:
-                            logging.debug(f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and midnight just passed")
+                            logging.debug(
+                                f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and midnight just passed"
+                            )
                         next_publish = now
                 if next_publish <= now:
                     last_publish = now
@@ -388,7 +390,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 or (address is None or count is None or sensor._address != address + count)
                 or scan_interval != sensor.scan_interval
                 or input_type != sensor._input_type
-                or (group_name is not None and (sum(s._count for s in combined_groups[group_name]) + sensor._count) > 123)  # Modbus over TCP max response size
+                or (group_name is not None and (sum(s._count for s in combined_groups[group_name]) + sensor._count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
             ):
                 group_name = f"{sensor._device_address:03d}_{sensor._address:05d}_{sensor.scan_interval:05d}"
                 combined_groups[group_name] = []

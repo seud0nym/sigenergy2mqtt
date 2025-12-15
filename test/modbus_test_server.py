@@ -17,7 +17,7 @@ from pymodbus.server import StartAsyncTcpServer
 from random import randint
 from ruamel.yaml import YAML
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.const import DeviceClass
+from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
 from test import get_sensor_instances, cancel_sensor_futures
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
@@ -211,7 +211,7 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
             device_address != sensor._device_address
             or (address is None or count is None or sensor._address != address + count)
             or input_type != sensor._input_type
-            or (group_index is not None and (sum(s._count for s in groups[group_index]) + sensor._count) > 123)  # Modbus over TCP max response size
+            or (group_index is not None and (sum(s._count for s in groups[group_index]) + sensor._count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
         ):
             group_index = group_index + 1 if group_index is not None else 0
             groups[group_index] = []

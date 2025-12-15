@@ -1,6 +1,8 @@
 from enum import StrEnum
 from typing import Final
 
+MAX_MODBUS_REGISTERS_PER_REQUEST: Final = 125
+
 PERCENTAGE: Final = "%"
 
 
