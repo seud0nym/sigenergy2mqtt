@@ -14,6 +14,7 @@ if not os.getcwd().endswith("resources"):
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from sigenergy2mqtt.config import Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, WriteOnlySensor
@@ -96,6 +97,8 @@ async def sensor_index():
         count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
             sensor: Sensor = mqtt_sensors[key]
+            if isinstance(sensor, ReservedSensor):
+                continue
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device and sensor.publishable:
                 count += 1
@@ -150,6 +153,7 @@ async def sensor_index():
                     elif isinstance(sensor, PVInverter):
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
+                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{'N/A' if sensor.protocol_version == Protocol.N_A else sensor.protocol_version}</td></tr>\n")
                 f.write("</table>\n")
         return count
 
@@ -159,13 +163,15 @@ async def sensor_index():
             sensor: Sensor = mqtt_sensors[key]
             if isinstance(sensor, ReservedSensor):
                 continue
+            if isinstance(sensor, ReservedSensor):
+                continue
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
                 count += 1
                 if index_only:
-                    f.write(f"<a href='#{sensor.unique_id}'>{sensor['name']}</a><br>\n")
+                    f.write(f"<a href='#{sensor.unique_id}_set'>{sensor['name']}</a><br>\n")
                     continue
-                f.write(f"<h5><a id='{sensor.unique_id}'>")
+                f.write(f"<h5><a id='{sensor.unique_id}_set'>")
                 f.write(f"{sensor['name']}")
                 if sensor["name"] == "Power":
                     f.write("&nbsp;On/Off")
@@ -182,7 +188,8 @@ async def sensor_index():
                         f.write(f"<tr><td>Valid&nbsp;Values</td><td>{comment}</td></tr>\n")
                     else:
                         f.write(f"<tr><td>Comment</td><td>{comment}</td></tr>\n")
-                        min, max = extract_min_max(comment, sensor.precision, sensor.gain)
+                        if "min" in sensor and "max" in sensor and isinstance(sensor["min"], (float, int)) and isinstance(sensor["max"], (float, int)):
+                            min, max = extract_min_max(comment, sensor.precision, sensor.gain)
                 if "min" in sensor:
                     f.write(f"<tr><td>Minimum&nbsp;Value</td><td>{min if min is not None else sensor['min']}</td></tr>\n")
                 if "max" in sensor:
@@ -202,6 +209,7 @@ async def sensor_index():
                     elif isinstance(sensor, PVInverter):
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
+                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{'N/A' if sensor.protocol_version == Protocol.N_A else sensor.protocol_version}</td></tr>\n")
                 f.write("</table>\n")
         return count
 
@@ -212,9 +220,7 @@ async def sensor_index():
         f.write("\nTopics prefixed with `homeassistant/` are used when the `home-assistant` configuration `enabled` option in the configuration file,\n")
         f.write("or the `SIGENERGY2MQTT_HASS_ENABLED` environment variable, are set to true, or the `--hass-enabled` command line option is specified\n")
         f.write("Otherwise, the topics prefixed with `sigenergy2mqtt/` are used.\n")
-        f.write(
-            "\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n"
-        )
+        f.write("\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n")
         f.write("or by specifying the `--hass-use-simplified-topics` command line option.\n")
         f.write("\nDefault Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.\n")
         write_naming_convention(f)
@@ -410,7 +416,10 @@ async def compare_sensor_instances():
 
     for k, v in registers.items():
         if isinstance(k, int) and k not in typqxq_instances:
-            logging.warning(f"Register {k} ({v}) found in sensor instances but not defined in TypQxQ")
+            for i in v:
+                if isinstance(sensor_instances[i], ReservedSensor):
+                    continue
+                logging.warning(f"V{sensor_instances[i].protocol_version} Register {k} ({sensor_instances[i].name}) found in sensor instances but not defined in TypQxQ")
 
     with SENSORS.open("w") as f:
         f.write("# Home Assistant Sensors\n")
@@ -468,6 +477,7 @@ async def compare_sensor_instances():
 
 
 if __name__ == "__main__":
+    logging.getLogger("root").setLevel(logging.INFO)
     download_latest("custom_components/sigen/modbusregisterdefinitions.py")
     loop = asyncio.new_event_loop()
     loop.run_until_complete(sensor_index())

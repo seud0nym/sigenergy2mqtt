@@ -27,7 +27,7 @@ class Config:
     sensor_debug_logging: bool = False
     sensor_overrides: dict = {}
 
-    sanity_check_default_kw: float = 100.0
+    sanity_check_default_kw: float = 500.0
     metrics_enabled: bool = True
 
     persistent_state_path: str = "."
@@ -299,6 +299,10 @@ class Config:
                 raise ValueError("No Modbus devices configured and auto-discovery did not find any Sigenergy devices; please check that the devices are powered on and reachable over the network")
             else:
                 raise ValueError("No Modbus devices configured")
+
+    @staticmethod
+    def version() -> str:
+        return version.__version__
 
     @staticmethod
     def _configure(data: dict, override: bool = False) -> None:

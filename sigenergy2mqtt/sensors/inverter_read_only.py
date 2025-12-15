@@ -1,23 +1,24 @@
 from dataclasses import dataclass
+
 from .base import (
-    AlarmCombinedSensor,
-    AlarmSensor,
-    DeviceClass,
-    InputType,
-    ObservableMixin,
-    ReservedSensor,
-    StateClass,
     Alarm1Sensor,
     Alarm2Sensor,
     Alarm3Sensor,
     Alarm4Sensor,
     Alarm5Sensor,
+    AlarmCombinedSensor,
+    AlarmSensor,
+    DeviceClass,
+    InputType,
+    ObservableMixin,
     ReadOnlySensor,
+    ReservedSensor,
     RunningStateSensor,
+    StateClass,
     TimestampSensor,
 )
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.const import (
@@ -58,6 +59,7 @@ class InverterModel(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:text-short",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -80,6 +82,7 @@ class InverterSerialNumber(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:text-short",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -102,6 +105,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:text-short",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -132,6 +136,7 @@ class RatedActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -154,6 +159,7 @@ class MaxRatedApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -176,6 +182,7 @@ class InverterMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -198,6 +205,7 @@ class MaxAbsorptionPower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -220,6 +228,7 @@ class RatedBatteryCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-high",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -242,6 +251,7 @@ class RatedChargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-positive",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -265,6 +275,7 @@ class RatedDischargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-negative",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -289,6 +300,7 @@ class DailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked a
             icon="mdi:transmission-tower-export",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -310,6 +322,7 @@ class AccumulatedExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Ma
             icon="mdi:transmission-tower-export",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -331,6 +344,7 @@ class DailyImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked a
             icon="mdi:transmission-tower-import",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -352,6 +366,7 @@ class AccumulatedImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Ma
             icon="mdi:transmission-tower-import",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -376,6 +391,7 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-arrow-up",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.min_value = None
@@ -399,6 +415,7 @@ class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-arrow-up",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -421,6 +438,7 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-arrow-down",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.min_value = None
@@ -447,6 +465,7 @@ class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-arrow-down",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -459,6 +478,7 @@ class InverterRunningState(RunningStateSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=30578,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -480,6 +500,7 @@ class MaxActivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:adjust",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -502,6 +523,7 @@ class MinActivePowerAdjustment(ReadOnlySensor, HybridInverter):
             icon="mdi:adjust",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -524,6 +546,7 @@ class MaxReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:adjust",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -546,6 +569,7 @@ class MinReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:adjust",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -568,6 +592,7 @@ class ActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -589,6 +614,7 @@ class ReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -610,6 +636,7 @@ class MaxBatteryChargePower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-arrow-up",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -631,6 +658,7 @@ class MaxBatteryDischargePower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-arrow-down",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -652,6 +680,7 @@ class AvailableBatteryChargeEnergy(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-plus-variant",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -674,6 +703,7 @@ class AvailableBatteryDischargeEnergy(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-minus-variant",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -696,6 +726,7 @@ class ChargeDischargePower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging-outline",
             gain=None,  # v1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -718,6 +749,7 @@ class InverterBatterySoC(ReadOnlySensor, HybridInverter):
             icon="mdi:home-battery-outline",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -740,6 +772,7 @@ class InverterBatterySoH(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-heart-variant",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -762,6 +795,7 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.min_value = -400  # -40.0 °C
@@ -786,6 +820,7 @@ class AverageCellVoltage(ReadOnlySensor, HybridInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -798,6 +833,7 @@ class InverterAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=30605,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -809,6 +845,7 @@ class InverterAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=30606,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -835,6 +872,7 @@ class InverterAlarm3(Alarm3Sensor, HybridInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=30607,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -846,6 +884,7 @@ class InverterAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=30608,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -857,6 +896,29 @@ class InverterAlarm5(Alarm5Sensor, HybridInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=30609,
+            protocol_version=Protocol.V1_8,
+        )
+
+
+class Reserved30610(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_reserved_30610",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=30610,
+            count=3,
+            data_type=ModbusClient.DATATYPE.STRING,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_5,
         )
 
 
@@ -878,6 +940,7 @@ class InverterActivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInve
             icon="mdi:comment-quote",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -899,6 +962,7 @@ class InverterReactivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridIn
             icon="mdi:comment-quote",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -920,6 +984,7 @@ class InverterActivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInve
             icon="mdi:percent",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -941,6 +1006,7 @@ class InverterReactivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridIn
             icon="mdi:percent",
             gain=100,
             precision=None,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -962,6 +1028,7 @@ class InverterPowerFactorAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVIn
             icon="mdi:adjust",
             gain=1000,
             precision=None,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -983,6 +1050,7 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             icon="mdi:thermometer-high",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.min_value = -400  # -40.0 °C
@@ -1007,6 +1075,7 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             icon="mdi:thermometer-low",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.min_value = -400  # -40.0 °C
@@ -1031,6 +1100,7 @@ class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
@@ -1054,6 +1124,7 @@ class InverterMinCellVoltage(ReadOnlySensor, HybridInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
@@ -1077,6 +1148,7 @@ class RatedGridVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:flash",
             gain=10,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -1099,6 +1171,7 @@ class RatedGridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -1121,6 +1194,7 @@ class GridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1142,6 +1216,7 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.min_value = -400  # -40.0 °C
@@ -1166,6 +1241,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:home-lightning-bolt",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
         self["options"] = [
@@ -1215,6 +1291,7 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:flash",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1245,6 +1322,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:flash",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self._phase = phase
 
@@ -1280,6 +1358,7 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:current-ac",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1308,6 +1387,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
             icon="mdi:angle-acute",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self._sanity.min_value = 0  # 0.0
         self._sanity.max_value = 1000  # 1.0
@@ -1378,6 +1458,7 @@ class PACKBCUCount(ReadOnlySensor, HybridInverter):
             icon="mdi:eye",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1399,6 +1480,7 @@ class PVStringCount(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-panel",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -1421,12 +1503,13 @@ class MPTTCount(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-panel",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
 
 class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int):
+    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
         assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
         super().__init__(
             name="Current",
@@ -1444,12 +1527,13 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:current-dc",
             gain=100,
             precision=2,
+            protocol_version=protocol_version,
         )
         self.string_number = string_number
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int):
+    def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
         assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
         super().__init__(
             name="Voltage",
@@ -1467,6 +1551,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:flash",
             gain=10,
             precision=1,
+            protocol_version=protocol_version,
         )
         self.string_number = string_number
 
@@ -1489,6 +1574,7 @@ class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-power",
             gain=None,  # 1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -1511,6 +1597,7 @@ class InsulationResistance(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:omega",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1524,6 +1611,7 @@ class StartupTime(TimestampSensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31038,
             scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1537,17 +1625,15 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31040,
             scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            protocol_version=Protocol.V1_8,
         )
 
 
-# region DC Charger
-
-
-class VehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle Battery Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_vehicle_battery_voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_vehicle_battery_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1561,14 +1647,15 @@ class VehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:car-electric",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
 
 
-class VehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle Charging Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_vehicle_charging_current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_vehicle_charging_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1582,6 +1669,7 @@ class VehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:car-electric",
             gain=10,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1589,7 +1677,7 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Output Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_output_power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_output_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1603,14 +1691,15 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:car-electric",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
-class VehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle SoC",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_vehicle_soc",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_vehicle_soc",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1624,6 +1713,7 @@ class VehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:car-electric",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -1631,7 +1721,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Current Charging Capacity",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_current_charging_capacity",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_current_charging_capacity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1645,6 +1735,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             icon="mdi:car-electric",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -1657,7 +1748,7 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Current Charging Duration",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_dc_charger_current_charging_duration",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_current_charging_duration",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1671,15 +1762,13 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             icon="mdi:car-clock",
             gain=1,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
         attributes["comment"] = "Single time"
         return attributes
-
-
-# endregion
 
 
 class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1700,6 +1789,7 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_6,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1729,6 +1819,7 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_6,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1737,3 +1828,45 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
+
+
+class DCChargerRunningState(ReadOnlySensor):
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Running State",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_running_state",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=31513,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:ev-station",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_8,
+        )
+        self["enabled_by_default"] = True
+        self["options"] = [
+            "Idle",  # 0
+            "Occupied (Charging Gun plugged in but not detected)",  # 1
+            "Preparing (Establishing communication)",  # 2
+            "Charging",  # 3
+            "Fault",  # 4
+            "Scheduled",  # 5
+        ]
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if raw:
+            return value
+        elif value is None:
+            return None
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
+        else:
+            return f"Unknown State code: {value}"

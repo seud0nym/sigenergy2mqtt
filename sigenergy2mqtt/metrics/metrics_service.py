@@ -1,5 +1,5 @@
 from .metrics import Metrics
-from sigenergy2mqtt.config import Config, SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
+from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient
@@ -171,18 +171,18 @@ class MetricsService(Device):
         },
     }
 
-    def __init__(self):
-        super().__init__("Sigenergy Metrics", -1, MetricsService._unique_id, "sigenergy2mqtt", "Metrics")
+    def __init__(self, protocol_version: Protocol):
+        super().__init__("Sigenergy Metrics", -1, MetricsService._unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
 
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
         pass
 
-    def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
+    def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> Any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean or not Config.metrics_enabled:
-            logging.debug(f"{self.name} - Publishing empty discovery ({Config.metrics_enabled=} {clean=})")
-            info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
-        if Config.metrics_enabled:
+            logging.debug(f"{self.name} - Cleaning discovery ({Config.metrics_enabled=} {clean=})")
+            info = mqtt.publish(topic, "", qos=1, retain=True)  # Clear retained messages
+        elif Config.metrics_enabled:
             logging.debug(f"{self.name} - Publishing discovery")
             discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
@@ -196,9 +196,9 @@ class MetricsService(Device):
                 case "sigenergy2mqtt_modbus_reads_sec":
                     value = Metrics.sigenergy2mqtt_modbus_reads / (time.monotonic() - Metrics._started)
                 case "sigenergy2mqtt_modbus_protocol":
-                    value = SIGENERGY_MODBUS_PROTOCOL
+                    value = self.protocol_version.value
                 case "sigenergy2mqtt_modbus_protocol_published":
-                    value = SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
+                    value = ProtocolApplies(self.protocol_version)
                 case _:
                     value = getattr(Metrics, object_id, None)
                     if value == float("inf"):

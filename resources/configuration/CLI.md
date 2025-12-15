@@ -1,4 +1,5 @@
 # Command Line Options
+
 ```
 usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]

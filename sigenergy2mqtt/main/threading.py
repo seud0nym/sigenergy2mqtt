@@ -14,7 +14,7 @@ import string
 import threading
 
 
-async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop):
+async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_required: bool, loop: asyncio.AbstractEventLoop):
     threading.current_thread().name = f"{config.description}Thread"
 
     device: Device = None
@@ -31,7 +31,10 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
 
     for device in config.devices:
         if Config.home_assistant.enabled:
-            await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, clean=False)
+            if upgrade_clean_required or Config.clean:  # Delete HA device
+                await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, clean=True)
+            if not Config.clean:  # Publish HA device
+                await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, clean=False)
 
         if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
             logging.info(f"{device.name} - Configured for {'clean' if Config.clean else 'discovery'} only - shutting down...")
@@ -71,14 +74,14 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
     return
 
 
-def run_modbus_event_loop(device: ThreadConfig, loop: asyncio.AbstractEventLoop):
+def run_modbus_event_loop(device: ThreadConfig, upgrade_clean_required: bool, loop: asyncio.AbstractEventLoop):
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(read_and_publish_device_sensors(device, loop))
+    loop.run_until_complete(read_and_publish_device_sensors(device, upgrade_clean_required, loop))
 
 
-async def start(configs: list[ThreadConfig]):
+async def start(configs: list[ThreadConfig], upgrade_clean_required: bool):
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(configs)) as executor:
         executions: list[concurrent.futures.Future] = []
         for config in configs:
-            executions.append(executor.submit(run_modbus_event_loop, config, asyncio.new_event_loop()))
+            executions.append(executor.submit(run_modbus_event_loop, config, upgrade_clean_required, asyncio.new_event_loop()))
         concurrent.futures.wait(executions)

@@ -77,9 +77,10 @@ fi
 
 echo -e "\033[1;32mUpdating documentation...\033[0m"
 python3 -c '
-print("# Command Line Options")
-print("```")
+import os
 import sys
+print("# Command Line Options\n")
+print("```")
 from sigenergy2mqtt.__main__ import main
 sys.exit(main())
 print("```")

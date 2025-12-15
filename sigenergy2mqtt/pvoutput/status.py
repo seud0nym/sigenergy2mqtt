@@ -12,47 +12,47 @@ class PVOutputStatusService(Service):
     def __init__(self, logger: logging.Logger, topics: dict[StatusField, list[Topic]], extended_data: dict[StatusField, str]):
         super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
 
+        _v1 = ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY)
+        _v2 = ServiceTopics(self, True, logger, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
+        _v3 = ServiceTopics(self, False and Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_ENERGY)
+        _v4 = ServiceTopics(self, Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
+        _v5 = ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, logger, value_key=StatusField.TEMPERATURE, calc=Calculation.AVERAGE, decimals=1, negative=True)
+        _v6 = ServiceTopics(self, True, logger, value_key=StatusField.VOLTAGE, calc=Calculation.L_L_AVG if Config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1)
+        _v7 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V7] else False, logger, value_key=StatusField.V7, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v8 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V8] else False, logger, value_key=StatusField.V8, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v9 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V9] else False, logger, value_key=StatusField.V9, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v10 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V10] else False, logger, value_key=StatusField.V10, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v11 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V11] else False, logger, value_key=StatusField.V11, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v12 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V12] else False, logger, value_key=StatusField.V12, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _b1 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS, decimals=1, donation=True, negative=True)
+        _b2 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_SOC, calc=Calculation.AVERAGE, donation=True, decimals=1)
+        _b3 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CAPACITY, donation=True)
+        _b4 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CHARGED, donation=True)
+        _b5 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_DISCHARGED, donation=True)
+        _b6 = ServiceTopics(self, False, logger, value_key=StatusField.BATTERY_STATE, donation=True)
+
         self._previous_payload: dict = None
         self._service_topics: dict[str, ServiceTopics] = {
-            StatusField.GENERATION_ENERGY: ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY),
-            StatusField.GENERATION_POWER: ServiceTopics(
-                self, True, logger, value_key=StatusField.GENERATION_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS
-            ),
-            StatusField.CONSUMPTION_ENERGY: ServiceTopics(self, False and Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_ENERGY),
-            StatusField.CONSUMPTION_POWER: ServiceTopics(
-                self, Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS
-            ),
-            StatusField.TEMPERATURE: ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, logger, value_key=StatusField.TEMPERATURE, calculation=Calculation.AVERAGE, decimals=1),
-            StatusField.VOLTAGE: ServiceTopics(
-                self, True, logger, value_key=StatusField.VOLTAGE, calculation=Calculation.L_L_AVG if Config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1
-            ),
-            StatusField.V7: ServiceTopics(
-                self, True if Config.pvoutput.extended[StatusField.V7.value] else False, logger, value_key=StatusField.V7, calculation=Calculation.AVERAGE, requires_donation=True
-            ),
-            StatusField.V8: ServiceTopics(
-                self, True if Config.pvoutput.extended[StatusField.V8.value] else False, logger, value_key=StatusField.V8, calculation=Calculation.AVERAGE, requires_donation=True
-            ),
-            StatusField.V9: ServiceTopics(
-                self, True if Config.pvoutput.extended[StatusField.V9.value] else False, logger, value_key=StatusField.V9, calculation=Calculation.AVERAGE, requires_donation=True
-            ),
-            StatusField.V10: ServiceTopics(
-                self, True if Config.pvoutput.extended[StatusField.V10.value] else False, logger, value_key=StatusField.V10, calculation=Calculation.AVERAGE, requires_donation=True
-            ),
-            StatusField.V11: ServiceTopics(
-                self, True if Config.pvoutput.extended[StatusField.V11.value] else False, logger, value_key=StatusField.V11, calculation=Calculation.AVERAGE, requires_donation=True
-            ),
-            StatusField.V12: ServiceTopics(
-                self, True if Config.pvoutput.extended[StatusField.V12.value] else False, logger, value_key=StatusField.V12, calculation=Calculation.AVERAGE, requires_donation=True
-            ),
-            StatusField.BATTERY_POWER: ServiceTopics(
-                self, True, logger, value_key=StatusField.BATTERY_POWER, calculation=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS, decimals=1, requires_donation=True
-            ),
-            StatusField.BATTERY_SOC: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_SOC, calculation=Calculation.AVERAGE, requires_donation=True, decimals=1),
-            StatusField.BATTERY_CAPACITY: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CAPACITY, requires_donation=True),
-            StatusField.BATTERY_CHARGED: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CHARGED, requires_donation=True),
-            StatusField.BATTERY_DISCHARGED: ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_DISCHARGED, requires_donation=True),
-            StatusField.BATTERY_STATE: ServiceTopics(self, False, logger, value_key=StatusField.BATTERY_STATE, requires_donation=True),
+            StatusField.GENERATION_ENERGY: _v1,
+            StatusField.GENERATION_POWER: _v2,
+            StatusField.CONSUMPTION_ENERGY: _v3,
+            StatusField.CONSUMPTION_POWER: _v4,
+            StatusField.TEMPERATURE: _v5,
+            StatusField.VOLTAGE: _v6,
+            StatusField.V7: _v7,
+            StatusField.V8: _v8,
+            StatusField.V9: _v9,
+            StatusField.V10: _v10,
+            StatusField.V11: _v11,
+            StatusField.V12: _v12,
+            StatusField.BATTERY_POWER: _b1,
+            StatusField.BATTERY_SOC: _b2,
+            StatusField.BATTERY_CAPACITY: _b3,
+            StatusField.BATTERY_CHARGED: _b4,
+            StatusField.BATTERY_DISCHARGED: _b5,
+            StatusField.BATTERY_STATE: _b6,
         }
+
         for field, topic_list in topics.items():
             if field in self._service_topics:
                 if field in extended_data and extended_data[field] == "energy":
@@ -101,17 +101,17 @@ class PVOutputStatusService(Service):
                                 payload["c1"] = 3
                             if payload.get(StatusField.CONSUMPTION_POWER.value, 0) < 0:
                                 self.logger.warning(
-                                    f"{self.__class__.__name__} Adjusted {StatusField.CONSUMPTION_POWER.name} (payload['{StatusField.CONSUMPTION_POWER.value}']) to 0 from {payload[StatusField.CONSUMPTION_POWER.value]} to comply with PVOutput requirements"
+                                    f"{self.__class__.__name__} Adjusted {StatusField.CONSUMPTION_POWER.name} (payload['{StatusField.CONSUMPTION_POWER.value}']) to 0 from {payload[StatusField.CONSUMPTION_POWER]} to comply with PVOutput requirements"
                                 )
-                                payload[StatusField.CONSUMPTION_POWER.value] = 0  # PVOutput does not accept negative consumption power values
+                                payload[StatusField.CONSUMPTION_POWER] = 0  # PVOutput does not accept negative consumption power values
                             uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
                             if not uploaded:
                                 self.logger.debug(f"{self.__class__.__name__} Restoring previous state of topics due to failed upload")
                                 async with self.lock(timeout=5):
                                     for st, topics in self._service_topics.items():
                                         for topic in topics.values():
-                                            if topic.topic in snapshot[st.value]:
-                                                topic.previous_state, topic.previous_timestamp = snapshot[st.value][topic.topic][0]
+                                            if topic.topic in snapshot[st]:
+                                                topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic][0]
                         else:
                             self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()

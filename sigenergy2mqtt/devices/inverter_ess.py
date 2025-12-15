@@ -1,5 +1,5 @@
 from .device import ModbusDevice, DeviceType
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 import sigenergy2mqtt.sensors.inverter_derived as derived
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 
@@ -10,6 +10,7 @@ class ESS(ModbusDevice):
         plant_index: int,
         device_address: int,
         device_type: DeviceType,
+        protocol_version: Protocol,
         model_id: str,
         serial_number: str,
     ):
@@ -20,6 +21,7 @@ class ESS(ModbusDevice):
             plant_index,
             device_address,
             "Energy Storage System",
+            protocol_version,
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}",
         )
 

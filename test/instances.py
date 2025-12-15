@@ -4,24 +4,27 @@ import sys
 import os
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-from sigenergy2mqtt.config import Config
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor
+from sigenergy2mqtt.devices.types import DeviceType
+from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
-from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
+from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 
 
 async def get_sensor_instances(
     hass: bool = False,
     plant_index: int = 0,
+    protocol_version: Protocol = list(Protocol)[-1],
     hybrid_inverter_device_address: int = 1,
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
 ):
+    logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
+
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
 
@@ -32,21 +35,22 @@ async def get_sensor_instances(
 
     Config.home_assistant.enabled = hass
 
-    logging.debug(f"Instantiating Power Plant ({hass=})")
     plant = PowerPlant(
         plant_index=plant_index,
-        device_type=HybridInverter(),
+        device_type=DeviceType.create("SigenStor EC 12.0 TP"),
+        protocol_version=protocol_version,
         output_type=2,
         power_phases=3,
         rcp_value=12.6,
         rdp_value=13.68,
+        rf_value=50.0,
         rated_charging_power=PlantRatedChargingPower(plant_index),
         rated_discharging_power=PlantRatedDischargingPower(plant_index),
+        rated_frequency=GridCodeRatedFrequency(plant_index),
     )
     remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
-    logging.debug(f"Instantiating Hybrid Inverter ({hass=})")
     hybrid_model = InverterModel(plant_index, hybrid_inverter_device_address)
     hybrid_serial = InverterSerialNumber(plant_index, hybrid_inverter_device_address)
     hybrid_firmware = InverterFirmwareVersion(plant_index, hybrid_inverter_device_address)
@@ -60,7 +64,8 @@ async def get_sensor_instances(
     hybrid_inverter = Inverter(
         plant_index=plant_index,
         device_address=hybrid_inverter_device_address,
-        device_type=HybridInverter(),
+        protocol_version=protocol_version,
+        device_type=DeviceType.create(hybrid_model.latest_raw_state),
         model_id=hybrid_model.latest_raw_state,
         serial=hybrid_serial.latest_raw_state,
         firmware=hybrid_firmware.latest_raw_state,
@@ -73,7 +78,6 @@ async def get_sensor_instances(
         serial_number=hybrid_serial,
     )
 
-    logging.debug(f"Instantiating PV Inverter ({hass=})")
     pv_model = InverterModel(plant_index, pv_inverter_device_address)
     pv_serial = InverterSerialNumber(plant_index, pv_inverter_device_address)
     pv_firmware = InverterFirmwareVersion(plant_index, pv_inverter_device_address)
@@ -87,7 +91,8 @@ async def get_sensor_instances(
     pv_inverter = Inverter(
         plant_index=plant_index,
         device_address=pv_inverter_device_address,
-        device_type=PVInverter(),
+        protocol_version=protocol_version,
+        device_type=DeviceType.create(pv_model.latest_raw_state),
         model_id=pv_model.latest_raw_state,
         serial=pv_serial.latest_raw_state,
         firmware=pv_firmware.latest_raw_state,
@@ -100,35 +105,42 @@ async def get_sensor_instances(
         serial_number=pv_serial,
     )
 
-    logging.debug(f"Instantiating DC Charger ({hass=})")
-    dc_charger = DCCharger(plant_index, dc_charger_device_address, remote_ems)
+    dc_charger = DCCharger(plant_index, dc_charger_device_address, protocol_version)
 
-    logging.debug(f"Instantiating AC Charger ({hass=})")
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
-    ac_charger = ACCharger(plant_index, ac_charger_device_address, remote_ems, 1.0, 2.0, rated_current, input_breaker)
+    ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, 16.0, 32.0, rated_current, input_breaker)
 
-    sensor_count = {}
-    sensor_instances = {}
+    classes = {}
+    registers = {}
+    sensors = {}
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
-            if c.__name__ != "ReservedSensor":
-                if len(c.__subclasses__()) == 0:
-                    if c.__name__ != "RequisiteSensor":
-                        sensor_count[c.__name__] = 0
-                else:
-                    find_concrete_classes(c)
+            if len(c.__subclasses__()) == 0:
+                if c.__name__ != "RequisiteSensor":
+                    classes[c.__name__] = 0
+            else:
+                find_concrete_classes(c)
 
     def add_sensor_instance(s):
-        if isinstance(s, ReservedSensor):
-            return
         key = s.unique_id
-        if key not in sensor_instances:
-            sensor_instances[key] = s
-        elif s.__class__.__name__ != sensor_instances[key].__class__.__name__:
-            logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensor_instances[key].__class__.__name__}")
-        sensor_count[s.__class__.__name__] += 1
+        if hasattr(s, "_address"):
+            if (
+                s._address in registers
+                and s._device_address == registers[s._address]._device_address
+                and s.__class__.__name__ != registers[s._address].__class__.__name__
+                and not (isinstance(s, AlarmSensor) and isinstance(registers[s._address], AlarmCombinedSensor))
+                and not (isinstance(s, AlarmCombinedSensor) and isinstance(registers[s._address], AlarmSensor))
+            ):
+                logging.warning(f"Register {s._address} in {s.__class__.__name__} already defined in {registers[s._address].__class__.__name__}")
+            else:
+                registers[s._address] = s
+        if key not in sensors:
+            sensors[key] = s
+        elif s.__class__.__name__ != sensors[key].__class__.__name__:
+            logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensors[key].__class__.__name__}")
+        classes[s.__class__.__name__] += 1
         for d in s._derived_sensors.values():
             add_sensor_instance(d)
 
@@ -148,11 +160,25 @@ async def get_sensor_instances(
                         add_sensor_instance(alarm)
                 else:
                     add_sensor_instance(s)
-    for sensor, count in sensor_count.items():
-        if count == 0:
-            logging.warning(f"Sensor {sensor} has not been used?")
 
-    return sensor_instances
+    previous = None
+    for address in sorted(registers.keys()):
+        count = registers[address]._count
+        if previous:
+            last_address, last_count = previous
+            if address not in (30500, 31000, 31500, 32000, 40000, 40500, 41000, 41500, 42000) and last_address + last_count < address:
+                logging.warning(
+                    f"Gap detected between register {last_address} (count={last_count} class={registers[last_address].__class__.__name__}) and register {address} (class={registers[address].__class__.__name__})"
+                )
+        for i in range(address + 1, address + count):
+            if i in registers:
+                logging.warning(f"Register {i} in {s.__class__.__name__} overlaps {registers[i].__class__.__name__}")
+        previous = (address, count)
+    for classname, count in classes.items():
+        if count == 0:
+            logging.warning(f"Class {classname} has not been used?")
+
+    return sensors
 
 
 def cancel_sensor_futures():

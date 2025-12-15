@@ -5,7 +5,7 @@ if __name__ == "__main__":
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../src"))
     sys.path.insert(0, parent_dir)
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.config.smart_port_config import ModuleConfig
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClient
@@ -41,6 +41,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             gain=None,
             precision=2,
         )
+        self._data_type = ModbusClient.DATATYPE.INT32
         ReadableSensorMixin.__init__(self, Config.devices[0].scan_interval.realtime)
         self["enabled_by_default"] = True
 
@@ -427,7 +428,7 @@ class SmartPort(Device):
                 raise Exception(f"Unable to initialise from {url} after {i} attempts")
         unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Smart-Port"
-        super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", mdl_id=pn, sn=sn, hw=fw)
+        super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", Protocol.N_A, mdl_id=pn, sn=sn, hw=fw)
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
         lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)

@@ -37,6 +37,7 @@ class BatteryChargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.protocol_version = battery_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -67,6 +68,7 @@ class BatteryDischargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.protocol_version = battery_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -97,6 +99,7 @@ class GridSensorExportPower(DerivedSensor):
             gain=None,
             precision=active_power.precision,
         )
+        self.protocol_version = active_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -127,6 +130,7 @@ class GridSensorImportPower(DerivedSensor):
             gain=None,
             precision=active_power.precision,
         )
+        self.protocol_version = active_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -410,6 +414,7 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
             source=source,
         )
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -425,6 +430,7 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             source=source,
         )
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -447,6 +453,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
             precision=2,
         )
         self["enabled_by_default"] = True
+        self.protocol_version = 2.7
         self.plant_lifetime_pv_energy: float = None
         self.plant_3rd_party_lifetime_pv_energy: float = None
 
@@ -506,6 +513,7 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_daily_pv_energy",
             source=source,
         )
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -521,6 +529,7 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_pv_energy",
             source=source,
         )
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -536,6 +545,7 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_charge_energy",
             source=source,
         )
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -551,6 +561,7 @@ class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
             source=source,
         )
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()

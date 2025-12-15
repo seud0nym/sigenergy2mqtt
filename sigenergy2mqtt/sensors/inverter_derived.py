@@ -2,7 +2,7 @@ from .base import DeviceClass, EnergyDailyAccumulationSensor, StateClass, Energy
 from .const import UnitOfPower
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.mqtt import MqttClient
 from typing import Any
 import logging
@@ -22,6 +22,7 @@ class InverterBatteryChargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.protocol_version = battery_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -52,6 +53,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
             gain=None,
             precision=2,
         )
+        self.protocol_version = battery_power.protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -69,7 +71,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
 
 
 class PVStringPower(DerivedSensor):
-    def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):
+    def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, voltage: PVVoltageSensor, current: PVCurrentSensor):
         super().__init__(
             name="Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
@@ -81,12 +83,14 @@ class PVStringPower(DerivedSensor):
             icon="mdi:home-lightning-bolt",
             gain=None,
             precision=2,
+            protocol_version=protocol_version,
         )
         self.string_number = string_number
         self.current: float = None
         self.current_gain: float = current.gain
         self.voltage: float = None
         self.voltage_gain: float = voltage.gain
+        self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -127,7 +131,7 @@ class PVStringPower(DerivedSensor):
 
 
 class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
-    def __init__(self, plant_index: int, device_address: int, string_number: int, source: PVStringPower):
+    def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringPower):
         super().__init__(
             name="Lifetime Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
@@ -135,6 +139,7 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
             source=source,
         )
         self.string_number = string_number
+        self.protocol_version = protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -143,7 +148,7 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
 
 
 class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
-    def __init__(self, plant_index: int, device_address: int, string_number: int, source: PVStringLifetimeEnergy):
+    def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringLifetimeEnergy):
         super().__init__(
             name="Daily Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
@@ -151,6 +156,7 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
             source=source,
         )
         self.string_number = string_number
+        self.protocol_version = protocol_version
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()

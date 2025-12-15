@@ -3,7 +3,7 @@ from .sanity_check import SanityCheck
 from concurrent.futures import Future
 from pathlib import Path
 from pymodbus.pdu import ExceptionResponse
-from sigenergy2mqtt.config import Config, RegisterAccess
+from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
@@ -37,6 +37,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol = Protocol.V2_4,
     ):
         assert unique_id not in self._used_unique_ids or self._used_unique_ids[unique_id] == self.__class__.__name__, (
             f"{self.__class__.__name__} unique_id {unique_id} has already been used for class {self._used_unique_ids[unique_id]}"
@@ -47,8 +48,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         )
         assert object_id.startswith(Config.home_assistant.entity_id_prefix), f"{self.__class__.__name__} object_id {object_id} does not start with '{Config.home_assistant.entity_id_prefix}'"
         assert icon is None or icon.startswith("mdi:"), f"{self.__class__.__name__} icon {icon} does not start with 'mdi:'"
+        assert isinstance(protocol_version, Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
         self._used_unique_ids[unique_id] = self.__class__.__name__
         self._used_object_ids[object_id] = self.__class__.__name__
+
+        self._protocol_version = protocol_version
 
         self["platform"] = "sensor"
         self["name"] = name
@@ -136,6 +140,19 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         return self["display_precision"]
 
     @property
+    def protocol_version(self) -> float:
+        return self._protocol_version.value
+
+    @protocol_version.setter
+    def protocol_version(self, protocol_version: Protocol | float):
+        isProtocol = isinstance(protocol_version, Protocol)
+        assert isProtocol or (isinstance(protocol_version, float) and protocol_version in Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
+        if isProtocol:
+            self._protocol_version = protocol_version
+        else:
+            self._protocol_version = {p.value: p for p in Protocol}.get(protocol_version)
+
+    @property
     def publishable(self) -> bool:
         return self._publishable
 
@@ -195,7 +212,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
     # endregion
 
-    def _apply_gain_and_precision(self, state, raw):
+    def _apply_gain_and_precision(self, state: float | int, raw: bool = False) -> float | int:
         """
         Applies gain and precision adjustments to a given state value if applicable.
 
@@ -238,7 +255,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             sensor:     The DerivedSensor instance.
         """
         self._derived_sensors[sensor.__class__.__name__] = sensor
-        logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} derived sensors")
 
     def add_requisite_sensor(self, sensor: "RequisiteSensor") -> None:
         """Adds a requisite sensor on which this sensor depends.
@@ -247,7 +263,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             sensor:     The RequisiteSensor instance.
         """
         self._requisite_sensors[sensor.__class__.__name__] = sensor
-        logging.debug(f"{sensor.__class__.__name__} added to {self.__class__.__name__} requisite sensors")
 
     def apply_sensor_overrides(self, registers: RegisterAccess):
         for identifier in Config.sensor_overrides.keys():
@@ -331,6 +346,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         """
         attributes = {}
         attributes["sensor-class"] = self.__class__.__name__
+        if self.protocol_version:
+            attributes["since-protocol"] = f"V{self.protocol_version}"
         if self._gain:
             attributes["gain"] = self._gain
         if hasattr(self, "_scan_interval"):
@@ -395,7 +412,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         if republish and len(self._states) > 0:
             state = self._states[-1][1]
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Republishing previous state ({state=})")
+                logging.debug(f"{self.__class__.__name__} Republishing previous state ({state=} retrieved={time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(self._states[-1][0]))})")
         else:
             result = await self._update_internal_state(**kwargs)
             if result:
@@ -441,16 +458,14 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 if modbus.connected:
                     self._failures += 1
                     self._next_retry = (
-                        None
-                        if self._failures < self._max_failures or self._max_failures_retry_interval == 0
-                        else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
+                        None if self._failures < self._max_failures or self._max_failures_retry_interval == 0 else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
                     )
                     if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
                 else:
                     raise
                 if Config.home_assistant.enabled:
-                    self.publish_attributes(mqtt, failures=self._failures, exception=f"{repr(e)}")
+                    self.publish_attributes(mqtt, clean=False, failures=self._failures, exception=f"{repr(e)}")
                 if self._failures >= self._max_failures:
                     logging.warning(
                         f"{self.__class__.__name__} Publishing DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
@@ -465,23 +480,28 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=} {now=}")
         return published
 
-    def publish_attributes(self, mqtt: MqttClient, **kwargs) -> None:
+    def publish_attributes(self, mqtt: MqttClient, clean: bool = False, **kwargs) -> None:
         """Publishes the attributes for this sensor.
 
         Args:
             mqtt:       The MQTT client for publishing the current state.
+            clean:      True if the attributes are to be cleaned rather than published.
             **kwargs:   key=value pairs that will be added as attributes.
         """
-        if self.publishable and not Config.clean:
+        if clean:
+            if self._debug_logging:
+                logging.debug(f"{self.name} - Cleaning attributes")
+            mqtt.publish(self["json_attributes_topic"], None, qos=1, retain=True)  # Clear retained messages
+        elif self.publishable:
             attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
             for k, v in kwargs.items():
                 attributes[k] = v
             if self._debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
-            mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), 2, True)
-        self.force_publish = False
+            mqtt.publish(self["json_attributes_topic"], json.dumps(attributes, indent=4), qos=2, retain=True)
+            self.force_publish = False
         for sensor in self._derived_sensors.values():
-            sensor.publish_attributes(mqtt)
+            sensor.publish_attributes(mqtt, clean=clean)
 
     def set_latest_state(self, state: float | int | str) -> None:
         """Updates the latest state of this sensor, and passes the updated state to any derived sensors.
@@ -522,9 +542,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 return state
             elif "options" in self and state in self["options"]:
                 return self["options"].index(state)
-        try:
-            value = float(state) if "." in state else int(state)
-        except ValueError:
+            try:
+                value = float(state) if "." in state else int(state)
+            except ValueError:
+                value = state
+        else:
             value = state
         if isinstance(value, (float, int)):
             if self.gain is not None and self.gain != 1:
@@ -593,6 +615,7 @@ class DerivedSensor(Sensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol = Protocol.N_A,
     ):
         super().__init__(
             name,
@@ -604,6 +627,7 @@ class DerivedSensor(Sensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         assert data_type in ModbusClient.DATATYPE, f"Invalid data type {data_type}"
         self._data_type = data_type
@@ -655,6 +679,7 @@ class ModbusSensor(Sensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         unique_id_override: str = None,
     ):
         assert device_address is not None and 1 <= device_address <= 247, f"Invalid device address {device_address}"
@@ -674,6 +699,7 @@ class ModbusSensor(Sensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
         self._address = address
         self._count = count
@@ -728,7 +754,7 @@ class ReadableSensorMixin(abc.ABC):
         assert scan_interval is not None and scan_interval >= 1, "Scan interval cannot be less than 1 second"
         self._scan_interval = scan_interval
 
-        self._sanity.init(self["unit_of_measurement"], self["state_class"], self.gain, scan_interval)
+        self._sanity.init(self["unit_of_measurement"], self["state_class"], self.gain, scan_interval, self._data_type if hasattr(self, "_data_type") else None)
 
         for identifier in Config.sensor_overrides.keys():
             if identifier in self.__class__.__name__ or identifier in self["object_id"]:
@@ -762,10 +788,27 @@ class ReadOnlySensor(ModbusSensor, ReadableSensorMixin):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         unique_id_override: str = None,
     ):
         ModbusSensor.__init__(
-            self, name, object_id, input_type, plant_index, device_address, address, count, data_type, unit, device_class, state_class, icon, gain, precision, unique_id_override=unique_id_override
+            self,
+            name,
+            object_id,
+            input_type,
+            plant_index,
+            device_address,
+            address,
+            count,
+            data_type,
+            unit,
+            device_class,
+            state_class,
+            icon,
+            gain,
+            precision,
+            protocol_version,
+            unique_id_override=unique_id_override,
         )
         ReadableSensorMixin.__init__(self, scan_interval)
 
@@ -846,7 +889,9 @@ class ReservedSensor(ReadOnlySensor):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
         unique_id_override: str = None,
+        availability_control_sensor=None,
     ):
         super().__init__(
             name,
@@ -864,6 +909,7 @@ class ReservedSensor(ReadOnlySensor):
             icon,
             gain,
             precision,
+            protocol_version,
             unique_id_override=unique_id_override,
         )
         self._publishable = False  # Reserved sensors are not published
@@ -891,6 +937,7 @@ class TimestampSensor(ReadOnlySensor):
         device_address: int,
         address: int,
         scan_interval: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             name,
@@ -908,6 +955,7 @@ class TimestampSensor(ReadOnlySensor):
             icon="mdi:calendar-clock",
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         self["entity_category"] = "diagnostic"
 
@@ -932,7 +980,10 @@ class TimestampSensor(ReadOnlySensor):
             return dt_object.isoformat()
 
     def state2raw(self, state) -> float | int | str:
-        return int(datetime.datetime.fromisoformat(state).timestamp())
+        if isinstance(state, (float, int)):
+            return int(state)
+        else:
+            return int(datetime.datetime.fromisoformat(state).timestamp())
 
 
 class ObservableMixin(abc.ABC):
@@ -956,7 +1007,9 @@ class WritableSensorMixin(ModbusSensor):
         max_wait = 2
         device_id = self._device_address
         no_response_expected = False
-        logging.info(f"{self.__class__.__name__} write_registers {self._address=} {value=} ({self.latest_raw_state=}) {device_id=}")
+        logging.info(
+            f"{self.__class__.__name__} _write_registers value={self['options'][value] if hasattr(self, 'options') else round(value / self.gain, self.precision)} (raw={value} latest_raw_state={self.latest_raw_state} address={self._address} {device_id=})"
+        )
         if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [value]
         elif self._data_type == ModbusClient.DATATYPE.STRING:
@@ -965,22 +1018,21 @@ class WritableSensorMixin(ModbusSensor):
             registers = modbus.convert_to_registers(int(value), self._data_type)
         method = "write_register" if len(registers) == 1 else "write_registers"
         try:
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]")
+            start = time.monotonic()
             async with ModbusLockFactory.get(modbus).lock(max_wait):
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]")
-                start = time.monotonic()
                 if len(registers) == 1:
                     rr = await modbus.write_register(self._address, registers[0], device_id=device_id, no_response_expected=no_response_expected)
                 else:
                     rr = await modbus.write_registers(self._address, registers, device_id=device_id, no_response_expected=no_response_expected)
-                elapsed = time.monotonic() - start
-                await Metrics.modbus_write(len(registers), elapsed)
-            if Config.devices[self._plant_index].log_level == logging.DEBUG:
+            elapsed = time.monotonic() - start
+            await Metrics.modbus_write(len(registers), elapsed)
+            if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
             result = self._check_register_response(rr, method)
             if result:
                 self.force_publish = True
-                await self.publish(mqtt, modbus)
             return result
         except asyncio.CancelledError:
             logging.warning(f"{self.__class__.__name__} Modbus write interrupted")
@@ -999,11 +1051,20 @@ class WritableSensorMixin(ModbusSensor):
         return base
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        try:
+            if not await self.value_is_valid(modbus, value):
+                return False
+        except Exception as e:
+            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
+            raise
         if source == self["command_topic"]:
             return await self._write_registers(modbus, value, mqtt)
         else:
-            logging.warning(f"{self.__class__.__name__} Attempt to set_value({value}) from unknown topic {source}")
+            logging.error(f"{self.__class__.__name__} Attempt to set value '{value}' from unknown topic {source}")
             return False
+
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        return True
 
 
 class WriteOnlySensor(WritableSensorMixin):
@@ -1016,6 +1077,7 @@ class WriteOnlySensor(WritableSensorMixin):
         plant_index: int,
         device_address: int,
         address: int,
+        protocol_version: Protocol,
         payload_off: str = "off",
         payload_on: str = "on",
         name_off: str = "Power Off",
@@ -1040,6 +1102,7 @@ class WriteOnlySensor(WritableSensorMixin):
             icon=None,
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         assert icon_on is not None and icon_on.startswith("mdi:"), f"{self.__class__.__name__} on icon {icon_on} does not start with 'mdi:'"
         assert icon_off is not None and icon_off.startswith("mdi:"), f"{self.__class__.__name__} off icon {icon_off} does not start with 'mdi:'"
@@ -1071,17 +1134,14 @@ class WriteOnlySensor(WritableSensorMixin):
             logging.debug(f"{self.__class__.__name__} Discovered {components=}")
         return components
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if value == self._payloads["off"]:
-            return await super().set_value(modbus, mqtt, self._values["off"], source, handler)
-        elif value == self._payloads["on"]:
-            return await super().set_value(modbus, mqtt, self._values["on"], source, handler)
-        else:
-            logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to {value}: Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
-        return False
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if value not in (self._payloads["off"], self._payloads["on"]):
+            logging.error(f"{self.__class__.__name__} Invalid value '{value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
+            return False
+        return True
 
 
-class RemoteEMSMixin(Sensor):
+class AvailabilityMixin(Sensor):
     """Mixin to flag the class that will control Read-Write sensor availability"""
 
     pass
@@ -1092,7 +1152,7 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
 
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
         input_type: InputType,
@@ -1108,6 +1168,7 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
         icon: str,
         gain: float,
         precision: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             name,
@@ -1125,16 +1186,17 @@ class ReadWriteSensor(ReadOnlySensor, WritableSensorMixin):
             icon,
             gain,
             precision,
+            protocol_version,
         )
-        assert remote_ems is None or isinstance(remote_ems, RemoteEMSMixin), f"{self.__class__.__name__} remote_ems is not an instance of RemoteEMSMixin"
-        self._remote_ems = remote_ems
+        assert availability_control_sensor is None or isinstance(availability_control_sensor, AvailabilityMixin), f"{self.__class__.__name__} availability_control_sensor is not an instance of AvailabilityMixin"
+        self._availability_control_sensor = availability_control_sensor
         self["enabled_by_default"] = True
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if self._remote_ems is not None and Config.home_assistant.enabled:
-            assert self._remote_ems.state_topic and not self._remote_ems.state_topic.isspace(), "RemoteEMS state_topic has not been configured"
-            self["availability"].append({"topic": self._remote_ems.state_topic, "payload_available": 1, "payload_not_available": 0})
+        if self._availability_control_sensor is not None and Config.home_assistant.enabled:
+            assert self._availability_control_sensor.state_topic and not self._availability_control_sensor.state_topic.isspace(), "RemoteEMS state_topic has not been configured"
+            self["availability"].append({"topic": self._availability_control_sensor.state_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
 
@@ -1143,7 +1205,7 @@ class NumericSensor(ReadWriteSensor):
 
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
         input_type: InputType,
@@ -1159,11 +1221,12 @@ class NumericSensor(ReadWriteSensor):
         icon: str,
         gain: float,
         precision: int,
-        min: float = 0.0,
-        max: float = 100.0,
+        protocol_version: Protocol,
+        minimum: float | tuple[float] = 0.0,
+        maximum: float | tuple[float] = 100.0,
     ):
         super().__init__(
-            remote_ems,
+            availability_control_sensor,
             name,
             object_id,
             input_type,
@@ -1179,10 +1242,17 @@ class NumericSensor(ReadWriteSensor):
             icon,
             gain,
             precision,
+            protocol_version,
         )
+        assert (isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)) and minimum < maximum) or (
+            isinstance(minimum, (tuple, list))
+            and isinstance(maximum, (tuple, list))
+            and len(minimum) == len(maximum)
+            and all(isinstance(mn, (int, float)) and isinstance(mx, (int, float)) and mn < mx for mn, mx in zip(minimum, maximum))
+        ), f"{self.__class__.__name__} Invalid min/max values: {minimum}/{maximum}"
         self["platform"] = "number"
-        self["min"] = min
-        self["max"] = max
+        self["min"] = minimum
+        self["max"] = maximum
         self["mode"] = "slider" if unit == PERCENTAGE else "box"
         self["step"] = 1 if precision is None else 10**-precision
         self._sanity.min_value = None
@@ -1190,16 +1260,19 @@ class NumericSensor(ReadWriteSensor):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
+        value = state
         if isinstance(state, (float, int)):
-            if state < self["min"]:
+            minimum = self["min"] * self.gain
+            maximum = self["max"] * self.gain
+            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
+                value = min(minimum) if isinstance(minimum, (tuple, list)) else minimum
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} {state=} < {self['min']=} so adjusted")
-                state = self["min"]
-            elif state > self["max"]:
+                    logging.debug(f"{self.__class__.__name__} Acquired state {state} < {minimum} so adjusted to {value}")
+            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or (not isinstance(maximum, (tuple, list)) and state > maximum):
+                value = max(maximum) if isinstance(maximum, (tuple, list)) else maximum
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} {state=} > {self['max']=} so adjusted")
-                state = self["max"]
-        return state
+                    logging.debug(f"{self.__class__.__name__} Acquired state {state} > {maximum} so adjusted to {value}")
+        return value
 
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value is not None:
@@ -1214,52 +1287,135 @@ class NumericSensor(ReadWriteSensor):
             logging.warning(f"{self.__class__.__name__} Ignored attempt to set None value to {value}")
         return False
 
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        try:
+            state = float(value)
+            minimum = self["min"] * self.gain
+            maximum = self["max"] * self.gain
+            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
+                logging.error(f"{self.name} - Invalid value '{value}': Less than minimum of {minimum}")
+                return False
+            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or (not isinstance(maximum, (tuple, list)) and state > maximum):
+                logging.error(f"{self.name} - Invalid value '{value}': Greater than maximum of {maximum}")
+                return False
+            return True
+        except ValueError:
+            logging.error(f"{self.name} - Invalid value '{value}': Not a number")
+            return False
+
+
+class SelectSensor(ReadWriteSensor):
+    def __init__(
+        self,
+        availability_control_sensor: AvailabilityMixin,
+        name: str,
+        object_id: str,
+        plant_index: int,
+        device_address: int,
+        address: int,
+        scan_interval: int,
+        options: list[str],
+        protocol_version: Protocol,
+    ):
+        assert options is not None and isinstance(options, list) and len(options) > 0 and not any(o for o in options if not isinstance(o, str)), "options must be a non-empty list of strings"
+        super().__init__(
+            availability_control_sensor=availability_control_sensor,
+            name=name,
+            object_id=object_id,
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=scan_interval,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:list-status",
+            gain=None,
+            precision=None,
+            protocol_version=protocol_version,
+        )
+        self["platform"] = "select"
+        self["options"] = options
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if raw:
+            return value
+        elif value is None:
+            return None
+        elif 0 <= value <= (len(self["options"]) - 1):
+            return self["options"][value]
+        else:
+            return f"Unknown Mode: {value}"
+
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
+        try:
+            index = int(value)
+        except ValueError:
+            index = self["options"].index(value)
+        return await super().set_value(modbus, mqtt, index, source, handler)
+
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        try:
+            if self["options"].index(value) is not None:
+                return True
+        except ValueError:
+            try:
+                int(value)
+                return True
+            except ValueError:
+                pass
+        logging.error(f"{self.name} - Invalid value '{value}': Not a valid option or index")
+        return False
+
 
 class SwitchSensor(ReadWriteSensor):
     """Superclass of all enabled/disabled read-write sensor definitions"""
 
     def __init__(
         self,
-        remote_ems: RemoteEMSMixin,
+        availability_control_sensor: AvailabilityMixin,
         name: str,
         object_id: str,
-        input_type: InputType,
         plant_index: int,
         device_address: int,
         address: int,
-        count: int,
-        data_type: ModbusClient.DATATYPE,
         scan_interval: int,
-        unit: str,
-        device_class: DeviceClass,
-        state_class: StateClass,
-        icon: str,
-        gain: float,
-        precision: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
-            remote_ems,
-            name,
-            object_id,
-            input_type,
-            plant_index,
-            device_address,
-            address,
-            count,
-            data_type,
-            scan_interval,
-            unit,
-            device_class,
-            state_class,
-            icon,
-            gain,
-            precision,
+            availability_control_sensor=availability_control_sensor,
+            name=name,
+            object_id=object_id,
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=scan_interval,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:toggle-switch",
+            gain=None,
+            precision=None,
+            protocol_version=protocol_version,
         )
         self["platform"] = "switch"
         self["payload_off"] = "0"
         self["payload_on"] = "1"
         self["state_off"] = "0"
         self["state_on"] = "1"
+
+    async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
+        if value not in (self["payload_off"], self["payload_on"]):
+            logging.error(f"{self.__class__.__name__} Failed to write value '{value}': Must be either '{self['payload_off']}' or '{self['payload_on']}'")
+            return False
+        return True
 
 
 class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
@@ -1274,6 +1430,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         plant_index: int,
         device_address: int,
         address: int,
+        protocol_version: Protocol,
         alarm_type: str,
     ):
         super().__init__(
@@ -1292,6 +1449,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             icon="mdi:flash-triangle",
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         self.alarm_type = alarm_type
 
@@ -1321,7 +1479,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw:
             return value
-        elif value is None or value == 0 or (isinstance(value, list) and sum(value) == 0):
+        elif value is None or value == 0 or (isinstance(value, list) and sum(value) == 0) or value == 65535:
             return self.NO_ALARM
         else:
             if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
@@ -1351,12 +1509,17 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                             alarms = alarms[: (max_length - 3)] + "..."
                 return alarms
 
+    def state2raw(self, state):
+        if state == AlarmSensor.NO_ALARM:
+            return 0
+        return super().state2raw(state)
+
 
 class Alarm1Sensor(AlarmSensor):
     """Superclass of all Alarm 1 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "PCS")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "PCS")
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1407,8 +1570,8 @@ class Alarm1Sensor(AlarmSensor):
 class Alarm2Sensor(AlarmSensor):
     """Superclass of all Alarm 2 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "PCS")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "PCS")
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1445,8 +1608,8 @@ class Alarm2Sensor(AlarmSensor):
 class Alarm3Sensor(AlarmSensor):
     """Superclass of all Alarm 3 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "ESS")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "ESS")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1480,8 +1643,16 @@ class Alarm3Sensor(AlarmSensor):
 class Alarm4Sensor(AlarmSensor):
     """Superclass of all Alarm 4 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "GW")
+    def __init__(
+        self,
+        name: str,
+        object_id: str,
+        plant_index: int,
+        device_address: int,
+        address: int,
+        protocol_version: Protocol,
+    ):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "GW")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1517,8 +1688,8 @@ class Alarm4Sensor(AlarmSensor):
 class Alarm5Sensor(AlarmSensor):
     """Superclass of all Alarm 5 definitions. Alarms have the same configuration in the both the Power Plant and the Hybrid Inverter."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int):
-        super().__init__(name, object_id, plant_index, device_address, address, "EVDC")
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+        super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "EVDC")
         self["enabled_by_default"] = True
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1560,6 +1731,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             icon="mdi:flash-triangle",
             gain=None,
             precision=None,
+            protocol_version=Protocol.N_A,
         )
         device_addresses = set([a._device_address for a in alarms])
         first_address = min([a._address for a in alarms])
@@ -1567,15 +1739,22 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         count = sum([a._count for a in alarms])
         assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
         assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a._address for a in alarms]})"
-        ReadableSensorMixin.__init__(self, scan_interval=10)
         self["enabled_by_default"] = True
         self._alarms = list(alarms)
         self._address = min([a._address for a in alarms])
         self._device_address = device_addresses.pop()
-        self._scan_interval = min([a._scan_interval for a in alarms])
         self._count = count
-        self._input_type = alarms[0]._input_type
-        self._data_type = alarms[0]._data_type
+        self._input_type = InputType.INPUT
+        self._data_type = ModbusClient.DATATYPE.UINT16
+        ReadableSensorMixin.__init__(self, scan_interval=min([a._scan_interval for a in alarms]))
+
+    @property
+    def protocol_version(self) -> float:
+        protocol = super().protocol_version
+        for alarm in self._alarms:
+            if alarm.protocol_version > protocol:
+                protocol = alarm.protocol_version
+        return protocol
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Gets the state of this sensor.
@@ -1606,6 +1785,11 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             self.set_state(result)
             return self._apply_gain_and_precision(self._states[-1][1], raw)
 
+    def state2raw(self, state):
+        if state == AlarmSensor.NO_ALARM:
+            return 0
+        return super().state2raw(state)
+
 
 class RunningStateSensor(ReadOnlySensor):
     """Superclass of all Running State sensors."""
@@ -1617,6 +1801,7 @@ class RunningStateSensor(ReadOnlySensor):
         plant_index: int,
         device_address: int,
         address: int,
+        protocol_version: Protocol,
     ):
         super().__init__(
             name,
@@ -1634,6 +1819,7 @@ class RunningStateSensor(ReadOnlySensor):
             icon="mdi:power-settings",
             gain=None,
             precision=None,
+            protocol_version=protocol_version,
         )
         self["enabled_by_default"] = True
         self["options"] = [
@@ -1776,8 +1962,6 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                         logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
                 except ValueError as error:
                     logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
-        else:
-            logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
         self.set_latest_state(self._current_total)
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
@@ -1830,7 +2014,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
 
 
 class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
-    """Superclass of all sensor definitions that are derived by accumulating a daily total from a power sensor"""
+    """Superclass of all sensor definitions that are derived by accumulating a daily total from an energy sensor"""
 
     futures: set[Future] = set()
 
@@ -1878,8 +2062,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             else:
                 logging.debug(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
-        else:
-            logging.debug(f"{self.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():

@@ -1,18 +1,18 @@
 from .thread_config import ThreadConfig, ThreadConfigFactory
 from .threading import start
+from pathlib import Path
 from pymodbus import pymodbus_apply_logging_config
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
-from sigenergy2mqtt.sensors.plant_read_only import PlantRatedChargingPower, PlantRatedDischargingPower
+from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 from typing import Tuple
 import logging
-import re
 import signal
 
 
@@ -20,6 +20,7 @@ async def async_main() -> None:
     pymodbus_apply_logging_config(Config.get_modbus_log_level())
     configure_logging()
 
+    protocol_version: Protocol = None
     for plant_index in range(len(Config.devices)):
         device = Config.devices[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
@@ -33,26 +34,31 @@ async def async_main() -> None:
                     inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
                     if plant is None and plant_tmp is not None:
                         plant = plant_tmp
+                        availability_control_sensor = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
+                        assert availability_control_sensor is not None, "Failed to find RemoteEMS instance"
                         config.add_device(plant_index, plant)
-                        remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
-                        assert remote_ems is not None, "Failed to find RemoteEMS instance"
+                        protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
                     if inverter is not None:
                         inverters[device_address] = inverter.unique_id
                         config.add_device(plant_index, inverter)
                 if plant and len(device.dc_chargers) == 0:
                     logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
-                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30252", search_children=True).publishable = False
-                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30256", search_children=True).publishable = False
+                    for register in (30252, 30256):
+                        si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
+                        if si_sensor:
+                            si_sensor.publishable = False
                 else:
                     for device_address in device.dc_chargers:
-                        charger = await make_dc_charger(plant_index, device_address, inverters[device_address], remote_ems)
+                        charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
                         config.add_device(plant_index, charger)
                 if plant and len(device.ac_chargers) == 0:
                     logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
-                    plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True).publishable = False
+                    si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True)
+                    if si_sensor:
+                        si_sensor.publishable = False
                 else:
                     for device_address in device.ac_chargers:
-                        charger = await make_ac_charger(plant_index, modbus, device_address, plant, remote_ems)
+                        charger = await make_ac_charger(plant_index, modbus, device_address, plant)
                         config.add_device(plant_index, charger)
                 logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
         else:
@@ -61,7 +67,7 @@ async def async_main() -> None:
     configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
 
     svc_thread_cfg = ThreadConfig(None, None, name="Services")
-    svc_thread_cfg.add_device(-1, MetricsService())
+    svc_thread_cfg.add_device(-1, MetricsService(protocol_version))
 
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
@@ -92,7 +98,32 @@ async def async_main() -> None:
     signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGUSR1, configure_for_restart)
 
-    await start(configs)
+    if Config.home_assistant.enabled:
+        current_version_file = Path(Config.persistent_state_path, ".current-version")
+        current_version: str = None
+        if current_version_file.exists():
+            try:
+                with current_version_file.open("r") as f:
+                    current_version = f.read()
+                    logging.debug(f"Loaded '{current_version}' from {current_version_file}")
+            except Exception as error:
+                logging.error(f"Failed to read {current_version_file}: {error}")
+        upgrade_clean_required: bool = current_version != Config.version()
+        if upgrade_clean_required:
+            if current_version:
+                logging.info(f"Upgrade to '{Config.version()}' from '{current_version}' detected - clean required")
+            else:
+                logging.info(f"Upgrade to '{Config.version()}' detected - clean required")
+            logging.debug(f"Writing '{Config.version()}' to {current_version_file}")
+            try:
+                with current_version_file.open("w") as f:
+                    f.write(Config.version())
+            except Exception as error:
+                logging.error(f"Failed to write to {current_version_file}: {error}")
+    else:
+        upgrade_clean_required = False
+
+    await start(configs, upgrade_clean_required)
     logging.info("Shutdown completed")
 
 
@@ -120,18 +151,18 @@ def configure_logging():
         pvoutput.setLevel(Config.pvoutput.log_level)
 
 
-async def make_ac_charger(plant_index, modbus, device_address, plant, remote_ems):
+async def make_ac_charger(plant_index, modbus, device_address, plant):
     input_breaker = ACChargerInputBreaker(plant_index, device_address)
     rated_current = ACChargerRatedCurrent(plant_index, device_address)
     ip_value = await input_breaker.get_state(modbus=modbus)
     rc_value = await rated_current.get_state(modbus=modbus)
-    charger = ACCharger(plant_index, device_address, remote_ems, ip_value, rc_value, input_breaker, rated_current)
+    charger = ACCharger(plant_index, device_address, plant.protocol_version, ip_value, rc_value, input_breaker, rated_current)
     charger.via_device = plant.unique_id
     return charger
 
 
-async def make_dc_charger(plant_index, device_address, inverter_unique_id, remote_ems):
-    charger = DCCharger(plant_index, device_address, remote_ems)
+async def make_dc_charger(plant_index, device_address, protocol_version, inverter_unique_id):
+    charger = DCCharger(plant_index, device_address, protocol_version)
     charger.via_device = inverter_unique_id
     return charger
 
@@ -139,7 +170,7 @@ async def make_dc_charger(plant_index, device_address, inverter_unique_id, remot
 serial_numbers = []
 
 
-async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, HybridInverter | PVInverter, PowerPlant, any]:
+async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, PowerPlant]:
     serial = InverterSerialNumber(plant_index, device_address)
     serial_number = await serial.get_state(modbus=modbus)
 
@@ -153,6 +184,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
     output_type = OutputType(plant_index, device_address)
 
     model_id = await model.get_state(modbus=modbus)
+    device_type = DeviceType.create(model_id)
     firmware_version = await firmware.get_state(modbus=modbus)
     pv_string_count = await strings.get_state(modbus=modbus)
     output_type_state = await output_type.get_state(raw=True, modbus=modbus)
@@ -164,19 +196,39 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
         case _:
             power_phases = 3
 
-    if re.search(r"EC|Hybrid|PG|PV.*M1-HYA", model_id):
-        device_type = HybridInverter()
-    else:
-        device_type = PVInverter()
-
     if plant is None:
+        # Probe the plant for the supported Modbus Protocol version
+        for register, count, protocol in (  # Obviously must be a register specific to the version, in descending protocol sequence
+            (30284, 2, Protocol.V2_8),  # TotalLoadPower
+            (30194, 2, Protocol.V2_7),  # ThirdPartyPVPower
+            (30092, 2, Protocol.V2_6),  # TotalLoadDailyConsumption
+            (30087, 1, Protocol.V2_5),  # PlantBatterySoH
+        ):
+            try:
+                rr = await modbus.read_holding_registers(register, count=count, device_id=247)
+                if not rr.isError():
+                    # No exception, so assign the associated protocol as the real version
+                    protocol_version = protocol
+                    break
+            except Exception:
+                # Most likely 0x02 ILLEGAL DATA ADDRESS, but doesn't matter; just try the next one
+                pass
+        else:
+            protocol_version = Protocol.V1_8
+        logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol_version.value} ({ProtocolApplies(protocol_version)})")
         rated_charging_power = PlantRatedChargingPower(plant_index)
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)
         rdp_value = await rated_discharging_power.get_state(modbus=modbus)
-        plant = PowerPlant(plant_index, device_type, output_type_state, power_phases, rcp_value, rdp_value, rated_charging_power, rated_discharging_power)
+        if device_type.has_grid_code_interface and protocol_version >= Protocol.V2_8:
+            rated_frequency = GridCodeRatedFrequency(plant_index)
+            rf_value = await rated_frequency.get_state(modbus=modbus)
+        else:
+            rated_frequency, rf_value = (None, None)
 
-    inverter = Inverter(plant_index, device_address, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
+        plant = PowerPlant(plant_index, device_type, protocol_version, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
+
+    inverter = Inverter(plant_index, device_address, protocol_version, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
     inverter.via_device = plant.unique_id
 
     serial_numbers.append(serial_number)

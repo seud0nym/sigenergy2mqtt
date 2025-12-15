@@ -1,8 +1,9 @@
 from .device import ModbusDevice
+from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
 from .types import DeviceType
-from sigenergy2mqtt.config import Config, SIGENERGY_MODBUS_PROTOCOL
+from sigenergy2mqtt.config import Config, Protocol
 import importlib
 import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -15,15 +16,26 @@ class PowerPlant(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
+        protocol_version: Protocol,
         output_type: int,
         power_phases: int,
         rcp_value: float,
         rdp_value: float,
+        rf_value: float,
         rated_charging_power: ro.PlantRatedChargingPower,
         rated_discharging_power: ro.PlantRatedDischargingPower,
+        rated_frequency: ro.GridCodeRatedFrequency,
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
-        super().__init__(device_type, name, plant_index, 247, "Energy Management System", sw=f"Modbus Protocol {SIGENERGY_MODBUS_PROTOCOL}")
+        super().__init__(
+            device_type,
+            name,
+            plant_index,
+            247,
+            "Energy Management System",
+            protocol_version,
+            sw=f"Modbus Protocol V{protocol_version.value}",
+        )
         battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
@@ -34,14 +46,14 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.MaxActivePower(plant_index))
         self._add_read_sensor(ro.MaxApparentPower(plant_index))
         self._add_read_sensor(ro.PlantBatterySoC(plant_index))
-        self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, "A"))
-        self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, "A"))
+        self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "A"))
+        self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "A"))
         if power_phases > 1:
-            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, "B"))
-            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, "B"))
+            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "B"))
+            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "B"))
         if power_phases > 2:
-            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, "C"))
-            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, "C"))
+            self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "C"))
+            self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "C"))
         self._add_read_sensor(ro.GeneralPCSAlarm(plant_index, ro.GeneralAlarm1(plant_index), ro.GeneralAlarm2(plant_index)))
         self._add_read_sensor(ro.GeneralAlarm3(plant_index))
         self._add_read_sensor(ro.GeneralAlarm4(plant_index))
@@ -89,20 +101,21 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems))
         self._add_read_sensor(rw.QSAdjustmentTargetValue(plant_index))
         self._add_read_sensor(rw.PowerFactorAdjustmentTargetValue(plant_index))
-        if output_type == 2:  # L1/L2/L3/N
-            self._add_read_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, "A"))
-            self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, "A"))
-            self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type, "A"))
-            self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, remote_ems, output_type, "A"))
-            self._add_read_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, "B"))
-            self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, "B"))
-            self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type, "B"))
-            self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, remote_ems, output_type, "B"))
-            self._add_read_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, "C"))
-            self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, remote_ems, output_type, "C"))
-            self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, remote_ems, output_type, "C"))
-            self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, remote_ems, output_type, "C"))
-            self._add_read_sensor(rw.IndependentPhasePowerControl(plant_index, remote_ems, output_type))
+        if device_type.has_independent_phase_power_control_interface and output_type == 2:  # L1/L2/L3/N
+            independent_phase_power_control = rw.IndependentPhasePowerControl(plant_index, output_type)
+            self._add_read_sensor(independent_phase_power_control)
+            self._add_read_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "A"))
+            self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "A"))
+            self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "A"))
+            self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "A"))
+            self._add_read_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "B"))
+            self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "B"))
+            self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "B"))
+            self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "B"))
+            self._add_read_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
+            self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
+            self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
+            self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
         self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, remote_ems_mode, rcp_value))
         self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, remote_ems_mode, rdp_value))
         self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems, remote_ems_mode))
@@ -126,8 +139,10 @@ class PowerPlant(ModbusDevice):
 
         self._add_writeonly_sensor(rw.PlantStatus(plant_index))
 
-        self._add_child_device(GridSensor(plant_index, device_type, power_phases, grid_sensor_active_power))
-        self._add_child_device(PlantStatistics(plant_index, device_type))
+        self._add_child_device(GridSensor(plant_index, device_type, protocol_version, power_phases, grid_sensor_active_power))
+        self._add_child_device(PlantStatistics(plant_index, device_type, protocol_version))
+        if device_type.has_grid_code_interface and protocol_version >= Protocol.V2_8:
+            self._add_child_device(GridCode(plant_index, device_type, protocol_version, rf_value, rated_frequency))
 
         plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index)
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
@@ -172,3 +187,17 @@ class PowerPlant(ModbusDevice):
         self._add_derived_sensor(total_lifetime_pv_energy, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
         self._add_derived_sensor(derived.TotalDailyPVEnergy(plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
+
+        self._add_read_sensor(ro.GeneralLoadPower(plant_index))
+        self._add_read_sensor(ro.TotalLoadPower(plant_index))
+        self._add_read_sensor(rw.ActivePowerRegulationGradient(plant_index))
+
+        self._add_read_sensor(ro.CurrentControlCommandValue(plant_index))
+        self._add_read_sensor(ro.PlantAlarms(plant_index))
+
+        # region reserved registers
+        self._add_read_sensor(ro.Reserved30073(plant_index))
+        self._add_read_sensor(ro.ReservedPVTotalGenerationToday(plant_index))
+        self._add_read_sensor(ro.ReservedPVTotalGenerationYesterday(plant_index))
+        self._add_read_sensor(rw.Reserved40026(plant_index))
+        # endregion

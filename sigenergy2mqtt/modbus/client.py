@@ -63,10 +63,12 @@ class ModbusClient(AsyncModbusTcpClient):
     def bypass_read_ahead(self, address: int, count: int = 1) -> None:
         self._read_ahead_pdu.update({key: None for key in range(address, address + count)})
 
-    async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, trace: bool = False) -> None:
+    async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, trace: bool = False) -> bool:
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, trace=trace)
         if rr is not None and not rr.isError() and not isinstance(rr, ExceptionResponse):
             self._read_ahead_pdu.update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
+            return True
+        return False
 
     async def read_holding_registers(self, address, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.HOLDING, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)

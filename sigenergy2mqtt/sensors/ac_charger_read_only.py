@@ -1,6 +1,6 @@
 from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from typing import Any
 
@@ -26,6 +26,7 @@ class ACChargerRunningState(ReadOnlySensor):
             icon="mdi:ev-station",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V2_0,
         )
         self["enabled_by_default"] = True
         self["options"] = [
@@ -79,6 +80,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_0,
         )
         self["enabled_by_default"] = True
 
@@ -101,6 +103,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_0,
         )
         self["enabled_by_default"] = True
 
@@ -123,6 +126,7 @@ class ACChargerRatedPower(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_0,
         )
 
 
@@ -144,6 +148,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_0,
         )
 
 
@@ -165,6 +170,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V2_0,
         )
 
 
@@ -186,6 +192,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_0,
         )
 
 
@@ -198,6 +205,7 @@ class ACChargerAlarm1(AlarmSensor):
             device_address=device_address,
             address=32012,
             alarm_type="EVAC",
+            protocol_version=Protocol.V2_0,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -241,6 +249,7 @@ class ACChargerAlarm2(AlarmSensor):
             device_address=device_address,
             address=32013,
             alarm_type="EVAC",
+            protocol_version=Protocol.V2_0,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -278,6 +287,7 @@ class ACChargerAlarm3(AlarmSensor):
             device_address=device_address,
             address=32014,
             alarm_type="EVAC",
+            protocol_version=Protocol.V2_0,
         )
 
     def decode_alarm_bit(self, bit_position: int):

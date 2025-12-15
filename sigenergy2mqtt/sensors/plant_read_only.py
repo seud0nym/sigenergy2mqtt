@@ -1,25 +1,27 @@
 from typing import Any, Dict
+
 from .base import (
-    AlarmCombinedSensor,
-    AlarmSensor,
-    DeviceClass,
-    InputType,
-    PVPowerSensor,
-    StateClass,
     Alarm1Sensor,
     Alarm2Sensor,
     Alarm3Sensor,
     Alarm4Sensor,
     Alarm5Sensor,
+    AlarmCombinedSensor,
+    AlarmSensor,
+    DeviceClass,
+    InputType,
+    PVPowerSensor,
     ReadOnlySensor,
+    ReservedSensor,
     RunningStateSensor,
+    StateClass,
     TimestampSensor,
 )
 from datetime import timedelta, timezone
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfEnergy, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 
 # 5.1 Plant running information address definition(read-only register)
@@ -35,6 +37,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             device_address=247,
             address=30000,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -56,6 +59,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:map-clock",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -72,10 +76,13 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             return formatted_offset
 
     def state2raw(self, state) -> float | int | str:
-        offset = state.replace("UTC", "")
-        sign = 1 if offset[0] == "+" else -1
-        hours, minutes = map(int, offset[1:].split(":"))
-        total_minutes = sign * (hours * 60 + minutes)
+        if isinstance(state, str):
+            offset = state.replace("UTC", "")
+            sign = 1 if offset[0] == "+" else -1
+            hours, minutes = map(int, offset[1:].split(":"))
+            total_minutes = sign * (hours * 60 + minutes)
+        else:
+            total_minutes = state
         return int(total_minutes)
 
 
@@ -97,6 +104,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:pencil",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["options"] = [
             "Max Self Consumption",  # 0
@@ -141,6 +149,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:meter-electric-outline",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self["options"] = [
@@ -183,6 +192,7 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower",
             gain=None,  # 1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self._sanity.max_value = 100000  # 100kW
@@ -212,6 +222,7 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower",
             gain=None,  # 1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -238,6 +249,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             icon="mdi:meter-electric-outline",
             gain=None,
             precision=None,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
         self["options"] = [
@@ -276,6 +288,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -303,6 +316,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -330,12 +344,13 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
             icon="mdi:home-battery-outline",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
 
 class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, phase: str):
+    def __init__(self, plant_index: int, power_phases: int, phase: str):
         match phase:
             case "A":
                 address = 30015
@@ -346,7 +361,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name=f"Phase {phase} Active Power",
+            name=f"Phase {phase} Active Power" if power_phases > 1 else "Phase Active Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -361,11 +376,12 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
 class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, phase: str):
+    def __init__(self, plant_index: int, power_phases: int, phase: str):
         match phase:
             case "A":
                 address = 30021
@@ -376,7 +392,7 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name=f"Phase {phase} Reactive Power",
+            name=f"Phase {phase} Reactive Power" if power_phases > 1 else "Phase Reactive Power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -391,12 +407,20 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
 class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
-        super().__init__("PCS Alarms 1", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_1", plant_index, 247, 30027)
+        super().__init__(
+            "PCS Alarms 1",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_1",
+            plant_index,
+            247,
+            30027,
+            protocol_version=Protocol.V1_8,
+        )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -406,7 +430,14 @@ class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
 
 class GeneralAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
-        super().__init__("PCS Alarms 2", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_2", plant_index, 247, 30028)
+        super().__init__(
+            "PCS Alarms 2",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_2",
+            plant_index,
+            247,
+            30028,
+            protocol_version=Protocol.V1_8,
+        )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -432,7 +463,14 @@ class GeneralPCSAlarm(AlarmCombinedSensor):
 
 class GeneralAlarm3(Alarm3Sensor, HybridInverter):
     def __init__(self, plant_index: int):
-        super().__init__("ESS Alarms", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_3", plant_index, 247, 30029)
+        super().__init__(
+            "ESS Alarms",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_3",
+            plant_index,
+            247,
+            30029,
+            protocol_version=Protocol.V1_8,
+        )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -442,7 +480,14 @@ class GeneralAlarm3(Alarm3Sensor, HybridInverter):
 
 class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
-        super().__init__("Gateway Alarms", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_4", plant_index, 247, 30030)
+        super().__init__(
+            "Gateway Alarms",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_4",
+            plant_index,
+            247,
+            30030,
+            protocol_version=Protocol.V1_8,
+        )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -468,6 +513,7 @@ class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -489,6 +535,7 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
 
@@ -510,6 +557,7 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             icon="mdi:solar-power",
             gain=None,  # 1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -532,6 +580,7 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
             icon="mdi:home-battery-outline",
             gain=None,  # 1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -559,6 +608,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -586,6 +636,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -613,6 +664,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -641,6 +693,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -668,6 +721,7 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-plus-outline",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -694,6 +748,7 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-minus-outline",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -704,18 +759,34 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
 
 class PlantRunningState(RunningStateSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
-        super().__init__("Running State", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_running_state", plant_index, 247, 30051)
-
-
-class GridPhaseAActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
         super().__init__(
-            name="Phase A Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_a_active_power",
+            "Running State",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_running_state",
+            plant_index,
+            247,
+            30051,
+            protocol_version=Protocol.V1_8,
+        )
+
+
+class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30052
+            case "B":
+                address = 30054
+            case "C":
+                address = 30056
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Active Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=247,
-            address=30052,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
@@ -725,6 +796,7 @@ class GridPhaseAActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -733,67 +805,24 @@ class GridPhaseAActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         return attributes
 
 
-class GridPhaseBActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
+class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30058
+            case "B":
+                address = 30060
+            case "C":
+                address = 30062
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
         super().__init__(
-            name="Phase B Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_b_active_power",
+            name=f"Phase {phase} Reactive Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=247,
-            address=30054,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=StateClass.MEASUREMENT,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-    def get_attributes(self) -> dict[str, Any]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
-        return attributes
-
-
-class GridPhaseCActivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase C Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_c_active_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30056,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=StateClass.MEASUREMENT,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-    def get_attributes(self) -> dict[str, Any]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
-        return attributes
-
-
-class GridPhaseAReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase A Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_a_reactive_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30058,
+            address=address,
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
@@ -803,58 +832,7 @@ class GridPhaseAReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-        )
-
-    def get_attributes(self) -> dict[str, Any]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
-        return attributes
-
-
-class GridPhaseBReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase B Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_b_reactive_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30060,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
-            device_class=None,
-            state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
-        )
-
-    def get_attributes(self) -> dict[str, Any]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
-        return attributes
-
-
-class GridPhaseCReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
-        super().__init__(
-            name="Phase C Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_c_reactive_power",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=247,
-            address=30062,
-            count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
-            device_class=None,
-            state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
-            precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -881,6 +859,7 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-plus",
             gain=100,
             precision=1,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -907,6 +886,7 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-minus",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
 
     def get_attributes(self) -> dict[str, Any]:
@@ -933,6 +913,7 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -955,18 +936,48 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
 
 class GeneralAlarm5(Alarm5Sensor, HybridInverter):
     def __init__(self, plant_index: int):
-        super().__init__("DC Charger Alarms", f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_5", plant_index, 247, 30072)
+        super().__init__(
+            "DC Charger Alarms",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_5",
+            plant_index,
+            247,
+            30072,
+            protocol_version=Protocol.V1_8,
+        )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
+
+
+class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_reserved_30073",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30073,
+            count=10,
+            data_type=ModbusClient.DATATYPE.STRING,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_5,
+        )
 
 
 class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
@@ -987,6 +998,7 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_5,
         )
         self["entity_category"] = "diagnostic"
 
@@ -1009,6 +1021,7 @@ class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging-high",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V2_5,
         )
 
 
@@ -1030,6 +1043,7 @@ class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging-low",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V2_5,
         )
 
 
@@ -1051,6 +1065,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-heart-variant",
             gain=10,
             precision=1,
+            protocol_version=Protocol.V2_5,
         )
         self["enabled_by_default"] = True
 
@@ -1078,6 +1093,7 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -1099,6 +1115,7 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:home-lightning-bolt-outline",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_6,
             unique_id_override=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1128,6 +1145,7 @@ class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:home-lightning-bolt-outline",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_6,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1157,6 +1175,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt-circle",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -1179,6 +1198,7 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt-outline",
             gain=1000,
             precision=2,
+            protocol_version=Protocol.V2_6,
         )
 
 
@@ -1200,6 +1220,7 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
             icon="mdi:solar-power",
             gain=None,  # 1000,
             precision=2,
+            protocol_version=Protocol.V2_7,
         )
 
 
@@ -1221,6 +1242,7 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
         )
 
 
@@ -1242,6 +1264,7 @@ class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:battery-arrow-up",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1270,6 +1293,7 @@ class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:battery-arrow-down",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1298,6 +1322,7 @@ class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:ev-station",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
         )
 
 
@@ -1319,6 +1344,7 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:ev-station",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
         )
 
 
@@ -1340,6 +1366,7 @@ class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower-import",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1368,6 +1395,7 @@ class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower-export",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
@@ -1396,6 +1424,7 @@ class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter
             icon="mdi:generator-stationary",
             gain=100,
             precision=2,
+            protocol_version=Protocol.V2_7,
         )
 
 
@@ -1420,6 +1449,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
         state_class: StateClass = StateClass.TOTAL_INCREASING,
         gain: float = 100,
         precision: int = 2,
+        protocol_version: Protocol = Protocol.V2_7,
         unique_id_override: str = None,
     ):
         super().__init__(
@@ -1438,14 +1468,13 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
             icon=icon,
             gain=gain,
             precision=precision,
+            protocol_version=protocol_version,
             unique_id_override=unique_id_override,
         )
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
-        attributes["comment"] = (
-            "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
-        )
+        attributes["comment"] = "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
         return attributes
 
 
@@ -1582,3 +1611,310 @@ class SITotalGeneratorOutputEnergy(StatisticsInterfaceSensor):
 
 
 # endregion
+
+
+class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="PV Total Generation Today",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_pv_total_generation_today",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30272,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:solar-power-variant",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="PV Total Generation Yesterday",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_pv_total_generation_yesterday",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30274,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:solar-power-variant",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Rated Frequency",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_frequency",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30276,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=UnitOfFrequency.HERTZ,
+            device_class=DeviceClass.FREQUENCY,
+            state_class=None,
+            icon="mdi:sine-wave",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+        self["entity_category"] = "diagnostic"
+
+
+class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Rated Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_voltage",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30277,
+            count=2,
+            data_type=ModbusClient.DATATYPE.UINT32,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=UnitOfElectricPotential.VOLT,
+            device_class=DeviceClass.VOLTAGE,
+            state_class=None,
+            icon="mdi:flash",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+        self["entity_category"] = "diagnostic"
+
+
+class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Current Control Command Value",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_current_control_command_value",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30279,
+            count=1,
+            data_type=ModbusClient.DATATYPE.UINT16,
+            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            unit=PERCENTAGE,
+            device_class=None,
+            state_class=None,
+            icon="mdi:percent",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Use of Remote Output Control in Japan"
+        return attributes
+
+
+class Alarm6(AlarmSensor):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Alarm 6",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_6",
+            plant_index=plant_index,
+            device_address=247,
+            address=30280,
+            alarm_type="Plant",
+            protocol_version=Protocol.V2_8,
+        )
+
+    def decode_alarm_bit(self, bit_position: int):
+        """Decodes the alarm bit.
+
+        Args:
+            bit_position:     The set bit in the alarm register value.
+
+        Returns:
+            The alarm description or None if not found.
+        """
+        match bit_position:
+            case 0:
+                return "Gateway communication abnormal"
+            case 1:
+                return "Meter communication abnormal"
+            case 2:
+                return "AC power sensor communication abnormal"
+            case 6:
+                return "Hard protection against grid-feed power limit exceeding"
+            case 8:
+                return "Generator failure to start"
+            case 10:
+                return "CLS fault"
+            case _:
+                return None
+
+
+class Alarm7(AlarmSensor):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Alarm 7",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_7",
+            plant_index=plant_index,
+            device_address=247,
+            address=30281,
+            alarm_type="Plant",
+            protocol_version=Protocol.V2_8,
+        )
+
+    def decode_alarm_bit(self, bit_position: int):
+        """Decodes the alarm bit.
+
+        Args:
+            bit_position:     The set bit in the alarm register value.
+
+        Returns:
+            The alarm description or None if not found.
+        """
+        match bit_position:
+            case 0:
+                return "OVGR fault"
+            case 1:
+                return "RPR Fault"
+            case _:
+                return None
+
+
+class PlantAlarms(AlarmCombinedSensor):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            "Plant Alarms",
+            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_plant_alarms",
+            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_alarms",
+            Alarm6(plant_index),
+            Alarm7(plant_index),
+        )
+
+    def get_attributes(self) -> dict[str, Any]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Modbus Registers 30280 and 30281"
+        return attributes
+
+
+class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="General Load Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_general_load_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30282,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Total Load Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_load_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=30284,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridPhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30286
+            case "B":
+                address = 30288
+            case "C":
+                address = 30290
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_voltage",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=address,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfElectricPotential.VOLT,
+            device_class=DeviceClass.VOLTAGE,
+            state_class=None,
+            icon="mdi:flash",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )
+
+
+class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = 30292
+            case "B":
+                address = 30294
+            case "C":
+                address = 30296
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_current",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=247,
+            address=address,
+            count=2,
+            data_type=ModbusClient.DATATYPE.INT32,
+            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            unit=UnitOfElectricCurrent.AMPERE,
+            device_class=DeviceClass.CURRENT,
+            state_class=None,
+            icon="mdi:current-ac",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_8,
+        )

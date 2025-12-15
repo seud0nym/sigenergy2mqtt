@@ -1,11 +1,11 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "SIGENERGY_MODBUS_PROTOCOL", "SIGENERGY_MODBUS_PROTOCOL_PUBLISHED", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource"]
+__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "Protocol", "ProtocolApplies", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource"]
 
 
 from . import const
 from .config import Config
 from .modbus_config import RegisterAccess, SmartPortConfig
+from .protocol import Protocol, ProtocolApplies
 from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
-from .version import SIGENERGY_MODBUS_PROTOCOL, SIGENERGY_MODBUS_PROTOCOL_PUBLISHED
 from pathlib import Path
 import argparse
 import logging
@@ -22,7 +22,13 @@ else:
     else:
         logging.basicConfig(format="{levelname:<8} {module:.<15.15}{lineno:04d} {message}", level=logging.INFO, style="{")
 _logger = logging.getLogger("root")
-_logger.info(f"Release {Config.origin['sw']}")
+_logger.info(f"Release {Config.origin['sw']} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
+
+MIN_VERSION = (3, 11)
+
+if sys.version_info < MIN_VERSION:
+    logging.critical(f"Python {MIN_VERSION[0]}.{MIN_VERSION[1]} or higher is required!")
+    sys.exit(1)
 
 for _storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
     if os.path.isdir(_storage_base_path) and os.access(_storage_base_path, os.W_OK):
