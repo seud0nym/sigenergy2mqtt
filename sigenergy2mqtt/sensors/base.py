@@ -412,7 +412,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         if republish and len(self._states) > 0:
             state = self._states[-1][1]
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Republishing previous state ({state=})")
+                logging.debug(f"{self.__class__.__name__} Republishing previous state ({state=} retrieved={time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(self._states[-1][0]))})")
         else:
             result = await self._update_internal_state(**kwargs)
             if result:
@@ -1008,7 +1008,7 @@ class WritableSensorMixin(ModbusSensor):
         device_id = self._device_address
         no_response_expected = False
         logging.info(
-            f"{self.__class__.__name__} write_registers value={self['options'][value] if hasattr(self, 'options') else round(value / self.gain, self.precision)} (raw={value} latest_raw_state={self.latest_raw_state} address={self._address} {device_id=})"
+            f"{self.__class__.__name__} _write_registers value={self['options'][value] if hasattr(self, 'options') else round(value / self.gain, self.precision)} (raw={value} latest_raw_state={self.latest_raw_state} address={self._address} {device_id=})"
         )
         if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [value]
@@ -1018,22 +1018,21 @@ class WritableSensorMixin(ModbusSensor):
             registers = modbus.convert_to_registers(int(value), self._data_type)
         method = "write_register" if len(registers) == 1 else "write_registers"
         try:
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]")
+            start = time.monotonic()
             async with ModbusLockFactory.get(modbus).lock(max_wait):
-                if Config.devices[self._plant_index].log_level == logging.DEBUG:
-                    logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}]")
-                start = time.monotonic()
                 if len(registers) == 1:
                     rr = await modbus.write_register(self._address, registers[0], device_id=device_id, no_response_expected=no_response_expected)
                 else:
                     rr = await modbus.write_registers(self._address, registers, device_id=device_id, no_response_expected=no_response_expected)
-                elapsed = time.monotonic() - start
-                await Metrics.modbus_write(len(registers), elapsed)
-            if Config.devices[self._plant_index].log_level == logging.DEBUG:
+            elapsed = time.monotonic() - start
+            await Metrics.modbus_write(len(registers), elapsed)
+            if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} {method}({self._address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self._plant_index}] took {elapsed:.3f}s")
             result = self._check_register_response(rr, method)
             if result:
                 self.force_publish = True
-                await self.publish(mqtt, modbus)
             return result
         except asyncio.CancelledError:
             logging.warning(f"{self.__class__.__name__} Modbus write interrupted")
@@ -1263,8 +1262,8 @@ class NumericSensor(ReadWriteSensor):
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
         value = state
         if isinstance(state, (float, int)):
-            minimum = self["min"]
-            maximum = self["max"]
+            minimum = self["min"] * self.gain
+            maximum = self["max"] * self.gain
             if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
                 value = min(minimum) if isinstance(minimum, (tuple, list)) else minimum
                 if self.debug_logging:
