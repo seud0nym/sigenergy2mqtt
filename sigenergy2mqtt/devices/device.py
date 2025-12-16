@@ -5,7 +5,7 @@ from random import randint, uniform
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadableSensorMixin, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadableSensorMixin, ReservedSensor, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.const import InputType, MAX_MODBUS_REGISTERS_PER_REQUEST
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Self
 import abc
@@ -255,13 +255,14 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
         async def publish_updates(modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: Sensor) -> None:
             multiple: bool = len(sensors) > 1
-            first_address: int = min([s._address for s in sensors if hasattr(s, "_address")])
-            last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address")])
-            count: int = sum([s._count for s in sensors if hasattr(s, "_count")])
-            contiguous: bool = multiple and first_address and last_address and (((last_address - first_address + 1) == count) or count <= MAX_MODBUS_REGISTERS_PER_REQUEST)
+            first_address: int = min([s._address for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
+            last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
+            count: int = sum([s._count for s in sensors if hasattr(s, "_address") and hasattr(s, "_count") and first_address <= getattr(s, "_address") <= last_address])
             interval: int = min([s.scan_interval for s in sensors if isinstance(s, ReadableSensorMixin)])  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor)
+            contiguous: bool = multiple and first_address and last_address and (((last_address - first_address + 1) == count) or count <= MAX_MODBUS_REGISTERS_PER_REQUEST)
             debug_logging: bool = False
             daily_sensors: bool = False
+            count = last_address - first_address + 1 # Recalculate count for non-contiguous reads
             for sensor in sensors:
                 debug_logging = debug_logging or sensor.debug_logging or any(ds.debug_logging for ds in sensor._derived_sensors.values())
                 daily_sensors = daily_sensors or any(isinstance(ds, EnergyDailyAccumulationSensor) for ds in sensor._derived_sensors.values())
@@ -294,7 +295,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                         next_publish = now
                 if next_publish <= now:
                     last_publish = now
-                    publishable_now = [sensor for sensor in sensors if isinstance(sensor, ReadableSensorMixin) and sensor.publishable]  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor, etc.)
+                    publishable_now = [s for s in sensors if isinstance(s, ReadableSensorMixin) and s.publishable and not isinstance(s, ReservedSensor)]
                     try:
                         async with lock.lock():
                             if multiple and contiguous:
