@@ -1406,10 +1406,17 @@ class SwitchSensor(ReadWriteSensor):
             protocol_version=protocol_version,
         )
         self["platform"] = "switch"
-        self["payload_off"] = "0"
-        self["payload_on"] = "1"
-        self["state_off"] = "0"
-        self["state_on"] = "1"
+        self["payload_off"] = 0
+        self["payload_on"] = 1
+        self["state_off"] = 0
+        self["state_on"] = 1
+
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
+        try:
+            return await super().set_value(modbus, mqtt, int(value), source, handler)
+        except ValueError as e:
+            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
+            raise
 
     async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
         if value not in (self["payload_off"], self["payload_on"]):
