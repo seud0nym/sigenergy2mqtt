@@ -445,7 +445,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
         return result
 
     async def value_is_valid(self, modbus: ModbusClient, value: float | int | str) -> bool:
-        if self._availability_control_sensor is not None and self._availability_control_sensor.get_state(raw=True, republish=True, modbus=modbus) in (0, "0"):
+        if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus=modbus) in (0, "0"):
             logging.error(f"{self.__class__.__name__} Failed to write '{self['options'][value]}' ({value}): {self._availability_control_sensor.name} is not enabled")
             return False
         return await super().value_is_valid(modbus, value)
