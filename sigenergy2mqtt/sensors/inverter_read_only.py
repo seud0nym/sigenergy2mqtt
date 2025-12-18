@@ -279,10 +279,7 @@ class RatedDischargingPower(ReadOnlySensor, HybridInverter):
         )
 
 
-# region Reserved
-
-
-class DailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
+class ReservedDailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Daily Energy Exported",
@@ -304,7 +301,7 @@ class DailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked a
         )
 
 
-class AccumulatedExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
+class ReservedAccumulatedExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Lifetime Energy Exported",
@@ -326,7 +323,7 @@ class AccumulatedExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Ma
         )
 
 
-class DailyImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
+class ReservedDailyImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Daily Energy Imported",
@@ -348,7 +345,7 @@ class DailyImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked a
         )
 
 
-class AccumulatedImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
+class ReservedAccumulatedImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Lifetime Energy Imported",
@@ -368,9 +365,6 @@ class AccumulatedImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Ma
             precision=2,
             protocol_version=Protocol.V1_8,
         )
-
-
-# endregion
 
 
 class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
@@ -911,7 +905,7 @@ class Reserved30610(ReservedSensor, HybridInverter, PVInverter):
             address=30610,
             count=3,
             data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             unit=None,
             device_class=None,
             state_class=None,

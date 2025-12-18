@@ -25,7 +25,7 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
         return attributes
 
 
-class GridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v2.7 2025-05-23
+class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v2.7 2025-05-23
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Grid Code",
@@ -72,7 +72,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
         return attributes
 
 
-class InverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
+class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
@@ -84,7 +84,7 @@ class InverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as 
             address=41500,
             count=1,
             data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             unit=None,
             device_class=None,
             state_class=None,

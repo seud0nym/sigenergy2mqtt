@@ -255,14 +255,31 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
     def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
         async def publish_updates(modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: Sensor) -> None:
             multiple: bool = len(sensors) > 1
-            first_address: int = min([s._address for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
-            last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
-            count: int = sum([s._count for s in sensors if hasattr(s, "_address") and hasattr(s, "_count") and first_address <= getattr(s, "_address") <= last_address])
+            if multiple:
+                first_address: int = min([s._address for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
+                last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
+                count: int = sum([s._count for s in sensors if hasattr(s, "_address") and hasattr(s, "_count") and first_address <= getattr(s, "_address") <= last_address])
+            elif hasattr(sensors[0], "_address") and hasattr(sensors[0], "_count") and not isinstance(sensors[0], ReservedSensor):
+                first_address: int = sensors[0]._address
+                count = sensors[0]._count
+                last_address: int = first_address + count - 1
+            else:
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] only contains one sensor that is not addressable ({sensors[0].__class__.__name__}) - skipping")
+                return
+            contiguous: bool = (
+                multiple
+                and first_address
+                and last_address
+                and (((last_address - first_address + 1) == count) or count <= MAX_MODBUS_REGISTERS_PER_REQUEST)
+                and (last_address - first_address + 1) <= MAX_MODBUS_REGISTERS_PER_REQUEST
+            )
+            count = last_address - first_address + 1  # Recalculate count for non-contiguous reads
+            if contiguous and count > MAX_MODBUS_REGISTERS_PER_REQUEST:
+                logging.warning(f"{self.name} Sensor Scan Group [{name}] contains {count} registers which exceeds the maximum of {MAX_MODBUS_REGISTERS_PER_REQUEST} - falling back to individual reads")
+                contiguous = False
             interval: int = min([s.scan_interval for s in sensors if isinstance(s, ReadableSensorMixin)])  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor)
-            contiguous: bool = multiple and first_address and last_address and (((last_address - first_address + 1) == count) or count <= MAX_MODBUS_REGISTERS_PER_REQUEST)
             debug_logging: bool = False
             daily_sensors: bool = False
-            count = last_address - first_address + 1 # Recalculate count for non-contiguous reads
             for sensor in sensors:
                 debug_logging = debug_logging or sensor.debug_logging or any(ds.debug_logging for ds in sensor._derived_sensors.values())
                 daily_sensors = daily_sensors or any(isinstance(ds, EnergyDailyAccumulationSensor) for ds in sensor._derived_sensors.values())
@@ -273,11 +290,13 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                         logging.warning(f"Sensor {sensor.__class__.__name__} scan-interval ({sensor.scan_interval}s) ignored - the interval of {self.name} Sensor Group [{name}] is {interval}s")
                     if sensor.latest_raw_state is not None:
                         await sensor.publish(mqtt, modbus, republish=True)
+            if debug_logging:
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} {contiguous=} sensors={len(sensors)})")
             last_publish: float = time.time()
             next_publish: float = last_publish + uniform(0.5, min(5, interval))
             actual_elapsed: list[float] = []
             if debug_logging:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced (interval={interval}s {daily_sensors=})")
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced - first publish at {time.strftime('%Y-%m-%d %H:%M:%S', next_publish)} (interval={interval}s {daily_sensors=})")
             lock = ModbusLockFactory.get(modbus)
             while self.online:
                 now = time.time()  # Grab the started time first, so that elapsed contains ALL activity
@@ -384,12 +403,12 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         input_type: InputType = None
         scan_interval: int = None
         for sensor in sorted(combined_sensors.values(), key=lambda x: (x.scan_interval, x._device_address, x._address)):
-            if (
+            if (  # Conditions for creating a new sensor scan group
                 Config.devices[self._plant_index].disable_chunking
                 or device_address != sensor._device_address
-                or (address is None or count is None or sensor._address != address + count)
-                or scan_interval != sensor.scan_interval
                 or input_type != sensor._input_type
+                or scan_interval != sensor.scan_interval
+                or (address is None or count is None or sensor._address != address + count)
                 or (group_name is not None and (sum(s._count for s in combined_groups[group_name]) + sensor._count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
             ):
                 group_name = f"{sensor._device_address:03d}_{sensor._address:05d}_{sensor.scan_interval:05d}"
