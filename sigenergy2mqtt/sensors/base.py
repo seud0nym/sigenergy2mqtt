@@ -1012,7 +1012,7 @@ class WritableSensorMixin(ModbusSensor):
         device_id = self._device_address
         no_response_expected = False
         logging.info(
-            f"{self.__class__.__name__} _write_registers value={self['options'][value] if hasattr(self, 'options') else round(value / self.gain, self.precision)} (raw={value} latest_raw_state={self.latest_raw_state} address={self._address} {device_id=})"
+            f"{self.__class__.__name__} _write_registers value={self['options'][value] if 'options' in self else round(value / self.gain, self.precision)} (raw={value} latest_raw_state={self.latest_raw_state} address={self._address} {device_id=})"
         )
         if self._data_type == ModbusClient.DATATYPE.UINT16 and isinstance(value, int) and 0 <= value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [value]
