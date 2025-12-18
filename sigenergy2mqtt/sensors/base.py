@@ -763,6 +763,10 @@ class ReadableSensorMixin(abc.ABC):
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
                     self._scan_interval = overrides["scan-interval"]
 
+    @property 
+    def publishable_now(self) -> bool:
+        return self.publishable and (time.time() - self.latest_time) >= self._scan_interval
+
     @property
     def scan_interval(self):
         return self._scan_interval
