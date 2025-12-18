@@ -296,7 +296,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             next_publish: float = last_publish + uniform(0.5, min(5, interval))
             actual_elapsed: list[float] = []
             if debug_logging:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced - first publish at {time.strftime('%Y-%m-%d %H:%M:%S', next_publish)} (interval={interval}s {daily_sensors=})")
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced - first publish at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_publish))} (interval={interval}s {daily_sensors=})")
             lock = ModbusLockFactory.get(modbus)
             while self.online:
                 now = time.time()  # Grab the started time first, so that elapsed contains ALL activity
