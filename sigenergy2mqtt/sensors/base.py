@@ -1263,22 +1263,6 @@ class NumericSensor(ReadWriteSensor):
         self._sanity.min_value = None
         self._sanity.max_value = None
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        state = await super().get_state(raw=raw, republish=republish, **kwargs)
-        value = state
-        if isinstance(state, (float, int)):
-            minimum = self["min"] * self.gain
-            maximum = self["max"] * self.gain
-            if (isinstance(minimum, (tuple, list)) and not min(minimum) <= state <= max(minimum)) or (not isinstance(minimum, (tuple, list)) and state < minimum):
-                value = min(minimum) if isinstance(minimum, (tuple, list)) else minimum
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Acquired state {state} < {minimum} so adjusted to {value}")
-            elif (isinstance(maximum, (tuple, list)) and not min(maximum) <= state <= max(maximum)) or (not isinstance(maximum, (tuple, list)) and state > maximum):
-                value = max(maximum) if isinstance(maximum, (tuple, list)) else maximum
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Acquired state {state} > {maximum} so adjusted to {value}")
-        return value
-
     async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value is not None:
             try:
@@ -1752,7 +1736,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
         assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a._address for a in alarms]})"
         self["enabled_by_default"] = True
-        self._alarms = list(alarms)
+        self._alarms = list([a for a in alarms if a.publishable])
         self._address = min([a._address for a in alarms])
         self._device_address = device_addresses.pop()
         self._count = count
