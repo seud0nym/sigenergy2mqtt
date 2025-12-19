@@ -242,7 +242,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         topics: set[str] = set()
         for charger in [device for device in DeviceRegistry.get(self._plant_index) if device.__class__.__name__.endswith("Charger")]:
             for sensor in charger.get_all_sensors().values():
-                if sensor["object_id"].endswith("rated_charging_power") or sensor["object_id"].endswith("dc_charger_output_power"):
+                if sensor["object_id"].endswith("rated_charging_power") or sensor["object_id"].endswith("_output_power"):
                     self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
                     topics.add(sensor.state_topic)
                     if self._debug_logging:
