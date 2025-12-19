@@ -188,8 +188,8 @@ class PowerPlant(ModbusDevice):
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
         self._add_derived_sensor(derived.TotalDailyPVEnergy(plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
 
-        self._add_read_sensor(ro.GeneralLoadPower(plant_index))
-        self._add_read_sensor(ro.TotalLoadPower(plant_index))
+        self._add_read_sensor(ro.GeneralLoadPower(plant_index), "Consumption")
+        self._add_read_sensor(ro.TotalLoadPower(plant_index), "Consumption")
         self._add_read_sensor(rw.ActivePowerRegulationGradient(plant_index))
 
         self._add_read_sensor(ro.CurrentControlCommandValue(plant_index))
