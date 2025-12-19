@@ -916,6 +916,7 @@ class ReservedSensor(ReadOnlySensor):
             protocol_version,
             unique_id_override=unique_id_override,
         )
+        assert self.__class__.__name__.startswith("Reserved"), f"{self.__class__.__name__} class name does not start with 'Reserved'"
         self._publishable = False  # Reserved sensors are not published
 
     @property
