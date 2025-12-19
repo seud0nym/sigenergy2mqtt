@@ -15,7 +15,7 @@ class ModbusClient(AsyncModbusTcpClient):
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler
         super().__init__(*args, **kwargs)
-        self._read_ahead_pdu: dict[int, ReadAhead] = {}
+        self._read_ahead_pdu: dict[int, dict[int, ReadAhead]] = {}
         self._trace: bool = False
         self._read_count: int = 0
         self._cache_hits: int = 0
@@ -30,13 +30,13 @@ class ModbusClient(AsyncModbusTcpClient):
         return data
 
     async def _read_registers(
-        self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
+        self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
     ) -> ModbusPDU:
         if use_pre_read:
             self._read_count += 1
-            if address in self._read_ahead_pdu and self._read_ahead_pdu[address] is not None:
-                pre_read = self._read_ahead_pdu[address]
-                if pre_read is not None and pre_read.address == address:
+            if device_id in self._read_ahead_pdu and address in self._read_ahead_pdu[device_id]:
+                pre_read = self._read_ahead_pdu[device_id][address]
+                if pre_read is not None:
                     self._cache_hits += 1
                     await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
                     return pre_read.get_registers(address, count=count)
@@ -67,13 +67,19 @@ class ModbusClient(AsyncModbusTcpClient):
         finally:
             self._trace = False
 
-    def bypass_read_ahead(self, address: int, count: int = 1) -> None:
-        self._read_ahead_pdu.update({key: None for key in range(address, address + count)})
+    def bypass_read_ahead(self, address: int, count: int = 1, device_id: int = 1) -> None:
+        if device_id in self._read_ahead_pdu:
+            self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
 
-    async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, trace: bool = False) -> bool:
+    def is_cached(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT) -> bool:
+        return device_id in self._read_ahead_pdu and address in self._read_ahead_pdu[device_id] and self._read_ahead_pdu[device_id][address] is not None
+
+    async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> bool:
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
         if rr is not None and not rr.isError() and not isinstance(rr, ExceptionResponse):
-            self._read_ahead_pdu.update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
+            if device_id not in self._read_ahead_pdu:
+                self._read_ahead_pdu[device_id] = {}
+            self._read_ahead_pdu[device_id].update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
             return True
         match rr.exception_code:
             case 1:
