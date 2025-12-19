@@ -18,6 +18,8 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
+from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
+from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 from typing import Any, Dict
 import logging
 import time
@@ -240,9 +242,10 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
-        for charger in [device for device in DeviceRegistry.get(self._plant_index) if device.__class__.__name__.endswith("Charger")]:
+        chargers = [device for device in DeviceRegistry.get(self._plant_index) if device.__class__.__name__.endswith("Charger")]
+        for charger in chargers:
             for sensor in charger.get_all_sensors().values():
-                if sensor["object_id"].endswith("rated_charging_power") or sensor["object_id"].endswith("_output_power"):
+                if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
                     self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
                     topics.add(sensor.state_topic)
                     if self._debug_logging:
