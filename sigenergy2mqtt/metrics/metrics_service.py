@@ -3,6 +3,7 @@ from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient
+from sigenergy2mqtt.sensors.const import PERCENTAGE
 from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
 import json
@@ -24,6 +25,17 @@ class MetricsService(Device):
         },
         "o": Config.origin,
         "cmps": {
+            "sigenergy2mqtt_modbus_cache_hit_percentage": {
+                "platform": "sensor",
+                "name": "Modbus Cache Hits",
+                "default_entity_id": "sensor.sigenergy2mqtt_modbus_cache_hit_percentage",
+                "object_id": "sigenergy2mqtt_modbus_cache_hit_percentage",
+                "unique_id": "sigenergy2mqtt_modbus_cache_hit_percentage",
+                "icon": "mdi:percent",
+                "unit_of_measurement": PERCENTAGE,
+                "state_topic": "sigenergy2mqtt/metrics/modbus_cache_hit_percentage",
+                "availability_topic": "sigenergy2mqtt/status",
+            },
             "sigenergy2mqtt_modbus_reads_sec": {
                 "platform": "sensor",
                 "name": "Modbus Reads/second",

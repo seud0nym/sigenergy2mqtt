@@ -10,6 +10,8 @@ class Metrics:
 
     _started: float = time.monotonic()
 
+    sigenergy2mqtt_modbus_cache_hit_percentage: float = 0.0
+
     sigenergy2mqtt_modbus_reads: int = 0
     sigenergy2mqtt_modbus_read_total: float = 0.0
     sigenergy2mqtt_modbus_read_max: float = 0.0
@@ -43,14 +45,25 @@ class Metrics:
                 Metrics._lock.release()
 
     @classmethod
+    async def modbus_cache_hits(cls, reads: int, hits: int) -> None:
+        try:
+            percentage = round(hits / reads * 100.0, 2)
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_modbus_cache_hit_percentage = percentage
+        except Exception as exc:
+            logging.warning(f"Error during modbus cache metrics collection: {repr(exc)}")
+
+    @classmethod
     async def modbus_read(cls, registers: int, seconds: float) -> None:
         try:
             elapsed = seconds * 1000.0
+            read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
+            read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
             async with cls.lock(timeout=1):
                 cls.sigenergy2mqtt_modbus_reads += registers
                 cls.sigenergy2mqtt_modbus_read_total += elapsed
-                cls.sigenergy2mqtt_modbus_read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
-                cls.sigenergy2mqtt_modbus_read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
+                cls.sigenergy2mqtt_modbus_read_max = read_max
+                cls.sigenergy2mqtt_modbus_read_min = read_min
                 cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_reads if cls.sigenergy2mqtt_modbus_reads > 0 else 0.0
         except Exception as exc:
             logging.warning(f"Error during modbus read metrics collection: {repr(exc)}")
@@ -65,13 +78,15 @@ class Metrics:
 
     @classmethod
     async def modbus_write(cls, registers: int, seconds: float) -> None:
-        elapsed = seconds * 1000.0
         try:
+            elapsed = seconds * 1000.0
+            write_max = max(cls.sigenergy2mqtt_modbus_write_max, elapsed)
+            write_min = min(cls.sigenergy2mqtt_modbus_write_min, elapsed)
             async with cls.lock(timeout=1):
                 cls.sigenergy2mqtt_modbus_writes += registers
                 cls.sigenergy2mqtt_modbus_write_total += elapsed
-                cls.sigenergy2mqtt_modbus_write_max = max(cls.sigenergy2mqtt_modbus_write_max, elapsed)
-                cls.sigenergy2mqtt_modbus_write_min = min(cls.sigenergy2mqtt_modbus_write_min, elapsed)
+                cls.sigenergy2mqtt_modbus_write_max = write_max
+                cls.sigenergy2mqtt_modbus_write_min = write_min
                 cls.sigenergy2mqtt_modbus_write_mean = cls.sigenergy2mqtt_modbus_write_total / cls.sigenergy2mqtt_modbus_writes if cls.sigenergy2mqtt_modbus_writes > 0 else 0.0
         except Exception as exc:
             logging.warning(f"Error during modbus write metrics collection: {repr(exc)}")

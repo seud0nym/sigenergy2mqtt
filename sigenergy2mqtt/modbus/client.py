@@ -17,6 +17,8 @@ class ModbusClient(AsyncModbusTcpClient):
         super().__init__(*args, **kwargs)
         self._read_ahead_pdu: dict[int, ReadAhead] = {}
         self._trace: bool = False
+        self._read_count: int = 0
+        self._cache_hits: int = 0
 
     def _trace_packet_handler(self, is_send: bool, data: bytes) -> bytes:
         if self._trace:
@@ -30,10 +32,15 @@ class ModbusClient(AsyncModbusTcpClient):
     async def _read_registers(
         self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
     ) -> ModbusPDU:
-        if use_pre_read and address in self._read_ahead_pdu and self._read_ahead_pdu[address] is not None:
-            pre_read = self._read_ahead_pdu[address]
-            if pre_read is not None:
-                return pre_read.get_registers(address, count=count)
+        if use_pre_read:
+            self._read_count += 1
+            if address in self._read_ahead_pdu and self._read_ahead_pdu[address] is not None:
+                pre_read = self._read_ahead_pdu[address]
+                if pre_read is not None and pre_read.address == address:
+                    self._cache_hits += 1
+                    await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
+                    return pre_read.get_registers(address, count=count)
+            await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
         self._trace = trace
         try:
             start = time.monotonic()
@@ -64,10 +71,21 @@ class ModbusClient(AsyncModbusTcpClient):
         self._read_ahead_pdu.update({key: None for key in range(address, address + count)})
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, trace: bool = False) -> bool:
-        rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, trace=trace)
+        rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
         if rr is not None and not rr.isError() and not isinstance(rr, ExceptionResponse):
             self._read_ahead_pdu.update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
             return True
+        match rr.exception_code:
+            case 1:
+                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x01 ILLEGAL FUNCTION")
+            case 2:
+                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x02 ILLEGAL DATA ADDRESS")
+            case 3:
+                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x03 ILLEGAL DATA VALUE")
+            case 4:
+                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x04 SLAVE DEVICE FAILURE")
+            case _:
+                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: {rr=}")
         return False
 
     async def read_holding_registers(self, address, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
