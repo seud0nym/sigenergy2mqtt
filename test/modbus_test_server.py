@@ -100,6 +100,12 @@ class CustomDataBlock(ModbusSparseDataBlock):
             elif sensor._address == 31026:  # MPTTCount
                 source = "mptt_count"
                 value = 4
+            elif sensor._address == 32007:  # ACChargerRatedCurrent
+                source = "rated_current"
+                value = 63
+            elif sensor._address == 32010:  # ACChargerInputBreaker
+                source = "input_breaker"
+                value = 64
             elif hasattr(sensor, "decode_alarm_bit"):  # AlarmSensor
                 source = "alarm_sensor"
                 value = 0
@@ -221,26 +227,29 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
         device_address = sensor._device_address
         input_type = sensor._input_type
 
-    _logger.info("Pre-populating sensor values...")
-    skip_devices: list[int] = []
-    async with modbus_client:
-        await modbus_client.connect()
-        for group_sensors in groups.values():
-            first_address: int = min([s._address for s in group_sensors if hasattr(s, "_address")])
-            last_address: int = max([s._address + s._count - 1 for s in group_sensors if hasattr(s, "_address")])
-            count: int = sum([s._count for s in group_sensors if hasattr(s, "_count")])
-            assert first_address and last_address and (last_address - first_address + 1) == count
-            device_address = group_sensors[0]._device_address
-            try:
-                if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0]._input_type):
-                    for sensor in group_sensors:
-                        if sensor.publishable:
-                            await sensor.get_state(modbus=modbus_client)
-            except Exception:
-                if device_address not in skip_devices:
-                    skip_devices.append(device_address)
-                if not modbus_client.connected:
-                    await modbus_client.connect()
+    if modbus_client:
+        _logger.info("Pre-populating sensor values...")
+        skip_devices: list[int] = []
+        async with modbus_client:
+            await modbus_client.connect()
+            for group_sensors in groups.values():
+                if len(group_sensors) == 1 and (group_sensors[0]._device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
+                    continue
+                first_address: int = min([s._address for s in group_sensors if hasattr(s, "_address") and not s.__class__.__name__.startswith("Reserved")])
+                last_address: int = max([s._address + s._count - 1 for s in group_sensors if hasattr(s, "_address") and not s.__class__.__name__.startswith("Reserved")])
+                count: int = sum([s._count for s in group_sensors if hasattr(s, "_count") and first_address <= getattr(s, "_address") <= last_address])
+                assert first_address and last_address and (last_address - first_address + 1) == count
+                device_address = group_sensors[0]._device_address
+                try:
+                    if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0]._input_type):
+                        for sensor in group_sensors:
+                            if sensor.publishable:
+                                await sensor.get_state(modbus=modbus_client)
+                except Exception:
+                    if device_address not in skip_devices:
+                        skip_devices.append(device_address)
+                    if not modbus_client.connected:
+                        await modbus_client.connect()
 
     _logger.info("Creating data blocks...")
     for sensor in sensors.values():
