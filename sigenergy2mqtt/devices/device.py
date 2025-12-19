@@ -264,7 +264,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
                 count = sensors[0]._count
                 last_address: int = first_address + count - 1
             else:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] only contains one sensor that is not addressable ({sensors[0].__class__.__name__}) - skipping")
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] SKIPPED - only contains {sensors[0].__class__.__name__}")
                 return
             contiguous: bool = (
                 multiple
