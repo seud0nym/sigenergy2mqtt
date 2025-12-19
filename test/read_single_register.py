@@ -1,41 +1,45 @@
+import asyncio
+import logging
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from pymodbus import ExceptionResponse
-from pymodbus.client import ModbusTcpClient
+from sigenergy2mqtt.modbus.client import ModbusClient
 
 
-register: int = 30276
-count: int = 1
-device_address: int = 247
-datatype: ModbusTcpClient.DATATYPE = None
+register: int = 30613
+count: int = 11
+device_address: int = 1
 
 
-client = ModbusTcpClient("192.168.192.75", port=502)
-client.connect()
+async def read_single_register():
+    client = ModbusClient("192.168.192.75", port=502)
 
-print(f"Reading registers {register}:{register + count - 1} from device address {device_address}...")
-rr = client.read_input_registers(register, count=count, device_id=device_address)
-if rr.isError() or isinstance(rr, ExceptionResponse):
-    match rr.exception_code:
-        case 1:
-            print("Result:", "0x01 ILLEGAL FUNCTION")
-        case 2:
-            print("Result:", "0x02 ILLEGAL DATA ADDRESS")
-        case 3:
-            print("Result:", "0x03 ILLEGAL DATA VALUE")
-        case 4:
-            print("Result:", "0x04 SLAVE DEVICE FAILURE")
-        case _:
-            print(rr)
-else:
-    if datatype is None:
-        match count:
+    logging.info("Connecting to Modbus server...")
+    await client.connect()
+
+    logging.debug(f"Reading registers {register}:{register + count - 1} from device address {device_address}...")
+    rr = await client.read_input_registers(register, count=count, device_id=device_address)
+    if rr.isError() or isinstance(rr, ExceptionResponse):
+        match rr.exception_code:
             case 1:
-                datatype = ModbusTcpClient.DATATYPE.UINT16
+                logging.error("Result:", "0x01 ILLEGAL FUNCTION")
             case 2:
-                datatype = ModbusTcpClient.DATATYPE.UINT32
+                logging.error("Result:", "0x02 ILLEGAL DATA ADDRESS")
+            case 3:
+                logging.error("Result:", "0x03 ILLEGAL DATA VALUE")
             case 4:
-                datatype = ModbusTcpClient.DATATYPE.UINT64
+                logging.error("Result:", "0x04 SLAVE DEVICE FAILURE")
             case _:
-                datatype = ModbusTcpClient.DATATYPE.STRING
-    print("Result:", client.convert_from_registers(rr.registers, datatype))
+                logging.error(rr)
 
-client.close()
+    logging.info("Disconnecting from Modbus server...")
+    client.close()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(read_single_register())
+    loop.close()
