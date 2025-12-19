@@ -1,8 +1,7 @@
 from .thread_config import ThreadConfig
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
-from sigenergy2mqtt.modbus import ModbusClientFactory
+from sigenergy2mqtt.modbus import ModbusClientFactory, ModbusClient
 from sigenergy2mqtt.mqtt import MqttClient, mqtt_setup
 from sigenergy2mqtt.sensors.base import Sensor
 from typing import Awaitable, Callable, Iterable, List
@@ -25,8 +24,8 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
         modbus_client = None
     else:
         modbus_client = await ModbusClientFactory.get_client(config.host, config.port, config.timeout, config.retries)
-    mqtt_client_id = f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))}_{config.description}"
 
+    mqtt_client_id = f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))}_{config.description}"
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
     for device in config.devices:
