@@ -1723,6 +1723,7 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_8,
         )
+        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -1779,6 +1780,7 @@ class Alarm7(AlarmSensor):
             alarm_type="Plant",
             protocol_version=Protocol.V2_8,
         )
+        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1826,11 +1828,11 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT, #UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
+            icon="mdi:meter-electric-outline",
+            gain=None,  # v1000,
             precision=2,
             protocol_version=Protocol.V2_8,
         )
@@ -1848,11 +1850,11 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
-            unit=UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT, #UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
-            icon="mdi:lightning-bolt",
-            gain=1000,
+            icon="mdi:meter-electric",
+            gain=None,  # v1000,
             precision=2,
             protocol_version=Protocol.V2_8,
         )
@@ -1887,6 +1889,7 @@ class GridPhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_8,
         )
+        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1918,3 +1921,4 @@ class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_8,
         )
+        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
