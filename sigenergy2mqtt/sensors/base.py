@@ -1736,7 +1736,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
         assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
         assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a._address for a in alarms]})"
         self["enabled_by_default"] = True
-        self._alarms = list([a for a in alarms if a.publishable])
+        self._alarms = list(alarms)
         self._address = min([a._address for a in alarms])
         self._device_address = device_addresses.pop()
         self._count = count
@@ -1767,7 +1767,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             return self._apply_gain_and_precision(self._states[-1][1], raw)
         else:
             result = AlarmSensor.NO_ALARM
-            for alarm in self._alarms:
+            for alarm in [a for a in self._alarms if a.publishable]:
                 state = await alarm.get_state(raw=False, republish=False, max_length=sys.maxsize, **kwargs)
                 if state != AlarmSensor.NO_ALARM:
                     if result == AlarmSensor.NO_ALARM:
