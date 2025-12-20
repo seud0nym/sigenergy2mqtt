@@ -20,6 +20,8 @@ class Config:
     clean: bool = False
     log_level: int = logging.WARNING
 
+    consumption: ConsumptionSource = const.ConsumptionMethod.CALCULATED
+
     devices: List[DeviceConfig] = []
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
     mqtt: MqttConfiguration = MqttConfiguration()
@@ -89,6 +91,18 @@ class Config:
                 logging.debug(f"Found env/cli override: {key} = {'[REDACTED]' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 try:
                     match key:
+                        case const.SIGENERGY2MQTT_CONSUMPTION:
+                            overrides["consumption"] = const.ConsumptionMethod(
+                                check_string(
+                                    os.environ[key],
+                                    key,
+                                    const.ConsumptionMethod.CALCULATED.value,
+                                    const.ConsumptionMethod.TOTAL.value,
+                                    const.ConsumptionMethod.GENERAL.value,
+                                    allow_empty=False,
+                                    allow_none=False,
+                                )
+                            )
                         case const.SIGENERGY2MQTT_LOG_LEVEL:
                             overrides["log-level"] = check_log_level(os.environ[key], key)
                         case const.SIGENERGY2MQTT_DEBUG_SENSOR:
@@ -310,6 +324,19 @@ class Config:
             match name:
                 case "home-assistant":
                     Config.home_assistant.configure(data[name], override)
+                case "consumption":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: consumption = {data[name]}")
+                    Config.consumption = const.ConsumptionMethod(
+                        check_string(
+                            data[name],
+                            name,
+                            const.ConsumptionMethod.CALCULATED.value,
+                            const.ConsumptionMethod.TOTAL.value,
+                            const.ConsumptionMethod.GENERAL.value,
+                            allow_empty=False,
+                            allow_none=False,
+                        )
+                    )
                 case "log-level":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: log-level = {data[name]}")
                     Config.log_level = check_log_level(data[name], name)
@@ -352,9 +379,7 @@ class Config:
                                     case "gain":
                                         Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1)
                                     case "icon":
-                                        Config.sensor_overrides[sensor][p] = check_string(
-                                            v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, starts_with="mdi:"
-                                        )
+                                        Config.sensor_overrides[sensor][p] = check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, starts_with="mdi:")
                                     case "max-failures":
                                         Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1)
                                     case "max-failures-retry-interval":
