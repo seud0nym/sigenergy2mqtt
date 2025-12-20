@@ -207,15 +207,20 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             (30087, 1, Protocol.V2_5),  # PlantBatterySoH
         ):
             try:
-                rr = await modbus.read_holding_registers(register, count=count, device_id=247)
-                if not rr.isError():
+                logging.debug(f"READING modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to see if V{protocol.value} register {register} exists ({count=} device_id=247)")
+                rr = await modbus.read_input_registers(register, count=count, device_id=247)
+                if rr.isError():
+                    logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> {rr.exception_code=}")
+                else:
                     # No exception, so assign the associated protocol as the real version
+                    logging.debug(f"SUCCESS modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> OK protocol=V{protocol.value}")
                     protocol_version = protocol
                     break
-            except Exception:
-                # Most likely 0x02 ILLEGAL DATA ADDRESS, but doesn't matter; just try the next one
+            except Exception as e:
+                logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> {e}")
                 pass
         else:
+            logging.debug(f"DEFAULT modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to Sigenergy Modbus Protocol V1.8")
             protocol_version = Protocol.V1_8
         logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol_version.value} ({ProtocolApplies(protocol_version)})")
         rated_charging_power = PlantRatedChargingPower(plant_index)
@@ -227,8 +232,9 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             rf_value = await rated_frequency.get_state(modbus=modbus)
         else:
             rated_frequency = rf_value = None
-
         plant = PowerPlant(plant_index, device_type, protocol_version, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
+    else:
+        protocol_version = plant.protocol_version
 
     inverter = Inverter(plant_index, device_address, protocol_version, device_type, model_id, serial_number, firmware_version, pv_string_count, power_phases, strings, output_type, firmware, model, serial)
     inverter.via_device = plant.unique_id
