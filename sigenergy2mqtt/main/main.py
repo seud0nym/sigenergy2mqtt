@@ -16,6 +16,9 @@ import logging
 import signal
 
 
+serial_numbers = []
+
+
 async def async_main() -> None:
     pymodbus_apply_logging_config(Config.get_modbus_log_level())
     configure_logging()
@@ -37,10 +40,12 @@ async def async_main() -> None:
                         availability_control_sensor = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
                         assert availability_control_sensor is not None, "Failed to find RemoteEMS instance"
                         config.add_device(plant_index, plant)
+                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, 30279, 30281, 30286, 30288, 30290, 30292, 30294, 30296, 40049)
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
                     if inverter is not None:
                         inverters[device_address] = inverter.unique_id
                         config.add_device(plant_index, inverter)
+                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, 30622, 30623)
                 if plant and len(device.dc_chargers) == 0:
                     logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
                     for register in (30252, 30256):
@@ -167,9 +172,6 @@ async def make_dc_charger(plant_index, device_address, protocol_version, inverte
     return charger
 
 
-serial_numbers = []
-
-
 async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, PowerPlant]:
     serial = InverterSerialNumber(plant_index, device_address)
     serial_number = await serial.get_state(modbus=modbus)
@@ -224,7 +226,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             rated_frequency = GridCodeRatedFrequency(plant_index)
             rf_value = await rated_frequency.get_state(modbus=modbus)
         else:
-            rated_frequency, rf_value = (None, None)
+            rated_frequency = rf_value = None
 
         plant = PowerPlant(plant_index, device_type, protocol_version, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
 
@@ -234,3 +236,18 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
     serial_numbers.append(serial_number)
 
     return inverter, plant
+
+
+async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus: ModbusClient, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
+    device_id: int = device.device_address
+    for register in registers:
+        sensor = device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True)
+        if sensor and sensor.publishable:
+            try:
+                rr = await modbus.read_holding_registers(register, count=sensor._count, device_id=device_id)
+                if rr.isError() and rr.exception_code == 0x02:
+                    logging.debug(f"{sensor.__class__.__name__} ({sensor.name}) plant_index={plant_index} device_address={device_id} register={register} returned 0x02 ILLEGAL DATA ADDRESS")
+                    sensor.publishable = False
+            except Exception as e:
+                logging.debug(f"{sensor.__class__.__name__} ({sensor.name}) plant_index={plant_index} device_address={device_id} register={register} raised {e}")
+                sensor.publishable = False

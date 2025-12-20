@@ -21,10 +21,17 @@ from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from test import get_sensor_instances, cancel_sensor_futures
 
-TOPICS: Path = Path("sensors/TOPICS.md")
-SENSORS: Path = Path("sensors/SENSORS.md")
 
-regex_pattern = r"Range:\s*\[(.*?)\]"
+RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
+REGISTER_PATTERN = r"[3-4][0-9]+"
+SENSORS: Path = Path("sensors/SENSORS.md")
+TOPICS: Path = Path("sensors/TOPICS.md")
+ILLEGAL_DATA_ADDRESSES: list[int] = []
+with open("../sigenergy2mqtt/main/main.py", "r") as file:
+    for line_number, line in enumerate(file, start=1):
+        if "await test_for_0x02_ILLEGAL_DATA_ADDRESS" in line:
+            for register in re.findall(REGISTER_PATTERN, line):
+                ILLEGAL_DATA_ADDRESSES.append(int(register))
 
 
 async def sensor_index():
@@ -33,7 +40,7 @@ async def sensor_index():
         Isolates the range content and then programmatically extracts the
         first (min) and last (max) potential values, including hex and formulas.
         """
-        match = re.search(regex_pattern, range_string, re.DOTALL)
+        match = re.search(RANGE_PATTERN, range_string, re.DOTALL)
         if match:
             content = match.group(1).strip()
 
@@ -143,8 +150,12 @@ async def sensor_index():
                         f.write("</dl>")
                     else:
                         f.write(f"{attributes['source']}")
+                        if attributes["source"] in ILLEGAL_DATA_ADDRESSES:
+                            f.write(" (may not be available on all devices)")
                 elif hasattr(sensor, "_address"):
-                    f.write(f"Modbus Register {sensor._address}")
+                    f.write(f"{sensor._address}")
+                    if sensor._address in ILLEGAL_DATA_ADDRESSES:
+                        f.write(" (may not be available on all devices)")
                 else:
                     logging.getLogger("root").error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("</td></tr>\n")

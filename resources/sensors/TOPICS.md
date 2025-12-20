@@ -42,6 +42,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_247_30031'>Active Power</a><br>
 <a href='#sigen_0_247_40001'>Active Power Fixed Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40005'>Active Power Percentage Adjustment Target Value</a><br>
+<a href='#sigen_0_247_40049'>Active Power Regulation Gradient</a><br>
 <a href='#sigen_0_247_30039'>Available Max Active Power</a><br>
 <a href='#sigen_0_247_30064'>Available Max Charging Capacity</a><br>
 <a href='#sigen_0_247_30047'>Available Max Charging Power</a><br>
@@ -59,6 +60,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_247_30085'>Charge Cut-Off SoC</a><br>
 <a href='#sigen_0_247_40047'>Charge Cut-Off SoC</a><br>
 <a href='#sigen_0_consumed_power'>Consumed Power</a><br>
+<a href='#sigen_0_247_30279'>Current Control Command Value</a><br>
 <a href='#sigen_0_247_30072'>DC Charger Alarms</a><br>
 <a href='#sigen_0_daily_charge_energy'>Daily Charge Energy</a><br>
 <a href='#sigen_0_daily_consumed_energy'>Daily Consumption</a><br>
@@ -186,11 +188,17 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_grid_sensor_lifetime_export_energy'>Lifetime Exported Energy</a><br>
 <a href='#sigen_0_grid_sensor_lifetime_import_energy'>Lifetime Imported Energy</a><br>
 <a href='#sigen_0_247_30052'>Phase A Active Power</a><br>
+<a href='#sigen_0_247_30292'>Phase A Current</a><br>
 <a href='#sigen_0_247_30058'>Phase A Reactive Power</a><br>
+<a href='#sigen_0_247_30286'>Phase A Voltage</a><br>
 <a href='#sigen_0_247_30054'>Phase B Active Power</a><br>
+<a href='#sigen_0_247_30294'>Phase B Current</a><br>
 <a href='#sigen_0_247_30060'>Phase B Reactive Power</a><br>
+<a href='#sigen_0_247_30288'>Phase B Voltage</a><br>
 <a href='#sigen_0_247_30056'>Phase C Active Power</a><br>
+<a href='#sigen_0_247_30296'>Phase C Current</a><br>
 <a href='#sigen_0_247_30062'>Phase C Reactive Power</a><br>
+<a href='#sigen_0_247_30290'>Phase C Voltage</a><br>
 <a href='#sigen_0_247_30007'>Reactive Power</a><br>
 
 <h6>Statistics</h6>
@@ -274,9 +282,11 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_001_30568'>Lifetime Charge Energy</a><br>
 <a href='#sigen_0_001_30574'>Lifetime Discharge Energy</a><br>
 <a href='#sigen_0_001_30620'>Max Battery Temperature</a><br>
+<a href='#sigen_0_001_30622'>Max Cell Voltage</a><br>
 <a href='#sigen_0_001_30591'>Max Charge Power</a><br>
 <a href='#sigen_0_001_30593'>Max Discharge Power</a><br>
 <a href='#sigen_0_001_30621'>Min Battery Temperature</a><br>
+<a href='#sigen_0_001_30623'>Min Cell Voltage</a><br>
 <a href='#sigen_0_001_30548'>Rated Battery Capacity</a><br>
 <a href='#sigen_0_001_30550'>Rated Charging Power</a><br>
 <a href='#sigen_0_001_30552'>Rated Discharging Power</a><br>
@@ -459,7 +469,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 
 <h6>DC Charger</h6>
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -501,6 +511,19 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40005</td></tr>
 <tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_247_40049'>Active Power Regulation Gradient</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ActivePowerRegulationGradient</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>%/s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_active_power_regulation_gradient</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_regulation_gradient/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_regulation_gradient/state</td></tr>
+<tr><td>Source</td><td>40049 (may not be available on all devices)</td></tr>
+<tr><td>Comment</td><td>Range:[0,5000]。Percentage of rated power adjusted per second</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30039'>Available Max Active Power</a></h5>
 <table>
@@ -710,6 +733,19 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_consumed_power/state</td></tr>
 <tr><td>Source</td><td><dl><dt>CALCULATED Configuration Option:</dt><dd>TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower</dd><dt>TOTAL Configuration Option:</dt><dd>TotalLoadPower (Protocol V2.8+ only)</dd><dt>GENERAL Configuration Option:</dt><dd>GeneralLoadPower (Protocol V2.8+ only)</dd></dl></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
+</table>
+<h5><a id='sigen_0_247_30279'>Current Control Command Value</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CurrentControlCommandValue</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>%</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_current_control_command_value</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_current_control_command_value/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_current_control_command_value/state</td></tr>
+<tr><td>Source</td><td>30279 (may not be available on all devices)</td></tr>
+<tr><td>Comment</td><td>Use of Remote Output Control in Japan</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30072'>DC Charger Alarms</a></h5>
 <table>
@@ -2205,6 +2241,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
+<h5><a id='sigen_0_247_30292'>Phase A Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_a_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_current/state</td></tr>
+<tr><td>Source</td><td>30292 (may not be available on all devices)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
 <h5><a id='sigen_0_247_30058'>Phase A Reactive Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
@@ -2217,6 +2265,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30058</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_247_30286'>Phase A Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_a_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_voltage/state</td></tr>
+<tr><td>Source</td><td>30286 (may not be available on all devices)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30054'>Phase B Active Power</a></h5>
 <table>
@@ -2231,6 +2291,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
+<h5><a id='sigen_0_247_30294'>Phase B Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_b_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_current/state</td></tr>
+<tr><td>Source</td><td>30294 (may not be available on all devices)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
 <h5><a id='sigen_0_247_30060'>Phase B Reactive Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
@@ -2243,6 +2315,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30060</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_247_30288'>Phase B Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_b_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_voltage/state</td></tr>
+<tr><td>Source</td><td>30288 (may not be available on all devices)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30056'>Phase C Active Power</a></h5>
 <table>
@@ -2257,6 +2341,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
+<h5><a id='sigen_0_247_30296'>Phase C Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_c_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_current/state</td></tr>
+<tr><td>Source</td><td>30296 (may not be available on all devices)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
 <h5><a id='sigen_0_247_30062'>Phase C Reactive Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
@@ -2269,6 +2365,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30062</td></tr>
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_247_30290'>Phase C Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_c_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_voltage/state</td></tr>
+<tr><td>Source</td><td>30290 (may not be available on all devices)</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30007'>Reactive Power</a></h5>
 <table>
@@ -3243,6 +3351,19 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
+<h5><a id='sigen_0_001_30622'>Max Cell Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InverterMaxCellVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_max_cell_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_max_cell_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_max_cell_voltage/state</td></tr>
+<tr><td>Source</td><td>30622 (may not be available on all devices)</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
 <h5><a id='sigen_0_001_30591'>Max Charge Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>MaxBatteryChargePower</td></tr>
@@ -3279,6 +3400,19 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_min_battery_temperature/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_battery_temperature/state</td></tr>
 <tr><td>Source</td><td>30621</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_30623'>Min Cell Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InverterMinCellVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_min_cell_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_min_cell_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_min_cell_voltage/state</td></tr>
+<tr><td>Source</td><td>30623 (may not be available on all devices)</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>

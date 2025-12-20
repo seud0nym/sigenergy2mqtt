@@ -826,7 +826,6 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_8,
             maximum=5000,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
