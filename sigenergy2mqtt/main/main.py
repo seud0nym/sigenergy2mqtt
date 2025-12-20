@@ -246,8 +246,8 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus: ModbusClient, plant_index, 
             try:
                 rr = await modbus.read_holding_registers(register, count=sensor._count, device_id=device_id)
                 if rr.isError() and rr.exception_code == 0x02:
-                    logging.debug(f"{sensor.__class__.__name__} ({sensor.name}) plant_index={plant_index} device_address={device_id} register={register} returned 0x02 ILLEGAL DATA ADDRESS")
+                    logging.info(f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}] is not publishable (ILLEGAL DATA ADDRESS)")
                     sensor.publishable = False
             except Exception as e:
-                logging.debug(f"{sensor.__class__.__name__} ({sensor.name}) plant_index={plant_index} device_address={device_id} register={register} raised {e}")
+                logging.info(f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}] is not publishable ({e})")
                 sensor.publishable = False
