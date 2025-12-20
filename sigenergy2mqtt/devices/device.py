@@ -5,7 +5,7 @@ from random import randint, uniform
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadableSensorMixin, ReservedSensor, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, EnergyDailyAccumulationSensor, ReadableSensorMixin, ReservedSensor, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.const import InputType, MAX_MODBUS_REGISTERS_PER_REQUEST
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Self
 import abc
@@ -198,6 +198,14 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             for child in self._children:
                 if unique_id in child.sensors:
                     return child.sensors[unique_id]
+        for alarm in [s for s in self._all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
+            if unique_id in [a.unique_id for a in alarm._alarms]:
+                return next(a for a in alarm._alarms if a.unique_id == unique_id)
+        if search_children:
+            for child in self._children:
+                for alarm in [s for s in child._all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
+                    if unique_id in [a.unique_id for a in alarm._alarms]:
+                        return next(a for a in alarm._alarms if a.unique_id == unique_id)
         return None
 
     async def on_ha_state_change(self, modbus: ModbusClient, mqtt: MqttClient, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:

@@ -1097,7 +1097,6 @@ class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class InverterMinCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1121,7 +1120,6 @@ class InverterMinCellVoltage(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class RatedGridVoltage(ReadOnlySensor, HybridInverter, PVInverter):

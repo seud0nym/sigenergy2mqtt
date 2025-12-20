@@ -2,6 +2,7 @@ from .base import DeviceClass, EnergyDailyAccumulationSensor, ObservableMixin, P
 from .const import UnitOfEnergy, UnitOfPower
 from .plant_read_only import (
     BatteryPower,
+    GeneralLoadPower,
     GridSensorActivePower,
     ESSTotalChargedEnergy,
     ESSTotalDischargedEnergy,
@@ -11,11 +12,12 @@ from .plant_read_only import (
     PlantTotalExportedEnergy,
     PlantTotalImportedEnergy,
     ThirdPartyLifetimePVEnergy,
+    TotalLoadPower,
 )
 from dataclasses import dataclass
 from enum import StrEnum
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, ConsumptionMethod
 from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
@@ -168,7 +170,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             else:
                 return "Never"
 
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
         super().__init__(
             name="Consumed Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
@@ -184,11 +186,19 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         self._grid_status: int = None
         self._plant_index = plant_index
         self._sanity.min_value = 0.0
-        self._sources: dict[str, PlantConsumedPower.Value] = {
-            "battery": PlantConsumedPower.Value(negate=True),
-            "grid": PlantConsumedPower.Value(),
-            "pv": PlantConsumedPower.Value(),
-        }
+        self._sources: dict[str, PlantConsumedPower.Value] = dict()
+        self._method = method
+        match self._method:
+            case ConsumptionMethod.CALCULATED:
+                self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
+            case ConsumptionMethod.GENERAL:
+                self._sources.update({ConsumptionMethod.GENERAL.value: PlantConsumedPower.Value()})
+            case ConsumptionMethod.TOTAL:
+                self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
+
+    @property
+    def method(self) -> ConsumptionMethod:
+        return self._method
 
     def _set_latest_consumption(self):
         if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
@@ -208,7 +218,13 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
-        attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower"
+        match self.method:
+            case ConsumptionMethod.CALCULATED:
+                attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower"
+            case ConsumptionMethod.GENERAL:
+                attributes["source"] = "GeneralLoadPower"
+            case ConsumptionMethod.TOTAL:
+                attributes["source"] = "TotalLoadPower"
         return attributes
 
     async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
@@ -253,21 +269,26 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         return topics
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if issubclass(type(sensor), BatteryPower):
+        if isinstance(sensor, TotalLoadPower):
+            self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
+        elif isinstance(sensor, GeneralLoadPower):
+            self._update_source(ConsumptionMethod.GENERAL.value, values[-1][1])
+        elif issubclass(type(sensor), BatteryPower):
             self._update_source("battery", values[-1][1])
         elif issubclass(type(sensor), GridSensorActivePower):
             self._update_source("grid", values[-1][1])
         elif issubclass(type(sensor), (PlantPVPower, TotalPVPower)):
             self._update_source("pv", values[-1][1])
         elif issubclass(type(sensor), GridStatus):
-            grid = int(values[-1][1])
-            if grid != self._grid_status:
-                if self._grid_status is not None:
-                    if grid == 0:
-                        logging.info(f"{self.__class__.__name__} Grid restored - including AC/DC charger power in consumption calculations")
-                    else:
-                        logging.warning(f"{self.__class__.__name__} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
-                self._grid_status = grid
+            if Config.consumption == ConsumptionMethod.CALCULATED:
+                grid = int(values[-1][1])
+                if grid != self._grid_status:
+                    if self._grid_status is not None:
+                        if grid == 0:
+                            logging.info(f"{self.__class__.__name__} Grid restored - including AC/DC charger power in consumption calculations")
+                        else:
+                            logging.warning(f"{self.__class__.__name__} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
+                    self._grid_status = grid
         else:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -485,9 +506,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
                 )
             return  # until all values populated, can't do calculation
         if self._debug_logging:
-            logging.debug(
-                f"{self.__class__.__name__} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
-            )
+            logging.debug(f"{self.__class__.__name__} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation
         self.plant_lifetime_pv_energy = None

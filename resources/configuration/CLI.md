@@ -5,7 +5,8 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
           [-d SIGENERGY2MQTT_DEBUG_SENSOR]
           [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
-          [--no-metrics] [--hass-enabled]
+          [--no-metrics] [--consumption {calculated,total,general}]
+          [--hass-enabled]
           [--hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]]
           [--hass-entity-id-prefix [SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX]]
           [--hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]]
@@ -91,6 +92,13 @@ options:
                         sensors. The default value is 100 kW per second, and
                         readings outside the range are ignored.
   --no-metrics          Do not publish any sigenergy2mqtt metrics.
+  --consumption {calculated,total,general}
+                        Set the method of calculating the Plant Consumed Power
+                        sensor. Valid values are: 'calculated', 'total' (Total
+                        Load Power register), or 'general' (V2.8 General Load
+                        Power register). The default is 'calculated'. This
+                        option is ignored on firmware earlier than that
+                        supporting Modbus Protocol V2.8.
   --hass-enabled        Enable auto-discovery in Home Assistant.
   --hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]
                         The Home Assistant MQTT Discovery topic prefix to use

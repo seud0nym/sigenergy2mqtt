@@ -7,6 +7,15 @@
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
+# consumption
+#   added: 2025.12.20
+#   default: calculated
+#   description:  Set the method of calculating the Plant Consumed Power sensor.
+#                 Valid values are: 'calculated', 'total' (Total Load Power register),
+#                 or 'general' (General Load Power register). The default is
+#                 'calculated'. This option is ignored on firmware earlier
+#                 than that supporting Modbus Protocol V2.8.
+consumption: calculated
 # sanity-check-default-kw
 #   added: 2025.7.9
 #   default: 100.0

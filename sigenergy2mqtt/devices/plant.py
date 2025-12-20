@@ -3,7 +3,7 @@ from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
 from .types import DeviceType
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
 import importlib
 import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -36,6 +36,10 @@ class PowerPlant(ModbusDevice):
             protocol_version,
             sw=f"Modbus Protocol V{protocol_version.value}",
         )
+
+        consumption_source = ConsumptionMethod.CALCULATED if protocol_version < Protocol.V2_8 else Config.consumption
+        consumption_group = "Consumption" if consumption_source == ConsumptionMethod.CALCULATED else None
+
         battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
@@ -61,8 +65,8 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(ro.GeneralAlarm5(plant_index))
         self._add_read_sensor(ro.PlantActivePower(plant_index), "Plant Power")
         self._add_read_sensor(ro.PlantReactivePower(plant_index), "Plant Power")
-        self._add_read_sensor(plant_pv_power, "Consumption")
-        self._add_read_sensor(battery_power, "Consumption")
+        self._add_read_sensor(plant_pv_power, consumption_group)
+        self._add_read_sensor(battery_power, consumption_group)
 
         self._add_derived_sensor(derived.BatteryChargingPower(plant_index, battery_power), battery_power)
         self._add_derived_sensor(derived.BatteryDischargingPower(plant_index, battery_power), battery_power)
@@ -170,14 +174,30 @@ class PowerPlant(ModbusDevice):
                     logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {e}")
                     smartport = None
         if smartport is None:
-            self._add_read_sensor(plant_3rd_party_pv_power, "Consumption")
+            self._add_read_sensor(plant_3rd_party_pv_power, consumption_group)
             total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
 
         self._add_derived_sensor(total_pv_power, plant_3rd_party_pv_power)
 
-        plant_consumed_power = derived.PlantConsumedPower(plant_index)
-        grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)
-        self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, grid_status, search_children=True)
+        general_load_power = ro.GeneralLoadPower(plant_index)
+        total_load_power = ro.TotalLoadPower(plant_index)
+        self._add_read_sensor(general_load_power, "Consumption")  # Always assign to Consumption scan group
+        self._add_read_sensor(total_load_power, "Consumption")  # Always assign to Consumption scan group
+        self._add_read_sensor(rw.ActivePowerRegulationGradient(plant_index))
+
+        self._add_read_sensor(ro.CurrentControlCommandValue(plant_index))
+        self._add_read_sensor(ro.PlantAlarms(plant_index))
+
+        plant_consumed_power = derived.PlantConsumedPower(plant_index, method=consumption_source)
+        match plant_consumed_power.method:
+            case ConsumptionMethod.CALCULATED:
+                grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)
+                assert grid_status is not None, "Grid Status sensor not found for Plant Consumed Power calculation"
+                self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, grid_status, search_children=True)
+            case ConsumptionMethod.GENERAL:
+                self._add_derived_sensor(plant_consumed_power, general_load_power)
+            case ConsumptionMethod.TOTAL:
+                self._add_derived_sensor(plant_consumed_power, total_load_power)
 
         plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(plant_index)
@@ -187,13 +207,6 @@ class PowerPlant(ModbusDevice):
         self._add_derived_sensor(total_lifetime_pv_energy, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
         self._add_derived_sensor(derived.PlantDailyPVEnergy(plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
         self._add_derived_sensor(derived.TotalDailyPVEnergy(plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
-
-        self._add_read_sensor(ro.GeneralLoadPower(plant_index), "Consumption")
-        self._add_read_sensor(ro.TotalLoadPower(plant_index), "Consumption")
-        self._add_read_sensor(rw.ActivePowerRegulationGradient(plant_index))
-
-        self._add_read_sensor(ro.CurrentControlCommandValue(plant_index))
-        self._add_read_sensor(ro.PlantAlarms(plant_index))
 
         # region reserved registers
         self._add_read_sensor(ro.Reserved30073(plant_index))

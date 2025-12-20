@@ -1723,7 +1723,6 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_8,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -1780,7 +1779,6 @@ class Alarm7(AlarmSensor):
             alarm_type="Plant",
             protocol_version=Protocol.V2_8,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
     def decode_alarm_bit(self, bit_position: int):
         """Decodes the alarm bit.
@@ -1889,7 +1887,6 @@ class GridPhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_8,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS
 
 
 class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1921,4 +1918,3 @@ class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_8,
         )
-        self.publishable = False  # 0x02 ILLEGAL DATA ADDRESS

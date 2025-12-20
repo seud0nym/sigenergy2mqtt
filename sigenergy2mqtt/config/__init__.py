@@ -1,8 +1,9 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "Protocol", "ProtocolApplies", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource"]
+__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "Protocol", "ProtocolApplies", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource", "ConsumptionMethod"]
 
 
 from . import const
 from .config import Config
+from .const import ConsumptionMethod
 from .modbus_config import RegisterAccess, SmartPortConfig
 from .protocol import Protocol, ProtocolApplies
 from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
@@ -95,6 +96,14 @@ _parser.add_argument(
     action="store_true",
     dest=const.SIGENERGY2MQTT_NO_METRICS,
     help="Do not publish any sigenergy2mqtt metrics.",
+)
+_parser.add_argument(
+    "--consumption",
+    action="store",
+    dest=const.SIGENERGY2MQTT_CONSUMPTION,
+    choices=["calculated", "total", "general"],
+    default=os.getenv(const.SIGENERGY2MQTT_CONSUMPTION, None),
+    help="Set the method of calculating the Plant Consumed Power sensor. Valid values are: 'calculated', 'total' (Total Load Power register), or 'general' (V2.8 General Load Power register). The default is 'calculated'. This option is ignored on firmware earlier than that supporting Modbus Protocol V2.8.",
 )
 # endregion
 # region Home Assistant Configuration
