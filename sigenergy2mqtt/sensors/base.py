@@ -709,6 +709,22 @@ class ModbusSensor(Sensor):
         self._plant_index = plant_index
 
     @property
+    def address(self) -> int:
+        return self._address
+
+    @property
+    def count(self) -> int:
+        return self._count
+
+    @property
+    def device_address(self) -> int:
+        return self._device_address
+
+    @property
+    def input_type(self) -> InputType:
+        return self._input_type
+
+    @property
     def gain(self) -> float:
         return None if self._data_type == ModbusClient.DATATYPE.STRING else 1 if self._gain is None else self._gain
 
@@ -762,10 +778,6 @@ class ReadableSensorMixin(abc.ABC):
                 if "scan-interval" in overrides and self._scan_interval != overrides["scan-interval"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
                     self._scan_interval = overrides["scan-interval"]
-
-    @property 
-    def publishable_now(self) -> bool:
-        return self.publishable and (time.time() - self.latest_time) >= self._scan_interval
 
     @property
     def scan_interval(self):
