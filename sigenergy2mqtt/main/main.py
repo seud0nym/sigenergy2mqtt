@@ -2,7 +2,7 @@ from .thread_config import ThreadConfig, ThreadConfigFactory
 from .threading import start
 from pathlib import Path
 from pymodbus import pymodbus_apply_logging_config
-from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
+from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
@@ -224,6 +224,9 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             logging.debug(f"DEFAULT modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to Sigenergy Modbus Protocol V1.8")
             protocol_version = Protocol.V1_8
         logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol_version.value} ({ProtocolApplies(protocol_version)})")
+        if protocol_version < Protocol.V2_8 and Config.consumption != ConsumptionMethod.CALCULATED:
+            logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {Config.consumption.name} is not supported on Modbus Protocol V{protocol_version.value}")
+            Config.consumption = ConsumptionMethod.CALCULATED
         rated_charging_power = PlantRatedChargingPower(plant_index)
         rated_discharging_power = PlantRatedDischargingPower(plant_index)
         rcp_value = await rated_charging_power.get_state(modbus=modbus)
