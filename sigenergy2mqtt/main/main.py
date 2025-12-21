@@ -8,6 +8,7 @@ from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
+from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
@@ -113,12 +114,12 @@ async def async_main() -> None:
                     logging.debug(f"Loaded '{current_version}' from {current_version_file}")
             except Exception as error:
                 logging.error(f"Failed to read {current_version_file}: {error}")
-        upgrade_clean_required: bool = current_version != Config.version()
-        if upgrade_clean_required:
+        upgrade_detected: bool = current_version != Config.version()
+        if upgrade_detected:
             if current_version:
-                logging.info(f"Upgrade to '{Config.version()}' from '{current_version}' detected - clean required")
+                logging.info(f"Upgrade to '{Config.version()}' from '{current_version}' detected")
             else:
-                logging.info(f"Upgrade to '{Config.version()}' detected - clean required")
+                logging.info(f"Upgrade to '{Config.version()}' detected")
             logging.debug(f"Writing '{Config.version()}' to {current_version_file}")
             try:
                 with current_version_file.open("w") as f:
@@ -126,9 +127,9 @@ async def async_main() -> None:
             except Exception as error:
                 logging.error(f"Failed to write to {current_version_file}: {error}")
     else:
-        upgrade_clean_required = False
+        upgrade_detected = False
 
-    await start(configs, upgrade_clean_required)
+    await start(configs, False) # Removed upgrade_clean_required because it deletes associated statistics helper entities (#77)
     logging.info("Shutdown completed")
 
 
@@ -200,7 +201,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
 
     if plant is None:
         # Probe the plant for the supported Modbus Protocol version
-        for register, count, protocol in (  # Obviously must be a register specific to the version, in descending protocol sequence
+        for register, count, protocol in (  # Must be an input register specific to the version, in descending protocol sequence
             (30284, 2, Protocol.V2_8),  # TotalLoadPower
             (30194, 2, Protocol.V2_7),  # ThirdPartyPVPower
             (30092, 2, Protocol.V2_6),  # TotalLoadDailyConsumption
@@ -249,11 +250,15 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus: ModbusClient, plant_index, 
     for register in registers:
         sensor = device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True)
         if sensor and sensor.publishable:
+            id = f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}]" if Config.home_assistant.enabled else f"{device.name} - {sensor.name} [{sensor.state_topic}]"
             try:
-                rr = await modbus.read_holding_registers(register, count=sensor._count, device_id=device_id)
+                if sensor._input_type == InputType.HOLDING:
+                    rr = await modbus.read_holding_registers(register, count=sensor._count, device_id=device_id)
+                elif sensor._input_type == InputType.INPUT:
+                    rr = await modbus.read_input_registers(register, count=sensor._count, device_id=device_id)
                 if rr.isError() and rr.exception_code == 0x02:
-                    logging.info(f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}] is not publishable (ILLEGAL DATA ADDRESS)")
+                    logging.info(f"{id} is not publishable (ILLEGAL DATA ADDRESS)")
                     sensor.publishable = False
             except Exception as e:
-                logging.info(f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}] is not publishable ({e})")
+                logging.info(f"{id} is not publishable ({e})")
                 sensor.publishable = False
