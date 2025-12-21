@@ -71,28 +71,17 @@ class ModbusClient(AsyncModbusTcpClient):
         if device_id in self._read_ahead_pdu:
             self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
 
-    def is_cached(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT) -> bool:
-        return device_id in self._read_ahead_pdu and address in self._read_ahead_pdu[device_id] and self._read_ahead_pdu[device_id][address] is not None
-
-    async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> bool:
+    async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
-        if rr is not None and not rr.isError() and not isinstance(rr, ExceptionResponse):
-            if device_id not in self._read_ahead_pdu:
-                self._read_ahead_pdu[device_id] = {}
-            self._read_ahead_pdu[device_id].update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
-            return True
-        match rr.exception_code:
-            case 1:
-                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x01 ILLEGAL FUNCTION")
-            case 2:
-                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x02 ILLEGAL DATA ADDRESS")
-            case 3:
-                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x03 ILLEGAL DATA VALUE")
-            case 4:
-                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: 0x04 SLAVE DEVICE FAILURE")
-            case _:
-                logging.debug(f"Modbus {input_type.name} read-ahead failed {device_id=} {address=} {count=}: {rr=}")
-        return False
+        if rr:
+            if (rr.isError() or isinstance(rr, ExceptionResponse)):
+                self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)}) # Set registers to None to prevent unexpected values 
+            else:
+                if device_id not in self._read_ahead_pdu:
+                    self._read_ahead_pdu[device_id] = {}
+                self._read_ahead_pdu[device_id].update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
+            return rr.exception_code
+        return -1
 
     async def read_holding_registers(self, address, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.HOLDING, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)

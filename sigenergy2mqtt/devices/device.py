@@ -5,9 +5,20 @@ from random import randint, uniform
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, EnergyDailyAccumulationSensor, ReadableSensorMixin, ReservedSensor, Sensor, DerivedSensor, ObservableMixin, ReadOnlySensor, WritableSensorMixin, WriteOnlySensor
-from sigenergy2mqtt.sensors.const import InputType, MAX_MODBUS_REGISTERS_PER_REQUEST
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Self
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    DerivedSensor,
+    EnergyDailyAccumulationSensor,
+    ModbusSensor,
+    ObservableMixin,
+    ReadableSensorMixin,
+    ReservedSensor,
+    Sensor,
+    WritableSensorMixin,
+    WriteOnlySensor,
+)
+from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST
+from typing import Awaitable, Callable, Iterable, Self
 import abc
 import asyncio
 import json
@@ -16,7 +27,7 @@ import statistics
 import time
 
 
-class SensorGroup(List[ReadableSensorMixin]):
+class SensorGroup(list[ReadableSensorMixin]):
     def __init__(self, *sensors: ReadableSensorMixin):
         super().__init__(sensors)
 
@@ -30,18 +41,18 @@ class SensorGroup(List[ReadableSensorMixin]):
         return super().append(object)
 
 
-class Device(Dict[str, any], metaclass=abc.ABCMeta):
+class Device(dict[str, any], metaclass=abc.ABCMeta):
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
         self._plant_index = plant_index
         self._protocol = protocol_version
         self._registers = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
 
-        self._children: List[Device] = []
+        self._children: list[Device] = []
 
-        self._all_sensors: Dict[str, Sensor] = {}
-        self._group_sensors: Dict[str, List[ReadableSensorMixin]] = {}
-        self._read_sensors: Dict[str, ReadableSensorMixin] = {}
-        self._write_sensors: Dict[str, WritableSensorMixin] = {}
+        self._all_sensors: dict[str, Sensor] = {}
+        self._group_sensors: dict[str, list[ReadableSensorMixin]] = {}
+        self._read_sensors: dict[str, ReadableSensorMixin] = {}
+        self._write_sensors: dict[str, WritableSensorMixin] = {}
 
         self._rediscover = False
         self._online: asyncio.Future = None
@@ -108,7 +119,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         return self._registers
 
     @property
-    def sensors(self) -> Dict[str, Sensor]:
+    def sensors(self) -> dict[str, Sensor]:
         return self._all_sensors
 
     @property
@@ -178,7 +189,60 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             self._write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
 
-    def get_all_sensors(self, search_children: bool = True) -> Dict[str, Sensor]:
+    def _create_sensor_scan_groups(self) -> dict[str, list[ModbusSensor | ReadableSensorMixin]]:
+        combined_sensors: dict[str, ModbusSensor | ReadableSensorMixin] = self._read_sensors.copy()
+        combined_groups: dict[str, list[ModbusSensor | ReadableSensorMixin]] = self._group_sensors.copy()
+        named_group_sensors: dict[int, ModbusSensor | ReadableSensorMixin] = {}
+        first_address: int = None
+        next_address: int = None
+        device_address: int = None
+        group_name: str = None
+        scan_interval: int = None
+
+        for device in self._children:
+            combined_sensors.update(device._read_sensors)
+            for group, sensor_list in device._group_sensors.items():
+                if group not in combined_groups:
+                    combined_groups[group] = []
+                combined_groups[group].extend(sensor_list)
+                named_group_sensors.update({s.address: s for s in sensor_list if isinstance(s, ModbusSensor)})
+
+        for sensor in sorted([s for s in combined_sensors.values() if isinstance(s, ModbusSensor) and not isinstance(s, ReservedSensor)], key=lambda s: (s.scan_interval, s.device_address, s.address)):
+            if (  # Conditions for creating a new sensor scan group
+                Config.devices[self._plant_index].disable_chunking  # If chunking is disabled, always create a new group
+                or group_name is None  # First sensor
+                or device_address != sensor.device_address  # Device address changed
+                or scan_interval != sensor.scan_interval  # Scan interval changed
+                or sensor.address > next_address  # Non-contiguous addresses
+                or (next_address - first_address + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST  # Modbus request size exceeded
+            ):
+                group_name = f"{sensor.device_address:03d}_{sensor.address:05d}_{sensor.scan_interval:05d}"
+                combined_groups[group_name] = []
+                first_address = sensor.address
+            combined_groups[group_name].append(sensor)
+            next_address = sensor.address + sensor.count
+            while next_address in named_group_sensors:  # Include any named group sensors that fall within the range
+                if (next_address - first_address + named_group_sensors[next_address].count) > MAX_MODBUS_REGISTERS_PER_REQUEST:
+                    break
+                else:
+                    next_address += named_group_sensors[next_address].count
+            device_address = sensor.device_address
+            scan_interval = sensor.scan_interval
+
+        group_name = None
+        for sensor in sorted([s for s in combined_sensors.values() if isinstance(s, ReadableSensorMixin) and not isinstance(s, (AlarmCombinedSensor, ModbusSensor))], key=lambda s: (s.scan_interval)):
+            if (  # Conditions for creating a new sensor scan group
+                group_name is None  # First sensor
+                or scan_interval != sensor.scan_interval  # Scan interval changed
+            ):
+                group_name = f"{sensor.__class__.__name__}_{sensor.scan_interval:05d}"
+                combined_groups[group_name] = []
+            combined_groups[group_name].append(sensor)
+            scan_interval = sensor.scan_interval
+
+        return combined_groups
+
+    def get_all_sensors(self, search_children: bool = True) -> dict[str, Sensor]:
         """
         Returns all sensors in this device and its children.
         If search_children is False, only returns sensors in this device.
@@ -225,7 +289,7 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
         for device in self._children:
             device.publish_availability(mqtt, ha_state)
 
-    def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> Any:
+    def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> any:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean:
             logging.debug(f"{self.name} - Cleaning availability")
@@ -260,179 +324,142 @@ class Device(Dict[str, any], metaclass=abc.ABCMeta):
             device.publish_discovery(mqtt, clean=clean)
         return info
 
-    def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
-        async def publish_updates(modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: Sensor) -> None:
-            multiple: bool = len(sensors) > 1
-            if multiple:
-                first_address: int = min([s._address for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
-                last_address: int = max([s._address + s._count - 1 for s in sensors if hasattr(s, "_address") and not isinstance(s, ReservedSensor)])
-                count: int = sum([s._count for s in sensors if hasattr(s, "_address") and hasattr(s, "_count") and first_address <= getattr(s, "_address") <= last_address])
-            elif hasattr(sensors[0], "_address") and hasattr(sensors[0], "_count") and not isinstance(sensors[0], ReservedSensor):
-                first_address: int = sensors[0]._address
-                count = sensors[0]._count
-                last_address: int = first_address + count - 1
-            else:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] SKIPPED - only contains {sensors[0].__class__.__name__}")
-                return
-            contiguous: bool = (
-                multiple
-                and first_address
-                and last_address
-                and (((last_address - first_address + 1) == count) or count <= MAX_MODBUS_REGISTERS_PER_REQUEST)
-                and (last_address - first_address + 1) <= MAX_MODBUS_REGISTERS_PER_REQUEST
-            )
-            count = last_address - first_address + 1  # Recalculate count for non-contiguous reads
-            if contiguous and count > MAX_MODBUS_REGISTERS_PER_REQUEST:
-                logging.warning(f"{self.name} Sensor Scan Group [{name}] contains {count} registers which exceeds the maximum of {MAX_MODBUS_REGISTERS_PER_REQUEST} - falling back to individual reads")
-                contiguous = False
-            interval: int = min([s.scan_interval for s in sensors if isinstance(s, ReadableSensorMixin)])  # ReadOnlySensor and subclasses (e.g. ReadWriteSensor)
-            debug_logging: bool = False
-            daily_sensors: bool = False
-            for sensor in sensors:
-                debug_logging = debug_logging or sensor.debug_logging or any(ds.debug_logging for ds in sensor._derived_sensors.values())
-                daily_sensors = daily_sensors or any(isinstance(ds, EnergyDailyAccumulationSensor) for ds in sensor._derived_sensors.values())
-                if not contiguous and hasattr(sensor, "_address") and hasattr(sensor, "_count"):
-                    modbus.bypass_read_ahead(sensor._address, sensor._count)
-                if sensor.publishable:
-                    if isinstance(sensor, ReadOnlySensor) and interval != sensor.scan_interval:
-                        logging.warning(f"Sensor {sensor.__class__.__name__} scan-interval ({sensor.scan_interval}s) ignored - the interval of {self.name} Sensor Group [{name}] is {interval}s")
-                    if sensor.latest_raw_state is not None:
-                        await sensor.publish(mqtt, modbus, republish=True)
-            if debug_logging:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} {contiguous=} sensors={len(sensors)})")
-            last_publish: float = time.time()
-            next_publish: float = last_publish + uniform(0.5, min(5, interval))
-            actual_elapsed: list[float] = []
-            if debug_logging:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced - first publish at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_publish))} (interval={interval}s {daily_sensors=})")
-            lock = ModbusLockFactory.get(modbus)
-            while self.online:
-                now = time.time()  # Grab the started time first, so that elapsed contains ALL activity
-                if any(sensor for sensor in sensors if sensor.force_publish):
+    async def publish_updates(self, modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: ModbusSensor | ReadableSensorMixin) -> None:
+        multiple: bool = len(sensors) > 1
+        if multiple:
+            first_address: int = min([s.address for s in sensors if isinstance(s, ModbusSensor)])
+            last_address: int = max([s.address + s.count - 1 for s in sensors if isinstance(s, ModbusSensor)])
+            count: int = last_address - first_address + 1
+        else:
+            first_address: int = sensors[0].address
+            count = sensors[0].count
+            last_address: int = first_address + count - 1
+        interval: int = min([s.scan_interval for s in sensors])
+        debug_logging: bool = False
+        daily_sensors: bool = False
+        for sensor in sensors:
+            debug_logging = debug_logging or sensor.debug_logging or any(ds.debug_logging for ds in sensor._derived_sensors.values())
+            daily_sensors = daily_sensors or any(isinstance(ds, EnergyDailyAccumulationSensor) for ds in sensor._derived_sensors.values())
+            if sensor.publishable and sensor.latest_raw_state is not None:
+                await sensor.publish(mqtt, modbus, republish=True)
+        if debug_logging:
+            logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} sensors={len(sensors)})")
+        last_publish: float = time.time()
+        next_publish: float = last_publish + uniform(0.5, min(5, interval))
+        actual_elapsed: list[float] = []
+        if debug_logging:
+            logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced - first publish at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_publish))} (interval={interval}s {daily_sensors=})")
+        lock = ModbusLockFactory.get(modbus)
+        while self.online:
+            now = time.time()  # Grab the started time first, so that elapsed contains ALL activity
+            if any(sensor for sensor in sensors if sensor.force_publish):
+                if debug_logging:
+                    logging.debug(f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because force_publish set on {sensor.__class__.__name__}")
+                next_publish = now  # If any sensor requires a force publish, process all of them now
+            elif daily_sensors:
+                now_struct: time.struct_time = time.localtime(now)
+                was = time.localtime(last_publish)
+                if was.tm_yday != now_struct.tm_yday:
+                    logging.info(
+                        f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and the day has changed ({was.tm_yday} -> {now_struct.tm_yday})"
+                    )
+                    next_publish = now
+            if next_publish <= now:
+                last_publish = now
+                publishable_now = [s for s in sensors if s.publishable]
+                try:
+                    async with lock.lock():
+                        if multiple and count <= MAX_MODBUS_REGISTERS_PER_REQUEST:
+                            if debug_logging:
+                                read_ahead_start = time.time()
+                            exception_code = await modbus.read_ahead_registers(first_address, count=count, device_id=sensors[0].device_address, input_type=sensors[0].input_type)
+                            if exception_code == 0:
+                                if debug_logging:
+                                    logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
+                            else:
+                                match exception_code:
+                                    case -1:
+                                        reason = "NO RESPONSE FROM DEVICE"
+                                    case 1:
+                                        reason = "0x01 ILLEGAL FUNCTION"
+                                    case 2:
+                                        reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
+                                        multiple = False
+                                    case 3:
+                                        reason = "0x03 ILLEGAL DATA VALUE"
+                                    case 4:
+                                        reason = "0x04 SLAVE DEVICE FAILURE"
+                                    case _:
+                                        reason = f"UNKNOWN PROBLEM ({exception_code=})"
+                                logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
+                        elif debug_logging:
+                            logging.debug(f"{self.name} Sensor Scan Group [{name}] publishing sensors (interval={now - last_publish:.2f}s)")
+                        for sensor in publishable_now:
+                            await sensor.publish(mqtt, modbus)
+                            if sensor.latest_interval is not None:
+                                actual_elapsed.append(sensor.latest_interval)
+                        elapsed = time.time() - now
+                        average_excess = statistics.fmean(actual_elapsed) - interval if len(actual_elapsed) > 0 else 0
+                        if elapsed > interval and modbus.connected:
+                            logging.info(f"{self.name} Sensor Scan Group [{name}] exceeded scan interval ({interval=}s) {elapsed=:.2f}s {average_excess=:.3f}s")
+                    if len(actual_elapsed) > 100:
+                        actual_elapsed = actual_elapsed[-100:]
+                    next_publish = time.time() + max(interval - elapsed, 0.5)
                     if debug_logging:
-                        logging.debug(f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because force_publish set on {sensor.__class__.__name__}")
-                    next_publish = now  # If any sensor requires a force publish, process all of them now
-                elif daily_sensors:
-                    now_struct: time.struct_time = time.localtime(now)
-                    was = time.localtime(last_publish)
-                    if was.tm_yday != now_struct.tm_yday:
-                        logging.info(
-                            f"{self.name} Sensor Scan Group [{name}] wait interrupted with {next_publish - now:.2f}s remaining because it contains at least one EnergyDailyAccumulationSensor and the day has changed ({was.tm_yday} -> {now_struct.tm_yday})"
-                        )
-                        next_publish = now
-                if next_publish <= now:
-                    last_publish = now
-                    publishable_now = [s for s in sensors if isinstance(s, ReadableSensorMixin) and s.publishable and not isinstance(s, ReservedSensor)]
-                    try:
-                        async with lock.lock():
-                            if multiple and contiguous:
-                                if debug_logging:
-                                    logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} (interval={now - last_publish:.2f}s)")
-                                    read_ahead_start = time.time()
-                                await modbus.read_ahead_registers(first_address, count=count, device_id=sensors[0]._device_address, input_type=sensors[0]._input_type)
-                                if debug_logging:
-                                    logging.debug(
-                                        f"{self.name} Sensor Scan Group [{name}] pre-reading contiguous registers {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s"
-                                    )
-                            elif debug_logging:
-                                logging.debug(f"{self.name} Sensor Scan Group [{name}] publishing sensors (interval={now - last_publish:.2f}s)")
-                            for sensor in publishable_now:
-                                await sensor.publish(mqtt, modbus)
-                                if sensor.latest_interval is not None:
-                                    actual_elapsed.append(sensor.latest_interval)
-                            elapsed = time.time() - now
-                            average_excess = statistics.fmean(actual_elapsed) - interval if len(actual_elapsed) > 0 else 0
-                            if elapsed > interval and modbus.connected:
-                                logging.info(f"{self.name} Sensor Scan Group [{name}] exceeded scan interval ({interval=}s) {elapsed=:.2f}s {average_excess=:.3f}s")
-                        if len(actual_elapsed) > 100:
-                            actual_elapsed = actual_elapsed[-100:]
-                        next_publish = time.time() + max(interval - elapsed, 0.5)
-                        if debug_logging:
-                            logging.debug(f"{self.name} Sensor Scan Group [{name}] {interval=}s {elapsed=:.2f}s next={next_publish - time.time():.2f}s {average_excess=:.3f}s")
-                        if self.rediscover:
-                            logging.debug(f"{self.name} Sensor Scan Group [{name}]: Acquiring lock to republish discovery... ({lock.waiters=})")
-                            async with lock.lock(timeout=1):
-                                self.rediscover = False
-                                self.publish_discovery(mqtt, clean=False)
-                    except ModbusException as e:
-                        lock = ModbusLockFactory.get(modbus)
-                        logging.debug(f"{self.name} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
-                        async with lock.lock(timeout=None):
-                            if not modbus.connected and self.online:
-                                logging.info(f"{self.name} attempting to reconnect to Modbus...")
-                                while not modbus.connected:
-                                    modbus.close()
-                                    await asyncio.sleep(0.5)
-                                    await modbus.connect()
-                                    await asyncio.sleep(1)
-                                logging.info(f"{self.name} reconnected to Modbus")
-                    except Exception as e:
-                        logging.error(f"{self.name} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
-                sleep = min(next_publish - time.time(), 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
-                if sleep > 0:
-                    task = asyncio.create_task(asyncio.sleep(sleep))
+                        logging.debug(f"{self.name} Sensor Scan Group [{name}] {interval=}s {elapsed=:.2f}s next={next_publish - time.time():.2f}s {average_excess=:.3f}s")
+                    if self.rediscover:
+                        logging.debug(f"{self.name} Sensor Scan Group [{name}]: Acquiring lock to republish discovery... ({lock.waiters=})")
+                        async with lock.lock(timeout=1):
+                            self.rediscover = False
+                            self.publish_discovery(mqtt, clean=False)
+                except ModbusException as e:
+                    lock = ModbusLockFactory.get(modbus)
+                    logging.debug(f"{self.name} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
+                    async with lock.lock(timeout=None):
+                        if not modbus.connected and self.online:
+                            logging.info(f"{self.name} attempting to reconnect to Modbus...")
+                            while not modbus.connected:
+                                modbus.close()
+                                await asyncio.sleep(0.5)
+                                await modbus.connect()
+                                await asyncio.sleep(1)
+                            logging.info(f"{self.name} reconnected to Modbus")
+                except Exception as e:
+                    logging.error(f"{self.name} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
+            sleep = min(next_publish - time.time(), 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+            if sleep > 0:
+                task = asyncio.create_task(asyncio.sleep(sleep))
+                for sensor in sensors:
+                    sensor.sleeper_task = task
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    if debug_logging:
+                        logging.debug(f"{self.name} Sensor Scan Group [{name}] sleep interrupted")
+                finally:
                     for sensor in sensors:
-                        sensor.sleeper_task = task
-                    try:
-                        await task
-                    except asyncio.CancelledError:
-                        if debug_logging:
-                            logging.debug(f"{self.name} Sensor Scan Group [{name}] sleep interrupted")
-                    finally:
-                        for sensor in sensors:
-                            sensor.sleeper_task = None
-            if debug_logging:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] completed - {self.name} flagged as offline ({self.online=})")
-            return
+                        sensor.sleeper_task = None
+        if debug_logging:
+            logging.debug(f"{self.name} Sensor Scan Group [{name}] completed - {self.name} flagged as offline ({self.online=})")
+        return
 
-        async def republish_discovery(mqtt: MqttClient) -> None:
-            wait = Config.home_assistant.republish_discovery_interval
-            while self.online and Config.home_assistant.republish_discovery_interval > 0:
-                await asyncio.sleep(1)
-                wait -= 1
-                if wait <= 0:
-                    logging.info(f"{self.name} - Re-publishing discovery")
-                    self.publish_discovery(mqtt, clean=False)
-                    wait = Config.home_assistant.republish_discovery_interval
+    async def republish_discovery(self, mqtt: MqttClient) -> None:
+        wait = Config.home_assistant.republish_discovery_interval
+        while self.online and Config.home_assistant.republish_discovery_interval > 0:
+            await asyncio.sleep(1)
+            wait -= 1
+            if wait <= 0:
+                logging.info(f"{self.name} - Re-publishing discovery")
+                self.publish_discovery(mqtt, clean=False)
+                wait = Config.home_assistant.republish_discovery_interval
 
-        combined_sensors: Dict[str, ReadableSensorMixin] = self._read_sensors.copy()
-        combined_groups: Dict[str, List[ReadableSensorMixin]] = self._group_sensors.copy()
-        for device in self._children:
-            combined_sensors.update(device._read_sensors)
-            for group, sensor_list in device._group_sensors.items():
-                if group not in combined_groups:
-                    combined_groups[group] = []
-                combined_groups[group].extend(sensor_list)
-
-        address: int = None
-        count: int = None
-        device_address: int = None
-        group_name: str = None
-        input_type: InputType = None
-        scan_interval: int = None
-        for sensor in sorted(combined_sensors.values(), key=lambda x: (x.scan_interval, x._device_address, x._address)):
-            if (  # Conditions for creating a new sensor scan group
-                Config.devices[self._plant_index].disable_chunking
-                or device_address != sensor._device_address
-                or input_type != sensor._input_type
-                or scan_interval != sensor.scan_interval
-                or (address is None or count is None or sensor._address != address + count)
-                or (group_name is not None and (sum(s._count for s in combined_groups[group_name]) + sensor._count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
-            ):
-                group_name = f"{sensor._device_address:03d}_{sensor._address:05d}_{sensor.scan_interval:05d}"
-                combined_groups[group_name] = []
-            combined_groups[group_name].append(sensor)
-            address = sensor._address
-            count = sensor._count
-            device_address = sensor._device_address
-            input_type = sensor._input_type
-            scan_interval = sensor.scan_interval
-
+    def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> list[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
+        groups = self._create_sensor_scan_groups()
         tasks = []
-        for name, sensors in combined_groups.items():
-            tasks.append(publish_updates(modbus, mqtt, name, *sensors))
+        for name, sensors in groups.items():
+            tasks.append(self.publish_updates(modbus, mqtt, name, *sensors))
         if Config.home_assistant.enabled and Config.home_assistant.republish_discovery_interval > 0:
-            tasks.append(republish_discovery(mqtt))
+            tasks.append(self.republish_discovery(mqtt))
         return tasks
 
     def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:

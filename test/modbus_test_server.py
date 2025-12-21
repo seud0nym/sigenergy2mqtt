@@ -241,7 +241,7 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
                 assert first_address and last_address and (last_address - first_address + 1) == count
                 device_address = group_sensors[0]._device_address
                 try:
-                    if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0]._input_type):
+                    if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0]._input_type) == 0:
                         for sensor in group_sensors:
                             if sensor.publishable:
                                 await sensor.get_state(modbus=modbus_client)
