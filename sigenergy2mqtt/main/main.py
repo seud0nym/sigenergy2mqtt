@@ -8,6 +8,7 @@ from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
+from sigenergy2mqtt.sensors.base import ModbusSensor
 from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
@@ -129,7 +130,7 @@ async def async_main() -> None:
     else:
         upgrade_detected = False
 
-    await start(configs, False) # Removed upgrade_clean_required because it deletes associated statistics helper entities (#77)
+    await start(configs, False)  # Removed upgrade_clean_required because it deletes associated statistics helper entities (#77)
     logging.info("Shutdown completed")
 
 
@@ -157,11 +158,15 @@ def configure_logging():
         pvoutput.setLevel(Config.pvoutput.log_level)
 
 
+async def get_state(sensor: ModbusSensor, modbus: ModbusClient, device: str, raw: bool = False) -> tuple[ModbusSensor, int | float | str]:
+    state = await sensor.get_state(raw=raw, modbus=modbus)
+    logging.debug(f"READING modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to acquire {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device}")
+    return sensor, state
+
+
 async def make_ac_charger(plant_index, modbus, device_address, plant):
-    input_breaker = ACChargerInputBreaker(plant_index, device_address)
-    rated_current = ACChargerRatedCurrent(plant_index, device_address)
-    ip_value = await input_breaker.get_state(modbus=modbus)
-    rc_value = await rated_current.get_state(modbus=modbus)
+    input_breaker, ip_value = await get_state(ACChargerInputBreaker(plant_index, device_address), modbus, "ac-charger")
+    rated_current, rc_value = await get_state(ACChargerRatedCurrent(plant_index, device_address), modbus, "ac-charger")
     charger = ACCharger(plant_index, device_address, plant.protocol_version, ip_value, rc_value, input_breaker, rated_current)
     charger.via_device = plant.unique_id
     return charger
@@ -174,23 +179,16 @@ async def make_dc_charger(plant_index, device_address, protocol_version, inverte
 
 
 async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, PowerPlant]:
-    serial = InverterSerialNumber(plant_index, device_address)
-    serial_number = await serial.get_state(modbus=modbus)
-
+    serial, serial_number = await get_state(InverterSerialNumber(plant_index, device_address), modbus, "inverter")
     if serial_number in serial_numbers:
         logging.info(f"Inverter serial number {serial_number} has already been detected - ignoring")
         return None, None
 
-    model = InverterModel(plant_index, device_address)
-    firmware = InverterFirmwareVersion(plant_index, device_address)
-    strings = PVStringCount(plant_index, device_address)
-    output_type = OutputType(plant_index, device_address)
-
-    model_id = await model.get_state(modbus=modbus)
+    model, model_id = await get_state(InverterModel(plant_index, device_address), modbus, "inverter")
     device_type = DeviceType.create(model_id)
-    firmware_version = await firmware.get_state(modbus=modbus)
-    pv_string_count = await strings.get_state(modbus=modbus)
-    output_type_state = await output_type.get_state(raw=True, modbus=modbus)
+    firmware, firmware_version = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus, "inverter")
+    strings, pv_string_count = await get_state(PVStringCount(plant_index, device_address), modbus, "inverter")
+    output_type, output_type_state = await get_state(OutputType(plant_index, device_address), modbus, "plant/inverter", raw=True)
     match output_type_state:
         case 0:  # L/N
             power_phases = 1
@@ -227,13 +225,10 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
         if protocol_version < Protocol.V2_8 and Config.consumption != ConsumptionMethod.CALCULATED:
             logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {Config.consumption.name} is not supported on Modbus Protocol V{protocol_version.value}")
             Config.consumption = ConsumptionMethod.CALCULATED
-        rated_charging_power = PlantRatedChargingPower(plant_index)
-        rated_discharging_power = PlantRatedDischargingPower(plant_index)
-        rcp_value = await rated_charging_power.get_state(modbus=modbus)
-        rdp_value = await rated_discharging_power.get_state(modbus=modbus)
+        rated_charging_power, rcp_value = await get_state(PlantRatedChargingPower(plant_index), modbus, "plant")
+        rated_discharging_power, rdp_value = await get_state(PlantRatedDischargingPower(plant_index), modbus, "plant")
         if device_type.has_grid_code_interface and protocol_version >= Protocol.V2_8:
-            rated_frequency = GridCodeRatedFrequency(plant_index)
-            rf_value = await rated_frequency.get_state(modbus=modbus)
+            rated_frequency, rf_value = await get_state(GridCodeRatedFrequency(plant_index), modbus, "plant")
         else:
             rated_frequency = rf_value = None
         plant = PowerPlant(plant_index, device_type, protocol_version, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
