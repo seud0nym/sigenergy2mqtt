@@ -330,10 +330,14 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             first_address: int = min([s.address for s in sensors if isinstance(s, ModbusSensor)])
             last_address: int = max([s.address + s.count - 1 for s in sensors if isinstance(s, ModbusSensor)])
             count: int = last_address - first_address + 1
-        else:
+        elif isinstance(sensors[0], ModbusSensor):
             first_address: int = sensors[0].address
-            count = sensors[0].count
+            count: int = sensors[0].count
             last_address: int = first_address + count - 1
+        else:
+            first_address: int = None
+            count: int = None
+            last_address: int = None
         interval: int = min([s.scan_interval for s in sensors])
         debug_logging: bool = False
         daily_sensors: bool = False
