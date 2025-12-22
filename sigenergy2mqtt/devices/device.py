@@ -464,7 +464,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             if any([s.address for s in sensors if s.publishable]):
                 tasks.append(self.publish_updates(modbus, mqtt, name, *sensors))
             else:
-                logging.debug(f"{self.name} Sensor Scan Group [{name}] skipped because no sensors are publishable {sensors=}")
+                logging.debug(f"{self.name} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
         if Config.home_assistant.enabled and Config.home_assistant.republish_discovery_interval > 0:
             tasks.append(self.republish_discovery(mqtt))
         return tasks
