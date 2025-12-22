@@ -1,5 +1,5 @@
 from .device import ModbusDevice, DeviceType
-from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 
@@ -17,7 +17,7 @@ class GridSensor(ModbusDevice):
         super().__init__(device_type, name, plant_index, 247, "Grid Sensor", protocol_version)
 
         self._add_read_sensor(ro.GridSensorStatus(plant_index))
-        self._add_read_sensor(active_power, "Consumption")
+        self._add_read_sensor(active_power, "Consumption" if Config.consumption == ConsumptionMethod.CALCULATED else None)
         self._add_read_sensor(ro.GridSensorReactivePower(plant_index))
         self._add_read_sensor(ro.GridPhaseActivePower(plant_index, "A"))
         self._add_read_sensor(ro.GridPhaseReactivePower(plant_index, "A"))

@@ -5,7 +5,7 @@ if __name__ == "__main__":
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../src"))
     sys.path.insert(0, parent_dir)
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
 from sigenergy2mqtt.config.smart_port_config import ModuleConfig
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClient
@@ -432,7 +432,7 @@ class SmartPort(Device):
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
         lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)
-        self._add_read_sensor(pv_power, "Consumption")
+        self._add_read_sensor(pv_power, "Consumption" if Config.consumption == ConsumptionMethod.CALCULATED else None)
         self._add_derived_sensor(lifetime_pv_energy, pv_power)
         self._add_derived_sensor(EnphaseDailyPVEnergy(plant_index, sn, lifetime_pv_energy), lifetime_pv_energy)
         self._add_derived_sensor(EnphaseCurrent(plant_index, sn), pv_power)

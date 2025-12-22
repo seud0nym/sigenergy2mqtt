@@ -181,8 +181,8 @@ class PowerPlant(ModbusDevice):
 
         general_load_power = ro.GeneralLoadPower(plant_index)
         total_load_power = ro.TotalLoadPower(plant_index)
-        self._add_read_sensor(general_load_power, "Consumption")  # Always assign to Consumption scan group
-        self._add_read_sensor(total_load_power, "Consumption")  # Always assign to Consumption scan group
+        self._add_read_sensor(general_load_power)
+        self._add_read_sensor(total_load_power)
         self._add_read_sensor(rw.ActivePowerRegulationGradient(plant_index))
 
         self._add_read_sensor(ro.CurrentControlCommandValue(plant_index))
