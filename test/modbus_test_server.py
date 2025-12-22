@@ -12,6 +12,7 @@ from paho.mqtt.client import CallbackAPIVersion
 from pymodbus import __version__ as pymodbus_version
 from pymodbus import FramerType, ModbusDeviceIdentification
 from pymodbus.client.base import ModbusClientMixin
+from pymodbus.constants import ExcCodes
 from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
 from random import randint
@@ -194,6 +195,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
             sleep_time = randint(delay_min, delay_max)  # Simulate variable response times
         self._total_sleep_time += sleep_time
         await asyncio.sleep(sleep_time / 1000)
+        if address in (30279, 30281, 30286, 30288, 30290, 30292, 30294, 30296, 30622, 30623, 40049):
+            # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
+            return ExcCodes.ILLEGAL_ADDRESS
         return super().getValues(address, count)
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]):
