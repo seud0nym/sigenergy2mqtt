@@ -44,6 +44,12 @@ async def async_main() -> None:
                         config.add_device(plant_index, plant)
                         await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, 30279, 30281, 30286, 30288, 30290, 30292, 30294, 30296, 40049)
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
+                        if not plant.has_battery:
+                            logging.debug(f"No battery modules attached to plant {device.host}:{device.port} - disabling charging/discharging statistics interface sensors")
+                            for register in (30244, 30248):
+                                si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
+                                if si_sensor:
+                                    si_sensor.publishable = False
                     if inverter is not None:
                         inverters[device_address] = inverter.unique_id
                         config.add_device(plant_index, inverter)
