@@ -6,6 +6,8 @@ import logging
 @dataclass
 class HomeAssistantConfiguration:
     enabled: bool = False
+
+    edit_percentage_with_box: bool = False
     discovery_only: bool = False
     republish_discovery_interval: int = 0
     use_simplified_topics: bool = False
@@ -33,6 +35,8 @@ class HomeAssistantConfiguration:
                             self.discovery_only = check_bool(value, f"home-assistant.{field}")
                         case "discovery-prefix":
                             self.discovery_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False)
+                        case "edit-pct-box":
+                            self.edit_percentage_with_box = check_bool(value, f"home-assistant.{field}")
                         case "entity-id-prefix":
                             self.entity_id_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False)
                         case "republish-discovery-interval":

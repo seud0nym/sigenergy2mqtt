@@ -91,6 +91,13 @@ home-assistant:
   #                 Assistant topic structure of 
   #                 homeassistant/platform/device_id/object_id/state.
   use-simplified-topics: false
+  # edit-pct-box
+  #   added: 2025.12.23
+  #   default: false
+  #   description:  When editing percentage sensors, use a numeric entry box 
+  #                 to change the value (true) or use a slider to change the 
+  #                 value (false).
+  edit-pct-box: false
 mqtt:
   # broker
   #   default: 127.0.0.1

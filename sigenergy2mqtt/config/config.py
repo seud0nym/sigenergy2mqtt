@@ -114,6 +114,8 @@ class Config:
                             overrides["no-metrics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
                             overrides["home-assistant"]["enabled"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
+                            overrides["home-assistant"]["edit-pct-box"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
                             overrides["home-assistant"]["entity-id-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:

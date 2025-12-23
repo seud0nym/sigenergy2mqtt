@@ -1228,7 +1228,7 @@ class NumericSensor(ReadWriteSensor):
         self["platform"] = "number"
         self["min"] = minimum
         self["max"] = maximum
-        self["mode"] = "slider" if unit == PERCENTAGE else "box"
+        self["mode"] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
         self["step"] = 1 if precision is None else 10**-precision
         self._sanity.min_value = None
         self._sanity.max_value = None

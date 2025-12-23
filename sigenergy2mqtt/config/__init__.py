@@ -152,6 +152,12 @@ _parser.add_argument(
     help="The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')",
 )
 _parser.add_argument(
+    "--hass-edit-pct-box",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX,
+    help="When editing percentage sensors, use a numeric entry box to change the value (true) or use a slider to change the value (false).",
+)
+_parser.add_argument(
     "--hass-discovery-only",
     action="store_true",
     dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY,
@@ -672,6 +678,7 @@ for arg in vars(_args):
     elif (
         arg == const.SIGENERGY2MQTT_HASS_ENABLED
         or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
+        or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
         or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS

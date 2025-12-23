@@ -12,7 +12,8 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [--hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]]
           [--hass-use-simplified-topics]
           [--hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]]
-          [--hass-discovery-only] [-b [SIGENERGY2MQTT_MQTT_BROKER]]
+          [--hass-edit-pct-box] [--hass-discovery-only]
+          [-b [SIGENERGY2MQTT_MQTT_BROKER]]
           [--mqtt-port [SIGENERGY2MQTT_MQTT_PORT]]
           [--mqtt-keepalive [SIGENERGY2MQTT_MQTT_KEEPALIVE]] [--mqtt-tls]
           [--mqtt-tls-insecure] [--mqtt-anonymous]
@@ -122,6 +123,9 @@ options:
                         The prefix to use for Home Assistant entity names.
                         Example: A prefix of 'prefix' will prepend 'prefix '
                         to names (default: '')
+  --hass-edit-pct-box   When editing percentage sensors, use a numeric entry
+                        box to change the value (true) or use a slider to
+                        change the value (false).
   --hass-discovery-only
                         Exit immediately after publishing discovery. Does not
                         read values from the Modbus interface, except to probe
