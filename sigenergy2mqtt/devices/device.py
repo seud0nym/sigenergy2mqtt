@@ -325,8 +325,8 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
     async def publish_updates(self, modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: ModbusSensor | ReadableSensorMixin) -> None:
         multiple: bool = len(sensors) > 1
         if multiple:
-            first_address: int = min([s.address for s in sensors if isinstance(s, ModbusSensor)])
-            last_address: int = max([s.address + s.count - 1 for s in sensors if isinstance(s, ModbusSensor)])
+            first_address: int = min([s.address for s in sensors if isinstance(s, ModbusSensor) and s.publishable])
+            last_address: int = max([s.address + s.count - 1 for s in sensors if isinstance(s, ModbusSensor) and s.publishable])
             count: int = last_address - first_address + 1
         elif isinstance(sensors[0], ModbusSensor):
             first_address: int = sensors[0].address
