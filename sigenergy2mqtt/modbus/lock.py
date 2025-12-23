@@ -7,27 +7,19 @@ import asyncio
 class ModbusLock:
     def __init__(self, modbus: ModbusClient):
         self._lock = asyncio.Lock()
-        self._waiters = 0
-        self._host = ModbusClientFactory.get_host(modbus)
-
-    @property
-    def host(self) -> str:
-        return self._host
-
-    @property
-    def waiters(self):
-        return self._waiters
+        self.waiters = 0
+        self.host = ModbusClientFactory.get_host(modbus)
 
     async def acquire(self, timeout=None):
-        self._waiters += 1
+        self.waiters += 1
         try:
             if timeout is None:
                 return await self._lock.acquire()
             else:
                 return await asyncio.wait_for(self._lock.acquire(), timeout)
         finally:
-            self._waiters -= 1
-            
+            self.waiters -= 1
+
     @asynccontextmanager
     async def lock(self, timeout=None):
         acquired = await self.acquire(timeout)

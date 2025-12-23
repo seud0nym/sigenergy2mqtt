@@ -127,17 +127,17 @@ async def get_sensor_instances(
 
     def add_sensor_instance(s):
         key = s.unique_id
-        if hasattr(s, "_address"):
+        if hasattr(s, "address"):
             if (
-                s._address in registers
-                and s._device_address == registers[s._address]._device_address
-                and s.__class__.__name__ != registers[s._address].__class__.__name__
-                and not (isinstance(s, AlarmSensor) and isinstance(registers[s._address], AlarmCombinedSensor))
-                and not (isinstance(s, AlarmCombinedSensor) and isinstance(registers[s._address], AlarmSensor))
+                s.address in registers
+                and s.device_address == registers[s.address].device_address
+                and s.__class__.__name__ != registers[s.address].__class__.__name__
+                and not (isinstance(s, AlarmSensor) and isinstance(registers[s.address], AlarmCombinedSensor))
+                and not (isinstance(s, AlarmCombinedSensor) and isinstance(registers[s.address], AlarmSensor))
             ):
-                logging.warning(f"Register {s._address} in {s.__class__.__name__} already defined in {registers[s._address].__class__.__name__}")
+                logging.warning(f"Register {s.address} in {s.__class__.__name__} already defined in {registers[s.address].__class__.__name__}")
             else:
-                registers[s._address] = s
+                registers[s.address] = s
         if key not in sensors:
             sensors[key] = s
         elif s.__class__.__name__ != sensors[key].__class__.__name__:
@@ -153,19 +153,19 @@ async def get_sensor_instances(
     # add_sensor_instance(pv_serial)
     for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
         devices = [parent]
-        devices.extend(parent._children)
+        devices.extend(parent.children)
         for device in devices:
             for s in device.sensors.values():
                 if isinstance(s, AlarmCombinedSensor):
                     add_sensor_instance(s)
-                    for alarm in s._alarms:
+                    for alarm in s.alarms:
                         add_sensor_instance(alarm)
                 else:
                     add_sensor_instance(s)
 
     previous = None
     for address in sorted(registers.keys()):
-        count = registers[address]._count
+        count = registers[address].count
         if previous:
             last_address, last_count = previous
             if address not in (30500, 31000, 31500, 32000, 40000, 40500, 41000, 41500, 42000) and last_address + last_count < address:

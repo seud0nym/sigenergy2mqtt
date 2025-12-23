@@ -16,56 +16,44 @@ MqttResponse = namedtuple("MqttResponse", ["now", "handler"])
 
 class MqttHandler:
     def __init__(self, client_id: str, modbus: ModbusClient, loop: asyncio.AbstractEventLoop):
-        self._client_id = client_id
-        self._mids: Dict[Any, MqttResponse] = {}
-        self._topics: Dict[str, list[Callable[[mqtt.Client, str], None]]] = {}
-        self._modbus = modbus
         self._loop = loop
-        self._connected = False
+        self._mids: Dict[Any, MqttResponse] = {}
+        self._modbus = modbus
         self._reconnect_lock = threading.Lock()
-
-    @property
-    def client_id(self) -> str:
-        return self._client_id
-
-    @property
-    def connected(self) -> bool:
-        return self._connected
-
-    @connected.setter
-    def connected(self, value) -> None:
-        self._connected = value
+        self._topics: Dict[str, list[Callable[[mqtt.Client, str], None]]] = {}
+        self.client_id = client_id
+        self.connected = False
 
     def on_reconnect(self, client: mqtt.Client) -> None:
-        if not self._connected:
+        if not self.connected:
             with self._reconnect_lock:
-                if not self._connected:
-                    self._connected = True
+                if not self.connected:
+                    self.connected = True
                     if len(self._topics) > 0:
-                        logger.info(f"[{self._client_id}] Reconnected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
+                        logger.info(f"[{self.client_id}] Reconnected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
                         for topic in self._topics.keys():
                             result = client.unsubscribe(topic)
-                            logger.debug(f"[{self._client_id}] on_reconnect: unsubscribe('{topic}') -> {result}")
+                            logger.debug(f"[{self.client_id}] on_reconnect: unsubscribe('{topic}') -> {result}")
                             result = client.subscribe(topic)
-                            logger.debug(f"[{self._client_id}] on_reconnect: subscribe('{topic}') -> {result}")
+                            logger.debug(f"[{self.client_id}] on_reconnect: subscribe('{topic}') -> {result}")
 
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
         value = str(payload).strip()
         if not value:
-            logger.info(f"[{self._client_id}] IGNORED empty payload from topic {topic}")
+            logger.info(f"[{self.client_id}] IGNORED empty payload from topic {topic}")
         else:
             with self._reconnect_lock:
                 if topic in self._topics:
                     for method in self._topics[topic]:
-                        logger.debug(f"[{self._client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
+                        logger.debug(f"[{self.client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
                         asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
                 else:
-                    logger.warning(f"[{self._client_id}] No registered handler found for topic {topic}")
+                    logger.warning(f"[{self.client_id}] No registered handler found for topic {topic}")
 
     def on_response(self, mid: Any, source: str, client: mqtt.Client) -> None:
         if mid in self._mids:
             method = self._mids[mid].handler
-            logger.debug(f"[{self._client_id}] Handling {source} response for MID={mid} with method {method}")
+            logger.debug(f"[{self.client_id}] Handling {source} response for MID={mid} with method {method}")
             if method is not None:
                 method(client, source)
             del self._mids[mid]
@@ -74,7 +62,7 @@ class MqttHandler:
         expires = time.time() - 60
         for mid in list(self._mids.keys()):
             if self._mids[mid].now < expires:
-                logger.debug(f"[{self._client_id}] Removing expired MID={mid}")
+                logger.debug(f"[{self.client_id}] Removing expired MID={mid}")
                 del self._mids[mid]
 
     def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient, mqtt.Client, str, str, Self], Awaitable[bool]]) -> tuple[int, int]:
@@ -82,7 +70,7 @@ class MqttHandler:
             if topic not in self._topics:
                 self._topics[topic] = []
             self._topics[topic].append(handler)
-        logger.debug(f"[{self._client_id}] Registered handler {handler.__self__.__class__.__name__}.{getattr(handler, '__name__', '[Unknown method]')} for topic {topic}")
+        logger.debug(f"[{self.client_id}] Registered handler {handler.__self__.__class__.__name__}.{getattr(handler, '__name__', '[Unknown method]')} for topic {topic}")
         return client.subscribe(topic)
 
     async def wait_for(self, seconds: float, prefix: str, method: Callable | Awaitable, *args, **kwargs) -> bool:

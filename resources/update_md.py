@@ -141,7 +141,7 @@ async def sensor_index():
                     if isinstance(sensor, PlantConsumedPower):
                         f.write("<dl>")
                         for method in ConsumptionMethod:
-                            sensor._method = method
+                            sensor.method = method
                             source = sensor.get_attributes()["source"]
                             f.write(f"<dt>{method.name} Configuration Option:</dt><dd>{source}")
                             if method != ConsumptionMethod.CALCULATED:
@@ -152,9 +152,9 @@ async def sensor_index():
                         f.write(f"{attributes['source']}")
                         if attributes["source"] in ILLEGAL_DATA_ADDRESSES:
                             f.write(" (may not be available on all devices)")
-                elif hasattr(sensor, "_address"):
-                    f.write(f"{sensor._address}")
-                    if sensor._address in ILLEGAL_DATA_ADDRESSES:
+                elif hasattr(sensor, "address"):
+                    f.write(f"{sensor.address}")
+                    if sensor.address in ILLEGAL_DATA_ADDRESSES:
                         f.write(" (may not be available on all devices)")
                 else:
                     logging.getLogger("root").error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
@@ -399,7 +399,7 @@ def write_naming_convention(f):
 async def compare_sensor_instances():
     typqxq_instances = {}
     sensor_instances = await get_sensor_instances()
-    registers = invert_dict_by_field(sensor_instances, "_address")
+    registers = invert_dict_by_field(sensor_instances, "address")
 
     from modbusregisterdefinitions import (
         DataType,
@@ -464,14 +464,14 @@ async def compare_sensor_instances():
                 sensor_instance = sensor_instances[sensor_name]
                 # Compare data type
                 typqxq_type = getattr(typqxq_def, "data_type", None)
-                sensor_type = sensor_instance._data_type
+                sensor_type = sensor_instance.data_type
                 mapped_typqxq_type = datatype_map.get(typqxq_type, None)
                 if mapped_typqxq_type is None or mapped_typqxq_type != sensor_type:
                     logging.warning(f"Data type mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_type}' != '{sensor_type}'")
                 # Compare count
                 typqxq_count = getattr(typqxq_def, "count", None)
-                sensor_count = sensor_instance._count
-                sensor_alarms = getattr(sensor_instance, "_alarms", [])
+                sensor_count = sensor_instance.count
+                sensor_alarms = getattr(sensor_instance, "alarms", [])
                 if typqxq_count != sensor_count and not (len(sensor_alarms) > 0 and sensor_count / len(sensor_alarms) == typqxq_count):
                     logging.warning(f"Count mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_count}' != '{sensor_count}'")
                 # Compare unit

@@ -204,7 +204,7 @@ class PVOutputOutputService(Service):
                         total, at, _ = self._service_topics[OutputField.PEAK_POWER].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
-                            self._logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")
+                            self.logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")
                     if last:
                         was = time.localtime(last)
                         if was.tm_yday != now_struct.tm_yday:

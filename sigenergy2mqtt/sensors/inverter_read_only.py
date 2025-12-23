@@ -1316,11 +1316,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
-        self._phase = phase
-
-    @property
-    def phase(self) -> str:
-        return self._phase
+        self.phase = phase
 
 
 class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1409,12 +1405,12 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
             if isinstance(sensor, ActivePower) and sensor.state_topic is not None:
                 self._active_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
                 topics.add(sensor.state_topic)
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
             elif isinstance(sensor, ReactivePower) and sensor.state_topic is not None:
                 self._reactive_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
                 topics.add(sensor.state_topic)
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
             if self._active_power is not None and self._reactive_power is not None:
                 break

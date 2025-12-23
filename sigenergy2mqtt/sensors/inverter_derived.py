@@ -106,10 +106,10 @@ class PVStringPower(DerivedSensor):
             republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
         """
         if self.voltage is None or self.current is None:
-            if self._debug_logging:
+            if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - current={self.current} voltage={self.voltage}")
             return  # until all values populated, can't do calculation
-        if self._debug_logging:
+        if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Publishing READY   - current={self.current} voltage={self.voltage}")
         await super().publish(mqtt, modbus, republish=republish)
         # reset internal values to missing for next calculation

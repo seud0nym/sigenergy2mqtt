@@ -257,14 +257,14 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
 async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus: ModbusClient, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
     device_id: int = device.device_address
     for register in registers:
-        sensor = device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True)
+        sensor: ModbusSensor = device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True)
         if sensor and sensor.publishable:
             id = f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}]" if Config.home_assistant.enabled else f"{device.name} - {sensor.name} [{sensor.state_topic}]"
             try:
-                if sensor._input_type == InputType.HOLDING:
-                    rr = await modbus.read_holding_registers(register, count=sensor._count, device_id=device_id)
-                elif sensor._input_type == InputType.INPUT:
-                    rr = await modbus.read_input_registers(register, count=sensor._count, device_id=device_id)
+                if sensor.input_type == InputType.HOLDING:
+                    rr = await modbus.read_holding_registers(register, count=sensor.count, device_id=device_id)
+                elif sensor.input_type == InputType.INPUT:
+                    rr = await modbus.read_input_registers(register, count=sensor.count, device_id=device_id)
                 if rr.isError() and rr.exception_code == 0x02:
                     logging.info(f"{id} is not publishable (ILLEGAL DATA ADDRESS)")
                     sensor.publishable = False

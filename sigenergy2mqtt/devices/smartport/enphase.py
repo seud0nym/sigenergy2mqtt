@@ -41,11 +41,11 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             gain=None,
             precision=2,
         )
-        self._data_type = ModbusClient.DATATYPE.INT32
+        self.data_type = ModbusClient.DATATYPE.INT32
         ReadableSensorMixin.__init__(self, Config.devices[0].scan_interval.realtime)
         self["enabled_by_default"] = True
 
-        if Config.log_level == logging.DEBUG and not self._debug_logging:
+        if Config.log_level == logging.DEBUG and not self.debug_logging:
             requests_log = logging.getLogger("urllib3")
             requests_log.setLevel(logging.INFO)
             requests_log.propagate = True
@@ -73,7 +73,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
         try:
             url = f"https://{self._host}/ivp/meters/readings"
             headers = {"Authorization": f"Bearer {token}"}
-            if self._debug_logging:
+            if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Fetching data for Envoy device {self._serial_number} from {url}")
             with requests.get(url, timeout=self.scan_interval, verify=False, headers=headers) as response:
                 if response.status_code == 401:
@@ -84,11 +84,11 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                     raise Exception(f"{self.__class__.__name__} Failed to connect to {url}: Response={response}")
                 else:
                     elapsed_time = response.elapsed.total_seconds()
-                    if self._debug_logging:
+                    if self.debug_logging:
                         logging.debug(f"{self.__class__.__name__} Response from {url} took {elapsed_time:.2f} seconds")
                     try:
                         reading = response.json()
-                        if self._debug_logging:
+                        if self.debug_logging:
                             logging.debug(f"{self.__class__.__name__} Response from {url}: JSON={json.dumps(reading)}")
                         solar = reading[0]
                         state_is = float(solar["activePower"])
@@ -149,10 +149,10 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                     try:
                         token = f.read()
                         if token:
-                            if self._debug_logging:
+                            if self.debug_logging:
                                 logging.debug(f"Loaded authentication token from {token_file}: {token}")
                         else:
-                            if self._debug_logging:
+                            if self.debug_logging:
                                 logging.debug(f"No authentication token found in {token_file}!")
                             token = ""
                     except Exception as e:
@@ -169,7 +169,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                 token:  The authentication token
             """
             with open(token_file, "w") as f:
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"Saving authentication token to {token_file}: {token}")
                 try:
                     f.write(token)
@@ -179,7 +179,7 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
         if not reauthenticate:
             if self._token and not self._token.isspace():
                 token = self._token
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"Using cached authentication token: {token}")
             else:
                 token = load_token()
@@ -187,22 +187,22 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
         if reauthenticate or not token or token == "":
             logging.info("Generating new Enphase authentication token")
             payload = {"user[email]": self._username, "user[password]": self._password}
-            if self._debug_logging:
+            if self.debug_logging:
                 logging.debug(f"Step 1: Authentication request payload: {payload}")
             with requests.post("https://enlighten.enphaseenergy.com/login/login.json?", data=payload) as response:
                 assert response.status_code == 200, f"Failed connect to https://enlighten.enphaseenergy.com/login/login.json? to authenticate: Response={response} Payload={payload}"
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"Step 1: Authentication response: {response.text}")
                 response_data = json.loads(response.text)
                 payload = {"session_id": response_data["session_id"], "serial_num": self._serial_number, "username": self._username}
-                if self._debug_logging:
+                if self.debug_logging:
                     logging.debug(f"Step 2: Token request payload: {payload}")
                 with requests.post("https://entrez.enphaseenergy.com/tokens", json=payload) as response:
                     assert response.status_code == 200, f"Failed connect to https://entrez.enphaseenergy.com/tokens to generate token: Response={response} Payload={payload}"
                     token = response.text
                     save_token(token)
 
-        if self._debug_logging:
+        if self.debug_logging:
             logging.debug(f"Caching authentication token: {token}")
         self._token = token
         return token
@@ -444,10 +444,6 @@ class SmartPort(Device):
     def _init_from_enphase_info(self, config):
         return None, None, None
 
-    @property
-    def online(self) -> bool:
-        return super()._online
-
 
 if __name__ == "__main__":
     logging.getLogger("root").setLevel(logging.DEBUG)
@@ -458,7 +454,7 @@ if __name__ == "__main__":
         print(smartport)
         pv_power_unique_id = f"{Config.home_assistant.unique_id_prefix}_0_enphase_{smartport['serial_number']}_active_power"
         sensor = smartport.get_sensor(pv_power_unique_id)
-        sensor._debug_logging = True
+        sensor.debug_logging = True
         print(f"{sensor.name} =  {await sensor.get_state()}")
         for derived in sensor._derived_sensors.values():
             print(f"{derived.name} =  {await derived.get_state()}")

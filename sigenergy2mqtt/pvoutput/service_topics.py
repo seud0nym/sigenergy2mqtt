@@ -46,7 +46,7 @@ class ServiceTopics(dict[str, Topic]):
         self._logger = logger
         self._name = value_key.name
         self._persistent_state_file: Path = None
-        self._requires_donation = donation
+        self.requires_donation = donation
         self._service = service
         self._value_key = value_key
         self._time_periods = periods
@@ -77,10 +77,6 @@ class ServiceTopics(dict[str, Topic]):
     def enabled(self, value: bool) -> None:
         assert isinstance(value, bool), "Enabled must be a boolean value"
         self._enabled = value
-
-    @property
-    def requires_donation(self) -> bool:
-        return self._requires_donation
 
     def _average_into(self, payload: dict[str, any], value_key: OutputField | StatusField, datetime_key: str = None) -> bool:
         total, at, count = self.aggregate(exclude_zero=True)

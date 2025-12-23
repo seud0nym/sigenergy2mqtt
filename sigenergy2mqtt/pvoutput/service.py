@@ -18,12 +18,8 @@ class Service(Device):
 
     def __init__(self, name: str, unique_id: str, model: str, logger: logging.Logger):
         super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, Protocol.N_A)
-        self._logger = logger
+        self.logger = logger
         self._lock = asyncio.Lock()
-
-    @property
-    def logger(self) -> logging.Logger:
-        return self._logger
 
     @property
     def request_headers(self) -> dict[str, str]:

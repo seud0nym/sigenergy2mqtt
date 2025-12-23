@@ -2,7 +2,7 @@ from .types import DeviceType
 from pathlib import Path
 from pymodbus import ModbusException
 from random import randint, uniform
-from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.base import (
@@ -43,16 +43,16 @@ class SensorGroup(list[ReadableSensorMixin]):
 
 class Device(dict[str, any], metaclass=abc.ABCMeta):
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
-        self._plant_index = plant_index
-        self._protocol = protocol_version
-        self._registers = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
+        self.plant_index = plant_index
+        self.protocol_version = protocol_version
+        self.registers = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
 
-        self._children: list[Device] = []
+        self.children: list[Device] = []
 
-        self._all_sensors: dict[str, Sensor] = {}
-        self._group_sensors: dict[str, list[ReadableSensorMixin]] = {}
-        self._read_sensors: dict[str, ReadableSensorMixin] = {}
-        self._write_sensors: dict[str, WritableSensorMixin] = {}
+        self.all_sensors: dict[str, Sensor] = {}
+        self.group_sensors: dict[str, list[ReadableSensorMixin]] = {}
+        self.read_sensors: dict[str, ReadableSensorMixin] = {}
+        self.write_sensors: dict[str, WritableSensorMixin] = {}
 
         self._rediscover = False
         self._online: asyncio.Future = None
@@ -66,7 +66,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             self[k] = v
 
         logging.debug(f"Created Device {self}")
-        DeviceRegistry.add(self._plant_index, self)
+        DeviceRegistry.add(self.plant_index, self)
 
     # region Properties
     @property
@@ -97,10 +97,6 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             raise ValueError("online must be a Future or False")
 
     @property
-    def protocol_version(self) -> Protocol:
-        return self._protocol
-
-    @property
     def rediscover(self) -> bool:
         return self._rediscover
 
@@ -115,12 +111,8 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             logging.debug(f"{self.name} no longer set to rediscover")
 
     @property
-    def registers(self) -> RegisterAccess:
-        return self._registers
-
-    @property
     def sensors(self) -> dict[str, Sensor]:
-        return self._all_sensors
+        return self.all_sensors
 
     @property
     def unique_id(self) -> str:
@@ -141,7 +133,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         sensors = device.get_all_sensors(search_children=True)
         if any(s for s in sensors.values() if s.publishable):
             device.via_device = self.unique_id
-            self._children.append(device)
+            self.children.append(device)
         else:
             logging.debug(f"{self.name} - Cannot add child device {device.name} - No publishable sensors defined")
 
@@ -172,32 +164,32 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             return False
         else:
             if group is None:
-                self._read_sensors[sensor.unique_id] = sensor
+                self.read_sensors[sensor.unique_id] = sensor
                 self._add_to_all_sensors(sensor)
             else:
-                if group not in self._group_sensors:
-                    self._group_sensors[group] = []
-                self._group_sensors[group].append(sensor)
+                if group not in self.group_sensors:
+                    self.group_sensors[group] = []
+                self.group_sensors[group].append(sensor)
                 self._add_to_all_sensors(sensor)
             return True
 
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         if not self.get_sensor(sensor.unique_id, search_children=True):
-            sensor.apply_sensor_overrides(self._registers)
+            sensor.apply_sensor_overrides(self.registers)
             sensor.parent_device = self
             sensor.configure_mqtt_topics(self.unique_id)
-            self._all_sensors[sensor.unique_id] = sensor
+            self.all_sensors[sensor.unique_id] = sensor
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if not issubclass(type(sensor), WriteOnlySensor):
             logging.error(f"{self.name} - Cannot add {sensor.unique_id} ({sensor.unique_id}) - not a WriteOnlySensor")
         else:
-            self._write_sensors[sensor.unique_id] = sensor
+            self.write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
 
     def _create_sensor_scan_groups(self) -> dict[str, list[ModbusSensor | ReadableSensorMixin]]:
-        combined_sensors: dict[str, ModbusSensor | ReadableSensorMixin] = self._read_sensors.copy()
-        combined_groups: dict[str, list[ModbusSensor | ReadableSensorMixin]] = self._group_sensors.copy()
+        combined_sensors: dict[str, ModbusSensor | ReadableSensorMixin] = self.read_sensors.copy()
+        combined_groups: dict[str, list[ModbusSensor | ReadableSensorMixin]] = self.group_sensors.copy()
         named_group_sensors: dict[int, ModbusSensor | ReadableSensorMixin] = {}
         first_address: int = None
         next_address: int = None
@@ -205,9 +197,9 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         group_name: str = None
         scan_interval: int = None
 
-        for device in self._children:
-            combined_sensors.update(device._read_sensors)
-            for group, sensor_list in device._group_sensors.items():
+        for device in self.children:
+            combined_sensors.update(device.read_sensors)
+            for group, sensor_list in device.group_sensors.items():
                 if group not in combined_groups:
                     combined_groups[group] = []
                 combined_groups[group].extend(sensor_list)
@@ -215,7 +207,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
 
         for sensor in sorted([s for s in combined_sensors.values() if isinstance(s, ModbusSensor) and not isinstance(s, ReservedSensor)], key=lambda s: (s.scan_interval, s.device_address, s.address)):
             if (  # Conditions for creating a new sensor scan group
-                Config.devices[self._plant_index].disable_chunking  # If chunking is disabled, always create a new group
+                Config.devices[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
                 or group_name is None  # First sensor
                 or device_address != sensor.device_address  # Device address changed
                 or scan_interval != sensor.scan_interval  # Scan interval changed
@@ -254,28 +246,28 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         If search_children is False, only returns sensors in this device.
         """
         if search_children:
-            all_sensors = self._all_sensors.copy()
-            for child in self._children:
+            all_sensors = self.all_sensors.copy()
+            for child in self.children:
                 all_sensors.update(child.get_all_sensors(search_children=True))
             return all_sensors
         else:
-            return self._all_sensors
+            return self.all_sensors
 
     def get_sensor(self, unique_id: str, search_children: bool = False) -> Sensor:
-        if unique_id in self._all_sensors:
-            return self._all_sensors[unique_id]
+        if unique_id in self.all_sensors:
+            return self.all_sensors[unique_id]
         elif search_children:
-            for child in self._children:
+            for child in self.children:
                 if unique_id in child.sensors:
                     return child.sensors[unique_id]
-        for alarm in [s for s in self._all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
-            if unique_id in [a.unique_id for a in alarm._alarms]:
-                return next(a for a in alarm._alarms if a.unique_id == unique_id)
+        for alarm in [s for s in self.all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
+            if unique_id in [a.unique_id for a in alarm.alarms]:
+                return next(a for a in alarm.alarms if a.unique_id == unique_id)
         if search_children:
-            for child in self._children:
-                for alarm in [s for s in child._all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
-                    if unique_id in [a.unique_id for a in alarm._alarms]:
-                        return next(a for a in alarm._alarms if a.unique_id == unique_id)
+            for child in self.children:
+                for alarm in [s for s in child.all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
+                    if unique_id in [a.unique_id for a in alarm.alarms]:
+                        return next(a for a in alarm.alarms if a.unique_id == unique_id)
         return None
 
     async def on_ha_state_change(self, modbus: ModbusClient, mqtt: MqttClient, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
@@ -292,7 +284,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
 
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
         mqtt.publish(f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
-        for device in self._children:
+        for device in self.children:
             device.publish_availability(mqtt, ha_state)
 
     def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> any:
@@ -326,7 +318,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
                 info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt, clean=clean)
-        for device in self._children:
+        for device in self.children:
             device.publish_discovery(mqtt, clean=clean)
         return info
 
@@ -467,7 +459,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         groups = self._create_sensor_scan_groups()
         tasks = []
         for name, sensors in groups.items():
-            if any([s.address for s in sensors if s.publishable]):
+            if any([s for s in sensors if s.publishable]):
                 tasks.append(self.publish_updates(modbus, mqtt, name, *sensors))
             else:
                 logging.debug(f"{self.name} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
@@ -495,7 +487,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
                             logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification ({result=})")
                     except Exception as e:
                         logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {repr(e)}")
-        for device in self._children:
+        for device in self.children:
             device.subscribe(mqtt, mqtt_handler)
 
 
@@ -525,20 +517,16 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
 
         super().__init__(name, plant_index, unique_id, "Sigenergy", model, protocol_version, **kwargs)
 
-        self._device_address = device_address
-        self._type = type
-
-    @property
-    def device_address(self) -> int:
-        return self._device_address
+        self.device_address = device_address
+        self._device_type = type
 
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         super()._add_to_all_sensors(sensor)
 
     def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> bool:
-        if self._type is not None and not isinstance(sensor, self._type.__class__):
+        if self._device_type is not None and not isinstance(sensor, self._device_type.__class__):
             if sensor.debug_logging:
-                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
+                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._device_type.__class__.__name__}")
             return False
         elif sensor.protocol_version > self.protocol_version:
             if sensor.debug_logging:
@@ -548,9 +536,9 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             return super()._add_read_sensor(sensor, group)
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
-        if self._type is not None and not isinstance(sensor, self._type.__class__):
+        if self._device_type is not None and not isinstance(sensor, self._device_type.__class__):
             if sensor.debug_logging:
-                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._type.__class__.__name__}")
+                logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - not a {self._device_type.__class__.__name__}")
         elif sensor.protocol_version > self.protocol_version:
             if sensor.debug_logging:
                 logging.debug(f"{self.name} - Skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {Config.protocol_version}")

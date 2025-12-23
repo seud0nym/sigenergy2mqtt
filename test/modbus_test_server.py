@@ -30,24 +30,16 @@ _logger.setLevel(logging.INFO)
 
 class CustomMqttHandler:
     def __init__(self, loop: asyncio.AbstractEventLoop):
+        self.connected = False
         self._topics = {}
         self._loop = loop
-        self._connected = False
         self._reconnect_lock = threading.Lock()
 
-    @property
-    def connected(self) -> bool:
-        return self._connected
-
-    @connected.setter
-    def connected(self, value) -> None:
-        self._connected = value
-
     def on_reconnect(self, client: MqttClient) -> None:
-        if not self._connected:
+        if not self.connected:
             with self._reconnect_lock:
-                if not self._connected:
-                    self._connected = True
+                if not self.connected:
+                    self.connected = True
                     if len(self._topics) > 0:
                         _logger.info("Reconnected to mqtt")
                         for topic in self._topics.keys():
@@ -72,7 +64,7 @@ class CustomMqttHandler:
 class CustomDataBlock(ModbusSparseDataBlock):
     def __init__(self, device_address: int, mqtt_client: MqttClient):
         super().__init__(values=None, mutable=True)
-        self._device_address = device_address
+        self.device_address = device_address
         self._topics: dict = {}
         if mqtt_client:
             self._mqtt_client = mqtt_client
@@ -88,23 +80,23 @@ class CustomDataBlock(ModbusSparseDataBlock):
         if not sensor.publishable:
             return
         source = None
-        if sensor._data_type == ModbusClientMixin.DATATYPE.STRING:
+        if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             source = "string"
             value = "string value" if not sensor.latest_raw_state else sensor.latest_raw_state
         else:
-            if sensor._address == 31004:  # OutputType
+            if sensor.address == 31004:  # OutputType
                 source = "output_type"
                 value = 2
-            elif sensor._address == 31025:  # PVStringCount
+            elif sensor.address == 31025:  # PVStringCount
                 source = "pv_string_count"
                 value = 16
-            elif sensor._address == 31026:  # MPTTCount
+            elif sensor.address == 31026:  # MPTTCount
                 source = "mptt_count"
                 value = 4
-            elif sensor._address == 32007:  # ACChargerRatedCurrent
+            elif sensor.address == 32007:  # ACChargerRatedCurrent
                 source = "rated_current"
                 value = 63
-            elif sensor._address == 32010:  # ACChargerInputBreaker
+            elif sensor.address == 32010:  # ACChargerInputBreaker
                 source = "input_breaker"
                 value = 64
             elif hasattr(sensor, "decode_alarm_bit"):  # AlarmSensor
@@ -131,7 +123,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                 value /= sensor.gain
             else:
                 source = "data_type_default"
-                match sensor._data_type:
+                match sensor.data_type:
                     case ModbusClientMixin.DATATYPE.INT16:
                         value = randint(-32768 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 32767 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
                     case ModbusClientMixin.DATATYPE.UINT16:
@@ -150,9 +142,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
                     case _:
                         value = randint(0, 255)
                 value /= sensor.gain
-        _logger.debug(f"Setting initial value for sensor {sensor['name']} (address={sensor._address}, device_address={self._device_address}, source={source}): {value}")
+        _logger.debug(f"Setting initial value for sensor {sensor['name']} (address={sensor.address}, device_address={self.device_address}, source={source}): {value}")
         self._set_value(sensor, value)
-        if self._mqtt_client and sensor._address and not hasattr(sensor, "decode_alarm_bit"):
+        if self._mqtt_client and sensor.address and not hasattr(sensor, "decode_alarm_bit"):
             if "state_topic" in sensor:
                 self._topics[sensor.state_topic] = sensor
                 self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
@@ -164,18 +156,18 @@ class CustomDataBlock(ModbusSparseDataBlock):
         self._set_value(sensor, value)
 
     def _set_value(self, sensor, value: float | int | str) -> None:
-        address = sensor._address
+        address = sensor.address
         if address in self._written_addresses:
             return  # Ignore messages for addresses that were just written to
-        if sensor._data_type == ModbusClientMixin.DATATYPE.STRING:
-            registers = ModbusClientMixin.convert_to_registers(value, sensor._data_type)
-            if len(registers) < sensor._count:
-                registers.extend([0] * (sensor._count - len(registers)))  # Pad with zeros
-            elif len(registers) > sensor._count:
-                registers = registers[: sensor._count]  # Truncate to the required length
+        if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
+            registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
+            if len(registers) < sensor.count:
+                registers.extend([0] * (sensor.count - len(registers)))  # Pad with zeros
+            elif len(registers) > sensor.count:
+                registers = registers[: sensor.count]  # Truncate to the required length
         else:
             raw = sensor.state2raw(value)
-            registers = ModbusClientMixin.convert_to_registers(raw, sensor._data_type)
+            registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
         super().setValues(address, registers)
         if address == 31011:
             super().setValues(31013, registers)
@@ -216,20 +208,20 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
 
     _logger.info("Getting sensor instances...")
     sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, pv_inverter_device_address=3)
-    for sensor in sorted([s for s in sensors.values() if hasattr(s, "_address") and s["platform"] != "button" and not hasattr(s, "_alarms")], key=lambda x: (x._device_address, x._address)):
+    for sensor in sorted([s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")], key=lambda x: (x.device_address, x.address)):
         if (
-            device_address != sensor._device_address
-            or (address is None or count is None or sensor._address != address + count)
-            or input_type != sensor._input_type
-            or (group_index is not None and (sum(s._count for s in groups[group_index]) + sensor._count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
+            device_address != sensor.device_address
+            or (address is None or count is None or sensor.address != address + count)
+            or input_type != sensor.input_type
+            or (group_index is not None and (sum(s.count for s in groups[group_index]) + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
         ):
             group_index = group_index + 1 if group_index is not None else 0
             groups[group_index] = []
         groups[group_index].append(sensor)
-        address = sensor._address
-        count = sensor._count
-        device_address = sensor._device_address
-        input_type = sensor._input_type
+        address = sensor.address
+        count = sensor.count
+        device_address = sensor.device_address
+        input_type = sensor.input_type
 
     if modbus_client:
         _logger.info("Pre-populating sensor values...")
@@ -237,15 +229,15 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
         async with modbus_client:
             await modbus_client.connect()
             for group_sensors in groups.values():
-                if len(group_sensors) == 1 and (group_sensors[0]._device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
+                if len(group_sensors) == 1 and (group_sensors[0].device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
                     continue
-                first_address: int = min([s._address for s in group_sensors if hasattr(s, "_address") and not s.__class__.__name__.startswith("Reserved")])
-                last_address: int = max([s._address + s._count - 1 for s in group_sensors if hasattr(s, "_address") and not s.__class__.__name__.startswith("Reserved")])
-                count: int = sum([s._count for s in group_sensors if hasattr(s, "_count") and first_address <= getattr(s, "_address") <= last_address])
+                first_address: int = min([s.address for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
+                last_address: int = max([s.address + s.count - 1 for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
+                count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= getattr(s, "address") <= last_address])
                 assert first_address and last_address and (last_address - first_address + 1) == count
-                device_address = group_sensors[0]._device_address
+                device_address = group_sensors[0].device_address
                 try:
-                    if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0]._input_type) == 0:
+                    if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0].input_type) == 0:
                         for sensor in group_sensors:
                             if sensor.publishable:
                                 await sensor.get_state(modbus=modbus_client)
@@ -257,10 +249,10 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
 
     _logger.info("Creating data blocks...")
     for sensor in sensors.values():
-        if hasattr(sensor, "_device_address"):
-            if sensor._device_address not in context:
-                context[sensor._device_address] = CustomDataBlock.create(sensor._device_address, mqtt_client)
-            context[sensor._device_address].add_sensor(sensor)
+        if hasattr(sensor, "device_address"):
+            if sensor.device_address not in context:
+                context[sensor.device_address] = CustomDataBlock.create(sensor.device_address, mqtt_client)
+            context[sensor.device_address].add_sensor(sensor)
     cancel_sensor_futures()
 
     _logger.info("Starting ASYNC Modbus TCP Testing Server...")
