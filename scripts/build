@@ -90,6 +90,6 @@ cd resources
 python3 update_md.py
 cd -
 
-echo -e "\033[1;32mBuild successful\033[0m"
+echo -e "\033[1;32mBuild successful\033[0m $(date)"
 echo -e "New version: \033[1;32m$new_version\033[0m"
 echo -e "PyPi version: \033[1;32m$pypi_version\033[0m"
