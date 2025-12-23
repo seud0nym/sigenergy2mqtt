@@ -2,7 +2,7 @@ from .device import ModbusDevice
 from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
-from .types import DeviceType
+from .types import DeviceType, HybridInverter
 from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
 import importlib
 import logging
@@ -37,10 +37,11 @@ class PowerPlant(ModbusDevice):
             sw=f"Modbus Protocol V{protocol_version.value}",
         )
 
+        self.has_battery = isinstance(device_type, HybridInverter) and rcp_value > 0.0
+
         consumption_source = ConsumptionMethod.CALCULATED if protocol_version < Protocol.V2_8 else Config.consumption
         consumption_group = "Consumption" if consumption_source == ConsumptionMethod.CALCULATED else None
 
-        battery_power = ro.BatteryPower(plant_index)
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
         plant_pv_power = ro.PlantPVPower(plant_index)
 
@@ -49,7 +50,6 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.EMSWorkMode(plant_index))
         self._add_read_sensor(ro.MaxActivePower(plant_index))
         self._add_read_sensor(ro.MaxApparentPower(plant_index))
-        self._add_read_sensor(ro.PlantBatterySoC(plant_index))
         self._add_read_sensor(ro.PlantPhaseActivePower(plant_index, power_phases, "A"))
         self._add_read_sensor(ro.PlantPhaseReactivePower(plant_index, power_phases, "A"))
         if power_phases > 1:
@@ -66,33 +66,17 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.PlantActivePower(plant_index), "Plant Power")
         self._add_read_sensor(ro.PlantReactivePower(plant_index), "Plant Power")
         self._add_read_sensor(plant_pv_power, consumption_group)
-        self._add_read_sensor(battery_power, consumption_group)
-
-        self._add_derived_sensor(derived.BatteryChargingPower(plant_index, battery_power), battery_power)
-        self._add_derived_sensor(derived.BatteryDischargingPower(plant_index, battery_power), battery_power)
 
         self._add_read_sensor(ro.AvailableMaxActivePower(plant_index))
         self._add_read_sensor(ro.AvailableMinActivePower(plant_index))
         self._add_read_sensor(ro.AvailableMaxReactivePower(plant_index))
         self._add_read_sensor(ro.AvailableMinReactivePower(plant_index))
-        self._add_read_sensor(ro.AvailableMaxChargingPower(plant_index))
-        self._add_read_sensor(ro.AvailableMaxDischargingPower(plant_index))
         self._add_read_sensor(ro.PlantRunningState(plant_index))
-        self._add_read_sensor(ro.AvailableMaxChargingCapacity(plant_index))
-        self._add_read_sensor(ro.AvailableMaxDischargingCapacity(plant_index))
-        self._add_read_sensor(rated_charging_power)
-        self._add_read_sensor(rated_discharging_power)
         self._add_read_sensor(ro.PlantRatedEnergyCapacity(plant_index))
-        self._add_read_sensor(ro.ChargeCutOffSoC(plant_index))
-        self._add_read_sensor(ro.DischargeCutOffSoC(plant_index))
-        self._add_read_sensor(ro.PlantBatterySoH(plant_index))
         self._add_read_sensor(rw.GridMaxExportLimit(plant_index))
         self._add_read_sensor(rw.GridMaxImportLimit(plant_index))
         self._add_read_sensor(rw.PCSMaxExportLimit(plant_index))
         self._add_read_sensor(rw.PCSMaxImportLimit(plant_index))
-        self._add_read_sensor(rw.ESSBackupSOC(plant_index))
-        self._add_read_sensor(rw.ESSChargeCutOffSOC(plant_index))
-        self._add_read_sensor(rw.ESSDischargeCutOffSOC(plant_index))
         self._add_read_sensor(ro.TotalLoadConsumption(plant_index))
         self._add_read_sensor(ro.TotalLoadDailyConsumption(plant_index))
 
@@ -120,8 +104,6 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
             self._add_read_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
             self._add_read_sensor(rw.PhaseQSAdjustmentTargetValue(plant_index, independent_phase_power_control, output_type, "C"))
-        self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, remote_ems_mode, rcp_value))
-        self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, remote_ems_mode, rdp_value))
         self._add_read_sensor(rw.PVMaxPowerLimit(plant_index, remote_ems, remote_ems_mode))
 
         address = 30098
@@ -130,12 +112,34 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(ro.SmartLoadPower(plant_index, address + 48, n))
             address += 2
 
-        total_charge_energy = ro.ESSTotalChargedEnergy(plant_index)
-        total_discharge_energy = ro.ESSTotalDischargedEnergy(plant_index)
-        self._add_read_sensor(total_charge_energy)
-        self._add_read_sensor(total_discharge_energy)
-        self._add_derived_sensor(derived.PlantDailyChargeEnergy(plant_index, total_charge_energy), total_charge_energy, search_children=False)
-        self._add_derived_sensor(derived.PlantDailyDischargeEnergy(plant_index, total_discharge_energy), total_discharge_energy, search_children=False)
+        if self.has_battery:
+            battery_power = ro.BatteryPower(plant_index)
+            total_charge_energy = ro.ESSTotalChargedEnergy(plant_index)
+            total_discharge_energy = ro.ESSTotalDischargedEnergy(plant_index)
+            self._add_read_sensor(ro.PlantBatterySoC(plant_index))
+            self._add_read_sensor(battery_power, consumption_group)
+            self._add_read_sensor(ro.AvailableMaxChargingPower(plant_index))
+            self._add_read_sensor(ro.AvailableMaxDischargingPower(plant_index))
+            self._add_read_sensor(ro.AvailableMaxChargingCapacity(plant_index))
+            self._add_read_sensor(ro.AvailableMaxDischargingCapacity(plant_index))
+            self._add_read_sensor(rated_charging_power)
+            self._add_read_sensor(rated_discharging_power)
+            self._add_read_sensor(ro.ChargeCutOffSoC(plant_index))
+            self._add_read_sensor(ro.DischargeCutOffSoC(plant_index))
+            self._add_read_sensor(ro.PlantBatterySoH(plant_index))
+            self._add_read_sensor(rw.ESSBackupSOC(plant_index))
+            self._add_read_sensor(rw.ESSChargeCutOffSOC(plant_index))
+            self._add_read_sensor(rw.ESSDischargeCutOffSOC(plant_index))
+            self._add_read_sensor(rw.MaxChargingLimit(plant_index, remote_ems, remote_ems_mode, rcp_value))
+            self._add_read_sensor(rw.MaxDischargingLimit(plant_index, remote_ems, remote_ems_mode, rdp_value))
+            self._add_read_sensor(total_charge_energy)
+            self._add_read_sensor(total_discharge_energy)
+            self._add_derived_sensor(derived.BatteryChargingPower(plant_index, battery_power), battery_power)
+            self._add_derived_sensor(derived.BatteryDischargingPower(plant_index, battery_power), battery_power)
+            self._add_derived_sensor(derived.PlantDailyChargeEnergy(plant_index, total_charge_energy), total_charge_energy, search_children=False)
+            self._add_derived_sensor(derived.PlantDailyDischargeEnergy(plant_index, total_discharge_energy), total_discharge_energy, search_children=False)
+        else:
+            battery_power = None
 
         self._add_read_sensor(ro.EVDCTotalChargedEnergy(plant_index))
         self._add_read_sensor(ro.EVDCTotalDischargedEnergy(plant_index))

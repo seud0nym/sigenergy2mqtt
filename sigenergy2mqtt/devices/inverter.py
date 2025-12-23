@@ -2,7 +2,8 @@ from .device import ModbusDevice
 from sigenergy2mqtt.config import Protocol
 from sigenergy2mqtt.devices.inverter_ess import ESS
 from sigenergy2mqtt.devices.inverter_pv_string import PVString
-from sigenergy2mqtt.devices.types import DeviceType
+from sigenergy2mqtt.devices.types import DeviceType, HybridInverter, PVInverter
+import logging
 import re
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
@@ -18,6 +19,7 @@ class Inverter(ModbusDevice):
         model_id: str,
         serial: str,
         firmware: str,
+        has_battery: bool,
         strings: int,
         power_phases: int,
         pv_string_count: ro.PVStringCount,
@@ -124,10 +126,14 @@ class Inverter(ModbusDevice):
             for n in range(5, min(16, strings) + 1):
                 self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
                 address += 2
-        if protocol_version >= Protocol.V2_8:
+        if protocol_version >= Protocol.V2_8 and isinstance(device_type, PVInverter):
             address = 31066
             for n in range(17, min(36, strings) + 1):
                 self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_8))
                 address += 2
 
-        self._add_child_device(ESS(plant_index, device_address, device_type, protocol_version, model_id, serial))
+        if isinstance(device_type, HybridInverter):
+            if has_battery:
+                self._add_child_device(ESS(plant_index, device_address, device_type, protocol_version, model_id, serial))
+            else:
+                logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {has_battery=}")

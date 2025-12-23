@@ -145,7 +145,13 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         else:
             logging.debug(f"{self.name} - Cannot add child device {device.name} - No publishable sensors defined")
 
-    def _add_derived_sensor(self, sensor: DerivedSensor, *source_sensors: Sensor, search_children: bool = False) -> None:
+    def _add_derived_sensor(self, sensor: DerivedSensor, *from_sensors: Sensor, search_children: bool = False) -> None:
+        none_sensors = len([s for s in from_sensors if s is None])
+        if none_sensors:
+            logging.debug(f"{self.name} - Removed {none_sensors} undefined source sensor{'s' if none_sensors != 1 else ''} for {sensor.__class__.__name__}")
+            source_sensors = [s for s in from_sensors if s is not None]
+        else:
+            source_sensors = from_sensors
         if len(source_sensors) == 0:
             logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - No source sensors defined")
         else:
