@@ -10,7 +10,7 @@ from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 
 
@@ -56,6 +56,7 @@ async def get_sensor_instances(
     hybrid_firmware = InverterFirmwareVersion(plant_index, hybrid_inverter_device_address)
     hybrid_pv_strings = PVStringCount(plant_index, hybrid_inverter_device_address)
     hybrid_output_type = OutputType(plant_index, hybrid_inverter_device_address)
+    hybrid_pack_bcu_count = PACKBCUCount(plant_index, hybrid_inverter_device_address)
     hybrid_model.set_state("SigenStor EC 12.0 TP")
     hybrid_serial.set_state("CMU123A45BP678")
     hybrid_firmware.set_state("V100R001C00SPC108B088F")
@@ -69,7 +70,7 @@ async def get_sensor_instances(
         model_id=hybrid_model.latest_raw_state,
         serial=hybrid_serial.latest_raw_state,
         firmware=hybrid_firmware.latest_raw_state,
-        has_battery=True,
+        battery_count=3,
         strings=hybrid_pv_strings.latest_raw_state,
         power_phases=3,
         pv_string_count=hybrid_pv_strings,
@@ -77,6 +78,7 @@ async def get_sensor_instances(
         firmware_version=hybrid_firmware,
         model=hybrid_model,
         serial_number=hybrid_serial,
+        pack_bcu_count=hybrid_pack_bcu_count,
     )
 
     pv_model = InverterModel(plant_index, pv_inverter_device_address)
@@ -84,6 +86,7 @@ async def get_sensor_instances(
     pv_firmware = InverterFirmwareVersion(plant_index, pv_inverter_device_address)
     pv_pv_strings = PVStringCount(plant_index, pv_inverter_device_address)
     pv_output_type = OutputType(plant_index, pv_inverter_device_address)
+    pv_pack_bcu_count = PACKBCUCount(plant_index, hybrid_inverter_device_address)
     pv_model.set_state("Sigen PV Max 5.0 TP")
     pv_serial.set_state("CMU876A65BP321")
     pv_firmware.set_state("V100R001C00SPC108B088F")
@@ -97,7 +100,7 @@ async def get_sensor_instances(
         model_id=pv_model.latest_raw_state,
         serial=pv_serial.latest_raw_state,
         firmware=pv_firmware.latest_raw_state,
-        has_battery=False,
+        battery_count=0,
         strings=pv_pv_strings.latest_raw_state,
         power_phases=3,
         pv_string_count=pv_pv_strings,
@@ -105,6 +108,7 @@ async def get_sensor_instances(
         firmware_version=pv_firmware,
         model=pv_model,
         serial_number=pv_serial,
+        pack_bcu_count=pv_pack_bcu_count,
     )
 
     dc_charger = DCCharger(plant_index, dc_charger_device_address, protocol_version)

@@ -11,7 +11,7 @@ from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import ModbusSensor
 from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PVStringCount
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 from typing import Tuple
 import logging
@@ -189,73 +189,82 @@ async def make_dc_charger(plant_index, device_address, protocol_version, inverte
 
 
 async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, PowerPlant]:
-    serial, serial_number = await get_state(InverterSerialNumber(plant_index, device_address), modbus, "inverter")
-    if serial_number in serial_numbers:
-        logging.info(f"Inverter serial number {serial_number} has already been detected - ignoring")
+    serial, sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus, "inverter")
+    if sn in serial_numbers:
+        logging.info(f"Inverter serial number {sn} has already been detected - ignoring")
         return None, None
 
-    model, model_id = await get_state(InverterModel(plant_index, device_address), modbus, "inverter")
-    device_type = DeviceType.create(model_id)
+    model, mdl = await get_state(InverterModel(plant_index, device_address), modbus, "inverter")
+    device_type = DeviceType.create(mdl)
 
-    firmware, firmware_version = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus, "inverter")
-    strings, pv_string_count = await get_state(PVStringCount(plant_index, device_address), modbus, "inverter")
-    output_type, output_type_state = await get_state(OutputType(plant_index, device_address), modbus, "plant/inverter", raw=True)
-    match output_type_state:
+    firmware, fw = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus, "inverter")
+    string_count, strings = await get_state(PVStringCount(plant_index, device_address), modbus, "inverter")
+
+    output_type, ot = await get_state(OutputType(plant_index, device_address), modbus, "plant/inverter", raw=True)
+    match ot:
         case 0:  # L/N
-            power_phases = 1
+            phases = 1
         case 3:  # L1/L2/N
-            power_phases = 2
+            phases = 2
         case _:
-            power_phases = 3
+            phases = 3
+
+    if isinstance(device_type, HybridInverter):
+        pack_count, batteries = await get_state(PACKBCUCount(plant_index, device_address), modbus, "inverter", default_value=0)
+    else:
+        pack_count = None
+        batteries = 0
 
     if plant is None:
         # Probe the plant for the supported Modbus Protocol version
-        for register, count, protocol in (  # Must be an input register specific to the version, in descending protocol sequence
+        for register, count, version in (  # Must be an input register specific to the version, in descending protocol sequence
             (30284, 2, Protocol.V2_8),  # TotalLoadPower
             (30194, 2, Protocol.V2_7),  # ThirdPartyPVPower
             (30092, 2, Protocol.V2_6),  # TotalLoadDailyConsumption
             (30087, 1, Protocol.V2_5),  # PlantBatterySoH
         ):
             try:
-                logging.debug(f"READING modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to see if V{protocol.value} register {register} exists ({count=} device_id=247)")
+                logging.debug(f"READING modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to see if V{version.value} register {register} exists ({count=} device_id=247)")
                 rr = await modbus.read_input_registers(register, count=count, device_id=247)
                 if rr.isError():
                     logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> {rr.exception_code=}")
                 else:
                     # No exception, so assign the associated protocol as the real version
-                    logging.debug(f"SUCCESS modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> OK protocol=V{protocol.value}")
-                    protocol_version = protocol
+                    logging.debug(f"SUCCESS modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> OK protocol=V{version.value}")
+                    protocol = version
                     break
             except Exception as e:
                 logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> {e}")
                 pass
         else:
             logging.debug(f"DEFAULT modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to Sigenergy Modbus Protocol V1.8")
-            protocol_version = Protocol.V1_8
-        logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol_version.value} ({ProtocolApplies(protocol_version)})")
-        if protocol_version < Protocol.V2_8 and Config.consumption != ConsumptionMethod.CALCULATED:
-            logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {Config.consumption.name} is not supported on Modbus Protocol V{protocol_version.value}")
-            Config.consumption = ConsumptionMethod.CALCULATED
-        if isinstance(device_type, HybridInverter):
-            rated_charging_power, rcp_value = await get_state(PlantRatedChargingPower(plant_index), modbus, "plant", default_value=0.0)
-            rated_discharging_power, rdp_value = await get_state(PlantRatedDischargingPower(plant_index), modbus, "plant", default_value=0.0)
-        else:
-            rated_charging_power = None
-            rcp_value = rdp_value = 0.0
-        if device_type.has_grid_code_interface and protocol_version >= Protocol.V2_8:
-            rated_frequency, rf_value = await get_state(GridCodeRatedFrequency(plant_index), modbus, "plant")
-        else:
-            rated_frequency = rf_value = None
-        plant = PowerPlant(plant_index, device_type, protocol_version, output_type_state, power_phases, rcp_value, rdp_value, rf_value, rated_charging_power, rated_discharging_power, rated_frequency)
-    else:
-        protocol_version = plant.protocol_version
+            protocol = Protocol.V1_8
+        logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
 
-    inverter = Inverter(
-        plant_index, device_address, protocol_version, device_type, model_id, serial_number, firmware_version, plant.has_battery, pv_string_count, power_phases, strings, output_type, firmware, model, serial
-    )
+        if protocol < Protocol.V2_8 and Config.consumption != ConsumptionMethod.CALCULATED:
+            logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {Config.consumption.name} is not supported on Modbus Protocol V{protocol.value}")
+            Config.consumption = ConsumptionMethod.CALCULATED
+
+        if isinstance(device_type, HybridInverter):
+            rated_charging_power, rcp = await get_state(PlantRatedChargingPower(plant_index), modbus, "plant", default_value=0.0)
+            rated_discharging_power, rdp = await get_state(PlantRatedDischargingPower(plant_index), modbus, "plant", default_value=0.0)
+        else:
+            rated_charging_power = rated_discharging_power = None
+            rcp = rdp = 0.0
+
+        if device_type.has_grid_code_interface and protocol >= Protocol.V2_8:
+            rated_frequency, rf = await get_state(GridCodeRatedFrequency(plant_index), modbus, "plant")
+        else:
+            rated_frequency = rf = None
+
+        plant = PowerPlant(plant_index, device_type, protocol, ot, phases, rcp, rdp, rf, rated_charging_power, rated_discharging_power, rated_frequency)
+    else:
+        protocol = plant.protocol_version
+
+    inverter = Inverter(plant_index, device_address, protocol, device_type, mdl, sn, fw, batteries, strings, phases, string_count, output_type, firmware, model, serial, pack_count)
     inverter.via_device = plant.unique_id
 
-    serial_numbers.append(serial_number)
+    serial_numbers.append(sn)
 
     return inverter, plant
 

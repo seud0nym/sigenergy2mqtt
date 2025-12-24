@@ -19,7 +19,7 @@ class Inverter(ModbusDevice):
         model_id: str,
         serial: str,
         firmware: str,
-        has_battery: bool,
+        battery_count: int,
         strings: int,
         power_phases: int,
         pv_string_count: ro.PVStringCount,
@@ -27,6 +27,7 @@ class Inverter(ModbusDevice):
         firmware_version: ro.InverterFirmwareVersion,
         model: ro.InverterModel,
         serial_number: ro.InverterSerialNumber,
+        pack_bcu_count: ro.PACKBCUCount,
     ):
         assert 2 <= strings <= 16, f"Invalid PV String Count ({strings} - must be between 2 and 16)"
         match = re.match(r"^[^\d]*", model_id)
@@ -82,7 +83,6 @@ class Inverter(ModbusDevice):
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "B-C"))
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "C-A"))
         self._add_read_sensor(ro.PowerFactor(plant_index, device_address))
-        self._add_read_sensor(ro.PACKBCUCount(plant_index, device_address))
         self._add_read_sensor(ro.MPTTCount(plant_index, device_address))
         self._add_read_sensor(pv_string_count)
         self._add_read_sensor(pv_power)
@@ -133,7 +133,8 @@ class Inverter(ModbusDevice):
                 address += 2
 
         if isinstance(device_type, HybridInverter):
-            if has_battery:
+            if battery_count > 0:
+                self._add_read_sensor(pack_bcu_count)
                 self._add_child_device(ESS(plant_index, device_address, device_type, protocol_version, model_id, serial))
             else:
-                logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {has_battery=}")
+                logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {battery_count=}")
