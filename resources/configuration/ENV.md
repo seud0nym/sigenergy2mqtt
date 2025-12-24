@@ -19,11 +19,38 @@ Environment variables override the configuration file, but *not* command line op
 |------|-------------|
 | `SIGENERGY2MQTT_HASS_ENABLED` | Set to `true` to enable auto-discovery in Home Assistant. |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` | The Home Assistant MQTT Discovery topic prefix to use (default: `homeassistant`) |
+| `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` | The prefix to use for Home Assistant entity names. Example: A prefix of `prefix` will prepend 'prefix ' to names (default: '') |
 | `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` | The prefix to use for Home Assistant entity IDs. Example: A prefix of `prefix` will prepend 'prefix_' to entity IDs (default: `sigen`) |
 | `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX` | The prefix to use for Home Assistant unique IDs. Example: A prefix of `prefix` will prepend 'prefix_' to unique IDs (default: `sigen`). Once you have set this, you should **NEVER** change it, as it will break existing entities in Home Assistant. |
 | `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` | Set to `true` to enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state) |
-| `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` | The prefix to use for Home Assistant entity names. Example: A prefix of `prefix` will prepend 'prefix ' to names (default: '') |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_ONLY`| Set to `true` to exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration. |
+| `SIGENERGY2MQTT_HASS_EDIT_PCT_BOX` | Set to `true` to use a numeric entry box to change the value of percentage sensors or `false` to use a slider to change the value (default: `false`) |
+
+## Modbus Configuration Variables
+
+| Name | Description |
+|------|-------------|
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY` | Controls auto-discovery of Sigenergy Modbus hosts and device IDs. If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled. |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT` | The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.5` seconds. |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT` | The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.25` seconds. |
+| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES` | The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is `0`. |
+| `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device. Required unless auto-discovery is enabled. |
+| `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: `502`) |
+| `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID` | The Sigenergy device Modbus Device ID. May be specified as a comma-separated list (e.g. `1,2`). (default: `1`) |
+| `SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID` | The Sigenergy AC Charger Modbus Device ID. May be specified as a comma-separated list. |
+| `SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID` | The Sigenergy DC Charger Modbus Device ID. May be specified as a comma-separated list. |
+| `SIGENERGY2MQTT_MODBUS_READ_ONLY` | If `false`, read-only entities will not be published to MQTT. Default is `true`. |
+| `SIGENERGY2MQTT_MODBUS_READ_WRITE` | If `false`, read-write entities will not be published to MQTT. Default is `true`. |
+| `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` | If `false`, write-only entities will not be published to MQTT. Default is `true`. |
+| `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`| If `true`, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is `false`. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is `false`. |
+| `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING` | If `true`, chunking of Modbus reads will be disabled and each register will be read individually. This is NOT recommended for production use. |
+| `SIGENERGY2MQTT_MODBUS_RETRIES` | The maximum number of times to retry a Modbus operation if it fails. The default is `3`. |
+| `SIGENERGY2MQTT_MODBUS_TIMEOUT` | The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is `1.0`. |
+| `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `WARNING` (warnings, errors and critical failures) |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is `600` (seconds), and the minimum value is `1`. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is `60` (seconds), and the minimum value is `1`. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` | The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is `10` (seconds), and the minimum value is `1`. |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` | The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is `5` (seconds), and the minimum value is `1`. |
 
 ## MQTT Configuration Variables
 
@@ -38,32 +65,6 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MQTT_USERNAME` | A valid username for the MQTT broker |
 | `SIGENERGY2MQTT_MQTT_PASSWORD` | A valid password for the MQTT broker username |
 | `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `WARNING` (warnings, errors and critical failures) |
-
-## Modbus Configuration Variables
-
-| Name | Description |
-|------|-------------|
-| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY` | Controls auto-discovery of Sigenergy Modbus hosts and device IDs. If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled. |
-| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT` | The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.5` seconds. |
-| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT` | The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.25` seconds. |
-| `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES` | The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is `0`. |
-| `SIGENERGY2MQTT_MODBUS_HOST` | The hostname or IP address of the Sigenergy device. Required unless auto-discovery is enabled. |
-| `SIGENERGY2MQTT_MODBUS_PORT` | The Sigenergy device Modbus port number (default: `502`) |
-| `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID` | The Sigenergy device Modbus Device ID. May be specified as a space-separated list (e.g. `1 2`). (default: `1`) |
-| `SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID` | The Sigenergy AC Charger Modbus Device ID. |
-| `SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID` | The Sigenergy DC Charger Modbus Device ID. |
-| `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`| If `true`, read-write sensors for remote Energy Management System (EMS) integration will NOT be published to MQTT. Default is `false`. Ignored if `SIGENERGY2MQTT_MODBUS_READ_WRITE` is `false`. |
-| `SIGENERGY2MQTT_MODBUS_READ_ONLY` | If `false`, read-only entities will not be published to MQTT. Default is `true`. |
-| `SIGENERGY2MQTT_MODBUS_READ_WRITE` | If `false`, read-write entities will not be published to MQTT. Default is `true`. |
-| `SIGENERGY2MQTT_MODBUS_WRITE_ONLY` | If `false`, write-only entities will not be published to MQTT. Default is `true`. |
-| `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING` | If `true`, chunking of Modbus reads will be disabled and each register will be read individually. This is NOT recommended for production use. |
-| `SIGENERGY2MQTT_MODBUS_RETRIES` | The maximum number of times to retry a Modbus operation if it fails. The default is `3`. |
-| `SIGENERGY2MQTT_MODBUS_TIMEOUT` | The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is `1.0`. |
-| `SIGENERGY2MQTT_MODBUS_LOG_LEVEL` | Set the pymodbus log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `WARNING` (warnings, errors and critical failures) |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_LOW` | The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is `600` (seconds), and the minimum value is `1`. |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM` | The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is `60` (seconds), and the minimum value is `1`. |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH` | The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is `10` (seconds), and the minimum value is `1`. |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME` | The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is `5` (seconds), and the minimum value is `1`. |
 
 ## PVOutput Configuration Variables
 
