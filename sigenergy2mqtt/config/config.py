@@ -137,11 +137,11 @@ class Config:
                             if auto_discovered:
                                 for device in auto_discovered:
                                     device["log-level"] = overrides["modbus"][0]["log-level"]
-                        case const.SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE | const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
+                        case const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
                             overrides["modbus"][0]["inverters"] = check_int_list([int(device_id) for device_id in os.environ[key].split(",")], key)
-                        case const.SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE | const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
+                        case const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
                             overrides["modbus"][0]["ac-chargers"] = check_int_list([int(device_id) for device_id in os.environ[key].split(",")], key)
-                        case const.SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE | const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
+                        case const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
                             overrides["modbus"][0]["dc-chargers"] = check_int_list([int(device_id) for device_id in os.environ[key].split(",")], key)
                         case const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
                             overrides["modbus"][0]["no-remote-ems"] = check_bool(os.environ[key], key)
@@ -255,8 +255,6 @@ class Config:
                                 allow_empty=False,
                                 allow_none=False,
                             )
-                        case const.SIGENERGY2MQTT_PVOUTPUT_INTERVAL:
-                            pass  # Deprecated
                         case const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
                             overrides["pvoutput"]["temperature-topic"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:

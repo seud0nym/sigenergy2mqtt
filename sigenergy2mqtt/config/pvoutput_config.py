@@ -196,10 +196,6 @@ class PVOutputConfiguration:
                             self.exports = check_bool(value, f"pvoutput.{field}")
                         case "imports":
                             self.imports = check_bool(value, f"pvoutput.{field}")
-                        case "interval-minutes":
-                            logging.warning(
-                                "The 'interval-minutes' option is deprecated and will be removed in a future version. The Status Interval is now determined from the settings on pvoutput.org."
-                            )
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
                         case "output-hour":
