@@ -113,7 +113,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
                 value = 0
             elif hasattr(sensor, "min") and hasattr(sensor, "max"):
                 source = "min_max"
-                value = randint(sensor["min"], sensor["max"])
+                value = randint(sensor["min"][0] if not isinstance(sensor["min"], (tuple, list)) else sensor["min"], sensor["min"][1] if not isinstance(sensor["min"], (tuple, list)) else sensor["max"])
+            elif hasattr(sensor, "options"):
+                value = 0
             elif sensor._sanity.min_value is not None and sensor._sanity.max_value is not None:
                 source = "sanity_check"
                 if sensor._sanity.delta:
