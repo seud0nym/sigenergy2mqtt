@@ -897,7 +897,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             gain=100,
             precision=1,
             protocol_version=Protocol.V2_8,
-            maximum=10.0,
+            maximum=20.0,  # Protocol says 0.0-10.0 but live systems are returning 20.0???? (https://github.com/seud0nym/sigenergy2mqtt/issues/80#issuecomment-3689277867)
         )
 
     def get_attributes(self) -> dict[str, Any]:
