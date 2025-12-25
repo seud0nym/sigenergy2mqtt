@@ -26,11 +26,8 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [--modbus-auto-discovery-retries [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES]]
           [-m [SIGENERGY2MQTT_MODBUS_HOST]]
           [--modbus-port [SIGENERGY2MQTT_MODBUS_PORT]]
-          [--modbus-slave [SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE ...]]
           [--modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID ...]]
-          [--modbus-accharger-slave [SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE ...]]
           [--modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID ...]]
-          [--modbus-dccharger-slave [SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE ...]]
           [--modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID ...]]
           [--modbus-readonly] [--modbus-no-remote-ems]
           [--modbus-timeout [SIGENERGY2MQTT_MODBUS_TIMEOUT]]
@@ -55,7 +52,6 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [--pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]]
           [--pvoutput-exports] [--pvoutput-imports]
           [--pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]]
-          [--pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]]
           [--pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]]
           [--pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]]
           [--pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]]
@@ -183,22 +179,15 @@ options:
                         The hostname or IP address of the Sigenergy device
   --modbus-port [SIGENERGY2MQTT_MODBUS_PORT]
                         The Sigenergy device Modbus port number (default: 502)
-  --modbus-slave [SIGENERGY2MQTT_MODBUS_INVERTER_SLAVE ...]
-                        ** DEPRECATED ** Use --modbus-inverter-device-id
-                        instead.
   --modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID ...]
                         **The Sigenergy Inverter Modbus Device ID. Multiple
-                        device IDS may be specified, separated by spaces.
-  --modbus-accharger-slave [SIGENERGY2MQTT_MODBUS_ACCHARGER_SLAVE ...]
-                        ** DEPRECATED ** Use --modbus-accharger-device-id
-                        instead.
+                        device IDS may be specified, separated by commas.
   --modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID ...]
-                        The Sigenergy AC Charger Modbus Device ID.
-  --modbus-dccharger-slave [SIGENERGY2MQTT_MODBUS_DCCHARGER_SLAVE ...]
-                        ** DEPRECATED ** Use --modbus-dccharger-device-id
-                        instead.
+                        The Sigenergy AC Charger Modbus Device ID. Multiple
+                        device IDS may be specified, separated by commas.
   --modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID ...]
-                        The Sigenergy DC Charger Modbus Device ID.
+                        The Sigenergy DC Charger Modbus Device ID. Multiple
+                        device IDS may be specified, separated by commas.
   --modbus-readonly     Only publish read-only sensors to MQTT. Neither read-
                         write or write-only sensors will be published if
                         specified.
@@ -278,9 +267,6 @@ options:
                         values are 20 to 23. The minute is randomly chosen
                         between 56 and 59. If you specify -1, daily uploads
                         will be sent at the same frequency as status updates.
-  --pvoutput-interval [SIGENERGY2MQTT_PVOUTPUT_INTERVAL]
-                        ** DEPRECATED ** The Status Interval is now determined
-                        from the settings on pvoutput.org.
   --pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]
                         An MQTT topic from which the current temperature can
                         be read. This is used to send the temperature to
