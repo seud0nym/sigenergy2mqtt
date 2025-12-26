@@ -1,7 +1,7 @@
 from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.sensors.const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from typing import Any
 
 
@@ -76,7 +76,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
-            state_class=None,
+            state_class=StateClass.TOTAL_INCREASING,
             icon="mdi:car-electric",
             gain=100,
             precision=2,
