@@ -18,18 +18,18 @@ log-level: WARNING
 consumption: calculated
 # sanity-check-default-kw
 #   added: 2025.7.9
-#   default: 100.0
+#   default: 500.0
 #   description:  The default value used for sanity checks to validate the
 #                 maximum and minimum values for power and energy sensors.
 #                 The specified value is taken as the maximum in kW, and 
 #                 the minimum value is derived by multiplying by -1 (e.g. 
-#                 if the option value is 100, the minimum value will be
-#                 -100). The value is applied per second, so the actual
+#                 if the option value is 500, the minimum value will be
+#                 -500). The value is applied per second, so the actual
 #                 sanity check applied to a sensor is a multiple of the
 #                 scan-interval. For energy sensors, the check is applied
 #                 to the delta value. Readings outside of the range are
 #                 ignored.    
-sanity-check-default-kw: 100.0
+sanity-check-default-kw: 500.0
 # no-metrics
 #   default: false
 #   description:  If true, sigenergy2mqtt will not publish any metrics to

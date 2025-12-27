@@ -89,7 +89,7 @@ _parser.add_argument(
     dest=const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW,
     type=float,
     default=os.getenv(const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW, None),
-    help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 100 kW per second, and readings outside the range are ignored.",
+    help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.",
 )
 _parser.add_argument(
     "--no-metrics",
