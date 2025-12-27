@@ -1036,17 +1036,17 @@ class WritableSensorMixin(ModbusSensor):
         self["command_topic"] = f"{base}/set"
         return base
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, raw_value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         try:
-            if not await self.value_is_valid(modbus, raw_value):
+            if not await self.value_is_valid(modbus, value):
                 return False
         except Exception as e:
-            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{self._apply_gain_and_precision(raw_value)}' (raw={raw_value}) FAILED: {repr(e)}")
+            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{self._apply_gain_and_precision(value)}' (raw={value}) FAILED: {repr(e)}")
             raise
         if source == self["command_topic"]:
-            return await self._write_registers(modbus, raw_value, mqtt)
+            return await self._write_registers(modbus, value, mqtt)
         else:
-            logging.error(f"{self.__class__.__name__} Attempt to set value '{self._apply_gain_and_precision(raw_value)}' (raw={raw_value}) from unknown topic {source}")
+            logging.error(f"{self.__class__.__name__} Attempt to set value '{self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
             return False
 
     async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
@@ -1285,14 +1285,14 @@ class NumericSensor(ReadWriteSensor):
                 logging.debug(f"{self.__class__.__name__} {value=} adjusted to {state=}")
         return state
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, raw_value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if raw_value is not None:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        if value is not None:
             try:
-                state = float(raw_value)
+                state = float(value)
                 if self.gain != 1:
                     state = state * self.gain  # Convert to raw value before validating and writing
             except Exception as e:
-                logging.warning(f"{self.__class__.__name__} Attempt to set value to '{raw_value}' FAILED: {repr(e)}")
+                logging.warning(f"{self.__class__.__name__} Attempt to set value to '{value}' FAILED: {repr(e)}")
                 return False
             return await super().set_value(modbus, mqtt, state, source, handler)
         else:
@@ -1369,11 +1369,11 @@ class SelectSensor(ReadWriteSensor):
         else:
             return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, raw_value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
         try:
-            index = int(raw_value)
+            index = int(value)
         except ValueError:
-            index = self["options"].index(raw_value)
+            index = self["options"].index(value)
         return await super().set_value(modbus, mqtt, index, source, handler)
 
     async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
@@ -1429,11 +1429,11 @@ class SwitchSensor(ReadWriteSensor):
         self["state_off"] = 0
         self["state_on"] = 1
 
-    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, raw_value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
+    async def set_value(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool | Exception | ExceptionResponse:
         try:
-            return await super().set_value(modbus, mqtt, int(raw_value), source, handler)
+            return await super().set_value(modbus, mqtt, int(value), source, handler)
         except ValueError as e:
-            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{raw_value}' FAILED: {repr(e)}")
+            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
             raise
 
     async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
