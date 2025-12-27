@@ -388,7 +388,7 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = None
+        self._sanity.min_raw = None
 
 
 class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
@@ -435,7 +435,7 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = None
+        self._sanity.min_raw = None
 
     def set_state(self, state: float | int | str) -> None:
         super().set_state(state)
@@ -792,8 +792,8 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400  # -40.0 °C
-        self._sanity.max_value = 2000  # 200.0 °C
+        self._sanity.min_raw = -400  # -40.0 °C
+        self._sanity.max_raw = 2000  # 200.0 °C
 
 
 class AverageCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1047,8 +1047,8 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400  # -40.0 °C
-        self._sanity.max_value = 2000  # 200.0 °C
+        self._sanity.min_raw = -400  # -40.0 °C
+        self._sanity.max_raw = 2000  # 200.0 °C
 
 
 class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
@@ -1072,8 +1072,8 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400  # -40.0 °C
-        self._sanity.max_value = 2000  # 200.0 °C
+        self._sanity.min_raw = -400  # -40.0 °C
+        self._sanity.max_raw = 2000  # 200.0 °C
 
 
 class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1211,8 +1211,8 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = -400  # -40.0 °C
-        self._sanity.max_value = 2000  # 200.0 °C
+        self._sanity.min_raw = -400  # -40.0 °C
+        self._sanity.max_raw = 2000  # 200.0 °C
 
 
 class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1377,8 +1377,8 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
-        self._sanity.min_value = 0  # 0.0
-        self._sanity.max_value = 1000  # 1.0
+        self._sanity.min_raw = 0  # 0.0
+        self._sanity.max_raw = 1000  # 1.0
         self._max_failures_retry_interval = 300
         self._active_power: PowerFactor.Power = None
         self._reactive_power: PowerFactor.Power = None
@@ -1781,7 +1781,7 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = None
+        self._sanity.min_raw = None
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()

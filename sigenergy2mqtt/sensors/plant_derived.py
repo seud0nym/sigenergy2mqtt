@@ -186,7 +186,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         self.plant_index = plant_index
         self.method = method
         self._grid_status: int = None
-        self._sanity.min_value = 0.0
+        self._sanity.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
         match self.method:
             case ConsumptionMethod.CALCULATED:

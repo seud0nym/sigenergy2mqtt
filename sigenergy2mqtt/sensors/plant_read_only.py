@@ -195,8 +195,8 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.max_value = 100000  # 100kW
-        self._sanity.min_value = -100000  # -100kW
+        self._sanity.max_raw = 100000  # 100kW
+        self._sanity.min_raw = -100000  # -100kW
 
     def get_attributes(self) -> dict[str, Any]:
         attributes = super().get_attributes()
@@ -1119,7 +1119,7 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-        self._sanity.min_value = None
+        self._sanity.min_raw = None
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()

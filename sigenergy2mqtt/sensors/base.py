@@ -274,12 +274,12 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 if "sanity-check-delta" in overrides and self._sanity.delta != overrides["sanity-check-delta"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
                     self._sanity.delta = overrides["sanity-check-delta"]
-                if "sanity-check-max-value" in overrides and self._sanity.max_value != overrides["sanity-check-max-value"]:
+                if "sanity-check-max-value" in overrides and self._sanity.max_raw != overrides["sanity-check-max-value"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
-                    self._sanity.max_value = overrides["sanity-check-max-value"]
-                if "sanity-check-min-value" in overrides and self._sanity.min_value != overrides["sanity-check-min-value"]:
+                    self._sanity.max_raw = overrides["sanity-check-max-value"]
+                if "sanity-check-min-value" in overrides and self._sanity.min_raw != overrides["sanity-check-min-value"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
-                    self._sanity.min_value = overrides["sanity-check-min-value"]
+                    self._sanity.min_raw = overrides["sanity-check-min-value"]
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
@@ -1244,8 +1244,8 @@ class NumericSensor(ReadWriteSensor):
         self["max"] = maximum  # Must NOT be raw value, and *may* be a tuple of display values!
         self["mode"] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
         self["step"] = 1 if precision is None else 10**-precision
-        self._sanity.min_value = None
-        self._sanity.max_value = None
+        self._sanity.min_raw = None
+        self._sanity.max_raw = None
 
     def get_discovery_components(self) -> Dict[str, Dict[str, Any]]:
         components = super().get_discovery_components()
