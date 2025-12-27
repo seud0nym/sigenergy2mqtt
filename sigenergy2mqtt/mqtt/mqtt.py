@@ -46,7 +46,10 @@ class MqttHandler:
                 if topic in self._topics:
                     for method in self._topics[topic]:
                         logger.debug(f"[{self.client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
-                        asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
+                        if isinstance(method, Awaitable):
+                            asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
+                        else:
+                            method(self._modbus, client, value, topic, self)
                 else:
                     logger.warning(f"[{self.client_id}] No registered handler found for topic {topic}")
 
@@ -55,7 +58,10 @@ class MqttHandler:
             method = self._mids[mid].handler
             logger.debug(f"[{self.client_id}] Handling {source} response for MID={mid} with method {method}")
             if method is not None:
-                method(client, source)
+                if isinstance(method, Awaitable):
+                    asyncio.run_coroutine_threadsafe(method(client, source), self._loop)
+                else:
+                    method(client, source)
             del self._mids[mid]
         else:
             self._mids[mid] = MqttResponse(time.time(), None)
