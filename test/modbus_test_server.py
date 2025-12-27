@@ -102,56 +102,57 @@ class CustomDataBlock(ModbusSparseDataBlock):
             elif hasattr(sensor, "decode_alarm_bit"):  # AlarmSensor
                 source = "alarm_sensor"
                 value = 0
-            elif sensor.latest_raw_state is not None:
-                source = "latest_raw_state"
-                value = sensor.latest_raw_state / sensor.gain
-            elif sensor.device_class == DeviceClass.TIMESTAMP:
-                source = "timestamp"
-                value = datetime.now().isoformat()
-            elif hasattr(sensor, "state_off") and hasattr(sensor, "state_on"):  # SwitchSensor
-                source = "switch_sensor"
-                value = 0
-            elif hasattr(sensor, "min") and hasattr(sensor, "max"):
-                source = "min_max"
-                value = randint(sensor["min"][0] if not isinstance(sensor["min"], (tuple, list)) else sensor["min"], sensor["min"][1] if not isinstance(sensor["min"], (tuple, list)) else sensor["max"])
-            elif hasattr(sensor, "options"):
-                value = 0
-            elif sensor._sanity.min_value is not None and sensor._sanity.max_value is not None:
-                source = "sanity_check"
-                if sensor._sanity.delta:
-                    value = sensor._sanity.min_value + randint(0, int(sensor._sanity.max_value - sensor._sanity.min_value) // sensor._sanity.delta) * sensor._sanity.delta
-                else:
-                    value = randint(int(sensor._sanity.min_value), int(sensor._sanity.max_value))
-                value /= sensor.gain
             else:
-                source = "data_type_default"
-                match sensor.data_type:
-                    case ModbusClientMixin.DATATYPE.INT16:
-                        value = randint(-32768 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 32767 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
-                    case ModbusClientMixin.DATATYPE.UINT16:
-                        value = randint(0, 65535 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
-                    case ModbusClientMixin.DATATYPE.INT32:
-                        value = randint(-2147483648 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 2147483647 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
-                    case ModbusClientMixin.DATATYPE.UINT32:
-                        value = randint(0, 4294967295 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
-                    case ModbusClientMixin.DATATYPE.INT64:
-                        value = randint(
-                            -9223372036854775808 if sensor._sanity.min_value is None else int(sensor._sanity.min_value),
-                            9223372036854775807 if sensor._sanity.max_value is None else int(sensor._sanity.max_value),
-                        )
-                    case ModbusClientMixin.DATATYPE.UINT64:
-                        value = randint(0, 18446744073709551615 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
-                    case _:
-                        value = randint(0, 255)
-                value /= sensor.gain
+                if sensor.latest_raw_state is not None:
+                    source = "latest_raw_state"
+                    value = sensor.latest_raw_state / sensor.gain
+                elif sensor.device_class == DeviceClass.TIMESTAMP:
+                    source = "timestamp"
+                    value = datetime.now().isoformat()
+                elif hasattr(sensor, "state_off") and hasattr(sensor, "state_on"):  # SwitchSensor
+                    source = "switch_sensor"
+                    value = 0
+                elif hasattr(sensor, "min") and hasattr(sensor, "max"):
+                    source = "min_max"
+                    value = randint(sensor["min"][0] if not isinstance(sensor["min"], (tuple, list)) else sensor["min"], sensor["min"][1] if not isinstance(sensor["min"], (tuple, list)) else sensor["max"])
+                elif hasattr(sensor, "options"):
+                    value = 0
+                elif sensor._sanity.min_value is not None and sensor._sanity.max_value is not None:
+                    source = "sanity_check"
+                    if sensor._sanity.delta:
+                        value = sensor._sanity.min_value + randint(0, int(sensor._sanity.max_value - sensor._sanity.min_value) // sensor._sanity.delta) * sensor._sanity.delta
+                    else:
+                        value = randint(int(sensor._sanity.min_value), int(sensor._sanity.max_value))
+                    value /= sensor.gain
+                else:
+                    source = "data_type_default"
+                    match sensor.data_type:
+                        case ModbusClientMixin.DATATYPE.INT16:
+                            value = randint(-32768 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 32767 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                        case ModbusClientMixin.DATATYPE.UINT16:
+                            value = randint(0, 65535 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                        case ModbusClientMixin.DATATYPE.INT32:
+                            value = randint(-2147483648 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 2147483647 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                        case ModbusClientMixin.DATATYPE.UINT32:
+                            value = randint(0, 4294967295 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                        case ModbusClientMixin.DATATYPE.INT64:
+                            value = randint(
+                                -9223372036854775808 if sensor._sanity.min_value is None else int(sensor._sanity.min_value),
+                                9223372036854775807 if sensor._sanity.max_value is None else int(sensor._sanity.max_value),
+                            )
+                        case ModbusClientMixin.DATATYPE.UINT64:
+                            value = randint(0, 18446744073709551615 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                        case _:
+                            value = randint(0, 255)
+                    value /= sensor.gain
+                if self._mqtt_client and sensor.address and not hasattr(sensor, "decode_alarm_bit"):
+                    if "state_topic" in sensor:
+                        self._topics[sensor.state_topic] = sensor
+                        self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
+                    else:
+                        _logger.warning(f"Sensor {sensor['name']} does not have a state_topic and cannot be updated via MQTT.")
         _logger.debug(f"Setting initial value for sensor {sensor['name']} (address={sensor.address}, device_address={self.device_address}, source={source}): {value}")
         self._set_value(sensor, value)
-        if self._mqtt_client and sensor.address and not hasattr(sensor, "decode_alarm_bit"):
-            if "state_topic" in sensor:
-                self._topics[sensor.state_topic] = sensor
-                self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
-            else:
-                _logger.warning(f"Sensor {sensor['name']} does not have a state_topic and cannot be updated via MQTT.")
 
     def _handle_mqtt_message(self, topic: str, value: str) -> None:
         sensor = self._topics.get(topic)
