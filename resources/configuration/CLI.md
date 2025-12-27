@@ -86,7 +86,7 @@ options:
                         The default value in kW used for sanity checks to
                         validate the maximum and minimum values for actual
                         value of power sensors and the delta value of energy
-                        sensors. The default value is 100 kW per second, and
+                        sensors. The default value is 500 kW per second, and
                         readings outside the range are ignored.
   --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --consumption {calculated,total,general}

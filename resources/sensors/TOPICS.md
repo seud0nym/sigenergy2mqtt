@@ -448,7 +448,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_247_40022_set'>Phase C Active Power Percentage Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40025_set'>Phase C Q/S Fixed Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40018_set'>Phase C Reactive Power Fixed Adjustment Target Value</a><br>
-<a href='#sigen_0_247_40000_set'>Power</a><br>
+<a href='#sigen_0_247_40000_set'>Plant Power On/Off</a><br>
 <a href='#sigen_0_247_40007_set'>Power Factor Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40006_set'>Q/S Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40003_set'>Reactive Power Fixed Adjustment Target Value</a><br>
@@ -458,7 +458,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <h6>Inverter</h6>
 <a href='#sigen_0_001_41501_set'>Active Power Fixed Value Adjustment</a><br>
 <a href='#sigen_0_001_41505_set'>Active Power Percentage Adjustment</a><br>
-<a href='#sigen_0_001_40500_set'>Power</a><br>
+<a href='#sigen_0_001_40500_set'>Inverter Power On/Off</a><br>
 <a href='#sigen_0_001_41507_set'>Power Factor Adjustment</a><br>
 <a href='#sigen_0_001_41503_set'>Reactive Power Fixed Value Adjustment</a><br>
 <a href='#sigen_0_001_41506_set'>Reactive Power Q/S Adjustment</a><br>
@@ -5010,7 +5010,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Maximum&nbsp;Value</td><td>100.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
-<h5><a id='sigen_0_247_40000_set'>Power&nbsp;On/Off
+<h5><a id='sigen_0_247_40000_set'>Plant Power On/Off
 </a></h5>
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_247_powerplant/sigen_0_plant_status/set</td></tr>
@@ -5086,7 +5086,7 @@ Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Hom
 <tr><td>Applicable&nbsp;To</td><td> PV Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 </table>
-<h5><a id='sigen_0_001_40500_set'>Power&nbsp;On/Off
+<h5><a id='sigen_0_001_40500_set'>Inverter Power On/Off
 </a></h5>
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_001_inverter/sigen_0_inverter_1_status/set</td></tr>
