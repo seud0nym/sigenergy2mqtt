@@ -14,7 +14,7 @@ import logging
 class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
-            name="Power",
+            name="Plant Power On/Off",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_status",
             plant_index=plant_index,
             device_address=247,

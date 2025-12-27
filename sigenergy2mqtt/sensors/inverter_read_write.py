@@ -11,7 +11,7 @@ from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactive
 class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="Power",
+            name="Inverter Power On/Off",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_status",
             plant_index=plant_index,
             device_address=device_address,
