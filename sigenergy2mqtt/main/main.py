@@ -42,7 +42,7 @@ async def async_main() -> None:
                         availability_control_sensor = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
                         assert availability_control_sensor is not None, "Failed to find RemoteEMS instance"
                         config.add_device(plant_index, plant)
-                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, 30279, 30281, 30286, 30288, 30290, 30292, 30294, 30296, 40049)
+                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, 30279, 30281, 40049)
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
                         if not plant.has_battery:
                             logging.debug(f"No battery modules attached to plant {device.host}:{device.port} - disabling charging/discharging statistics interface sensors")

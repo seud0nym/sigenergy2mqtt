@@ -1826,7 +1826,7 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
-            unit=UnitOfPower.WATT, #UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
             icon="mdi:meter-electric-outline",
@@ -1848,7 +1848,7 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusClient.DATATYPE.INT32,
             scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
-            unit=UnitOfPower.WATT, #UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
             icon="mdi:meter-electric",
@@ -1858,7 +1858,7 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class GridPhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+class ReservedGridPhaseVoltage(ReservedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, phase: str):
         match phase:
             case "A":
@@ -1889,7 +1889,7 @@ class GridPhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class GridPhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+class ReservedGridPhaseCurrent(ReservedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, phase: str):
         match phase:
             case "A":

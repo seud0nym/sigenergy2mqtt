@@ -28,6 +28,6 @@ def ProtocolApplies(version: Protocol) -> str:
         case Protocol.V2_7:
             return "2025-05-23"
         case Protocol.V2_8:
-            return "2025-11-20"
+            return "2025-11-28"
         case _:
             return datetime.today().strftime("%Y-%m-%d")
