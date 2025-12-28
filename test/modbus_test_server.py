@@ -117,31 +117,31 @@ class CustomDataBlock(ModbusSparseDataBlock):
                     value = randint(sensor["min"][0] if not isinstance(sensor["min"], (tuple, list)) else sensor["min"], sensor["min"][1] if not isinstance(sensor["min"], (tuple, list)) else sensor["max"])
                 elif hasattr(sensor, "options"):
                     value = 0
-                elif sensor._sanity.min_value is not None and sensor._sanity.max_value is not None:
+                elif sensor._sanity.min_raw is not None and sensor._sanity.max_raw is not None:
                     source = "sanity_check"
                     if sensor._sanity.delta:
-                        value = sensor._sanity.min_value + randint(0, int(sensor._sanity.max_value - sensor._sanity.min_value) // sensor._sanity.delta) * sensor._sanity.delta
+                        value = sensor._sanity.min_raw + randint(0, int(sensor._sanity.max_raw - sensor._sanity.min_raw) // sensor._sanity.delta) * sensor._sanity.delta
                     else:
-                        value = randint(int(sensor._sanity.min_value), int(sensor._sanity.max_value))
+                        value = randint(int(sensor._sanity.min_raw), int(sensor._sanity.max_raw))
                     value /= sensor.gain
                 else:
                     source = "data_type_default"
                     match sensor.data_type:
                         case ModbusClientMixin.DATATYPE.INT16:
-                            value = randint(-32768 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 32767 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                            value = randint(-32768 if sensor._sanity.min_raw is None else int(sensor._sanity.min_raw), 32767 if sensor._sanity.max_raw is None else int(sensor._sanity.max_raw))
                         case ModbusClientMixin.DATATYPE.UINT16:
-                            value = randint(0, 65535 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                            value = randint(0, 65535 if sensor._sanity.max_raw is None else int(sensor._sanity.max_raw))
                         case ModbusClientMixin.DATATYPE.INT32:
-                            value = randint(-2147483648 if sensor._sanity.min_value is None else int(sensor._sanity.min_value), 2147483647 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                            value = randint(-2147483648 if sensor._sanity.min_raw is None else int(sensor._sanity.min_raw), 2147483647 if sensor._sanity.max_raw is None else int(sensor._sanity.max_raw))
                         case ModbusClientMixin.DATATYPE.UINT32:
-                            value = randint(0, 4294967295 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                            value = randint(0, 4294967295 if sensor._sanity.max_raw is None else int(sensor._sanity.max_raw))
                         case ModbusClientMixin.DATATYPE.INT64:
                             value = randint(
-                                -9223372036854775808 if sensor._sanity.min_value is None else int(sensor._sanity.min_value),
-                                9223372036854775807 if sensor._sanity.max_value is None else int(sensor._sanity.max_value),
+                                -9223372036854775808 if sensor._sanity.min_raw is None else int(sensor._sanity.min_raw),
+                                9223372036854775807 if sensor._sanity.max_raw is None else int(sensor._sanity.max_raw),
                             )
                         case ModbusClientMixin.DATATYPE.UINT64:
-                            value = randint(0, 18446744073709551615 if sensor._sanity.max_value is None else int(sensor._sanity.max_value))
+                            value = randint(0, 18446744073709551615 if sensor._sanity.max_raw is None else int(sensor._sanity.max_raw))
                         case _:
                             value = randint(0, 255)
                     value /= sensor.gain
