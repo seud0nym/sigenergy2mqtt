@@ -3,6 +3,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config
 from typing import Any, Awaitable, Callable, Dict, Self
 import asyncio
+import inspect
 import logging
 import os
 import paho.mqtt.client as mqtt
@@ -46,7 +47,7 @@ class MqttHandler:
                 if topic in self._topics:
                     for method in self._topics[topic]:
                         logger.debug(f"[{self.client_id}] Handling topic {topic} with {method.__self__.__class__.__name__}.{getattr(method, '__name__', '[Unknown method]')} ({payload=})")
-                        if isinstance(method, Awaitable):
+                        if inspect.iscoroutinefunction(method):
                             asyncio.run_coroutine_threadsafe(method(self._modbus, client, value, topic, self), self._loop)
                         else:
                             method(self._modbus, client, value, topic, self)
@@ -58,7 +59,7 @@ class MqttHandler:
             method = self._mids[mid].handler
             logger.debug(f"[{self.client_id}] Handling {source} response for MID={mid} with method {method}")
             if method is not None:
-                if isinstance(method, Awaitable):
+                if inspect.iscoroutinefunction(method):
                     asyncio.run_coroutine_threadsafe(method(client, source), self._loop)
                 else:
                     method(client, source)
@@ -89,7 +90,7 @@ class MqttHandler:
 
         assert isinstance(seconds, (int, float)) and seconds < 60, "Seconds must be an integer or float and less then 60"
         assert isinstance(method, (Callable, Awaitable)), "Method must be a Callable or Awaitable"
-        if isinstance(method, Awaitable):
+        if inspect.iscoroutinefunction(method):
             info = await method(*args, **kwargs)
         else:
             info = method(*args, **kwargs)
