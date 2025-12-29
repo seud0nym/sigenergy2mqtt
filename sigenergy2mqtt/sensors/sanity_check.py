@@ -47,10 +47,8 @@ class SanityCheck:
                 self.min_raw = 0
                 self.max_raw = 18446744073709551615
         match unit:
-            case UnitOfPower.WATT | UnitOfEnergy.WATT_HOUR:
+            case UnitOfPower.WATT | UnitOfEnergy.WATT_HOUR | UnitOfPower.KILO_WATT | UnitOfEnergy.KILO_WATT_HOUR:
                 self.max_raw = min(Config.sanity_check_default_kw * 1000, self.max_raw)
-            case UnitOfPower.KILO_WATT | UnitOfEnergy.KILO_WATT_HOUR:
-                self.max_raw = min(Config.sanity_check_default_kw * gain, self.max_raw)
         if state_class == StateClass.TOTAL_INCREASING:
             self.delta = True
             self.min_raw = 0
