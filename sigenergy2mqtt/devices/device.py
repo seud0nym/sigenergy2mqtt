@@ -374,7 +374,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
                         if multiple and count <= MAX_MODBUS_REGISTERS_PER_REQUEST:
                             if debug_logging:
                                 read_ahead_start = time.time()
-                            exception_code = await modbus.read_ahead_registers(first_address, count=count, device_id=sensors[0].device_address, input_type=sensors[0].input_type)
+                            exception_code = await modbus.read_ahead_registers(first_address, count=count, device_id=sensors[0].device_address, input_type=sensors[0].input_type, trace=debug_logging)
                             if exception_code == 0:
                                 if debug_logging:
                                     logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
