@@ -166,7 +166,7 @@ class PVOutputOutputService(Service):
                 elif validate < verify_retries:
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
                 else:
-                    self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} downloaded={result} ({response.text})")
+                    self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")
             except requests.exceptions.HTTPError as exc:
                 self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
             except requests.exceptions.ConnectionError as exc:
