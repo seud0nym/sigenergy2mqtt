@@ -114,7 +114,7 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
         logging.debug(f"Modbus connection to {ip}:{port} failed: {e}")
 
 
-def scan(port: int = 502, ping_timeout:float = 0.5, modbus_timeout:float = 0.25, modbus_retries: int = 0) -> list[dict[str, int, list[int], list[int], list[int]]]:
+def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.25, modbus_retries: int = 0) -> list[dict[str, int, list[int], list[int], list[int]]]:
     logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.CRITICAL)
 

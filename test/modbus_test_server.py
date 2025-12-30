@@ -151,7 +151,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
                     else:
                         _logger.warning(f"Sensor {sensor['name']} does not have a state_topic and cannot be updated via MQTT.")
-        _logger.debug(f"Setting initial value for sensor {sensor['name']} (address={sensor.address}, device_address={self.device_address}, source={source}): {value}")
+        # _logger.debug(f"Setting initial value for sensor {sensor['name']} (address={sensor.address}, device_address={self.device_address}, source={source}): {value}")
         self._set_value(sensor, value)
 
     def _handle_mqtt_message(self, topic: str, value: str) -> None:
@@ -266,7 +266,7 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
 
     _logger.info("Starting ASYNC Modbus TCP Testing Server...")
     await StartAsyncTcpServer(
-        context=ModbusServerContext(devices=context, single=False if len(context) > 1 else True),
+        context=ModbusServerContext(devices=context, single=False),
         identity=ModbusDeviceIdentification(
             info_name={
                 "VendorName": "seud0nym",
