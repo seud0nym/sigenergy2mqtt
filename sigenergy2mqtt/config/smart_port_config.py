@@ -38,6 +38,7 @@ class ModuleConfig:
         else:
             raise ValueError("modbus.smart-port.module.configuration elements must contain options and their values")
 
+
 @dataclass
 class TopicConfig:
     topic: str = ""
@@ -59,13 +60,14 @@ class TopicConfig:
                                 topic.gain = check_int(value, f"modbus.smart-port.mqtt.{field}", allow_none=False, min=1)
                             case _:
                                 raise ValueError(f"modbus.smart-port.mqtt {'override from env/cli' if override else 'configuration'} contains unknown option '{field}'")
-                    if topic.topic and not topic.topic.isspace(): # Command line/Environment variable overrides can cause an empty topic
+                    if topic.topic and not topic.topic.isspace():  # Command line/Environment variable overrides can cause an empty topic
                         result.append(topic)
                 else:
                     raise ValueError("modbus.smart-port.mqtt configuration elements must contain a list of topics and, optionally, their gains")
-                return result
+            return result
         else:
             raise ValueError("modbus.smart-port.mqtt configuration elements must contain a list of topics and, optionally, their gains")
+
 
 @dataclass
 class SmartPortConfig:
