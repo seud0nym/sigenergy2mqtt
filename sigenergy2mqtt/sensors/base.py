@@ -977,17 +977,17 @@ class WritableSensorMixin(ModbusSensor):
         topic: str = self["command_topic"]
         assert topic and not topic.isspace(), f"{self.__class__.__name__} command topic is not defined"
         return topic
-    
+
     def _raw2state(self, raw_value: float | int | str) -> str:
         if isinstance(raw_value, str):
             return raw_value
         if "options" in self:
-            return self['options'][raw_value]
-        if hasattr(self,"_names") and hasattr(self,"_values"):
+            return self["options"][raw_value]
+        if hasattr(self, "_names") and hasattr(self, "_values"):
             return self._names["off"] if self._values["off"] == raw_value else self._names["on"] if self._values["on"] == raw_value else raw_value
         if "payload_off" in self and "payload_on" in self and "state_off" in self and "state_on" in self:
             return "Off" if self["payload_off"] == raw_value else "On" if self["payload_on"] == raw_value else raw_value
-        if isinstance(raw_value, (float,int)):
+        if isinstance(raw_value, (float, int)):
             return round(raw_value / self.gain, self.precision)
         return raw_value
 
@@ -995,9 +995,7 @@ class WritableSensorMixin(ModbusSensor):
         max_wait = 2
         device_id = self.device_address
         no_response_expected = False
-        logging.info(
-            f"{self.__class__.__name__} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} {device_id=})"
-        )
+        logging.info(f"{self.__class__.__name__} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} {device_id=})")
         if self.data_type == ModbusClient.DATATYPE.UINT16 and isinstance(raw_value, int) and 0 <= raw_value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [raw_value]
         elif self.data_type == ModbusClient.DATATYPE.STRING:
@@ -1030,6 +1028,7 @@ class WritableSensorMixin(ModbusSensor):
             logging.error(f"{self.__class__.__name__} write_registers: {repr(e)}")
             await Metrics.modbus_write_error()
             raise
+        return result
 
     def configure_mqtt_topics(self, device_id: str) -> None:
         base = super().configure_mqtt_topics(device_id)
