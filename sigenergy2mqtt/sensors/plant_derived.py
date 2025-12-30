@@ -49,7 +49,7 @@ class BatteryChargingPower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if not issubclass(type(sensor), BatteryPower):
+        if not isinstance(sensor, BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
@@ -80,7 +80,7 @@ class BatteryDischargingPower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if not issubclass(type(sensor), BatteryPower):
+        if not isinstance(sensor, BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
@@ -111,7 +111,7 @@ class GridSensorExportPower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if not issubclass(type(sensor), GridSensorActivePower):
+        if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
@@ -142,7 +142,7 @@ class GridSensorImportPower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if not issubclass(type(sensor), GridSensorActivePower):
+        if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
@@ -269,13 +269,13 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
         elif isinstance(sensor, GeneralLoadPower):
             self._update_source(ConsumptionMethod.GENERAL.value, values[-1][1])
-        elif issubclass(type(sensor), BatteryPower):
+        elif isinstance(sensor, BatteryPower):
             self._update_source("battery", values[-1][1])
-        elif issubclass(type(sensor), GridSensorActivePower):
+        elif isinstance(sensor, GridSensorActivePower):
             self._update_source("grid", values[-1][1])
-        elif issubclass(type(sensor), (PlantPVPower, TotalPVPower)):
+        elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
             self._update_source("pv", values[-1][1])
-        elif issubclass(type(sensor), GridStatus):
+        elif isinstance(sensor, GridStatus):
             if Config.consumption == ConsumptionMethod.CALCULATED:
                 grid = int(values[-1][1])
                 if grid != self._grid_status:
@@ -509,9 +509,9 @@ class TotalLifetimePVEnergy(DerivedSensor):
         self.plant_3rd_party_lifetime_pv_energy = None
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if issubclass(type(sensor), PlantPVTotalGeneration):
+        if isinstance(sensor, PlantPVTotalGeneration):
             self.plant_lifetime_pv_energy = values[-1][1]
-        elif issubclass(type(sensor), ThirdPartyLifetimePVEnergy):
+        elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
             self.plant_3rd_party_lifetime_pv_energy = values[-1][1]
         else:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")

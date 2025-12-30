@@ -30,7 +30,7 @@ class InverterBatteryChargingPower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if not issubclass(type(sensor), ChargeDischargePower):
+        if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
@@ -61,7 +61,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if not issubclass(type(sensor), ChargeDischargePower):
+        if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
@@ -117,9 +117,9 @@ class PVStringPower(DerivedSensor):
         self.current = None
 
     def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
-        if issubclass(type(sensor), PVVoltageSensor):
+        if isinstance(sensor, PVVoltageSensor):
             self.voltage = values[-1][1] / self.voltage_gain
-        elif issubclass(type(sensor), PVCurrentSensor):
+        elif isinstance(sensor, PVCurrentSensor):
             self.current = values[-1][1] / self.current_gain
         else:
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")

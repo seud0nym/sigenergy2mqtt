@@ -229,7 +229,7 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
-        if not issubclass(type(sensor), EnphasePVPower):
+        if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(values[-1][2]["actEnergyDlvd"])
@@ -273,7 +273,7 @@ class EnphaseCurrent(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
-        if not issubclass(type(sensor), EnphasePVPower):
+        if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(values[-1][2]["current"])
@@ -302,7 +302,7 @@ class EnphaseFrequency(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
-        if not issubclass(type(sensor), EnphasePVPower):
+        if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(values[-1][2]["freq"])
@@ -331,7 +331,7 @@ class EnphasePowerFactor(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
-        if not issubclass(type(sensor), EnphasePVPower):
+        if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(values[-1][2]["pwrFactor"])
@@ -360,7 +360,7 @@ class EnphaseReactivePower(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
-        if not issubclass(type(sensor), EnphasePVPower):
+        if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(values[-1][2]["reactivePower"])
@@ -389,7 +389,7 @@ class EnphaseVoltage(DerivedSensor):
         return attributes
 
     def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
-        if not issubclass(type(sensor), EnphasePVPower):
+        if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(values[-1][2]["voltage"])

@@ -152,14 +152,14 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
                 if not found:
                     logging.warning(f"{self.name} - Cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.__class__.__name__}")
                 else:
-                    if issubclass(type(sensor), DerivedSensor):
+                    if isinstance(sensor, DerivedSensor):
                         to_sensor.add_derived_sensor(sensor)
                         self._add_to_all_sensors(sensor)
                     else:
                         logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - not a DerivedSensor")
 
     def _add_read_sensor(self, sensor: ReadableSensorMixin, group: str = None) -> bool:
-        if not issubclass(type(sensor), ReadableSensorMixin):
+        if not isinstance(sensor, ReadableSensorMixin):
             logging.error(f"{self.name} - Cannot add {sensor.__class__.__name__} - not a ReadableSensorMixin")
             return False
         else:
@@ -181,7 +181,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
             self.all_sensors[sensor.unique_id] = sensor
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
-        if not issubclass(type(sensor), WriteOnlySensor):
+        if not isinstance(sensor, WriteOnlySensor):
             logging.error(f"{self.name} - Cannot add {sensor.unique_id} ({sensor.unique_id}) - not a WriteOnlySensor")
         else:
             self.write_sensors[sensor.unique_id] = sensor
