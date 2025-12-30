@@ -98,6 +98,7 @@ class MqttHandler:
             if info.mid in self._mids:
                 logging.debug(f"{prefix} - {method.__name__} has already been acknowledged (MID={info.mid})")
                 del self._mids[info.mid]
+                return True
             else:
                 self._mids[info.mid] = MqttResponse(time.time(), handle_response)
                 until = time.time() + seconds
