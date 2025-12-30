@@ -48,13 +48,19 @@ class PVOutputOutputService(Service):
             OutputField.EXPORT_SHOULDER: _es,
             OutputField.EXPORT_HIGH_SHOULDER: _eh,
         }
-        
+
         for field, topic_list in topics.items():
             if field in self._service_topics:
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
             else:
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
+
+    def _create_payload(self, now_struct: time.struct_time, interval: int) -> dict[str, int | str]:
+        payload = {"d": time.strftime("%Y%m%d", now_struct)}
+        for topic in [t for t in self._service_topics.values() if t.enabled]:
+            topic.add_to_payload(payload, interval, now_struct)
+        return payload
 
     def _is_payload_changed(self, payload: dict[str, str | int]) -> bool:
         if payload and self._previous_payload and len(payload) == len(self._previous_payload):
@@ -189,10 +195,8 @@ class PVOutputOutputService(Service):
                     now: float = time.mktime(now_struct)
                     if now >= next:
                         interval: int = self._interval if self._interval is not None else 1440
-                        payload = {"d": time.strftime("%Y%m%d", now_struct)}
                         async with self.lock(timeout=5):
-                            for topic in [t for t in self._service_topics.values() if t.enabled]:
-                                topic.add_to_payload(payload, interval, now_struct)
+                            payload = self._create_payload(now_struct, interval)
                         tomorrow = await self._next_output_upload(minute)
                         last_update_of_day: bool = time.localtime(tomorrow).tm_yday != now_struct.tm_yday  # Bypass verification except on last upload of the day
                         await self._upload(payload, last_update_of_day)

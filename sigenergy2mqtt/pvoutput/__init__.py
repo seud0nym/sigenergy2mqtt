@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __all__ = ["get_pvoutput_services"]
 
 from .output import PVOutputOutputService
@@ -6,7 +8,6 @@ from .topic import Topic
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, ConsumptionSource, OutputField, StatusField, VoltageSource
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
-from sigenergy2mqtt.main.thread_config import ThreadConfig
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
@@ -21,7 +22,11 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     TotalLoadConsumption,
     TotalLoadDailyConsumption,
 )
+from typing import TYPE_CHECKING
 import logging
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.main.thread_config import ThreadConfig
 
 
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:

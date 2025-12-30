@@ -64,6 +64,18 @@ class PVOutputStatusService(Service):
             else:
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
 
+    def _create_payload(self, now: time.struct_time) -> tuple[dict[str, any], dict[str, dict[str, tuple[float | int, time.struct_time]]]]:
+        payload: dict[str, any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
+        topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or Service._donator)]
+        snapshot: dict[str, dict[str, tuple[float | int, time.struct_time]]] = {
+            st.value: {t.topic: (t.previous_state, t.previous_timestamp) for t in st_topics.values()}
+            for st, st_topics in self._service_topics.items()
+            if st_topics.enabled and (not st_topics.requires_donation or Service._donator)
+        }
+        for topic in topics:
+            topic.add_to_payload(payload, Service._interval, now)
+        return payload, snapshot
+
     async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:
         seconds, next_time = await super().seconds_until_status_upload(rand_min, rand_max)
         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
@@ -77,16 +89,8 @@ class PVOutputStatusService(Service):
                 try:
                     if wait <= 0:
                         now = time.localtime()
-                        payload: dict[str, any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
-                        topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or Service._donator)]
                         async with self.lock(timeout=5):
-                            snapshot: dict[str, dict[str, tuple[float | int, time.struct_time]]] = {
-                                st.value: {t.topic: [(t.previous_state, t.previous_timestamp)] for t in topics.values()}
-                                for st, topics in self._service_topics.items()
-                                if topics.enabled and (not topics.requires_donation or Service._donator)
-                            }
-                            for topic in topics:
-                                topic.add_to_payload(payload, Service._interval, now)
+                            payload, snapshot = self._create_payload(now)
                         if (  # At least one of the values v1, v2, v3 or v4 must be present
                             payload.get(StatusField.GENERATION_ENERGY.value) is not None
                             or payload.get(StatusField.GENERATION_POWER.value) is not None
@@ -108,10 +112,10 @@ class PVOutputStatusService(Service):
                             if not uploaded:
                                 self.logger.debug(f"{self.__class__.__name__} Restoring previous state of topics due to failed upload")
                                 async with self.lock(timeout=5):
-                                    for st, topics in self._service_topics.items():
-                                        for topic in topics.values():
-                                            if topic.topic in snapshot[st]:
-                                                topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic][0]
+                                    for st, topics_dict in self._service_topics.items():
+                                        for topic in topics_dict.values():
+                                            if st.value in snapshot and topic.topic in snapshot[st.value]:
+                                                topic.previous_state, topic.previous_timestamp = snapshot[st.value][topic.topic]
                         else:
                             self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
