@@ -22,6 +22,16 @@ license-files = ["LICEN[CS]E*"]
 readme = "README.md"
 requires-python = ">=3.11"
 
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-asyncio",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
 [project.scripts]
 sigenergy2mqtt = "sigenergy2mqtt.__main__:main"
 
