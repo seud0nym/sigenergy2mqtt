@@ -151,14 +151,14 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
                     else:
                         _logger.warning(f"Sensor {sensor['name']} does not have a state_topic and cannot be updated via MQTT.")
-        # _logger.debug(f"Setting initial value for sensor {sensor['name']} (address={sensor.address}, device_address={self.device_address}, source={source}): {value}")
-        self._set_value(sensor, value)
+        self._set_value(sensor, value, source)
 
     def _handle_mqtt_message(self, topic: str, value: str) -> None:
         sensor = self._topics.get(topic)
-        self._set_value(sensor, value)
+        self._set_value(sensor, value, f"mqtt::{topic}")
 
-    def _set_value(self, sensor, value: float | int | str) -> None:
+    def _set_value(self, sensor, value: float | int | str, source: str = "") -> None:
+        _logger.debug(f"_set_value({sensor['name']}, {value}) [address={sensor.address} device_address={self.device_address} {source=}]")
         address = sensor.address
         if address in self._written_addresses:
             return  # Ignore messages for addresses that were just written to
@@ -213,8 +213,6 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
     device_address: int = None
     input_type = None
 
-    _logger.setLevel(log_level)
-
     _logger.info("Getting sensor instances...")
     sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, pv_inverter_device_address=3)
     for sensor in sorted([s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")], key=lambda x: (x.device_address, x.address)):
@@ -255,6 +253,8 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
                         skip_devices.append(device_address)
                     if not modbus_client.connected:
                         await modbus_client.connect()
+
+    _logger.setLevel(log_level)
 
     _logger.info("Creating data blocks...")
     for sensor in sensors.values():
@@ -303,6 +303,7 @@ def on_message(client: MqttClient, userdata: CustomMqttHandler, message) -> None
 
 async def async_helper() -> None:
     _yaml = YAML(typ="safe", pure=True)
+    log_level: int = logging.INFO
     with open("test/.modbus_test_server.yaml", "r") as f:
         config = _yaml.load(f)
         mqtt_client = MqttClient(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop()))
@@ -313,8 +314,9 @@ async def async_helper() -> None:
         mqtt_client.on_message = on_message
         mqtt_client.loop_start()
         modbus_client = ModbusClient(config.get("modbus")[0].get("host"), port=config.get("modbus")[0].get("port", 502), timeout=1, retries=0)
+        log_level = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
 
-    await run_async_server(mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")))
+    await run_async_server(mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")), log_level=log_level)
 
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
