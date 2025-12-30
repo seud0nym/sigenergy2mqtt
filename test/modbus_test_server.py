@@ -200,7 +200,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
         return super().setValues(address, values)
 
 
-async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient, use_simplified_topics: bool) -> None:
+async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient, use_simplified_topics: bool, host="0.0.0.0", port=502) -> None:
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
     group_index: int = None
@@ -271,7 +271,7 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
                 "MajorMinorRevision": pymodbus_version,
             }
         ),
-        address=("0.0.0.0", 502),
+        address=(host, port),
         framer=FramerType.SOCKET,
     )
 
