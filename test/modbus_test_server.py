@@ -25,7 +25,6 @@ logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
 
 _logger = logging.getLogger(__file__)
-_logger.setLevel(logging.INFO)
 
 
 class CustomMqttHandler:
@@ -52,6 +51,7 @@ class CustomMqttHandler:
         value = str(payload).strip()
         if value and topic in self._topics:
             for method in self._topics[topic]:
+                _logger.debug(f"on_message: '{topic}' -> {value}")
                 method(topic, value)
 
     def register(self, client: MqttClient, topic: str, handler) -> tuple[int, int]:
@@ -179,7 +179,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
             super().setValues(31019, registers)
             super().setValues(31021, registers)
 
-    async def async_getValues(self, fc_as_hex: int, address: int, count=1):
+    async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:
         delay_avg: int = 15
         delay_min: int = 5
         delay_max: int = 50
@@ -192,15 +192,19 @@ class CustomDataBlock(ModbusSparseDataBlock):
         await asyncio.sleep(sleep_time / 1000)
         if address in (30279, 30281, 30286, 30288, 30290, 30292, 30294, 30296, 30622, 30623, 40049):
             # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
-            return ExcCodes.ILLEGAL_ADDRESS
-        return super().getValues(address, count)
+            result = ExcCodes.ILLEGAL_ADDRESS
+        else:
+            result = super().getValues(address, count)
+        _logger.debug(f"async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
+        return result
 
-    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]):
+    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:
         self._written_addresses.append(address)
+        _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
         return super().setValues(address, values)
 
 
-async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient, use_simplified_topics: bool, host="0.0.0.0", port=502) -> None:
+async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, log_level: int = logging.INFO) -> None:
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
     group_index: int = None
@@ -208,6 +212,8 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
     count: int = None
     device_address: int = None
     input_type = None
+
+    _logger.setLevel(log_level)
 
     _logger.info("Getting sensor instances...")
     sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, pv_inverter_device_address=3)
