@@ -69,7 +69,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         self._precision: int = precision
 
         self._derived_sensors: Dict[str, "DerivedSensor"] = {}
-        self._requisite_sensors: Dict[str, "RequisiteSensor"] = {}
 
         self.debug_logging: bool = Config.sensor_debug_logging
 
@@ -234,14 +233,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         """
         self._derived_sensors[sensor.__class__.__name__] = sensor
 
-    def add_requisite_sensor(self, sensor: "RequisiteSensor") -> None:
-        """Adds a requisite sensor on which this sensor depends.
-
-        Args:
-            sensor:     The RequisiteSensor instance.
-        """
-        self._requisite_sensors[sensor.__class__.__name__] = sensor
-
     def apply_sensor_overrides(self, registers: RegisterAccess):
         for identifier in Config.sensor_overrides.keys():
             if identifier in self.__class__.__name__ or identifier in self["object_id"] or identifier in self.unique_id:
@@ -394,8 +385,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         else:
             result = await self._update_internal_state(**kwargs)
             if result:
-                for sensor in self._requisite_sensors.values():
-                    result = result and sensor.update_base_sensor_state(self, **kwargs)
                 state = self._states[-1][1]
         return state if raw else self._apply_gain_and_precision(state, raw)
 
@@ -530,52 +519,6 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             if self.gain is not None and self.gain != 1:
                 value *= self.gain
         return int(value)
-
-
-class RequisiteSensor(Sensor):
-    """Base superclass of all sensor definitions that are required by other sensors.
-
-    Requisite sensors are NOT published.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        unique_id: str,
-        object_id: str,
-        unit: str,
-        device_class: DeviceClass,
-        state_class: StateClass,
-        icon: str,
-        gain: float,
-        precision: int,
-    ):
-        super().__init__(
-            name,
-            unique_id,
-            object_id,
-            unit,
-            device_class,
-            state_class,
-            icon,
-            gain,
-            precision,
-        )
-
-    async def update_base_sensor_state(self, base_sensor: Sensor, **kwargs) -> bool:
-        """Updates the state of the base sensor with this sensors state.
-
-            Implementations must update base_sensor.latest_raw_state with its original
-            value combined with the state of this sensor.
-
-        Args:
-            base_sensor: The sensor to be updated with the state of this sensor.
-            **kwargs     Supplemental keyword arguments to pass to the get_state method.
-
-        Returns:
-            True only if base_sensor.latest_raw_state was updated.
-        """
-        pass
 
 
 class DerivedSensor(Sensor):

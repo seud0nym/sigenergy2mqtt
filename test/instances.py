@@ -124,8 +124,7 @@ async def get_sensor_instances(
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
             if len(c.__subclasses__()) == 0:
-                if c.__name__ != "RequisiteSensor":
-                    classes[c.__name__] = 0
+                classes[c.__name__] = 0
             else:
                 find_concrete_classes(c)
 
