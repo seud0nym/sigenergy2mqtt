@@ -19,7 +19,7 @@ from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
-from test import get_sensor_instances, cancel_sensor_futures
+from tests.utils import get_sensor_instances, cancel_sensor_futures
 
 
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"

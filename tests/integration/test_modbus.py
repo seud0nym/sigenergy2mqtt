@@ -2,7 +2,7 @@ import logging
 import pytest
 import asyncio
 from sigenergy2mqtt.modbus.client import ModbusClient
-from test.modbus_test_server import run_async_server, CustomMqttHandler
+from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
 
 
 # Mock MqttClient

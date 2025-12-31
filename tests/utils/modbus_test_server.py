@@ -5,7 +5,7 @@ import sys
 import threading
 
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from datetime import datetime
 from paho.mqtt.client import Client as MqttClient
 from paho.mqtt.client import CallbackAPIVersion
@@ -19,7 +19,7 @@ from random import randint
 from ruamel.yaml import YAML
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
-from test import get_sensor_instances, cancel_sensor_futures
+from tests.utils import get_sensor_instances, cancel_sensor_futures
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
@@ -304,7 +304,7 @@ def on_message(client: MqttClient, userdata: CustomMqttHandler, message) -> None
 async def async_helper() -> None:
     _yaml = YAML(typ="safe", pure=True)
     log_level: int = logging.INFO
-    with open("test/.modbus_test_server.yaml", "r") as f:
+    with open("tests/utils/.modbus_test_server.yaml", "r") as f:
         config = _yaml.load(f)
         mqtt_client = MqttClient(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop()))
         mqtt_client.username_pw_set(config.get("mqtt", {}).get("username"), config.get("mqtt", {}).get("password"))

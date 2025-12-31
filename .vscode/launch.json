@@ -1,0 +1,73 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/modbus_test_server.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run (env)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/tests/utils/.debug.env",
+            "args": "--config=tests/utils/.debug.env.yaml",
+        },
+        {
+            "name": "Run (config)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "args": "--config=tests/utils/.debug.yaml",
+        },
+        {
+            "name": "Run (args)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "args": "${command:pickArgs}"
+        },
+        {
+            "name": "Clean (config)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "args": "--config=tests/utils/.debug.yaml --clean"
+        },
+        {
+            "name": "Clean (env)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/tests/utils/.debug.env",
+            "args": "--config=tests/utils/.debug.env.yaml --clean"
+        },
+        {
+            "name": "Discovery Only",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-discovery-only"
+        },
+        {
+            "name": "Version",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "args": "--version"
+        }
+    ]
+}

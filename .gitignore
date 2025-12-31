@@ -1,7 +1,6 @@
 # Project
 .*.yaml
 .debug.*
-.vscode/launch.json
 data/
 protocol/
 resources/modbusregisterdefinitions.py

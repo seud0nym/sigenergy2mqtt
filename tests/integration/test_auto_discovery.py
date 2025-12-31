@@ -3,7 +3,7 @@ import pytest
 import asyncio
 from unittest.mock import MagicMock, patch
 from sigenergy2mqtt.config import auto_discovery
-from test.modbus_test_server import run_async_server, CustomMqttHandler
+from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
 
 
 # Mock MqttClient for the server
@@ -33,7 +33,7 @@ async def mock_modbus_server():
 
     # Configure logging to show all debug output
     logging.basicConfig(level=logging.DEBUG)
-    logging.getLogger("test.modbus_test_server").setLevel(logging.DEBUG)
+    logging.getLogger("tests.utils.modbus_test_server").setLevel(logging.DEBUG)
     logging.getLogger("sigenergy2mqtt.config.auto_discovery").setLevel(logging.DEBUG)
     logging.getLogger("pymodbus").setLevel(logging.INFO)  # Keep pymodbus less chatty unless needed
 

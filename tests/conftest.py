@@ -5,7 +5,7 @@ from unittest.mock import patch
 # Ensure the package is in the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # Ensure the test helpers are in the path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../test")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "utils")))
 
 # Set environment variables to satisfy Config validation
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
