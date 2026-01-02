@@ -8,6 +8,7 @@ from sigenergy2mqtt.devices.types import DeviceType, HybridInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
+from sigenergy2mqtt.influxdb import get_influx_services
 from sigenergy2mqtt.sensors.base import ModbusSensor
 from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
@@ -84,6 +85,10 @@ async def async_main() -> None:
 
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
+            svc_thread_cfg.add_device(-1, service)
+
+    if Config.influxdb.enabled and not Config.clean:
+        for service in get_influx_services(configs):
             svc_thread_cfg.add_device(-1, service)
 
     configs.insert(0, svc_thread_cfg)

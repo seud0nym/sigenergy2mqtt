@@ -5,6 +5,7 @@ from .home_assistant_config import HomeAssistantConfiguration
 from .modbus_config import DeviceConfig
 from .mqtt_config import MqttConfiguration
 from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSource
+from .influxdb_config import InfluxDBConfiguration
 from .validation import check_bool, check_host, check_float, check_int, check_int_list, check_log_level, check_port, check_string
 from pathlib import Path
 from ruamel.yaml import YAML
@@ -26,6 +27,7 @@ class Config:
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
     mqtt: MqttConfiguration = MqttConfiguration()
     pvoutput: PVOutputConfiguration = PVOutputConfiguration()
+    influxdb: InfluxDBConfiguration = InfluxDBConfiguration()
     sensor_debug_logging: bool = False
     sensor_overrides: dict = {}
 
@@ -271,6 +273,22 @@ class Config:
                             overrides["pvoutput"]["v11"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
                         case const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
                             overrides["pvoutput"]["v12"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_INFLUX_ENABLED:
+                            overrides["influxdb"]["enabled"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_INFLUX_HOST:
+                            overrides["influxdb"]["host"] = check_host(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_INFLUX_PORT:
+                            overrides["influxdb"]["port"] = check_int(os.environ[key], key, min=1, max=65535)
+                        case const.SIGENERGY2MQTT_INFLUX_DATABASE:
+                            overrides["influxdb"]["database"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
+                        case const.SIGENERGY2MQTT_INFLUX_USERNAME:
+                            overrides["influxdb"]["username"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_INFLUX_PASSWORD:
+                            overrides["influxdb"]["password"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_INFLUX_INCLUDE:
+                            overrides["influxdb"]["include"] = [x for x in os.environ[key].split(",")]
+                        case const.SIGENERGY2MQTT_INFLUX_EXCLUDE:
+                            overrides["influxdb"]["exclude"] = [x for x in os.environ[key].split(",")]
                         case (
                             const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY
                             | const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT
@@ -364,6 +382,8 @@ class Config:
                         raise ValueError("modbus configuration element must contain a list of Sigenergy hosts")
                 case "pvoutput":
                     Config.pvoutput.configure(data[name], override)
+                case "influxdb":
+                    Config.influxdb.configure(data[name], override)
                 case "sensor-debug-logging":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sensor-debug-logging = {data[name]}")
                     Config.sensor_debug_logging = check_bool(data[name], name)
