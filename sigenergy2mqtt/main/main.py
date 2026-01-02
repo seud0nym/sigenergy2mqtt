@@ -167,6 +167,7 @@ def configure_logging():
         if pvoutput.level != logging.NOTSET:
             pvoutput.log(root.level, f"pvoutput log-level changed to {logging.getLevelName(Config.pvoutput.log_level)}")
         pvoutput.setLevel(Config.pvoutput.log_level)
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
 
 
 async def get_state(sensor: ModbusSensor, modbus: ModbusClient, device: str, default_value: int | float | str | None = None, raw: bool = False) -> tuple[ModbusSensor, int | float | str | None]:
