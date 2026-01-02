@@ -5,6 +5,11 @@ from typing import Any, Awaitable, Callable, Iterable, List
 import logging
 import asyncio
 import requests
+try:
+    from influxdb_client import InfluxDBClient, Point, WriteOptions
+    HAS_INFLUX_CLIENT = True
+except Exception:
+    HAS_INFLUX_CLIENT = False
 import time
 import json
 
@@ -120,6 +125,20 @@ class InfluxService(Device):
         pwd = Config.influxdb.password
         base = f"http://{host}:{port}"
         headers = {}
+
+        # Prefer official client when available (supports v2 and v3 where token-based)
+        if HAS_INFLUX_CLIENT and pwd:
+            try:
+                org = None
+                with InfluxDBClient(url=base, token=pwd, org=org) as client:
+                    write_api = client.write_api(write_options=WriteOptions(batch_size=1))
+                    # If bucket exists, write directly; client will throw on failure
+                    write_api.write(bucket=db, org=org, record=line)
+                    self.logger.debug("InfluxDB client write OK")
+                    return
+            except Exception:
+                # Fall through to HTTP methods if client fails
+                pass
 
         # Try v2 write endpoint using token in password
         try:
