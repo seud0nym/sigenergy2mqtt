@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import ANY, MagicMock, patch
 
-from sigenergy2mqtt.influxdb.service import InfluxService
+from influxdb.influx_service import InfluxService
 from sigenergy2mqtt.config import Config
 
 

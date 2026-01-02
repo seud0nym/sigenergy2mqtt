@@ -15,8 +15,8 @@ except Exception:
     mod.WriteOptions = None
     sys.modules["influxdb_client"] = mod
 
-import sigenergy2mqtt.influxdb.service as service_module
-from sigenergy2mqtt.influxdb.service import InfluxService
+import influxdb.influx_service as service_module
+from influxdb.influx_service import InfluxService
 from sigenergy2mqtt.config import Config
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 __all__ = ["get_influx_services"]
 
-from .service import InfluxService
+from .influx_service import InfluxService
 from typing import TYPE_CHECKING
 import logging
 
