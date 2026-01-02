@@ -47,9 +47,9 @@ class InfluxService(Device):
         db = Config.influxdb.database
         user = Config.influxdb.username
         pwd = Config.influxdb.password
-        token = getattr(Config.influxdb, "token", None)
-        org = getattr(Config.influxdb, "org", None)
-        bucket = getattr(Config.influxdb, "bucket", None) or db
+        token = Config.influxdb.token
+        org = Config.influxdb.org
+        bucket = Config.influxdb.bucket or db
         # Backwards-compat: if no explicit token provided but a password is
         # supplied and no username, treat the password as a v2 token.
         if not token and pwd and not user:
