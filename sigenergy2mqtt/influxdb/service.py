@@ -47,46 +47,80 @@ class InfluxService(Device):
         db = Config.influxdb.database
         user = Config.influxdb.username
         pwd = Config.influxdb.password
+        token = getattr(Config.influxdb, "token", None)
+        org = getattr(Config.influxdb, "org", None)
+        bucket = getattr(Config.influxdb, "bucket", None) or db
+        # Backwards-compat: if no explicit token provided but a password is
+        # supplied and no username, treat the password as a v2 token.
+        if not token and pwd and not user:
+            token = pwd
         base = f"http://{host}:{port}"
 
-        # 1) Prefer official client when token provided
-        if pwd:
+        # Prefer v2/client only when token provided. If a username is provided, prefer v1 HTTP.
+        # 1) Official client (v2) when token is provided
+        if token:
             try:
-                client = InfluxDBClient(url=base, token=pwd)
-                # Try a write to the target bucket (may raise)
+                client = InfluxDBClient(url=base, token=token)
                 write_api = client.write_api(write_options=WriteOptions(batch_size=1))
                 test_line = b"_sigenergy_init value=1"
                 try:
-                    # Include `org=None` to match the signature of test dummies
-                    write_api.write(bucket=db, org=None, record=test_line)
+                    write_api.write(bucket=bucket, org=org, record=test_line)
                 except Exception:
                     client.close()
                     raise
                 self._writer_type = "client"
                 self._writer_obj = client
-                self._writer_obj_bucket = db
-                self._writer_obj_org = None
-                self.logger.info("InfluxDB: using official client for writes")
+                self._writer_obj_bucket = bucket
+                self._writer_obj_org = org
+                self.logger.info("InfluxDB: using official client for writes (v2 token)")
                 return
             except Exception as e:
                 self.logger.debug(f"InfluxDB client detection/initial write failed: {e}")
 
-        # 2) Try v2 HTTP write endpoint (uses token in password)
+        # If username is provided, prefer v1 HTTP (InfluxDB 1.x)
+        if user:
+            try:
+                url_v1 = f"{base}/write"
+                auth = (user, pwd) if user or pwd else None
+                r = self._session.post(url_v1, params={"db": db}, data=b"_sigenergy_init value=1", auth=auth, timeout=5)
+                if r.status_code in (204, 200):
+                    self._writer_type = "v1_http"
+                    self._write_url = url_v1
+                    self._write_auth = auth
+                    self.logger.info("InfluxDB: using v1 HTTP write endpoint")
+                    return
+                # Attempt to create database and retry
+                if r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower()):
+                    create_url = f"{base}/query"
+                    q = {"q": f"CREATE DATABASE {db}"}
+                    r2 = self._session.post(create_url, params=q, auth=auth, timeout=5)
+                    if r2.status_code == 200:
+                        r3 = self._session.post(url_v1, params={"db": db}, data=b"_sigenergy_init value=1", auth=auth, timeout=5)
+                        if r3.status_code in (204, 200):
+                            self._writer_type = "v1_http"
+                            self._write_url = url_v1
+                            self._write_auth = auth
+                            self.logger.info("InfluxDB: created v1 database and will use v1 HTTP write")
+                            return
+            except Exception as e:
+                self.logger.debug(f"InfluxDB v1 HTTP detection failed: {e}")
+
+        # Try v2 HTTP write endpoint (may succeed without a token)
         try:
-            url_v2 = f"{base}/api/v2/write?bucket={db}&precision=s"
-            headers = {}
-            if pwd:
-                headers["Authorization"] = f"Token {pwd}"
-            r = self._session.post(url_v2, headers=headers, data=b"_sigenergy_init value=1", timeout=5)
+            url_v2 = f"{base}/api/v2/write?bucket={bucket}&precision=s"
+            if org:
+                url_v2 += f"&org={org}"
+            headers = {"Authorization": f"Token {token}"} if token else {}
+            r = self._session.post(url_v2, headers=headers or None, data=b"_sigenergy_init value=1", timeout=5)
             if r.status_code in (204, 200):
                 self._writer_type = "v2_http"
                 self._write_url = url_v2
-                self._write_headers = headers
+                self._write_headers = headers or {}
                 self.logger.info("InfluxDB: using v2 HTTP write endpoint")
                 return
-            # If bucket not found, attempt to create it (requires token)
-            if r.status_code in (400, 404) and pwd:
-                headers_create = {"Authorization": f"Token {pwd}", "Content-Type": "application/json"}
+            # If bucket not found and token provided, attempt to create it
+            if r.status_code in (400, 404) and token:
+                headers_create = {"Authorization": f"Token {token}", "Content-Type": "application/json"}
                 orgs = self._session.get(f"{base}/api/v2/orgs", headers=headers_create, timeout=5)
                 if orgs.status_code == 200:
                     items = orgs.json()
@@ -96,21 +130,21 @@ class InfluxService(Device):
                         if isinstance(lst, list) and lst:
                             org_id = lst[0].get("id")
                     if org_id:
-                        create_bucket = {"name": db, "orgID": org_id}
+                        create_bucket = {"name": bucket, "orgID": org_id}
                         r2 = self._session.post(f"{base}/api/v2/buckets", headers=headers_create, data=json.dumps(create_bucket), timeout=5)
                         if r2.status_code in (201, 200):
                             # retry write
-                            r3 = self._session.post(url_v2, headers=headers, data=b"_sigenergy_init value=1", timeout=5)
+                            r3 = self._session.post(url_v2, headers=headers or None, data=b"_sigenergy_init value=1", timeout=5)
                             if r3.status_code in (204, 200):
                                 self._writer_type = "v2_http"
                                 self._write_url = url_v2
-                                self._write_headers = headers
+                                self._write_headers = headers or {}
                                 self.logger.info("InfluxDB: created v2 bucket and will use v2 HTTP write")
                                 return
         except Exception as e:
             self.logger.debug(f"InfluxDB v2 HTTP detection failed: {e}")
 
-        # 3) Try v1 HTTP write endpoint
+        # Final fallback: try v1 HTTP without username (no auth)
         try:
             url_v1 = f"{base}/write"
             auth = (user, pwd) if user or pwd else None
@@ -122,7 +156,7 @@ class InfluxService(Device):
                 self.logger.info("InfluxDB: using v1 HTTP write endpoint")
                 return
             # Attempt to create database and retry
-            if r.status_code in (404, 400) or (r.status_code >= 400 and b"database" in r.content.lower() if r.content else False):
+            if r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower()):
                 create_url = f"{base}/query"
                 q = {"q": f"CREATE DATABASE {db}"}
                 r2 = self._session.post(create_url, params=q, auth=auth, timeout=5)

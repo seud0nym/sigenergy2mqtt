@@ -621,6 +621,30 @@ _parser.add_argument(
     help="InfluxDB database to write metrics to (default: sigenergy)",
 )
 _parser.add_argument(
+    "--influx-org",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_ORG,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_ORG, None),
+    help="InfluxDB organization name or ID",
+)
+_parser.add_argument(
+    "--influx-token",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_TOKEN,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_TOKEN, None),
+    help="InfluxDB v2 authentication token (prefer v2 APIs when supplied)",
+)
+_parser.add_argument(
+    "--influx-bucket",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_BUCKET,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_BUCKET, None),
+    help="InfluxDB v2 bucket name (defaults to --influx-database if not set)",
+)
+_parser.add_argument(
     "--influx-username",
     nargs="?",
     action="store",
@@ -657,9 +681,9 @@ _parser.add_argument(
     nargs="?",
     action="store",
     dest=const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL,
-    type=int,
+    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     default=os.getenv(const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL, None),
-    help="InfluxDB subsystem log level (numeric 0-50). Default corresponds to WARNING.",
+    help="InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 # endregion
 _parser.add_argument(

@@ -282,6 +282,12 @@ class Config:
                             overrides["influxdb"]["port"] = check_int(os.environ[key], key, min=1, max=65535)
                         case const.SIGENERGY2MQTT_INFLUX_DATABASE:
                             overrides["influxdb"]["database"] = check_string(os.environ[key], key, allow_none=False, allow_empty=False)
+                        case const.SIGENERGY2MQTT_INFLUX_ORG:
+                            overrides["influxdb"]["org"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_INFLUX_TOKEN:
+                            overrides["influxdb"]["token"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
+                        case const.SIGENERGY2MQTT_INFLUX_BUCKET:
+                            overrides["influxdb"]["bucket"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
                         case const.SIGENERGY2MQTT_INFLUX_USERNAME:
                             overrides["influxdb"]["username"] = check_string(os.environ[key], key, allow_none=True, allow_empty=True)
                         case const.SIGENERGY2MQTT_INFLUX_PASSWORD:
@@ -291,7 +297,7 @@ class Config:
                         case const.SIGENERGY2MQTT_INFLUX_EXCLUDE:
                             overrides["influxdb"]["exclude"] = [x for x in os.environ[key].split(",")]
                         case const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
-                            overrides["influxdb"]["log-level"] = check_int(os.environ[key], key, min=0, max=50)
+                            overrides["influxdb"]["log-level"] = check_log_level(os.environ[key], key)
                         case (
                             const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY
                             | const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT

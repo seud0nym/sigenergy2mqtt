@@ -9,7 +9,9 @@
             "type": "debugpy",
             "request": "launch",
             "program": "tests/utils/modbus_test_server.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "subProcess": true
         },
         {
             "name": "Run (env)",
@@ -19,6 +21,16 @@
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/tests/utils/.debug.env",
             "args": "--config=tests/utils/.debug.env.yaml",
+            "justMyCode": false,
+            "subProcess": true,
+            "purpose": [
+                "debug-test"
+            ],
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+            }
         },
         {
             "name": "Run (config)",
@@ -27,6 +39,11 @@
             "program": "tests/utils/.debug.py",
             "console": "integratedTerminal",
             "args": "--config=tests/utils/.debug.yaml",
+            "justMyCode": false,
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
         },
         {
             "name": "Run (args)",
@@ -34,7 +51,12 @@
             "request": "launch",
             "program": "tests/utils/.debug.py",
             "console": "integratedTerminal",
-            "args": "${command:pickArgs}"
+            "args": "${command:pickArgs}",
+            "justMyCode": false,
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
         },
         {
             "name": "Clean (config)",
@@ -42,7 +64,12 @@
             "request": "launch",
             "program": "tests/utils/.debug.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml --clean"
+            "args": "--config=tests/utils/.debug.yaml --clean",
+            "justMyCode": false,
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
         },
         {
             "name": "Clean (env)",
@@ -51,7 +78,12 @@
             "program": "tests/utils/.debug.py",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/tests/utils/.debug.env",
-            "args": "--config=tests/utils/.debug.env.yaml --clean"
+            "args": "--config=tests/utils/.debug.env.yaml --clean",
+            "justMyCode": false,
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
         },
         {
             "name": "Discovery Only",
@@ -59,7 +91,12 @@
             "request": "launch",
             "program": "tests/utils/.debug.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-discovery-only"
+            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-discovery-only",
+            "justMyCode": false,
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
         },
         {
             "name": "Version",
@@ -67,7 +104,12 @@
             "request": "launch",
             "program": "tests/utils/.debug.py",
             "console": "integratedTerminal",
-            "args": "--version"
+            "args": "--version",
+            "justMyCode": false,
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov"
+            }
         }
     ]
 }

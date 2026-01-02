@@ -1,5 +1,5 @@
+from sigenergy2mqtt.config.validation import check_log_level
 from dataclasses import dataclass, field
-from typing import Final
 from .validation import check_bool, check_host, check_int, check_string
 import logging
 
@@ -10,6 +10,11 @@ class InfluxDBConfiguration:
     host: str = "127.0.0.1"
     port: int = 8086
     database: str = "sigenergy"
+    # v2 fields
+    token: str = ""
+    org: str = ""
+    bucket: str = ""
+    org: str = ""
     username: str = ""
     password: str = ""
     include: list[str] = field(default_factory=list)
@@ -33,6 +38,14 @@ class InfluxDBConfiguration:
                             self.port = check_int(v, "influxdb.port", min=1, max=65535)
                         case "database":
                             self.database = check_string(str(v), "influxdb.database", allow_none=False, allow_empty=False)
+                        case "token":
+                            self.token = check_string(v, "influxdb.token", allow_none=True, allow_empty=True)
+                        case "org":
+                            self.org = check_string(v, "influxdb.org", allow_none=True, allow_empty=True)
+                        case "bucket":
+                            self.bucket = check_string(v, "influxdb.bucket", allow_none=True, allow_empty=True)
+                        case "org":
+                            self.org = check_string(str(v), "influxdb.org", allow_none=True, allow_empty=True)
                         case "username":
                             self.username = check_string(v, "influxdb.username", allow_none=True, allow_empty=True)
                         case "password":
@@ -48,7 +61,7 @@ class InfluxDBConfiguration:
                             else:
                                 raise ValueError("influxdb.exclude must be a list of sensor identifiers")
                         case "log-level":
-                            self.log_level = check_int(v, "influxdb.log-level", min=0, max=50)
+                            self.log_level = check_log_level(v, "influxdb.log-level")
                         case _:
                             if k != "enabled":
                                 raise ValueError(f"influxdb configuration element contains unknown option '{k}'")

@@ -656,6 +656,20 @@ influxdb:
   #   default: sigenergy
   #   description: The InfluxDB database to write metrics to.
   database: sigenergy
+  # org
+  #   default: ""
+  #   description: InfluxDB organization name or ID (InfluxDB 2.x only).
+  org: ""
+  # token
+  #   default: ""
+  #   description: InfluxDB v2 authentication token. If supplied, v2 APIs
+  #                (client or HTTP) will be used in preference to v1.
+  token: ""
+  # bucket
+  #   default: ""
+  #   description: InfluxDB v2 bucket name. If not specified, the value of
+  #                'database' will be used as the v2 bucket name.
+  bucket: ""
   # username
   #   default: ""
   #   description: InfluxDB username.
@@ -673,9 +687,10 @@ influxdb:
   #   description: List of sensor identifiers to exclude when publishing to InfluxDB.
   exclude: []
   # log-level
-  #   default: 30
-  #   description: Log level for InfluxDB subsystem (numeric, 0-50). 30 corresponds to WARNING.
-  log-level: 30
+  #   default: WARNING  
+  #   description:  The InfluxDB interface logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: CRITICAL
 
 
 
