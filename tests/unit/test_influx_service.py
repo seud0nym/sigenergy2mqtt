@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -12,18 +11,24 @@ class DummyMqtt:
 
 
 @pytest.mark.asyncio
-async def test_influx_handle_mqtt_includes_excludes(tmp_path, mocker):
+async def test_influx_handle_mqtt_includes_excludes(tmp_path):
     logger = MagicMock()
-    svc = InfluxService(logger)
+    svc = InfluxService(logger, plant_index=0)
 
     # Create a fake sensor
-    class FakeSensor(dict):
+    class FakeSensor:
         def __init__(self):
-            super().__init__()
-            self['object_id'] = 'sensor.test_1'
-            self['unique_id'] = 'uid_test_1'
-            self['state_topic'] = 'sigenergy2mqtt/sensor.test_1/state'
-            self['raw_state_topic'] = 'sigenergy2mqtt/sensor.test_1/raw'
+            self._data = {'object_id': 'sensor.test_1', 'unique_id': 'uid_test_1', 'unit_of_measurement': 'W'}
+            self.state_topic = 'sigenergy2mqtt/sensor.test_1/state'
+            self.raw_state_topic = 'sigenergy2mqtt/sensor.test_1/raw'
+            self.publishable = True
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        @property
+        def unique_id(self):
+            return self._data['unique_id']
 
     fake_sensor = FakeSensor()
 
@@ -32,6 +37,8 @@ async def test_influx_handle_mqtt_includes_excludes(tmp_path, mocker):
     fake_device.get_all_sensors.return_value = {'uid_test_1': fake_sensor}
 
     with patch('sigenergy2mqtt.devices.device.DeviceRegistry.get', return_value=(fake_device,)):
+        # Pre-populate the service topic cache to avoid scanning registry (service now ignores cache misses)
+        svc._topic_cache[fake_sensor.state_topic] = {"uom": fake_sensor["unit_of_measurement"], "object_id": fake_sensor["object_id"], "unique_id": fake_sensor.unique_id}
         # No include/exclude -> should write (we patch _write_line to capture)
         wrote = {}
 

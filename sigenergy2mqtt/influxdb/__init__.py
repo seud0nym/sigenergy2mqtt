@@ -13,5 +13,11 @@ if TYPE_CHECKING:
 def get_influx_services(configs: list[ThreadConfig]):
     logger = logging.getLogger("influxdb")
     logger.setLevel(__import__("sigenergy2mqtt").config.Config.influxdb.log_level)
-    svc = InfluxService(logger)
-    return [svc]
+    services = []
+    # Create one service instance per plant index
+    for plant_index in range(len(__import__("sigenergy2mqtt").config.Config.devices)):
+        svc_logger = logging.getLogger(f"influxdb.plant{plant_index}")
+        svc_logger.setLevel(__import__("sigenergy2mqtt").config.Config.influxdb.log_level)
+        svc = InfluxService(svc_logger, plant_index)
+        services.append(svc)
+    return services
