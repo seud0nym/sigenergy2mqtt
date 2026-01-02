@@ -588,6 +588,80 @@ _parser.add_argument(
     help="Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 # endregion
+# region InfluxDB Configuration
+_parser.add_argument(
+    "--influx-enabled",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_INFLUX_ENABLED,
+    help="Enable writing metrics to InfluxDB.",
+)
+_parser.add_argument(
+    "--influx-host",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_HOST,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_HOST, None),
+    help="InfluxDB hostname or IP address (default: 127.0.0.1)",
+)
+_parser.add_argument(
+    "--influx-port",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_PORT,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_PORT, None),
+    help="InfluxDB port (default: 8086)",
+)
+_parser.add_argument(
+    "--influx-database",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_DATABASE,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_DATABASE, None),
+    help="InfluxDB database to write metrics to (default: sigenergy)",
+)
+_parser.add_argument(
+    "--influx-username",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_USERNAME,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_USERNAME, None),
+    help="InfluxDB username",
+)
+_parser.add_argument(
+    "--influx-password",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_PASSWORD,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_PASSWORD, None),
+    help="InfluxDB password",
+)
+_parser.add_argument(
+    "--influx-include",
+    nargs="*",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_INCLUDE,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_INCLUDE, None),
+    help="List of sensor identifiers to include (space separated)",
+)
+_parser.add_argument(
+    "--influx-exclude",
+    nargs="*",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_EXCLUDE,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_EXCLUDE, None),
+    help="List of sensor identifiers to exclude (space separated)",
+)
+_parser.add_argument(
+    "--influx-log-level",
+    nargs="?",
+    action="store",
+    dest=const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL,
+    type=int,
+    default=os.getenv(const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL, None),
+    help="InfluxDB subsystem log level (numeric 0-50). Default corresponds to WARNING.",
+)
+# endregion
 _parser.add_argument(
     "--clean",
     action="store_true",
@@ -637,6 +711,7 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
         or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
         or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
+        or arg == const.SIGENERGY2MQTT_INFLUX_ENABLED
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS

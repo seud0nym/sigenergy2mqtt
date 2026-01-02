@@ -57,7 +57,8 @@ class InfluxService(Device):
                 write_api = client.write_api(write_options=WriteOptions(batch_size=1))
                 test_line = b"_sigenergy_init value=1"
                 try:
-                    write_api.write(bucket=db, record=test_line)
+                    # Include `org=None` to match the signature of test dummies
+                    write_api.write(bucket=db, org=None, record=test_line)
                 except Exception:
                     client.close()
                     raise

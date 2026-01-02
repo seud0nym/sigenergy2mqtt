@@ -241,12 +241,6 @@ modbus:
     #                 Management System (EMS) integration will NOT be published
     #                 to MQTT. Ignored if read-write option is false.
     no-remote-ems: false
-    # disable-chunking
-    #   default: false
-    #   description:  If true, Modbus read chunking will be disabled and each
-    #                 register will be read individually. This may impact
-    #                 performance.
-    disable-chunking: false
     # scan-interval-low
     #   added: 2025.6.11
     #   default: 600
@@ -638,4 +632,50 @@ pvoutput:
         end: 21:00
         days: 
           - All
+# influxdb
+#   added: 2026.01.02
+#   default: false
+#   description:  Configuration for sending metrics to InfluxDB. Both
+#                 InfluxDB v2 (token/org/bucket) and v1 (username/password,
+#                 retention-policy) authentication modes are supported; if a
+#                 `token` is supplied the v2 API will be used.
+influxdb:
+  # enabled
+  #   default: false
+  #   description: If true, sigenergy2mqtt will write metrics to InfluxDB.
+  enabled: false
+  # host
+  #   default: 127.0.0.1
+  #   description: Hostname or IP address of the InfluxDB server.
+  host: 127.0.0.1
+  # port
+  #   default: 8086
+  #   description: Port on which InfluxDB is listening.
+  port: 8086
+  # database
+  #   default: sigenergy
+  #   description: The InfluxDB database to write metrics to.
+  database: sigenergy
+  # username
+  #   default: ""
+  #   description: InfluxDB username.
+  username: ""
+  # password
+  #   default: ""
+  #   description: InfluxDB password.
+  password: ""
+  # include
+  #   default: [ ]
+  #   description: List of sensor identifiers to include when publishing to InfluxDB.
+  include: []
+  # exclude
+  #   default: [ ]
+  #   description: List of sensor identifiers to exclude when publishing to InfluxDB.
+  exclude: []
+  # log-level
+  #   default: 30
+  #   description: Log level for InfluxDB subsystem (numeric, 0-50). 30 corresponds to WARNING.
+  log-level: 30
+
+
 
