@@ -6,11 +6,12 @@ build-backend = "hatchling.build"
 name = "sigenergy2mqtt"
 dynamic = ["version"]
 dependencies = [
+    "influxdb-client==1.49.0",
     "paho-mqtt==2.1.0",
     "psutil==7.2.1",
     "pymodbus==3.11.4",
     "requests==2.32.5",
-    "ruamel.yaml==0.19.0",
+    "ruamel.yaml==0.18.17",
     "scapy==2.7.0",
 ]
 description = "Publish Modbus data from Sigenergy to MQTT, with optional Home Assistant Auto-Discovery and PVOutput updating"
@@ -20,7 +21,7 @@ authors = [
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 [project.optional-dependencies]
 test = [
