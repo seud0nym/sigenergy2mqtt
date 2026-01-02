@@ -3,6 +3,7 @@
 cd "$(cd $(dirname $0)/..; pwd)"
 
 for spec in \
+        "influxdb-client(>=1.31.0,<2.0.0)" \
         "paho-mqtt(>=2.1.0,<3.0.0)" \
         "psutil(>=7.0.0,<8.0.0)" \
         "pymodbus(>=3.9.2,<4.0.0)" \
