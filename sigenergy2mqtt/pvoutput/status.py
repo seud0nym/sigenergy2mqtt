@@ -2,7 +2,7 @@ from .service_topics import Calculation, ServiceTopics
 from .service import Service
 from .topic import Topic
 from sigenergy2mqtt.config import Config, StatusField, VoltageSource
-from typing import Any, Awaitable, Callable, Iterable, List
+from typing import Any, Awaitable, List
 import asyncio
 import logging
 import time
@@ -81,7 +81,7 @@ class PVOutputStatusService(Service):
         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, next_time
 
-    def schedule(self, modbus: Any, mqtt: Any) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
+    def schedule(self, modbus: Any, mqtt: Any) -> List[Awaitable[None]]:
         async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
             self.logger.info(f"{self.__class__.__name__} Commenced")
             wait, _ = await self.seconds_until_status_upload()

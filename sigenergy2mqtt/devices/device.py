@@ -18,7 +18,7 @@ from sigenergy2mqtt.sensors.base import (
     WriteOnlySensor,
 )
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST
-from typing import Awaitable, Callable, Iterable, Self
+from typing import Awaitable, Self
 import abc
 import asyncio
 import json
@@ -55,7 +55,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         self.write_sensors: dict[str, WritableSensorMixin] = {}
 
         self._rediscover = False
-        self._online: asyncio.Future = None
+        self._online: asyncio.Future | bool | None = None
 
         self["name"] = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
         self["ids"] = [unique_id]
@@ -75,7 +75,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
 
     @property
     def online(self) -> bool:
-        return self._online
+        return bool(self._online)
 
     @online.setter
     def online(self, value: bool | asyncio.Future) -> None:
@@ -455,7 +455,7 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
                 self.publish_discovery(mqtt, clean=False)
                 wait = Config.home_assistant.republish_discovery_interval
 
-    def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> list[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]]:
+    def schedule(self, modbus: ModbusClient, mqtt: MqttClient) -> list[Awaitable[None]]:
         groups = self._create_sensor_scan_groups()
         tasks = []
         for name, sensors in groups.items():

@@ -4,7 +4,7 @@ from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 from sigenergy2mqtt.mqtt import MqttClient
 from sigenergy2mqtt.sensors.const import PERCENTAGE
-from typing import Any, Awaitable, Callable, Iterable, List
+from typing import Any, Awaitable, List
 import asyncio
 import json
 import logging
@@ -200,7 +200,7 @@ class MetricsService(Device):
             info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
         return info
 
-    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
+    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Awaitable[None]]:
         def get_value(object_id: str) -> Any:
             match object_id:
                 case "sigenergy2mqtt_modbus_locks":

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from random import randint
 from sigenergy2mqtt.config import Config, OutputField
 from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from typing import Any, Awaitable, Callable, Iterable, List
+from typing import Any, Awaitable, List
 import asyncio
 import logging
 import re
@@ -183,7 +183,7 @@ class PVOutputOutputService(Service):
                 self.logger.error(f"{self.__class__.__name__} {exc}")
         return matches
 
-    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, MqttClient, Iterable[Any]], Awaitable[None]]]:
+    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Awaitable[None]]:
         async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)

@@ -2,9 +2,8 @@ from .thread_config import ThreadConfig
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory, ModbusClient
-from sigenergy2mqtt.mqtt import MqttClient, mqtt_setup
-from sigenergy2mqtt.sensors.base import Sensor
-from typing import Awaitable, Callable, Iterable, List
+from sigenergy2mqtt.mqtt import mqtt_setup
+from typing import Awaitable, List
 import asyncio
 import concurrent.futures
 import logging
@@ -18,7 +17,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
 
     device: Device = None
     modbus_client: ModbusClient = None
-    tasks: List[Callable[[ModbusClient, MqttClient, Iterable[Sensor]], Awaitable[None]]] = []
+    tasks: List[Awaitable[None]] = []
 
     if config.host is None or Config.clean:
         modbus_client = None
