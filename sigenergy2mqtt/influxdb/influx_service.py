@@ -238,10 +238,7 @@ class InfluxService(Device):
                     if not getattr(s, "publishable", False):
                         continue
                     # subscribe to state_topic only when unit_of_measurement exists
-                    try:
-                        uom = s["unit_of_measurement"]
-                    except Exception:
-                        uom = None
+                    uom = s["unit_of_measurement"] if s["unit_of_measurement"] else s.device_class.value if s.device_class else getattr(s, "data_type").name if hasattr(s, "data_type") else None
                     # Cache sensor metadata keyed by state_topic for fast lookup during updates
                     try:
                         obj = s["object_id"]
@@ -250,6 +247,8 @@ class InfluxService(Device):
                     self._topic_cache[s.state_topic] = {"uom": uom, "object_id": obj, "unique_id": s.unique_id}
                     if uom:
                         mqtt_handler.register(mqtt, s.state_topic, self.handle_mqtt)
+                    else:
+                        self.logger.debug(f"{self.__class__.__name__} Ignored {obj} ({s.__class__.__name__}): {uom=}")
             except Exception:
                 # Ignore devices we can't iterate
                 continue
@@ -291,7 +290,6 @@ class InfluxService(Device):
                 except Exception:
                     fields["value_str"] = value
                 tags["object_id"] = cache_entry.get("object_id")
-                tags["sensor"] = cache_entry.get("unique_id")
             else:
                 measurement = topic.replace("/", "_")
                 try:
