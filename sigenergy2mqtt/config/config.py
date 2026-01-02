@@ -59,6 +59,7 @@ class Config:
             "home-assistant": {},
             "mqtt": {},
             "modbus": [{"smart-port": {"mqtt": [{}], "module": {}}}],
+            "influxdb": {},
             "pvoutput": {},
             "sensor-overrides": {},
         }
@@ -289,6 +290,8 @@ class Config:
                             overrides["influxdb"]["include"] = [x for x in os.environ[key].split(",")]
                         case const.SIGENERGY2MQTT_INFLUX_EXCLUDE:
                             overrides["influxdb"]["exclude"] = [x for x in os.environ[key].split(",")]
+                        case const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+                            overrides["influxdb"]["log-level"] = check_int(os.environ[key], key, min=0, max=50)
                         case (
                             const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY
                             | const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT
