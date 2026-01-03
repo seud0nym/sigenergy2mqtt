@@ -53,7 +53,7 @@ def check_date(value, source) -> date:
 def check_float(value, source, min: float = None, max: float = None, allow_none: bool = False):
     if allow_none and value is None:
         return value
-    if isinstance(value, str):
+    if isinstance(value, (int, str)):
         try:
             value = float(value)
         except ValueError:
