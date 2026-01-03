@@ -87,6 +87,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
             if sensor.address == 31004:  # OutputType
                 source = "output_type"
                 value = 2
+            elif sensor.address == 31023:  # PowerFactor
+                source = "power_factor"
+                value = randint(64572, 65534) / sensor.gain  # Force sanity check failure to test handling
             elif sensor.address == 31025:  # PVStringCount
                 source = "pv_string_count"
                 value = 16
@@ -145,7 +148,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         case _:
                             value = randint(0, 255)
                     value /= sensor.gain
-                if self._mqtt_client and sensor.address and not hasattr(sensor, "decode_alarm_bit"):
+                if self._mqtt_client and sensor.address and source not in ("output_type", "pv_string_count", "mptt_count", "alarm_sensor", "power_factor"):
                     if "state_topic" in sensor:
                         self._topics[sensor.state_topic] = sensor
                         self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
