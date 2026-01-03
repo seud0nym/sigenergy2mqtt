@@ -305,6 +305,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
         if Config.home_assistant.enabled:
             self["availability_mode"] = "all"
             self["availability"] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Configured MQTT topics ({Config.home_assistant.enabled=} {Config.home_assistant.use_simplified_topics=})")
+            for key in ("state_topic", "raw_state_topic", "json_attributes_topic", "availability"):
+                if key in self:
+                    logging.debug(f"{self.__class__.__name__} >>> {key}={self[key]})")
         return base
 
     def get_attributes(self) -> dict[str, Any]:
@@ -411,12 +416,12 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                             self._failures = 0
                             self._next_retry = None
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Publishing {state=}")
+                            logging.debug(f"{self.__class__.__name__} Publishing {state=} to topic '{self['state_topic']}'")
                         mqtt.publish(self["state_topic"], f"{state}", self._qos, self._retain)
                         published = True
                         if self.publish_raw:
                             if self.debug_logging:
-                                logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state}")
+                                logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state} to topic '{self['raw_state_topic']}'")
                             mqtt.publish(self["raw_state_topic"], f"{self.latest_raw_state}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)
@@ -1722,7 +1727,7 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             if alarm.protocol_version > protocol:
                 protocol = alarm.protocol_version
         return protocol
-    
+
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         for alarm in self.alarms:
