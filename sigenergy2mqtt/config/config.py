@@ -65,7 +65,10 @@ class Config:
             _yaml = YAML(typ="safe", pure=True)
             with open(Config._source, "r") as f:
                 data = _yaml.load(f)
-            Config._configure(data)
+            if data:
+                Config._configure(data)
+            else:
+                logging.warning(f"Ignored configuration file {Config._source} because it contains no keys?")
 
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(Config.persistent_state_path, "auto-discovery.yaml")
@@ -320,7 +323,7 @@ class Config:
 
     @staticmethod
     def _configure(data: dict, override: bool = False) -> None:
-        for name in data.keys():
+        for name in data.keys() if data else {}:
             match name:
                 case "home-assistant":
                     Config.home_assistant.configure(data[name], override)
