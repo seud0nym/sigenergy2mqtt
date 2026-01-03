@@ -388,6 +388,8 @@ class Config:
                                         Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0, max=6)
                                     case "publishable":
                                         Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                    case "publish-raw":
+                                        Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
                                     case "scan-interval":
                                         Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=1)
                                     case "sanity-check-max-value":
