@@ -1,5 +1,10 @@
 #!/bin/bash
 
+GREEN='\033[1;32m'
+ORANGE='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 cd "$(cd $(dirname $0)/..; pwd)"
 
 changed_files=y
@@ -7,28 +12,53 @@ if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigene
     changed_files=n
 fi
 if echo "$*" | grep -vqe "-f" && [[ $changed_files = n ]]; then
-  echo "Build CANCELLED - no changed files found"
-  exit
+    echo -e "${RED}>>> Build CANCELLED: ${ORANGE}No changed files found${NC}"
+    exit
 fi
 
+echo -e "${GREEN}>>> Checking sensors...${NC}"
 python3 -c '
 import asyncio
 import logging
-from test import instances
+from tests.utils import get_sensor_instances, cancel_sensor_futures
 logging.getLogger("root").setLevel(logging.WARNING)
 async def check():
-    print("Checking sensors")
-    await instances.get_sensor_instances(hass=True)
-    await instances.get_sensor_instances(hass=False)
+    await get_sensor_instances(hass=True)
+    await get_sensor_instances(hass=False)
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     loop.run_until_complete(check())
-    instances.cancel_sensor_futures()
+    cancel_sensor_futures()
     loop.close()
 ' || exit
 
-old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
+echo -e "${GREEN}>>> Updating documentation...${NC}"
+for var in $(grep -Eo '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py); do
+    grep -Eq "| \`${var}\`" resources/configuration/ENV.md || { echo -e "${RED}>>> Environment variable ${ORANGE}$var${RED} not found in ENV.md!"; exit; }
+done
+date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 All environment variables found in resources/configuration/ENV.md"
+python3 -c '
+import os
+import sys
+print("# Command Line Options\n")
+print("```")
+from sigenergy2mqtt.__main__ import main
+sys.exit(main())
+print("```")
+' --help >resources/configuration/CLI.md 2>/dev/null
+date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 resources/configuration/CLI.md updated"
+cd resources
+python3 update_md.py
+cd - >> /dev/null
 
+echo -e "${GREEN}>>> Checking dependencies...${NC}"
+scripts/dependencies
+
+echo -e "${GREEN}>>> Running test suite...${NC}"
+pytest -q --disable-warnings || exit
+
+echo -e "${GREEN}>>> Calculating new version...${NC}"
+old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
 if [[ $changed_files = n ]]; then
     new_version=$old_version
     post=$(echo $old_version | cut -d'-' -f2)
@@ -50,46 +80,23 @@ else
             new_version="${new_version}-1"
         fi
     fi
-    echo -e "Updating version from \033[1;32m$old_version\033[0m to \033[1;32m$new_version (PyPi=$pypi_version)\033[0m"
     sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
+    echo -e "    Updated version from ${GREEN}$old_version${NC} to ${GREEN}$new_version (PyPi=$pypi_version)${NC}"
 fi
 
 rm -f dist/*
 
+echo -e "${GREEN}>>> Building distribution...${NC}"
 python3 -m build || exit
 python3 -m twine check dist/* || exit
-if echo "$*" | grep -qe "docker"; then
-    docker buildx build --output type=cacheonly --platform linux/amd64,linux/arm64 -t sigenergy2mqtt:latest . || exit
-fi
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
-    echo -e "\033[1;32mUpdating add-on...\033[0m"
+    echo -e "${GREEN}>>> Updating add-on...${NC}"
     mkdir -p ../home-assistant-addons/sigenergy2mqtt/rootfs/dist
     rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
-    if echo "$*" | grep -qe "docker"; then
-        docker rmi $(docker images --filter=reference='local/home-assistant-addon-sigenergy2mqtt-amd64:*' -q)
-        docker run --rm -it --privileged -v ../home-assistant-addons/sigenergy2mqtt:/data -v /var/run/docker.sock:/var/run/docker.sock:ro ghcr.io/home-assistant/amd64-builder:latest --target /data --test --no-latest -d local --amd64 || exit
-    fi
 fi
 
-echo -e "\033[1;32mUpdating documentation...\033[0m"
-python3 -c '
-import os
-import sys
-print("# Command Line Options\n")
-print("```")
-from sigenergy2mqtt.__main__ import main
-sys.exit(main())
-print("```")
-' --help > resources/configuration/CLI.md
-date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 resources/configuration/CLI.md updated"
-cd resources
-python3 update_md.py
-cd -
-
-echo -e "\033[1;32mBuild successful\033[0m $(date)"
-echo -e "New version: \033[1;32m$new_version\033[0m"
-echo -e "PyPi version: \033[1;32m$pypi_version\033[0m"
+echo -e "${GREEN}>>> Build successful${NC} $(date):  New version: ${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"
