@@ -398,7 +398,7 @@ def write_naming_convention(f):
 
 async def compare_sensor_instances():
     typqxq_instances = {}
-    sensor_instances = await get_sensor_instances()
+    sensor_instances = await get_sensor_instances(hass=True)
     registers = invert_dict_by_field(sensor_instances, "address")
 
     from modbusregisterdefinitions import (
