@@ -22,7 +22,9 @@ async def mock_modbus_server():
     # Start the server in a way that we can connect to it
     mqtt_client = MockMqttClient()
 
-    server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, log_level=logging.DEBUG))
+    # Use a non-privileged port for tests to avoid permission errors
+    test_port = 1502
+    server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=test_port, log_level=logging.DEBUG))
 
     # Give server time to start
     await asyncio.sleep(2)
@@ -39,7 +41,7 @@ async def mock_modbus_server():
 @pytest.mark.asyncio
 async def test_modbus_read(mock_modbus_server):
     """Test reading from the mock Modbus server using the application ModbusClient."""
-    client = ModbusClient("127.0.0.1", port=502)
+    client = ModbusClient("127.0.0.1", port=1502)
     await client.connect()
     assert client.connected
 
