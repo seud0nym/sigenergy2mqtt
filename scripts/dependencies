@@ -2,20 +2,47 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
-for spec in \
-        "paho-mqtt(>=2.1.0,<3.0.0)" \
-        "psutil(>=7.0.0,<8.0.0)" \
-        "pymodbus(>=3.9.2,<4.0.0)" \
-        "requests(>=2.32.4,<3.0.0)" \
-        "ruamel.yaml(>=0.18.14,<0.19.0)" \
-        "scapy(>=2.6.1,<3.0.0)" \
-; do
-  pkg="${spec%%[=(]*}"
+check_pkg () {
+  local spec="$1"
+  local add_after="$2"
+  local pkg="${spec%%[=(]*}"
   echo ">>> Checking $pkg..."
   if ! pip freeze | grep -q "^${pkg}=="; then
     pip install $spec --root-user-action=ignore
   else
-    pip install "$spec" --upgrade --root-user-action=ignore
+    pip install "$spec" --upgrade --root-user-action=ignore --quiet
   fi
-  sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
+  if [[ -n "$add_after" ]]; then
+    if grep -Eq "$pkg[=(]" pyproject.toml; then
+      sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
+    else
+      sed -e "/${add_after}/a\    \"$(pip freeze | grep "^${pkg}==")\"," -i pyproject.toml
+    fi
+  fi
+}
+
+for spec in \
+    "build(>=1.3.0,<2.0.0)" \
+    "twine(>=6.2.0,<7.0.0)" \
+    "pip-autoremove(>=0.10.0,<1.0.0)" \
+; do
+  check_pkg "$spec"
+done
+
+after="dependencies"
+for spec in \
+    "paho-mqtt(>=2.1.0,<3.0.0)" \
+    "psutil(>=7.0.0,<8.0.0)" \
+    "pymodbus(>=3.9.2,<4.0.0)" \
+    "requests(>=2.32.4,<3.0.0)" \
+    "ruamel.yaml(>=0.19.1,<1.0.0)" \
+    "scapy(>=2.6.1,<3.0.0)" \
+; do
+  check_pkg "$spec" $after
+  pkgs="$pkgs $spec"
+  after="${spec%%[=(]*}"
+done
+for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
+  pkg="${spec%%[=(]*}"
+  echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
 done
