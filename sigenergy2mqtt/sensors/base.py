@@ -1722,6 +1722,12 @@ class AlarmCombinedSensor(Sensor, ReadableSensorMixin, HybridInverter, PVInverte
             if alarm.protocol_version > protocol:
                 protocol = alarm.protocol_version
         return protocol
+    
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        for alarm in self.alarms:
+            alarm.configure_mqtt_topics(device_id)
+        return base
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Gets the state of this sensor.
