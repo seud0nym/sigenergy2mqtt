@@ -1389,10 +1389,10 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
             apparent_power = math.sqrt(self._active_power.value**2 + self._reactive_power.value**2)
             power_factor = round((abs(self._active_power.value) / apparent_power) * self.gain) if apparent_power != 0 else 0
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Calculated {power_factor=} from active_power={self._active_power.value} reactive_power={self._reactive_power.value=} -> {apparent_power=}")
+                logging.debug(f"{self.__class__.__name__} Calculated {power_factor=} from active_power={self._active_power.value} reactive_power={self._reactive_power.value} -> {apparent_power=}")
             return power_factor, apparent_power
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Unable to calculate power_factor: active_power={self._active_power.value} reactive_power={self._reactive_power.value=}")
+            logging.debug(f"{self.__class__.__name__} Unable to calculate power_factor: active_power={self._active_power.value} reactive_power={self._reactive_power.value}")
         return None, None
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
