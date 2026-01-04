@@ -282,11 +282,12 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
         else:
             return False
 
-    def publish_attributes(self, mqtt: MqttClient, clean: bool = False) -> None:
+    def publish_attributes(self, mqtt: MqttClient, clean: bool = False, propagate: bool = True) -> None:
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt, clean=clean)
-        for device in self.children:
-            device.publish_attributes(mqtt, clean=clean)
+        if propagate:
+            for device in self.children:
+                device.publish_attributes(mqtt, clean=clean, propagate=propagate)
 
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
         mqtt.publish(f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
@@ -322,9 +323,9 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
                 self.publish_availability(mqtt, None, qos=1)
                 logging.debug(f"{self.name} - Publishing empty discovery (No components found)")
                 info = mqtt.publish(topic, None, qos=1, retain=True)  # Clear retained messages
+        self.publish_attributes(mqtt, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
         for device in self.children:
             device.publish_discovery(mqtt, clean=clean)
-        self.publish_attributes(mqtt, clean)
         return info
 
     async def publish_updates(self, modbus: ModbusClient, mqtt: MqttClient, name: str, *sensors: ModbusSensor | ReadableSensorMixin) -> None:
