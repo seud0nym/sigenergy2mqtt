@@ -1387,10 +1387,17 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
     def calculated(self) -> tuple[int, float] | None:
         if self._active_power.value is not None and self._reactive_power.value is not None:
             apparent_power = math.sqrt(self._active_power.value**2 + self._reactive_power.value**2)
-            return round((abs(self._active_power.value) / apparent_power) * self.gain) if apparent_power != 0 else 0, apparent_power
+            power_factor = round((abs(self._active_power.value) / apparent_power) * self.gain) if apparent_power != 0 else 0
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} Calculated {power_factor=} from active_power={self._active_power.value} reactive_power={self._reactive_power.value=} -> {apparent_power=}")
+            return power_factor, apparent_power
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Unable to calculate power_factor: active_power={self._active_power.value} reactive_power={self._reactive_power.value=}")
         return None, None
 
     async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Notified of update from topic {source} {value=}")
         if source == self._active_power.topic:
             self._active_power.value = float(value) * self._active_power.gain
         elif source == self._reactive_power.topic:
@@ -1414,6 +1421,10 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
                     logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
             if self._active_power is not None and self._reactive_power is not None:
                 break
+        if self._active_power is None:
+            logging.warning(f"{self.__class__.__name__} Failed to locate topic to populate active_power!!!")
+        if self._reactive_power is None:
+            logging.warning(f"{self.__class__.__name__} Failed to locate topic to populate reactive_power!!!")
         return topics
 
     def set_state(self, state: float | int | str) -> None:
