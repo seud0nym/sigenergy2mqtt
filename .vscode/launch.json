@@ -16,7 +16,7 @@
             "name": "Run (env)",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/tests/utils/.debug.env",
             "args": "--config=tests/utils/.debug.env.yaml",
@@ -31,68 +31,78 @@
             "name": "Run (config)",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
             "args": "--config=tests/utils/.debug.yaml",
             "subProcess": true,
             "env": {
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
             "name": "Run (args)",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
             "args": "${command:pickArgs}",
             "subProcess": true,
             "env": {
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
             "name": "Clean (config)",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml --clean",
+            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-enabled --clean",
             "subProcess": true,
             "env": {
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
             "name": "Clean (env)",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/tests/utils/.debug.env",
-            "args": "--config=tests/utils/.debug.env.yaml --clean",
+            "args": "--config=tests/utils/.debug.env.yaml --log-level=DEBUG --hass-enabled --clean",
             "subProcess": true,
             "env": {
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
             "name": "Discovery Only",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-discovery-only",
+            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-enabled --hass-discovery-only",
             "subProcess": true,
             "env": {
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
             "name": "Validate sigenenergy2mqtt.yaml",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
             "args": "--log-level=DEBUG --config=resources/configuration/sigenergy2mqtt.yaml --validate",
             "subProcess": true,
@@ -106,12 +116,14 @@
             "name": "Version",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/utils/.debug.py",
+            "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
             "args": "--version",
             "subProcess": true,
             "env": {
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         }
     ]
