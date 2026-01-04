@@ -205,6 +205,14 @@ _parser.add_argument(
     help="Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. Ignored unless --mqtt-tls is also specified.",
 )
 _parser.add_argument(
+    "--mqtt-transport",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_TRANSPORT,
+    choices=["tcp", "websockets"],
+    default=os.getenv(const.SIGENERGY2MQTT_MQTT_TRANSPORT, None),
+    help="Sets the MQTT transport mechanism. Must be one of websockets or tcp. The default is tcp.",
+)
+_parser.add_argument(
     "--mqtt-anonymous",
     action="store_true",
     dest=const.SIGENERGY2MQTT_MQTT_ANONYMOUS,
@@ -595,6 +603,12 @@ _parser.add_argument(
     help="Publish empty discovery to delete existing devices, then exits immediately.",
 )
 _parser.add_argument(
+    "--validate",
+    action="store_true",
+    dest="validate_only",
+    help="Validates the configuration, then exits immediately.",
+)
+_parser.add_argument(
     "-v",
     "--version",
     action="store_true",
@@ -674,6 +688,9 @@ try:
         Config.load("/data/sigenergy2mqtt.yaml")
     else:
         Config.reload()
+    if _args.validate_only:
+        _logger.info("Configuration is valid - exiting")
+        sys.exit(0)
 except Exception as e:
     _logger.critical(f"Error processing configuration: {e}")
     sys.exit(1)

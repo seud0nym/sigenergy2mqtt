@@ -1,4 +1,4 @@
-from .validation import check_bool, check_host, check_int, check_log_level, check_port
+from .validation import check_bool, check_host, check_int, check_log_level, check_port, check_string
 from dataclasses import dataclass
 import logging
 
@@ -7,6 +7,7 @@ import logging
 class MqttConfiguration:
     broker: str = "127.0.0.1"
     port: int = 1883
+    transport: str = "tcp"
 
     keepalive: int = 60
 
@@ -46,6 +47,8 @@ class MqttConfiguration:
                         self.log_level = check_log_level(value, f"mqtt.{field}")
                     case "tls-insecure":
                         self.tls_insecure = check_bool(value, f"mqtt.{field}")
+                    case "transport":
+                        self.transport = check_string(value, f"mqtt.{field}", "tcp", "websockets", allow_none=False, allow_empty=False)
                     case _:
                         if field != "tls":
                             raise ValueError(f"mqtt configuration element contains unknown option '{field}'")

@@ -218,6 +218,8 @@ class Config:
                             overrides["mqtt"]["tls"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_TLS_INSECURE:
                             overrides["mqtt"]["tls-insecure"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MQTT_TRANSPORT:
+                            overrides["mqtt"]["transport"] = check_string(os.environ[key], key, "tcp", "websockets", allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_MQTT_ANONYMOUS:
                             overrides["mqtt"]["anonymous"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_LOG_LEVEL:

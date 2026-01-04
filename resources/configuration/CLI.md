@@ -16,8 +16,8 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [-b [SIGENERGY2MQTT_MQTT_BROKER]]
           [--mqtt-port [SIGENERGY2MQTT_MQTT_PORT]]
           [--mqtt-keepalive [SIGENERGY2MQTT_MQTT_KEEPALIVE]] [--mqtt-tls]
-          [--mqtt-tls-insecure] [--mqtt-anonymous]
-          [-u [SIGENERGY2MQTT_MQTT_USERNAME]]
+          [--mqtt-tls-insecure] [--mqtt-transport {tcp,websockets}]
+          [--mqtt-anonymous] [-u [SIGENERGY2MQTT_MQTT_USERNAME]]
           [-p [SIGENERGY2MQTT_MQTT_PASSWORD]]
           [--mqtt-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
           [--modbus-auto-discovery {once,force}]
@@ -61,7 +61,7 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [--pvoutput-ext-v11 [SIGENERGY2MQTT_PVOUTPUT_EXT_V11]]
           [--pvoutput-ext-v12 [SIGENERGY2MQTT_PVOUTPUT_EXT_V12]]
           [--pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [--clean]
-          [-v]
+          [--validate] [-v]
 
 Reads the Sigenergy modbus interface and publishes the data to MQTT. The data
 will be published to MQTT in the Home Assistant MQTT Discovery format.
@@ -145,6 +145,9 @@ options:
                         broker is using a self-signed certificate, you must
                         specify this option. Ignored unless --mqtt-tls is also
                         specified.
+  --mqtt-transport {tcp,websockets}
+                        Sets the MQTT transport mechanism. Must be one of
+                        websockets or tcp. The default is tcp.
   --mqtt-anonymous      Allow anonymous connection to MQTT broker (i.e.
                         without username/password). If specified, the --mqtt-
                         username and --mqtt-password options are ignored.
@@ -326,6 +329,7 @@ options:
                         (warnings, errors and critical failures)
   --clean               Publish empty discovery to delete existing devices,
                         then exits immediately.
+  --validate            Validates the configuration, then exits immediately.
   -v, --version         Shows the version number, then exits immediately.
 
 Command line options over-ride values in the configuration file and

@@ -132,6 +132,12 @@ mqtt:
   #                this to true. If you are using a valid certificate, set 
   #                this to false. Ignored unless tls is also true. 
   tls-insecure: false
+  # transport
+  #   add: 2026.1.4
+  #   default: tcp
+  #   description: Sets the MQTT transport mechanism. Must be one of 
+  #                websockets or tcp.
+  transport: tcp
   # anonymous
   #   default: false
   #   description:  If true, the MQTT broker does not require authentication.
@@ -277,7 +283,7 @@ modbus:
       #   default: false
       #   description:  If true, sigenergy2mqtt will interrogate a third-party
       #                 device for production data.
-      enabled: false
+      enabled: true
       module:
         # name
         #   default: ""
@@ -329,7 +335,7 @@ modbus:
 #                 individual sensors debugging messages are displayed.
 #                 If false, individual sensor debugging may be enabled
 #                 through sensor-overrides.
-sensor-debug-logging: false
+sensor-debug-logging: true
 sensor-overrides:
   # Specify the sensor to be overridden by either by the full entity id,
   # a partial entity id, the full sensor class name, or a partial 
@@ -436,17 +442,17 @@ pvoutput:
   #   default: false
   #   description:  If true, sigenergy2mqtt will update the system status
   #                 in PVOutput.
-  enabled: false
+  enabled: true
   # api-key
   #   default: ""
   #   description:  The PVOutput API key (create/find your key under 
   #                 https://pvoutput.org/account.jsp)
-  api-key: ""
+  api-key: "9f3a7b1c4d8e2f6a1b0c9d4e7f8a6b3c5d1e2f4a"
   # system-id
   #   default: ""
   #   description:  The PVOutput System ID (create/find your System id 
   #                 under https://pvoutput.org/account.jsp)
-  system-id: ""
+  system-id: "testing"
   # consumption
   #   default: false
   #   description:  If specified with a value of 'true' or 'consumption', 
@@ -491,7 +497,7 @@ pvoutput:
   #                 read. This is used to send the temperature to PVOutput.
   #                 If not specified, the temperature will not be sent to
   #                 PVOutput.
-  temperature_topic: ""
+  temperature-topic: "homeassistant/weather/temperature"
   # v7
   #   added: 2025.9.16
   #   default: ""
@@ -502,7 +508,7 @@ pvoutput:
   #                 a numeric value. Classes that can be used for multiple
   #                 sensors (e.g. PVVoltageSensor) will be averaged to
   #                 determine a single value.
-  v7: ""
+  v7: "InverterTemperature"
   # v8
   #   added: 2025.9.16
   #   default: ""

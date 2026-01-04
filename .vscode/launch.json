@@ -21,9 +21,6 @@
             "envFile": "${workspaceFolder}/tests/utils/.debug.env",
             "args": "--config=tests/utils/.debug.env.yaml",
             "subProcess": true,
-            "purpose": [
-                "debug-test"
-            ],
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
                 "PYTHONPATH": "${workspaceFolder}",
@@ -89,6 +86,20 @@
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov"
+            }
+        },
+        {
+            "name": "Validate sigenenergy2mqtt.yaml",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/utils/.debug.py",
+            "console": "integratedTerminal",
+            "args": "--log-level=DEBUG --config=resources/configuration/sigenergy2mqtt.yaml --validate",
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
         {
