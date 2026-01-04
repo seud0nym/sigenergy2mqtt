@@ -285,6 +285,8 @@ class Device(dict[str, any], metaclass=abc.ABCMeta):
     def publish_attributes(self, mqtt: MqttClient, clean: bool = False) -> None:
         for sensor in self.sensors.values():
             sensor.publish_attributes(mqtt, clean=clean)
+        for device in self.children:
+            device.publish_attributes(mqtt, clean=clean)
 
     def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
         mqtt.publish(f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
