@@ -216,13 +216,13 @@ class ServiceTopics(dict[str, Topic]):
                     minutes = int(seconds / 60.0)
                     if seconds <= scan_interval:
                         if Config.pvoutput.update_debug_logging:
-                            self._logger.debug(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
+                            self._logger.debug(f"{self._service.__class__.__name__} Topic {topic.topic} for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
                         updated += 1
                     elif (self._last_update_warning is None or (now - self._last_update_warning) > 3600) and minutes > 0:
-                        self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
+                        self._logger.warning(f"{self._service.__class__.__name__} Topic {topic.topic} for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
                         self._last_update_warning = now
                 elif not isinstance(self, TimePeriodServiceTopics) and (self._last_update_warning is None or (now - self._last_update_warning) > 3600):
-                    self._logger.warning(f"{self._service.__class__.__name__} Topic '{topic.topic}' for {self._name} has never been updated??? ({scan_interval=}s)")
+                    self._logger.warning(f"{self._service.__class__.__name__} Topic {topic.topic} for {self._name} has never been updated??? ({scan_interval=}s)")
                     self._last_update_warning = now
             if updated == 0 and self._last_update_warning != now:
                 self._logger.debug(f"{self._service.__class__.__name__} {self._name} failed updating check (topics {updated=} now={now_struct} {interval_seconds=}): {self}")
@@ -289,16 +289,16 @@ class ServiceTopics(dict[str, Topic]):
         for topic in self.keys():
             if self.enabled:
                 result = mqtt_handler.register(mqtt, topic, self.update)
-                self._logger.debug(f"{self._service.__class__.__name__} Subscribed to topic '{topic}' to record {self._name} ({result=})")
+                self._logger.debug(f"{self._service.__class__.__name__} Subscribed to topic {topic} to record {self._name} ({result=})")
             else:
-                self._logger.debug(f"{self._service.__class__.__name__} Not subscribing to topic '{topic}' because {self._name} uploading is disabled")
+                self._logger.debug(f"{self._service.__class__.__name__} Not subscribing to topic {topic} because {self._name} uploading is disabled")
 
     async def update(self, modbus: Any, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
         if self.enabled:
             state = value if isinstance(value, float) else float(value)
             if Calculation.PEAK not in self._calculation or state > self[topic].state:
                 if Config.pvoutput.update_debug_logging:
-                    self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from '{topic}' {value=}")
+                    self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from topic {topic} {value=}")
                 async with self._service.lock(timeout=1):
                     state_was = self[topic].state
                     self[topic].state = state
@@ -311,7 +311,7 @@ class ServiceTopics(dict[str, Topic]):
                     self[topic].timestamp if self[topic].restore_timestamp is None or self[topic].timestamp > self[topic].restore_timestamp else self[topic].restore_timestamp
                 )
                 if int(seconds) % 60 == 0:
-                    self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from '{topic}': {state=} (<= Previous peak={self[topic].state})")
+                    self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from topic {topic}: {state=} (<= Previous peak={self[topic].state})")
             if self._time_periods:
                 current_period = Config.pvoutput.current_time_period
                 other_periods_total = sum(child.aggregate(True, never_return_none=True)[0] for child in self._time_periods if child._value_key not in current_period) / self[topic].gain

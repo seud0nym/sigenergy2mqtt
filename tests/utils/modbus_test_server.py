@@ -51,7 +51,7 @@ class CustomMqttHandler:
         value = str(payload).strip()
         if value and topic in self._topics:
             for method in self._topics[topic]:
-                _logger.debug(f"on_message: '{topic}' -> {value}")
+                _logger.debug(f"on_message: {method.__func__.__qualname__}('{topic}', {value})")
                 method(topic, value)
 
     def register(self, client: MqttClient, topic: str, handler) -> tuple[int, int]:

@@ -351,7 +351,7 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             if "json_attributes_topic" in self:
                 mqtt.publish(self["json_attributes_topic"], None, qos=0, retain=False)  # Clear retained messages
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic '{self['json_attributes_topic']}'")
+                    logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic {self['json_attributes_topic']}")
             if self._persistent_publish_state_file.exists() or Config.clean:
                 components = {}
                 if self.debug_logging:
@@ -416,12 +416,12 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                             self._failures = 0
                             self._next_retry = None
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Publishing {state=} to topic '{self['state_topic']}'")
+                            logging.debug(f"{self.__class__.__name__} Publishing {state=} to topic {self['state_topic']}")
                         mqtt.publish(self["state_topic"], f"{state}", self._qos, self._retain)
                         published = True
                         if self.publish_raw:
                             if self.debug_logging:
-                                logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state} to topic '{self['raw_state_topic']}'")
+                                logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state} to topic {self['raw_state_topic']}")
                             mqtt.publish(self["raw_state_topic"], f"{self.latest_raw_state}", self._qos, self._retain)
                 for sensor in self._derived_sensors.values():
                     await sensor.publish(mqtt, modbus, republish=republish)

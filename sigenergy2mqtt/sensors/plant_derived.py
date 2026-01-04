@@ -246,11 +246,11 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         if topic in self._sources:
             self._update_source(topic, value if isinstance(value, float) else float(value))
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from topic '{topic}' - {self._sources}")
+                logging.debug(f"{self.__class__.__name__} Updated from topic {topic} - {self._sources}")
             if self._set_latest_consumption():
                 await self.publish(mqtt, modbus, republish=True)
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{topic}', but topic is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {topic}, but topic is not registered")
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
@@ -360,12 +360,12 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
                 self.failback(topic)
             self._sources[topic].state = (value if isinstance(value, float) else float(value)) * self._sources[topic].gain
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[topic].enabled else 'disabled'}) topic '{topic}' - {self._sources=}")
+                logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[topic].enabled else 'disabled'}) topic {topic} - {self._sources=}")
             if self._sources[topic].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
                 self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
                 await self.publish(mqtt, modbus, republish=True)
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{topic}', but topic is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {topic}, but topic is not registered")
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
