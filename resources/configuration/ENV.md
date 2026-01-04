@@ -64,7 +64,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MQTT_KEEPALIVE` | The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker. Default is `60` and minimum is `1`. |
 | `SIGENERGY2MQTT_MQTT_TLS` | Set to `true` to enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is `8883`. |
 | `SIGENERGY2MQTT_MQTT_TLS_INSECURE` | If `true`, allows insecure communication over TLS. If your broker is using a self-signed certificate, you _must_ set this to `true`. If you are using a valid certificate, set this to `false` (or do not set at all). Ignored unless `SIGENERGY2MQTT_MQTT_TLS` is also `true`. |
-| `SIGENERGY2MQTT_MQTT_TRANSPORT` | Sets the MQTT transport mechanism. Must be one of websockets or tcp. The default is tcp. |
+| `SIGENERGY2MQTT_MQTT_TRANSPORT` | Sets the MQTT transport mechanism. Must be one of `websockets` or `tcp`. The default is `tcp`. |
 | `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `WARNING` (warnings, errors and critical failures) |
 
 ## PVOutput Configuration Variables
