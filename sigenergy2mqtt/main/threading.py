@@ -29,11 +29,11 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
     for device in config.devices:
-        if Config.home_assistant.enabled:
-            if upgrade_clean_required or Config.clean:  # Delete HA device
-                await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, clean=True)
-            if not Config.clean:  # Publish HA device
-                await mqtt_handler.wait_for(5, device.name, device.publish_discovery, mqtt_client, clean=False)
+        method = device.publish_discovery if Config.home_assistant.enabled else device.publish_attributes
+        if upgrade_clean_required or Config.clean:
+            await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=True)
+        if not Config.clean:  # Publish HA device
+            await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=False)
 
         if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
             logging.info(f"{device.name} - Configured for {'clean' if Config.clean else 'discovery'} only - shutting down...")

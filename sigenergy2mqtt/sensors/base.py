@@ -319,6 +319,10 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
             A dictionary of attributes for this sensor.
         """
         attributes = {}
+        if not Config.home_assistant.enabled:
+            attributes["name"] = self.name
+            if self.unit:
+                attributes["unit-of-measurement"] = self.unit
         attributes["sensor-class"] = self.__class__.__name__
         if self.protocol_version:
             attributes["since-protocol"] = f"V{self.protocol_version}"
