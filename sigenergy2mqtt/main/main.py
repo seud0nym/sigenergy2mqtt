@@ -281,8 +281,8 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus: ModbusClient, plant_index, 
                 elif sensor.input_type == InputType.INPUT:
                     rr = await modbus.read_input_registers(register, count=sensor.count, device_id=device_id)
                 if rr.isError() and rr.exception_code == 0x02:
-                    logging.info(f"{id} is not publishable (ILLEGAL DATA ADDRESS)")
+                    logging.info(f"UNPUBLISHED {id}: ILLEGAL DATA ADDRESS")
                     sensor.publishable = False
             except Exception as e:
-                logging.info(f"{id} is not publishable ({e})")
+                logging.info(f"UNPUBLISHED {id}: {e}")
                 sensor.publishable = False

@@ -77,11 +77,13 @@ options:
                         (warnings, errors and critical failures)
   -d, --debug-sensor SIGENERGY2MQTT_DEBUG_SENSOR
                         Specify a sensor to be debugged using either the full
-                        entity id, a partial entity id, the full sensor class
-                        name, or a partial sensor class name. For example,
+                        or partial entity id or sensor class name (e.g.
                         specifying 'daily' would match all sensors with daily
-                        in their entity name. If specified, --debug-level is
-                        also forced to DEBUG
+                        in their entity name), or a regular expression to be
+                        matched against the entity id or sensor class name
+                        (e.g. '^PowerFactor$' only matches the single class
+                        name). If specified, --log-level is also forced to
+                        DEBUG.
   --sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW
                         The default value in kW used for sanity checks to
                         validate the maximum and minimum values for actual

@@ -81,7 +81,7 @@ _parser.add_argument(
     action="store",
     dest=const.SIGENERGY2MQTT_DEBUG_SENSOR,
     default=os.getenv(const.SIGENERGY2MQTT_DEBUG_SENSOR, None),
-    help="Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG",
+    help="Specify a sensor to be debugged using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name). If specified, --log-level is also forced to DEBUG.",
 )
 _parser.add_argument(
     "--sanity-check-default-kw",

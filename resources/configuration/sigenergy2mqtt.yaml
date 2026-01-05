@@ -341,6 +341,9 @@ sensor-overrides:
   # a partial entity id, the full sensor class name, or a partial 
   # sensor class name. For example, specifying Reactive: would match all
   # sensors with Reactive in their class name.
+  # From 2026.1.5, the sensor may be specified as a regular expression.
+  # e.g. ^PowerFactor$ will match *only* the PowerFactor class name,
+  # but not InverterPowerFactorAdjustmentFeedback.
   partial_or_full_entity_id_or_sensor_class_name:
     # debug-logging
     #   default: There is no default

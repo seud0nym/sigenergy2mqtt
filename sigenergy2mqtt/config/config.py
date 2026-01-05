@@ -8,7 +8,7 @@ from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSo
 from .validation import check_bool, check_host, check_float, check_int, check_int_list, check_log_level, check_port, check_string
 from pathlib import Path
 from ruamel.yaml import YAML
-from typing import List
+from types import ModuleType
 import json
 import logging
 import os
@@ -22,12 +22,12 @@ class Config:
 
     consumption: ConsumptionSource = const.ConsumptionMethod.CALCULATED
 
-    devices: List[DeviceConfig] = []
+    devices: list[DeviceConfig] = []
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
     mqtt: MqttConfiguration = MqttConfiguration()
     pvoutput: PVOutputConfiguration = PVOutputConfiguration()
     sensor_debug_logging: bool = False
-    sensor_overrides: dict = {}
+    sensor_overrides: dict[str, dict[str, bool | int | float | str | list[int] | ModuleType]] = {}
 
     sanity_check_default_kw: float = 500.0
     metrics_enabled: bool = True

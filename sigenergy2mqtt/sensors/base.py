@@ -213,6 +213,11 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
                 state = round(state, self._precision)
         return state
 
+    def _get_applicable_overrides(self, identifier: str) -> dict | None:
+        if re.search(identifier, self.__class__.__name__) or re.search(identifier, self["object_id"]) or re.search(identifier, self.unique_id):
+            return Config.sensor_overrides[identifier]
+        return None
+
     @abc.abstractmethod
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         """Retrieves the current state of this sensor and updates the internal state history.
@@ -235,8 +240,8 @@ class Sensor(Dict[str, any], metaclass=abc.ABCMeta):
 
     def apply_sensor_overrides(self, registers: RegisterAccess):
         for identifier in Config.sensor_overrides.keys():
-            if identifier in self.__class__.__name__ or identifier in self["object_id"] or identifier in self.unique_id:
-                overrides = Config.sensor_overrides[identifier]
+            overrides = self._get_applicable_overrides(identifier)
+            if overrides:
                 if "debug-logging" in overrides and self.debug_logging != overrides["debug-logging"]:
                     self.debug_logging = overrides["debug-logging"]
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'debug-logging' override ({overrides['debug-logging']})")
@@ -687,8 +692,8 @@ class ReadableSensorMixin(abc.ABC):
         self._sanity.init(self["unit_of_measurement"], self["state_class"], self.gain, scan_interval, self.data_type if hasattr(self, "data_type") else None)
 
         for identifier in Config.sensor_overrides.keys():
-            if identifier in self.__class__.__name__ or identifier in self["object_id"]:
-                overrides = Config.sensor_overrides[identifier]
+            overrides = self._get_applicable_overrides(identifier)
+            if overrides:
                 if "scan-interval" in overrides and self.scan_interval != overrides["scan-interval"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
                     self.scan_interval = overrides["scan-interval"]
