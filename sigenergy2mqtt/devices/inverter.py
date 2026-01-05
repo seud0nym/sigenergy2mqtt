@@ -48,6 +48,8 @@ class Inverter(ModbusDevice):
         )
 
         pv_power = ro.InverterPVPower(plant_index, device_address)
+        active_power = ro.ActivePower(plant_index, device_address)
+        reactive_power = ro.ReactivePower(plant_index, device_address)
 
         # region read sensors
         self._add_read_sensor(model)
@@ -62,8 +64,8 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.MinActivePowerAdjustment(plant_index, device_address))
         self._add_read_sensor(ro.MaxReactivePowerAdjustment(plant_index, device_address))
         self._add_read_sensor(ro.MinReactivePowerAdjustment(plant_index, device_address))
-        self._add_read_sensor(ro.ActivePower(plant_index, device_address))
-        self._add_read_sensor(ro.ReactivePower(plant_index, device_address))
+        self._add_read_sensor(active_power)
+        self._add_read_sensor(reactive_power)
         self._add_read_sensor(ro.InverterPCSAlarm(plant_index, device_address, ro.InverterAlarm1(plant_index, device_address), ro.InverterAlarm2(plant_index, device_address)))
         self._add_read_sensor(ro.InverterAlarm4(plant_index, device_address))
         self._add_read_sensor(ro.RatedGridVoltage(plant_index, device_address))
@@ -82,7 +84,7 @@ class Inverter(ModbusDevice):
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "A-B"))
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "B-C"))
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "C-A"))
-        self._add_read_sensor(ro.PowerFactor(plant_index, device_address))
+        self._add_read_sensor(ro.PowerFactor(plant_index, device_address, active_power, reactive_power))
         self._add_read_sensor(ro.MPTTCount(plant_index, device_address))
         self._add_read_sensor(pv_string_count)
         self._add_read_sensor(pv_power)

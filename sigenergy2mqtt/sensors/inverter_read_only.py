@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from .base import (
     Alarm1Sensor,
     Alarm2Sensor,
@@ -10,7 +8,6 @@ from .base import (
     AlarmSensor,
     DeviceClass,
     InputType,
-    ObservableMixin,
     ReadOnlySensor,
     ReservedSensor,
     RunningStateSensor,
@@ -20,7 +17,6 @@ from .base import (
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler
 from sigenergy2mqtt.sensors.const import (
     PERCENTAGE,
     UnitOfApparentPower,
@@ -1350,15 +1346,8 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
-    @dataclass
-    class Power:
-        topic: str
-        gain: float
-        active: bool
-        value: float | int | None = None
-
-    def __init__(self, plant_index: int, device_address: int):
+class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, active_power: ActivePower, reactive_power: ReactivePower):
         super().__init__(
             name="Power Factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor",
@@ -1380,52 +1369,21 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
         self._sanity.min_raw = 0  # 0.0
         self._sanity.max_raw = 1000  # 1.0
         self._max_failures_retry_interval = 300
-        self._active_power: PowerFactor.Power = None
-        self._reactive_power: PowerFactor.Power = None
+        self._active_power = active_power
+        self._reactive_power = reactive_power
 
     @property
     def calculated(self) -> tuple[int, float] | None:
-        if self._active_power.value is not None and self._reactive_power.value is not None:
-            apparent_power = math.sqrt(self._active_power.value**2 + self._reactive_power.value**2)
-            power_factor = round((abs(self._active_power.value) / apparent_power) * self.gain) if apparent_power != 0 else 0
+        active_power = self._active_power.latest_raw_state
+        reactive_power = self._reactive_power.latest_raw_state
+        if active_power is not None and reactive_power is not None:
+            apparent_power = math.sqrt(active_power**2 + reactive_power**2)
+            power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Calculated {power_factor=} from active_power={self._active_power.value} reactive_power={self._reactive_power.value} -> {apparent_power=}")
+                logging.debug(f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} reactive_power={reactive_power} -> {apparent_power=}")
             return power_factor, apparent_power
-        if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Unable to calculate power_factor: active_power={self._active_power.value} reactive_power={self._reactive_power.value}")
+        logging.info(f"{self.__class__.__name__} Unable to calculate corrected state: active_power={active_power} reactive_power={reactive_power}")
         return None, None
-
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Notified of update from topic {source} {value=}")
-        if source == self._active_power.topic:
-            self._active_power.value = float(value) * self._active_power.gain
-        elif source == self._reactive_power.topic:
-            self._reactive_power.value = float(value) * self._reactive_power.gain
-        else:
-            return False
-        return True
-
-    def observable_topics(self) -> set[str]:
-        topics: set[str] = set()
-        for sensor in self.parent_device.get_all_sensors().values():
-            if isinstance(sensor, ActivePower) and sensor.state_topic is not None:
-                self._active_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
-                topics.add(sensor.state_topic)
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
-            elif isinstance(sensor, ReactivePower) and sensor.state_topic is not None:
-                self._reactive_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
-                topics.add(sensor.state_topic)
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
-            if self._active_power is not None and self._reactive_power is not None:
-                break
-        if self._active_power is None:
-            logging.warning(f"{self.__class__.__name__} Failed to locate topic to populate active_power!!!")
-        if self._reactive_power is None:
-            logging.warning(f"{self.__class__.__name__} Failed to locate topic to populate reactive_power!!!")
-        return topics
 
     def set_state(self, state: float | int | str) -> None:
         try:
@@ -1433,7 +1391,9 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
         except ValueError as e:
             power_factor, apparent_power = self.calculated
             if power_factor is not None:
-                logging.info(f"{self.__class__.__name__} Applying Value {power_factor} (Active={self._active_power.value} Reactive={self._reactive_power.value} Apparent={apparent_power}) because {e}")
+                logging.info(
+                    f"{self.__class__.__name__} Applying calculated state {power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
+                )
                 super().set_state(power_factor)
             else:
                 raise e
