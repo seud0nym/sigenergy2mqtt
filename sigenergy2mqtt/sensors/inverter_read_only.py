@@ -32,6 +32,7 @@ from sigenergy2mqtt.sensors.const import (
 from typing import Any, Dict
 import logging
 import math
+import time
 
 
 # 5.3 Hybrid inverter running information address definition (read-only register)
@@ -1375,12 +1376,16 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
     @property
     def calculated(self) -> tuple[int, float] | None:
         active_power = self._active_power.latest_raw_state
+        active_power_time = self._active_power.latest_time
         reactive_power = self._reactive_power.latest_raw_state
+        reactive_power_time = self._reactive_power.latest_time
         if active_power is not None and reactive_power is not None:
             apparent_power = math.sqrt(active_power**2 + reactive_power**2)
             power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} reactive_power={reactive_power} -> {apparent_power=}")
+                logging.debug(
+                    f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
+                )
             return power_factor, apparent_power
         logging.info(f"{self.__class__.__name__} Unable to calculate corrected state: active_power={active_power} reactive_power={reactive_power}")
         return None, None
@@ -1392,7 +1397,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
             power_factor, apparent_power = self.calculated
             if power_factor is not None:
                 logging.info(
-                    f"{self.__class__.__name__} Applying calculated state {power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
+                    f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
                 )
                 super().set_state(power_factor)
             else:
