@@ -116,7 +116,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "",  # 3
             "",  # 4
             "Full Feed-in to Grid",  # 5
-            "",  # 6
+            "VPP Scheduling",  # 6 (https://github.com/TypQxQ/Sigenergy-Local-Modbus/pull/289)
             "Remote EMS",  # 7
             "",  # 8
             "Time-Based Control",  # 9
