@@ -33,6 +33,14 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
     _used_object_ids = {}
     _used_unique_ids = {}
 
+    def __hash__(self) -> int:  # pyright: ignore[reportIncompatibleVariableOverride]
+        return hash(self["unique_id"])
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Sensor):
+            return self["unique_id"] == other["unique_id"]
+        return False
+
     def __init__(
         self,
         name: str,
@@ -437,12 +445,12 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         for sensor in self._derived_sensors.values():
             sensor.publish_attributes(mqtt_client, clean=clean)
 
-    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None: # Updates the latest state of this sensor, and passes the updated state to any derived sensors.
+    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:  # Updates the latest state of this sensor, and passes the updated state to any derived sensors.
         self.set_state(state)
         for sensor in self._derived_sensors.values():
             sensor.set_source_values(self, self._states)
 
-    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None: # Updates the latest state of this sensor, WITHOUT passing the updated state to any derived sensors.
+    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:  # Updates the latest state of this sensor, WITHOUT passing the updated state to any derived sensors.
         if isinstance(state, str) or (isinstance(state, (int, float)) and self._sanity.check(state, self._states)):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Acquired raw {state=}")

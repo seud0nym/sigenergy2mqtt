@@ -158,6 +158,9 @@ def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     # ensure initial state has no latest_raw_state so loop enters read_ahead
     s1._states = []
     s2._states = []
+    # Force immediate publish so sensors become due right away
+    s1.force_publish = True
+    s2.force_publish = True
     dev._online = True
     from paho.mqtt.client import Client as MqttClient
 
@@ -221,6 +224,9 @@ def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     # ensure initial state has no latest_raw_state so loop enters read_ahead
     s1._states = []
     s2._states = []
+    # Force immediate publish so sensors become due right away
+    s1.force_publish = True
+    s2.force_publish = True
 
     dev._online = True
     from paho.mqtt.client import Client as MqttClient

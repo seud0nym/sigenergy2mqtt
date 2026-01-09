@@ -6,7 +6,7 @@
     "python.analysis.extraPaths": [
         "./sigenergy2mqtt"
     ],
-	"python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticMode": "workspace",
     "cSpell.words": [
         "_mids",
         "ACCHARGER",
@@ -79,6 +79,7 @@
         "TPLV",
         "typqxq",
         "uidpub",
+        "Unpublishing",
         "veth",
         "wordorder",
         "writeonly"
