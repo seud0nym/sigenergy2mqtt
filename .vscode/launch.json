@@ -10,7 +10,12 @@
             "request": "launch",
             "program": "tests/utils/modbus_test_server.py",
             "console": "integratedTerminal",
-            "subProcess": true
+            "subProcess": true,
+            "env": {
+                "PYTEST_ADDOPTS": "--no-cov",
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+            }
         },
         {
             "name": "Run (env)",

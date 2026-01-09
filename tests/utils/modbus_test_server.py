@@ -1,4 +1,5 @@
 import asyncio
+import bisect
 import logging
 import os
 import sys
@@ -67,14 +68,19 @@ class CustomDataBlock(ModbusSparseDataBlock):
     def __init__(self, device_address: int, mqtt_client: mqtt.Client):
         super().__init__(values=None, mutable=True)
         self.device_address = device_address
-        self._topics: dict = {}
+        self.addresses: dict[int, Any] = {}
+        self._reserved: list[int] = []
+        self._topics: dict[str, Any] = {}
+        self._written_addresses: list[int] = []
         if mqtt_client:
             self._mqtt_client = mqtt_client
         self._total_sleep_time: int = 0
         self._read_count: int = 0
-        self._written_addresses: list[int] = []
 
-    def add_sensor(self, sensor) -> None:
+    def add_sensor(self, sensor: Any) -> None:
+        self.addresses[sensor.address] = sensor
+        if sensor.__class__.__name__.startswith("Reserved"):
+            self._reserved.append(sensor.address)
         if not sensor.publishable:
             return
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
@@ -97,7 +103,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                 source = "alarm_sensor"
                 value = 0
             else:
-                if sensor.latest_raw_state is not None:
+                if sensor.latest_raw_state is not None and isinstance(sensor.latest_raw_state, (int, float)):
                     source = "latest_raw_state"
                     value = sensor.latest_raw_state / sensor.gain
                 elif sensor.device_class == DeviceClass.TIMESTAMP:
@@ -167,14 +173,14 @@ class CustomDataBlock(ModbusSparseDataBlock):
             raw = sensor.state2raw(value)
             registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
         super().setValues(address, registers)
-        if address == 31011: # Use the Phase A Voltage for all three phases
+        if address == 31011:  # Use the Phase A Voltage for all three phases
             super().setValues(31013, registers)
             super().setValues(31015, registers)
-        elif address == 31017: # Use the Phase A Current for all three phases
+        elif address == 31017:  # Use the Phase A Current for all three phases
             super().setValues(31019, registers)
             super().setValues(31021, registers)
 
-    async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
         delay_avg: int = 15
         delay_min: int = 5
         delay_max: int = 50
@@ -185,18 +191,38 @@ class CustomDataBlock(ModbusSparseDataBlock):
             sleep_time = randint(delay_min, delay_max)  # Simulate variable response times
         self._total_sleep_time += sleep_time
         await asyncio.sleep(sleep_time / 1000)
-        if address in (30279, 30281, 30286, 30288, 30290, 30292, 30294, 30296, 30622, 30623, 40049):
-            # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
-            result = ExcCodes.ILLEGAL_ADDRESS
-        else:
-            result = super().getValues(address, count)
+        result = self.getValues(address, count)
         _logger.debug(f"async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
         return result
 
-    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
         self._written_addresses.append(address)
         _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
         return super().setValues(address, values)
+
+    def getValues(self, address, count=1) -> list[int] | list[bool] | ExcCodes:
+        last_address = address + count - 1
+        if address in self._reserved or last_address - count + 1 in self._reserved:
+            # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
+            result = ExcCodes.ILLEGAL_ADDRESS
+        elif address in self.addresses and self.addresses[address].count == count:
+            result = super().getValues(address, count)
+        else:
+            pre_read: list[int | bool] = []
+            keys = list(self.addresses.keys())
+            start = bisect.bisect_left(keys, address)
+            end = bisect.bisect_right(keys, last_address)
+            for k in keys[start:end]:
+                sensor = self.addresses[k]
+                state = super().getValues(sensor.address, sensor.count)
+                if isinstance(state, list):
+                    pre_read.extend(state)
+                else:
+                    for _ in range(0, sensor.count):
+                        pre_read.append(0)
+            result = pre_read
+        _logger.debug(f"getValues({address}, {count}) -> {result}")
+        return result
 
 
 async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, log_level: int = logging.INFO) -> None:
@@ -210,7 +236,8 @@ async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None,
 
     _logger.info("Getting sensor instances...")
     sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, pv_inverter_device_address=3)
-    for sensor in sorted([s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")], key=lambda x: (x.device_address, x.address)):
+    sorted_sensors: list = sorted([s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")], key=lambda x: (x.device_address, x.address))
+    for sensor in sorted_sensors:
         if (
             device_address != sensor.device_address
             or (address is None or count is None or sensor.address != address + count)
@@ -231,7 +258,7 @@ async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None,
     _logger.setLevel(log_level)
 
     _logger.info("Creating data blocks...")
-    for sensor in sensors.values():
+    for sensor in sorted_sensors:
         if hasattr(sensor, "device_address"):
             if sensor.device_address not in context:
                 context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client)
