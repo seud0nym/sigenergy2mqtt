@@ -1,11 +1,14 @@
 import asyncio
 import types
+from pathlib import Path
+from typing import Any, cast
 
 import pytest
+from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.device import Device
-from sigenergy2mqtt.sensors.base import ModbusSensor, ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin
 
 
 class FakeLock:
@@ -14,10 +17,10 @@ class FakeLock:
 
     def lock(self, timeout=None):
         class _CM:
-            async def __aenter__(self_inner):
+            async def __aenter__(self):
                 return None
 
-            async def __aexit__(self_inner, exc_type, exc, tb):
+            async def __aexit__(self, exc_type, exc, tb):
                 return False
 
         return _CM()
@@ -27,13 +30,14 @@ class FakeModbus:
     def __init__(self):
         self.connected = True
 
-    async def read_ahead_registers(self, first_address, count, device_id, input_type, trace=False):
+    async def read_ahead_registers(self, first_address, count, device_id, input_type, trace=False) -> int:
         # Simulate successful pre-read
         return 0
 
 
 def setup_module(module):
-    Config.devices = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    conf = cast(Any, Config)
+    conf.devices = [types.SimpleNamespace(registers={}, disable_chunking=False)]
     defaults = dict(
         device_name_prefix="",
         unique_id_prefix="sigen",
@@ -43,21 +47,21 @@ def setup_module(module):
         entity_id_prefix="sigen",
         enabled_by_default=True,
     )
-    ha = getattr(Config, "home_assistant", None)
+    ha = getattr(conf, "home_assistant", None)
     if ha is None:
-        Config.home_assistant = types.SimpleNamespace(**defaults)
+        conf.home_assistant = types.SimpleNamespace(**defaults)
     else:
         for k, v in defaults.items():
             if not hasattr(ha, k):
                 setattr(ha, k, v)
-    if not hasattr(Config, "persistent_state_path"):
-        Config.persistent_state_path = "."
+    if not hasattr(conf, "persistent_state_path"):
+        conf.persistent_state_path = Path(".")
 
 
-class DummyModbusSensor(ModbusSensor, ReadableSensorMixin):
+class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
     def __init__(self, unique_id, address=1, count=1, device_address=1, input_type="holding", scan_interval=1):
         # Sensor stores unique_id in its dict storage
-        self["unique_id"] = unique_id
+        self.unique_id = self["unique_id"] = unique_id
         object.__setattr__(self, "address", address)
         object.__setattr__(self, "count", count)
         object.__setattr__(self, "device_address", device_address)
@@ -67,19 +71,23 @@ class DummyModbusSensor(ModbusSensor, ReadableSensorMixin):
         object.__setattr__(self, "_derived_sensors", {})
         # provide internal _states used by Sensor.latest_raw_state
         import time
+
         object.__setattr__(self, "_states", [(time.time() - scan_interval, 1)])
         object.__setattr__(self, "sleeper_task", None)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "_publishable", True)
         object.__setattr__(self, "force_publish", False)
 
+    async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
+        return False
+
     def apply_sensor_overrides(self, registers):
         return None
 
-    def configure_mqtt_topics(self, unique_id):
-        return None
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        return ""
 
-    async def publish(self, mqtt, modbus=None, republish=False):
+    async def publish(self, mqtt_client, modbus_client=None, republish=False):
         # mark that we published (append a new state) and force device offline to stop loop
         import time
 
@@ -90,7 +98,7 @@ class DummyModbusSensor(ModbusSensor, ReadableSensorMixin):
 
 
 def test_publish_updates_runs_one_iteration(monkeypatch):
-    dev = Device("devpub", 0, "uidpub", "mf", "mdl", Config)
+    dev = Device("devpub", 0, "uidpub", "mf", "mdl", Protocol.V1_8)
 
     # create two modbus sensors
     s1 = DummyModbusSensor("s1", address=1, count=2, device_address=5, scan_interval=1)
@@ -113,7 +121,11 @@ def test_publish_updates_runs_one_iteration(monkeypatch):
     dev._online = True
 
     # run the coroutine but limit total time so test cannot hang
-    coro = dev.publish_updates(modbus, mqtt, "grp", s1, s2)
+    from paho.mqtt.client import Client as MqttClient
+
+    from sigenergy2mqtt.modbus.client import ModbusClient
+
+    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, mqtt), "grp", s1, s2)
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.wait_for(coro, timeout=5))
@@ -125,7 +137,7 @@ def test_publish_updates_runs_one_iteration(monkeypatch):
 
 def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     """If read_ahead_registers returns code 2 the code should disable multiple pre-reads and still publish sensors."""
-    dev = Device("devpub2", 0, "uidpub2", "mf", "mdl", Config)
+    dev = Device("devpub2", 0, "uidpub2", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=12, count=1, device_address=7, scan_interval=1)
     dev._add_read_sensor(s1)
@@ -147,7 +159,11 @@ def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     s1._states = []
     s2._states = []
     dev._online = True
-    coro = dev.publish_updates(modbus, object(), "grp", s1, s2)
+    from paho.mqtt.client import Client as MqttClient
+
+    from sigenergy2mqtt.modbus.client import ModbusClient
+
+    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(asyncio.wait_for(coro, timeout=5))
 
@@ -160,7 +176,7 @@ def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     """If ModbusException occurs the device attempts to reconnect via modbus.connect."""
     from pymodbus import ModbusException
 
-    dev = Device("devpub3", 0, "uidpub3", "mf", "mdl", Config)
+    dev = Device("devpub3", 0, "uidpub3", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=1, count=1, device_address=2, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=2, count=1, device_address=2, scan_interval=1)
     dev._add_read_sensor(s1)
@@ -186,6 +202,7 @@ def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
 
     modbus = ModbusRaises()
     modbus.connected = False
+
     # override connect to stop the device loop after reconnecting
     async def _connect_and_stop():
         modbus.connect_called += 1
@@ -206,7 +223,11 @@ def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     s2._states = []
 
     dev._online = True
-    coro = dev.publish_updates(modbus, object(), "grp", s1, s2)
+    from paho.mqtt.client import Client as MqttClient
+
+    from sigenergy2mqtt.modbus.client import ModbusClient
+
+    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
     loop = asyncio.get_event_loop()
     # run but allow the reconnect logic to be exercised
     loop.run_until_complete(asyncio.wait_for(coro, timeout=5))

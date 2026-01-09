@@ -1,7 +1,8 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from .client import ModbusClient
 from .client_factory import ModbusClientFactory
-from contextlib import asynccontextmanager
-import asyncio
 
 
 class ModbusLock:

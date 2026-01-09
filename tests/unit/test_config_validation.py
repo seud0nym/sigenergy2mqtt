@@ -1,6 +1,8 @@
-import pytest
 import logging
 from datetime import date, time
+
+import pytest
+
 from sigenergy2mqtt.config import validation
 
 

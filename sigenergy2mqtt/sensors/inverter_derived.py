@@ -1,11 +1,13 @@
-from .base import DeviceClass, EnergyDailyAccumulationSensor, StateClass, EnergyLifetimeAccumulationSensor, DerivedSensor, ModbusSensor
+import logging
+
+import paho.mqtt.client as mqtt
+
+from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.modbus import ModbusClient
+
+from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor, StateClass
 from .const import UnitOfPower
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.mqtt import MqttClient
-from typing import Any
-import logging
 
 
 class InverterBatteryChargingPower(DerivedSensor):
@@ -24,17 +26,17 @@ class InverterBatteryChargingPower(DerivedSensor):
         )
         self.protocol_version = battery_power.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "ChargeDischargePower &gt; 0"
         return attributes
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] <= 0 else round(values[-1][1], self._precision),
+            0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
         )
         return True
 
@@ -55,17 +57,17 @@ class InverterBatteryDischargingPower(DerivedSensor):
         )
         self.protocol_version = battery_power.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "ChargeDischargePower &lt; 0 &times; -1"
         return attributes
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
+            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
         )
         return True
 
@@ -86,37 +88,31 @@ class PVStringPower(DerivedSensor):
             protocol_version=protocol_version,
         )
         self.string_number = string_number
-        self.current: float = None
+        self.current: float | None = None
         self.current_gain: float = current.gain
-        self.voltage: float = None
+        self.voltage: float | None = None
         self.voltage_gain: float = voltage.gain
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "PVVoltageSensor &times; PVCurrentSensor"
         return attributes
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
-        """Publishes this sensor.
-
-        Args:
-            mqtt:       The MQTT client for publishing the current state.
-            modbus:     The Modbus client for determining the current state.
-            republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
-        """
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.voltage is None or self.current is None:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - current={self.current} voltage={self.voltage}")
-            return  # until all values populated, can't do calculation
+            return False  # until all values populated, can't do calculation
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Publishing READY   - current={self.current} voltage={self.voltage}")
-        await super().publish(mqtt, modbus, republish=republish)
+        await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         self.voltage = None
         self.current = None
+        return True
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if isinstance(sensor, PVVoltageSensor):
             self.voltage = values[-1][1] / self.voltage_gain
         elif isinstance(sensor, PVCurrentSensor):
@@ -141,7 +137,7 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
         self.string_number = string_number
         self.protocol_version = protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Riemann &sum; of PVStringPower"
         return attributes
@@ -158,7 +154,7 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
         self.string_number = string_number
         self.protocol_version = protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight"
         return attributes

@@ -1,8 +1,9 @@
-from .base import DeviceClass, InputType, StateClass, NumericSensor, WriteOnlySensor
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
 
+from .base import DeviceClass, InputType, NumericSensor, StateClass, WriteOnlySensor
 
 # 5.6 AC-Charger parameter setting address definition (holding register)
 
@@ -26,7 +27,7 @@ class ACChargerStatus(WriteOnlySensor):
             value_on=0,
         )
 
-    def get_attributes(self) -> dict[str, any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "0:Start 1:Stop"
         return attributes
@@ -64,7 +65,7 @@ class ACChargerOutputCurrent(NumericSensor):
             maximum=min(input_breaker, rated_current),
         )
 
-    def get_attributes(self) -> dict[str, any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']"
         return attributes

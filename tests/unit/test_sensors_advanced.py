@@ -1,6 +1,7 @@
-import pytest
 import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Mock circular dependencies before importing sensors.base
 mock_types = MagicMock()
@@ -18,9 +19,9 @@ mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
 sys.modules["sigenergy2mqtt.devices.types"] = mock_types
 
+from sigenergy2mqtt.config import Protocol  # noqa: E402
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
-from sigenergy2mqtt.config import Protocol  # noqa: E402
 
 
 # Concrete implementation of Sensor for testing
@@ -39,7 +40,7 @@ class ConcreteSensor(Sensor):
                 precision=2,
                 protocol_version=Protocol.V2_4,
             )
-            self._test_value = None
+            self._test_value: float | None = None
 
     async def _update_internal_state(self, **kwargs):
         if self._test_value is not None:
@@ -106,7 +107,7 @@ class TestSensorStateManagement:
         """Test state2raw applies precision during conversion."""
         sensor = ConcreteSensor()
         sensor._gain = 1.0
-        sensor._precision = 2
+        sensor.precision = 2
 
         raw = sensor.state2raw(42.123456)
 

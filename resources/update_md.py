@@ -1,12 +1,14 @@
-from pathlib import Path
-from datetime import datetime, timedelta, timezone
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 import asyncio
 import logging
-import re
-import requests
-import sys
 import os
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import cast
+
+import requests
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 if not os.getcwd().endswith("resources"):
     os.chdir("resources")
@@ -17,10 +19,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from sigenergy2mqtt.config import ConsumptionMethod, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
-from sigenergy2mqtt.sensors.base import ReservedSensor, Sensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
-from tests.utils import get_sensor_instances, cancel_sensor_futures
-
+from tests.utils import cancel_sensor_futures, get_sensor_instances
 
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
 REGISTER_PATTERN = r"[3-4][0-9]+"
@@ -35,7 +36,7 @@ with open("../sigenergy2mqtt/main/main.py", "r") as file:
 
 
 async def sensor_index():
-    def extract_min_max(range_string: str, precision: int, gain: float):
+    def extract_min_max(range_string: str, precision: int | None, gain: float):
         """
         Isolates the range content and then programmatically extracts the
         first (min) and last (max) potential values, including hex and formulas.
@@ -92,7 +93,7 @@ async def sensor_index():
         if not index_only:
             f.write("| Metric | Interval | Unit | State Topic|\n")
             f.write("|--------|---------:|------|-------------|\n")
-        metrics = MetricsService._discovery["cmps"]
+        metrics = MetricsService.discovery["cmps"]
         for metric in sorted(metrics.values(), key=lambda x: x["name"]):
             count += 1
             if index_only:
@@ -103,31 +104,33 @@ async def sensor_index():
 
     def published_topics(device: str, index_only: bool = False) -> int:
         count = 0
-        for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
+        for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1].name) if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
             sensor: Sensor = mqtt_sensors[key]
             if isinstance(sensor, ReservedSensor):
                 continue
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device and sensor.publishable:
                 count += 1
+                string_number: int | None = getattr(sensor, "string_number", None)
+                protocol = "N/A" if sensor.protocol_version == Protocol.N_A else sensor.protocol_version.value
                 if index_only:
                     f.write(f"<a href='#{sensor.unique_id}'>")
-                    if hasattr(sensor, "string_number"):
-                        f.write(f"PV String {sensor.string_number} ")
+                    if string_number:
+                        f.write(f"PV String {string_number} ")
                     f.write(f"{sensor['name']}</a><br>\n")
                     continue
                 sensor_name = sensor.__class__.__name__
                 attributes = sensor.get_attributes()
                 f.write(f"<h5><a id='{sensor.unique_id}'>")
-                if hasattr(sensor, "string_number"):
-                    f.write(f"PV String {sensor.string_number} ")
+                if string_number:
+                    f.write(f"PV String {string_number} ")
                 f.write(f"{sensor['name']}")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
                 f.write(f"<tr><td>Sensor&nbsp;Class</td><td>{sensor.__class__.__name__}</td></tr>\n")
-                if hasattr(sensor, "scan_interval"):
+                if isinstance(sensor, ReadableSensorMixin):
                     f.write(f"<tr><td>Scan&nbsp;Interval</td><td>{sensor.scan_interval}s</td></tr>\n")
-                if sensor.unit:
+                if isinstance(sensor, Sensor) and sensor.unit:
                     f.write(f"<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>{sensor.unit}</td></tr>\n")
                 if sensor._gain:
                     f.write(f"<tr><td>Gain</td><td>{sensor.gain}</td></tr>\n")
@@ -152,7 +155,7 @@ async def sensor_index():
                         f.write(f"{attributes['source']}")
                         if attributes["source"] in ILLEGAL_DATA_ADDRESSES:
                             f.write(" (may not be available on all devices)")
-                elif hasattr(sensor, "address"):
+                elif isinstance(sensor, ModbusSensorMixin):
                     f.write(f"{sensor.address}")
                     if sensor.address in ILLEGAL_DATA_ADDRESSES:
                         f.write(" (may not be available on all devices)")
@@ -160,10 +163,11 @@ async def sensor_index():
                     logging.getLogger("root").error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("</td></tr>\n")
                 if "options" in sensor:
+                    options = cast(list[str], sensor["options"])
                     f.write("<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'>")
-                    for i in range(0, len(sensor["options"])):
-                        if sensor["options"][i] is not None:
-                            f.write(f"<li value='{i}'>{sensor['options'][i]}</li>")
+                    for i in range(0, len(options)):
+                        if options[i] != "":
+                            f.write(f"<li value='{i}'>{options[i]}</li>")
                     f.write("</ol></td></tr>\n")
                 if "comment" in attributes:
                     f.write(f"<tr><td>Comment</td><td>{attributes['comment']}</td></tr>\n")
@@ -176,20 +180,19 @@ async def sensor_index():
                     elif isinstance(sensor, PVInverter):
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
-                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{'N/A' if sensor.protocol_version == Protocol.N_A else sensor.protocol_version}</td></tr>\n")
+                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
                 f.write("</table>\n")
         return count
 
     def subscribed_topics(device, index_only: bool = False) -> int:
         count = 0
-        for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1]["name"]) if "command_topic" in value]:
-            sensor: Sensor = mqtt_sensors[key]
-            if isinstance(sensor, ReservedSensor):
+        for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1].name) if "command_topic" in value]:
+            if isinstance(mqtt_sensors[key], ReservedSensor):
                 continue
-            if isinstance(sensor, ReservedSensor):
-                continue
+            sensor = mqtt_sensors[key]
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
+                protocol = 'N/A' if sensor.protocol_version == Protocol.N_A else sensor.protocol_version.value
                 count += 1
                 if index_only:
                     f.write(f"<a href='#{sensor.unique_id}_set'>{sensor['name']}</a><br>\n")
@@ -201,12 +204,12 @@ async def sensor_index():
                 f.write("\n")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
-                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>{hass_sensors[key].command_topic}</td></tr>\n")
-                f.write(f"<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>{sensor.command_topic}</td></tr>\n")
+                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>{cast(WritableSensorMixin, hass_sensors[key]).command_topic}</td></tr>\n")
+                f.write(f"<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>{cast(WritableSensorMixin, sensor).command_topic}</td></tr>\n")
                 attributes = sensor.get_attributes()
                 min, max = None, None
                 if "comment" in attributes:
-                    comment: str = attributes["comment"]
+                    comment: str = cast(str, attributes["comment"])
                     if re.match(r"0:(Start|Stop)\s+1:(Start|Stop)", comment):
                         f.write(f"<tr><td>Valid&nbsp;Values</td><td>{comment}</td></tr>\n")
                     else:
@@ -219,9 +222,10 @@ async def sensor_index():
                     f.write(f"<tr><td>Maximum&nbsp;Value</td><td>{max if max is not None else sensor['max']}</td></tr>\n")
                 if "options" in sensor:
                     f.write("<tr><td>Valid&nbsp;Values</td><td><ul>")
-                    for i in range(0, len(sensor["options"])):
-                        if sensor["options"][i] is not None:
-                            f.write(f"<li value='{i}'>\"{sensor['options'][i]}\"</li>")
+                    options = cast(list[str], sensor["options"])
+                    for i in range(0, len(options)):
+                        if options[i] is not None:
+                            f.write(f"<li value='{i}'>\"{options[i]}\"</li>")
                     f.write("</ol></td></tr>\n")
                 if sensor_parent in ("Inverter", "ESS", "PVString"):
                     f.write("<tr><td>Applicable&nbsp;To</td><td>")
@@ -232,7 +236,7 @@ async def sensor_index():
                     elif isinstance(sensor, PVInverter):
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
-                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{'N/A' if sensor.protocol_version == Protocol.N_A else sensor.protocol_version}</td></tr>\n")
+                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
                 f.write("</table>\n")
         return count
 
@@ -402,18 +406,18 @@ async def compare_sensor_instances():
     registers = invert_dict_by_field(sensor_instances, "address")
 
     from modbusregisterdefinitions import (
-        DataType,
-        PLANT_RUNNING_INFO_REGISTERS,
-        PLANT_PARAMETER_REGISTERS,
-        INVERTER_RUNNING_INFO_REGISTERS,
-        INVERTER_PARAMETER_REGISTERS,
-        AC_CHARGER_RUNNING_INFO_REGISTERS,
         AC_CHARGER_PARAMETER_REGISTERS,
-        DC_CHARGER_RUNNING_INFO_REGISTERS,
+        AC_CHARGER_RUNNING_INFO_REGISTERS,
         DC_CHARGER_PARAMETER_REGISTERS,
+        DC_CHARGER_RUNNING_INFO_REGISTERS,
+        INVERTER_PARAMETER_REGISTERS,
+        INVERTER_RUNNING_INFO_REGISTERS,
+        PLANT_PARAMETER_REGISTERS,
+        PLANT_RUNNING_INFO_REGISTERS,
+        DataType,
     )
 
-    datatype_map = {
+    datatype_map: dict[DataType, ModbusClient.DATATYPE] = {
         DataType.U16: ModbusClient.DATATYPE.UINT16,
         DataType.U32: ModbusClient.DATATYPE.UINT32,
         DataType.U64: ModbusClient.DATATYPE.UINT64,
@@ -462,18 +466,20 @@ async def compare_sensor_instances():
             f.write("| ")
             for sensor_name in sensor_names:
                 sensor_instance = sensor_instances[sensor_name]
-                # Compare data type
-                typqxq_type = getattr(typqxq_def, "data_type", None)
-                sensor_type = sensor_instance.data_type
-                mapped_typqxq_type = datatype_map.get(typqxq_type, None)
-                if mapped_typqxq_type is None or mapped_typqxq_type != sensor_type:
-                    logging.warning(f"Data type mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_type}' != '{sensor_type}'")
-                # Compare count
-                typqxq_count = getattr(typqxq_def, "count", None)
-                sensor_count = sensor_instance.count
-                sensor_alarms = getattr(sensor_instance, "alarms", [])
-                if typqxq_count != sensor_count and not (len(sensor_alarms) > 0 and sensor_count / len(sensor_alarms) == typqxq_count):
-                    logging.warning(f"Count mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_count}' != '{sensor_count}'")
+                if isinstance(sensor_instance, TypedSensorMixin):
+                    # Compare data type
+                    typqxq_type = getattr(typqxq_def, "data_type")
+                    sensor_type = sensor_instance.data_type
+                    mapped_typqxq_type = datatype_map.get(typqxq_type, None)
+                    if mapped_typqxq_type is None or mapped_typqxq_type != sensor_type:
+                        logging.warning(f"Data type mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_type}' != '{sensor_type}'")
+                if isinstance(sensor_instance, ModbusSensorMixin):
+                    # Compare count
+                    typqxq_count = getattr(typqxq_def, "count", None)
+                    sensor_count = sensor_instance.count
+                    sensor_alarms = getattr(sensor_instance, "alarms", [])
+                    if typqxq_count != sensor_count and not (len(sensor_alarms) > 0 and sensor_count / len(sensor_alarms) == typqxq_count):
+                        logging.warning(f"Count mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_count}' != '{sensor_count}'")
                 # Compare unit
                 typqxq_unit = getattr(typqxq_def, "unit", None)
                 sensor_unit = sensor_instance.unit
@@ -484,13 +490,13 @@ async def compare_sensor_instances():
                 ):
                     logging.warning(f"Unit mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_unit}' != '{sensor_unit}'")
                 # Compare gain
-                typqxq_type = getattr(typqxq_def, "data_type", None)
+                typqxq_type = getattr(typqxq_def, "data_type")
                 typqxq_gain = getattr(typqxq_def, "gain", None)
                 sensor_gain = sensor_instance.gain
                 if typqxq_type != DataType.STRING and typqxq_gain != sensor_gain and typqxq_unit == sensor_unit:
                     logging.warning(f"Gain mismatch for register {address} ({typqxq_name} vs {sensor_name}): '{typqxq_gain}' != '{sensor_gain}'")
                 f.write(f"<a href='./TOPICS.md#{sensor_instance.unique_id}'>{sensor_instance['object_id']}")
-                if len(sensor_alarms) > 0:
+                if isinstance(sensor_instance, AlarmCombinedSensor):
                     f.write(" (Combined Alarm)")
                 f.write("</a><br>")
             f.write(" |\n")

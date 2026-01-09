@@ -1,6 +1,7 @@
 import sys
 import time
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 # Mock circular dependencies and other imports
@@ -29,10 +30,10 @@ sys.modules["sigenergy2mqtt.metrics.metrics"] = mock_metrics
 mock_registry = MagicMock()
 sys.modules["sigenergy2mqtt.devices"] = mock_registry
 
-from sigenergy2mqtt.sensors.base import Sensor, PVPowerSensor  # noqa: E402
-from sigenergy2mqtt.sensors.plant_read_only import BatteryPower, GridSensorActivePower, GridStatus, PlantPVPower  # noqa: E402
+from sigenergy2mqtt.config import ConsumptionMethod, Protocol  # noqa: E402
+from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_derived import BatteryChargingPower, BatteryDischargingPower, GridSensorExportPower, PlantConsumedPower, TotalPVPower  # noqa: E402
-from sigenergy2mqtt.config import Protocol, ConsumptionMethod  # noqa: E402
+from sigenergy2mqtt.sensors.plant_read_only import BatteryPower, GridSensorActivePower, GridStatus, PlantPVPower  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -55,8 +56,8 @@ class TestBatteryDerivedPower:
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
                 self["device_class"] = MagicMock()
-                self["state_class"] = MagicMock()
-                self._precision = 2
+                self.state_class = self["state_class"] = MagicMock()
+                self.precision = 2
 
         proxy_battery = ProxyBatteryPower()
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -71,8 +72,8 @@ class TestBatteryDerivedPower:
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
                 self["device_class"] = MagicMock()
-                self["state_class"] = MagicMock()
-                self._precision = 2
+                self.state_class = self["state_class"] = MagicMock()
+                self.precision = 2
 
         proxy_battery = ProxyBatteryPower()
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -89,9 +90,9 @@ class TestGridDerivedPower:
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
                 self["device_class"] = MagicMock()
-                self["state_class"] = MagicMock()
+                self.state_class = self["state_class"] = MagicMock()
                 self["display_precision"] = 1
-                self._precision = 1
+                self.precision = 1
 
         proxy_grid = ProxyGridPower()
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -170,13 +171,13 @@ class TestTotalPVPower:
             class MockPV(Sensor, PVPowerSensor):
                 def __init__(self, name, object_id):
                     self["name"] = name
-                    self["unique_id"] = object_id
+                    self.name = name
+                    self.unique_id = self["unique_id"] = object_id
                     self._gain = 1.0
                     self["display_precision"] = 2
 
-                @property
-                def name(self):
-                    return self["name"]
+                async def _update_internal_state(self, **kwargs):
+                    return False
 
             s1 = MockPV("PV1", "sigenergy_pv1")
             sensor = TotalPVPower(0, s1)

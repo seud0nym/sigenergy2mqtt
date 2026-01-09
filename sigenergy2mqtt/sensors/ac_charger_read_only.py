@@ -1,9 +1,11 @@
-from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
+from typing import cast
+
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.sensors.const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
-from typing import Any
 
+from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
 
 # 5.5 AC-Charger running information address definition (read-only register)
 
@@ -56,8 +58,8 @@ class ACChargerRunningState(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown State code: {value}"
 
@@ -209,14 +211,6 @@ class ACChargerAlarm1(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "5001_1: Grid over-voltage"
@@ -319,7 +313,7 @@ class ACChargerAlarms(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Modbus Registers 32012, 32013, and 32014"
         return attributes

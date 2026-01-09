@@ -2,13 +2,17 @@ import re
 
 
 class DeviceType:
-    """Base class for Inverter types"""
-
     @classmethod
-    def create(cls, model_id: str):
+    def create(cls, model_id: str | None):
+        if model_id is None:
+            raise ValueError("Model ID cannot be None")
         device_type = HybridInverter() if re.search(r"EC|Hybrid|PG|PV.*M1-HY", model_id) else PVInverter()
         device_type._model_id = model_id
         return device_type
+
+    def __init__(self, **kwargs):
+        self._model_id: str
+        super().__init__(**kwargs)
 
     @property
     def has_independent_phase_power_control_interface(self) -> bool:
@@ -32,9 +36,6 @@ class HybridInverter(DeviceType):
     Sigen PV (50, 60, 80, 99.9, 100, 110) M1-HYB series
     """
 
-    def __str__(self):
-        return "Hybrid Inverter"
-
 
 class PVInverter(DeviceType):
     """Applicable Models:
@@ -43,6 +44,3 @@ class PVInverter(DeviceType):
     Sigen PV (50, 60, 80, 99.9, 100, 110, 125)M1 series
     Sigen PV (500)H1 series
     """
-
-    def __str__(self):
-        return "PV Inverter"

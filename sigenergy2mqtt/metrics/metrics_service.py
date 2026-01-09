@@ -1,20 +1,23 @@
-from .metrics import Metrics
-from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
-from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
-from sigenergy2mqtt.mqtt import MqttClient
-from sigenergy2mqtt.sensors.const import PERCENTAGE
-from typing import Any, Awaitable, Callable, Iterable, List
 import asyncio
 import json
 import logging
 import time
+from typing import Any, Awaitable
+
+import paho.mqtt.client as mqtt
+
+from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
+from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
+from sigenergy2mqtt.sensors.const import PERCENTAGE
+
+from .metrics import Metrics
 
 
 class MetricsService(Device):
     _unique_id: str = f"{Config.home_assistant.unique_id_prefix}_metrics"
 
-    _discovery = {
+    discovery = {
         "dev": {
             "name": "Sigenergy Metrics",
             "ids": [_unique_id],
@@ -186,21 +189,22 @@ class MetricsService(Device):
     def __init__(self, protocol_version: Protocol):
         super().__init__("Sigenergy Metrics", -1, MetricsService._unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
 
-    def publish_availability(self, mqtt: MqttClient, ha_state: str, qos: int = 2) -> None:
+    def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
         pass
 
-    def publish_discovery(self, mqtt: MqttClient, clean: bool = False) -> Any:
+    def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
+        info = None
         if clean or not Config.metrics_enabled:
-            logging.debug(f"{self.name} - Cleaning discovery ({Config.metrics_enabled=} {clean=})")
-            info = mqtt.publish(topic, "", qos=1, retain=True)  # Clear retained messages
+            logging.debug(f"{self.name} cleaning discovery ({Config.metrics_enabled=} {clean=})")
+            info = mqtt_client.publish(topic, "", qos=1, retain=True)  # Clear retained messages
         elif Config.metrics_enabled:
-            logging.debug(f"{self.name} - Publishing discovery")
-            discovery_json = json.dumps(MetricsService._discovery, allow_nan=False, indent=2, sort_keys=False)
-            info = mqtt.publish(topic, discovery_json, qos=2, retain=True)
+            logging.debug(f"{self.name} publishing discovery")
+            discovery_json = json.dumps(MetricsService.discovery, allow_nan=False, indent=2, sort_keys=False)
+            info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
         return info
 
-    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Callable[[Any, Any, Iterable[Any]], Awaitable[None]]]:
+    def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         def get_value(object_id: str) -> Any:
             match object_id:
                 case "sigenergy2mqtt_modbus_locks":
@@ -216,34 +220,33 @@ class MetricsService(Device):
                     if value == float("inf"):
                         value = 0.0
             if value is None:
-                logging.warning(f"{self.name} - No value found for {object_id}")
+                logging.warning(f"{self.name} no value found for {object_id}")
                 return None
             return f"{value:.2f}" if isinstance(value, float) else str(value)
 
-        async def publish_updates(modbus: Any, mqtt: MqttClient) -> None:
+        async def publish_updates(modbus_client: Any, mqtt_client: mqtt.Client) -> None:
             logging.info(f"{self.name} Service Commenced")
             while self.online:
-                mqtt.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
+                mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
                 try:
-                    for object_id, discovery in MetricsService._discovery["cmps"].items():
+                    for object_id, discovery in MetricsService.discovery["cmps"].items():
                         value = get_value(object_id)
                         if value is not None:
-                            mqtt.publish(discovery["state_topic"], f"{value:.2f}" if isinstance(value, float) else str(value), qos=0, retain=False)
+                            mqtt_client.publish(discovery["state_topic"], f"{value:.2f}" if isinstance(value, float) else str(value), qos=0, retain=False)
                     await asyncio.sleep(1.0)
                 except asyncio.CancelledError:
-                    logging.info(f"{self.name} - Sleep interrupted")
+                    logging.info(f"{self.name} sleep interrupted")
                 except asyncio.TimeoutError:
-                    logging.warning(f"{self.name} - Failed to acquire lock within timeout")
+                    logging.warning(f"{self.name} failed to acquire lock within timeout")
                 except Exception as e:
-                    logging.error(f"{self.name} - Error during publish: {repr(e)}")
-            mqtt.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
+                    logging.error(f"{self.name} error during publish: {repr(e)}")
+            mqtt_client.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
             logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
             return
 
         if Config.metrics_enabled:
-            logging.debug(f"{self.name} - Scheduling updates")
-            tasks = [publish_updates(modbus, mqtt)]
+            tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         else:
-            logging.debug(f"{self.name} - Disabled, no tasks scheduled")
+            logging.debug(f"{self.name} disabled, no tasks scheduled")
             tasks = []
         return tasks

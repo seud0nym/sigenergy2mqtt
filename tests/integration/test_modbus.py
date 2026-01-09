@@ -1,11 +1,13 @@
-import logging
-import pytest
 import asyncio
+import logging
+
+import pytest
+
 from sigenergy2mqtt.modbus.client import ModbusClient
-from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
+from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
 
 
-# Mock MqttClient
+# Mock mqtt.Client
 class MockMqttClient:
     def __init__(self):
         self._user_data = CustomMqttHandler(asyncio.get_running_loop())
@@ -52,7 +54,8 @@ async def test_modbus_read(mock_modbus_server):
     # Sigenergy ModbusClient signature:
     # read_input_registers(self, address, count: int = 1, device_id: int = 1, ...)
 
-    rr = await client.read_input_registers(31004, 1, device_id=1)
+    rr = await client.read_input_registers(31004, count=1, device_id=1)
+    assert rr is not None
 
     # Check if we got a valid response
     assert not rr.isError()

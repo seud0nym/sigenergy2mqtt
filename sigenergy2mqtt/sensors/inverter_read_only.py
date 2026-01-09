@@ -1,3 +1,25 @@
+import logging
+import math
+import time
+from typing import Any, Dict, cast
+
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+
+from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.sensors.const import (
+    PERCENTAGE,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfReactivePower,
+    UnitOfTemperature,
+    UnitOfTime,
+)
+
 from .base import (
     Alarm1Sensor,
     Alarm2Sensor,
@@ -14,26 +36,6 @@ from .base import (
     StateClass,
     TimestampSensor,
 )
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.const import (
-    PERCENTAGE,
-    UnitOfApparentPower,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfFrequency,
-    UnitOfPower,
-    UnitOfReactivePower,
-    UnitOfTemperature,
-    UnitOfTime,
-)
-from typing import Any, Dict
-import logging
-import math
-import time
-
 
 # 5.3 Hybrid inverter running information address definition (read-only register)
 
@@ -108,10 +110,12 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if "device" in self and value is not None and self.device["hw"] != value:
-            # Firmware has been updated, so need to update the device and to republish discovery
-            self.device["hw"] = value
-            self.device.rediscover = True
+        if value is not None:
+            device = getattr(self, "parent_device")
+            if device and device["hw"] != value:
+                logging.info(f"{device.name} firmware change detected: {device['hw']} -> {value} (device_address={device.device_address})")
+                device["hw"] = value
+                device.rediscover = True
         return value
 
 
@@ -433,9 +437,6 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
         self._sanity.min_raw = None
-
-    def set_state(self, state: float | int | str) -> None:
-        super().set_state(state)
 
 
 class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
@@ -849,7 +850,7 @@ class InverterPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Modbus Registers 30605 and 30606"
         return attributes
@@ -1246,8 +1247,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown Output Type: {value}"
 
@@ -1373,32 +1374,24 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         self._active_power = active_power
         self._reactive_power = reactive_power
 
-    @property
-    def calculated(self) -> tuple[int, float] | None:
-        active_power = self._active_power.latest_raw_state
-        active_power_time = self._active_power.latest_time
-        reactive_power = self._reactive_power.latest_raw_state
-        reactive_power_time = self._reactive_power.latest_time
-        if active_power is not None and reactive_power is not None:
-            apparent_power = math.sqrt(active_power**2 + reactive_power**2)
-            power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
-            if self.debug_logging:
-                logging.debug(
-                    f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
-                )
-            return power_factor, apparent_power
-        logging.info(f"{self.__class__.__name__} Unable to calculate corrected state: active_power={active_power} reactive_power={reactive_power}")
-        return None, None
-
-    def set_state(self, state: float | int | str) -> None:
+    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
         try:
             super().set_state(state)
         except ValueError as e:
-            power_factor, apparent_power = self.calculated
-            if power_factor is not None:
-                logging.info(
-                    f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
-                )
+            active_power = cast(float, self._active_power.latest_raw_state)
+            reactive_power = cast(float, self._reactive_power.latest_raw_state)
+            if active_power is not None and reactive_power is not None:
+                apparent_power = math.sqrt(active_power**2 + reactive_power**2)
+                power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
+                if self.debug_logging:
+                    active_power_time = cast(float, self._active_power.latest_time)
+                    reactive_power_time = cast(float, self._reactive_power.latest_time)
+                    logging.debug(
+                        f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
+                    )
+                    logging.info(
+                        f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
+                    )
                 super().set_state(power_factor)
             else:
                 raise e
@@ -1702,7 +1695,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Single time"
         return attributes
@@ -1729,7 +1722,7 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Single time"
         return attributes
@@ -1830,7 +1823,7 @@ class DCChargerRunningState(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown State code: {value}"

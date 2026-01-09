@@ -3,23 +3,25 @@ import logging
 import os
 import sys
 import threading
-
+from typing import Any
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from datetime import datetime
-from paho.mqtt.client import Client as MqttClient
-from paho.mqtt.client import CallbackAPIVersion
-from pymodbus import __version__ as pymodbus_version
+from random import randint
+
+import paho.mqtt.client as mqtt
+from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
 from pymodbus import FramerType, ModbusDeviceIdentification
-from pymodbus.client.base import ModbusClientMixin
+from pymodbus import __version__ as pymodbus_version
+from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.constants import ExcCodes
 from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
-from random import randint
 from ruamel.yaml import YAML
+
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
-from tests.utils import get_sensor_instances, cancel_sensor_futures
+from tests.utils import cancel_sensor_futures, get_sensor_instances
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
@@ -34,7 +36,7 @@ class CustomMqttHandler:
         self._loop = loop
         self._reconnect_lock = threading.Lock()
 
-    def on_reconnect(self, client: MqttClient) -> None:
+    def on_reconnect(self, client: mqtt.Client) -> None:
         if not self.connected:
             with self._reconnect_lock:
                 if not self.connected:
@@ -54,7 +56,7 @@ class CustomMqttHandler:
                 _logger.debug(f"on_message: {method.__func__.__qualname__}('{topic}', {value})")
                 method(topic, value)
 
-    def register(self, client: MqttClient, topic: str, handler) -> tuple[int, int]:
+    def register(self, client: mqtt.Client, topic: str, handler) -> tuple[MQTTErrorCode, int | None]:
         if topic not in self._topics:
             self._topics[topic] = []
         self._topics[topic].append(handler)
@@ -62,7 +64,7 @@ class CustomMqttHandler:
 
 
 class CustomDataBlock(ModbusSparseDataBlock):
-    def __init__(self, device_address: int, mqtt_client: MqttClient):
+    def __init__(self, device_address: int, mqtt_client: mqtt.Client):
         super().__init__(values=None, mutable=True)
         self.device_address = device_address
         self._topics: dict = {}
@@ -72,14 +74,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
         self._read_count: int = 0
         self._written_addresses: list[int] = []
 
-    @classmethod
-    def create(cls, device_address: int, mqtt_client: MqttClient) -> "CustomDataBlock":
-        return cls(device_address, mqtt_client)
-
     def add_sensor(self, sensor) -> None:
         if not sensor.publishable:
             return
-        source = None
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             source = "string"
             value = "string value" if not sensor.latest_raw_state else sensor.latest_raw_state
@@ -90,12 +87,6 @@ class CustomDataBlock(ModbusSparseDataBlock):
             elif sensor.address == 31023:  # PowerFactor
                 source = "power_factor"
                 value = randint(64572, 65534) / sensor.gain  # Force sanity check failure to test handling
-            elif sensor.address == 31025:  # PVStringCount
-                source = "pv_string_count"
-                value = 16
-            elif sensor.address == 31026:  # MPTTCount
-                source = "mptt_count"
-                value = 4
             elif sensor.address == 32007:  # ACChargerRatedCurrent
                 source = "rated_current"
                 value = 63
@@ -119,6 +110,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                     source = "min_max"
                     value = randint(sensor["min"][0] if not isinstance(sensor["min"], (tuple, list)) else sensor["min"], sensor["min"][1] if not isinstance(sensor["min"], (tuple, list)) else sensor["max"])
                 elif hasattr(sensor, "options"):
+                    source = "options"
                     value = 0
                 elif sensor._sanity.min_raw is not None and sensor._sanity.max_raw is not None:
                     source = "sanity_check"
@@ -175,14 +167,14 @@ class CustomDataBlock(ModbusSparseDataBlock):
             raw = sensor.state2raw(value)
             registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
         super().setValues(address, registers)
-        if address == 31011:
+        if address == 31011: # Use the Phase A Voltage for all three phases
             super().setValues(31013, registers)
             super().setValues(31015, registers)
-        elif address == 31017:
+        elif address == 31017: # Use the Phase A Current for all three phases
             super().setValues(31019, registers)
             super().setValues(31021, registers)
 
-    async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:
+    async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:  # pyright: ignore[reportIncompatibleMethodOverride]
         delay_avg: int = 15
         delay_min: int = 5
         delay_max: int = 50
@@ -201,19 +193,19 @@ class CustomDataBlock(ModbusSparseDataBlock):
         _logger.debug(f"async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
         return result
 
-    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:
+    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride]
         self._written_addresses.append(address)
         _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
         return super().setValues(address, values)
 
 
-async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, log_level: int = logging.INFO) -> None:
+async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, log_level: int = logging.INFO) -> None:
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
-    group_index: int = None
-    address: int = None
-    count: int = None
-    device_address: int = None
+    group_index: int = -1
+    address: int | None = None
+    count: int | None = None
+    device_address: int | None = None
     input_type = None
 
     _logger.info("Getting sensor instances...")
@@ -223,9 +215,9 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
             device_address != sensor.device_address
             or (address is None or count is None or sensor.address != address + count)
             or input_type != sensor.input_type
-            or (group_index is not None and (sum(s.count for s in groups[group_index]) + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
+            or (group_index != -1 and (sum(s.count for s in groups[group_index]) + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
         ):
-            group_index = group_index + 1 if group_index is not None else 0
+            group_index = group_index + 1
             groups[group_index] = []
         groups[group_index].append(sensor)
         address = sensor.address
@@ -234,28 +226,7 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
         input_type = sensor.input_type
 
     if modbus_client:
-        _logger.info("Pre-populating sensor values...")
-        skip_devices: list[int] = []
-        async with modbus_client:
-            await modbus_client.connect()
-            for group_sensors in groups.values():
-                if len(group_sensors) == 1 and (group_sensors[0].device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
-                    continue
-                first_address: int = min([s.address for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
-                last_address: int = max([s.address + s.count - 1 for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
-                count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= getattr(s, "address") <= last_address])
-                assert first_address and last_address and (last_address - first_address + 1) == count
-                device_address = group_sensors[0].device_address
-                try:
-                    if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0].input_type) == 0:
-                        for sensor in group_sensors:
-                            if sensor.publishable:
-                                await sensor.get_state(modbus=modbus_client)
-                except Exception:
-                    if device_address not in skip_devices:
-                        skip_devices.append(device_address)
-                    if not modbus_client.connected:
-                        await modbus_client.connect()
+        await prepopulate(modbus_client, groups)
 
     _logger.setLevel(log_level)
 
@@ -263,7 +234,7 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
     for sensor in sensors.values():
         if hasattr(sensor, "device_address"):
             if sensor.device_address not in context:
-                context[sensor.device_address] = CustomDataBlock.create(sensor.device_address, mqtt_client)
+                context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client)
             context[sensor.device_address].add_sensor(sensor)
     cancel_sensor_futures()
 
@@ -285,7 +256,32 @@ async def run_async_server(mqtt_client: MqttClient, modbus_client: ModbusClient,
     )
 
 
-def on_connect(client: MqttClient, userdata: CustomMqttHandler, flags, reason_code, properties) -> None:
+async def prepopulate(modbus_client, groups):
+    _logger.info("Pre-populating sensor values...")
+    skip_devices: list[int] = []
+    async with modbus_client:
+        await modbus_client.connect()
+        for group_sensors in groups.values():
+            if len(group_sensors) == 1 and (group_sensors[0].device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
+                continue
+            first_address: int = min([s.address for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
+            last_address: int = max([s.address + s.count - 1 for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
+            count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= getattr(s, "address") <= last_address])
+            assert first_address and last_address and (last_address - first_address + 1) == count
+            device_address = group_sensors[0].device_address
+            try:
+                if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0].input_type) == 0:
+                    for sensor in group_sensors:
+                        if sensor.publishable:
+                            await sensor.get_state(modbus_client=modbus_client)
+            except Exception:
+                if device_address not in skip_devices:
+                    skip_devices.append(device_address)
+                if not modbus_client.connected:
+                    await modbus_client.connect()
+
+
+def on_connect(client: mqtt.Client, userdata: CustomMqttHandler, flags, reason_code, properties) -> None:
     if reason_code == 0:
         userdata.on_reconnect(client)
     else:
@@ -293,13 +289,13 @@ def on_connect(client: MqttClient, userdata: CustomMqttHandler, flags, reason_co
         os._exit(2)
 
 
-def on_disconnect(client: MqttClient, userdata: CustomMqttHandler, flags, reason_code, properties) -> None:
+def on_disconnect(client: mqtt.Client, userdata: CustomMqttHandler, flags, reason_code, properties) -> None:
     userdata.connected = False
     if reason_code != 0:
         _logger.error(f"Failed to disconnect from mqtt (Reason Code = {reason_code})")
 
 
-def on_message(client: MqttClient, userdata: CustomMqttHandler, message) -> None:
+def on_message(client: mqtt.Client, userdata: CustomMqttHandler, message) -> None:
     userdata.on_message(message.topic, str(message.payload, "utf-8"))
     userdata.on_reconnect(client)
 
@@ -309,7 +305,7 @@ async def async_helper() -> None:
     log_level: int = logging.INFO
     with open("tests/utils/.modbus_test_server.yaml", "r") as f:
         config = _yaml.load(f)
-        mqtt_client = MqttClient(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop()))
+        mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop()))
         mqtt_client.username_pw_set(config.get("mqtt", {}).get("username"), config.get("mqtt", {}).get("password"))
         mqtt_client.connect(config.get("mqtt", {}).get("broker", "localhost"), config.get("mqtt", {}).get("port", 1883), 60)
         mqtt_client.on_disconnect = on_disconnect

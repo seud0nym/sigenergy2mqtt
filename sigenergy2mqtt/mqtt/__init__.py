@@ -1,20 +1,22 @@
-__all__ = ["MqttClient", "MqttHandler", "mqtt_setup"]
+__all__ = ["MqttHandler", "mqtt_setup"]
 
-from .mqtt import MqttClient, MqttHandler
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
-from time import sleep
-from typing import Tuple
 import asyncio
 import logging
+from time import sleep
+from typing import Tuple
+
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus import ModbusClient
+
+from .mqtt import MqttClient, MqttHandler
 
 
-def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
+def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
     assert mqtt_client_id and not mqtt_client_id.isspace(), "mqtt_client_id must not be None or an empty string"
 
     logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for mqtt://{Config.mqtt.broker}:{Config.mqtt.port} over {Config.mqtt.transport}")
 
-    mqtt_handler = MqttHandler(mqtt_client_id, modbus, loop)
+    mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop)
     mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler, transport=Config.mqtt.transport)
 
     if Config.mqtt.anonymous:

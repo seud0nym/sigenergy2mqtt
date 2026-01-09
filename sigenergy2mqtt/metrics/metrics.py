@@ -1,8 +1,8 @@
-from contextlib import asynccontextmanager
-from datetime import datetime
 import asyncio
 import logging
 import time
+from contextlib import asynccontextmanager
+from datetime import datetime
 
 
 class Metrics:
@@ -26,7 +26,7 @@ class Metrics:
     sigenergy2mqtt_modbus_write_min: float = float("inf")
     sigenergy2mqtt_modbus_write_errors: int = 0
 
-    sigenergy2mqtt_started: float = datetime.now().astimezone().isoformat()
+    sigenergy2mqtt_started: str = datetime.now().astimezone().isoformat()
 
     @classmethod
     @asynccontextmanager

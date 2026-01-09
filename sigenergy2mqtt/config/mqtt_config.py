@@ -1,13 +1,18 @@
-from .validation import check_bool, check_host, check_int, check_log_level, check_port, check_string
-from dataclasses import dataclass
 import logging
+import secrets
+import string
+from dataclasses import dataclass
+from typing import Literal, cast
 
+from .validation import check_bool, check_host, check_int, check_log_level, check_port, check_string
+
+TRANSPORTS = Literal['tcp','websockets']
 
 @dataclass
 class MqttConfiguration:
     broker: str = "127.0.0.1"
     port: int = 1883
-    transport: str = "tcp"
+    transport: Literal['tcp','websockets'] = "tcp"
 
     keepalive: int = 60
 
@@ -15,8 +20,10 @@ class MqttConfiguration:
     tls_insecure: bool = False  # Allow insecure TLS connections (not recommended)
 
     anonymous: bool = False
-    username: str = None
-    password: str = None
+    username: str | None = None
+    password: str | None = None
+
+    client_id_prefix: str = f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}"
 
     log_level: int = logging.WARNING
 
@@ -36,7 +43,7 @@ class MqttConfiguration:
                     case "port":
                         self.port = check_port(value, f"mqtt.{field}")
                     case "keepalive":
-                        self.keepalive = check_int(value, f"mqtt.{field}", min=1)
+                        self.keepalive = cast(int, check_int(value, f"mqtt.{field}", min=1))
                     case "anonymous":
                         self.anonymous = check_bool(value, f"mqtt.{field}")
                     case "username":
@@ -48,7 +55,7 @@ class MqttConfiguration:
                     case "tls-insecure":
                         self.tls_insecure = check_bool(value, f"mqtt.{field}")
                     case "transport":
-                        self.transport = check_string(value, f"mqtt.{field}", "tcp", "websockets", allow_none=False, allow_empty=False)
+                        self.transport = cast(TRANSPORTS, check_string(value, f"mqtt.{field}", "tcp", "websockets", allow_none=False, allow_empty=False))
                     case _:
                         if field != "tls":
                             raise ValueError(f"mqtt configuration element contains unknown option '{field}'")

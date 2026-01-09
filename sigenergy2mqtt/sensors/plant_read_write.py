@@ -1,12 +1,14 @@
-from .base import DeviceClass, InputType, NumericSensor, AvailabilityMixin, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
-from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+import logging
+from typing import cast
+
+import paho.mqtt.client as mqtt
+
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.mqtt import MqttClient
-from typing import Any
-import logging
+from sigenergy2mqtt.modbus import ModbusClient
 
+from .base import AvailabilityMixin, DeviceClass, InputType, NumericSensor, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
+from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 # 5.2 Plant parameter setting address definition (holding register)
 
@@ -22,7 +24,7 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "0:Stop 1:Start"
         return attributes
@@ -75,7 +77,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             maximum=60.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -105,7 +107,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             maximum=100.00,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [-100.00,100.00]"
         return attributes
@@ -135,7 +137,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             maximum=60.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -166,7 +168,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             maximum=(0.8, 1.0),
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -188,7 +190,7 @@ class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInvert
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
         return attributes
@@ -227,7 +229,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
         return attributes
@@ -266,7 +268,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
         return attributes
@@ -307,7 +309,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
         return attributes
@@ -348,7 +350,7 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
         return attributes
@@ -389,7 +391,7 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS"
         return attributes
@@ -425,30 +427,32 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
         return base
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> bool:
-        result = await super().publish(mqtt, modbus, republish=republish)
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, modbus_client, republish=republish)
         if result and Config.home_assistant.enabled:
             match self.latest_raw_state:
                 case 3 | 4:
-                    mqtt.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
-                    mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
                 case 5 | 6:
-                    mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_discharging_mode_topic, "1", self._qos, self._retain)
-                    mqtt.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_discharging_mode_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
                 case _:
-                    mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
             return True
         return result
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
-        if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus=modbus) in (0, "0"):
-            logging.error(f"{self.__class__.__name__} Failed to write '{self['options'][raw_value]}' ({raw_value}): {self._availability_control_sensor.name} is not enabled")
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus_client=modbus_client) in (0, "0"):
+            logging.error(
+                f"{self.__class__.__name__} Failed to write '{cast(list[str], self['options'])[raw_value] if isinstance(raw_value, int) else raw_value}' ({raw_value}): {self._availability_control_sensor.name} is not enabled"
+            )
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class RemoteEMSLimit(NumericSensor):
@@ -494,18 +498,18 @@ class RemoteEMSLimit(NumericSensor):
         base = super().configure_mqtt_topics(device_id)
         if Config.home_assistant.enabled:
             if self._charging and self._discharging:
-                self["availability"].append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._charging:
-                self["availability"].append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._discharging:
-                self["availability"].append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': {self._availability_control_sensor.name} is not enabled")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
@@ -524,16 +528,16 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging"
         return attributes
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
@@ -552,16 +556,16 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging"
         return attributes
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Discharging")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
@@ -580,16 +584,16 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
         return attributes
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging/Discharging")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
@@ -615,7 +619,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -644,7 +648,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -673,7 +677,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
         return attributes
@@ -681,7 +685,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value == 0xFFFFFFFF:
-            logging.warning(f"{self.name} - Register is not valid, setting publishable to False ({value=})")
+            logging.warning(f"{self.name} register is not valid, setting publishable to False ({value=})")
             self.publishable = False
             return None
         else:
@@ -711,7 +715,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
         return attributes
@@ -740,7 +744,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
         return attributes
@@ -769,7 +773,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
         return attributes
@@ -798,7 +802,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
         return attributes
@@ -827,7 +831,7 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             maximum=5000,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0,5000]。Percentage of rated power adjusted per second"
         return attributes
@@ -871,7 +875,7 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             maximum=10.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -900,7 +904,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             maximum=20.0,  # Protocol says 0.0-10.0 but live systems are returning 20.0???? (https://github.com/seud0nym/sigenergy2mqtt/issues/80#issuecomment-3689277867)
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -918,7 +922,7 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
-                None,  # 1
+                "",  # 1
                 "Zero-current mode",  # 2
                 "Constant current mode",  # 3
                 "Reactive dynamic current, active zero-current mode",  # 4
@@ -981,7 +985,7 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             maximum=10.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -1010,7 +1014,7 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             maximum=10.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -1028,7 +1032,7 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
-                None,  # 1
+                "",  # 1
                 "Zero-current mode",  # 2
                 "Constant current mode",  # 3
                 "Reactive dynamic current, active hold mode",  # 4
@@ -1090,7 +1094,7 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             protocol_version=Protocol.V2_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,100.0]"
         return attributes
@@ -1120,7 +1124,7 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             maximum=1.2 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes
@@ -1150,7 +1154,7 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             maximum=1.2 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes
@@ -1193,7 +1197,7 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             protocol_version=Protocol.V2_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,100.0]"
         return attributes
@@ -1223,7 +1227,7 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             maximum=1.0 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes
@@ -1253,7 +1257,7 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             maximum=1.0 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes

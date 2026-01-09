@@ -1,4 +1,11 @@
-from typing import Any, Dict
+from datetime import timedelta, timezone
+from typing import Any, cast
+
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+
+from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 from .base import (
     Alarm1Sensor,
@@ -17,12 +24,6 @@ from .base import (
     StateClass,
     TimestampSensor,
 )
-from datetime import timedelta, timezone
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
-
 
 # 5.1 Plant running information address definition(read-only register)
 
@@ -69,11 +70,13 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             return None
         elif raw:
             return value
-        else:
+        elif isinstance(value, (float, int)):
             offset = timedelta(minutes=value)
             tz = timezone(offset)
             formatted_offset = tz.tzname(None)
             return formatted_offset
+        else:
+            return None
 
     def state2raw(self, state) -> float | int | str:
         if isinstance(state, str):
@@ -110,12 +113,12 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "Max Self Consumption",  # 0
             "Sigen AI",  # 1
             "Time of Use",  # 2
-            None,  # 3
-            None,  # 4
+            "",  # 3
+            "",  # 4
             "Full Feed-in to Grid",  # 5
-            None,  # 6
+            "",  # 6
             "Remote EMS",  # 7
-            None,  # 8
+            "",  # 8
             "Time-Based Control",  # 9
         ]
 
@@ -125,8 +128,8 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1) and self["options"][value] is not None:
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown Mode: {value}"
 
@@ -163,12 +166,12 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown Status: {value}"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Gateway or meter connection status"
         return attributes
@@ -198,7 +201,7 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         self._sanity.max_raw = 100000  # 100kW
         self._sanity.min_raw = -100000  # -100kW
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
         return attributes
@@ -225,7 +228,7 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
         return attributes
@@ -264,8 +267,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown Status: {value}"
 
@@ -292,7 +295,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "This should be the base value of all active power adjustment actions"
         return attributes
@@ -320,7 +323,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "This should be the base value of all reactive power adjustment actions"
         return attributes
@@ -422,7 +425,7 @@ class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -439,7 +442,7 @@ class GeneralAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -454,7 +457,7 @@ class GeneralPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         attributes["source"] = "Modbus Registers 30027 and 30028"
@@ -472,7 +475,7 @@ class GeneralAlarm3(Alarm3Sensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -489,7 +492,7 @@ class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -584,7 +587,7 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "ESS Power: <0 = discharging >0 = charging"
         return attributes
@@ -612,7 +615,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Feed to the AC terminal. Count only the running inverters"
         return attributes
@@ -640,7 +643,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
         return attributes
@@ -668,7 +671,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Feed to the AC terminal. Count only the running inverters"
         return attributes
@@ -697,7 +700,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
         return attributes
@@ -724,7 +727,7 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Count only the running inverters"
         return attributes
@@ -751,7 +754,7 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
         return attributes
@@ -799,7 +802,7 @@ class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
         return attributes
@@ -835,7 +838,7 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
         return attributes
@@ -862,7 +865,7 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Count only the running inverters"
         return attributes
@@ -889,7 +892,7 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Count only the running inverters"
         return attributes
@@ -952,7 +955,7 @@ class GeneralAlarm5(Alarm5Sensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -1069,7 +1072,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight"
         return attributes
@@ -1121,8 +1124,8 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
         self["enabled_by_default"] = True
         self._sanity.min_raw = None
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1150,8 +1153,8 @@ class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1269,8 +1272,8 @@ class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1298,8 +1301,8 @@ class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1371,8 +1374,8 @@ class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1400,8 +1403,8 @@ class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1450,7 +1453,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
         gain: float = 100,
         precision: int = 2,
         protocol_version: Protocol = Protocol.V2_7,
-        unique_id_override: str = None,
+        unique_id_override: str | None = None,
     ):
         super().__init__(
             name=name,
@@ -1472,7 +1475,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=unique_id_override,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
         return attributes
@@ -1724,7 +1727,7 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Use of Remote Output Control in Japan"
         return attributes
@@ -1743,14 +1746,6 @@ class Alarm6(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "Gateway communication abnormal"
@@ -1781,14 +1776,6 @@ class Alarm7(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "OVGR fault"
@@ -1808,7 +1795,7 @@ class PlantAlarms(AlarmCombinedSensor):
             Alarm7(plant_index),
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Modbus Registers 30280 and 30281"
         return attributes

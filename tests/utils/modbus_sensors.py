@@ -1,15 +1,16 @@
 import asyncio
 import logging
-import sys
 import os
+import sys
+from typing import cast
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
-from sigenergy2mqtt.sensors.base import AlarmSensor, AlarmCombinedSensor, EnergyDailyAccumulationSensor, Sensor
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRatedCurrent, ACChargerInputBreaker
+from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 
@@ -22,7 +23,7 @@ async def get_sensor_instances(
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
-):
+) -> dict[str, Sensor]:
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
     Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
@@ -66,12 +67,12 @@ async def get_sensor_instances(
         plant_index=plant_index,
         device_address=hybrid_inverter_device_address,
         protocol_version=protocol_version,
-        device_type=DeviceType.create(hybrid_model.latest_raw_state),
-        model_id=hybrid_model.latest_raw_state,
-        serial=hybrid_serial.latest_raw_state,
-        firmware=hybrid_firmware.latest_raw_state,
+        device_type=DeviceType.create(cast(str, hybrid_model.latest_raw_state)),
+        model_id=cast(str, hybrid_model.latest_raw_state),
+        serial=cast(str, hybrid_serial.latest_raw_state),
+        firmware=cast(str, hybrid_firmware.latest_raw_state),
         battery_count=3,
-        strings=hybrid_pv_strings.latest_raw_state,
+        strings=cast(int, hybrid_pv_strings.latest_raw_state),
         power_phases=3,
         pv_string_count=hybrid_pv_strings,
         output_type=hybrid_output_type,
@@ -96,12 +97,12 @@ async def get_sensor_instances(
         plant_index=plant_index,
         device_address=pv_inverter_device_address,
         protocol_version=protocol_version,
-        device_type=DeviceType.create(pv_model.latest_raw_state),
-        model_id=pv_model.latest_raw_state,
-        serial=pv_serial.latest_raw_state,
-        firmware=pv_firmware.latest_raw_state,
+        device_type=DeviceType.create(cast(str, pv_model.latest_raw_state)),
+        model_id=cast(str, pv_model.latest_raw_state),
+        serial=cast(str, pv_serial.latest_raw_state),
+        firmware=cast(str, pv_firmware.latest_raw_state),
         battery_count=0,
-        strings=pv_pv_strings.latest_raw_state,
+        strings=cast(int, pv_pv_strings.latest_raw_state),
         power_phases=3,
         pv_string_count=pv_pv_strings,
         output_type=pv_output_type,
@@ -113,13 +114,13 @@ async def get_sensor_instances(
 
     dc_charger = DCCharger(plant_index, dc_charger_device_address, protocol_version)
 
-    rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     input_breaker = ACChargerInputBreaker(plant_index, ac_charger_device_address)
-    ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, 16.0, 32.0, rated_current, input_breaker)
+    rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
+    ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, 16.0, 32.0, input_breaker, rated_current)
 
     classes = {}
     registers = {}
-    sensors = {}
+    sensors: dict[str, Sensor] = {}
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
@@ -158,17 +159,18 @@ async def get_sensor_instances(
         devices = [parent]
         devices.extend(parent.children)
         for device in devices:
-            for s in device.sensors.values():
-                if isinstance(s, AlarmCombinedSensor):
-                    add_sensor_instance(s)
-                    for alarm in s.alarms:
+            for sensor in device.sensors.values():
+                if isinstance(sensor, AlarmCombinedSensor):
+                    add_sensor_instance(sensor)
+                    for alarm in sensor.alarms:
                         add_sensor_instance(alarm)
                 else:
-                    add_sensor_instance(s)
+                    add_sensor_instance(sensor)
 
     previous = None
     for address in sorted(registers.keys()):
-        count = registers[address].count
+        sensor = registers[address]
+        count = sensor.count
         if previous:
             last_address, last_count = previous
             if address not in (30500, 31000, 31500, 32000, 40000, 40500, 41000, 41500, 42000) and last_address + last_count < address:
@@ -177,7 +179,7 @@ async def get_sensor_instances(
                 )
         for i in range(address + 1, address + count):
             if i in registers:
-                logging.warning(f"Register {i} in {s.__class__.__name__} overlaps {registers[i].__class__.__name__}")
+                logging.warning(f"Register {i} in {sensor.__class__.__name__} overlaps {registers[i].__class__.__name__}")
         previous = (address, count)
     for classname, count in classes.items():
         if count == 0:

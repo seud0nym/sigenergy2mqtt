@@ -22,6 +22,7 @@ class DeviceClass(StrEnum):
 class InputType(StrEnum):
     HOLDING = "holding"
     INPUT = "input"
+    NONE = "none"
 
 
 class StateClass(StrEnum):
@@ -31,22 +32,16 @@ class StateClass(StrEnum):
 
 
 class UnitOfApparentPower(StrEnum):
-    """Apparent power units."""
-
     VOLT_AMPERE = "VA"
     KILOVOLT_AMPERE = "kVA"
 
 
 class UnitOfElectricCurrent(StrEnum):
-    """Electric current units."""
-
     MILLIAMPERE = "mA"
     AMPERE = "A"
 
 
 class UnitOfElectricPotential(StrEnum):
-    """Electric potential units."""
-
     MICROVOLT = "µV"
     MILLIVOLT = "mV"
     VOLT = "V"
@@ -55,8 +50,6 @@ class UnitOfElectricPotential(StrEnum):
 
 
 class UnitOfEnergy(StrEnum):
-    """Energy units."""
-
     JOULE = "J"
     KILO_JOULE = "kJ"
     MEGA_JOULE = "MJ"
@@ -74,8 +67,6 @@ class UnitOfEnergy(StrEnum):
 
 
 class UnitOfFrequency(StrEnum):
-    """Frequency units."""
-
     HERTZ = "Hz"
     KILOHERTZ = "kHz"
     MEGAHERTZ = "MHz"
@@ -83,8 +74,6 @@ class UnitOfFrequency(StrEnum):
 
 
 class UnitOfPower(StrEnum):
-    """Power units."""
-
     MILLIWATT = "mW"
     WATT = "W"
     KILO_WATT = "kW"
@@ -95,23 +84,17 @@ class UnitOfPower(StrEnum):
 
 
 class UnitOfReactivePower(StrEnum):
-    """Reactive power units."""
-
     VOLT_AMPERE_REACTIVE = "var"
     KILO_VOLT_AMPERE_REACTIVE = "kvar"
 
 
 class UnitOfTemperature(StrEnum):
-    """Temperature units."""
-
     CELSIUS = "°C"
     FAHRENHEIT = "°F"
     KELVIN = "K"
 
 
 class UnitOfTime(StrEnum):
-    """Time units."""
-
     MICROSECONDS = "μs"
     MILLISECONDS = "ms"
     SECONDS = "s"

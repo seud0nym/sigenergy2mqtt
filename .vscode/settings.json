@@ -1,8 +1,12 @@
 {
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
     "ruff.lineLength": 210,
     "python.analysis.extraPaths": [
         "./sigenergy2mqtt"
     ],
+	"python.analysis.diagnosticMode": "workspace",
     "cSpell.words": [
         "_mids",
         "ACCHARGER",
@@ -27,6 +31,8 @@
         "enphase",
         "EVAC",
         "EVDC",
+        "Gcal",
+        "GIGA",
         "HACS",
         "HASS",
         "hassio",
@@ -41,6 +47,7 @@
         "levelname",
         "lvrt",
         "MAINPID",
+        "Mcal",
         "mktime",
         "modbus",
         "modbusregisterdefinitions",
@@ -80,5 +87,7 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "python.pyrefly.displayTypeErrors": "force-on",
+    "python.analysis.typeCheckingMode": "standard"
 }

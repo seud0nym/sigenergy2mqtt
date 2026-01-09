@@ -1,9 +1,11 @@
 import asyncio
+from typing import Any, cast
+
 import pytest
 
-from sigenergy2mqtt.devices.device import SensorGroup, Device, DeviceRegistry
-from sigenergy2mqtt.config.config import Config
 from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.devices.device import Device, DeviceRegistry, SensorGroup
 
 
 def test_sensor_group_scan_interval_empty_and_non_empty():
@@ -29,11 +31,13 @@ def test_sensor_group_scan_interval_empty_and_non_empty():
 
 @pytest.mark.asyncio
 async def test_device_online_future_cancel(monkeypatch):
-    # Prepare Config.devices to include a registers attribute for plant_index 0
-    orig_devices = Config.devices
-    class D: 
+    conf = cast(Any, Config)
+    orig_devices = conf.devices
+
+    class D:
         registers = {}
-    Config.devices = [D()]
+
+    conf.devices = [D()]
 
     # Isolate DeviceRegistry
     orig_registry = DeviceRegistry._devices.copy()
@@ -52,14 +56,17 @@ async def test_device_online_future_cancel(monkeypatch):
 
     # restore
     DeviceRegistry._devices = orig_registry
-    Config.devices = orig_devices
+    conf.devices = orig_devices
 
 
 def test_device_rediscover_setter_and_type_check():
-    orig_devices = Config.devices
-    class D: 
+    conf = cast(Any, Config)
+    orig_devices = conf.devices
+
+    class D:
         registers = {}
-    Config.devices = [D()]
+
+    conf.devices = [D()]
 
     orig_registry = DeviceRegistry._devices.copy()
     DeviceRegistry._devices = {}
@@ -69,19 +76,21 @@ def test_device_rediscover_setter_and_type_check():
     assert dev.rediscover is True
     dev.rediscover = False
     assert dev.rediscover is False
-    with pytest.raises(ValueError):
-        dev.rediscover = "yes"
+    with pytest.raises(ValueError, match="rediscover must be a bool"):
+        cast(Any, dev).rediscover = "yes"
 
     DeviceRegistry._devices = orig_registry
-    Config.devices = orig_devices
+    conf.devices = orig_devices
 
 
 def test_add_child_device_adds_when_publishable():
-    # Setup Config and registry
-    orig_devices = Config.devices
-    class D: 
+    conf = cast(Any, Config)
+    orig_devices = conf.devices
+
+    class D:
         registers = {}
-    Config.devices = [D()]
+
+    conf.devices = [D()]
     orig_registry = DeviceRegistry._devices.copy()
     DeviceRegistry._devices = {}
 
@@ -92,7 +101,7 @@ def test_add_child_device_adds_when_publishable():
     class S:
         publishable = True
 
-    child.all_sensors = {"s1": S()}
+    cast(Any, child).all_sensors = {"s1": S()}
 
     parent._add_child_device(child)
     assert child.via_device == parent.unique_id
@@ -100,4 +109,4 @@ def test_add_child_device_adds_when_publishable():
 
     # cleanup
     DeviceRegistry._devices = orig_registry
-    Config.devices = orig_devices
+    conf.devices = orig_devices

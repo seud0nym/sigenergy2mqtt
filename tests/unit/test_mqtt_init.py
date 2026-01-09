@@ -1,6 +1,8 @@
 import asyncio
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 

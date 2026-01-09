@@ -1,6 +1,8 @@
-import pytest  # noqa: F401
-from unittest.mock import MagicMock, patch
 import logging
+from unittest.mock import MagicMock, patch
+
+import pytest  # noqa: F401
+
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.config.modbus_config import DeviceConfig  # noqa: F401
 

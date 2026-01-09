@@ -1,20 +1,23 @@
-from contextlib import asynccontextmanager
-from random import randint
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.mqtt import MqttClient
-from typing import Any
 import asyncio
 import logging
 import re
-import requests
 import time
+from contextlib import asynccontextmanager
+from random import randint
+from typing import Any
+
+import paho.mqtt.client as mqtt
+import requests
+from requests.structures import CaseInsensitiveDict
+
+from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.devices import Device
 
 
 class Service(Device):
-    _donator: bool = None
-    _interval: int = None  # Interval in minutes for PVOutput status updates
-    _interval_updated: float = None
+    _donator: bool = False
+    _interval: int = 5  # Interval in minutes for PVOutput status updates
+    _interval_updated: float | None = None
 
     def __init__(self, name: str, unique_id: str, model: str, logger: logging.Logger):
         super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, Protocol.N_A)
@@ -46,10 +49,10 @@ class Service(Device):
 
     # region Device overrides
 
-    def publish_availability(self, mqtt: MqttClient, ha_state, qos=2) -> None:
+    def publish_availability(self, mqtt_client: mqtt.Client, ha_state, qos=2) -> None:
         pass
 
-    def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
+    def publish_discovery(self, mqtt_client: mqtt.Client, clean=False) -> mqtt.MQTTMessageInfo | None:
         pass
 
     # endregion
@@ -72,7 +75,7 @@ class Service(Device):
                 if Config.pvoutput.testing:
                     Service._interval = 5
                     Service._interval_updated = current_time
-                    Service._donator = 1
+                    Service._donator = True
                     self.logger.info(
                         f"{self.__class__.__name__} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
                     )
@@ -111,15 +114,21 @@ class Service(Device):
         seconds = 60 if Config.pvoutput.testing else float(next_time - current_time)
         return seconds, next_time
 
-    async def upload_payload(self, url: str, payload: dict[str, any]) -> bool:
+    async def upload_payload(self, url: str, payload: dict[str, Any]) -> bool:
         self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
-        uploaded = False
+        uploaded: bool = False
+        response: requests.Response = requests.Response()
+        attempts: int = 0
         for i in range(1, 4, 1):
+            attempts = i
             try:
                 if Config.pvoutput.testing:
                     uploaded = True
                     self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
-                    response = {"status_code": 200, "headers": {"X-Rate-Limit-Remaining": 60}}
+                    cid = CaseInsensitiveDict()
+                    cid["X-Rate-Limit-Remaining"] = 60
+                    response.status_code = 200
+                    response.headers = cid
                     break
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")
@@ -148,12 +157,12 @@ class Service(Device):
                 self.logger.error(f"{self.__class__.__name__} Attempt #{i} Timeout Error: {exc}")
             except Exception as exc:
                 self.logger.error(f"{self.__class__.__name__} {exc}")
-            if response and response.status_code != 200 and "headers" in response and "X-Rate-Limit-Remaining" in response.headers and int(response.headers["X-Rate-Limit-Remaining"]) < 10:
-                self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
-                await asyncio.sleep(reset)
+            if response and response.status_code != 200 and hasattr(response, "headers") and "X-Rate-Limit-Remaining" in response.headers and int(response.headers["X-Rate-Limit-Remaining"]) < 10:
+                self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable]
+                await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]
             else:
                 self.logger.info(f"{self.__class__.__name__} Retrying in 10 seconds")
                 await asyncio.sleep(10)
         else:
-            self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after {i} attempts")
+            self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after {attempts} attempts")
         return uploaded

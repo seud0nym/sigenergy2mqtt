@@ -1,7 +1,8 @@
 import asyncio
 import datetime
 import sys
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 # Mock circular dependencies before importing sensors.base
@@ -21,9 +22,20 @@ mock_types.PVInverter = MockPVInverter
 sys.modules["sigenergy2mqtt.devices.types"] = mock_types
 
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
-from sigenergy2mqtt.sensors.base import Sensor, ModbusSensor, ReadOnlySensor, TimestampSensor, NumericSensor, SelectSensor, EnergyLifetimeAccumulationSensor, EnergyDailyAccumulationSensor, InputType  # noqa: E402
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
+
 from sigenergy2mqtt.config import Protocol  # noqa: E402
+from sigenergy2mqtt.sensors.base import (  # noqa: E402
+    EnergyDailyAccumulationSensor,
+    EnergyLifetimeAccumulationSensor,
+    InputType,
+    ModbusSensorMixin,
+    NumericSensor,
+    ReadOnlySensor,
+    SelectSensor,
+    Sensor,
+    TimestampSensor,
+)
+from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 
 # Mock Metrics and MetricsService to avoid background thread issues
 mock_metrics = MagicMock()
@@ -49,10 +61,42 @@ class TestModbusSensor:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # Invalid device address
             with pytest.raises(AssertionError, match="Invalid device address"):
-                ModbusSensor("N", "sigenergy_o", InputType.HOLDING, 0, 0, 30000, 1, ModbusClient.DATATYPE.UINT16, "U", None, None, "mdi:power", 1.0, 0, Protocol.V2_4)
+                ModbusSensorMixin(
+                    InputType.HOLDING,
+                    0,
+                    0,
+                    30000,
+                    1,
+                    name="N",
+                    unique_id="sigenergy_o",
+                    object_id="sigenergy_o",
+                    unit="U",
+                    device_class=None,
+                    state_class=None,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=0,
+                    protocol_version=Protocol.V2_4,
+                )
             # Invalid address
             with pytest.raises(AssertionError, match="Invalid address"):
-                ModbusSensor("N", "sigenergy_o", InputType.HOLDING, 0, 1, 29999, 1, ModbusClient.DATATYPE.UINT16, "U", None, None, "mdi:power", 1.0, 0, Protocol.V2_4)
+                ModbusSensorMixin(
+                    InputType.HOLDING,
+                    0,
+                    1,
+                    29999,
+                    1,
+                    name="N",
+                    unique_id="sigenergy_o",
+                    object_id="sigenergy_o",
+                    unit="U",
+                    device_class=None,
+                    state_class=None,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=0,
+                    protocol_version=Protocol.V2_4,
+                )
 
 
 class TestReadOnlySensor:
@@ -86,7 +130,7 @@ class TestReadOnlySensor:
             mock_rr.registers = [123]
             mock_modbus.read_holding_registers.return_value = mock_rr
 
-            result = await sensor._update_internal_state(modbus=mock_modbus)
+            result = await sensor._update_internal_state(modbus_client=mock_modbus)
 
             assert result is True
             assert sensor.latest_raw_state == 123

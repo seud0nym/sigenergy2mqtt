@@ -1,9 +1,12 @@
-from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, WriteOnlySensor
+from typing import Any
+
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
 
+from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, WriteOnlySensor
 
 # 5.4 Hybrid inverter parameter setting address definition (holding register)
 
@@ -19,7 +22,7 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "0:Stop 1:Start"
         return attributes
@@ -66,7 +69,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
             value_on=0,
         )
 
-    def get_attributes(self) -> dict[str, any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "0:Start 1:Stop"
         return attributes

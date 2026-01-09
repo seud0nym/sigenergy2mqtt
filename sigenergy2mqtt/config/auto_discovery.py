@@ -1,30 +1,32 @@
-from pymodbus import ExceptionResponse, FramerType, ModbusException
-from pymodbus.client import AsyncModbusTcpClient
-from queue import Queue
-from scapy.all import IP, ICMP, sr1
 import asyncio
 import ipaddress
 import logging
-import psutil
 import threading
 import time
+from queue import Queue
+from typing import cast
+
+import psutil
+from pymodbus import ExceptionResponse, FramerType, ModbusException
+from pymodbus.client import AsyncModbusTcpClient
+from scapy.all import ICMP, IP, sr1  # type: ignore
 
 
-def ping_worker(ip_queue: Queue, found_hosts: dict[float, str], timeout: float) -> None:
+def ping_worker(ip_queue: Queue[str], found_hosts: dict[str, float], timeout: float) -> None:
     while not ip_queue.empty():
         ip = ip_queue.get()
         pkt = IP(dst=ip) / ICMP()
         ans = sr1(pkt, timeout=timeout, verbose=0)
         if ans:
-            rx = ans[0][1]
-            tx = ans[0][0]
+            rx = ans[0][1]  # type: ignore
+            tx = ans[0][0]  # type: ignore
             found_hosts[ip] = rx.time - (tx.sent_time if tx.sent_time is not None else tx.time)
         ip_queue.task_done()
 
 
-def ping_scan(ip_list: list[str], threads=100, timeout=0.5) -> dict[float, str]:
-    ip_queue: Queue = Queue()
-    found_hosts: dict[float, str] = {}
+def ping_scan(ip_list: list[str], threads=100, timeout=0.5) -> dict[str, float]:
+    ip_queue: Queue[str] = Queue()
+    found_hosts: dict[str, float] = {}
 
     for ip in ip_list:
         ip_queue.put(ip)
@@ -57,7 +59,7 @@ async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) ->
         rr = await modbus.read_input_registers(address=30515, count=10, device_id=device_id)
         if rr and not rr.isError() and not isinstance(rr, ExceptionResponse):
             serial = modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING)
-            return serial
+            return cast(str, serial)
     except ModbusException as e:
         logging.debug(f"Failed to retrieve serial number for {modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
     except Exception as e:
@@ -75,7 +77,10 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
         if modbus.connected:
             try:
                 logging.info(f"Found Modbus device at {ip}:{port}")
-                device = {"host": ip, "port": port, "ac-chargers": [], "dc-chargers": [], "inverters": []}
+                ac_chargers: list[int] = []
+                dc_chargers: list[int] = []
+                inverters: list[int] = []
+                device: dict[str, str | int | list[int]] = {"host": ip, "port": port, "ac-chargers": ac_chargers, "dc-chargers": dc_chargers, "inverters": inverters}
                 if await probe_register(modbus, address=30051, device_id=247):  # Plant running state
                     logging.info(f" -> Found Sigenergy Plant at {ip}:{port}")
                     for device_id in range(1, 247):
@@ -84,8 +89,8 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
                             if serial and serial not in serial_numbers:
                                 serial_numbers.append(serial)
                                 logging.info(f" -> Found Inverter {device_id} ({serial}) and DC-Charger at {ip}:{port}: Device ID={device_id}")
-                                device["dc-chargers"].append(device_id)
-                                device["inverters"].append(device_id)
+                                dc_chargers.append(device_id)
+                                inverters.append(device_id)
                             else:
                                 logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
                             continue
@@ -94,15 +99,15 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
                             if serial and serial not in serial_numbers:
                                 serial_numbers.append(serial)
                                 logging.info(f" -> Found Inverter {device_id} ({serial}) at {ip}:{port}: Device ID={device_id}")
-                                device["inverters"].append(device_id)
+                                inverters.append(device_id)
                             else:
                                 logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
                             continue
-                        if len(device["inverters"]) > 0 and await probe_register(modbus, address=32000, device_id=device_id):  # AC Charger System state
+                        if len(inverters) > 0 and await probe_register(modbus, address=32000, device_id=device_id):  # AC Charger System state
                             logging.info(f" -> Found AC-Charger at {ip}:{port}: Device ID={device_id}")
-                            device["ac-chargers"].append(device_id)
+                            ac_chargers.append(device_id)
                             continue
-                    if len(device["inverters"]) == 0 and len(device["dc-chargers"]) == 0 and len(device["ac-chargers"]) == 0:
+                    if len(inverters) == 0 and len(dc_chargers) == 0 and len(ac_chargers) == 0:
                         logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found")
                     else:
                         results.append(device)
@@ -114,7 +119,7 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
         logging.debug(f"Modbus connection to {ip}:{port} failed: {e}")
 
 
-def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.25, modbus_retries: int = 0) -> list[dict[str, int, list[int], list[int], list[int]]]:
+def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.25, modbus_retries: int = 0) -> list[dict[str, str | int | list[int]]]:
     logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
     logging.getLogger("scapy").setLevel(logging.CRITICAL)
 
@@ -133,13 +138,12 @@ def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.2
                         logging.info(f"Found network '{iface_name}' {networks[ip]} via {network}")
                         break
 
-    active_ips: dict[str, float] = {}
+    active_ips: dict[str, float] = {"127.0.0.1": 0.0}  # Scan localhost first
     for addr, subnet in networks.items():
         logging.info(f"Scanning for active devices in network {subnet.with_prefixlen}...")
         all_ips: list[str] = [str(ip) for ip in subnet.hosts()]
         missing_ips: list[str] = [ip for ip in all_ips if ip != addr]
-        ping_results: dict[float, str] = ping_scan(missing_ips, timeout=ping_timeout)
-        active_ips[addr] = 0.0  # Scan localhost first
+        ping_results: dict[str, float] = ping_scan(missing_ips, timeout=ping_timeout)
         active_ips.update(ping_results)
     ips_sorted_by_latency = dict(sorted(active_ips.items(), key=lambda item: item[1]))
 

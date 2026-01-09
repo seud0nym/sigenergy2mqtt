@@ -1,10 +1,14 @@
 import logging
+from typing import Any, cast
+
 import pytest
 
-from sigenergy2mqtt.main import main as sm_main
-from sigenergy2mqtt.config.config import Config
-from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.main import main as sm_main
+from sigenergy2mqtt.modbus.client import ModbusClient
+from sigenergy2mqtt.sensors.base import Sensor
+from sigenergy2mqtt.sensors.const import InputType
 
 
 def test_configure_logging_changes_levels(monkeypatch):
@@ -22,11 +26,13 @@ def test_configure_logging_changes_levels(monkeypatch):
     # Set Config levels
     orig_devices = Config.devices
     Config.log_level = logging.DEBUG
+
     # create dummy devices list for modbus level
     class D:
         log_level = logging.INFO
 
-    Config.devices = [D()]
+    conf = cast(Any, Config)
+    conf.devices = [D()]
     Config.mqtt.log_level = logging.ERROR
     Config.pvoutput.log_level = logging.CRITICAL
 
@@ -38,7 +44,7 @@ def test_configure_logging_changes_levels(monkeypatch):
     assert pvoutput.level == logging.CRITICAL
 
     # restore original devices
-    Config.devices = orig_devices
+    conf.devices = orig_devices
 
 
 @pytest.mark.asyncio
@@ -51,19 +57,19 @@ async def test_get_state_success_and_failure():
         comm_params = FakeComm()
 
     class GoodSensor:
-        async def get_state(self, raw=False, modbus=None):
+        async def get_state(self, raw=False, modbus_client=None):
             return 99
 
     class BadSensor:
-        async def get_state(self, raw=False, modbus=None):
+        async def get_state(self, raw=False, modbus_client=None):
             raise RuntimeError("boom")
 
     modbus = FakeModbus()
 
-    sensor, state = await sm_main.get_state(GoodSensor(), modbus, "device")
+    sensor, state = await sm_main.get_state(cast(Sensor, GoodSensor()), cast(ModbusClient, modbus), "device")
     assert state == 99
 
-    sensor, state = await sm_main.get_state(BadSensor(), modbus, "device", default_value=7)
+    sensor, state = await sm_main.get_state(cast(Sensor, BadSensor()), cast(ModbusClient, modbus), "device", default_value=7)
     assert state == 7
 
 
@@ -75,7 +81,7 @@ async def test_make_dc_charger_sets_via_device():
             self.plant_index = plant_index
             self.device_address = device_address
 
-    sm_main.DCCharger = FakeDC
+    sm_main.DCCharger = cast(Any, FakeDC)
     charger = await sm_main.make_dc_charger(1, 5, Protocol.V2_8, "inverter-uid")
     assert hasattr(charger, "via_device")
     assert charger.via_device == "inverter-uid"
@@ -137,6 +143,6 @@ async def test_test_for_0x02_marks_unpublishable(monkeypatch):
 
     modbus = FakeModbus()
     device = FakeDevice()
-    await sm_main.test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, 0, device, 1234)
+    await sm_main.test_for_0x02_ILLEGAL_DATA_ADDRESS(cast(ModbusClient, modbus), 0, cast(Any, device), 1234)
     # Ensure get_sensor was invoked (function exercised)
     assert device.get_sensor_called >= 1

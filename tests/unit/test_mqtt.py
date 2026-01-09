@@ -1,10 +1,12 @@
 import asyncio
-import time
-import pytest
 import ssl
-from unittest.mock import MagicMock, patch, AsyncMock
-from sigenergy2mqtt.mqtt.mqtt import MqttHandler, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe, MqttClient
+import time
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import paho.mqtt.client as mqtt
+import pytest
+
+from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
 
 
 class TestMqttHandler:
@@ -13,12 +15,12 @@ class TestMqttHandler:
     def test_init(self):
         """Test MqttHandler initialization."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
+        modbus_client = MagicMock()
 
-        handler = MqttHandler("test_client", modbus, loop)
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         assert handler.client_id == "test_client"
-        assert handler._modbus == modbus
+        assert handler._modbus == modbus_client
         assert handler._loop == loop
         assert handler.connected is False
         assert handler._topics == {}
@@ -29,8 +31,8 @@ class TestMqttHandler:
     def test_register_topic(self):
         """Test registering a message handler for a topic."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
         mock_client.subscribe.return_value = (0, 1)
@@ -51,8 +53,8 @@ class TestMqttHandler:
     def test_on_reconnect_first_connection(self):
         """Test on_reconnect with first connection."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
         mock_client.subscribe.return_value = (0, 1)
@@ -83,8 +85,8 @@ class TestMqttHandler:
     def test_on_message_with_handler(self):
         """Test on_message dispatching to registered handler."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
         mock_handler_func = MagicMock()
@@ -104,8 +106,8 @@ class TestMqttHandler:
     def test_on_message_empty_payload(self):
         """Test on_message with empty payload is ignored."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
         mock_handler_func = MagicMock()
@@ -121,8 +123,8 @@ class TestMqttHandler:
     def test_on_message_no_handler(self):
         """Test on_message with unregistered topic."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
 
@@ -134,8 +136,8 @@ class TestMqttHandler:
     def test_on_response_with_handler(self):
         """Test on_response calling registered handler."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
         mock_response_handler = MagicMock()
@@ -153,8 +155,8 @@ class TestMqttHandler:
     def test_on_response_expired_cleanup(self):
         """Test on_response cleans up expired MIDs."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
 
@@ -173,8 +175,8 @@ class TestMqttHandler:
     def test_on_message_async_handler(self):
         """Test on_message with an async handler."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
 
         async_handler = AsyncMock()
@@ -193,8 +195,8 @@ class TestMqttHandler:
     def test_on_response_async_handler(self):
         """Test on_response with an async handler."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
 
         async_handler = AsyncMock()
@@ -209,8 +211,8 @@ class TestMqttHandler:
     @pytest.mark.asyncio
     async def test_wait_for_success(self):
         """Test wait_for successful acknowledgement."""
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, asyncio.get_running_loop())
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, asyncio.get_running_loop())
 
         mock_info = MagicMock(spec=mqtt.MQTTMessageInfo)
         mock_info.mid = 123
@@ -231,8 +233,9 @@ class TestMqttHandler:
     @pytest.mark.asyncio
     async def test_wait_for_timeout(self):
         """Test wait_for timeout scenario."""
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, asyncio.get_running_loop())
+        loop = asyncio.new_event_loop()
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_info = MagicMock(spec=mqtt.MQTTMessageInfo)
         mock_info.mid = 123
@@ -243,12 +246,13 @@ class TestMqttHandler:
         # No response simulation
         result = await handler.wait_for(0.2, "Test", mock_method)
         assert result is False
+        loop.close()
 
     @pytest.mark.asyncio
     async def test_wait_for_already_acknowledged(self):
         """Test wait_for when MID is already in mids list (handled before loop)."""
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, asyncio.get_running_loop())
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, asyncio.get_running_loop())
 
         # Pre-populate MID as if it was already acknowledged
         handler._mids[123] = MagicMock(now=time.time(), handler=None)
@@ -268,8 +272,8 @@ class TestMqttHandler:
     @pytest.mark.asyncio
     async def test_wait_for_invalid_return(self):
         """Test wait_for when method doesn't return MQTTMessageInfo."""
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, asyncio.get_running_loop())
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, asyncio.get_running_loop())
 
         mock_method = MagicMock(return_value=None)
         mock_method.__name__ = "test_method"
@@ -284,8 +288,8 @@ class TestMqttCallbacks:
     def test_on_connect_success(self):
         """Test on_connect callback with successful connection."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
 
@@ -303,8 +307,8 @@ class TestMqttCallbacks:
     def test_on_disconnect(self):
         """Test on_disconnect callback."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
         handler.connected = True
 
         mock_client = MagicMock()
@@ -315,15 +319,14 @@ class TestMqttCallbacks:
 
             on_disconnect(mock_client, handler, {}, 0, {})
 
-        assert handler.connected is False
-
+        assert not handler.connected
         loop.close()
 
     def test_on_message_callback(self):
         """Test on_message callback wrapper."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
         mock_message = MagicMock()
@@ -345,8 +348,8 @@ class TestMqttCallbacks:
     def test_on_publish_callback(self):
         """Test on_publish callback."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
 
@@ -360,8 +363,8 @@ class TestMqttCallbacks:
     def test_on_connect_failure(self):
         """Test on_connect callback with failure."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
 
         with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
@@ -377,8 +380,8 @@ class TestMqttCallbacks:
     def test_on_subscribe_callbacks(self):
         """Test on_subscribe with different reason codes."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
 
         # Success (reason_codes empty)
@@ -403,8 +406,8 @@ class TestMqttCallbacks:
     def test_on_unsubscribe_callbacks(self):
         """Test on_unsubscribe with different reason codes."""
         loop = asyncio.new_event_loop()
-        modbus = MagicMock()
-        handler = MqttHandler("test_client", modbus, loop)
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
 
         # Success (reason_codes empty)
@@ -422,18 +425,20 @@ class TestMqttCallbacks:
 
 
 class TestMqttClient:
-    """Tests for MqttClient class."""
+    """Tests for MQTT client class."""
 
     def test_mqtt_client_init_no_tls(self):
-        """Test MqttClient initialization without TLS."""
+        """Test mqtt.Client initialization without TLS."""
         with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
             mock_config.mqtt.tls = False
-            handler = MagicMock()
+            loop = asyncio.new_event_loop()
+            modbus_client = MagicMock()
+            handler = MqttHandler("test_client", modbus_client, loop)
             _client = MqttClient(client_id="test_client", userdata=handler)
             assert _client._userdata == handler
 
     def test_mqtt_client_init_tls_secure(self):
-        """Test MqttClient initialization with secure TLS."""
+        """Test mqtt.Client initialization with secure TLS."""
         with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
             mock_config.mqtt.tls = True
             mock_config.mqtt.tls_insecure = False
@@ -449,7 +454,7 @@ class TestMqttClient:
                 assert context.verify_mode == ssl.CERT_REQUIRED
 
     def test_mqtt_client_init_tls_insecure(self):
-        """Test MqttClient initialization with insecure TLS."""
+        """Test mqtt.Client initialization with insecure TLS."""
         with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
             mock_config.mqtt.tls = True
             mock_config.mqtt.tls_insecure = True

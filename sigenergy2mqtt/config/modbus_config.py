@@ -1,8 +1,9 @@
+import logging
+from dataclasses import dataclass, field
+from typing import Any, cast
+
 from .smart_port_config import SmartPortConfig
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port
-from dataclasses import dataclass, field
-from typing import List
-import logging
 
 
 @dataclass
@@ -26,9 +27,9 @@ class DeviceConfig:
     host: str = ""
     port: int = 502
 
-    ac_chargers: List[int] = field(default_factory=list)
-    dc_chargers: List[int] = field(default_factory=list)
-    inverters: List[int] = field(default_factory=list)
+    ac_chargers: list[int] = field(default_factory=list)
+    dc_chargers: list[int] = field(default_factory=list)
+    inverters: list[int] = field(default_factory=list)
 
     disable_chunking: bool = False
     retries: int = 3
@@ -41,7 +42,7 @@ class DeviceConfig:
 
     smartport = SmartPortConfig()
 
-    def configure(self, config: dict, override: bool = False, auto_discovered: bool = False) -> None:
+    def configure(self, config: Any, override: bool = False, auto_discovered: bool = False) -> None:
         if isinstance(config, dict):
             for field, value in config.items():
                 if field != "smart-port":
@@ -67,9 +68,9 @@ class DeviceConfig:
                     case "disable-chunking":
                         self.disable_chunking = check_bool(value, f"modbus.{field}")
                     case "retries":
-                        self.retries = check_int(value, f"modbus.{field}", min=0)
+                        self.retries = cast(int, check_int(value, f"modbus.{field}", min=0))
                     case "timeout":
-                        self.timeout = check_float(value, f"modbus.{field}", min=0.25)
+                        self.timeout = cast(float, check_float(value, f"modbus.{field}", min=0.25))
                     case "ac-chargers":
                         self.ac_chargers = check_int_list(value, f"modbus.{field}")
                     case "dc-chargers":
@@ -79,13 +80,13 @@ class DeviceConfig:
                     case "smart-port":
                         self.smartport.configure(value, override)
                     case "scan-interval-low":
-                        self.scan_interval.low = check_int(value, f"modbus.{field}", min=1)
+                        self.scan_interval.low = cast(int, check_int(value, f"modbus.{field}", min=1))
                     case "scan-interval-medium":
-                        self.scan_interval.medium = check_int(value, f"modbus.{field}", min=1)
+                        self.scan_interval.medium = cast(int, check_int(value, f"modbus.{field}", min=1))
                     case "scan-interval-high":
-                        self.scan_interval.high = check_int(value, f"modbus.{field}", min=1)
+                        self.scan_interval.high = cast(int, check_int(value, f"modbus.{field}", min=1))
                     case "scan-interval-realtime":
-                        self.scan_interval.realtime = check_int(value, f"modbus.{field}", min=1)
+                        self.scan_interval.realtime = cast(int, check_int(value, f"modbus.{field}", min=1))
                     case _:
                         raise ValueError(f"modbus device configuration element contains unknown option '{field}'")
             if len(self.inverters) == 0:

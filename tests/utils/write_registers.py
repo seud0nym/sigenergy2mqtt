@@ -1,10 +1,11 @@
-from paho.mqtt.client import Client as MqttClient
-from paho.mqtt.client import CallbackAPIVersion
-from ruamel.yaml import YAML
 import logging
 import os
 import sys
 import time
+
+import paho.mqtt.client as mqtt
+from paho.mqtt.enums import CallbackAPIVersion
+from ruamel.yaml import YAML
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("paho.mqtt")
@@ -19,7 +20,7 @@ with open("test/.debug.yaml", "r") as f:
     broker = config.get("mqtt", {}).get("broker", "localhost")
     port = config.get("mqtt", {}).get("port", 1883)
 
-mqtt_client = MqttClient(CallbackAPIVersion.VERSION2, client_id="modbus_test_client")
+mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2, client_id="modbus_test_client")
 mqtt_client.enable_logger(logger)
 
 mqtt_client.username_pw_set(username, password)

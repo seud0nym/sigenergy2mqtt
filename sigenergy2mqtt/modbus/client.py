@@ -1,13 +1,16 @@
-from .read_ahead import ReadAhead
+import logging
+import time
+
 from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
 from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
+
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.sensors.const import InputType
-import logging
-import time
+
+from .read_ahead import ReadAhead
 
 
 class ModbusClient(AsyncModbusTcpClient):
@@ -15,7 +18,7 @@ class ModbusClient(AsyncModbusTcpClient):
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler
         super().__init__(*args, **kwargs)
-        self._read_ahead_pdu: dict[int, dict[int, ReadAhead]] = {}
+        self._read_ahead_pdu: dict[int, dict[int, ReadAhead | None]] = {}
         self._trace: bool = False
         self._read_count: int = 0
         self._cache_hits: int = 0
@@ -37,9 +40,13 @@ class ModbusClient(AsyncModbusTcpClient):
             if device_id in self._read_ahead_pdu and address in self._read_ahead_pdu[device_id]:
                 pre_read = self._read_ahead_pdu[device_id][address]
                 if pre_read is not None:
-                    self._cache_hits += 1
-                    await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
-                    return pre_read.get_registers(address, count=count)
+                    try:
+                        rr = pre_read.get_registers(address, count=count)
+                        self._cache_hits += 1
+                        await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
+                        return rr
+                    except IndexError as e:
+                        logging.debug(f"Pre-read failed: {e}")
             await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
         self._trace = trace
         try:
@@ -52,8 +59,8 @@ class ModbusClient(AsyncModbusTcpClient):
                 raise Exception(f"Unknown input type '{input_type}'")
             elapsed = time.monotonic() - start
             if rr is None:
-                return None
-            elif rr.isError() or isinstance(rr, ExceptionResponse):
+                rr = ExceptionResponse(function_code=0x3 if input_type == InputType.HOLDING else 0x04, exception_code=0x5, device_id=device_id)
+            if rr.isError() or isinstance(rr, ExceptionResponse):
                 await Metrics.modbus_read_error()
                 return rr
             else:
@@ -74,8 +81,8 @@ class ModbusClient(AsyncModbusTcpClient):
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
         if rr:
-            if (rr.isError() or isinstance(rr, ExceptionResponse)):
-                self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)}) # Set registers to None to prevent unexpected values 
+            if rr.isError() or isinstance(rr, ExceptionResponse):
+                self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})  # Set registers to None to prevent unexpected values
             else:
                 if device_id not in self._read_ahead_pdu:
                     self._read_ahead_pdu[device_id] = {}
@@ -83,8 +90,8 @@ class ModbusClient(AsyncModbusTcpClient):
             return rr.exception_code
         return -1
 
-    async def read_holding_registers(self, address, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
+    async def read_holding_registers(self, address, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.HOLDING, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)
 
-    async def read_input_registers(self, address, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
+    async def read_input_registers(self, address, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.INPUT, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)

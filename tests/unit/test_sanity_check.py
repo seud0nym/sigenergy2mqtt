@@ -1,20 +1,22 @@
 import pytest
-from sigenergy2mqtt.sensors.sanity_check import SanityCheck
+
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.const import StateClass, UnitOfPower
+from sigenergy2mqtt.sensors.const import StateClass
+from sigenergy2mqtt.sensors.sanity_check import SanityCheck
+
 
 class TestSanityCheck:
 
     def test_init_default(self):
         sc = SanityCheck()
-        sc.init(unit="W", state_class=None, gain=1, scan_interval=60, data_type=ModbusClient.DATATYPE.UINT16)
+        sc.init(unit="W", state_class=None, data_type=ModbusClient.DATATYPE.UINT16)
         assert sc.min_raw == 0
         assert sc.max_raw is not None  # Should be set based on UINT16
         assert sc.delta is False
 
     def test_init_delta(self):
         sc = SanityCheck()
-        sc.init(unit="kWh", state_class=StateClass.TOTAL_INCREASING, gain=1, scan_interval=60, data_type=ModbusClient.DATATYPE.UINT32)
+        sc.init(unit="kWh", state_class=StateClass.TOTAL_INCREASING, data_type=ModbusClient.DATATYPE.UINT32)
         assert sc.delta is True
         assert sc.min_raw == 0
 

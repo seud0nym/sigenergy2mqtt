@@ -1,6 +1,7 @@
+import logging
+
 from .client import ModbusClient
 from .lock import ModbusLock
-import logging
 
 
 class ModbusLockFactory:

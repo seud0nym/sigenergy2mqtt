@@ -1,12 +1,14 @@
-import logging
-import pytest
 import asyncio
+import logging
+
+import pytest
+
 from sigenergy2mqtt.modbus.client import ModbusClient
-from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
 from sigenergy2mqtt.sensors.const import InputType
+from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
 
 
-# Mock MqttClient for the server
+# Mock mqtt.Client for the server
 class MockMqttClient:
     def __init__(self):
         self._user_data = CustomMqttHandler(asyncio.get_running_loop())
@@ -79,20 +81,23 @@ async def test_read_ahead_caching(mock_modbus_server):
 
     # Test Cache HIT
     # Read register 31004. read_input_registers calls _read_registers with use_pre_read=True.
-    rr = await client.read_input_registers(31004, 1, device_id=1)
+    rr = await client.read_input_registers(31004, count=1, device_id=1)
+    assert rr is not None
     assert not rr.isError()
     assert rr.registers[0] == 2  # Known value
     assert client._cache_hits == 1  # Should increment
 
     # Test Cache HIT 2
     # Read register 31000
-    rr2 = await client.read_input_registers(31000, 1, device_id=1)
+    rr2 = await client.read_input_registers(31000, count=1, device_id=1)
+    assert rr2 is not None
     assert not rr2.isError()
     assert client._cache_hits == 2
 
     # Test Cache MISS (Out of range)
     # Read register 31020
-    rr3 = await client.read_input_registers(31020, 1, device_id=1)
+    rr3 = await client.read_input_registers(31020, count=1, device_id=1)
+    assert rr3 is not None
     assert not rr3.isError()
     assert client._cache_hits == 2  # Should NOT increment
 

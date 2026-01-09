@@ -1,12 +1,14 @@
-import logging
-import pytest
 import asyncio
+import logging
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from sigenergy2mqtt.config import auto_discovery
-from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
+from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
 
 
-# Mock MqttClient for the server
+# Mock mqtt.Client for the server
 class MockMqttClient:
     def __init__(self):
         self._user_data = CustomMqttHandler(asyncio.get_running_loop())

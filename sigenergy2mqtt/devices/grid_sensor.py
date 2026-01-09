@@ -1,7 +1,8 @@
-from .device import ModbusDevice, DeviceType
-from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
+from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
+
+from .device import DeviceType, ModbusDevice
 
 
 class GridSensor(ModbusDevice):
