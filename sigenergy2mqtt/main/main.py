@@ -1,22 +1,25 @@
-from .thread_config import ThreadConfig, ThreadConfigFactory
-from .threading import start
+import logging
+import signal
 from pathlib import Path
+from typing import Tuple, cast
+
 from pymodbus import pymodbus_apply_logging_config
+
 from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType, HybridInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
-from sigenergy2mqtt.sensors.base import ModbusSensor
-from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
+from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
+from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
-from typing import Tuple
-import logging
-import signal
 
+from .thread_config import ThreadConfig, ThreadConfigFactory
+from .threading import start
 
 serial_numbers = []
 
@@ -25,7 +28,7 @@ async def async_main() -> None:
     pymodbus_apply_logging_config(Config.get_modbus_log_level())
     configure_logging()
 
-    protocol_version: Protocol = None
+    protocol_version: Protocol | None = None
     for plant_index in range(len(Config.devices)):
         device = Config.devices[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
@@ -33,7 +36,7 @@ async def async_main() -> None:
             modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
             async with modbus:
                 logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
-                plant: PowerPlant = None  # Make sure plant is only created with first inverter
+                plant: PowerPlant | None = None  # Make sure plant is only created with first inverter
                 inverters: dict[int, str] = {}
                 for device_address in device.inverters:
                     inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
@@ -60,7 +63,7 @@ async def async_main() -> None:
                         si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
                         if si_sensor:
                             si_sensor.publishable = False
-                else:
+                elif plant:
                     for device_address in device.dc_chargers:
                         charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
                         config.add_device(plant_index, charger)
@@ -80,13 +83,16 @@ async def async_main() -> None:
     configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
 
     svc_thread_cfg = ThreadConfig(None, None, name="Services")
-    svc_thread_cfg.add_device(-1, MetricsService(protocol_version))
-
+    svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
             svc_thread_cfg.add_device(-1, service)
-
     configs.insert(0, svc_thread_cfg)
+
+    if Config.log_level == logging.DEBUG:
+        mon_thread_cfg = ThreadConfig(None, None, name="Monitor")
+        mon_thread_cfg.add_device(-1, MonitorService([d for c in configs for d in c.devices]))
+        configs.append(mon_thread_cfg)
 
     def configure_for_restart(caught, frame):
         logging.info(f"Signal {caught} received - reconfiguring for restart")
@@ -113,7 +119,7 @@ async def async_main() -> None:
 
     if Config.home_assistant.enabled:
         current_version_file = Path(Config.persistent_state_path, ".current-version")
-        current_version: str = None
+        current_version: str | None = None
         if current_version_file.exists():
             try:
                 with current_version_file.open("r") as f:
@@ -164,20 +170,28 @@ def configure_logging():
         pvoutput.setLevel(Config.pvoutput.log_level)
 
 
-async def get_state(sensor: ModbusSensor, modbus: ModbusClient, device: str, default_value: int | float | str | None = None, raw: bool = False) -> tuple[ModbusSensor, int | float | str | None]:
+async def get_state(sensor: Sensor, modbus_client: ModbusClient, device: str, default_value: int | float | str | None = None, raw: bool = False) -> tuple[Sensor, int | float | str | None]:
     try:
-        state = await sensor.get_state(raw=raw, modbus=modbus)
-        logging.debug(f"READING modbus://{modbus.comm_params.host}:{modbus.comm_params.port} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device}")
+        state = await sensor.get_state(raw=raw, modbus_client=modbus_client)
+        logging.debug(f"READING modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device}")
     except Exception as e:
         state = default_value
-        logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} - Acquiring {sensor.__class__.__name__} to initialise {device} -> {e} (returning {default_value=})")
+        logging.debug(f"FAILURE modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} - Acquiring {sensor.__class__.__name__} to initialise {device} -> {e} (returning {default_value=})")
     return sensor, state
 
 
-async def make_ac_charger(plant_index, modbus, device_address, plant):
-    input_breaker, ip_value = await get_state(ACChargerInputBreaker(plant_index, device_address), modbus, "ac-charger")
-    rated_current, rc_value = await get_state(ACChargerRatedCurrent(plant_index, device_address), modbus, "ac-charger")
-    charger = ACCharger(plant_index, device_address, plant.protocol_version, ip_value, rc_value, input_breaker, rated_current)
+async def make_ac_charger(plant_index, modbus_client, device_address, plant):
+    input_breaker, ib_value = await get_state(ACChargerInputBreaker(plant_index, device_address), modbus_client, "ac-charger")
+    rated_current, rc_value = await get_state(ACChargerRatedCurrent(plant_index, device_address), modbus_client, "ac-charger")
+    charger = ACCharger(
+        plant_index,
+        device_address,
+        plant.protocol_version,
+        cast(float, ib_value),
+        cast(float, rc_value),
+        cast(ACChargerInputBreaker, input_breaker),
+        cast(ACChargerRatedCurrent, rated_current),
+    )
     charger.via_device = plant.unique_id
     return charger
 
@@ -188,19 +202,19 @@ async def make_dc_charger(plant_index, device_address, protocol_version, inverte
     return charger
 
 
-async def make_plant_and_inverter(plant_index, modbus, device_address, plant) -> Tuple[Inverter, PowerPlant]:
-    serial, sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus, "inverter")
+async def make_plant_and_inverter(plant_index, modbus_client, device_address, plant) -> Tuple[Inverter | None, PowerPlant | None]:
+    serial, sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus_client, "inverter")
     if sn in serial_numbers:
         logging.info(f"Inverter serial number {sn} has already been detected - ignoring")
         return None, None
 
-    model, mdl = await get_state(InverterModel(plant_index, device_address), modbus, "inverter")
-    device_type = DeviceType.create(mdl)
+    model, mdl = await get_state(InverterModel(plant_index, device_address), modbus_client, "inverter")
+    device_type = DeviceType.create(cast(str, mdl))
 
-    firmware, fw = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus, "inverter")
-    string_count, strings = await get_state(PVStringCount(plant_index, device_address), modbus, "inverter")
+    firmware, fw = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "inverter")
+    string_count, strings = await get_state(PVStringCount(plant_index, device_address), modbus_client, "inverter")
 
-    output_type, ot = await get_state(OutputType(plant_index, device_address), modbus, "plant/inverter", raw=True)
+    output_type, ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
     match ot:
         case 0:  # L/N
             phases = 1
@@ -210,7 +224,7 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             phases = 3
 
     if isinstance(device_type, HybridInverter):
-        pack_count, batteries = await get_state(PACKBCUCount(plant_index, device_address), modbus, "inverter", default_value=0)
+        pack_count, batteries = await get_state(PACKBCUCount(plant_index, device_address), modbus_client, "inverter", default_value=0)
     else:
         pack_count = None
         batteries = 0
@@ -224,44 +238,73 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
             (30087, 1, Protocol.V2_5),  # PlantBatterySoH
         ):
             try:
-                logging.debug(f"READING modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to see if V{version.value} register {register} exists ({count=} device_id=247)")
-                rr = await modbus.read_input_registers(register, count=count, device_id=247)
+                logging.debug(f"READING modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} to see if V{version.value} register {register} exists ({count=} device_id=247)")
+                rr = await modbus_client.read_input_registers(register, count=count, device_id=247)
                 if rr.isError():
-                    logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> {rr.exception_code=}")
+                    logging.debug(f"FAILURE modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} {register=} {count=} device_id=247 -> {rr.exception_code=}")
                 else:
                     # No exception, so assign the associated protocol as the real version
-                    logging.debug(f"SUCCESS modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> OK protocol=V{version.value}")
+                    logging.debug(f"SUCCESS modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} {register=} {count=} device_id=247 -> OK protocol=V{version.value}")
                     protocol = version
                     break
             except Exception as e:
-                logging.debug(f"FAILURE modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {register=} {count=} device_id=247 -> {e}")
+                logging.debug(f"FAILURE modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} {register=} {count=} device_id=247 -> {e}")
                 pass
         else:
-            logging.debug(f"DEFAULT modbus://{modbus.comm_params.host}:{modbus.comm_params.port} to Sigenergy Modbus Protocol V1.8")
+            logging.debug(f"DEFAULT modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} to Sigenergy Modbus Protocol V1.8")
             protocol = Protocol.V1_8
-        logging.info(f"Interrogated modbus://{modbus.comm_params.host}:{modbus.comm_params.port} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
+        logging.info(f"Interrogated modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
 
         if protocol < Protocol.V2_8 and Config.consumption != ConsumptionMethod.CALCULATED:
             logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {Config.consumption.name} is not supported on Modbus Protocol V{protocol.value}")
             Config.consumption = ConsumptionMethod.CALCULATED
 
         if isinstance(device_type, HybridInverter):
-            rated_charging_power, rcp = await get_state(PlantRatedChargingPower(plant_index), modbus, "plant", default_value=0.0)
-            rated_discharging_power, rdp = await get_state(PlantRatedDischargingPower(plant_index), modbus, "plant", default_value=0.0)
+            rated_charging_power, rcp = await get_state(PlantRatedChargingPower(plant_index), modbus_client, "plant", default_value=0.0)
+            rated_discharging_power, rdp = await get_state(PlantRatedDischargingPower(plant_index), modbus_client, "plant", default_value=0.0)
         else:
             rated_charging_power = rated_discharging_power = None
             rcp = rdp = 0.0
 
         if device_type.has_grid_code_interface and protocol >= Protocol.V2_8:
-            rated_frequency, rf = await get_state(GridCodeRatedFrequency(plant_index), modbus, "plant")
+            rated_frequency, rf = await get_state(GridCodeRatedFrequency(plant_index), modbus_client, "plant")
         else:
             rated_frequency = rf = None
 
-        plant = PowerPlant(plant_index, device_type, protocol, ot, phases, rcp, rdp, rf, rated_charging_power, rated_discharging_power, rated_frequency)
+        plant = PowerPlant(
+            plant_index,
+            device_type,
+            protocol,
+            cast(int, ot),
+            cast(int, phases),
+            cast(float, rcp),
+            cast(float, rdp),
+            cast(float, rf),
+            cast(PlantRatedChargingPower, rated_charging_power),
+            cast(PlantRatedDischargingPower, rated_discharging_power),
+            cast(GridCodeRatedFrequency, rated_frequency),
+        )
     else:
         protocol = plant.protocol_version
 
-    inverter = Inverter(plant_index, device_address, protocol, device_type, mdl, sn, fw, batteries, strings, phases, string_count, output_type, firmware, model, serial, pack_count)
+    inverter = Inverter(
+        plant_index,
+        device_address,
+        protocol,
+        device_type,
+        cast(str, mdl),
+        cast(str, sn),
+        cast(str, fw),
+        cast(int, batteries),
+        int(cast(float, strings)),
+        cast(int, phases),
+        cast(PVStringCount, string_count),
+        cast(OutputType, output_type),
+        cast(InverterFirmwareVersion, firmware),
+        cast(InverterModel, model),
+        cast(InverterSerialNumber, serial),
+        cast(PACKBCUCount, pack_count),
+    )
     inverter.via_device = plant.unique_id
 
     serial_numbers.append(sn)
@@ -269,20 +312,23 @@ async def make_plant_and_inverter(plant_index, modbus, device_address, plant) ->
     return inverter, plant
 
 
-async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus: ModbusClient, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
+async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClient, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
     device_id: int = device.device_address
     for register in registers:
-        sensor: ModbusSensor = device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True)
+        sensor: Sensor = cast(Sensor, device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True))
         if sensor and sensor.publishable:
             id = f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}]" if Config.home_assistant.enabled else f"{device.name} - {sensor.name} [{sensor.state_topic}]"
-            try:
-                if sensor.input_type == InputType.HOLDING:
-                    rr = await modbus.read_holding_registers(register, count=sensor.count, device_id=device_id)
-                elif sensor.input_type == InputType.INPUT:
-                    rr = await modbus.read_input_registers(register, count=sensor.count, device_id=device_id)
-                if rr.isError() and rr.exception_code == 0x02:
-                    logging.info(f"UNPUBLISHED {id}: ILLEGAL DATA ADDRESS")
+            if isinstance(sensor, ModbusSensorMixin):
+                try:
+                    if sensor.input_type == InputType.HOLDING:
+                        rr = await modbus_client.read_holding_registers(register, count=sensor.count, device_id=device_id)
+                    elif sensor.input_type == InputType.INPUT:
+                        rr = await modbus_client.read_input_registers(register, count=sensor.count, device_id=device_id)
+                    else:
+                        raise Exception(f"Unknown input type '{sensor.input_type}'")
+                    if rr and rr.isError() and rr.exception_code == 0x02:
+                        logging.info(f"Unpublishing {id}: ILLEGAL DATA ADDRESS")
+                        sensor.publishable = False
+                except Exception as e:
+                    logging.info(f"Unpublishing {id}: {e}")
                     sensor.publishable = False
-            except Exception as e:
-                logging.info(f"UNPUBLISHED {id}: {e}")
-                sensor.publishable = False
