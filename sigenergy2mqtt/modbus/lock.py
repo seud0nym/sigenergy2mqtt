@@ -6,10 +6,10 @@ from .client_factory import ModbusClientFactory
 
 
 class ModbusLock:
-    def __init__(self, modbus: ModbusClient):
-        self._lock = asyncio.Lock()
-        self.waiters = 0
-        self.host = ModbusClientFactory.get_host(modbus)
+    def __init__(self, modbus: ModbusClient | None):
+        self._lock: asyncio.Lock = asyncio.Lock()
+        self.waiters: int = 0
+        self.host: str | None = ModbusClientFactory.get_host(modbus)
 
     async def acquire(self, timeout=None):
         self.waiters += 1

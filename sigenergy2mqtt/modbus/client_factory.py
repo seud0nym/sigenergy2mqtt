@@ -23,5 +23,5 @@ class ModbusClientFactory:
         return client
 
     @classmethod
-    def get_host(cls, modbus: ModbusClient):
+    def get_host(cls, modbus: ModbusClient | None) -> str | None:
         return None if modbus not in cls._hosts else cls._hosts[modbus]

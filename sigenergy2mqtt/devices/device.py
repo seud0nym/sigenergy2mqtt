@@ -48,7 +48,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
         self.plant_index = plant_index
         self.protocol_version = protocol_version
-        self.registers: RegisterAccess | None = None if plant_index >= len(Config.devices) else Config.devices[plant_index].registers
+        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(Config.devices) else Config.devices[plant_index].registers
 
         self.children: list[Device] = []
 
@@ -174,10 +174,14 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         if not self.get_sensor(sensor.unique_id, search_children=True):
+            if sensor.debug_logging:
+                logging.debug(f"{self.name} adding sensor {sensor.unique_id} ({sensor.__class__.__name__})")
             sensor.apply_sensor_overrides(self.registers)
             sensor.parent_device = self
             sensor.configure_mqtt_topics(self.unique_id)
             self.all_sensors[sensor.unique_id] = sensor
+        elif sensor.debug_logging:
+            logging.debug(f"{self.name} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if not isinstance(sensor, WriteOnlySensor):
@@ -342,7 +346,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             device.publish_discovery(mqtt_client, clean=clean)
         return info
 
-    async def publish_updates(self, modbus_client: ModbusClient, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
+    async def publish_updates(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         # Setup for Modbus read-ahead optimization
         modbus_sensors = [s for s in sensors if isinstance(s, ModbusSensorMixin)]
         multiple: bool = len(modbus_sensors) > 1
@@ -411,58 +415,58 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
             if due_sensors:
                 try:
-                    async with lock.lock():
-                        # Optimize Modbus read-ahead for due Modbus sensors with contiguous addresses
-                        due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
-                        if multiple and len(due_modbus) > 1:
-                            read_ahead_start = 0.0
-                            if debug_logging:
-                                read_ahead_start = time.time()
-                            exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
-                            if exception_code == 0:
+                    if modbus_client:
+                        async with lock.lock():
+                            # Optimize Modbus read-ahead for due Modbus sensors with contiguous addresses
+                            due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
+                            if multiple and len(due_modbus) > 1:
+                                read_ahead_start = 0.0
                                 if debug_logging:
-                                    logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
-                            else:
-                                match exception_code:
-                                    case -1:
-                                        reason = "NO RESPONSE FROM DEVICE"
-                                    case 1:
-                                        reason = "0x01 ILLEGAL FUNCTION"
-                                    case 2:
-                                        reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
-                                        multiple = False
-                                    case 3:
-                                        reason = "0x03 ILLEGAL DATA VALUE"
-                                    case 4:
-                                        reason = "0x04 SLAVE DEVICE FAILURE"
-                                    case _:
-                                        reason = f"UNKNOWN PROBLEM ({exception_code=})"
-                                logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
+                                    read_ahead_start = time.time()
+                                exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
+                                if exception_code == 0:
+                                    if debug_logging:
+                                        logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
+                                else:
+                                    match exception_code:
+                                        case -1:
+                                            reason = "NO RESPONSE FROM DEVICE"
+                                        case 1:
+                                            reason = "0x01 ILLEGAL FUNCTION"
+                                        case 2:
+                                            reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
+                                            multiple = False
+                                        case 3:
+                                            reason = "0x03 ILLEGAL DATA VALUE"
+                                        case 4:
+                                            reason = "0x04 SLAVE DEVICE FAILURE"
+                                        case _:
+                                            reason = f"UNKNOWN PROBLEM ({exception_code=})"
+                                    logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
 
-                        # Publish each due sensor and update its next publish time
-                        for sensor in due_sensors:
-                            await sensor.publish(mqtt_client, modbus_client)
-                            next_publish_times[sensor] = now + sensor.scan_interval
-                            sensor.force_publish = False
+                    # Publish each due sensor and update its next publish time
+                    for sensor in due_sensors:
+                        await sensor.publish(mqtt_client, modbus_client)
+                        next_publish_times[sensor] = now + sensor.scan_interval
+                        sensor.force_publish = False
 
                     if self.rediscover:
-                        logging.debug(f"{self.name} Sensor Scan Group [{name}]: Acquiring lock to republish discovery... ({lock.waiters=})")
-                        async with lock.lock(timeout=1):
-                            self.rediscover = False
-                            self.publish_discovery(mqtt_client, clean=False)
+                        self.rediscover = False
+                        self.publish_discovery(mqtt_client, clean=False)
 
                 except ModbusException as e:
-                    lock = ModbusLockFactory.get(modbus_client)
-                    logging.debug(f"{self.name} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
-                    async with lock.lock(timeout=None):
-                        if not modbus_client.connected and self.online:
-                            logging.info(f"{self.name} attempting to reconnect to Modbus...")
-                            while not modbus_client.connected:
-                                modbus_client.close()
-                                await asyncio.sleep(0.5)
-                                await modbus_client.connect()
-                                await asyncio.sleep(1)
-                            logging.info(f"{self.name} reconnected to Modbus")
+                    if modbus_client:
+                        lock = ModbusLockFactory.get(modbus_client)
+                        logging.debug(f"{self.name} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
+                        async with lock.lock(timeout=None):
+                            if not modbus_client.connected and self.online:
+                                logging.info(f"{self.name} attempting to reconnect to Modbus...")
+                                while not modbus_client.connected:
+                                    modbus_client.close()
+                                    await asyncio.sleep(0.5)
+                                    await modbus_client.connect()
+                                    await asyncio.sleep(1)
+                                logging.info(f"{self.name} reconnected to Modbus")
                 except Exception as e:
                     logging.error(f"{self.name} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
 
@@ -501,7 +505,6 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 wait = Config.home_assistant.republish_discovery_interval
 
     def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
-        assert modbus_client is not None, "ModbusClient cannot be none"
         groups = self._create_sensor_scan_groups()
         tasks: list[Awaitable[None]] = []
         for name, sensors in groups.items():

@@ -9,7 +9,9 @@ class ModbusLockFactory:
     _logger = logging.getLogger("pymodbus")
 
     @classmethod
-    def get(cls, modbus: ModbusClient) -> ModbusLock:
+    def get(cls, modbus: ModbusClient | None) -> ModbusLock:
+        if modbus is None:
+            return ModbusLock(None)
         if modbus not in cls._locks:
             cls._locks[modbus] = ModbusLock(modbus)
         lock = cls._locks[modbus]

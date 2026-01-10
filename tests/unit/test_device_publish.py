@@ -84,7 +84,7 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
     def apply_sensor_overrides(self, registers):
         return None
 
-    def configure_mqtt_topics(self, device_id: str) -> str:
+    def configure_mqtt_topics(self, device_id: str, ) -> str:
         return ""
 
     async def publish(self, mqtt_client, modbus_client=None, republish=False):

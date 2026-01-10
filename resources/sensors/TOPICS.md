@@ -399,20 +399,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_enphase_123456789012_voltage'>Voltage</a><br>
 
 <h6>Metrics</h6>
-<a href='#sigenergy2mqtt_modbus_locks'>Modbus Active Locks</a><br>
-<a href='#sigenergy2mqtt_modbus_cache_hit_percentage'>Modbus Cache Hits</a><br>
-<a href='#sigenergy2mqtt_modbus_read_errors'>Modbus Read Errors</a><br>
-<a href='#sigenergy2mqtt_modbus_read_max'>Modbus Read Max</a><br>
-<a href='#sigenergy2mqtt_modbus_read_mean'>Modbus Read Mean</a><br>
-<a href='#sigenergy2mqtt_modbus_read_min'>Modbus Read Min</a><br>
-<a href='#sigenergy2mqtt_modbus_reads_sec'>Modbus Reads/second</a><br>
-<a href='#sigenergy2mqtt_modbus_write_errors'>Modbus Write Errors</a><br>
-<a href='#sigenergy2mqtt_modbus_write_max'>Modbus Write Max</a><br>
-<a href='#sigenergy2mqtt_modbus_write_mean'>Modbus Write Mean</a><br>
-<a href='#sigenergy2mqtt_modbus_write_min'>Modbus Write Min</a><br>
-<a href='#sigenergy2mqtt_modbus_protocol_published'>Protocol Published</a><br>
-<a href='#sigenergy2mqtt_modbus_protocol'>Protocol Version</a><br>
-<a href='#sigenergy2mqtt_started'>Started</a><br>
+<a href='#sigen_modbus_locks'>Modbus Active Locks</a><br>
+<a href='#sigen_modbus_cache_hit_percentage'>Modbus Cache Hits</a><br>
+<a href='#sigen_modbus_read_errors'>Modbus Read Errors</a><br>
+<a href='#sigen_modbus_read_max'>Modbus Read Max</a><br>
+<a href='#sigen_modbus_read_mean'>Modbus Read Mean</a><br>
+<a href='#sigen_modbus_read_min'>Modbus Read Min</a><br>
+<a href='#sigen_modbus_reads_sec'>Modbus Reads/second</a><br>
+<a href='#sigen_modbus_write_errors'>Modbus Write Errors</a><br>
+<a href='#sigen_modbus_write_max'>Modbus Write Max</a><br>
+<a href='#sigen_modbus_write_mean'>Modbus Write Mean</a><br>
+<a href='#sigen_modbus_write_min'>Modbus Write Min</a><br>
+<a href='#sigen_modbus_protocol_published'>Protocol Published</a><br>
+<a href='#sigen_modbus_protocol'>Protocol Version</a><br>
+<a href='#sigen_started'>Started</a><br>
 </td><td>
 
 <h6>Plant</h6>
@@ -841,7 +841,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_ems_work_mode/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_ems_work_mode/state</td></tr>
 <tr><td>Source</td><td>30003</td></tr>
-<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Max Self Consumption</li><li value='1'>Sigen AI</li><li value='2'>Time of Use</li><li value='5'>Full Feed-in to Grid</li><li value='7'>Remote EMS</li><li value='9'>Time-Based Control</li></ol></td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Max Self Consumption</li><li value='1'>Sigen AI</li><li value='2'>Time of Use</li><li value='5'>Full Feed-in to Grid</li><li value='6'>VPP Scheduling</li><li value='7'>Remote EMS</li><li value='9'>Time-Based Control</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_30029'>ESS Alarms</a></h5>
@@ -4656,21 +4656,21 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 
 Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.
 | Metric | Interval | Unit | State Topic|
-|--------|---------:|------|-------------|
-| Modbus Active Locks | 1 |  | sigenergy2mqtt/metrics/modbus_locks |
-| Modbus Cache Hits | 1 | % | sigenergy2mqtt/metrics/modbus_cache_hit_percentage |
-| Modbus Read Errors | 1 |  | sigenergy2mqtt/metrics/modbus_read_errors |
-| Modbus Read Max | 1 | ms | sigenergy2mqtt/metrics/modbus_read_max |
-| Modbus Read Mean | 1 | ms | sigenergy2mqtt/metrics/modbus_read_mean |
-| Modbus Read Min | 1 | ms | sigenergy2mqtt/metrics/modbus_read_min |
-| Modbus Reads/second | 1 |  | sigenergy2mqtt/metrics/modbus_reads_sec |
-| Modbus Write Errors | 1 |  | sigenergy2mqtt/metrics/modbus_write_errors |
-| Modbus Write Max | 1 | ms | sigenergy2mqtt/metrics/modbus_write_max |
-| Modbus Write Mean | 1 | ms | sigenergy2mqtt/metrics/modbus_write_mean |
-| Modbus Write Min | 1 | ms | sigenergy2mqtt/metrics/modbus_write_min |
-| Protocol Published | 1 |  | sigenergy2mqtt/metrics/modbus_protocol_published |
-| Protocol Version | 1 |  | sigenergy2mqtt/metrics/modbus_protocol |
-| Started | 1 |  | sigenergy2mqtt/metrics/started |
+|--------|---------:|------|------------|
+| <a id='sigen_modbus_locks'>Modbus Active Locks</a> | 1 |  | sigenergy2mqtt/metrics/modbus_locks |
+| <a id='sigen_modbus_cache_hit_percentage'>Modbus Cache Hits</a> | 1 | % | sigenergy2mqtt/metrics/modbus_cache_hit_percentage |
+| <a id='sigen_modbus_read_errors'>Modbus Read Errors</a> | 1 |  | sigenergy2mqtt/metrics/modbus_read_errors |
+| <a id='sigen_modbus_read_max'>Modbus Read Max</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_read_max |
+| <a id='sigen_modbus_read_mean'>Modbus Read Mean</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_read_mean |
+| <a id='sigen_modbus_read_min'>Modbus Read Min</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_read_min |
+| <a id='sigen_modbus_reads_sec'>Modbus Reads/second</a> | 1 |  | sigenergy2mqtt/metrics/modbus_reads_sec |
+| <a id='sigen_modbus_write_errors'>Modbus Write Errors</a> | 1 |  | sigenergy2mqtt/metrics/modbus_write_errors |
+| <a id='sigen_modbus_write_max'>Modbus Write Max</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_write_max |
+| <a id='sigen_modbus_write_mean'>Modbus Write Mean</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_write_mean |
+| <a id='sigen_modbus_write_min'>Modbus Write Min</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_write_min |
+| <a id='sigen_modbus_protocol_published'>Protocol Published</a> | 1 |  | sigenergy2mqtt/metrics/modbus_protocol_published |
+| <a id='sigen_modbus_protocol'>Protocol Version</a> | 1 |  | sigenergy2mqtt/metrics/modbus_protocol |
+| <a id='sigen_started'>Started</a> | 1 |  | sigenergy2mqtt/metrics/started |
 
 ## Subscribed Topics
 

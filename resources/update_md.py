@@ -92,14 +92,14 @@ async def sensor_index():
         count = 0
         if not index_only:
             f.write("| Metric | Interval | Unit | State Topic|\n")
-            f.write("|--------|---------:|------|-------------|\n")
-        metrics = MetricsService.discovery["cmps"]
-        for metric in sorted(metrics.values(), key=lambda x: x["name"]):
+            f.write("|--------|---------:|------|------------|\n")
+        metrics = MetricsService(Protocol.N_A)
+        for metric in [s for s in sorted(metrics.all_sensors.values(), key=lambda x: x.name)]:
             count += 1
             if index_only:
-                f.write(f"<a href='#{metric['unique_id']}'>{metric['name']}</a><br>\n")
+                f.write(f"<a href='#{metric.unique_id}'>{metric['name']}</a><br>\n")
             else:
-                f.write(f"| {metric['name']} | 1 | {metric['unit_of_measurement'] if 'unit_of_measurement' in metric else ''} | {metric['state_topic']} |\n")
+                f.write(f"| <a id='{metric.unique_id}'>{metric['name']}</a> | 1 | {metric['unit_of_measurement'] if metric['unit_of_measurement'] else ''} | {metric['state_topic']} |\n")
         return count
 
     def published_topics(device: str, index_only: bool = False) -> int:
