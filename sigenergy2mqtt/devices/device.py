@@ -104,10 +104,11 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         if not isinstance(value, bool):
             raise ValueError("rediscover must be a boolean")
         self._rediscover = value
-        if value:
-            logging.info(f"{self.name} set to rediscover")
-        else:
-            logging.debug(f"{self.name} no longer set to rediscover")
+        if Config.home_assistant.enabled:
+            if value:
+                logging.info(f"{self.name} set to rediscover")
+            else:
+                logging.debug(f"{self.name} no longer set to rediscover")
 
     @property
     def sensors(self) -> dict[str, Sensor]:
