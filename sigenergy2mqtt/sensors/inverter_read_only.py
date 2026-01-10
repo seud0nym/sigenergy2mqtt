@@ -1467,7 +1467,7 @@ class MPTTCount(ReadOnlySensor, HybridInverter, PVInverter):
 
 class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
-        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+        assert 1 <= string_number <= 36, "string_number must be between 1 and 36"
         super().__init__(
             name="Current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_current",
@@ -1491,7 +1491,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
-        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+        assert 1 <= string_number <= 36, "string_number must be between 1 and 36"
         super().__init__(
             name="Voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_voltage",
