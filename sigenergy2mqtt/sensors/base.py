@@ -330,7 +330,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         return attributes
 
     def get_discovery(self, mqtt_client: mqtt.Client) -> dict[str, dict[str, Any]]:
-        assert "availability" in self, f"{self.__class__.__name__} MQTT topics are not configured?"
+        assert "state_topic" in self, f"{self.__class__.__name__} MQTT topics are not configured?"
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Getting discovery")
         components = self.get_discovery_components()
