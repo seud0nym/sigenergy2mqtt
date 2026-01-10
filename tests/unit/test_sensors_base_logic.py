@@ -22,7 +22,7 @@ sys.modules["sigenergy2mqtt.devices.types"] = mock_types
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
 
 from sigenergy2mqtt.config import Protocol  # noqa: E402
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyLifetimeAccumulationSensor, ReadOnlySensor, ResettableAccumulationSensor, Sensor  # noqa: E402
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyLifetimeAccumulationSensor, ReadOnlySensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 
 
@@ -45,7 +45,7 @@ class TestResettableAccumulation:
             source.latest_interval = 100.0
 
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                sensor = EnergyLifetimeAccumulationSensor("Accum", "sigenergy_acc", "sigenergy_acc", source, ModbusClient.DATATYPE.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
+                sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigenergy_acc", "sigenergy_acc", source, ModbusClient.DATATYPE.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
                 sensor._current_total = 100.0
 
                 # Negative power values

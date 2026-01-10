@@ -87,7 +87,7 @@ class TestSensorBase:
         assert sensor._apply_gain_and_precision(10.1234, raw=True) == 10.1234
 
     def test_configure_mqtt_topics(self, sensor):
-        # Mock Config to ensure consistent behavior
+        # Mock Config to ensure consistent behaviour
         with patch("sigenergy2mqtt.sensors.base.Config") as MockConfig:
             MockConfig.home_assistant.enabled = True
             MockConfig.home_assistant.use_simplified_topics = False

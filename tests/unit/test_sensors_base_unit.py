@@ -1,7 +1,6 @@
 import sys
 import time
 import types
-from types import SimpleNamespace
 
 import pytest
 
@@ -12,10 +11,10 @@ types_mod.HybridInverter = type("HybridInverter", (), {})
 types_mod.PVInverter = type("PVInverter", (), {})
 sys.modules.setdefault("sigenergy2mqtt.devices.types", types_mod)
 
-from sigenergy2mqtt.config.config import Config
-from sigenergy2mqtt.config.protocol import Protocol
-from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+from sigenergy2mqtt.config.config import Config  # noqa: E402
+from sigenergy2mqtt.config.protocol import Protocol  # noqa: E402
+from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
+from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 
 
 class DummySensor(Sensor):

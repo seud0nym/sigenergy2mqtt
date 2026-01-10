@@ -22,7 +22,7 @@ mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
 sys.modules["sigenergy2mqtt.devices.types"] = mock_types
 
-# Imported here (no hacks needed for mqtt anymore)
+# Imported here (no hacks needed for mqtt any more)
 from sigenergy2mqtt.config import Protocol  # noqa: E402
 from sigenergy2mqtt.modbus import ModbusClient  # noqa: E402
 from sigenergy2mqtt.sensors.base import InputType, NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor  # noqa: E402
@@ -59,7 +59,7 @@ def mock_modbus():
     modbus.read_holding_registers = AsyncMock()
     modbus.read_input_registers = AsyncMock()
 
-    # Default behavior for convert_to_registers: try to return a list with the value if it's int-like
+    # Default behaviour for convert_to_registers: try to return a list with the value if it's int-like
     def side_effect(val, _data_type):
         try:
             return [int(val)]
