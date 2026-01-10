@@ -29,7 +29,11 @@ class MonitorService(Device):
                 for topic, sensor in overdue.items():
                     sensor.notified = True
                     logging.warning(f"{self.__class__.__name__} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
-            await asyncio.sleep(1)
+            try:
+                await asyncio.sleep(1)
+            except asyncio.CancelledError:
+                logging.debug(f"{self.__class__.__name__} sleep interrupted")
+                break
         logging.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
