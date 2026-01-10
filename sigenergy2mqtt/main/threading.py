@@ -2,7 +2,7 @@ import asyncio
 import concurrent.futures
 import logging
 import threading
-from typing import Any, Awaitable, Sequence
+from typing import Any, Awaitable
 
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
@@ -17,7 +17,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
 
     device: Device
     modbus_client: ModbusClient | None = None
-    tasks: Sequence[Awaitable[Any]] = []
+    tasks: list[Awaitable[Any]] = []
 
     if config.host is None or Config.clean:
         modbus_client = None
