@@ -266,6 +266,8 @@ async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None,
     cancel_sensor_futures()
 
     _logger.info("Starting ASYNC Modbus TCP Testing Server...")
+    if log_level <= logging.INFO:
+        logging.getLogger("pymodbus").setLevel(logging.INFO)
     await StartAsyncTcpServer(
         context=ModbusServerContext(devices=context, single=False),
         identity=ModbusDeviceIdentification(
