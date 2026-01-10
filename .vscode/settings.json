@@ -1,12 +1,4 @@
 {
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit"
-    },
-    "ruff.lineLength": 210,
-    "python.analysis.extraPaths": [
-        "./sigenergy2mqtt"
-    ],
-    "python.analysis.diagnosticMode": "workspace",
     "cSpell.words": [
         "_mids",
         "ACCHARGER",
@@ -86,11 +78,22 @@
         "wordorder",
         "writeonly"
     ],
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.extraPaths": [
+        "./sigenergy2mqtt"
+    ],
+    "python.analysis.ignore": [
+        "tests"
+    ],
+    "python.analysis.typeCheckingMode": "standard",
+    "python.pyrefly.displayTypeErrors": "force-on",
+    "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.pyrefly.displayTypeErrors": "force-on",
-    "python.analysis.typeCheckingMode": "standard"
+    "ruff.lineLength": 210,
 }
