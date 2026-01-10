@@ -302,6 +302,26 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_001_31061'>PV String 14 Current</a><br>
 <a href='#sigen_0_001_31063'>PV String 15 Current</a><br>
 <a href='#sigen_0_001_31065'>PV String 16 Current</a><br>
+<a href='#sigen_0_001_31067'>PV String 17 Current</a><br>
+<a href='#sigen_0_001_31069'>PV String 18 Current</a><br>
+<a href='#sigen_0_001_31071'>PV String 19 Current</a><br>
+<a href='#sigen_0_001_31073'>PV String 20 Current</a><br>
+<a href='#sigen_0_001_31075'>PV String 21 Current</a><br>
+<a href='#sigen_0_001_31077'>PV String 22 Current</a><br>
+<a href='#sigen_0_001_31079'>PV String 23 Current</a><br>
+<a href='#sigen_0_001_31081'>PV String 24 Current</a><br>
+<a href='#sigen_0_001_31083'>PV String 25 Current</a><br>
+<a href='#sigen_0_001_31085'>PV String 26 Current</a><br>
+<a href='#sigen_0_001_31087'>PV String 27 Current</a><br>
+<a href='#sigen_0_001_31089'>PV String 28 Current</a><br>
+<a href='#sigen_0_001_31091'>PV String 29 Current</a><br>
+<a href='#sigen_0_001_31093'>PV String 30 Current</a><br>
+<a href='#sigen_0_001_31095'>PV String 31 Current</a><br>
+<a href='#sigen_0_001_31097'>PV String 32 Current</a><br>
+<a href='#sigen_0_001_31099'>PV String 33 Current</a><br>
+<a href='#sigen_0_001_31101'>PV String 34 Current</a><br>
+<a href='#sigen_0_001_31103'>PV String 35 Current</a><br>
+<a href='#sigen_0_001_31105'>PV String 36 Current</a><br>
 <a href='#sigen_0_inverter_1_pv1_daily_energy'>PV String 1 Daily Production</a><br>
 <a href='#sigen_0_inverter_1_pv2_daily_energy'>PV String 2 Daily Production</a><br>
 <a href='#sigen_0_inverter_1_pv3_daily_energy'>PV String 3 Daily Production</a><br>
@@ -318,6 +338,26 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_inverter_1_pv14_daily_energy'>PV String 14 Daily Production</a><br>
 <a href='#sigen_0_inverter_1_pv15_daily_energy'>PV String 15 Daily Production</a><br>
 <a href='#sigen_0_inverter_1_pv16_daily_energy'>PV String 16 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv17_daily_energy'>PV String 17 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv18_daily_energy'>PV String 18 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv19_daily_energy'>PV String 19 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv20_daily_energy'>PV String 20 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv21_daily_energy'>PV String 21 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv22_daily_energy'>PV String 22 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv23_daily_energy'>PV String 23 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv24_daily_energy'>PV String 24 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv25_daily_energy'>PV String 25 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv26_daily_energy'>PV String 26 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv27_daily_energy'>PV String 27 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv28_daily_energy'>PV String 28 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv29_daily_energy'>PV String 29 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv30_daily_energy'>PV String 30 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv31_daily_energy'>PV String 31 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv32_daily_energy'>PV String 32 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv33_daily_energy'>PV String 33 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv34_daily_energy'>PV String 34 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv35_daily_energy'>PV String 35 Daily Production</a><br>
+<a href='#sigen_0_inverter_1_pv36_daily_energy'>PV String 36 Daily Production</a><br>
 <a href='#sigen_0_inverter_1_pv1_lifetime_energy'>PV String 1 Lifetime Production</a><br>
 <a href='#sigen_0_inverter_1_pv2_lifetime_energy'>PV String 2 Lifetime Production</a><br>
 <a href='#sigen_0_inverter_1_pv3_lifetime_energy'>PV String 3 Lifetime Production</a><br>
@@ -334,6 +374,26 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_inverter_1_pv14_lifetime_energy'>PV String 14 Lifetime Production</a><br>
 <a href='#sigen_0_inverter_1_pv15_lifetime_energy'>PV String 15 Lifetime Production</a><br>
 <a href='#sigen_0_inverter_1_pv16_lifetime_energy'>PV String 16 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv17_lifetime_energy'>PV String 17 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv18_lifetime_energy'>PV String 18 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv19_lifetime_energy'>PV String 19 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv20_lifetime_energy'>PV String 20 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv21_lifetime_energy'>PV String 21 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv22_lifetime_energy'>PV String 22 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv23_lifetime_energy'>PV String 23 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv24_lifetime_energy'>PV String 24 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv25_lifetime_energy'>PV String 25 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv26_lifetime_energy'>PV String 26 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv27_lifetime_energy'>PV String 27 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv28_lifetime_energy'>PV String 28 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv29_lifetime_energy'>PV String 29 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv30_lifetime_energy'>PV String 30 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv31_lifetime_energy'>PV String 31 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv32_lifetime_energy'>PV String 32 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv33_lifetime_energy'>PV String 33 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv34_lifetime_energy'>PV String 34 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv35_lifetime_energy'>PV String 35 Lifetime Production</a><br>
+<a href='#sigen_0_inverter_1_pv36_lifetime_energy'>PV String 36 Lifetime Production</a><br>
 <a href='#sigen_0_inverter_1_pv1_power'>PV String 1 Power</a><br>
 <a href='#sigen_0_inverter_1_pv2_power'>PV String 2 Power</a><br>
 <a href='#sigen_0_inverter_1_pv3_power'>PV String 3 Power</a><br>
@@ -350,6 +410,26 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_inverter_1_pv14_power'>PV String 14 Power</a><br>
 <a href='#sigen_0_inverter_1_pv15_power'>PV String 15 Power</a><br>
 <a href='#sigen_0_inverter_1_pv16_power'>PV String 16 Power</a><br>
+<a href='#sigen_0_inverter_1_pv17_power'>PV String 17 Power</a><br>
+<a href='#sigen_0_inverter_1_pv18_power'>PV String 18 Power</a><br>
+<a href='#sigen_0_inverter_1_pv19_power'>PV String 19 Power</a><br>
+<a href='#sigen_0_inverter_1_pv20_power'>PV String 20 Power</a><br>
+<a href='#sigen_0_inverter_1_pv21_power'>PV String 21 Power</a><br>
+<a href='#sigen_0_inverter_1_pv22_power'>PV String 22 Power</a><br>
+<a href='#sigen_0_inverter_1_pv23_power'>PV String 23 Power</a><br>
+<a href='#sigen_0_inverter_1_pv24_power'>PV String 24 Power</a><br>
+<a href='#sigen_0_inverter_1_pv25_power'>PV String 25 Power</a><br>
+<a href='#sigen_0_inverter_1_pv26_power'>PV String 26 Power</a><br>
+<a href='#sigen_0_inverter_1_pv27_power'>PV String 27 Power</a><br>
+<a href='#sigen_0_inverter_1_pv28_power'>PV String 28 Power</a><br>
+<a href='#sigen_0_inverter_1_pv29_power'>PV String 29 Power</a><br>
+<a href='#sigen_0_inverter_1_pv30_power'>PV String 30 Power</a><br>
+<a href='#sigen_0_inverter_1_pv31_power'>PV String 31 Power</a><br>
+<a href='#sigen_0_inverter_1_pv32_power'>PV String 32 Power</a><br>
+<a href='#sigen_0_inverter_1_pv33_power'>PV String 33 Power</a><br>
+<a href='#sigen_0_inverter_1_pv34_power'>PV String 34 Power</a><br>
+<a href='#sigen_0_inverter_1_pv35_power'>PV String 35 Power</a><br>
+<a href='#sigen_0_inverter_1_pv36_power'>PV String 36 Power</a><br>
 <a href='#sigen_0_001_31027'>PV String 1 Voltage</a><br>
 <a href='#sigen_0_001_31029'>PV String 2 Voltage</a><br>
 <a href='#sigen_0_001_31031'>PV String 3 Voltage</a><br>
@@ -366,6 +446,26 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_001_31060'>PV String 14 Voltage</a><br>
 <a href='#sigen_0_001_31062'>PV String 15 Voltage</a><br>
 <a href='#sigen_0_001_31064'>PV String 16 Voltage</a><br>
+<a href='#sigen_0_001_31066'>PV String 17 Voltage</a><br>
+<a href='#sigen_0_001_31068'>PV String 18 Voltage</a><br>
+<a href='#sigen_0_001_31070'>PV String 19 Voltage</a><br>
+<a href='#sigen_0_001_31072'>PV String 20 Voltage</a><br>
+<a href='#sigen_0_001_31074'>PV String 21 Voltage</a><br>
+<a href='#sigen_0_001_31076'>PV String 22 Voltage</a><br>
+<a href='#sigen_0_001_31078'>PV String 23 Voltage</a><br>
+<a href='#sigen_0_001_31080'>PV String 24 Voltage</a><br>
+<a href='#sigen_0_001_31082'>PV String 25 Voltage</a><br>
+<a href='#sigen_0_001_31084'>PV String 26 Voltage</a><br>
+<a href='#sigen_0_001_31086'>PV String 27 Voltage</a><br>
+<a href='#sigen_0_001_31088'>PV String 28 Voltage</a><br>
+<a href='#sigen_0_001_31090'>PV String 29 Voltage</a><br>
+<a href='#sigen_0_001_31092'>PV String 30 Voltage</a><br>
+<a href='#sigen_0_001_31094'>PV String 31 Voltage</a><br>
+<a href='#sigen_0_001_31096'>PV String 32 Voltage</a><br>
+<a href='#sigen_0_001_31098'>PV String 33 Voltage</a><br>
+<a href='#sigen_0_001_31100'>PV String 34 Voltage</a><br>
+<a href='#sigen_0_001_31102'>PV String 35 Voltage</a><br>
+<a href='#sigen_0_001_31104'>PV String 36 Voltage</a><br>
 
 <h6>AC Charger</h6>
 <a href='#sigen_0_ac_charger_2_alarm'>Alarms</a><br>
@@ -463,7 +563,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 
 <h6>DC Charger</h6>
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -3589,6 +3689,266 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
+<h5><a id='sigen_0_001_31067'>PV String 17 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv17_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring17/sigen_0_inverter_1_pv17_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv17_current/state</td></tr>
+<tr><td>Source</td><td>31067</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31069'>PV String 18 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv18_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring18/sigen_0_inverter_1_pv18_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv18_current/state</td></tr>
+<tr><td>Source</td><td>31069</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31071'>PV String 19 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv19_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring19/sigen_0_inverter_1_pv19_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv19_current/state</td></tr>
+<tr><td>Source</td><td>31071</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31073'>PV String 20 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv20_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring20/sigen_0_inverter_1_pv20_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv20_current/state</td></tr>
+<tr><td>Source</td><td>31073</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31075'>PV String 21 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv21_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring21/sigen_0_inverter_1_pv21_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv21_current/state</td></tr>
+<tr><td>Source</td><td>31075</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31077'>PV String 22 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv22_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring22/sigen_0_inverter_1_pv22_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv22_current/state</td></tr>
+<tr><td>Source</td><td>31077</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31079'>PV String 23 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv23_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring23/sigen_0_inverter_1_pv23_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv23_current/state</td></tr>
+<tr><td>Source</td><td>31079</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31081'>PV String 24 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv24_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring24/sigen_0_inverter_1_pv24_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv24_current/state</td></tr>
+<tr><td>Source</td><td>31081</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31083'>PV String 25 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv25_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring25/sigen_0_inverter_1_pv25_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv25_current/state</td></tr>
+<tr><td>Source</td><td>31083</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31085'>PV String 26 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv26_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring26/sigen_0_inverter_1_pv26_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv26_current/state</td></tr>
+<tr><td>Source</td><td>31085</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31087'>PV String 27 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv27_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring27/sigen_0_inverter_1_pv27_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv27_current/state</td></tr>
+<tr><td>Source</td><td>31087</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31089'>PV String 28 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv28_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring28/sigen_0_inverter_1_pv28_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv28_current/state</td></tr>
+<tr><td>Source</td><td>31089</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31091'>PV String 29 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv29_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring29/sigen_0_inverter_1_pv29_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv29_current/state</td></tr>
+<tr><td>Source</td><td>31091</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31093'>PV String 30 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv30_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring30/sigen_0_inverter_1_pv30_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv30_current/state</td></tr>
+<tr><td>Source</td><td>31093</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31095'>PV String 31 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv31_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring31/sigen_0_inverter_1_pv31_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv31_current/state</td></tr>
+<tr><td>Source</td><td>31095</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31097'>PV String 32 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv32_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring32/sigen_0_inverter_1_pv32_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv32_current/state</td></tr>
+<tr><td>Source</td><td>31097</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31099'>PV String 33 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv33_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring33/sigen_0_inverter_1_pv33_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv33_current/state</td></tr>
+<tr><td>Source</td><td>31099</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31101'>PV String 34 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv34_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring34/sigen_0_inverter_1_pv34_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv34_current/state</td></tr>
+<tr><td>Source</td><td>31101</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31103'>PV String 35 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv35_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring35/sigen_0_inverter_1_pv35_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv35_current/state</td></tr>
+<tr><td>Source</td><td>31103</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31105'>PV String 36 Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVCurrentSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv36_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring36/sigen_0_inverter_1_pv36_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv36_current/state</td></tr>
+<tr><td>Source</td><td>31105</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
 <h5><a id='sigen_0_inverter_1_pv1_daily_energy'>PV String 1 Daily Production</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
@@ -3780,6 +4140,246 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv17_daily_energy'>PV String 17 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv17_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring17/sigen_0_inverter_1_pv17_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv17_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv18_daily_energy'>PV String 18 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv18_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring18/sigen_0_inverter_1_pv18_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv18_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv19_daily_energy'>PV String 19 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv19_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring19/sigen_0_inverter_1_pv19_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv19_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv20_daily_energy'>PV String 20 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv20_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring20/sigen_0_inverter_1_pv20_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv20_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv21_daily_energy'>PV String 21 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv21_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring21/sigen_0_inverter_1_pv21_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv21_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv22_daily_energy'>PV String 22 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv22_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring22/sigen_0_inverter_1_pv22_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv22_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv23_daily_energy'>PV String 23 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv23_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring23/sigen_0_inverter_1_pv23_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv23_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv24_daily_energy'>PV String 24 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv24_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring24/sigen_0_inverter_1_pv24_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv24_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv25_daily_energy'>PV String 25 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv25_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring25/sigen_0_inverter_1_pv25_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv25_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv26_daily_energy'>PV String 26 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv26_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring26/sigen_0_inverter_1_pv26_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv26_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv27_daily_energy'>PV String 27 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv27_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring27/sigen_0_inverter_1_pv27_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv27_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv28_daily_energy'>PV String 28 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv28_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring28/sigen_0_inverter_1_pv28_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv28_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv29_daily_energy'>PV String 29 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv29_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring29/sigen_0_inverter_1_pv29_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv29_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv30_daily_energy'>PV String 30 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv30_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring30/sigen_0_inverter_1_pv30_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv30_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv31_daily_energy'>PV String 31 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv31_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring31/sigen_0_inverter_1_pv31_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv31_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv32_daily_energy'>PV String 32 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv32_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring32/sigen_0_inverter_1_pv32_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv32_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv33_daily_energy'>PV String 33 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv33_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring33/sigen_0_inverter_1_pv33_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv33_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv34_daily_energy'>PV String 34 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv34_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring34/sigen_0_inverter_1_pv34_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv34_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv35_daily_energy'>PV String 35 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv35_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring35/sigen_0_inverter_1_pv35_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv35_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv36_daily_energy'>PV String 36 Daily Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringDailyEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv36_daily_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring36/sigen_0_inverter_1_pv36_daily_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv36_daily_energy/state</td></tr>
+<tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_lifetime_energy'>PV String 1 Lifetime Production</a></h5>
 <table>
@@ -3973,6 +4573,246 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
+<h5><a id='sigen_0_inverter_1_pv17_lifetime_energy'>PV String 17 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv17_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring17/sigen_0_inverter_1_pv17_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv17_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv18_lifetime_energy'>PV String 18 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv18_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring18/sigen_0_inverter_1_pv18_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv18_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv19_lifetime_energy'>PV String 19 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv19_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring19/sigen_0_inverter_1_pv19_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv19_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv20_lifetime_energy'>PV String 20 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv20_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring20/sigen_0_inverter_1_pv20_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv20_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv21_lifetime_energy'>PV String 21 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv21_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring21/sigen_0_inverter_1_pv21_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv21_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv22_lifetime_energy'>PV String 22 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv22_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring22/sigen_0_inverter_1_pv22_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv22_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv23_lifetime_energy'>PV String 23 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv23_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring23/sigen_0_inverter_1_pv23_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv23_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv24_lifetime_energy'>PV String 24 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv24_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring24/sigen_0_inverter_1_pv24_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv24_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv25_lifetime_energy'>PV String 25 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv25_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring25/sigen_0_inverter_1_pv25_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv25_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv26_lifetime_energy'>PV String 26 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv26_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring26/sigen_0_inverter_1_pv26_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv26_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv27_lifetime_energy'>PV String 27 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv27_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring27/sigen_0_inverter_1_pv27_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv27_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv28_lifetime_energy'>PV String 28 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv28_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring28/sigen_0_inverter_1_pv28_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv28_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv29_lifetime_energy'>PV String 29 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv29_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring29/sigen_0_inverter_1_pv29_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv29_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv30_lifetime_energy'>PV String 30 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv30_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring30/sigen_0_inverter_1_pv30_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv30_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv31_lifetime_energy'>PV String 31 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv31_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring31/sigen_0_inverter_1_pv31_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv31_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv32_lifetime_energy'>PV String 32 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv32_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring32/sigen_0_inverter_1_pv32_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv32_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv33_lifetime_energy'>PV String 33 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv33_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring33/sigen_0_inverter_1_pv33_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv33_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv34_lifetime_energy'>PV String 34 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv34_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring34/sigen_0_inverter_1_pv34_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv34_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv35_lifetime_energy'>PV String 35 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv35_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring35/sigen_0_inverter_1_pv35_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv35_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv36_lifetime_energy'>PV String 36 Lifetime Production</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringLifetimeEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv36_lifetime_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring36/sigen_0_inverter_1_pv36_lifetime_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv36_lifetime_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
 <h5><a id='sigen_0_inverter_1_pv1_power'>PV String 1 Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
@@ -4148,6 +4988,226 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv17_power'>PV String 17 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv17_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring17/sigen_0_inverter_1_pv17_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv17_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv18_power'>PV String 18 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv18_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring18/sigen_0_inverter_1_pv18_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv18_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv19_power'>PV String 19 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv19_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring19/sigen_0_inverter_1_pv19_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv19_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv20_power'>PV String 20 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv20_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring20/sigen_0_inverter_1_pv20_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv20_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv21_power'>PV String 21 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv21_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring21/sigen_0_inverter_1_pv21_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv21_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv22_power'>PV String 22 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv22_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring22/sigen_0_inverter_1_pv22_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv22_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv23_power'>PV String 23 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv23_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring23/sigen_0_inverter_1_pv23_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv23_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv24_power'>PV String 24 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv24_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring24/sigen_0_inverter_1_pv24_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv24_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv25_power'>PV String 25 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv25_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring25/sigen_0_inverter_1_pv25_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv25_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv26_power'>PV String 26 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv26_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring26/sigen_0_inverter_1_pv26_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv26_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv27_power'>PV String 27 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv27_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring27/sigen_0_inverter_1_pv27_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv27_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv28_power'>PV String 28 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv28_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring28/sigen_0_inverter_1_pv28_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv28_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv29_power'>PV String 29 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv29_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring29/sigen_0_inverter_1_pv29_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv29_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv30_power'>PV String 30 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv30_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring30/sigen_0_inverter_1_pv30_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv30_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv31_power'>PV String 31 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv31_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring31/sigen_0_inverter_1_pv31_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv31_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv32_power'>PV String 32 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv32_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring32/sigen_0_inverter_1_pv32_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv32_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv33_power'>PV String 33 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv33_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring33/sigen_0_inverter_1_pv33_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv33_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv34_power'>PV String 34 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv34_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring34/sigen_0_inverter_1_pv34_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv34_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv35_power'>PV String 35 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv35_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring35/sigen_0_inverter_1_pv35_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv35_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_pv36_power'>PV String 36 Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVStringPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv36_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring36/sigen_0_inverter_1_pv36_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv36_power/state</td></tr>
+<tr><td>Source</td><td>PVVoltageSensor &times; PVCurrentSensor</td></tr>
+<tr><td>Applicable To</td><td></td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 <h5><a id='sigen_0_001_31027'>PV String 1 Voltage</a></h5>
 <table>
@@ -4356,6 +5416,266 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>31064</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_0_001_31066'>PV String 17 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv17_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring17/sigen_0_inverter_1_pv17_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv17_voltage/state</td></tr>
+<tr><td>Source</td><td>31066</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31068'>PV String 18 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv18_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring18/sigen_0_inverter_1_pv18_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv18_voltage/state</td></tr>
+<tr><td>Source</td><td>31068</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31070'>PV String 19 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv19_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring19/sigen_0_inverter_1_pv19_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv19_voltage/state</td></tr>
+<tr><td>Source</td><td>31070</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31072'>PV String 20 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv20_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring20/sigen_0_inverter_1_pv20_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv20_voltage/state</td></tr>
+<tr><td>Source</td><td>31072</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31074'>PV String 21 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv21_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring21/sigen_0_inverter_1_pv21_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv21_voltage/state</td></tr>
+<tr><td>Source</td><td>31074</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31076'>PV String 22 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv22_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring22/sigen_0_inverter_1_pv22_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv22_voltage/state</td></tr>
+<tr><td>Source</td><td>31076</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31078'>PV String 23 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv23_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring23/sigen_0_inverter_1_pv23_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv23_voltage/state</td></tr>
+<tr><td>Source</td><td>31078</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31080'>PV String 24 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv24_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring24/sigen_0_inverter_1_pv24_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv24_voltage/state</td></tr>
+<tr><td>Source</td><td>31080</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31082'>PV String 25 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv25_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring25/sigen_0_inverter_1_pv25_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv25_voltage/state</td></tr>
+<tr><td>Source</td><td>31082</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31084'>PV String 26 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv26_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring26/sigen_0_inverter_1_pv26_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv26_voltage/state</td></tr>
+<tr><td>Source</td><td>31084</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31086'>PV String 27 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv27_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring27/sigen_0_inverter_1_pv27_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv27_voltage/state</td></tr>
+<tr><td>Source</td><td>31086</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31088'>PV String 28 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv28_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring28/sigen_0_inverter_1_pv28_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv28_voltage/state</td></tr>
+<tr><td>Source</td><td>31088</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31090'>PV String 29 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv29_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring29/sigen_0_inverter_1_pv29_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv29_voltage/state</td></tr>
+<tr><td>Source</td><td>31090</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31092'>PV String 30 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv30_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring30/sigen_0_inverter_1_pv30_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv30_voltage/state</td></tr>
+<tr><td>Source</td><td>31092</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31094'>PV String 31 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv31_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring31/sigen_0_inverter_1_pv31_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv31_voltage/state</td></tr>
+<tr><td>Source</td><td>31094</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31096'>PV String 32 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv32_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring32/sigen_0_inverter_1_pv32_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv32_voltage/state</td></tr>
+<tr><td>Source</td><td>31096</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31098'>PV String 33 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv33_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring33/sigen_0_inverter_1_pv33_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv33_voltage/state</td></tr>
+<tr><td>Source</td><td>31098</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31100'>PV String 34 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv34_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring34/sigen_0_inverter_1_pv34_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv34_voltage/state</td></tr>
+<tr><td>Source</td><td>31100</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31102'>PV String 35 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv35_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring35/sigen_0_inverter_1_pv35_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv35_voltage/state</td></tr>
+<tr><td>Source</td><td>31102</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_31104'>PV String 36 Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVVoltageSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_pv36_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_pvstring36/sigen_0_inverter_1_pv36_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_pv36_voltage/state</td></tr>
+<tr><td>Source</td><td>31104</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 </table>
 
 ### AC Charger
