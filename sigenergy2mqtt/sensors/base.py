@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import asyncio
 import datetime
@@ -9,19 +11,64 @@ import sys
 import time
 from concurrent.futures import Future
 from pathlib import Path
-from typing import Any, Final, Iterable, cast
+from typing import TYPE_CHECKING, Any, Final, Iterable, cast
 
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.metrics.metrics import Metrics
-from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
-from sigenergy2mqtt.mqtt import MqttHandler
+from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.mqtt import MqttHandler
 
 from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 from .sanity_check import SanityCheck
+
+
+# Provide a small runtime proxy for ModbusLockFactory so other modules/tests
+# can patch `sigenergy2mqtt.sensors.base.ModbusLockFactory.get` without
+# importing the full modbus package at module import time.
+class _ModbusLockFactoryProxy:
+    @staticmethod
+    def get(modbus):
+        from sigenergy2mqtt.modbus import ModbusLockFactory as _Real
+
+        return _Real.get(modbus)
+
+    @staticmethod
+    def get_waiter_count() -> int:
+        from sigenergy2mqtt.modbus import ModbusLockFactory as _Real
+
+        return _Real.get_waiter_count()
+
+
+ModbusLockFactory = _ModbusLockFactoryProxy
+
+
+# Lazy accessor for ModbusClient to avoid importing modbus at module import
+def _ModbusClient():
+    from sigenergy2mqtt.modbus import ModbusClient
+
+    return ModbusClient
+
+
+ModbusClient = _ModbusClient()
+
+
+# Expose a module-level `Metrics` binding. Prefer a `Metrics` attribute if the
+# metrics package provides one, otherwise expose the module object. This lets
+# tests either patch `sigenergy2mqtt.sensors.base.Metrics` or replace the
+# `sigenergy2mqtt.metrics.metrics` module in `sys.modules` with a mock
+# (the latter often provides functions at module scope instead of a class).
+import importlib as _importlib  # noqa: E402
+
+try:
+    _metrics_module = _importlib.import_module("sigenergy2mqtt.metrics.metrics")
+    Metrics = getattr(_metrics_module, "Metrics", _metrics_module)
+except Exception:
+    Metrics: Any = None
 
 
 class SensorDebuggingMixin:
@@ -377,7 +424,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
                 state = self._states[-1][1]
         return state if raw or isinstance(state, str) else self._apply_gain_and_precision(state, raw)
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         published: bool = False
         now = time.time()
         if self._failures < self._max_failures or (self._next_retry and self._next_retry <= now):
@@ -483,7 +530,8 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
 class TypedSensorMixin:
     def __init__(self, **kwargs):
         assert "data_type" in kwargs, "Missing required parameter: data_type"
-        assert kwargs["data_type"] in ModbusClient.DATATYPE, f"Invalid data type {kwargs['data_type']}"
+        if kwargs["data_type"] not in ModbusClient.DATATYPE:
+            raise AssertionError(f"Invalid data type {kwargs['data_type']}")
         self.data_type = kwargs["data_type"]
         super().__init__(**kwargs)
 
@@ -592,7 +640,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         device_address: int,
         address: int,
         count: int,
-        data_type: ModbusClient.DATATYPE,
+        data_type: ModbusDataType,
         scan_interval: int,
         unit: str | None,
         device_class: DeviceClass | None,
@@ -626,7 +674,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         assert "modbus_client" in kwargs, f"{self.__class__.__name__} Required argument 'modbus_client' not supplied"
         result = False
-        modbus_client: ModbusClient = kwargs["modbus_client"]
+        modbus_client: ModbusClientType = kwargs["modbus_client"]
 
         if self.debug_logging:
             logging.debug(
@@ -643,6 +691,8 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
                 logging.error(f"{self.__class__.__name__} Unknown input type '{self.input_type}'")
                 raise Exception(f"Unknown input type '{self.input_type}'")
             elapsed = time.monotonic() - start
+            # use module-level `Metrics` (set at import time) so tests can
+            # patch either the module or the `Metrics` name.
             await Metrics.modbus_read(self.count, elapsed)
             result = self._check_register_response(rr, f"read_{self.input_type}_registers")
             if result and rr:
@@ -658,6 +708,8 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             logging.warning(f"{self.__class__.__name__} Modbus read failed to acquire lock within {self.scan_interval}s")
             result = False
         except Exception:
+            # use module-level `Metrics` (set at import time) so tests can
+            # patch either the module or the `Metrics` name.
             await Metrics.modbus_read_error()
             raise
 
@@ -684,7 +736,7 @@ class ReservedSensor(ReadOnlySensor):
         device_address: int,
         address: int,
         count: int,
-        data_type: ModbusClient.DATATYPE,
+        data_type: ModbusDataType,
         scan_interval: int,
         unit: str | None,
         device_class: DeviceClass | None,
@@ -743,6 +795,7 @@ class TimestampSensor(ReadOnlySensor):
         scan_interval: int,
         protocol_version: Protocol,
     ):
+
         super().__init__(
             name,
             object_id,
@@ -782,7 +835,7 @@ class TimestampSensor(ReadOnlySensor):
 
 class ObservableMixin(abc.ABC):
     @abc.abstractmethod
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         pass
 
     def observable_topics(self) -> set[str]:
@@ -819,7 +872,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             return round(raw_value / self.gain, self.precision)
         return raw_value
 
-    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
+    async def _write_registers(self, modbus_client: ModbusClientType, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
         max_wait = 2
         device_id = self.device_address
         no_response_expected = False
@@ -839,6 +892,8 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
                 else:
                     rr = await modbus_client.write_registers(self.address, registers, device_id=device_id, no_response_expected=no_response_expected)
             elapsed = time.monotonic() - start
+            # use module-level `Metrics` (set at import time) so tests can
+            # patch either the module or the `Metrics` name.
             await Metrics.modbus_write(len(registers), elapsed)
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} {method}({self.address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self.plant_index}] took {elapsed:.3f}s")
@@ -854,6 +909,8 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             result = False
         except Exception as e:
             logging.error(f"{self.__class__.__name__} write_registers: {repr(e)}")
+            # use module-level `Metrics` (set at import time) so tests can
+            # patch either the module or the `Metrics` name.
             await Metrics.modbus_write_error()
             raise
         return result
@@ -863,7 +920,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         self["command_topic"] = f"{base}/set"
         return base
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         assert modbus_client is not None, "ModbusClient cannot be None"
         try:
             if not await self.value_is_valid(modbus_client, value):
@@ -877,7 +934,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             logging.error(f"{self.__class__.__name__} Attempt to set value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
             return False
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         return True
 
 
@@ -951,10 +1008,10 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             logging.debug(f"{self.__class__.__name__} Discovered {components=}")
         return components
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         return await super().set_value(modbus_client, mqtt_client, self._values["off"] if self._payloads["off"] == value else self._values["on"] if self._payloads["on"] else value, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if raw_value not in (self._values["off"], self._values["on"]):
             logging.error(f"{self.__class__.__name__} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
             return False
@@ -972,7 +1029,7 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
         device_address: int,
         address: int,
         count: int,
-        data_type: ModbusClient.DATATYPE,
+        data_type: ModbusDataType,
         scan_interval: int,
         unit: str | None,
         device_class: DeviceClass | None,
@@ -1023,7 +1080,7 @@ class NumericSensor(ReadWriteSensor):
         device_address: int,
         address: int,
         count: int,
-        data_type: ModbusClient.DATATYPE,
+        data_type: ModbusDataType,
         scan_interval: int,
         unit: str | None,
         device_class: DeviceClass | None,
@@ -1104,7 +1161,7 @@ class NumericSensor(ReadWriteSensor):
                 logging.debug(f"{self.__class__.__name__} {value=} adjusted to {state=}")
         return state
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if value is not None:
             try:
                 state = float(value)
@@ -1118,7 +1175,7 @@ class NumericSensor(ReadWriteSensor):
             logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to *None*")
         return False
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         try:
             value = cast(float, self._apply_gain_and_precision(float(raw_value)))  # Make NOT raw
             if isinstance(self["min"], float) and value < cast(float, self["min"]):
@@ -1186,14 +1243,14 @@ class SelectSensor(ReadWriteSensor):
         else:
             return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         try:
             index = int(value)
         except ValueError:
             index = cast(list[str], self["options"]).index(str(value))
         return await super().set_value(modbus_client, mqtt_client, index, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         try:
             if cast(list[str], self["options"]).index(str(raw_value)) is not None:
                 return True
@@ -1219,6 +1276,7 @@ class SwitchSensor(ReadWriteSensor):
         scan_interval: int,
         protocol_version: Protocol,
     ):
+
         super().__init__(
             availability_control_sensor=availability_control_sensor,
             name=name,
@@ -1244,14 +1302,14 @@ class SwitchSensor(ReadWriteSensor):
         self["state_off"] = 0
         self["state_on"] = 1
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         try:
             return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
         except ValueError as e:
             logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
             raise
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if raw_value not in (self["payload_off"], self["payload_on"]):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Must be either '{self['payload_off']}' or '{self['payload_on']}'")
             return False
@@ -1632,7 +1690,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         unique_id: str,
         object_id: str,
         source: Sensor,
-        data_type: ModbusClient.DATATYPE,
+        data_type: ModbusDataType,
         unit: str | None,
         device_class: DeviceClass | None,
         state_class: StateClass | None,
@@ -1697,7 +1755,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         unique_id: str,
         object_id: str,
         source: Sensor,
-        data_type=ModbusClient.DATATYPE.UINT32,
+        data_type=None,
         unit=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=DeviceClass.ENERGY,
         state_class=StateClass.TOTAL_INCREASING,
@@ -1705,6 +1763,8 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         gain=1000,
         precision=2,
     ):
+        if data_type is None:
+            data_type = ModbusClient.DATATYPE.UINT32
         super().__init__(
             name,
             unique_id,
@@ -1731,7 +1791,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
                     logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
         self.set_latest_state(self._current_total)
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             new_total = (value if value is float else float(value)) * self.gain
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({new_total=})")
@@ -1828,7 +1888,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 logging.debug(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} notified of updated state {value} {self.unit}")
@@ -1844,7 +1904,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         else:
             return False
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if not self._persistent_state_file.is_file():
             await self._update_state_at_midnight(self._state_at_midnight)
         return await super().publish(mqtt_client, modbus_client, republish)

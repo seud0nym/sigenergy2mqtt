@@ -1,14 +1,15 @@
 import logging
 
 from .client import ModbusClient
+from .types import ModbusClientType
 
 
 class ModbusClientFactory:
-    _clients: dict[tuple[str, int], ModbusClient] = {}
-    _hosts: dict[ModbusClient, str] = {}
+    _clients: dict[tuple[str, int], ModbusClientType] = {}
+    _hosts: dict[ModbusClientType, str] = {}
 
     @classmethod
-    async def get_client(cls, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClient:
+    async def get_client(cls, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClientType:
         key = (host, port)
         if key not in cls._clients:
             logging.debug(f"Creating Modbus client for {host}:{port} ({timeout=}s {retries=})")
@@ -23,5 +24,5 @@ class ModbusClientFactory:
         return client
 
     @classmethod
-    def get_host(cls, modbus: ModbusClient | None) -> str | None:
+    def get_host(cls, modbus: ModbusClientType | None) -> str | None:
         return None if modbus not in cls._hosts else cls._hosts[modbus]

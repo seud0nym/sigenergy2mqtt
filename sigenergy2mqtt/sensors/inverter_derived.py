@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusClientType
 
 from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor, StateClass
 from .const import UnitOfPower
@@ -99,7 +100,7 @@ class PVStringPower(DerivedSensor):
         attributes["source"] = "PVVoltageSensor &times; PVCurrentSensor"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if self.voltage is None or self.current is None:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - current={self.current} voltage={self.voltage}")

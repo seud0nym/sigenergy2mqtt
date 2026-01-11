@@ -10,6 +10,7 @@ from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType, HybridInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
@@ -170,7 +171,7 @@ def configure_logging():
         pvoutput.setLevel(Config.pvoutput.log_level)
 
 
-async def get_state(sensor: Sensor, modbus_client: ModbusClient, device: str, default_value: int | float | str | None = None, raw: bool = False) -> tuple[Sensor, int | float | str | None]:
+async def get_state(sensor: Sensor, modbus_client: ModbusClientType, device: str, default_value: int | float | str | None = None, raw: bool = False) -> tuple[Sensor, int | float | str | None]:
     try:
         state = await sensor.get_state(raw=raw, modbus_client=modbus_client)
         logging.debug(f"READING modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device}")
@@ -180,7 +181,7 @@ async def get_state(sensor: Sensor, modbus_client: ModbusClient, device: str, de
     return sensor, state
 
 
-async def make_ac_charger(plant_index, modbus_client, device_address, plant):
+async def make_ac_charger(plant_index, modbus_client: ModbusClientType, device_address, plant):
     input_breaker, ib_value = await get_state(ACChargerInputBreaker(plant_index, device_address), modbus_client, "ac-charger")
     rated_current, rc_value = await get_state(ACChargerRatedCurrent(plant_index, device_address), modbus_client, "ac-charger")
     charger = ACCharger(
@@ -202,7 +203,7 @@ async def make_dc_charger(plant_index, device_address, protocol_version, inverte
     return charger
 
 
-async def make_plant_and_inverter(plant_index, modbus_client, device_address, plant) -> Tuple[Inverter | None, PowerPlant | None]:
+async def make_plant_and_inverter(plant_index, modbus_client: ModbusClientType, device_address, plant) -> Tuple[Inverter | None, PowerPlant | None]:
     serial, sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus_client, "inverter")
     if sn in serial_numbers:
         logging.info(f"Inverter serial number {sn} has already been detected - ignoring")
@@ -312,7 +313,7 @@ async def make_plant_and_inverter(plant_index, modbus_client, device_address, pl
     return inverter, plant
 
 
-async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClient, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
+async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClientType, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
     device_id: int = device.device_address
     for register in registers:
         sensor: Sensor = cast(Sensor, device.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}", search_children=True))

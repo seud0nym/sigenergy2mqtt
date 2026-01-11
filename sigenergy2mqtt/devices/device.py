@@ -11,7 +11,8 @@ import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
-from sigenergy2mqtt.modbus import ModbusClient, ModbusLockFactory
+from sigenergy2mqtt.modbus import ModbusLockFactory
+from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import (
     AlarmCombinedSensor,
@@ -289,7 +290,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                         return next(a for a in alarm.alarms if a.unique_id == unique_id)
         return None
 
-    async def on_ha_state_change(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
+    async def on_ha_state_change(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         if ha_state == "online":
             seconds = float(randint(0, 3) + (randint(0, 10) / 10))
             logging.info(f"{self.name} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
@@ -347,7 +348,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             device.publish_discovery(mqtt_client, clean=clean)
         return info
 
-    async def publish_updates(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
+    async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         # Setup for Modbus read-ahead optimization
         modbus_sensors = [s for s in sensors if isinstance(s, ModbusSensorMixin)]
         multiple: bool = len(modbus_sensors) > 1
@@ -505,7 +506,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 self.publish_discovery(mqtt_client, clean=False)
                 wait = Config.home_assistant.republish_discovery_interval
 
-    def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         groups = self._create_sensor_scan_groups()
         tasks: list[Awaitable[None]] = []
         for name, sensors in groups.items():

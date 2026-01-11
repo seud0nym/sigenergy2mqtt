@@ -1,12 +1,12 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from .client import ModbusClient
 from .client_factory import ModbusClientFactory
+from .types import ModbusClientType
 
 
 class ModbusLock:
-    def __init__(self, modbus: ModbusClient | None):
+    def __init__(self, modbus: ModbusClientType | None):
         self._lock: asyncio.Lock = asyncio.Lock()
         self.waiters: int = 0
         self.host: str | None = ModbusClientFactory.get_host(modbus)

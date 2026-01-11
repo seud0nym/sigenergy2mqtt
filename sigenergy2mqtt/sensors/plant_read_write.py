@@ -6,6 +6,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusClientType
 
 from .base import AvailabilityMixin, DeviceClass, InputType, NumericSensor, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
 from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
@@ -427,7 +428,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
         return base
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         result = await super().publish(mqtt_client, modbus_client, republish=republish)
         if result and Config.home_assistant.enabled:
             match self.latest_raw_state:
@@ -446,7 +447,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             return True
         return result
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus_client=modbus_client) in (0, "0"):
             logging.error(
                 f"{self.__class__.__name__} Failed to write '{cast(list[str], self['options'])[raw_value] if isinstance(raw_value, int) else raw_value}' ({raw_value}): {self._availability_control_sensor.name} is not enabled"
@@ -505,7 +506,7 @@ class RemoteEMSLimit(NumericSensor):
                 cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': {self._availability_control_sensor.name} is not enabled")
             return False
@@ -533,7 +534,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
         attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging"
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging")
             return False
@@ -561,7 +562,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
         attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging"
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Discharging")
             return False
@@ -589,7 +590,7 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
         attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6):
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging/Discharging")
             return False

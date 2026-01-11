@@ -6,12 +6,12 @@ from time import sleep
 from typing import Tuple
 
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusClientType
 
 from .mqtt import MqttClient, MqttHandler
 
 
-def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
+def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClientType | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
     assert mqtt_client_id and not mqtt_client_id.isspace(), "mqtt_client_id must not be None or an empty string"
 
     logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for mqtt://{Config.mqtt.broker}:{Config.mqtt.port} over {Config.mqtt.transport}")
@@ -36,8 +36,8 @@ def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, loop: as
             return mqtt_client, mqtt_handler
         except Exception as e:
             if connect_attempts < 3:
-                logging.error(f"Error connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)} - Retrying in 30s")
-                sleep(30)
+                logging.error(f"Error connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)} - Retrying in {Config.mqtt.retry_delay}s")
+                sleep(Config.mqtt.retry_delay)
             else:
                 logging.critical(f"Failed to connect to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)}")
                 raise

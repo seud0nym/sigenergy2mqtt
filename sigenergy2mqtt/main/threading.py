@@ -6,7 +6,8 @@ from typing import Any, Awaitable
 
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
-from sigenergy2mqtt.modbus import ModbusClient, ModbusClientFactory
+from sigenergy2mqtt.modbus import ModbusClientFactory
+from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 from .thread_config import ThreadConfig
@@ -16,7 +17,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
     threading.current_thread().name = f"{config.description}Thread"
 
     device: Device
-    modbus_client: ModbusClient | None = None
+    modbus_client: ModbusClientType | None = None
     tasks: list[Awaitable[Any]] = []
 
     if config.host is None or Config.clean:

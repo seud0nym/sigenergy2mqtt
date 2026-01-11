@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.client import ModbusClient
 
 from .const import StateClass, UnitOfEnergy, UnitOfPower
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.modbus.types import ModbusDataType
 
 
 @dataclass
@@ -24,7 +30,7 @@ class SanityCheck:
     max_raw: float | int | None = None
     delta: bool = False
 
-    def init(self, unit: str | None, state_class: StateClass | None, data_type: ModbusClient.DATATYPE | None) -> None:
+    def init(self, unit: str | None, state_class: StateClass | None, data_type: ModbusDataType | None) -> None:
         if self.min_raw is not None or self.max_raw is not None:
             # Already initialized
             return

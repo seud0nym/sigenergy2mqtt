@@ -15,6 +15,7 @@ class MqttConfiguration:
     transport: Literal['tcp','websockets'] = "tcp"
 
     keepalive: int = 60
+    retry_delay: int = 30
 
     tls: bool = False
     tls_insecure: bool = False  # Allow insecure TLS connections (not recommended)

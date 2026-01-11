@@ -5,7 +5,7 @@ import paho.mqtt.client as mqtt
 import sigenergy2mqtt.metrics.metrics_sensors as sensors
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.sensors.base import Sensor
 
 
@@ -30,7 +30,7 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ProtocolVersion())
         self._add_read_sensor(sensors.ProtocolPublished())
 
-    async def publish_updates(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
+    async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         logging.info(f"{self.name} Service Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
         await super().publish_updates(modbus_client, mqtt_client, name, *sensors)

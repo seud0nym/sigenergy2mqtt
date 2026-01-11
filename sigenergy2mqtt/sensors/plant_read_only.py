@@ -5,6 +5,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 from .base import (
@@ -1446,7 +1447,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
         input_type: InputType = InputType.INPUT,
         device_address: int = 247,
         count: int = 4,
-        data_type: ModbusClient.DATATYPE = ModbusClient.DATATYPE.UINT64,
+        data_type: ModbusDataType = ModbusClient.DATATYPE.UINT64,
         unit: str = UnitOfEnergy.KILO_WATT_HOUR,
         device_class: DeviceClass = DeviceClass.ENERGY,
         state_class: StateClass = StateClass.TOTAL_INCREASING,
