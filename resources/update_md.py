@@ -192,7 +192,7 @@ async def sensor_index():
             sensor = mqtt_sensors[key]
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
-                protocol = 'N/A' if sensor.protocol_version == Protocol.N_A else sensor.protocol_version.value
+                protocol = "N/A" if sensor.protocol_version == Protocol.N_A else sensor.protocol_version.value
                 count += 1
                 if index_only:
                     f.write(f"<a href='#{sensor.unique_id}_set'>{sensor['name']}</a><br>\n")
@@ -326,42 +326,6 @@ async def sensor_index():
         logging.info(f"{TOPICS} successfully updated")
 
 
-def download_latest(path: str) -> None:
-    file = Path(Path(path).name)
-
-    if file.exists() and file.stat().st_mtime >= (datetime.now(tz=timezone.utc) - timedelta(days=1)).timestamp():
-        logging.info(f"{file} was updated less than a day ago.")
-        return
-
-    # 1. Find the latest commit that modified the file
-    commits_url = "https://api.github.com/repos/TypQxQ/Sigenergy-Local-Modbus/commits"
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    params = {"path": path, "per_page": 1}  # only need the latest commit
-    commits_response = requests.get(commits_url, headers=headers, params=params)
-    commits_response.raise_for_status()
-    latest_commit = commits_response.json()[0]
-    commit_sha = latest_commit["sha"]
-    commit_date = datetime.strptime(latest_commit["commit"]["committer"]["date"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-
-    logging.info(f"Latest commit for {path}: {commit_sha} ({commit_date})")
-
-    if file.exists() and file.stat().st_mtime >= commit_date.timestamp():
-        logging.info(f"{file} is already up to date.")
-        return
-
-    # 2. Download the file contents at that commit
-    contents_url = f"https://api.github.com/repos/TypQxQ/Sigenergy-Local-Modbus/contents/{path}"
-    params = {"ref": commit_sha}
-    file_response = requests.get(contents_url, headers={"Accept": "application/vnd.github.v3.raw"}, params=params)
-    file_response.raise_for_status()
-
-    # Save to local file
-    with file.open("wb") as f:
-        f.write(file_response.content)
-
-    logging.info(f"{file} downloaded from commit {commit_sha}")
-
-
 def invert_dict_by_field(original_dict, field):
     if not isinstance(original_dict, dict):
         raise TypeError("original_dict must be a dictionary")
@@ -484,7 +448,8 @@ async def compare_sensor_instances():
                 typqxq_unit = getattr(typqxq_def, "unit", None)
                 sensor_unit = sensor_instance.unit
                 if (
-                    typqxq_unit is not None
+                    address != 30012 # TypQxQ does not match Protocol doc
+                    and typqxq_unit is not None
                     and typqxq_unit != sensor_unit
                     and not ((typqxq_unit == "kW" and sensor_unit == "W") or (typqxq_unit == "kvar" and sensor_unit == "var") or (typqxq_unit in ("s", "min") and sensor_unit is None))
                 ):
@@ -503,6 +468,74 @@ async def compare_sensor_instances():
 
         logging.info(f"{SENSORS} successfully updated")
         logging.info("Comparison of sensor instances completed")
+
+
+def download_latest(path: str) -> None:
+    OWNER = "TypQxQ"
+    REPO = "Sigenergy-Local-Modbus"
+    FILE_PATH = "custom_components/sigen/modbusregisterdefinitions.py"
+    BASE = f"https://api.github.com/repos/{OWNER}/{REPO}"
+
+    file = Path(Path(path).name)
+
+    if file.exists() and file.stat().st_mtime >= (datetime.now(tz=timezone.utc) - timedelta(days=1)).timestamp():
+        logging.info(f"{file} was updated less than a day ago.")
+        return
+
+    def get_branches():
+        r = requests.get(f"{BASE}/branches")
+        r.raise_for_status()
+        return r.json()
+
+    def get_latest_commit_for_file(branch, path):
+        url = f"{BASE}/commits"
+        params = {"sha": branch, "path": path, "per_page": 1}
+        r = requests.get(url, params=params)
+        r.raise_for_status()
+        commits = r.json()
+        return commits[0] if commits else None
+
+    branches = get_branches()
+    latest = None
+
+    for b in branches:
+        branch_name = b["name"]
+        commit = get_latest_commit_for_file(branch_name, FILE_PATH)
+        if not commit:
+            continue
+
+        commit_date = commit["commit"]["committer"]["date"]
+
+        if latest is None or commit_date > latest["date"]:
+            latest = {
+                "branch": branch_name,
+                "sha": commit["sha"],
+                "date": commit_date,
+                "message": commit["commit"]["message"],
+                "url": commit["html_url"],
+            }
+
+    if latest is not None:
+        commit_date = datetime.strptime(latest["date"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        commit_sha = latest["sha"]
+
+        logging.info(f"Latest commit for {path}: {commit_sha} ({commit_date})")
+
+        if file.exists() and file.stat().st_mtime >= commit_date.timestamp():
+            logging.info(f"{file} is already up to date.")
+            return
+
+        # 2. Download the file contents at that commit
+        contents_url = f"https://api.github.com/repos/TypQxQ/Sigenergy-Local-Modbus/contents/{path}"
+        params = {"ref": commit_sha}
+        file_response = requests.get(contents_url, headers={"Accept": "application/vnd.github.v3.raw"}, params=params)
+        file_response.raise_for_status()
+
+        # Save to local file
+        with file.open("wb") as f:
+            f.write(file_response.content)
+
+        logging.info(f"{file} downloaded from commit {commit_sha}")
 
 
 if __name__ == "__main__":

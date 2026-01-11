@@ -5,7 +5,7 @@ import sys
 from typing import cast
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.devices.types import DeviceType
@@ -91,7 +91,7 @@ async def get_sensor_instances(
     pv_model.set_state("Sigen PV Max 5.0 TP")
     pv_serial.set_state("CMU876A65BP321")
     pv_firmware.set_state("V100R001C00SPC108B088F")
-    pv_pv_strings.set_state(16)
+    pv_pv_strings.set_state(36)
     pv_output_type.set_state(3)
     pv_inverter = Inverter(
         plant_index=plant_index,
@@ -126,7 +126,7 @@ async def get_sensor_instances(
         for c in superclass.__subclasses__():
             if len(c.__subclasses__()) == 0:
                 classes[c.__name__] = 0
-            else:
+            elif c.__name__ != "MetricsSensor":
                 find_concrete_classes(c)
 
     def add_sensor_instance(s):
