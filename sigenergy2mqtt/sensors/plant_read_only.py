@@ -6,7 +6,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.config import Config, Protocol
 from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 from .base import (
     Alarm1Sensor,
@@ -314,7 +314,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusClient.DATATYPE.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
-            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
+            unit=UnitOfApparentPower.KILOVOLT_AMPERE,
             device_class=None,
             state_class=None,
             icon="mdi:lightning-bolt",

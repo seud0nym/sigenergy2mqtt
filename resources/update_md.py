@@ -448,8 +448,7 @@ async def compare_sensor_instances():
                 typqxq_unit = getattr(typqxq_def, "unit", None)
                 sensor_unit = sensor_instance.unit
                 if (
-                    address != 30012 # TypQxQ does not match Protocol doc
-                    and typqxq_unit is not None
+                    typqxq_unit is not None
                     and typqxq_unit != sensor_unit
                     and not ((typqxq_unit == "kW" and sensor_unit == "W") or (typqxq_unit == "kvar" and sensor_unit == "var") or (typqxq_unit in ("s", "min") and sensor_unit is None))
                 ):

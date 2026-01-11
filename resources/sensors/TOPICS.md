@@ -1138,7 +1138,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>MaxApparentPower</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kVA</td></tr>
 <tr><td>Gain</td><td>1000</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_max_apparent_power</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_plant_max_apparent_power/state</td></tr>
