@@ -8,8 +8,8 @@ from sigenergy2mqtt.mqtt import mqtt_setup
 
 def test_mqtt_setup_retries_then_succeeds(monkeypatch):
     # Make sleep a no-op to avoid delays
-    import sigenergy2mqtt.mqtt.__init__ as mqtt_init
-    monkeypatch.setattr(mqtt_init, "sleep", lambda s: None)
+    # Ensure the `sleep` name used by `mqtt_setup` is replaced (covers different import forms)
+    monkeypatch.setitem(mqtt_setup.__globals__, "sleep", lambda s: None)
 
     # Prepare Config
     Config.mqtt.broker = "localhost"
@@ -52,8 +52,8 @@ def test_mqtt_setup_retries_then_succeeds(monkeypatch):
 
 
 def test_mqtt_setup_fails_after_retries(monkeypatch):
-    import sigenergy2mqtt.mqtt.__init__ as mqtt_init
-    monkeypatch.setattr(mqtt_init, "sleep", lambda s: None)
+    # Ensure the `sleep` name used by `mqtt_setup` is replaced (covers different import forms)
+    monkeypatch.setitem(mqtt_setup.__globals__, "sleep", lambda s: None)
 
     Config.mqtt.broker = "localhost"
     Config.mqtt.port = 1883
