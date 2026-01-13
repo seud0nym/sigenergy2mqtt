@@ -251,13 +251,18 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
 
     # region Methods
     def _apply_gain_and_precision(self, state: float | int | None, raw: bool = False) -> float | int | None:
-        if isinstance(state, (float, int)) and not raw:
+        if state is None:
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} Skipped applying gain={self.gain} and precision={self.precision} to {state=}")
+        elif isinstance(state, (float, int)) and not raw:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Applying gain={self.gain} and precision={self.precision} to {state=}")
             if self.gain is not None:
                 state /= self.gain
             if isinstance(state, float) and self.precision is not None:
                 state = round(state, self.precision)
+                if self.precision == 0:
+                    state = int(cast(float, state))
         return state
 
     def _get_applicable_overrides(self, identifier: str) -> dict | None:
@@ -795,7 +800,6 @@ class TimestampSensor(ReadOnlySensor):
         scan_interval: int,
         protocol_version: Protocol,
     ):
-
         super().__init__(
             name,
             object_id,
@@ -869,7 +873,9 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         if isinstance(self, SwitchSensor) and isinstance(raw_value, str):
             return "Off" if self["payload_off"] == raw_value else "On" if self["payload_on"] == raw_value else raw_value
         if isinstance(raw_value, (float, int)):
-            return round(raw_value / self.gain, self.precision)
+            state = self._apply_gain_and_precision(raw_value)
+            if state is not None:
+                return state
         return raw_value
 
     async def _write_registers(self, modbus_client: ModbusClientType, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
@@ -1276,7 +1282,6 @@ class SwitchSensor(ReadWriteSensor):
         scan_interval: int,
         protocol_version: Protocol,
     ):
-
         super().__init__(
             availability_control_sensor=availability_control_sensor,
             name=name,
@@ -1293,7 +1298,7 @@ class SwitchSensor(ReadWriteSensor):
             state_class=None,
             icon="mdi:toggle-switch",
             gain=None,
-            precision=None,
+            precision=0,
             protocol_version=protocol_version,
         )
         self["platform"] = "switch"
