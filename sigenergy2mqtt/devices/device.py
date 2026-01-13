@@ -421,7 +421,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                         async with lock.lock():
                             # Optimize Modbus read-ahead for due Modbus sensors with contiguous addresses
                             due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
-                            if multiple and len(due_modbus) > 1:
+                            if multiple and len(due_modbus) > 0:
                                 read_ahead_start = 0.0
                                 if debug_logging:
                                     read_ahead_start = time.time()
