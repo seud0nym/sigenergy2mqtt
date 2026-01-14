@@ -3,8 +3,7 @@ import logging
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor, StateClass
 from .const import UnitOfPower
@@ -17,7 +16,7 @@ class InverterBatteryChargingPower(DerivedSensor):
             name="Battery Charging Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
             state_class=battery_power.state_class,
@@ -48,7 +47,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
             name="Battery Discharging Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
             state_class=battery_power.state_class,
@@ -79,7 +78,7 @@ class PVStringPower(DerivedSensor):
             name="Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,

@@ -8,8 +8,7 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
 from sigenergy2mqtt.devices import DeviceRegistry
-from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
@@ -38,7 +37,7 @@ class BatteryChargingPower(DerivedSensor):
             name="Battery Charging Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_battery_charging_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_battery_charging_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
             state_class=battery_power.state_class,
@@ -69,7 +68,7 @@ class BatteryDischargingPower(DerivedSensor):
             name="Battery Discharging Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_battery_discharging_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_battery_discharging_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
             state_class=battery_power.state_class,
@@ -100,7 +99,7 @@ class GridSensorExportPower(DerivedSensor):
             name="Export Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_export_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_export_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=active_power.device_class,
             state_class=active_power.state_class,
@@ -131,7 +130,7 @@ class GridSensorImportPower(DerivedSensor):
             name="Import Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_import_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_import_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=active_power.device_class,
             state_class=active_power.state_class,
@@ -180,7 +179,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             name="Consumed Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_consumed_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -316,7 +315,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             name="Total PV Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_total_pv_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_pv_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -464,7 +463,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
             name="Lifetime Total PV Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
-            data_type=ModbusClient.DATATYPE.UINT32,
+            data_type=ModbusDataType.UINT32,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,

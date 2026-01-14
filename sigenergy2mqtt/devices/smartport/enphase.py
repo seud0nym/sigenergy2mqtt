@@ -21,7 +21,7 @@ import urllib3
 from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
 from sigenergy2mqtt.config.smart_port_config import ModuleConfig
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor, SubstituteMixin
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
@@ -40,7 +40,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
             icon="mdi:solar-power",
             gain=None,
             precision=2,
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             scan_interval=Config.devices[0].scan_interval.realtime,
         )
         self["enabled_by_default"] = True
@@ -188,7 +188,7 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
             name="Lifetime Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
-            data_type=ModbusClient.DATATYPE.UINT64,
+            data_type=ModbusDataType.UINT64,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -231,7 +231,7 @@ class EnphaseCurrent(DerivedSensor):
             name="Current",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_current",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -260,7 +260,7 @@ class EnphaseFrequency(DerivedSensor):
             name="Frequency",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -289,7 +289,7 @@ class EnphasePowerFactor(DerivedSensor):
             name="Power Factor",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=None,
             device_class=DeviceClass.POWER_FACTOR,
             state_class=None,
@@ -318,7 +318,7 @@ class EnphaseReactivePower(DerivedSensor):
             name="Reactive Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
-            data_type=ModbusClient.DATATYPE.UINT32,
+            data_type=ModbusDataType.UINT32,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -347,7 +347,7 @@ class EnphaseVoltage(DerivedSensor):
             name="Voltage",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,

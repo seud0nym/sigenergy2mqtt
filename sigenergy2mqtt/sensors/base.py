@@ -47,16 +47,6 @@ class _ModbusLockFactoryProxy:
 ModbusLockFactory = _ModbusLockFactoryProxy
 
 
-# Lazy accessor for ModbusClient to avoid importing modbus at module import
-def _ModbusClient():
-    from sigenergy2mqtt.modbus import ModbusClient
-
-    return ModbusClient
-
-
-ModbusClient = _ModbusClient()
-
-
 # Expose a module-level `Metrics` binding. Prefer a `Metrics` attribute if the
 # metrics package provides one, otherwise expose the module object. This lets
 # tests either patch `sigenergy2mqtt.sensors.base.Metrics` or replace the
@@ -514,7 +504,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         if state is None:
             return None
         elif isinstance(state, str):
-            if isinstance(self, TypedSensorMixin) and self.data_type == ModbusClient.DATATYPE.STRING:
+            if isinstance(self, TypedSensorMixin) and self.data_type == ModbusDataType.STRING:
                 return state
             elif "options" in self and state in cast(list[str], self["options"]):
                 return cast(list[str], self["options"]).index(state)
@@ -535,7 +525,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
 class TypedSensorMixin:
     def __init__(self, **kwargs):
         assert "data_type" in kwargs, "Missing required parameter: data_type"
-        if kwargs["data_type"] not in ModbusClient.DATATYPE:
+        if kwargs["data_type"] not in ModbusDataType:
             raise AssertionError(f"Invalid data type {kwargs['data_type']}")
         self.data_type = kwargs["data_type"]
         super().__init__(**kwargs)
@@ -808,7 +798,7 @@ class TimestampSensor(ReadOnlySensor):
             device_address,
             address,
             2,  # count
-            ModbusClient.DATATYPE.UINT32,
+            ModbusDataType.UINT32,
             scan_interval,
             unit=None,
             device_class=DeviceClass.TIMESTAMP,
@@ -883,9 +873,9 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         device_id = self.device_address
         no_response_expected = False
         logging.info(f"{self.__class__.__name__} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} {device_id=})")
-        if self.data_type == ModbusClient.DATATYPE.UINT16 and isinstance(raw_value, int) and 0 <= raw_value <= 255:  # Unsigned 8-bit ints do not need encoding
+        if self.data_type == ModbusDataType.UINT16 and isinstance(raw_value, int) and 0 <= raw_value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [raw_value]
-        elif self.data_type == ModbusClient.DATATYPE.STRING:
+        elif self.data_type == ModbusDataType.STRING:
             registers = modbus_client.convert_to_registers(str(raw_value), self.data_type)
         else:
             registers = modbus_client.convert_to_registers(int(raw_value), self.data_type)
@@ -971,7 +961,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1225,7 +1215,7 @@ class SelectSensor(ReadWriteSensor):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             scan_interval=scan_interval,
             unit=None,
             device_class=DeviceClass.ENUM,
@@ -1291,7 +1281,7 @@ class SwitchSensor(ReadWriteSensor):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             scan_interval=scan_interval,
             unit=None,
             device_class=None,
@@ -1342,7 +1332,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             device_address,
             address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
             unit=None,
             device_class=None,
@@ -1588,7 +1578,7 @@ class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverte
         self.device_address = device_addresses.pop()
         self.count = count
         self.input_type = InputType.INPUT
-        self.data_type = ModbusClient.DATATYPE.UINT16
+        self.data_type = ModbusDataType.UINT16
 
     @property
     def protocol_version(self) -> Protocol:
@@ -1654,7 +1644,7 @@ class RunningStateSensor(ReadOnlySensor):
             device_address,
             address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
@@ -1769,7 +1759,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         precision=2,
     ):
         if data_type is None:
-            data_type = ModbusClient.DATATYPE.UINT32
+            data_type = ModbusDataType.UINT32
         super().__init__(
             name,
             unique_id,

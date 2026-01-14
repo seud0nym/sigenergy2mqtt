@@ -1,6 +1,5 @@
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-
 from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
 
 from .base import DeviceClass, InputType, NumericSensor, StateClass, WriteOnlySensor
@@ -52,7 +51,7 @@ class ACChargerOutputCurrent(NumericSensor):
             device_address=device_address,
             address=42001,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
+            data_type=ModbusDataType.UINT32,
             scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,

@@ -5,10 +5,9 @@ __all__ = ["get_pvoutput_services"]
 import logging
 from typing import TYPE_CHECKING
 
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-
 from sigenergy2mqtt.config import Config, ConsumptionSource, OutputField, StatusField, VoltageSource
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import Sensor, TypedSensorMixin
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
@@ -123,7 +122,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     total_pv_power = sensor
             for k, v in donation.items():
                 if (sensor.__class__.__name__.lower() == v.lower() or sensor["object_id"] == v or f"sensor.{sensor['object_id']}" == v) and isinstance(sensor, TypedSensorMixin):
-                    if sensor.data_type == ModbusClient.DATATYPE.STRING:
+                    if sensor.data_type == ModbusDataType.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
                         key = StatusField(k)
