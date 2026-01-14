@@ -5,9 +5,9 @@ from typing import Tuple, cast
 
 from pymodbus import pymodbus_apply_logging_config
 
+from sigenergy2mqtt.common.types import DeviceType, HybridInverter
 from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol, ProtocolApplies
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import DeviceType, HybridInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.types import ModbusClientType

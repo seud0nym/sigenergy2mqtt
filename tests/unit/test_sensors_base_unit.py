@@ -6,10 +6,10 @@ import pytest
 
 # Prevent circular imports by stubbing heavy submodules used at import-time
 sys.modules.setdefault("sigenergy2mqtt.devices", types.ModuleType("sigenergy2mqtt.devices"))
-types_mod = types.ModuleType("sigenergy2mqtt.devices.types")
+types_mod = types.ModuleType("sigenergy2mqtt.common.types")
 types_mod.HybridInverter = type("HybridInverter", (), {})
 types_mod.PVInverter = type("PVInverter", (), {})
-sys.modules.setdefault("sigenergy2mqtt.devices.types", types_mod)
+sys.modules.setdefault("sigenergy2mqtt.common.types", types_mod)
 
 from sigenergy2mqtt.config.config import Config  # noqa: E402
 from sigenergy2mqtt.config.protocol import Protocol  # noqa: E402

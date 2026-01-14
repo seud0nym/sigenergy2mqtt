@@ -1,8 +1,8 @@
 from datetime import timedelta, timezone
 from typing import Any, cast
 
+from sigenergy2mqtt.common.types import HybridInverter, PVInverter
 from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 

@@ -18,7 +18,7 @@ class MockPVInverter:
 
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.devices.types"] = mock_types
+sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
 # Mock Metrics
 mock_metrics = MagicMock()

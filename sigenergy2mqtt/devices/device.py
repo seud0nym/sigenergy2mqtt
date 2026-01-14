@@ -10,6 +10,7 @@ from typing import Any, Awaitable, cast
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.common.types import DeviceType
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
@@ -27,8 +28,6 @@ from sigenergy2mqtt.sensors.base import (
     WriteOnlySensor,
 )
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
-
-from .types import DeviceType
 
 
 class SensorGroup(list[ReadableSensorMixin]):

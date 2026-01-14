@@ -3,8 +3,8 @@ import math
 import time
 from typing import Any, Dict, cast
 
+from sigenergy2mqtt.common.types import HybridInverter, PVInverter
 from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.const import (
     PERCENTAGE,

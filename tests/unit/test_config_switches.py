@@ -18,7 +18,7 @@ class MockPVInverter:
 
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.devices.types"] = mock_types
+sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
 from sigenergy2mqtt.config import Config, Protocol  # noqa: E402
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration  # noqa: E402
