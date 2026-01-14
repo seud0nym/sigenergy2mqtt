@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     EnergyDailyAccumulationSensor,

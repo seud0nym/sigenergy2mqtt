@@ -3,21 +3,9 @@ import math
 import time
 from typing import Any, Dict, cast
 
-from sigenergy2mqtt.common.types import HybridInverter, PVInverter
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.const import (
-    PERCENTAGE,
-    UnitOfApparentPower,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfFrequency,
-    UnitOfPower,
-    UnitOfReactivePower,
-    UnitOfTemperature,
-    UnitOfTime,
-)
 
 from .base import (
     Alarm1Sensor,
@@ -35,6 +23,7 @@ from .base import (
     StateClass,
     TimestampSensor,
 )
+from .const import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower, UnitOfTemperature, UnitOfTime
 
 # 5.3 Hybrid inverter running information address definition (read-only register)
 

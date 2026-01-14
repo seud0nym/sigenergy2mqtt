@@ -6,7 +6,8 @@ from typing import Any, cast
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry, SensorGroup
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor

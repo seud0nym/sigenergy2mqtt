@@ -4,8 +4,8 @@ import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
-from sigenergy2mqtt.common.types import DeviceType, HybridInverter
-from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol
+from sigenergy2mqtt.config import Config
 
 from .device import ModbusDevice
 from .grid_code import GridCode

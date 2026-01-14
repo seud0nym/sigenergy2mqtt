@@ -6,7 +6,8 @@ from typing import Any, cast
 import pytest
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin
 

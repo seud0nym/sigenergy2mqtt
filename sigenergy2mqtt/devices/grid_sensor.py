@@ -1,6 +1,7 @@
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
-from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.config import Config
 
 from .device import DeviceType, ModbusDevice
 

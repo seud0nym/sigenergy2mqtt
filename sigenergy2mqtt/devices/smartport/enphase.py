@@ -18,7 +18,8 @@ import requests
 # disable warnings of self signed certificate https
 import urllib3
 
-from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.config.smart_port_config import ModuleConfig
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusDataType

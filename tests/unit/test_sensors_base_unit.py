@@ -11,8 +11,8 @@ types_mod.HybridInverter = type("HybridInverter", (), {})
 types_mod.PVInverter = type("PVInverter", (), {})
 sys.modules.setdefault("sigenergy2mqtt.common.types", types_mod)
 
-from sigenergy2mqtt.config.config import Config  # noqa: E402
-from sigenergy2mqtt.config.protocol import Protocol  # noqa: E402
+from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.config import Config  # noqa: E402
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 

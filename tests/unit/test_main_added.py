@@ -3,7 +3,7 @@ from typing import Any, cast
 
 import pytest
 
-from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config.config import Config
 from sigenergy2mqtt.main import main as sm_main
 from sigenergy2mqtt.modbus.client import ModbusClient

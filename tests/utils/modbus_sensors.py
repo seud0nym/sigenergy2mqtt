@@ -6,8 +6,8 @@ from typing import cast
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from sigenergy2mqtt.common.types import DeviceType
-from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
+from sigenergy2mqtt.common import DeviceType, Protocol, ProtocolApplies
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, Sensor

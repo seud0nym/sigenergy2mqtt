@@ -117,7 +117,7 @@ class TestConfigConfiguration:
     def test_configure_consumption(self):
         """Test configuring consumption method."""
         Config._configure({"consumption": "total"})
-        from sigenergy2mqtt.config.const import ConsumptionMethod
+        from sigenergy2mqtt.common import ConsumptionMethod
 
         assert Config.consumption == ConsumptionMethod.TOTAL
 

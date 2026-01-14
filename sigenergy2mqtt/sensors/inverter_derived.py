@@ -2,7 +2,8 @@ import logging
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor, StateClass

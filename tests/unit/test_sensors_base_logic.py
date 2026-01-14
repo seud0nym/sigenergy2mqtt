@@ -21,7 +21,7 @@ sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
 
-from sigenergy2mqtt.config import Protocol  # noqa: E402
+from sigenergy2mqtt.common import Protocol  # noqa: E402
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyLifetimeAccumulationSensor, ReadOnlySensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 

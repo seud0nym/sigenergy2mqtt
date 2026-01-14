@@ -3,7 +3,8 @@ import logging
 import paho.mqtt.client as mqtt
 
 import sigenergy2mqtt.metrics.metrics_sensors as sensors
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.sensors.base import Sensor

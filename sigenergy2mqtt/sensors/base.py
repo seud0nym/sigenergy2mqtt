@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Any, Final, Iterable, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common.types import HybridInverter, PVInverter
-from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter, RegisterAccess
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 if TYPE_CHECKING:

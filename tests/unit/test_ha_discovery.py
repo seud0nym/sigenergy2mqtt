@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmSensor, EnergyDailyAccumulationSensor, ReadableSensorMixin, Sensor, TimestampSensor

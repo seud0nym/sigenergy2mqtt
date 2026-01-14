@@ -3,7 +3,7 @@ from typing import Any, cast
 
 import pytest
 
-from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.smartport.enphase import (
     EnphaseCurrent,
     EnphaseFrequency,

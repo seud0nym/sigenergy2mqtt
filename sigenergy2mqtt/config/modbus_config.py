@@ -2,16 +2,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, cast
 
+from sigenergy2mqtt.common import RegisterAccess
+
 from .smart_port_config import SmartPortConfig
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port
-
-
-@dataclass
-class RegisterAccess:
-    no_remote_ems: bool = False
-    read_only: bool = True
-    read_write: bool = True
-    write_only: bool = True
 
 
 @dataclass

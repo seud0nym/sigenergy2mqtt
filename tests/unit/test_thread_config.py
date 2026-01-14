@@ -1,6 +1,6 @@
 import asyncio
 
-from sigenergy2mqtt.config.protocol import Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.main.thread_config import ThreadConfig, ThreadConfigFactory
 

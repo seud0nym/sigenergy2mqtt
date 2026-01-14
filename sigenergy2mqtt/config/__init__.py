@@ -1,4 +1,4 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "Protocol", "ProtocolApplies", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource", "ConsumptionMethod"]
+__all__ = ["Config", "SmartPortConfig", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource"]
 
 
 import argparse
@@ -10,10 +10,8 @@ from pathlib import Path
 
 from . import const
 from .config import Config
-from .const import ConsumptionMethod
-from .modbus_config import RegisterAccess, SmartPortConfig
-from .protocol import Protocol, ProtocolApplies
 from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
+from .smart_port_config import SmartPortConfig
 
 if os.isatty(sys.stdout.fileno()):
     logging.basicConfig(format="{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}", level=logging.INFO, style="{")

@@ -10,8 +10,8 @@ from typing import Any, Awaitable, cast
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common.types import DeviceType
-from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
+from sigenergy2mqtt.common import DeviceType, Protocol, RegisterAccess
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler

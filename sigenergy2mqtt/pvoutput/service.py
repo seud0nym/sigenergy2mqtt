@@ -10,7 +10,8 @@ import paho.mqtt.client as mqtt
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device
 
 

@@ -3,8 +3,8 @@ from typing import cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common.types import HybridInverter, PVInverter
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 from .base import AvailabilityMixin, DeviceClass, InputType, NumericSensor, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor

@@ -30,7 +30,7 @@ sys.modules["sigenergy2mqtt.metrics.metrics"] = mock_metrics
 mock_registry = MagicMock()
 sys.modules["sigenergy2mqtt.devices"] = mock_registry
 
-from sigenergy2mqtt.config import ConsumptionMethod, Protocol  # noqa: E402
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol  # noqa: E402
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_derived import BatteryChargingPower, BatteryDischargingPower, GridSensorExportPower, PlantConsumedPower, TotalPVPower  # noqa: E402
 from sigenergy2mqtt.sensors.plant_read_only import BatteryPower, GridSensorActivePower, GridStatus, PlantPVPower  # noqa: E402

@@ -6,7 +6,8 @@ from typing import Any, Dict, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler

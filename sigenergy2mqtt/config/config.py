@@ -7,9 +7,10 @@ from typing import Any, cast
 
 from ruamel.yaml import YAML
 
+from sigenergy2mqtt.common import ConsumptionMethod
+
 from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
-from .const import ConsumptionMethod
 from .home_assistant_config import HomeAssistantConfiguration
 from .modbus_config import DeviceConfig
 from .mqtt_config import MqttConfiguration
@@ -109,15 +110,15 @@ class Config:
                 try:
                     match key:
                         case const.SIGENERGY2MQTT_CONSUMPTION:
-                            overrides["consumption"] = const.ConsumptionMethod(
+                            overrides["consumption"] = ConsumptionMethod(
                                 cast(
                                     str,
                                     check_string(
                                         os.environ[key],
                                         key,
-                                        const.ConsumptionMethod.CALCULATED.value,
-                                        const.ConsumptionMethod.TOTAL.value,
-                                        const.ConsumptionMethod.GENERAL.value,
+                                        ConsumptionMethod.CALCULATED.value,
+                                        ConsumptionMethod.TOTAL.value,
+                                        ConsumptionMethod.GENERAL.value,
                                         allow_empty=False,
                                         allow_none=False,
                                     ),
@@ -348,15 +349,15 @@ class Config:
                     Config.home_assistant.configure(data[name], override)
                 case "consumption":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: consumption = {data[name]}")
-                    Config.consumption = const.ConsumptionMethod(
+                    Config.consumption = ConsumptionMethod(
                         cast(
                             str,
                             check_string(
                                 data[name],
                                 name,
-                                const.ConsumptionMethod.CALCULATED.value,
-                                const.ConsumptionMethod.TOTAL.value,
-                                const.ConsumptionMethod.GENERAL.value,
+                                ConsumptionMethod.CALCULATED.value,
+                                ConsumptionMethod.TOTAL.value,
+                                ConsumptionMethod.GENERAL.value,
                                 allow_empty=False,
                                 allow_none=False,
                             ),
