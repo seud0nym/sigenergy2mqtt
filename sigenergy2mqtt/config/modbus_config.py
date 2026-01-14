@@ -42,6 +42,10 @@ class DeviceConfig:
 
     smartport = SmartPortConfig()
 
+    def validate(self) -> None:
+        if not self.host:
+            raise ValueError("modbus.host must be provided")
+
     def configure(self, config: Any, override: bool = False, auto_discovered: bool = False) -> None:
         if isinstance(config, dict):
             for field, value in config.items():

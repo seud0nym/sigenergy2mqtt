@@ -39,6 +39,18 @@ class Config:
     _source: str | None = None
 
     @classmethod
+    def validate(cls) -> None:
+        if len(cls.devices) == 0:
+            raise ValueError("At least one Modbus device must be configured")
+
+        for device in cls.devices:
+            device.validate()
+
+        cls.mqtt.validate()
+        cls.home_assistant.validate()
+        cls.pvoutput.validate()
+
+    @classmethod
     def get_modbus_log_level(cls) -> int:
         return min([device.log_level for device in cls.devices])
 
@@ -323,14 +335,6 @@ class Config:
                         cls.devices.append(new_device)
             else:
                 raise ValueError("Auto-discovery results must be a list of modbus device configurations")
-
-        if len(cls.devices) == 0 or (len(cls.devices) == 1 and not getattr(cls.devices[0], "host", None)):
-            # Use Local auto_discovery to avoid "may be uninitialized"
-            _auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
-            if _auto_discovery in ("once", "force"):
-                raise ValueError("No Modbus devices configured and auto-discovery did not find any Sigenergy devices; please check that the devices are powered on and reachable over the network")
-            else:
-                raise ValueError("No Modbus devices configured")
 
     @staticmethod
     def version() -> str:

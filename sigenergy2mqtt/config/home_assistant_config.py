@@ -21,6 +21,15 @@ class HomeAssistantConfiguration:
 
     enabled_by_default: bool = False
 
+    def validate(self) -> None:
+        if self.enabled:
+            if not self.discovery_prefix:
+                raise ValueError("home-assistant.discovery-prefix must be provided")
+            if not self.entity_id_prefix:
+                raise ValueError("home-assistant.entity-id-prefix must be provided")
+            if not self.unique_id_prefix:
+                raise ValueError("home-assistant.unique-id-prefix must be provided")
+
     def configure(self, config: Any, override: bool = False) -> None:
         if isinstance(config, dict):
             if "enabled" in config:

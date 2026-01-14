@@ -6,13 +6,14 @@ from typing import Literal, cast
 
 from .validation import check_bool, check_host, check_int, check_log_level, check_port, check_string
 
-TRANSPORTS = Literal['tcp','websockets']
+TRANSPORTS = Literal["tcp", "websockets"]
+
 
 @dataclass
 class MqttConfiguration:
     broker: str = "127.0.0.1"
     port: int = 1883
-    transport: Literal['tcp','websockets'] = "tcp"
+    transport: Literal["tcp", "websockets"] = "tcp"
 
     keepalive: int = 60
     retry_delay: int = 30
@@ -27,6 +28,15 @@ class MqttConfiguration:
     client_id_prefix: str = f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}"
 
     log_level: int = logging.WARNING
+
+    def validate(self) -> None:
+        if not self.broker:
+            raise ValueError("mqtt.broker must be provided")
+        if not self.anonymous:
+            if not self.username:
+                raise ValueError("mqtt.username must be provided when anonymous is false")
+            if not self.password:
+                raise ValueError("mqtt.password must be provided when anonymous is false")
 
     def configure(self, config: dict, override: bool = False) -> None:
         if isinstance(config, dict):

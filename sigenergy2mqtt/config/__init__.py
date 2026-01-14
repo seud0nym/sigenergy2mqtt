@@ -622,7 +622,7 @@ _parser.add_argument(
     dest="show_version",
     help="Shows the version number, then exits immediately.",
 )
-_args = _parser.parse_args()
+_args, _unknown = _parser.parse_known_args()
 # endregion
 
 if _args.show_version:
@@ -696,7 +696,9 @@ try:
         Config.load("/data/sigenergy2mqtt.yaml")
     else:
         Config.reload()
+
     if _args.validate_only:
+        Config.validate()
         _logger.info("Configuration is valid - exiting")
         sys.exit(0)
 except Exception as e:

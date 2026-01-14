@@ -26,6 +26,7 @@ serial_numbers = []
 
 
 async def async_main() -> None:
+    Config.validate()
     pymodbus_apply_logging_config(Config.get_modbus_log_level())
     configure_logging()
 

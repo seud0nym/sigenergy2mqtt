@@ -169,6 +169,17 @@ class PVOutputConfiguration:
                 raise ValueError(f"Invalid tariff type: {type}")
         return (export_type, import_type)
 
+    def validate(self) -> None:
+        if self.enabled:
+            if not self.api_key:
+                raise ValueError("pvoutput.api-key must be provided when enabled")
+            if not self.system_id:
+                raise ValueError("pvoutput.system-id must be provided when enabled")
+            for tariff in self.tariffs:
+                for period in tariff.periods:
+                    if period.end <= period.start:
+                        raise ValueError(f"pvoutput time period end time ({period.end}) must be after start time ({period.start})")
+
     def configure(self, config: Any, override: bool = False) -> None:
         if isinstance(config, dict):
             if "enabled" in config:
