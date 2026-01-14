@@ -34,7 +34,12 @@ class DummySensor(ReadableSensorMixin):
 
 
 @pytest.fixture
-def mock_config():
+def mock_config(tmp_path):
+    # Ensure logging level doesn't trigger discovery dump unless we want it
+    import logging
+
+    old_level = logging.getLogger().level
+
     # Patch the root Config object AND where it's imported in base and device
     with patch("sigenergy2mqtt.config.Config") as mock_conf, patch("sigenergy2mqtt.devices.device.Config", mock_conf), patch("sigenergy2mqtt.sensors.base.Config", mock_conf):
         mock_conf.home_assistant.enabled = True
@@ -45,7 +50,7 @@ def mock_config():
         mock_conf.home_assistant.device_name_prefix = ""
         mock_conf.home_assistant.enabled_by_default = True
         mock_conf.origin = {"name": "sigenergy2mqtt", "sw": "1.0", "url": "http://test"}
-        mock_conf.persistent_state_path = "."
+        mock_conf.persistent_state_path = tmp_path
         mock_conf.clean = False
 
         mock_device = MagicMock()
@@ -58,6 +63,7 @@ def mock_config():
 
         yield mock_conf
 
+    logging.getLogger().setLevel(old_level)
     DeviceRegistry._devices.clear()
     Sensor._used_unique_ids.clear()
     Sensor._used_object_ids.clear()

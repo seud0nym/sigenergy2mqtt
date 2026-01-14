@@ -59,6 +59,7 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
 
     monkeypatch.setattr(Config, "persistent_state_path", tmp_path)
     # enable debug logging so discovery file is written
+    old_level = logging.getLogger().level
     logging.getLogger().setLevel(logging.DEBUG)
     ha = HomeAssistantConfiguration()
     ha.discovery_prefix = "homeassistant"
@@ -87,3 +88,4 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
 
     # Clean up
     fpath.unlink()
+    logging.getLogger().setLevel(old_level)
