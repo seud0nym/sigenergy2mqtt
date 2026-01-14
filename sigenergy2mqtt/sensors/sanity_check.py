@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusDataType
