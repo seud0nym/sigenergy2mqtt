@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Any, Final, Iterable, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
+from sigenergy2mqtt.common.types import HybridInverter, PVInverter
 from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 if TYPE_CHECKING:
@@ -1707,6 +1707,19 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         )
         self._source = source
         self._reset_topic = f"sigenergy2mqtt/{self['object_id']}/reset"
+        self._current_total_lock = asyncio.Lock()
+        self._current_total: float = 0.0
+        self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
+        if self._persistent_state_file.is_file():
+            with self._persistent_state_file.open("r") as f:
+                try:
+                    content = f.read()
+                    if content is not None and content != "None":
+                        self._current_total = float(content)
+                        logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
+                except ValueError as error:
+                    logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
+        self.set_latest_state(self._current_total)
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         updater: dict[str, Any] = {
@@ -1740,57 +1753,12 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             attributes["reset_unit"] = self.unit
         return attributes
 
-
-class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
-    _current_total_lock = asyncio.Lock()
-
-    def __init__(
-        self,
-        name: str,
-        unique_id: str,
-        object_id: str,
-        source: Sensor,
-        data_type=None,
-        unit=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=DeviceClass.ENERGY,
-        state_class=StateClass.TOTAL_INCREASING,
-        icon="mdi:home-lightning-bolt",
-        gain=1000,
-        precision=2,
-    ):
-        if data_type is None:
-            data_type = ModbusDataType.UINT32
-        super().__init__(
-            name,
-            unique_id,
-            object_id,
-            source,
-            data_type=data_type,
-            unit=unit,
-            device_class=device_class,
-            state_class=state_class,
-            icon=icon,
-            gain=gain,
-            precision=precision,
-        )
-        self._current_total: float = 0.0
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
-        if self._persistent_state_file.is_file():
-            with self._persistent_state_file.open("r") as f:
-                try:
-                    content = f.read()
-                    if content is not None and content != "None":
-                        self._current_total = float(content)
-                        logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
-                except ValueError as error:
-                    logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
-        self.set_latest_state(self._current_total)
-
     async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             new_total = (value if value is float else float(value)) * self.gain
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({new_total=})")
-            await self._persist_current_total(new_total)
+            if new_total != self._current_total:
+                await self._persist_current_total(new_total)
             self._current_total = new_total
             self.set_latest_state(self._current_total)
             self.force_publish = True
@@ -1824,7 +1792,11 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
             logging.debug(f"{self.__class__.__name__} negative increase IGNORED ({self._current_total=} {previous=} {current=} {increase=} {new_total=} {sensor.latest_interval=:.2f}s)")
             return False
         else:
-            asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_running_loop())
+            if new_total != self._current_total:
+                try:
+                    asyncio.get_running_loop().create_task(self._persist_current_total(new_total))
+                except RuntimeError:
+                    asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_event_loop())
             self._current_total = new_total
             self.set_latest_state(self._current_total)
             return True
@@ -1833,6 +1805,38 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         async with self._current_total_lock:
             with self._persistent_state_file.open("w") as f:
                 f.write(str(new_total))
+
+
+class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
+    def __init__(
+        self,
+        name: str,
+        unique_id: str,
+        object_id: str,
+        source: Sensor,
+        data_type=None,
+        unit=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=DeviceClass.ENERGY,
+        state_class=StateClass.TOTAL_INCREASING,
+        icon="mdi:home-lightning-bolt",
+        gain=1000,
+        precision=2,
+    ):
+        if data_type is None:
+            data_type = ModbusDataType.UINT32
+        super().__init__(
+            name,
+            unique_id,
+            object_id,
+            source,
+            data_type=data_type,
+            unit=unit,
+            device_class=device_class,
+            state_class=state_class,
+            icon=icon,
+            gain=gain,
+            precision=precision,
+        )
 
 
 class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
@@ -1915,7 +1919,10 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             was = time.localtime(values[-2][0])
             now = time.localtime(values[-1][0])
             if was.tm_year != now.tm_year or was.tm_mon != now.tm_mon or was.tm_mday != now.tm_mday:
-                asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_running_loop())
+                try:
+                    asyncio.get_running_loop().create_task(self._update_state_at_midnight(now_state))
+                except RuntimeError:
+                    asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_event_loop())
                 self._states.clear()
                 self._state_at_midnight = now_state
 
