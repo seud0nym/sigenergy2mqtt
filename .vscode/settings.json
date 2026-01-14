@@ -85,6 +85,9 @@
     "python.analysis.extraPaths": [
         "./sigenergy2mqtt"
     ],
+    "python.analysis.exclude": [
+        "tests"
+    ],
     "python.analysis.ignore": [
         "tests"
     ],

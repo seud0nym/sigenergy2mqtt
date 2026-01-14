@@ -93,6 +93,12 @@ _parser.add_argument(
     help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.",
 )
 _parser.add_argument(
+    "--no-ems-mode-check",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK,
+    help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.",
+)
+_parser.add_argument(
     "--no-metrics",
     action="store_true",
     dest=const.SIGENERGY2MQTT_NO_METRICS,
@@ -652,16 +658,17 @@ for arg in vars(_args):
         or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
         or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
         or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
+        or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS_INSECURE
+        or arg == const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK
+        or arg == const.SIGENERGY2MQTT_NO_METRICS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
-        or arg == const.SIGENERGY2MQTT_NO_METRICS
-        or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
     ) and getattr(_args, arg) not in ["true", "True", True, 1]:  # argparse will store false by default, so ignore unless actually specified (and therefore true)
         continue
     elif arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and getattr(_args, arg) in ["true", "True", True, 1]:

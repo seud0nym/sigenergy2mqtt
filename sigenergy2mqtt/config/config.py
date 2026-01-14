@@ -21,9 +21,11 @@ class Config:
     origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
     clean: bool = False
-    log_level: int = logging.WARNING
-
     consumption: ConsumptionMethod = ConsumptionMethod.CALCULATED
+    ems_mode_check: bool = True
+    log_level: int = logging.WARNING
+    metrics_enabled: bool = True
+    sanity_check_default_kw: float = 500.0
 
     devices: list[DeviceConfig] = []
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
@@ -31,9 +33,6 @@ class Config:
     pvoutput: PVOutputConfiguration = PVOutputConfiguration()
     sensor_debug_logging: bool = False
     sensor_overrides: dict[str, dict[str, bool | int | float | str | list[int] | ModuleType | None]] = {}
-
-    sanity_check_default_kw: float = 500.0
-    metrics_enabled: bool = True
 
     persistent_state_path: Path = Path(".")
 
@@ -119,6 +118,8 @@ class Config:
                             overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
+                        case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
+                            overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
                             overrides["no-metrics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
@@ -363,6 +364,9 @@ class Config:
                 case "sanity-check-default-kw":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
                     Config.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))
+                case "no-ems-mode-check":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-ems-mode-check = {data[name]}")
+                    Config.ems_mode_check = not check_bool(data[name], name)
                 case "no-metrics":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
                     Config.metrics_enabled = not check_bool(data[name], name)

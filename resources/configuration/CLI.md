@@ -5,8 +5,8 @@ usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
           [-d SIGENERGY2MQTT_DEBUG_SENSOR]
           [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
-          [--no-metrics] [--consumption {calculated,total,general}]
-          [--hass-enabled]
+          [--no-ems-mode-check] [--no-metrics]
+          [--consumption {calculated,total,general}] [--hass-enabled]
           [--hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]]
           [--hass-entity-id-prefix [SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX]]
           [--hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]]
@@ -90,6 +90,10 @@ options:
                         value of power sensors and the delta value of energy
                         sensors. The default value is 500 kW per second, and
                         readings outside the range are ignored.
+  --no-ems-mode-check   Turn off validation that disables ESS Max
+                        Charging/Discharging and PV Max Power limits when
+                        Remote EMS Control Mode is not Command
+                        Charging/Discharging.
   --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --consumption {calculated,total,general}
                         Set the method of calculating the Plant Consumed Power

@@ -33,6 +33,16 @@ consumption: calculated
 #                 to the delta value. Readings outside of the range are
 #                 ignored.    
 sanity-check-default-kw: 500.0
+# no-ems-mode-check
+#   added: 2026.1.13
+#   default: false
+#   description:  Turn off the validation that disables ESS Max Charging
+#                 Discharging Limits and PV Max Power Limits when Remote 
+#                 EMS Control Mode is not Command Charging/Discharging.
+#                 This setting does not comply with the Sigenergy Modbus
+#                 Protocol documentation, but may be useful for some
+#                 installations.
+no-ems-mode-check: false
 # no-metrics
 #   default: false
 #   description:  If true, sigenergy2mqtt will not publish any metrics to

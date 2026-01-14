@@ -422,7 +422,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if Config.home_assistant.enabled:
+        if Config.home_assistant.enabled and Config.ems_mode_check:
             self.is_charging_mode_topic = f"{base}/is_charging_mode"
             self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
@@ -430,7 +430,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         result = await super().publish(mqtt_client, modbus_client, republish=republish)
-        if result and Config.home_assistant.enabled:
+        if result and Config.home_assistant.enabled and Config.ems_mode_check:
             match self.latest_raw_state:
                 case 3 | 4:
                     mqtt_client.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
@@ -497,7 +497,7 @@ class RemoteEMSLimit(NumericSensor):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if Config.home_assistant.enabled:
+        if Config.home_assistant.enabled and Config.ems_mode_check:
             if self._charging and self._discharging:
                 cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._charging:
@@ -531,11 +531,11 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging"
+        attributes["comment"] = f"Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging' if Config.ems_mode_check else ''}"
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4):
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4) and Config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
@@ -559,11 +559,11 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging"
+        attributes["comment"] = f"Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Discharging' if Config.ems_mode_check else ''}"
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6):
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6) and Config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Discharging")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
@@ -587,11 +587,12 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
+        if Config.ems_mode_check:
+            attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6):
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6) and Config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging/Discharging")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
