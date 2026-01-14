@@ -84,3 +84,6 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
     assert fpath.exists()
     data = json.loads(fpath.read_text())
     assert "cmps" in data
+
+    # Clean up
+    fpath.unlink()
