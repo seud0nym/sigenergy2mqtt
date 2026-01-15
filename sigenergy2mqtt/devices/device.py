@@ -350,7 +350,6 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         # Setup for Modbus read-ahead optimization
         modbus_sensors = [s for s in sensors if isinstance(s, ModbusSensorMixin)]
-        multiple: bool = len(modbus_sensors) > 1
         first_address: int = -1
         last_address: int = -1
         count: int = -1
@@ -362,6 +361,8 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             last_address = max([s.address + s.count - 1 for s in modbus_sensors if s.publishable])
             count = last_address - first_address + 1
             device_address, input_type = next((s.device_address, s.input_type) for s in modbus_sensors if s.address == first_address)
+
+        multiple: bool = len(modbus_sensors) > 1 and 1 <= count <= MAX_MODBUS_REGISTERS_PER_REQUEST
 
         debug_logging: bool = False
         daily_sensors: list[ReadableSensorMixin] = []
@@ -382,8 +383,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                     await sensor.publish(mqtt_client, modbus_client, republish=True)
 
         if debug_logging:
-            logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} sensors={len(sensors)})")
-            logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced with per-sensor timing ({len(daily_sensors)} daily sensors)")
+            logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} sensors={len(sensors)} daily_sensors={len(daily_sensors)})")
 
         lock = ModbusLockFactory.get(modbus_client)
         last_day = time.localtime(now).tm_yday
@@ -421,33 +421,29 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                             # Optimize Modbus read-ahead for due Modbus sensors with contiguous addresses
                             due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
                             if multiple and len(due_modbus) > 0:
-                                if count > MAX_MODBUS_REGISTERS_PER_REQUEST:
+                                read_ahead_start = 0.0
+                                if debug_logging:
+                                    read_ahead_start = time.time()
+                                exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
+                                if exception_code == 0:
                                     if debug_logging:
-                                        logging.debug(f"{self.name} Sensor Scan Group [{name}] skipping read-ahead: {count=} > {MAX_MODBUS_REGISTERS_PER_REQUEST=}")
+                                        logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
                                 else:
-                                    read_ahead_start = 0.0
-                                    if debug_logging:
-                                        read_ahead_start = time.time()
-                                    exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
-                                    if exception_code == 0:
-                                        if debug_logging:
-                                            logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
-                                    else:
-                                        match exception_code:
-                                            case -1:
-                                                reason = "NO RESPONSE FROM DEVICE"
-                                            case 1:
-                                                reason = "0x01 ILLEGAL FUNCTION"
-                                            case 2:
-                                                reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
-                                                multiple = False
-                                            case 3:
-                                                reason = "0x03 ILLEGAL DATA VALUE"
-                                            case 4:
-                                                reason = "0x04 SLAVE DEVICE FAILURE"
-                                            case _:
-                                                reason = f"UNKNOWN PROBLEM ({exception_code=})"
-                                        logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
+                                    match exception_code:
+                                        case -1:
+                                            reason = "NO RESPONSE FROM DEVICE"
+                                        case 1:
+                                            reason = "0x01 ILLEGAL FUNCTION"
+                                        case 2:
+                                            reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
+                                            multiple = False
+                                        case 3:
+                                            reason = "0x03 ILLEGAL DATA VALUE"
+                                        case 4:
+                                            reason = "0x04 SLAVE DEVICE FAILURE"
+                                        case _:
+                                            reason = f"UNKNOWN PROBLEM ({exception_code=})"
+                                    logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
 
                     # Publish each due sensor and update its next publish time
                     for sensor in due_sensors:
