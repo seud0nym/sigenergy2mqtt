@@ -202,6 +202,63 @@ class TestCreateSensorScanGroups:
         assert group[1] == r2
         assert group[2] == s2
 
+    def test_respects_disable_chunking_true(self, mock_config):
+        """Verify that contiguous sensors are NOT grouped when disable_chunking is True."""
+        mock_config.modbus[0].disable_chunking = True
+        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+
+        s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
+        s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
+
+        dev._add_read_sensor(cast(Sensor, s1))
+        dev._add_read_sensor(cast(Sensor, s2))
+
+        groups = dev._create_sensor_scan_groups()
+        modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
+
+        # Should be split into 2 groups despite being contiguous
+        assert len(modbus_groups) == 2
+        assert len(modbus_groups[0]) == 1
+        assert len(modbus_groups[1]) == 1
+
+    def test_respects_disable_chunking_false(self, mock_config):
+        """Verify that contiguous sensors ARE grouped when disable_chunking is False."""
+        mock_config.modbus[0].disable_chunking = False
+        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+
+        s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
+        s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
+
+        dev._add_read_sensor(cast(Sensor, s1))
+        dev._add_read_sensor(cast(Sensor, s2))
+
+        groups = dev._create_sensor_scan_groups()
+        modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
+
+        # Should be in 1 group
+        assert len(modbus_groups) == 1
+        assert len(modbus_groups[0]) == 2
+
+    def test_named_groups_ignore_disable_chunking(self, mock_config):
+        """Verify that sensors in a named group REMAIN grouped even when disable_chunking is True."""
+        mock_config.modbus[0].disable_chunking = True
+        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+
+        s1 = DummyModbusSensor("s1", address=100)
+        s2 = DummyModbusSensor("s2", address=101)
+
+        # Add both to the same named group
+        dev._add_read_sensor(cast(Sensor, s1), group="MyGroup")
+        dev._add_read_sensor(cast(Sensor, s2), group="MyGroup")
+
+        groups = dev._create_sensor_scan_groups()
+
+        # "MyGroup" should exist and contain both sensors
+        assert "MyGroup" in groups
+        assert len(groups["MyGroup"]) == 2
+        assert s1 in groups["MyGroup"]
+        assert s2 in groups["MyGroup"]
+
 
 class TestPublishUpdates:
     """Tests for publish_updates per-sensor timing."""
