@@ -109,9 +109,13 @@ class MqttHandler:
                 until = time.time() + seconds
                 logging.debug(f"{prefix} waiting up to {seconds}s for {method.__name__} to be acknowledged (MID={info.mid} client_id={self.client_id})")
                 while not responded:
-                    await asyncio.sleep(0.5)
-                    if time.time() >= until:
-                        logging.warning(f"{prefix} no acknowledgement of {method.__name__} received?? (client_id={self.client_id})")
+                    try:
+                        await asyncio.sleep(0.5)
+                        if time.time() >= until:
+                            logging.warning(f"{prefix} no acknowledgement of {method.__name__} received?? (client_id={self.client_id})")
+                            break
+                    except asyncio.CancelledError:
+                        logging.debug(f"{prefix} sleep interrupted before acknowledgement of {method.__name__} received (client_id={self.client_id})")
                         break
                 return responded
         else:

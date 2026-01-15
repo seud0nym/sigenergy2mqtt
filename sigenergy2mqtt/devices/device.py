@@ -293,11 +293,15 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         if ha_state == "online":
             seconds = float(randint(0, 3) + (randint(0, 10) / 10))
             logging.info(f"{self.name} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
-            await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
-            await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
-            for sensor in self.sensors.values():
-                await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
-            return True
+            try:
+                await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
+                await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
+                for sensor in self.sensors.values():
+                    await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
+                return True
+            except asyncio.CancelledError:
+                logging.debug(f"{self.__class__.__name__} on_ha_state_change sleep interrupted")
+                return False
         else:
             return False
 
@@ -498,12 +502,16 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     async def republish_discovery(self, mqtt_client: mqtt.Client) -> None:
         wait = Config.home_assistant.republish_discovery_interval
         while self.online and Config.home_assistant.republish_discovery_interval > 0:
-            await asyncio.sleep(1)
-            wait -= 1
-            if wait <= 0:
-                logging.info(f"{self.name} re-publishing discovery")
-                self.publish_discovery(mqtt_client, clean=False)
-                wait = Config.home_assistant.republish_discovery_interval
+            try:
+                await asyncio.sleep(1)
+                wait -= 1
+                if wait <= 0:
+                    logging.info(f"{self.name} re-publishing discovery")
+                    self.publish_discovery(mqtt_client, clean=False)
+                    wait = Config.home_assistant.republish_discovery_interval
+            except asyncio.CancelledError:
+                logging.debug(f"{self.__class__.__name__} republish_discovery sleep interrupted")
+                break
 
     def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         groups = self._create_sensor_scan_groups()

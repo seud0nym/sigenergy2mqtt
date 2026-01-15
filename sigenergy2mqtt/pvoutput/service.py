@@ -160,10 +160,18 @@ class Service(Device):
                 self.logger.error(f"{self.__class__.__name__} {exc}")
             if response and response.status_code != 200 and hasattr(response, "headers") and "X-Rate-Limit-Remaining" in response.headers and int(response.headers["X-Rate-Limit-Remaining"]) < 10:
                 self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable]
-                await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]
+                try:
+                    await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]
+                except asyncio.CancelledError:
+                    logging.debug(f"{self.__class__.__name__} reset sleep interrupted")
+                    break
             else:
                 self.logger.info(f"{self.__class__.__name__} Retrying in 10 seconds")
-                await asyncio.sleep(10)
+                try:
+                    await asyncio.sleep(10)
+                except asyncio.CancelledError:
+                    logging.debug(f"{self.__class__.__name__} retry sleep interrupted")
+                    break
         else:
             self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after {attempts} attempts")
         return uploaded
