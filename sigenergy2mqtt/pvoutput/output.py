@@ -177,7 +177,7 @@ class PVOutputOutputService(Service):
                                 matches = False
                 if matches:
                     try:
-                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # pyright: ignore[reportPossiblyUnboundVariable]
+                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # pyrefly: ignore
                     except NameError:
                         self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result}")
                     break
@@ -185,7 +185,7 @@ class PVOutputOutputService(Service):
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
                 else:
                     try:
-                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # pyright: ignore[reportPossiblyUnboundVariable]
+                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # pyrefly: ignore
                     except NameError:
                         self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=}")
             except requests.exceptions.HTTPError as exc:
@@ -209,9 +209,8 @@ class PVOutputOutputService(Service):
                     now_struct: time.struct_time = time.localtime()
                     now: float = time.mktime(now_struct)
                     if now >= next:
-                        interval: int = self._interval if self._interval is not None else 1440
                         async with self.lock(timeout=5):
-                            payload = self._create_payload(now_struct, interval)
+                            payload = self._create_payload(now_struct, Service._interval)
                         tomorrow = await self._next_output_upload(minute)
                         last_update_of_day: bool = time.localtime(tomorrow).tm_yday != now_struct.tm_yday  # Bypass verification except on last upload of the day
                         await self._upload(payload, last_update_of_day)
