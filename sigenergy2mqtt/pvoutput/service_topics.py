@@ -36,9 +36,10 @@ class ServiceTopics(dict[str, Topic]):
         decimals: int = 0,
         negative: bool = False,
         donation: bool = False,
-        periods: list["TimePeriodServiceTopics"] = [],
+        periods: list["TimePeriodServiceTopics"] | None = None,
         persist: bool = False,
     ):
+        super().__init__()
         self._allow_negative = negative
         self._always_persist = persist
         self._bypass_updating_check = Calculation.PEAK in calc
@@ -49,11 +50,11 @@ class ServiceTopics(dict[str, Topic]):
         self._last_update_warning: float | None = None
         self._logger = logger
         self._name = value_key.name
-        self._persistent_state_file: Path
+        self._persistent_state_file: Path | None = None
         self.requires_donation = donation
         self._service = service
         self._value_key = value_key
-        self._time_periods = periods
+        self._time_periods = periods or []
 
     @property
     def calculation(self) -> Calculation:
@@ -307,28 +308,25 @@ class ServiceTopics(dict[str, Topic]):
                     state_was = self[topic].state
                     self[topic].state = state
                     self[topic].timestamp = time.localtime()
-                    if (self._always_persist and state_was != state) or (self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0:
+                    if self._persistent_state_file and ((self._always_persist and state_was != state) or (self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
                         with self._persistent_state_file.open("w") as f:
                             json.dump(self, f, default=Topic.json_encoder)
             elif Config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
-                seconds = time.mktime(time.localtime()) - time.mktime(
-                    cast(
-                        time.struct_time,
-                        self[topic].timestamp
-                        if self[topic].restore_timestamp is None or cast(time.struct_time, self[topic].timestamp) > cast(time.struct_time, self[topic].restore_timestamp)
-                        else self[topic].restore_timestamp,
-                    ),
-                )
-                if int(seconds) % 60 == 0:
-                    self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from topic {topic}: {state=} (<= Previous peak={self[topic].state})")
+                ts = self[topic].timestamp
+                if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore
+                    ts = self[topic].restore_timestamp
+
+                if ts is not None:
+                    seconds = time.mktime(time.localtime()) - time.mktime(cast(time.struct_time, ts))  # pyrefly: ignore
+                    if int(seconds) % 60 == 0:
+                        self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from topic {topic}: {state=} (<= Previous peak={self[topic].state})")
             if self._time_periods:
                 current_period = Config.pvoutput.current_time_period
                 other_periods_total = sum((child.aggregate(True, never_return_none=True)[0] or 0.0) for child in self._time_periods if child._value_key not in current_period) / self[topic].gain
                 this_period_state = max(state - other_periods_total, 0.0)
                 if Config.pvoutput.update_debug_logging:
-                    self._logger.debug(
-                        f"{self._service.__class__.__name__} Updating {self._name} children: {state=} {other_periods_total=} {this_period_state=} current_period={current_period[0].value if current_period[0] is not None else '-'}/{current_period[1].value} {topic=}"
-                    )
+                    cp_log = f"{current_period[0].value if len(current_period) > 0 and current_period[0] is not None else '-'}/{current_period[1].value if len(current_period) > 1 else '-'}"
+                    self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} children: {state=} {other_periods_total=} {this_period_state=} current_period={cp_log} {topic=}")
                 for child in self._time_periods:
                     if child._value_key in current_period:
                         await child.handle_update(modbus_client, mqtt_client, this_period_state, topic, handler)
