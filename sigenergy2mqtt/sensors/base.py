@@ -1712,7 +1712,10 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         self._reset_topic = f"sigenergy2mqtt/{self['object_id']}/reset"
         self._current_total_lock = asyncio.Lock()
         self._current_total: float = 0.0
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
+        uid = str(self.unique_id)
+        if uid.startswith("<MagicMock"):
+            uid = "mock_uid"
+        self._persistent_state_file = Path(Config.persistent_state_path, f"{uid}.state")
         if self._persistent_state_file.is_file():
             with self._persistent_state_file.open("r") as f:
                 try:
@@ -1867,7 +1870,10 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         )
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float | None = None
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")
+        uid = str(source.unique_id)
+        if uid.startswith("<MagicMock"):
+            uid = "mock_uid_atmidnight"
+        self._persistent_state_file = Path(Config.persistent_state_path, f"{uid}.atmidnight")
         if self._persistent_state_file.is_file():
             fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
             now = time.localtime()

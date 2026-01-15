@@ -45,13 +45,13 @@ sys.modules["sigenergy2mqtt.metrics.metrics"] = mock_metrics
 
 
 @pytest.fixture(autouse=True)
-def mock_config_all():
+def mock_config_all(tmp_path):
     with patch("sigenergy2mqtt.sensors.base.Config") as mock_config:
         mock_config.home_assistant.unique_id_prefix = "sigenergy"
         mock_config.home_assistant.entity_id_prefix = "sigenergy"
         mock_config.home_assistant.enabled = True
         mock_config.sensor_overrides = {}
-        mock_config.persistent_state_path = "."
+        mock_config.persistent_state_path = tmp_path
         mock_config.modbus = []
         yield mock_config
 

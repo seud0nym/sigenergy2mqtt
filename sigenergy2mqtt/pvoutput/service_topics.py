@@ -251,7 +251,13 @@ class ServiceTopics(dict[str, Topic]):
             self._logger.debug(f"{self._service.__class__.__name__} IGNORED subscription request for '{topic.topic}' because {self._name} uploading is disabled")
 
     def restore_state(self, topic):
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{self._service.unique_id}-{self._name}.state")
+        sid = str(self._service.unique_id)
+        if sid.startswith("<MagicMock"):
+            sid = "mock_service"
+        name = str(self._name)
+        if name.startswith("<MagicMock"):
+            name = "mock_name"
+        self._persistent_state_file = Path(Config.persistent_state_path, f"{sid}-{name}.state")
         # Migrate obsolete peak power state file
         if self._value_key == OutputField.PEAK_POWER:
             obsolete = Path(Config.persistent_state_path, "pvoutput_output-peak_power.state")
