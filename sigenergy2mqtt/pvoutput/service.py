@@ -69,9 +69,9 @@ class Service(Device):
         url = "https://pvoutput.org/service/r2/getsystem.jsp?donations=1"
         current_time = time.time()  # Current time in seconds since epoch
         async with self._lock:
-            if Service._interval is None or Service._interval_updated is None or (Service._interval_updated + 3600) < current_time:
+            if Service._interval_updated is None or (Service._interval_updated + 3600) < current_time:
                 self.logger.debug(
-                    f"{self.__class__.__name__} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None and Service._interval is not None else current_time}"
+                    f"{self.__class__.__name__} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None else current_time}"
                 )
                 if Config.pvoutput.testing:
                     Service._interval = 5
@@ -102,10 +102,8 @@ class Service(Device):
                             else:
                                 self.logger.warning(f"{self.__class__.__name__} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
                     except Exception as exc:
-                        if Service._interval is None:
-                            Service._interval = 5  # Default interval in minutes if not set
-                        if Service._donator is None:
-                            Service._donator = False  # Default donator status if not set
+                        Service._interval = 5  # Default interval in minutes if not set
+                        Service._donator = False  # Default donator status if not set
                         self.logger.warning(
                             f"{self.__class__.__name__} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
                         )
@@ -127,7 +125,7 @@ class Service(Device):
                     uploaded = True
                     self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
                     cid = CaseInsensitiveDict()
-                    cid["X-Rate-Limit-Remaining"] = 60
+                    cid["X-Rate-Limit-Remaining"] = "60"
                     response.status_code = 200
                     response.headers = cid
                     break
@@ -158,7 +156,13 @@ class Service(Device):
                 self.logger.error(f"{self.__class__.__name__} Attempt #{i} Timeout Error: {exc}")
             except Exception as exc:
                 self.logger.error(f"{self.__class__.__name__} {exc}")
-            if response and response.status_code != 200 and hasattr(response, "headers") and "X-Rate-Limit-Remaining" in response.headers and int(response.headers["X-Rate-Limit-Remaining"]) < 10:
+            if (
+                response.status_code is not None
+                and response.status_code != 200
+                and hasattr(response, "headers")
+                and "X-Rate-Limit-Remaining" in response.headers
+                and int(response.headers["X-Rate-Limit-Remaining"]) < 10
+            ):
                 self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable]
                 try:
                     await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]
