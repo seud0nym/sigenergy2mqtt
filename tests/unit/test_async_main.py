@@ -10,7 +10,7 @@ from sigenergy2mqtt.main import main as main_mod
 @pytest.mark.asyncio
 async def test_async_main_with_no_devices(monkeypatch):
     # Ensure no devices to probe so async_main skips modbus probing
-    monkeypatch.setattr(Config, "devices", [], raising=False)
+    monkeypatch.setattr(Config, "modbus", [], raising=False)
     monkeypatch.setattr(Config, "pvoutput", Config.pvoutput, raising=False)
     Config.pvoutput.enabled = False
     monkeypatch.setattr(main_mod, "ThreadConfigFactory", main_mod.ThreadConfigFactory, raising=False)
@@ -40,7 +40,7 @@ async def test_async_main_with_no_devices(monkeypatch):
 @pytest.mark.asyncio
 async def test_async_main_registers_signal_handlers_and_callable(monkeypatch):
     # Setup minimal config
-    monkeypatch.setattr(Config, "devices", [], raising=False)
+    monkeypatch.setattr(Config, "modbus", [], raising=False)
     monkeypatch.setattr(Config, "pvoutput", Config.pvoutput, raising=False)
     Config.pvoutput.enabled = False
     import logging as _logging
@@ -82,7 +82,7 @@ async def test_async_main_registers_signal_handlers_and_callable(monkeypatch):
 @pytest.mark.asyncio
 async def test_async_main_writes_persistent_version_on_upgrade(tmp_path, monkeypatch):
     # Setup config to enable home assistant and pvoutput write flow
-    monkeypatch.setattr(Config, "devices", [], raising=False)
+    monkeypatch.setattr(Config, "modbus", [], raising=False)
     monkeypatch.setattr(Config, "pvoutput", Config.pvoutput, raising=False)
     monkeypatch.setattr(Config, "persistent_state_path", tmp_path, raising=False)
     monkeypatch.setattr(Config, "home_assistant", Config.home_assistant, raising=False)

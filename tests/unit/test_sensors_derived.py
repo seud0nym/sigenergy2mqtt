@@ -46,7 +46,7 @@ def mock_config_all():
         mock_config.consumption = ConsumptionMethod.CALCULATED
         mock_dev = MagicMock()
         mock_dev.smartport.enabled = False
-        mock_config.devices = [mock_dev]
+        mock_config.modbus = [mock_dev]
         yield mock_config
 
 

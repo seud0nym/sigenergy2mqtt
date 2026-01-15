@@ -4,10 +4,10 @@ from datetime import time
 import pytest
 
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-from sigenergy2mqtt.config.modbus_config import DeviceConfig
+from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
 from sigenergy2mqtt.config.pvoutput_config import ConsumptionSource, OutputField, PVOutputConfiguration, TariffType, VoltageSource
-from sigenergy2mqtt.config.smart_port_config import ModuleConfig, SmartPortConfig, TopicConfig  # noqa: F401
+from sigenergy2mqtt.config.smart_port_config import ModuleConfig, SmartPortConfiguration, TopicConfig  # noqa: F401
 
 
 class TestHomeAssistantConfiguration:
@@ -183,13 +183,13 @@ class TestPVOutputConfiguration:
 
 class TestSmartPortConfiguration:
     def test_default_values(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         assert config.enabled is False
         assert isinstance(config.module, ModuleConfig)
         assert config.mqtt == []
 
     def test_configure_module(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         config.configure({"enabled": True, "module": {"name": "enphase", "host": "1.2.3.4", "port": 80, "username": "admin", "password": "password", "pv-power": "envoy/production/inverters"}})
         assert config.enabled is True
         assert config.module.name == "enphase"
@@ -200,7 +200,7 @@ class TestSmartPortConfiguration:
         assert config.module.pv_power == "envoy/production/inverters"
 
     def test_configure_mqtt_topics(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         # This test will likely expose the bug where it only returns the first topic
         config.configure({"enabled": True, "module": {"name": "enphase"}, "mqtt": [{"topic": "topic/1", "gain": 1}, {"topic": "topic/2", "gain": 10}]})
         assert len(config.mqtt) == 2
@@ -208,21 +208,21 @@ class TestSmartPortConfiguration:
         assert config.mqtt[1].topic == "topic/2"
 
     def test_configure_invalid_enabled_combination(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         with pytest.raises(ValueError, match="no module name or MQTT topics configured"):
             config.configure({"enabled": True})
 
 
 class TestDeviceConfig:
     def test_default_values(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         assert config.host == ""
         assert config.port == 502
         assert config.retries == 3
         assert config.timeout == 1.0
 
     def test_configure_basic_fields(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure({"host": "192.168.1.50", "port": 503, "retries": 5, "timeout": 2.0, "disable-chunking": True, "log-level": "INFO"})
         assert config.host == "192.168.1.50"
         assert config.port == 503
@@ -232,7 +232,7 @@ class TestDeviceConfig:
         assert config.log_level == logging.INFO
 
     def test_configure_registers_and_intervals(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure(
             {"no-remote-ems": True, "read-only": False, "read-write": False, "write-only": False, "scan-interval-low": 1200, "scan-interval-medium": 120, "scan-interval-high": 20, "scan-interval-realtime": 2}
         )
@@ -246,14 +246,14 @@ class TestDeviceConfig:
         assert config.scan_interval.realtime == 2
 
     def test_configure_device_lists(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure({"inverters": [1, 2, 3], "ac-chargers": [10], "dc-chargers": [20, 21]})
         assert config.inverters == [1, 2, 3]
         assert config.ac_chargers == [10]
         assert config.dc_chargers == [20, 21]
 
     def test_configure_default_inverter(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure({"host": "localhost"})
         # Should default to [1] if empty
         assert config.inverters == [1]

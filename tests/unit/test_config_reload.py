@@ -1,4 +1,3 @@
-
 import pytest
 from ruamel.yaml import YAML
 
@@ -20,15 +19,15 @@ def test_reload_applies_yaml(tmp_path, monkeypatch):
     fn = write_yaml(tmp_path, data)
 
     # Directly configure from the parsed data to exercise _configure
-    Config.devices = []
-    with open(fn, 'r') as f:
-        parsed = YAML(typ='safe').load(f)
+    Config.modbus = []
+    with open(fn, "r") as f:
+        parsed = YAML(typ="safe").load(f)
     Config._configure(parsed)
 
     assert Config.log_level == getattr(__import__("logging"), "DEBUG")
     # Ensure modbus device was configured (check at least port)
-    assert len(Config.devices) >= 1
-    assert Config.devices[0].port == 1502
+    assert len(Config.modbus) >= 1
+    assert Config.modbus[0].port == 1502
 
 
 def test_reload_env_overrides(monkeypatch):
@@ -37,14 +36,14 @@ def test_reload_env_overrides(monkeypatch):
     monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_PORT, "1503")
 
     # Reset devices and clear any source so reload uses env overrides
-    Config.devices = []
+    Config.modbus = []
     Config._source = None
 
     # Reload should apply overrides and create a modbus device
     Config.reload()
-    assert len(Config.devices) >= 1
-    assert Config.devices[0].host == "8.8.8.8"
-    assert Config.devices[0].port == 1503
+    assert len(Config.modbus) >= 1
+    assert Config.modbus[0].host == "8.8.8.8"
+    assert Config.modbus[0].port == 1503
 
 
 def test_reload_invalid_yaml(tmp_path):

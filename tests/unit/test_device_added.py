@@ -32,12 +32,12 @@ def test_sensor_group_scan_interval_empty_and_non_empty():
 @pytest.mark.asyncio
 async def test_device_online_future_cancel(monkeypatch):
     conf = cast(Any, Config)
-    orig_devices = conf.devices
+    orig_devices = conf.modbus
 
     class D:
         registers = {}
 
-    conf.devices = [D()]
+    conf.modbus = [D()]
 
     # Isolate DeviceRegistry
     orig_registry = DeviceRegistry._devices.copy()
@@ -56,17 +56,17 @@ async def test_device_online_future_cancel(monkeypatch):
 
     # restore
     DeviceRegistry._devices = orig_registry
-    conf.devices = orig_devices
+    conf.modbus = orig_devices
 
 
 def test_device_rediscover_setter_and_type_check():
     conf = cast(Any, Config)
-    orig_devices = conf.devices
+    orig_devices = conf.modbus
 
     class D:
         registers = {}
 
-    conf.devices = [D()]
+    conf.modbus = [D()]
 
     orig_registry = DeviceRegistry._devices.copy()
     DeviceRegistry._devices = {}
@@ -80,17 +80,17 @@ def test_device_rediscover_setter_and_type_check():
         cast(Any, dev).rediscover = "yes"
 
     DeviceRegistry._devices = orig_registry
-    conf.devices = orig_devices
+    conf.modbus = orig_devices
 
 
 def test_add_child_device_adds_when_publishable():
     conf = cast(Any, Config)
-    orig_devices = conf.devices
+    orig_devices = conf.modbus
 
     class D:
         registers = {}
 
-    conf.devices = [D()]
+    conf.modbus = [D()]
     orig_registry = DeviceRegistry._devices.copy()
     DeviceRegistry._devices = {}
 
@@ -109,4 +109,4 @@ def test_add_child_device_adds_when_publishable():
 
     # cleanup
     DeviceRegistry._devices = orig_registry
-    conf.devices = orig_devices
+    conf.modbus = orig_devices

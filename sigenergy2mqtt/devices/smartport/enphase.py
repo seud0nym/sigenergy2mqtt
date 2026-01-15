@@ -42,7 +42,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
             gain=None,
             precision=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.devices[0].scan_interval.realtime,
+            scan_interval=Config.modbus[0].scan_interval.realtime,
         )
         self["enabled_by_default"] = True
 
@@ -430,7 +430,7 @@ if __name__ == "__main__":
     Config.sensor_debug_logging = True
 
     async def test():
-        smartport = SmartPort(0, Config.devices[0].smartport.module)
+        smartport = SmartPort(0, Config.modbus[0].smartport.module)
         print(smartport)
         pv_power_unique_id = f"{Config.home_assistant.unique_id_prefix}_0_enphase_{smartport['serial_number']}_active_power"
         sensor = smartport.get_sensor(pv_power_unique_id)

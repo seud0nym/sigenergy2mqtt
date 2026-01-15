@@ -63,7 +63,7 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.GeneralPCSAlarm(plant_index, ro.GeneralAlarm1(plant_index), ro.GeneralAlarm2(plant_index)))
         self._add_read_sensor(ro.GeneralAlarm3(plant_index))
         self._add_read_sensor(ro.GeneralAlarm4(plant_index))
-        if len(Config.devices[plant_index].dc_chargers) > 0:
+        if len(Config.modbus[plant_index].dc_chargers) > 0:
             self._add_read_sensor(ro.GeneralAlarm5(plant_index))
         self._add_read_sensor(ro.PlantActivePower(plant_index), "Plant Power")
         self._add_read_sensor(ro.PlantReactivePower(plant_index), "Plant Power")
@@ -158,8 +158,8 @@ class PowerPlant(ModbusDevice):
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
         self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
         smartport = None
-        if Config.devices[plant_index].smartport.enabled:
-            smartport_config = Config.devices[plant_index].smartport
+        if Config.modbus[plant_index].smartport.enabled:
+            smartport_config = Config.modbus[plant_index].smartport
             if smartport_config.module.name:
                 module_config = smartport_config.module
                 module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{module_config.name}")

@@ -45,14 +45,14 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
 def mock_config():
     """Setup minimal Config for Device tests."""
     conf = cast(Any, Config)
-    original_devices = conf.devices if hasattr(conf, "devices") else []
+    original_devices = conf.modbus if hasattr(conf, "devices") else []
     original_ha = conf.home_assistant if hasattr(conf, "home_assistant") else None
 
     class D:
         registers = {}
         disable_chunking = False
 
-    conf.devices = [D()]
+    conf.modbus = [D()]
     conf.home_assistant = types.SimpleNamespace(
         device_name_prefix="",
         unique_id_prefix="sigen",
@@ -65,7 +65,7 @@ def mock_config():
 
     yield conf
 
-    conf.devices = original_devices
+    conf.modbus = original_devices
     if original_ha:
         conf.home_assistant = original_ha
     DeviceRegistry._devices.clear()

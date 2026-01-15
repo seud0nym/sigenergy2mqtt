@@ -52,9 +52,9 @@ def test_threadconfig_properties_and_methods(monkeypatch):
 
     class FakeSensor:
         def apply_sensor_overrides(self, registers):
-            called['ok'] = registers
+            called["ok"] = registers
 
     dev.all_sensors = {"s1": FakeSensor()}
     dev.registers = {"r": 1}
     tc.reload_config()
-    assert called.get('ok') == dev.registers
+    assert called.get("ok") == dev.registers

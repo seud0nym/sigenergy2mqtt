@@ -23,7 +23,7 @@ class TestMetricsService:
         original_discovery_prefix = Config.home_assistant.discovery_prefix
         original_unique_id_prefix = Config.home_assistant.unique_id_prefix
         original_device_name_prefix = Config.home_assistant.device_name_prefix
-        original_devices = list(Config.devices)
+        original_devices = list(Config.modbus)
         original_started = Metrics._started
 
         # Set test config
@@ -31,7 +31,7 @@ class TestMetricsService:
         Config.home_assistant.discovery_prefix = "homeassistant"
         Config.home_assistant.unique_id_prefix = "test_prefix"
         Config.home_assistant.device_name_prefix = ""
-        Config.devices = []
+        Config.modbus = []
         Metrics._started = 0.0
 
         yield
@@ -41,7 +41,7 @@ class TestMetricsService:
         Config.home_assistant.discovery_prefix = original_discovery_prefix
         Config.home_assistant.unique_id_prefix = original_unique_id_prefix
         Config.home_assistant.device_name_prefix = original_device_name_prefix
-        Config.devices = original_devices
+        Config.modbus = original_devices
         Metrics._started = original_started
 
     def test_init(self):

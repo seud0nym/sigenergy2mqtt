@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest  # noqa: F401
 
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.config.modbus_config import DeviceConfig  # noqa: F401
+from sigenergy2mqtt.config.modbus_config import ModbusConfiguration  # noqa: F401
 
 
 class TestConfigStaticMethods:
@@ -12,10 +12,10 @@ class TestConfigStaticMethods:
 
     def test_get_modbus_log_level_single_device(self):
         """Test get_modbus_log_level with one device."""
-        with patch.object(Config, "devices", []):
+        with patch.object(Config, "modbus", []):
             device = MagicMock()
             device.log_level = logging.DEBUG
-            Config.devices.append(device)
+            Config.modbus.append(device)
 
             level = Config.get_modbus_log_level()
 
@@ -23,7 +23,7 @@ class TestConfigStaticMethods:
 
     def test_get_modbus_log_level_multiple_devices(self):
         """Test get_modbus_log_level returns minimum level."""
-        with patch.object(Config, "devices", []):
+        with patch.object(Config, "modbus", []):
             device1 = MagicMock()
             device1.log_level = logging.INFO
             device2 = MagicMock()
@@ -31,7 +31,7 @@ class TestConfigStaticMethods:
             device3 = MagicMock()
             device3.log_level = logging.WARNING
 
-            Config.devices = [device1, device2, device3]
+            Config.modbus = [device1, device2, device3]
 
             level = Config.get_modbus_log_level()
 
@@ -45,7 +45,7 @@ class TestConfigStaticMethods:
         device2 = MagicMock()
         device2.log_level = logging.ERROR
 
-        Config.devices = [device1, device2]
+        Config.modbus = [device1, device2]
 
         Config.set_modbus_log_level(logging.INFO)
 
@@ -183,7 +183,7 @@ class TestConfigReload:
 
     def test_devices_list_exists(self):
         """Test devices list exists and is a list."""
-        assert isinstance(Config.devices, list)
+        assert isinstance(Config.modbus, list)
 
     def test_sensor_overrides_dict_exists(self):
         """Test sensor overrides dict exists."""

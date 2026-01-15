@@ -15,8 +15,9 @@ def test_configure_logging_adjusts_levels(tmp_path, monkeypatch):
     monkeypatch.setattr(Config.mqtt, "log_level", logging.DEBUG, raising=False)
     monkeypatch.setattr(Config, "pvoutput", Config.pvoutput, raising=False)
     monkeypatch.setattr(Config.pvoutput, "log_level", logging.ERROR, raising=False)
-    # Avoid dependency on Config.devices during logging configuration
+    # Avoid dependency on Config.modbus during logging configuration
     import logging as _logging
+
     monkeypatch.setattr(Config, "get_modbus_log_level", classmethod(lambda cls: _logging.INFO), raising=False)
 
     # Ensure root is not at desired level to exercise the change path
@@ -127,7 +128,7 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
     # Ensure DeviceType.create returns a HybridInverter instance
     monkeypatch.setattr(main_mod.DeviceType, "create", lambda mdl: main_mod.HybridInverter())
 
-    # Avoid constructing real sensor classes which access Config.devices; provide dummy sensor classes
+    # Avoid constructing real sensor classes which access Config.modbus; provide dummy sensor classes
     class DummySensorFactory:
         def __init__(self, *args, **kwargs):
             pass
@@ -136,7 +137,7 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
         monkeypatch.setattr(main_mod, sym, DummySensorFactory)
 
     # Provide a fake get_state that returns values in sequence regardless of sensor class
-    call_index = {'i': 0}
+    call_index = {"i": 0}
 
     async def fake_get_state_sequence(sensor, modbus_client, device, raw=False, default_value=None):
         seq = [
@@ -147,8 +148,8 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
             (sensor, 0),
             (sensor, (None, 0)),
         ]
-        i = call_index['i']
-        call_index['i'] += 1
+        i = call_index["i"]
+        call_index["i"] += 1
         return seq[i]
 
     monkeypatch.setattr(main_mod, "get_state", fake_get_state_sequence)

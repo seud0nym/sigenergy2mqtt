@@ -32,7 +32,7 @@ def setup_configs():
 
             mock_device = MagicMock()
             mock_device.scan_interval.realtime = 5
-            m.devices = [mock_device]
+            m.modbus = [mock_device]
 
         yield
 

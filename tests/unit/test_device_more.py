@@ -53,7 +53,7 @@ class DummyDerived(DerivedSensor):
 def setup_module(module):
     # Minimal Config scaffolding used by Device
     conf = cast(Any, Config)
-    conf.devices = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
     conf.home_assistant = types.SimpleNamespace(
         device_name_prefix="",
         unique_id_prefix="sigen",

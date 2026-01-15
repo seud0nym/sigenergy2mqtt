@@ -52,7 +52,7 @@ def mock_config_all():
         mock_config.home_assistant.enabled = True
         mock_config.sensor_overrides = {}
         mock_config.persistent_state_path = "."
-        mock_config.devices = []
+        mock_config.modbus = []
         yield mock_config
 
 

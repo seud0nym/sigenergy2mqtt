@@ -38,7 +38,7 @@ class FakeModbus:
 
 def setup_module(module):
     conf = cast(Any, Config)
-    conf.devices = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
     defaults = dict(
         device_name_prefix="",
         unique_id_prefix="sigen",
@@ -85,7 +85,10 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
     def apply_sensor_overrides(self, registers):
         return None
 
-    def configure_mqtt_topics(self, device_id: str, ) -> str:
+    def configure_mqtt_topics(
+        self,
+        device_id: str,
+    ) -> str:
         return ""
 
     async def publish(self, mqtt_client, modbus_client=None, republish=False):

@@ -26,13 +26,13 @@ async def get_sensor_instances(
 ) -> dict[str, Sensor]:
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
-    Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
-    Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
+    Config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
+    Config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 
-    Config.devices[plant_index].smartport.enabled = True
-    Config.devices[plant_index].smartport.module.name = "enphase"
-    Config.devices[plant_index].smartport.module.pv_power = "EnphasePVPower"
-    Config.devices[plant_index].smartport.module.testing = True
+    Config.modbus[plant_index].smartport.enabled = True
+    Config.modbus[plant_index].smartport.module.name = "enphase"
+    Config.modbus[plant_index].smartport.module.pv_power = "EnphasePVPower"
+    Config.modbus[plant_index].smartport.module.testing = True
 
     Config.home_assistant.enabled = hass
 

@@ -57,9 +57,9 @@ def test_enphase_derived_setters(cls, key):
 
 
 def test_enphase_pvpower_get_attributes_minimal_init(tmp_path, monkeypatch):
-    # Ensure Config.devices[0].scan_interval.realtime available for ReadableSensorMixin
+    # Ensure Config.modbus[0].scan_interval.realtime available for ReadableSensorMixin
     conf = cast(Any, Config)
-    orig_devices = conf.devices
+    orig_devices = conf.modbus
 
     class SI:
         realtime = 1
@@ -67,10 +67,10 @@ def test_enphase_pvpower_get_attributes_minimal_init(tmp_path, monkeypatch):
     class D:
         scan_interval = SI()
 
-    conf.devices = [D()]
+    conf.modbus = [D()]
 
     pv = EnphasePVPower(0, "SN", "host", "user", "pass")
     attrs = pv.get_attributes()
     assert attrs["source"] == "Enphase Envoy API"
 
-    conf.devices = orig_devices
+    conf.modbus = orig_devices

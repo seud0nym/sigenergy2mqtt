@@ -12,7 +12,7 @@ from sigenergy2mqtt.common import ConsumptionMethod
 from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
 from .home_assistant_config import HomeAssistantConfiguration
-from .modbus_config import DeviceConfig
+from .modbus_config import ModbusConfiguration
 from .mqtt_config import MqttConfiguration
 from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSource
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port, check_string
@@ -28,7 +28,7 @@ class Config:
     metrics_enabled: bool = True
     sanity_check_default_kw: float = 500.0
 
-    devices: list[DeviceConfig] = []
+    modbus: list[ModbusConfiguration] = []
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
     mqtt: MqttConfiguration = MqttConfiguration()
     pvoutput: PVOutputConfiguration = PVOutputConfiguration()
@@ -41,10 +41,10 @@ class Config:
 
     @classmethod
     def validate(cls) -> None:
-        if len(cls.devices) == 0:
+        if len(cls.modbus) == 0:
             raise ValueError("At least one Modbus device must be configured")
 
-        for device in cls.devices:
+        for device in cls.modbus:
             device.validate()
 
         cls.mqtt.validate()
@@ -53,11 +53,11 @@ class Config:
 
     @classmethod
     def get_modbus_log_level(cls) -> int:
-        return min([device.log_level for device in cls.devices])
+        return min([device.log_level for device in cls.modbus])
 
     @classmethod
     def set_modbus_log_level(cls, level: int) -> None:
-        for device in cls.devices:
+        for device in cls.modbus:
             device.log_level = level
 
     @classmethod
@@ -318,7 +318,7 @@ class Config:
             if isinstance(auto_discovered, list):
                 for device in auto_discovered:
                     updated = False
-                    for defined in cls.devices:
+                    for defined in cls.modbus:
                         if (defined.host == device.get("host") or defined.host == "") and defined.port == device.get("port"):
                             if defined.host == "":
                                 defined.host = cast(str, device.get("host"))
@@ -331,9 +331,9 @@ class Config:
                             break
                     if not updated:
                         logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
-                        new_device = DeviceConfig()
+                        new_device = ModbusConfiguration()
                         new_device.configure(device, override=True, auto_discovered=True)
-                        cls.devices.append(new_device)
+                        cls.modbus.append(new_device)
             else:
                 raise ValueError("Auto-discovery results must be a list of modbus device configurations")
 
@@ -382,11 +382,11 @@ class Config:
                         index = 0
                         for config in data[name]:
                             if isinstance(config, dict):
-                                if len(Config.devices) <= index:
-                                    device = DeviceConfig()
-                                    Config.devices.append(device)
+                                if len(Config.modbus) <= index:
+                                    device = ModbusConfiguration()
+                                    Config.modbus.append(device)
                                 else:
-                                    device = Config.devices[index]
+                                    device = Config.modbus[index]
                                 device.configure(config, override)
                             index += 1
                     else:

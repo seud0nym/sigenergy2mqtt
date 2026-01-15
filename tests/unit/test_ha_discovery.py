@@ -56,7 +56,7 @@ def mock_config(tmp_path):
         mock_device = MagicMock()
         mock_device.registers = None
         mock_device.scan_interval.realtime = 5
-        mock_conf.devices = [mock_device]
+        mock_conf.modbus = [mock_device]
 
         mock_conf.sensor_overrides = {}
         mock_conf.sensor_debug_logging = False

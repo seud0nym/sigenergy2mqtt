@@ -48,7 +48,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
         self.plant_index = plant_index
         self.protocol_version = protocol_version
-        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(Config.devices) else Config.devices[plant_index].registers
+        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(Config.modbus) else Config.modbus[plant_index].registers
 
         self.children: list[Device] = []
 
@@ -215,7 +215,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             key=lambda s: (s.device_address, s.address),
         ):
             if (  # Conditions for creating a new sensor scan group
-                Config.devices[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
+                Config.modbus[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
                 or group_name is None  # First sensor
                 or device_address != sensor.device_address  # Device address changed
                 or sensor.address > next_address  # Non-contiguous addresses

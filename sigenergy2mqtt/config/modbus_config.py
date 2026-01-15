@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from sigenergy2mqtt.common import RegisterAccess
 
-from .smart_port_config import SmartPortConfig
+from .smart_port_config import SmartPortConfiguration
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port
 
 
@@ -17,7 +17,7 @@ class ScanInterval:
 
 
 @dataclass
-class DeviceConfig:
+class ModbusConfiguration:
     host: str = ""
     port: int = 502
 
@@ -34,7 +34,7 @@ class DeviceConfig:
     registers = RegisterAccess()
     scan_interval = ScanInterval()
 
-    smartport = SmartPortConfig()
+    smartport = SmartPortConfiguration()
 
     def validate(self) -> None:
         if not self.host:

@@ -352,7 +352,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        if Config.devices[self.plant_index].smartport.enabled:
+        if Config.modbus[self.plant_index].smartport.enabled:
             attributes["source"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
         else:
             attributes["source"] = "PV Power + Third-Party PV Power"
@@ -375,8 +375,8 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
-        if Config.devices[self.plant_index].smartport.enabled:
-            for topic in Config.devices[self.plant_index].smartport.mqtt:
+        if Config.modbus[self.plant_index].smartport.enabled:
+            for topic in Config.modbus[self.plant_index].smartport.mqtt:
                 if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
                     self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     topics.add(topic.topic)

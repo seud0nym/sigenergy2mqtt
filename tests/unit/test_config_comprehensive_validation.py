@@ -5,7 +5,7 @@ import pytest
 
 from sigenergy2mqtt.config.config import Config
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-from sigenergy2mqtt.config.modbus_config import DeviceConfig
+from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
 from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration, Tariff, TariffType, TimePeriod
 
@@ -31,7 +31,7 @@ class TestConfigComprehensiveValidation:
         mqtt.validate()  # Should pass
 
     def test_device_validation(self):
-        dev = DeviceConfig(host="")
+        dev = ModbusConfiguration(host="")
         with pytest.raises(ValueError, match="modbus.host must be provided"):
             dev.validate()
 
@@ -79,11 +79,11 @@ class TestConfigComprehensiveValidation:
 
     def test_config_global_validation(self):
         # Reset Config for testing
-        Config.devices = []
+        Config.modbus = []
         with pytest.raises(ValueError, match="At least one Modbus device must be configured"):
             Config.validate()
 
-        Config.devices = [DeviceConfig(host="localhost")]
+        Config.modbus = [ModbusConfiguration(host="localhost")]
         Config.mqtt = MqttConfiguration(broker="localhost", anonymous=True)
         Config.home_assistant = HomeAssistantConfiguration(enabled=False)
         Config.pvoutput = PVOutputConfiguration(enabled=False)

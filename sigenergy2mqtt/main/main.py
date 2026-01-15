@@ -31,8 +31,8 @@ async def async_main() -> None:
     configure_logging()
 
     protocol_version: Protocol | None = None
-    for plant_index in range(len(Config.devices)):
-        device = Config.devices[plant_index]
+    for plant_index in range(len(Config.modbus)):
+        device = Config.modbus[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
             config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
             modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)

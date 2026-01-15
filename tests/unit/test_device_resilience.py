@@ -71,8 +71,8 @@ def mock_config():
         mock_conf.home_assistant.unique_id_prefix = "sigen"
         mock_conf.home_assistant.entity_id_prefix = "sigen"
         mock_conf.home_assistant.enabled = False
-        mock_conf.devices = [MagicMock()]
-        mock_conf.devices[0].disable_chunking = False
+        mock_conf.modbus = [MagicMock()]
+        mock_conf.modbus[0].disable_chunking = False
         yield mock_conf
     DeviceRegistry._devices.clear()
     Sensor._used_unique_ids.clear()

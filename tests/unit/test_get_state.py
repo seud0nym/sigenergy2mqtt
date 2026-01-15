@@ -49,7 +49,7 @@ def mock_config_global():
         mock.home_assistant.enabled_by_default = False
         mock.sensor_debug_logging = False
         mock.persistent_state_path = "/tmp"
-        mock.devices = []
+        mock.modbus = []
         mock.sensor_overrides = {}
         # Also patch in base module where it might have been imported already
         with patch("sigenergy2mqtt.sensors.base.Config", mock):
