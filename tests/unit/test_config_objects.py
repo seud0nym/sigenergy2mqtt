@@ -59,6 +59,19 @@ class TestHomeAssistantConfiguration:
         with pytest.raises(ValueError, match="must contain options and their values"):
             config.configure("not a dict")
 
+    def test_configure_false_values(self):
+        config = HomeAssistantConfiguration()
+        # Set to True first
+        config.configure({"enabled": True, "discovery-only": True, "edit-pct-box": True, "sensors-enabled-by-default": True, "use-simplified-topics": True})
+        assert config.enabled is True
+        # Now set to False (keep enabled=True so other fields are processed)
+        config.configure({"enabled": True, "discovery-only": False, "edit-pct-box": False, "sensors-enabled-by-default": False, "use-simplified-topics": False})
+        assert config.enabled is True
+        assert config.discovery_only is False
+        assert config.edit_percentage_with_box is False
+        assert config.enabled_by_default is False
+        assert config.use_simplified_topics is False
+
 
 class TestMqttConfiguration:
     def test_default_values(self):
@@ -94,6 +107,17 @@ class TestMqttConfiguration:
         assert config.password == "pass"
         assert config.log_level == logging.DEBUG
         assert config.tls_insecure is True
+
+    def test_configure_false_values(self):
+        config = MqttConfiguration()
+        # Set to True first
+        config.configure({"tls": True, "anonymous": True, "tls-insecure": True})
+        assert config.tls is True
+        # Now set to False
+        config.configure({"tls": False, "anonymous": False, "tls-insecure": False})
+        assert config.tls is False
+        assert config.anonymous is False
+        assert config.tls_insecure is False
 
 
 class TestPVOutputConfiguration:
@@ -147,6 +171,19 @@ class TestPVOutputConfiguration:
         config = PVOutputConfiguration()
         config.configure({"enabled": True, "system-id": "testing"})
         assert config.testing is True
+
+    def test_configure_false_values(self):
+        config = PVOutputConfiguration()
+        # Set to True first
+        config.configure({"enabled": True, "api-key": "ABCDEF1234567890ABCDEF1234567890", "system-id": "12345", "exports": True, "imports": True, "calc-debug-logging": True, "update-debug-logging": True})
+        assert config.enabled is True
+        # Now set to False (keep enabled=True so other fields are processed)
+        config.configure({"enabled": True, "exports": False, "imports": False, "calc-debug-logging": False, "update-debug-logging": False})
+        assert config.enabled is True
+        assert config.exports is False
+        assert config.imports is False
+        assert config.calc_debug_logging is False
+        assert config.update_debug_logging is False
 
     def test_type_to_output_fields(self):
         config = PVOutputConfiguration()
@@ -257,3 +294,20 @@ class TestDeviceConfig:
         config.configure({"host": "localhost"})
         # Should default to [1] if empty
         assert config.inverters == [1]
+
+    def test_configure_boolean_toggles(self):
+        config = ModbusConfiguration()
+        # Test toggling all booleans
+        config.configure({"disable-chunking": True, "no-remote-ems": True, "read-only": True, "read-write": True, "write-only": True})
+        assert config.disable_chunking is True
+        assert config.registers.no_remote_ems is True
+        assert config.registers.read_only is True
+        assert config.registers.read_write is True
+        assert config.registers.write_only is True
+
+        config.configure({"disable-chunking": False, "no-remote-ems": False, "read-only": False, "read-write": False, "write-only": False})
+        assert config.disable_chunking is False
+        assert config.registers.no_remote_ems is False
+        assert config.registers.read_only is False
+        assert config.registers.read_write is False
+        assert config.registers.write_only is False

@@ -248,3 +248,36 @@ class TestConfigSwitches:
         sensor.configure_mqtt_topics("test_device")
 
         assert "Takes effect when Remote EMS control mode" not in sensor.get_attributes()["comment"]
+
+    def test_edit_percentage_with_box(self):
+        """Test if 'mode' attribute is 'slider' or 'box' based on edit_percentage_with_box."""
+        from sigenergy2mqtt.sensors.plant_read_write import ESSBackupSOC
+
+        Config.home_assistant.enabled = True
+        Config.home_assistant.edit_percentage_with_box = False
+        sensor = ESSBackupSOC(0)
+        assert sensor["mode"] == "slider"
+
+        Config.home_assistant.edit_percentage_with_box = True
+        sensor = ESSBackupSOC(0)
+        assert sensor["mode"] == "box"
+
+    def test_sensor_enabled_by_default(self):
+        """Test if 'enabled_by_default' is correctly set from Config."""
+        Config.home_assistant.enabled_by_default = False
+        sensor = MockSensor()
+        assert sensor["enabled_by_default"] is False
+
+        Config.home_assistant.enabled_by_default = True
+        sensor = MockSensor()
+        assert sensor["enabled_by_default"] is True
+
+    def test_sensor_debug_logging_inheritance(self):
+        """Test if sensor debug_logging is inherited from Config.sensor_debug_logging."""
+        Config.sensor_debug_logging = False
+        sensor = MockSensor()
+        assert sensor.debug_logging is False
+
+        Config.sensor_debug_logging = True
+        sensor = MockSensor()
+        assert sensor.debug_logging is True
