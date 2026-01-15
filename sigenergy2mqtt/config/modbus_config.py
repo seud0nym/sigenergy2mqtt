@@ -31,10 +31,10 @@ class ModbusConfiguration:
 
     log_level: int = logging.WARNING
 
-    registers = RegisterAccess()
-    scan_interval = ScanInterval()
+    registers: RegisterAccess = field(default_factory=RegisterAccess)
+    scan_interval: ScanInterval = field(default_factory=ScanInterval)
 
-    smartport = SmartPortConfiguration()
+    smartport: SmartPortConfiguration = field(default_factory=SmartPortConfiguration)
 
     def validate(self) -> None:
         if not self.host:
