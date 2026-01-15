@@ -59,6 +59,9 @@ def mock_config():
         discovery_prefix="homeassistant",
         enabled=False,
         republish_discovery_interval=0,
+        entity_id_prefix="sigen",
+        use_simplified_topics=False,
+        edit_percentage_with_box=False,
     )
     # Set logging to see debug messages if needed
     conf.sensor_debug_logging = True

@@ -47,6 +47,8 @@ def setup_module(module):
         republish_discovery_interval=0,
         entity_id_prefix="sigen",
         enabled_by_default=True,
+        use_simplified_topics=False,
+        edit_percentage_with_box=False,
     )
     ha = getattr(conf, "home_assistant", None)
     if ha is None:

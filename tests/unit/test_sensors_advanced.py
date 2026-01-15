@@ -31,7 +31,13 @@ def mock_config():
         import types
 
         mock_conf.home_assistant = types.SimpleNamespace(
-            enabled=True, use_simplified_topics=False, discovery_prefix="homeassistant", unique_id_prefix="sigen", entity_id_prefix="sigenergy", enabled_by_default=True
+            enabled=True,
+            use_simplified_topics=False,
+            edit_percentage_with_box=False,
+            discovery_prefix="homeassistant",
+            unique_id_prefix="sigen",
+            entity_id_prefix="sigenergy",
+            enabled_by_default=True,
         )
         mock_conf.sensor_debug_logging = False
         mock_conf.sensor_overrides = {}
