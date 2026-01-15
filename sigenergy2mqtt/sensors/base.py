@@ -125,6 +125,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
 
         self._derived_sensors: dict[str, "DerivedSensor"] = {}
 
+        self._attributes_published: bool = False
         self._publish_raw: bool = False
         self._publishable: bool = True
         self._persistent_publish_state_file: Path = Path(Config.persistent_state_path, f"{unique_id}.publishable")
@@ -472,18 +473,20 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         return published
 
     def publish_attributes(self, mqtt_client: mqtt.Client, clean: bool = False, **kwargs) -> None:
-        if clean:
-            if self.debug_logging:
-                logging.debug(f"{self.name} cleaning attributes")
-            mqtt_client.publish(cast(str, self["json_attributes_topic"]), None, qos=1, retain=True)  # Clear retained messages
-        elif self.publishable:
-            attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
-            for k, v in kwargs.items():
-                attributes[k] = v
-            if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
-            mqtt_client.publish(cast(str, self["json_attributes_topic"]), json.dumps(attributes, indent=4), qos=2, retain=True)
-            self.force_publish = False
+        if not self._attributes_published or clean:
+            if clean:
+                if self.debug_logging:
+                    logging.debug(f"{self.name} cleaning attributes")
+                mqtt_client.publish(cast(str, self["json_attributes_topic"]), None, qos=1, retain=True)  # Clear retained messages
+            elif self.publishable:
+                attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
+                for k, v in kwargs.items():
+                    attributes[k] = v
+                if self.debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
+                mqtt_client.publish(cast(str, self["json_attributes_topic"]), json.dumps(attributes, indent=4), qos=2, retain=True)
+                self._attributes_published = True
+                self.force_publish = False
         for sensor in self._derived_sensors.values():
             sensor.publish_attributes(mqtt_client, clean=clean)
 
