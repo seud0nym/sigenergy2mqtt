@@ -1230,6 +1230,7 @@ class SelectSensor(ReadWriteSensor):
         )
         self["platform"] = "select"
         self["options"] = options
+        assert all([isinstance(o, str) for o in options]), "options must be a non-empty list of strings"
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1251,12 +1252,23 @@ class SelectSensor(ReadWriteSensor):
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         try:
-            if cast(list[str], self["options"]).index(str(raw_value)) is not None:
+            index = cast(list[str], self["options"]).index(str(raw_value))
+            option = cast(list[str], self["options"])[index]
+            if len(option.strip()) == 0 or option is None:
+                logging.error(f"{self.name} invalid value '{raw_value}': Empty option?")
+                return False
+            else:
                 return True
         except ValueError:
             try:
-                int(raw_value)
-                return True
+                index = int(raw_value)
+                if 0 <= index < len(cast(list[str], self["options"])):
+                    option = cast(list[str], self["options"])[index]
+                    if len(option.strip()) == 0 or option is None:
+                        logging.error(f"{self.name} invalid value '{raw_value}': Empty option?")
+                        return False
+                    else:
+                        return True
             except ValueError:
                 pass
         logging.error(f"{self.name} invalid value '{raw_value}': Not a valid option or index")
