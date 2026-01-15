@@ -194,7 +194,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     def _create_sensor_scan_groups(self) -> dict[str, list[ReadableSensorMixin]]:
         combined_sensors: dict[str, ReadableSensorMixin] = self.read_sensors.copy()
         combined_groups: dict[str, list[ReadableSensorMixin]] = self.group_sensors.copy()
-        named_group_sensors: dict[int, ModbusSensorMixin] = {}
+        named_group_sensors: dict[int, ModbusSensorMixin] = {s.address: s for sublist in self.group_sensors.values() for s in sublist if isinstance(s, ModbusSensorMixin)}
         first_address: int = -1
         next_address: int = -1
         device_address: int = -1
@@ -421,29 +421,33 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                             # Optimize Modbus read-ahead for due Modbus sensors with contiguous addresses
                             due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
                             if multiple and len(due_modbus) > 0:
-                                read_ahead_start = 0.0
-                                if debug_logging:
-                                    read_ahead_start = time.time()
-                                exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
-                                if exception_code == 0:
+                                if count > MAX_MODBUS_REGISTERS_PER_REQUEST:
                                     if debug_logging:
-                                        logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
+                                        logging.debug(f"{self.name} Sensor Scan Group [{name}] skipping read-ahead: {count=} > {MAX_MODBUS_REGISTERS_PER_REQUEST=}")
                                 else:
-                                    match exception_code:
-                                        case -1:
-                                            reason = "NO RESPONSE FROM DEVICE"
-                                        case 1:
-                                            reason = "0x01 ILLEGAL FUNCTION"
-                                        case 2:
-                                            reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
-                                            multiple = False
-                                        case 3:
-                                            reason = "0x03 ILLEGAL DATA VALUE"
-                                        case 4:
-                                            reason = "0x04 SLAVE DEVICE FAILURE"
-                                        case _:
-                                            reason = f"UNKNOWN PROBLEM ({exception_code=})"
-                                    logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
+                                    read_ahead_start = 0.0
+                                    if debug_logging:
+                                        read_ahead_start = time.time()
+                                    exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
+                                    if exception_code == 0:
+                                        if debug_logging:
+                                            logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
+                                    else:
+                                        match exception_code:
+                                            case -1:
+                                                reason = "NO RESPONSE FROM DEVICE"
+                                            case 1:
+                                                reason = "0x01 ILLEGAL FUNCTION"
+                                            case 2:
+                                                reason = "0x02 ILLEGAL DATA ADDRESS (pre-reads now disabled)"
+                                                multiple = False
+                                            case 3:
+                                                reason = "0x03 ILLEGAL DATA VALUE"
+                                            case 4:
+                                                reason = "0x04 SLAVE DEVICE FAILURE"
+                                            case _:
+                                                reason = f"UNKNOWN PROBLEM ({exception_code=})"
+                                        logging.warning(f"{self.name} Sensor Scan Group [{name}] failed to pre-read {first_address} to {last_address} ({count} registers) - {reason}")
 
                     # Publish each due sensor and update its next publish time
                     for sensor in due_sensors:
