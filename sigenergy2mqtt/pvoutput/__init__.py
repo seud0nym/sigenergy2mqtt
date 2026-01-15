@@ -32,6 +32,8 @@ if TYPE_CHECKING:
 
 
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
+    if not Config.pvoutput.enabled:
+        return []
     logger = logging.getLogger("pvoutput")
     logger.setLevel(Config.pvoutput.log_level)
 
