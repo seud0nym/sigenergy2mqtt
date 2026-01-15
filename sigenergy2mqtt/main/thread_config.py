@@ -31,6 +31,10 @@ class ThreadConfig:
         return [host.device for host in self._devices]
 
     @property
+    def has_devices(self) -> bool:
+        return len(self._devices) > 0
+
+    @property
     def url(self) -> str:
         return self.name if self.host is None or self.host.isspace() else f"modbus://{self.host}:{self.port}"
 

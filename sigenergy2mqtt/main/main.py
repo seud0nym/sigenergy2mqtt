@@ -85,11 +85,15 @@ async def async_main() -> None:
     configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
 
     svc_thread_cfg = ThreadConfig(None, None, name="Services")
-    svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
+    if Config.metrics_enabled:
+        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
             svc_thread_cfg.add_device(-1, service)
-    configs.insert(0, svc_thread_cfg)
+    if svc_thread_cfg.has_devices:
+        configs.insert(0, svc_thread_cfg)
+    else:
+        logging.info("No services configured - skipping service thread")
 
     if Config.log_level == logging.DEBUG:
         mon_thread_cfg = ThreadConfig(None, None, name="Monitor")
