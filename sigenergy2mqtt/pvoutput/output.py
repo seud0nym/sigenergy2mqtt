@@ -177,7 +177,7 @@ class PVOutputOutputService(Service):
                                 matches = False
                 if matches:
                     try:
-                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # pyrefly: ignore
+                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore
                     except NameError:
                         self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result}")
                     break
@@ -185,7 +185,7 @@ class PVOutputOutputService(Service):
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
                 else:
                     try:
-                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # pyrefly: ignore
+                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # type: ignore # pyrefly: ignore
                     except NameError:
                         self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=}")
             except requests.exceptions.HTTPError as exc:
