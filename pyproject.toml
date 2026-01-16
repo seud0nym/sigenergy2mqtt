@@ -26,7 +26,12 @@ requires-python = ">=3.11"
 test = [
   "pytest",
   "pytest-asyncio",
+  "pytest-cov",
 ]
+
+[tool.hatch.envs.default]
+features = ["test"]
+scripts.cov = "pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0 --disable-warnings -q"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

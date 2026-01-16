@@ -26,14 +26,10 @@ jobs:
       - name: Create Hatch environment
         run: hatch env create
 
-      - name: Install test tools inside Hatch env
-        run: |
-          hatch run pip install pytest pytest-cov pytest-asyncio
-
       - name: Run tests with coverage
         id: pytest
         run: |
-          hatch run pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0 --disable-warnings -q | tee pytest_output.txt
+          hatch run cov | tee pytest_output.txt
 
       - name: Extract coverage metrics
         id: coverage
