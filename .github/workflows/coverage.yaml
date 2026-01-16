@@ -20,15 +20,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies from pyproject.toml
-        run: |
-          pip install .[test]
-          pip install pytest pytest-cov
+      - name: Install Hatch
+        run: pip install hatch
+
+      - name: Create Hatch environment
+        run: hatch env create
 
       - name: Run tests with coverage
         id: pytest
         run: |
-          pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0 --disable-warnings -q | tee pytest_output.txt
+          hatch run pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0 --disable-warnings -q | tee pytest_output.txt
 
       - name: Extract coverage metrics
         id: coverage
