@@ -62,8 +62,9 @@ except Exception:
 
 
 class SensorDebuggingMixin:
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.debug_logging: bool = Config.sensor_debug_logging
+        super().__init__(**kwargs)
 
 
 class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str] | list[dict[str, str]] | tuple[float] | DeviceClass | StateClass | None], metaclass=abc.ABCMeta):
@@ -317,6 +318,15 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
+                if "device-class" in overrides and self["device_class"] != overrides["device-class"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'device-class' override ({overrides['device-class']})")
+                    self["device_class"] = overrides["device-class"]
+                if "state-class" in overrides and self["state_class"] != overrides["state-class"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'state-class' override ({overrides['state-class']})")
+                    self["state_class"] = overrides["state-class"]
+                if "name" in overrides and self["name"] != overrides["name"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'name' override ({overrides['name']})")
+                    self["name"] = overrides["name"]
         if self.publishable and registers:
             if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
                 logging.debug(f"{self.__class__.__name__} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
