@@ -82,7 +82,7 @@ jobs:
 
       - name: Download Shields.io badges
         run: |
-          mkdir -p resources
+          mkdir -p resources/badges
 
           curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
             -o resources/badges/coverage-total.svg
