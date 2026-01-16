@@ -46,17 +46,6 @@ jobs:
           count=$(grep -oP "(\d+) passed" pytest_output.txt | grep -oP "\d+")
           echo "count=$count" >> $GITHUB_OUTPUT
 
-      - name: Extract version
-        id: version
-        run: |
-          version=$(python - <<EOF
-import tomli
-with open("pyproject.toml", "rb") as f:
-    print(tomli.load(f)["project"]["version"])
-EOF
-          )
-          echo "version=$version" >> $GITHUB_OUTPUT
-
       - name: Determine Shields.io color
         id: colors
         run: |
@@ -87,9 +76,6 @@ EOF
 
           curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
             -o resources/tests.svg
-
-          curl -s "https://img.shields.io/badge/version-${{ steps.version.outputs.version }}-informational.svg" \
-            -o resources/version.svg
 
       - name: Commit badges
         if: github.event_name == 'push'
