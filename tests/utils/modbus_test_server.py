@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import threading
+import time
 from typing import Any
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -283,6 +284,19 @@ async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None,
         address=(host, port),
         framer=FramerType.SOCKET,
     )
+
+
+async def wait_for_server_start(host: str, port: int, timeout: float = 10.0) -> bool:
+    start_time = time.monotonic()
+    while time.monotonic() - start_time < timeout:
+        try:
+            reader, writer = await asyncio.open_connection(host, port)
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except (OSError, ConnectionRefusedError):
+            await asyncio.sleep(0.1)
+    return False
 
 
 async def prepopulate(modbus_client, groups):

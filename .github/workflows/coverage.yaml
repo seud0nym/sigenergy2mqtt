@@ -90,9 +90,6 @@ jobs:
           curl -s "https://img.shields.io/badge/lines-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
             -o resources/badges/coverage-lines.svg
 
-          curl -s "https://img.shields.io/badge/branches-${{ steps.coverage.outputs.branches }}%25-${{ steps.colors.outputs.branch_color }}.svg" \
-            -o resources/badges/coverage-branches.svg
-
           curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
             -o resources/badges/tests.svg
 

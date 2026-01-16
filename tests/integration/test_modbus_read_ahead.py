@@ -38,7 +38,10 @@ async def mock_modbus_server():
     server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=port, log_level=logging.INFO))
 
     # Allow server to bind
-    await asyncio.sleep(2)
+    from tests.utils.modbus_test_server import wait_for_server_start
+
+    if not await wait_for_server_start("127.0.0.1", port):
+        raise RuntimeError("Mock Modbus server failed to start")
 
     yield port
 
