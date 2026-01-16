@@ -20,10 +20,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install dependencies from pyproject.toml
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov tomli
+          pip install .[test]
+          pip install pytest pytest-cov
 
       - name: Run tests with coverage
         id: pytest
@@ -46,7 +46,7 @@ jobs:
           count=$(grep -oP "(\d+) passed" pytest_output.txt | grep -oP "\d+")
           echo "count=$count" >> $GITHUB_OUTPUT
 
-      - name: Determine Shields.io color
+      - name: Determine Shields.io colors
         id: colors
         run: |
           pick_color () {
@@ -82,6 +82,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add resources/badges/*.svg
+          git add resources/*.svg
           git commit -m "Update badges" || echo "No changes to commit"
           git push
