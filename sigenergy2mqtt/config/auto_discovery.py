@@ -43,7 +43,7 @@ def ping_scan(ip_list: list[str], threads=100, timeout=0.5) -> dict[str, float]:
 async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
     try:
         result = await modbus.read_input_registers(address=address, count=count, device_id=device_id)
-        if result and not result.isError():
+        if result and not result.isError() and hasattr(result, "registers") and len(result.registers) >= count:
             return True
     except ModbusException:
         while not modbus.connected:
@@ -57,7 +57,7 @@ async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int 
 async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) -> str | None:
     try:
         rr = await modbus.read_input_registers(address=30515, count=10, device_id=device_id)
-        if rr and not rr.isError() and not isinstance(rr, ExceptionResponse):
+        if rr and not rr.isError() and not isinstance(rr, ExceptionResponse) and hasattr(rr, "registers") and len(rr.registers) >= 10:
             serial = modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING)
             return cast(str, serial)
     except ModbusException as e:
@@ -86,23 +86,25 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
                     for device_id in range(1, 247):
                         if await probe_register(modbus, address=31501, device_id=device_id):  # [DC Charger] Charging current
                             serial = await get_serial_number(modbus, device_id=device_id)
-                            if serial and serial not in serial_numbers:
-                                serial_numbers.append(serial)
-                                logging.info(f" -> Found Inverter {device_id} ({serial}) and DC-Charger at {ip}:{port}: Device ID={device_id}")
-                                dc_chargers.append(device_id)
-                                inverters.append(device_id)
-                            else:
-                                logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
-                            continue
+                            if serial:
+                                if serial not in serial_numbers:
+                                    serial_numbers.append(serial)
+                                    logging.info(f" -> Found Inverter {device_id} ({serial}) and DC-Charger at {ip}:{port}: Device ID={device_id}")
+                                    dc_chargers.append(device_id)
+                                    inverters.append(device_id)
+                                else:
+                                    logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
+                                continue
                         if await probe_register(modbus, address=30578, device_id=device_id):  # Inverter Running state
                             serial = await get_serial_number(modbus, device_id=device_id)
-                            if serial and serial not in serial_numbers:
-                                serial_numbers.append(serial)
-                                logging.info(f" -> Found Inverter {device_id} ({serial}) at {ip}:{port}: Device ID={device_id}")
-                                inverters.append(device_id)
-                            else:
-                                logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
-                            continue
+                            if serial:
+                                if serial not in serial_numbers:
+                                    serial_numbers.append(serial)
+                                    logging.info(f" -> Found Inverter {device_id} ({serial}) at {ip}:{port}: Device ID={device_id}")
+                                    inverters.append(device_id)
+                                else:
+                                    logging.info(f" -> IGNORED Inverter {device_id} at {ip}:{port} - serial number {serial} already discovered")
+                                continue
                         if len(inverters) > 0 and await probe_register(modbus, address=32000, device_id=device_id):  # AC Charger System state
                             logging.info(f" -> Found AC-Charger at {ip}:{port}: Device ID={device_id}")
                             ac_chargers.append(device_id)
