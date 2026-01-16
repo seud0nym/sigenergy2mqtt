@@ -28,7 +28,9 @@ jobs:
 
       - name: Run tests with coverage
         id: pytest
+        shell: bash
         run: |
+          set -o pipefail
           hatch run cov | tee pytest_output.txt
 
       - name: Extract coverage metrics

@@ -31,7 +31,7 @@ test = [
 
 [tool.hatch.envs.default]
 features = ["test"]
-scripts.cov = "pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0 --disable-warnings -q"
+scripts.cov = "pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
