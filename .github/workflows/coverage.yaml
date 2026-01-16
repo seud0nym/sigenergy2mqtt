@@ -35,13 +35,26 @@ jobs:
 
       - name: Extract coverage metrics
         id: coverage
+        shell: python
         run: |
-          total=$(grep -oPm1 "(?<=line-rate=\")\d+\.\d+" coverage.xml)
-          branches=$(grep -oPm1 "(?<=branch-rate=\")\d+\.\d+" coverage.xml)
-          total=$(printf "%.0f" "$(echo "$total * 100" | bc -l)")
-          branches=$(printf "%.0f" "$(echo "$branches * 100" | bc -l)")
-          echo "total=$total" >> $GITHUB_OUTPUT
-          echo "branches=$branches" >> $GITHUB_OUTPUT
+          import os
+          import xml.etree.ElementTree as ET
+
+          try:
+              tree = ET.parse('coverage.xml')
+              root = tree.getroot()
+              line_rate = float(root.attrib.get('line-rate', 0))
+              branch_rate = float(root.attrib.get('branch-rate', 0))
+              
+              total = int(round(line_rate * 100))
+              branches = int(round(branch_rate * 100))
+              
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"total={total}\n")
+                  f.write(f"branches={branches}\n")
+          except Exception as e:
+              print(f"Error extracting coverage: {e}")
+              exit(1)
 
       - name: Extract test count
         id: tests
