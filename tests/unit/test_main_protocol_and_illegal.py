@@ -29,11 +29,12 @@ def make_dummy_device_with_sensor(publishable=True, input_type=InputType.INPUT, 
 
     return DummyDevice()
 
+
 @pytest.mark.asyncio
 async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatch):
-
     # Prepare a device that returns a publishable sensor
     dev = types.SimpleNamespace()
+
     # create sensor object with publishable True and input_type
     # Make the sensor an instance of ModbusSensorMixin by monkeypatching the base and subclassing it
     class DummyBase:
@@ -49,9 +50,13 @@ async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatc
             self.name = "Sensor"
             self.state_topic = "topic"
 
+        def __getitem__(self, item):
+            return getattr(self, item, None)
+
     sensor = SensorObj()
 
     device = types.SimpleNamespace(device_address=247, name="Device")
+
     def get_sensor(key, search_children=True):
         return sensor
 
@@ -83,6 +88,7 @@ async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatc
 @pytest.mark.asyncio
 async def test_test_for_0x02_illegal_data_address_handles_exceptions(monkeypatch):
     device = types.SimpleNamespace(device_address=247, name="Device2")
+
     class DummyBase2:
         pass
 
@@ -95,6 +101,9 @@ async def test_test_for_0x02_illegal_data_address_handles_exceptions(monkeypatch
             self.count = 2
             self.name = "Sensor2"
             self.state_topic = "topic2"
+
+        def __getitem__(self, item):
+            return getattr(self, item, None)
 
     sensor2 = SensorObj()
     device.get_sensor = lambda *a, **k: sensor2

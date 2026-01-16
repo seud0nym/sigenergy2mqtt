@@ -123,6 +123,7 @@ class TestPlantDerived:
     async def test_remote_ems_control_mode_publish(self, mock_config):
         mock_config.ems_mode_check = True
         remote_ems = MagicMock(spec=AvailabilityMixin)
+        remote_ems.state_topic = "some/topic"
         sensor = RemoteEMSControlMode(plant_index=0, remote_ems=remote_ems)
         sensor.configure_mqtt_topics("test_device")
 
