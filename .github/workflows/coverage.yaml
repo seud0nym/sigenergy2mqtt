@@ -1,0 +1,101 @@
+name: Test & Badges
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov tomli
+
+      - name: Run tests with coverage
+        id: pytest
+        run: |
+          pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0 --disable-warnings -q | tee pytest_output.txt
+
+      - name: Extract coverage metrics
+        id: coverage
+        run: |
+          total=$(grep -oPm1 "(?<=line-rate=\")\d+\.\d+" coverage.xml)
+          branches=$(grep -oPm1 "(?<=branch-rate=\")\d+\.\d+" coverage.xml)
+          total=$(printf "%.0f" "$(echo "$total * 100" | bc -l)")
+          branches=$(printf "%.0f" "$(echo "$branches * 100" | bc -l)")
+          echo "total=$total" >> $GITHUB_OUTPUT
+          echo "branches=$branches" >> $GITHUB_OUTPUT
+
+      - name: Extract test count
+        id: tests
+        run: |
+          count=$(grep -oP "(\d+) passed" pytest_output.txt | grep -oP "\d+")
+          echo "count=$count" >> $GITHUB_OUTPUT
+
+      - name: Extract version
+        id: version
+        run: |
+          version=$(python - <<EOF
+import tomli
+with open("pyproject.toml", "rb") as f:
+    print(tomli.load(f)["project"]["version"])
+EOF
+          )
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Determine Shields.io color
+        id: colors
+        run: |
+          pick_color () {
+            v=$1
+            if   [ "$v" -ge 90 ]; then echo "brightgreen";
+            elif [ "$v" -ge 80 ]; then echo "green";
+            elif [ "$v" -ge 70 ]; then echo "yellowgreen";
+            elif [ "$v" -ge 60 ]; then echo "yellow";
+            elif [ "$v" -ge 50 ]; then echo "orange";
+            else echo "red"; fi
+          }
+          echo "total_color=$(pick_color ${{ steps.coverage.outputs.total }})" >> $GITHUB_OUTPUT
+          echo "branch_color=$(pick_color ${{ steps.coverage.outputs.branches }})" >> $GITHUB_OUTPUT
+
+      - name: Download Shields.io badges
+        run: |
+          mkdir -p resources
+
+          curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
+            -o resources/coverage-total.svg
+
+          curl -s "https://img.shields.io/badge/lines-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
+            -o resources/coverage-lines.svg
+
+          curl -s "https://img.shields.io/badge/branches-${{ steps.coverage.outputs.branches }}%25-${{ steps.colors.outputs.branch_color }}.svg" \
+            -o resources/coverage-branches.svg
+
+          curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
+            -o resources/tests.svg
+
+          curl -s "https://img.shields.io/badge/version-${{ steps.version.outputs.version }}-informational.svg" \
+            -o resources/version.svg
+
+      - name: Commit badges
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add resources/badges/*.svg
+          git commit -m "Update badges" || echo "No changes to commit"
+          git push
