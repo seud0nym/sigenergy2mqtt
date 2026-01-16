@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -82,22 +85,22 @@ jobs:
           mkdir -p resources
 
           curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
-            -o resources/coverage-total.svg
+            -o resources/badges/coverage-total.svg
 
           curl -s "https://img.shields.io/badge/lines-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
-            -o resources/coverage-lines.svg
+            -o resources/badges/coverage-lines.svg
 
           curl -s "https://img.shields.io/badge/branches-${{ steps.coverage.outputs.branches }}%25-${{ steps.colors.outputs.branch_color }}.svg" \
-            -o resources/coverage-branches.svg
+            -o resources/badges/coverage-branches.svg
 
           curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
-            -o resources/tests.svg
+            -o resources/badges/tests.svg
 
       - name: Commit badges
         if: github.event_name == 'push'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add resources/*.svg
+          git add resources/badges/*.svg
           git commit -m "Update badges" || echo "No changes to commit"
           git push
