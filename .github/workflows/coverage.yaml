@@ -50,11 +50,9 @@ jobs:
               branch_rate = float(root.attrib.get('branch-rate', 0))
               
               total = int(round(line_rate * 100))
-              branches = int(round(branch_rate * 100))
               
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"total={total}\n")
-                  f.write(f"branches={branches}\n")
           except Exception as e:
               print(f"Error extracting coverage: {e}")
               exit(1)
@@ -78,7 +76,6 @@ jobs:
             else echo "red"; fi
           }
           echo "total_color=$(pick_color ${{ steps.coverage.outputs.total }})" >> $GITHUB_OUTPUT
-          echo "branch_color=$(pick_color ${{ steps.coverage.outputs.branches }})" >> $GITHUB_OUTPUT
 
       - name: Download Shields.io badges
         run: |
@@ -86,9 +83,6 @@ jobs:
 
           curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
             -o resources/badges/coverage-total.svg
-
-          curl -s "https://img.shields.io/badge/lines-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
-            -o resources/badges/coverage-lines.svg
 
           curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
             -o resources/badges/tests.svg
