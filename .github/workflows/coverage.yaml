@@ -28,7 +28,7 @@ jobs:
 
       - name: Install test tools inside Hatch env
         run: |
-          hatch run pip install pytest pytest-cov
+          hatch run pip install pytest pytest-cov pytest-asyncio
 
       - name: Run tests with coverage
         id: pytest
