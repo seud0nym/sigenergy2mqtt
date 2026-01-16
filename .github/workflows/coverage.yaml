@@ -47,7 +47,6 @@ jobs:
               tree = ET.parse('coverage.xml')
               root = tree.getroot()
               line_rate = float(root.attrib.get('line-rate', 0))
-              branch_rate = float(root.attrib.get('branch-rate', 0))
               
               total = int(round(line_rate * 100))
               
