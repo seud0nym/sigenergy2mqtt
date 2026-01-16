@@ -200,7 +200,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
     @protocol_version.setter
     def protocol_version(self, protocol_version: Protocol | float):
         isProtocol = isinstance(protocol_version, Protocol)
-        assert isProtocol or (isinstance(protocol_version, float) and protocol_version in Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
+        assert isProtocol or (isinstance(protocol_version, float) and protocol_version in [p.value for p in Protocol]), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
         if isProtocol:
             self._protocol_version = cast(Protocol, protocol_version)
         else:
