@@ -26,6 +26,7 @@ def test_topic_json_roundtrip():
 
 def test_get_response_headers_parsing():
     svc = Service("n", "uid", "model", __import__("logging").getLogger("pvout"))
+
     class Dummy:
         headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 30)}
 
@@ -55,11 +56,13 @@ def test_json_encoder_raises_on_non_dataclass():
 @pytest.mark.asyncio
 async def test_upload_payload_retries_and_http400(monkeypatch):
     svc = Service("n", "uid", "model", __import__("logging").getLogger("pvout"))
+
     # avoid sleeping delays
     async def no_sleep(*a, **k):
         return None
 
     monkeypatch.setattr(asyncio, "sleep", no_sleep)
+    monkeypatch.setattr(Config.pvoutput, "testing", False)
 
     # Case A: first attempt raises ConnectionError, second succeeds
     calls = {"count": 0}
@@ -115,7 +118,6 @@ async def test_upload_payload_retries_and_http400(monkeypatch):
     monkeypatch.setattr("requests.post", fake_post_400)
     ok2 = await svc.upload_payload("u", {"d": "20250101"})
     assert ok2 is False
-
 
     @pytest.mark.asyncio
     async def test_seconds_until_status_upload_non_testing(monkeypatch):

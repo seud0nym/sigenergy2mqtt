@@ -47,7 +47,7 @@ class TopicConfig:
 
 
 @dataclass
-class SmartPortConfig:
+class SmartPortConfiguration:
     enabled: bool = False
     module: ModuleConfig = field(default_factory=ModuleConfig)
     mqtt: list[TopicConfig] = field(default_factory=list)

@@ -6,7 +6,8 @@ from typing import Any, cast
 import pytest
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin
 
@@ -37,7 +38,7 @@ class FakeModbus:
 
 def setup_module(module):
     conf = cast(Any, Config)
-    conf.devices = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
     defaults = dict(
         device_name_prefix="",
         unique_id_prefix="sigen",
@@ -46,6 +47,8 @@ def setup_module(module):
         republish_discovery_interval=0,
         entity_id_prefix="sigen",
         enabled_by_default=True,
+        use_simplified_topics=False,
+        edit_percentage_with_box=False,
     )
     ha = getattr(conf, "home_assistant", None)
     if ha is None:
@@ -84,7 +87,10 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
     def apply_sensor_overrides(self, registers):
         return None
 
-    def configure_mqtt_topics(self, device_id: str, ) -> str:
+    def configure_mqtt_topics(
+        self,
+        device_id: str,
+    ) -> str:
         return ""
 
     async def publish(self, mqtt_client, modbus_client=None, republish=False):

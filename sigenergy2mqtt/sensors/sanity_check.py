@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.modbus.client import ModbusClient
+from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .const import StateClass, UnitOfEnergy, UnitOfPower
-
-if TYPE_CHECKING:
-    from sigenergy2mqtt.modbus.types import ModbusDataType
 
 
 @dataclass
@@ -35,22 +31,22 @@ class SanityCheck:
             # Already initialized
             return
         match data_type:
-            case ModbusClient.DATATYPE.INT16:
+            case ModbusDataType.INT16:
                 self.min_raw = -32768
                 self.max_raw = 32767
-            case ModbusClient.DATATYPE.UINT16:
+            case ModbusDataType.UINT16:
                 self.min_raw = 0
                 self.max_raw = 65535
-            case ModbusClient.DATATYPE.INT32:
+            case ModbusDataType.INT32:
                 self.min_raw = -2147483648
                 self.max_raw = 2147483647
-            case ModbusClient.DATATYPE.UINT32:
+            case ModbusDataType.UINT32:
                 self.min_raw = 0
                 self.max_raw = 4294967295
-            case ModbusClient.DATATYPE.INT64:
+            case ModbusDataType.INT64:
                 self.min_raw = -9223372036854775808
                 self.max_raw = 9223372036854775807
-            case ModbusClient.DATATYPE.UINT64:
+            case ModbusDataType.UINT64:
                 self.min_raw = 0
                 self.max_raw = 18446744073709551615
         match unit:

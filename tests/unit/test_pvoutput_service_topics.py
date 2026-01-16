@@ -89,6 +89,8 @@ def test_difference_and_convert_to_watts():
     assert OutputField.GENERATION.value in payload
     # float nearly equal to 3.0 (power)
     assert pytest.approx(payload[OutputField.GENERATION.value], rel=1e-3) == 3.0
+
+
 import logging
 import time
 
@@ -167,12 +169,8 @@ def test_check_is_updating_and_restore_warning(monkeypatch, caplog):
     caplog.set_level(logging.DEBUG)
     st = make_service_topics(Calculation.SUM)
     # service just started -> should skip updating check
-    orig_started = Config.pvoutput.started
-    try:
-        Config.pvoutput.started = time.time()
-        t = Topic(topic="t1", state=1.0, timestamp=None, gain=1.0)
-        st.register(t)
-        # now_struct within 120s -> check_is_updating returns True
-        assert st.check_is_updating(5, time.localtime()) is True
-    finally:
-        Config.pvoutput.started = orig_started
+    monkeypatch.setattr(Config.pvoutput, "started", time.time())
+    t = Topic(topic="t1", state=1.0, timestamp=None, gain=1.0)
+    st.register(t)
+    # now_struct within 120s -> check_is_updating returns True
+    assert st.check_is_updating(5, time.localtime()) is True

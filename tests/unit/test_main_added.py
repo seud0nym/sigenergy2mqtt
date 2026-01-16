@@ -3,7 +3,7 @@ from typing import Any, cast
 
 import pytest
 
-from sigenergy2mqtt.config import Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config.config import Config
 from sigenergy2mqtt.main import main as sm_main
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -24,7 +24,7 @@ def test_configure_logging_changes_levels(monkeypatch):
     pvoutput.setLevel(logging.WARNING)
 
     # Set Config levels
-    orig_devices = Config.devices
+    orig_devices = Config.modbus
     Config.log_level = logging.DEBUG
 
     # create dummy devices list for modbus level
@@ -32,7 +32,7 @@ def test_configure_logging_changes_levels(monkeypatch):
         log_level = logging.INFO
 
     conf = cast(Any, Config)
-    conf.devices = [D()]
+    conf.modbus = [D()]
     Config.mqtt.log_level = logging.ERROR
     Config.pvoutput.log_level = logging.CRITICAL
 
@@ -44,7 +44,7 @@ def test_configure_logging_changes_levels(monkeypatch):
     assert pvoutput.level == logging.CRITICAL
 
     # restore original devices
-    conf.devices = orig_devices
+    conf.modbus = orig_devices
 
 
 @pytest.mark.asyncio

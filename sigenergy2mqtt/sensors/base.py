@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Any, Final, Iterable, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter, RegisterAccess
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 if TYPE_CHECKING:
@@ -47,16 +47,6 @@ class _ModbusLockFactoryProxy:
 ModbusLockFactory = _ModbusLockFactoryProxy
 
 
-# Lazy accessor for ModbusClient to avoid importing modbus at module import
-def _ModbusClient():
-    from sigenergy2mqtt.modbus import ModbusClient
-
-    return ModbusClient
-
-
-ModbusClient = _ModbusClient()
-
-
 # Expose a module-level `Metrics` binding. Prefer a `Metrics` attribute if the
 # metrics package provides one, otherwise expose the module object. This lets
 # tests either patch `sigenergy2mqtt.sensors.base.Metrics` or replace the
@@ -72,8 +62,9 @@ except Exception:
 
 
 class SensorDebuggingMixin:
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.debug_logging: bool = Config.sensor_debug_logging
+        super().__init__(**kwargs)
 
 
 class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str] | list[dict[str, str]] | tuple[float] | DeviceClass | StateClass | None], metaclass=abc.ABCMeta):
@@ -135,6 +126,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
 
         self._derived_sensors: dict[str, "DerivedSensor"] = {}
 
+        self._attributes_published: bool = False
         self._publish_raw: bool = False
         self._publishable: bool = True
         self._persistent_publish_state_file: Path = Path(Config.persistent_state_path, f"{unique_id}.publishable")
@@ -326,6 +318,15 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
+                if "device-class" in overrides and self["device_class"] != overrides["device-class"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'device-class' override ({overrides['device-class']})")
+                    self["device_class"] = overrides["device-class"]
+                if "state-class" in overrides and self["state_class"] != overrides["state-class"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'state-class' override ({overrides['state-class']})")
+                    self["state_class"] = overrides["state-class"]
+                if "name" in overrides and self["name"] != overrides["name"]:
+                    logging.debug(f"{self.__class__.__name__} Applying {identifier} 'name' override ({overrides['name']})")
+                    self["name"] = overrides["name"]
         if self.publishable and registers:
             if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
                 logging.debug(f"{self.__class__.__name__} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
@@ -482,18 +483,20 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         return published
 
     def publish_attributes(self, mqtt_client: mqtt.Client, clean: bool = False, **kwargs) -> None:
-        if clean:
-            if self.debug_logging:
-                logging.debug(f"{self.name} cleaning attributes")
-            mqtt_client.publish(cast(str, self["json_attributes_topic"]), None, qos=1, retain=True)  # Clear retained messages
-        elif self.publishable:
-            attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
-            for k, v in kwargs.items():
-                attributes[k] = v
-            if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
-            mqtt_client.publish(cast(str, self["json_attributes_topic"]), json.dumps(attributes, indent=4), qos=2, retain=True)
-            self.force_publish = False
+        if not self._attributes_published or clean:
+            if clean:
+                if self.debug_logging:
+                    logging.debug(f"{self.name} cleaning attributes")
+                mqtt_client.publish(cast(str, self["json_attributes_topic"]), None, qos=1, retain=True)  # Clear retained messages
+            elif self.publishable:
+                attributes = {key: html.unescape(value) if isinstance(value, str) else value for key, value in self.get_attributes().items()}
+                for k, v in kwargs.items():
+                    attributes[k] = v
+                if self.debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Publishing {attributes=}")
+                mqtt_client.publish(cast(str, self["json_attributes_topic"]), json.dumps(attributes, indent=4), qos=2, retain=True)
+                self._attributes_published = True
+                self.force_publish = False
         for sensor in self._derived_sensors.values():
             sensor.publish_attributes(mqtt_client, clean=clean)
 
@@ -514,7 +517,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         if state is None:
             return None
         elif isinstance(state, str):
-            if isinstance(self, TypedSensorMixin) and self.data_type == ModbusClient.DATATYPE.STRING:
+            if isinstance(self, TypedSensorMixin) and self.data_type == ModbusDataType.STRING:
                 return state
             elif "options" in self and state in cast(list[str], self["options"]):
                 return cast(list[str], self["options"]).index(state)
@@ -535,7 +538,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
 class TypedSensorMixin:
     def __init__(self, **kwargs):
         assert "data_type" in kwargs, "Missing required parameter: data_type"
-        if kwargs["data_type"] not in ModbusClient.DATATYPE:
+        if kwargs["data_type"] not in ModbusDataType:
             raise AssertionError(f"Invalid data type {kwargs['data_type']}")
         self.data_type = kwargs["data_type"]
         super().__init__(**kwargs)
@@ -808,7 +811,7 @@ class TimestampSensor(ReadOnlySensor):
             device_address,
             address,
             2,  # count
-            ModbusClient.DATATYPE.UINT32,
+            ModbusDataType.UINT32,
             scan_interval,
             unit=None,
             device_class=DeviceClass.TIMESTAMP,
@@ -883,9 +886,9 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         device_id = self.device_address
         no_response_expected = False
         logging.info(f"{self.__class__.__name__} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} {device_id=})")
-        if self.data_type == ModbusClient.DATATYPE.UINT16 and isinstance(raw_value, int) and 0 <= raw_value <= 255:  # Unsigned 8-bit ints do not need encoding
+        if self.data_type == ModbusDataType.UINT16 and isinstance(raw_value, int) and 0 <= raw_value <= 255:  # Unsigned 8-bit ints do not need encoding
             registers = [raw_value]
-        elif self.data_type == ModbusClient.DATATYPE.STRING:
+        elif self.data_type == ModbusDataType.STRING:
             registers = modbus_client.convert_to_registers(str(raw_value), self.data_type)
         else:
             registers = modbus_client.convert_to_registers(int(raw_value), self.data_type)
@@ -971,7 +974,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1225,7 +1228,7 @@ class SelectSensor(ReadWriteSensor):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             scan_interval=scan_interval,
             unit=None,
             device_class=DeviceClass.ENUM,
@@ -1237,6 +1240,7 @@ class SelectSensor(ReadWriteSensor):
         )
         self["platform"] = "select"
         self["options"] = options
+        assert all([isinstance(o, str) for o in options]), "options must be a non-empty list of strings"
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1258,12 +1262,23 @@ class SelectSensor(ReadWriteSensor):
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         try:
-            if cast(list[str], self["options"]).index(str(raw_value)) is not None:
+            index = cast(list[str], self["options"]).index(str(raw_value))
+            option = cast(list[str], self["options"])[index]
+            if len(option.strip()) == 0 or option is None:
+                logging.error(f"{self.name} invalid value '{raw_value}': Empty option?")
+                return False
+            else:
                 return True
         except ValueError:
             try:
-                int(raw_value)
-                return True
+                index = int(raw_value)
+                if 0 <= index < len(cast(list[str], self["options"])):
+                    option = cast(list[str], self["options"])[index]
+                    if len(option.strip()) == 0 or option is None:
+                        logging.error(f"{self.name} invalid value '{raw_value}': Empty option?")
+                        return False
+                    else:
+                        return True
             except ValueError:
                 pass
         logging.error(f"{self.name} invalid value '{raw_value}': Not a valid option or index")
@@ -1291,7 +1306,7 @@ class SwitchSensor(ReadWriteSensor):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             scan_interval=scan_interval,
             unit=None,
             device_class=None,
@@ -1342,8 +1357,8 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             device_address,
             address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1588,7 +1603,7 @@ class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverte
         self.device_address = device_addresses.pop()
         self.count = count
         self.input_type = InputType.INPUT
-        self.data_type = ModbusClient.DATATYPE.UINT16
+        self.data_type = ModbusDataType.UINT16
 
     @property
     def protocol_version(self) -> Protocol:
@@ -1654,8 +1669,8 @@ class RunningStateSensor(ReadOnlySensor):
             device_address,
             address,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -1717,6 +1732,22 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         )
         self._source = source
         self._reset_topic = f"sigenergy2mqtt/{self['object_id']}/reset"
+        self._current_total_lock = asyncio.Lock()
+        self._current_total: float = 0.0
+        uid = str(self.unique_id)
+        if uid.startswith("<MagicMock"):
+            uid = "mock_uid"
+        self._persistent_state_file = Path(Config.persistent_state_path, f"{uid}.state")
+        if self._persistent_state_file.is_file():
+            with self._persistent_state_file.open("r") as f:
+                try:
+                    content = f.read()
+                    if content is not None and content != "None":
+                        self._current_total = float(content)
+                        logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
+                except ValueError as error:
+                    logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
+        self.set_latest_state(self._current_total)
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         updater: dict[str, Any] = {
@@ -1750,57 +1781,12 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             attributes["reset_unit"] = self.unit
         return attributes
 
-
-class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
-    _current_total_lock = asyncio.Lock()
-
-    def __init__(
-        self,
-        name: str,
-        unique_id: str,
-        object_id: str,
-        source: Sensor,
-        data_type=None,
-        unit=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=DeviceClass.ENERGY,
-        state_class=StateClass.TOTAL_INCREASING,
-        icon="mdi:home-lightning-bolt",
-        gain=1000,
-        precision=2,
-    ):
-        if data_type is None:
-            data_type = ModbusClient.DATATYPE.UINT32
-        super().__init__(
-            name,
-            unique_id,
-            object_id,
-            source,
-            data_type=data_type,
-            unit=unit,
-            device_class=device_class,
-            state_class=state_class,
-            icon=icon,
-            gain=gain,
-            precision=precision,
-        )
-        self._current_total: float = 0.0
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{self.unique_id}.state")
-        if self._persistent_state_file.is_file():
-            with self._persistent_state_file.open("r") as f:
-                try:
-                    content = f.read()
-                    if content is not None and content != "None":
-                        self._current_total = float(content)
-                        logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
-                except ValueError as error:
-                    logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {error}")
-        self.set_latest_state(self._current_total)
-
     async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             new_total = (value if value is float else float(value)) * self.gain
             logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} ({new_total=})")
-            await self._persist_current_total(new_total)
+            if new_total != self._current_total:
+                await self._persist_current_total(new_total)
             self._current_total = new_total
             self.set_latest_state(self._current_total)
             self.force_publish = True
@@ -1834,7 +1820,11 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
             logging.debug(f"{self.__class__.__name__} negative increase IGNORED ({self._current_total=} {previous=} {current=} {increase=} {new_total=} {sensor.latest_interval=:.2f}s)")
             return False
         else:
-            asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_running_loop())
+            if new_total != self._current_total:
+                try:
+                    asyncio.get_running_loop().create_task(self._persist_current_total(new_total))
+                except RuntimeError:
+                    asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_event_loop())
             self._current_total = new_total
             self.set_latest_state(self._current_total)
             return True
@@ -1843,6 +1833,38 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         async with self._current_total_lock:
             with self._persistent_state_file.open("w") as f:
                 f.write(str(new_total))
+
+
+class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
+    def __init__(
+        self,
+        name: str,
+        unique_id: str,
+        object_id: str,
+        source: Sensor,
+        data_type=None,
+        unit=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=DeviceClass.ENERGY,
+        state_class=StateClass.TOTAL_INCREASING,
+        icon="mdi:home-lightning-bolt",
+        gain=1000,
+        precision=2,
+    ):
+        if data_type is None:
+            data_type = ModbusDataType.UINT32
+        super().__init__(
+            name,
+            unique_id,
+            object_id,
+            source,
+            data_type=data_type,
+            unit=unit,
+            device_class=device_class,
+            state_class=state_class,
+            icon=icon,
+            gain=gain,
+            precision=precision,
+        )
 
 
 class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
@@ -1870,7 +1892,10 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         )
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float | None = None
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{source.unique_id}.atmidnight")
+        uid = str(source.unique_id)
+        if uid.startswith("<MagicMock"):
+            uid = "mock_uid_atmidnight"
+        self._persistent_state_file = Path(Config.persistent_state_path, f"{uid}.atmidnight")
         if self._persistent_state_file.is_file():
             fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
             now = time.localtime()
@@ -1925,7 +1950,10 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             was = time.localtime(values[-2][0])
             now = time.localtime(values[-1][0])
             if was.tm_year != now.tm_year or was.tm_mon != now.tm_mon or was.tm_mday != now.tm_mday:
-                asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_running_loop())
+                try:
+                    asyncio.get_running_loop().create_task(self._update_state_at_midnight(now_state))
+                except RuntimeError:
+                    asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_event_loop())
                 self._states.clear()
                 self._state_at_midnight = now_state
 

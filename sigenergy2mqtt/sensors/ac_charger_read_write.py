@@ -1,9 +1,9 @@
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.sensors.const import UnitOfElectricCurrent
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .base import DeviceClass, InputType, NumericSensor, StateClass, WriteOnlySensor
+from .const import UnitOfElectricCurrent
 
 # 5.6 AC-Charger parameter setting address definition (holding register)
 
@@ -52,8 +52,8 @@ class ACChargerOutputCurrent(NumericSensor):
             device_address=device_address,
             address=42001,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=StateClass.MEASUREMENT,

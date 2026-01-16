@@ -7,11 +7,12 @@ from typing import Any, cast
 
 from ruamel.yaml import YAML
 
+from sigenergy2mqtt.common import ConsumptionMethod
+
 from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
-from .const import ConsumptionMethod
 from .home_assistant_config import HomeAssistantConfiguration
-from .modbus_config import DeviceConfig
+from .modbus_config import ModbusConfiguration
 from .mqtt_config import MqttConfiguration
 from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSource
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port, check_string
@@ -21,31 +22,42 @@ class Config:
     origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
     clean: bool = False
-    log_level: int = logging.WARNING
-
     consumption: ConsumptionMethod = ConsumptionMethod.CALCULATED
+    ems_mode_check: bool = True
+    log_level: int = logging.WARNING
+    metrics_enabled: bool = True
+    sanity_check_default_kw: float = 500.0
 
-    devices: list[DeviceConfig] = []
+    modbus: list[ModbusConfiguration] = []
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
     mqtt: MqttConfiguration = MqttConfiguration()
     pvoutput: PVOutputConfiguration = PVOutputConfiguration()
     sensor_debug_logging: bool = False
     sensor_overrides: dict[str, dict[str, bool | int | float | str | list[int] | ModuleType | None]] = {}
 
-    sanity_check_default_kw: float = 500.0
-    metrics_enabled: bool = True
-
     persistent_state_path: Path = Path(".")
 
     _source: str | None = None
 
     @classmethod
+    def validate(cls) -> None:
+        if len(cls.modbus) == 0:
+            raise ValueError("At least one Modbus device must be configured")
+
+        for device in cls.modbus:
+            device.validate()
+
+        cls.mqtt.validate()
+        cls.home_assistant.validate()
+        cls.pvoutput.validate()
+
+    @classmethod
     def get_modbus_log_level(cls) -> int:
-        return min([device.log_level for device in cls.devices])
+        return min([device.log_level for device in cls.modbus])
 
     @classmethod
     def set_modbus_log_level(cls, level: int) -> None:
-        for device in cls.devices:
+        for device in cls.modbus:
             device.log_level = level
 
     @classmethod
@@ -98,15 +110,15 @@ class Config:
                 try:
                     match key:
                         case const.SIGENERGY2MQTT_CONSUMPTION:
-                            overrides["consumption"] = const.ConsumptionMethod(
+                            overrides["consumption"] = ConsumptionMethod(
                                 cast(
                                     str,
                                     check_string(
                                         os.environ[key],
                                         key,
-                                        const.ConsumptionMethod.CALCULATED.value,
-                                        const.ConsumptionMethod.TOTAL.value,
-                                        const.ConsumptionMethod.GENERAL.value,
+                                        ConsumptionMethod.CALCULATED.value,
+                                        ConsumptionMethod.TOTAL.value,
+                                        ConsumptionMethod.GENERAL.value,
                                         allow_empty=False,
                                         allow_none=False,
                                     ),
@@ -119,6 +131,8 @@ class Config:
                             overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
+                        case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
+                            overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
                             overrides["no-metrics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
@@ -304,7 +318,7 @@ class Config:
             if isinstance(auto_discovered, list):
                 for device in auto_discovered:
                     updated = False
-                    for defined in cls.devices:
+                    for defined in cls.modbus:
                         if (defined.host == device.get("host") or defined.host == "") and defined.port == device.get("port"):
                             if defined.host == "":
                                 defined.host = cast(str, device.get("host"))
@@ -317,19 +331,11 @@ class Config:
                             break
                     if not updated:
                         logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
-                        new_device = DeviceConfig()
+                        new_device = ModbusConfiguration()
                         new_device.configure(device, override=True, auto_discovered=True)
-                        cls.devices.append(new_device)
+                        cls.modbus.append(new_device)
             else:
                 raise ValueError("Auto-discovery results must be a list of modbus device configurations")
-
-        if len(cls.devices) == 0 or (len(cls.devices) == 1 and not getattr(cls.devices[0], "host", None)):
-            # Use Local auto_discovery to avoid "may be uninitialized"
-            _auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
-            if _auto_discovery in ("once", "force"):
-                raise ValueError("No Modbus devices configured and auto-discovery did not find any Sigenergy devices; please check that the devices are powered on and reachable over the network")
-            else:
-                raise ValueError("No Modbus devices configured")
 
     @staticmethod
     def version() -> str:
@@ -343,15 +349,15 @@ class Config:
                     Config.home_assistant.configure(data[name], override)
                 case "consumption":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: consumption = {data[name]}")
-                    Config.consumption = const.ConsumptionMethod(
+                    Config.consumption = ConsumptionMethod(
                         cast(
                             str,
                             check_string(
                                 data[name],
                                 name,
-                                const.ConsumptionMethod.CALCULATED.value,
-                                const.ConsumptionMethod.TOTAL.value,
-                                const.ConsumptionMethod.GENERAL.value,
+                                ConsumptionMethod.CALCULATED.value,
+                                ConsumptionMethod.TOTAL.value,
+                                ConsumptionMethod.GENERAL.value,
                                 allow_empty=False,
                                 allow_none=False,
                             ),
@@ -363,6 +369,9 @@ class Config:
                 case "sanity-check-default-kw":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
                     Config.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))
+                case "no-ems-mode-check":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-ems-mode-check = {data[name]}")
+                    Config.ems_mode_check = not check_bool(data[name], name)
                 case "no-metrics":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
                     Config.metrics_enabled = not check_bool(data[name], name)
@@ -373,11 +382,11 @@ class Config:
                         index = 0
                         for config in data[name]:
                             if isinstance(config, dict):
-                                if len(Config.devices) <= index:
-                                    device = DeviceConfig()
-                                    Config.devices.append(device)
+                                if len(Config.modbus) <= index:
+                                    device = ModbusConfiguration()
+                                    Config.modbus.append(device)
                                 else:
-                                    device = Config.devices[index]
+                                    device = Config.modbus[index]
                                 device.configure(config, override)
                             index += 1
                     else:

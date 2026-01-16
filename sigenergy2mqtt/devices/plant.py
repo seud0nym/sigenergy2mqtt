@@ -4,13 +4,13 @@ import logging
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
-from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol
+from sigenergy2mqtt.config import Config
 
 from .device import ModbusDevice
 from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
-from .types import DeviceType, HybridInverter
 
 
 class PowerPlant(ModbusDevice):
@@ -63,7 +63,7 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.GeneralPCSAlarm(plant_index, ro.GeneralAlarm1(plant_index), ro.GeneralAlarm2(plant_index)))
         self._add_read_sensor(ro.GeneralAlarm3(plant_index))
         self._add_read_sensor(ro.GeneralAlarm4(plant_index))
-        if len(Config.devices[plant_index].dc_chargers) > 0:
+        if len(Config.modbus[plant_index].dc_chargers) > 0:
             self._add_read_sensor(ro.GeneralAlarm5(plant_index))
         self._add_read_sensor(ro.PlantActivePower(plant_index), "Plant Power")
         self._add_read_sensor(ro.PlantReactivePower(plant_index), "Plant Power")
@@ -158,8 +158,8 @@ class PowerPlant(ModbusDevice):
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
         self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
         smartport = None
-        if Config.devices[plant_index].smartport.enabled:
-            smartport_config = Config.devices[plant_index].smartport
+        if Config.modbus[plant_index].smartport.enabled:
+            smartport_config = Config.modbus[plant_index].smartport
             if smartport_config.module.name:
                 module_config = smartport_config.module
                 module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{module_config.name}")

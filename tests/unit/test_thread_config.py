@@ -1,6 +1,6 @@
 import asyncio
 
-from sigenergy2mqtt.config.protocol import Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.main.thread_config import ThreadConfig, ThreadConfigFactory
 
@@ -52,9 +52,9 @@ def test_threadconfig_properties_and_methods(monkeypatch):
 
     class FakeSensor:
         def apply_sensor_overrides(self, registers):
-            called['ok'] = registers
+            called["ok"] = registers
 
     dev.all_sensors = {"s1": FakeSensor()}
     dev.registers = {"r": 1}
     tc.reload_config()
-    assert called.get('ok') == dev.registers
+    assert called.get("ok") == dev.registers

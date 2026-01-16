@@ -52,3 +52,6 @@ include = ["sigenergy2mqtt/**"]
 
 [tool.hatch.build.targets.wheel]
 include = ["sigenergy2mqtt/**"]
+
+[tool.pyright]
+ignore = ["tests"]

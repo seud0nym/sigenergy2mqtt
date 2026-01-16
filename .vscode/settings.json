@@ -52,6 +52,7 @@
         "PACKBCUCount",
         "paho",
         "pdst",
+        "preread",
         "proc",
         "pvoutput",
         "pymodbus",
@@ -84,6 +85,9 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.extraPaths": [
         "./sigenergy2mqtt"
+    ],
+    "python.analysis.exclude": [
+        "tests"
     ],
     "python.analysis.ignore": [
         "tests"

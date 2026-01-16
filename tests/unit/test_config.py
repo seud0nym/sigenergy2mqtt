@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest  # noqa: F401
 
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.config.modbus_config import DeviceConfig  # noqa: F401
+from sigenergy2mqtt.config.modbus_config import ModbusConfiguration  # noqa: F401
 
 
 class TestConfigStaticMethods:
@@ -12,10 +12,10 @@ class TestConfigStaticMethods:
 
     def test_get_modbus_log_level_single_device(self):
         """Test get_modbus_log_level with one device."""
-        with patch.object(Config, "devices", []):
+        with patch.object(Config, "modbus", []):
             device = MagicMock()
             device.log_level = logging.DEBUG
-            Config.devices.append(device)
+            Config.modbus.append(device)
 
             level = Config.get_modbus_log_level()
 
@@ -23,7 +23,7 @@ class TestConfigStaticMethods:
 
     def test_get_modbus_log_level_multiple_devices(self):
         """Test get_modbus_log_level returns minimum level."""
-        with patch.object(Config, "devices", []):
+        with patch.object(Config, "modbus", []):
             device1 = MagicMock()
             device1.log_level = logging.INFO
             device2 = MagicMock()
@@ -31,7 +31,7 @@ class TestConfigStaticMethods:
             device3 = MagicMock()
             device3.log_level = logging.WARNING
 
-            Config.devices = [device1, device2, device3]
+            Config.modbus = [device1, device2, device3]
 
             level = Config.get_modbus_log_level()
 
@@ -45,7 +45,7 @@ class TestConfigStaticMethods:
         device2 = MagicMock()
         device2.log_level = logging.ERROR
 
-        Config.devices = [device1, device2]
+        Config.modbus = [device1, device2]
 
         Config.set_modbus_log_level(logging.INFO)
 
@@ -98,6 +98,10 @@ class TestConfigDefaults:
         path = Config.persistent_state_path
         assert path == "." or (hasattr(path, "is_absolute") and path.is_absolute())
 
+    def test_default_ems_mode_check(self):
+        """Test default ems_mode_check flag."""
+        assert Config.ems_mode_check is True
+
 
 class TestConfigConfiguration:
     """Tests for Config._configure method."""
@@ -113,7 +117,7 @@ class TestConfigConfiguration:
     def test_configure_consumption(self):
         """Test configuring consumption method."""
         Config._configure({"consumption": "total"})
-        from sigenergy2mqtt.config.const import ConsumptionMethod
+        from sigenergy2mqtt.common import ConsumptionMethod
 
         assert Config.consumption == ConsumptionMethod.TOTAL
 
@@ -129,6 +133,13 @@ class TestConfigConfiguration:
         Config._configure({"no-metrics": False})
         assert Config.metrics_enabled is True
 
+    def test_configure_ems_mode_check(self):
+        """Test configuring ems_mode_check."""
+        Config._configure({"no-ems-mode-check": True})
+        assert Config.ems_mode_check is False
+        Config._configure({"no-ems-mode-check": False})
+        assert Config.ems_mode_check is True
+
 
 class TestConfigReload:
     """Tests for Config.reload method."""
@@ -143,6 +154,16 @@ class TestConfigReload:
         with patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG"}):
             Config.reload()
             assert Config.log_level == logging.DEBUG
+
+    @patch("sigenergy2mqtt.config.config.os.getenv")
+    @patch("sigenergy2mqtt.config.config.os.environ", {})
+    def test_reload_with_no_ems_mode_check_env(self, mock_getenv):
+        """Test reload with SIGENERGY2MQTT_NO_EMS_MODE_CHECK environment variable."""
+        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_NO_EMS_MODE_CHECK
+
+        with patch.dict("os.environ", {SIGENERGY2MQTT_NO_EMS_MODE_CHECK: "true"}):
+            Config.reload()
+            assert Config.ems_mode_check is False
 
     @patch("sigenergy2mqtt.config.config.auto_discovery_scan")
     @patch("sigenergy2mqtt.config.config.os.getenv")
@@ -162,7 +183,7 @@ class TestConfigReload:
 
     def test_devices_list_exists(self):
         """Test devices list exists and is a list."""
-        assert isinstance(Config.devices, list)
+        assert isinstance(Config.modbus, list)
 
     def test_sensor_overrides_dict_exists(self):
         """Test sensor overrides dict exists."""

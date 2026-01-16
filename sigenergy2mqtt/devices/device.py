@@ -10,7 +10,8 @@ from typing import Any, Awaitable, cast
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.config import Config, Protocol, RegisterAccess
+from sigenergy2mqtt.common import DeviceType, Protocol, RegisterAccess
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -27,8 +28,6 @@ from sigenergy2mqtt.sensors.base import (
     WriteOnlySensor,
 )
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
-
-from .types import DeviceType
 
 
 class SensorGroup(list[ReadableSensorMixin]):
@@ -49,7 +48,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
         self.plant_index = plant_index
         self.protocol_version = protocol_version
-        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(Config.devices) else Config.devices[plant_index].registers
+        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(Config.modbus) else Config.modbus[plant_index].registers
 
         self.children: list[Device] = []
 
@@ -195,7 +194,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     def _create_sensor_scan_groups(self) -> dict[str, list[ReadableSensorMixin]]:
         combined_sensors: dict[str, ReadableSensorMixin] = self.read_sensors.copy()
         combined_groups: dict[str, list[ReadableSensorMixin]] = self.group_sensors.copy()
-        named_group_sensors: dict[int, ModbusSensorMixin] = {}
+        named_group_sensors: dict[int, ModbusSensorMixin] = {s.address: s for sublist in self.group_sensors.values() for s in sublist if isinstance(s, ModbusSensorMixin)}
         first_address: int = -1
         next_address: int = -1
         device_address: int = -1
@@ -216,7 +215,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             key=lambda s: (s.device_address, s.address),
         ):
             if (  # Conditions for creating a new sensor scan group
-                Config.devices[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
+                Config.modbus[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
                 or group_name is None  # First sensor
                 or device_address != sensor.device_address  # Device address changed
                 or sensor.address > next_address  # Non-contiguous addresses
@@ -294,11 +293,15 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         if ha_state == "online":
             seconds = float(randint(0, 3) + (randint(0, 10) / 10))
             logging.info(f"{self.name} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
-            await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
-            await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
-            for sensor in self.sensors.values():
-                await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
-            return True
+            try:
+                await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
+                await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
+                for sensor in self.sensors.values():
+                    await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
+                return True
+            except asyncio.CancelledError:
+                logging.debug(f"{self.__class__.__name__} on_ha_state_change sleep interrupted")
+                return False
         else:
             return False
 
@@ -351,7 +354,6 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         # Setup for Modbus read-ahead optimization
         modbus_sensors = [s for s in sensors if isinstance(s, ModbusSensorMixin)]
-        multiple: bool = len(modbus_sensors) > 1
         first_address: int = -1
         last_address: int = -1
         count: int = -1
@@ -363,6 +365,8 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             last_address = max([s.address + s.count - 1 for s in modbus_sensors if s.publishable])
             count = last_address - first_address + 1
             device_address, input_type = next((s.device_address, s.input_type) for s in modbus_sensors if s.address == first_address)
+
+        multiple: bool = len(modbus_sensors) > 1 and 1 <= count <= MAX_MODBUS_REGISTERS_PER_REQUEST
 
         debug_logging: bool = False
         daily_sensors: list[ReadableSensorMixin] = []
@@ -383,8 +387,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                     await sensor.publish(mqtt_client, modbus_client, republish=True)
 
         if debug_logging:
-            logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} sensors={len(sensors)})")
-            logging.debug(f"{self.name} Sensor Scan Group [{name}] commenced with per-sensor timing ({len(daily_sensors)} daily sensors)")
+            logging.debug(f"{self.name} Sensor Scan Group [{name}] instantiated ({multiple=} {first_address=} {last_address=} {count=} sensors={len(sensors)} daily_sensors={len(daily_sensors)})")
 
         lock = ModbusLockFactory.get(modbus_client)
         last_day = time.localtime(now).tm_yday
@@ -499,12 +502,16 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     async def republish_discovery(self, mqtt_client: mqtt.Client) -> None:
         wait = Config.home_assistant.republish_discovery_interval
         while self.online and Config.home_assistant.republish_discovery_interval > 0:
-            await asyncio.sleep(1)
-            wait -= 1
-            if wait <= 0:
-                logging.info(f"{self.name} re-publishing discovery")
-                self.publish_discovery(mqtt_client, clean=False)
-                wait = Config.home_assistant.republish_discovery_interval
+            try:
+                await asyncio.sleep(1)
+                wait -= 1
+                if wait <= 0:
+                    logging.info(f"{self.name} re-publishing discovery")
+                    self.publish_discovery(mqtt_client, clean=False)
+                    wait = Config.home_assistant.republish_discovery_interval
+            except asyncio.CancelledError:
+                logging.debug(f"{self.__class__.__name__} republish_discovery sleep interrupted")
+                break
 
     def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         groups = self._create_sensor_scan_groups()

@@ -5,9 +5,9 @@ from typing import Tuple, cast
 
 from pymodbus import pymodbus_apply_logging_config
 
-from sigenergy2mqtt.config import Config, ConsumptionMethod, Protocol, ProtocolApplies
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol, ProtocolApplies
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import DeviceType, HybridInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.types import ModbusClientType
@@ -26,12 +26,13 @@ serial_numbers = []
 
 
 async def async_main() -> None:
+    Config.validate()
     pymodbus_apply_logging_config(Config.get_modbus_log_level())
     configure_logging()
 
     protocol_version: Protocol | None = None
-    for plant_index in range(len(Config.devices)):
-        device = Config.devices[plant_index]
+    for plant_index in range(len(Config.modbus)):
+        device = Config.modbus[plant_index]
         if device.registers.read_only or device.registers.read_write or device.registers.write_only:
             config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
             modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
@@ -84,11 +85,15 @@ async def async_main() -> None:
     configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
 
     svc_thread_cfg = ThreadConfig(None, None, name="Services")
-    svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
+    if Config.metrics_enabled:
+        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
             svc_thread_cfg.add_device(-1, service)
-    configs.insert(0, svc_thread_cfg)
+    if svc_thread_cfg.has_devices:
+        configs.insert(0, svc_thread_cfg)
+    else:
+        logging.info("No services configured - skipping service thread")
 
     if Config.log_level == logging.DEBUG:
         mon_thread_cfg = ThreadConfig(None, None, name="Monitor")

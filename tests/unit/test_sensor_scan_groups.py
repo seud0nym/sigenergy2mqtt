@@ -10,7 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.config import Config, Protocol
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
@@ -49,26 +50,29 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
 def mock_config():
     """Setup minimal Config for Device tests."""
     conf = cast(Any, Config)
-    original_devices = conf.devices if hasattr(conf, "devices") else []
+    original_devices = conf.modbus if hasattr(conf, "devices") else []
     original_ha = conf.home_assistant if hasattr(conf, "home_assistant") else None
 
     class D:
         registers = {}
         disable_chunking = False
 
-    conf.devices = [D()]
+    conf.modbus = [D()]
     conf.home_assistant = types.SimpleNamespace(
         device_name_prefix="",
         unique_id_prefix="sigen",
         discovery_prefix="homeassistant",
         enabled=False,
         republish_discovery_interval=0,
+        entity_id_prefix="sigen",
+        use_simplified_topics=False,
+        edit_percentage_with_box=False,
     )
     conf.persistent_state_path = Path(".")
 
     yield conf
 
-    conf.devices = original_devices
+    conf.modbus = original_devices
     if original_ha:
         conf.home_assistant = original_ha
     DeviceRegistry._devices.clear()
@@ -197,6 +201,63 @@ class TestCreateSensorScanGroups:
         assert group[0] == s1
         assert group[1] == r2
         assert group[2] == s2
+
+    def test_respects_disable_chunking_true(self, mock_config):
+        """Verify that contiguous sensors are NOT grouped when disable_chunking is True."""
+        mock_config.modbus[0].disable_chunking = True
+        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+
+        s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
+        s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
+
+        dev._add_read_sensor(cast(Sensor, s1))
+        dev._add_read_sensor(cast(Sensor, s2))
+
+        groups = dev._create_sensor_scan_groups()
+        modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
+
+        # Should be split into 2 groups despite being contiguous
+        assert len(modbus_groups) == 2
+        assert len(modbus_groups[0]) == 1
+        assert len(modbus_groups[1]) == 1
+
+    def test_respects_disable_chunking_false(self, mock_config):
+        """Verify that contiguous sensors ARE grouped when disable_chunking is False."""
+        mock_config.modbus[0].disable_chunking = False
+        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+
+        s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
+        s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
+
+        dev._add_read_sensor(cast(Sensor, s1))
+        dev._add_read_sensor(cast(Sensor, s2))
+
+        groups = dev._create_sensor_scan_groups()
+        modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
+
+        # Should be in 1 group
+        assert len(modbus_groups) == 1
+        assert len(modbus_groups[0]) == 2
+
+    def test_named_groups_ignore_disable_chunking(self, mock_config):
+        """Verify that sensors in a named group REMAIN grouped even when disable_chunking is True."""
+        mock_config.modbus[0].disable_chunking = True
+        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+
+        s1 = DummyModbusSensor("s1", address=100)
+        s2 = DummyModbusSensor("s2", address=101)
+
+        # Add both to the same named group
+        dev._add_read_sensor(cast(Sensor, s1), group="MyGroup")
+        dev._add_read_sensor(cast(Sensor, s2), group="MyGroup")
+
+        groups = dev._create_sensor_scan_groups()
+
+        # "MyGroup" should exist and contain both sensors
+        assert "MyGroup" in groups
+        assert len(groups["MyGroup"]) == 2
+        assert s1 in groups["MyGroup"]
+        assert s2 in groups["MyGroup"]
 
 
 class TestPublishUpdates:

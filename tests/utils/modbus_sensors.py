@@ -6,9 +6,9 @@ from typing import cast
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from sigenergy2mqtt.config import Config, Protocol, ProtocolApplies
+from sigenergy2mqtt.common import DeviceType, Protocol, ProtocolApplies
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.devices.types import DeviceType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
@@ -26,13 +26,13 @@ async def get_sensor_instances(
 ) -> dict[str, Sensor]:
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
-    Config.devices[plant_index].dc_chargers.append(dc_charger_device_address)
-    Config.devices[plant_index].ac_chargers.append(ac_charger_device_address)
+    Config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
+    Config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 
-    Config.devices[plant_index].smartport.enabled = True
-    Config.devices[plant_index].smartport.module.name = "enphase"
-    Config.devices[plant_index].smartport.module.pv_power = "EnphasePVPower"
-    Config.devices[plant_index].smartport.module.testing = True
+    Config.modbus[plant_index].smartport.enabled = True
+    Config.modbus[plant_index].smartport.module.name = "enphase"
+    Config.modbus[plant_index].smartport.module.pv_power = "EnphasePVPower"
+    Config.modbus[plant_index].smartport.module.testing = True
 
     Config.home_assistant.enabled = hass
 

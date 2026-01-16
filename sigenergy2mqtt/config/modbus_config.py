@@ -2,16 +2,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, cast
 
-from .smart_port_config import SmartPortConfig
+from sigenergy2mqtt.common import RegisterAccess
+
+from .smart_port_config import SmartPortConfiguration
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port
-
-
-@dataclass
-class RegisterAccess:
-    no_remote_ems: bool = False
-    read_only: bool = True
-    read_write: bool = True
-    write_only: bool = True
 
 
 @dataclass
@@ -23,7 +17,7 @@ class ScanInterval:
 
 
 @dataclass
-class DeviceConfig:
+class ModbusConfiguration:
     host: str = ""
     port: int = 502
 
@@ -37,10 +31,14 @@ class DeviceConfig:
 
     log_level: int = logging.WARNING
 
-    registers = RegisterAccess()
-    scan_interval = ScanInterval()
+    registers: RegisterAccess = field(default_factory=RegisterAccess)
+    scan_interval: ScanInterval = field(default_factory=ScanInterval)
 
-    smartport = SmartPortConfig()
+    smartport: SmartPortConfiguration = field(default_factory=SmartPortConfiguration)
+
+    def validate(self) -> None:
+        if not self.host:
+            raise ValueError("modbus.host must be provided")
 
     def configure(self, config: Any, override: bool = False, auto_discovered: bool = False) -> None:
         if isinstance(config, dict):

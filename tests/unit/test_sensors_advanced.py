@@ -17,11 +17,31 @@ class MockPVInverter:
 
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.devices.types"] = mock_types
+sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
-from sigenergy2mqtt.config import Protocol  # noqa: E402
+from sigenergy2mqtt.common import Protocol  # noqa: E402
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def mock_config():
+    """Mock Config for all tests in this module."""
+    with patch("sigenergy2mqtt.sensors.base.Config") as mock_conf:
+        import types
+
+        mock_conf.home_assistant = types.SimpleNamespace(
+            enabled=True,
+            use_simplified_topics=False,
+            edit_percentage_with_box=False,
+            discovery_prefix="homeassistant",
+            unique_id_prefix="sigen",
+            entity_id_prefix="sigenergy",
+            enabled_by_default=True,
+        )
+        mock_conf.sensor_debug_logging = False
+        mock_conf.sensor_overrides = {}
+        yield mock_conf
 
 
 # Concrete implementation of Sensor for testing
