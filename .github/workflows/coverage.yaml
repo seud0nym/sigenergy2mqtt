@@ -26,6 +26,10 @@ jobs:
       - name: Create Hatch environment
         run: hatch env create
 
+      - name: Install test tools inside Hatch env
+        run: |
+          hatch run pip install pytest pytest-cov
+
       - name: Run tests with coverage
         id: pytest
         run: |
