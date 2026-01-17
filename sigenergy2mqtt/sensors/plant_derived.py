@@ -360,6 +360,10 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         if failed_over and source_id in self._sources:
             logging.info(f"{self.__class__.__name__} Disabling '{source_id}' as SmartPort source because failover sources enabled")
             self._sources[source_id].enabled = False
+        if failed_over:
+            logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0 because failover source enabled")
+            self._failures = 0
+            self._next_retry = None
         return failed_over
 
     def get_attributes(self) -> dict[str, float | int | str]:
