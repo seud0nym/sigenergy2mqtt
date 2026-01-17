@@ -427,7 +427,48 @@ class TestTotalPVPowerCoverage:
         sensor = TotalPVPower(0, s1)
         sensor.debug_logging = True
         sensor.set_source_values(s1, [(0, 100)])
+
         assert "Updated from enabled source 's1'" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_silent_failover_timeout(self, mock_config):
+        mock_config.modbus[0].scan_interval.realtime = 1
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            # Setup source sensors
+            s1 = MagicMock(spec=PVPowerSensor)
+            s1.unique_id = "s1"
+            s1.gain = 1.0
+
+            # Initialize TotalPVPower with s1 as primary (SMARTPORT intent)
+            sensor = TotalPVPower(0)
+            sensor.configure_mqtt_topics("test_device")
+
+            # Manually register s1 as SMARTPORT source
+            sensor.register_source_sensors(s1, type=TotalPVPower.SourceType.SMARTPORT, enabled=True)
+
+            # Add a FAILOVER source
+            s2 = MagicMock(spec=PVPowerSensor)
+            s2.unique_id = "s2"
+            s2.gain = 1.0
+            sensor.register_source_sensors(s2, type=TotalPVPower.SourceType.FAILOVER, enabled=False)
+
+            # Initial update works
+            start_time = 1000.0
+            with patch("time.time", return_value=start_time):
+                sensor.set_source_values(s1, [(start_time, 1000.0)])
+
+            assert sensor.latest_raw_state == 1000.0
+            assert sensor._sources["s1"].enabled is True
+            assert sensor._sources["s2"].enabled is False
+
+            # Now s1 goes silent. Time passes beyond timeout (1s * 5 = 5s)
+            # We simulate checking at start_time + 6s
+            with patch("time.time", return_value=start_time + 6.0):
+                await sensor.publish(MagicMock(), None)
+
+            # Check source statuses - FAILOVER should be enabled, S1 disabled
+            assert sensor._sources["s1"].enabled is False, "S1 should be disabled after timeout"
+            assert sensor._sources["s2"].enabled is True, "S2 should be enabled after timeout"
 
 
 class TestTotalLifetimePVEnergyCoverage:

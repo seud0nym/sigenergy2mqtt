@@ -307,6 +307,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         type: str
         enabled: bool = True
         state: float | None = None
+        last_update: float | None = None
 
         def __repr__(self):
             return f"{self.state} ({self.type}/{'enabled' if self.enabled else 'disabled'})"
@@ -328,6 +329,16 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         self._sources: dict[str, TotalPVPower.Value] = dict()
         self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)
 
+    async def _check_timeouts(self) -> None:
+        # Check for timeouts
+        now = time.time()
+        timeout = Config.modbus[self.plant_index].scan_interval.realtime * 5  # 5x poll interval grace period
+        for source_id, value in self._sources.items():
+            if value.enabled and value.type == TotalPVPower.SourceType.SMARTPORT:
+                if value.last_update and (now - value.last_update > timeout):
+                    logging.warning(f"{self.__class__.__name__} Failover triggered: Source '{source_id}' timed out (last_update={now - value.last_update:.1f}s ago, timeout={timeout}s)")
+                    self.failover(source_id)
+
     def fallback(self, source: str):
         logging.info(f"{self.__class__.__name__} Re-enabling '{source}' as source because state updated (state={self._sources[source].state})")
         self._sources[source].enabled = True
@@ -336,18 +347,19 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
                 logging.info(f"{self.__class__.__name__} Disabling '{id}' as failover source because state updated from SmartPort sensor '{source}'")
                 value.enabled = False
 
-    def failover(self, smartport_sensor: Sensor) -> bool:
+    def failover(self, smartport_sensor: Sensor | str) -> bool:
         failed_over = False
+        source_id = smartport_sensor if isinstance(smartport_sensor, str) else smartport_sensor.unique_id
         for id, value in self._sources.items():
             if value.type == TotalPVPower.SourceType.FAILOVER:
                 if value.enabled:
                     return True
-                logging.info(f"{self.__class__.__name__} Enabling '{id}' as failover source because SmartPort sensor '{smartport_sensor.unique_id}' failed")
+                logging.info(f"{self.__class__.__name__} Enabling '{id}' as failover source because SmartPort sensor '{source_id}' failed")
                 value.enabled = True
                 failed_over = True
-        if failed_over and smartport_sensor.unique_id in self._sources:
-            logging.info(f"{self.__class__.__name__} Disabling '{smartport_sensor.unique_id}' as SmartPort source because failover sources enabled")
-            self._sources[smartport_sensor.unique_id].enabled = False
+        if failed_over and source_id in self._sources:
+            logging.info(f"{self.__class__.__name__} Disabling '{source_id}' as SmartPort source because failover sources enabled")
+            self._sources[source_id].enabled = False
         return failed_over
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -363,6 +375,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
                 self.fallback(source)
             self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
+            self._sources[source].last_update = time.time()
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[source].enabled else 'disabled'}) topic {source} - {self._sources=}")
             if self._sources[source].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
@@ -388,6 +401,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if not republish:
+            await self._check_timeouts()
             if any(value.state is None for value in self._sources.values() if value.enabled):
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
@@ -418,6 +432,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
             self.fallback(source)
         self._sources[source].state = values[-1][1]
+        self._sources[source].last_update = time.time()
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
         if not self._sources[source].enabled or any(value.state is None for value in self._sources.values() if value.enabled):
