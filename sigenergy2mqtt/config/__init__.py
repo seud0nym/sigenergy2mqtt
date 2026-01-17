@@ -46,7 +46,14 @@ if Config.persistent_state_path == ".":
 persistent_state_path = Path(Config.persistent_state_path)
 threshold_time = time.time() - (7 * 86400)
 for file in persistent_state_path.iterdir():
-    if file.is_file() and not file.name.endswith(".yaml") and not file.name.endswith(".publishable") and not file.name.endswith(".token") and file.stat().st_mtime < threshold_time:
+    if (
+        file.is_file()
+        and file.stat().st_mtime < threshold_time
+        and not file.name == ".current-version"
+        and not file.name.endswith(".yaml")
+        and not file.name.endswith(".publishable")
+        and not file.name.endswith(".token")
+    ):
         _logger.info(f"Removing stale state file: {file} (last modified: {time.ctime(file.stat().st_mtime)})")
         file.unlink()
 
