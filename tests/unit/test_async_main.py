@@ -22,9 +22,8 @@ async def test_async_main_with_no_devices(monkeypatch):
 
     called = {}
 
-    async def fake_start(configs, upgrade_clean_required):
+    async def fake_start(configs):
         called["configs"] = configs
-        called["upgrade"] = upgrade_clean_required
 
     # Prevent changing real signal handlers in test runner
     monkeypatch.setattr(signal, "signal", lambda *a, **k: None)
@@ -58,7 +57,7 @@ async def test_async_main_registers_signal_handlers_and_callable(monkeypatch):
 
     called = {}
 
-    async def fake_start(configs, upgrade_clean_required):
+    async def fake_start(configs):
         called["called"] = True
 
     monkeypatch.setattr(main_mod, "start", fake_start)
@@ -100,7 +99,7 @@ async def test_async_main_writes_persistent_version_on_upgrade(tmp_path, monkeyp
     monkeypatch.setattr(Config, "version", staticmethod(lambda: "new-version"), raising=False)
 
     # Ensure start doesn't actually run threads
-    async def fake_start(configs, upgrade_clean_required):
+    async def fake_start(configs):
         return
 
     monkeypatch.setattr(main_mod, "start", fake_start)

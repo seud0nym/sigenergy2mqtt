@@ -13,7 +13,7 @@ from sigenergy2mqtt.mqtt import mqtt_setup
 from .thread_config import ThreadConfig
 
 
-async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_required: bool, loop: asyncio.AbstractEventLoop):
+async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop):
     threading.current_thread().name = f"{config.description}Thread"
 
     device: Device
@@ -28,9 +28,9 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
     mqtt_client_id = f"{Config.mqtt.client_id_prefix}_{config.description}"
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
-    for device in config.devices:
+    for device, clean_on_start in config.device_init:
         method = device.publish_discovery if Config.home_assistant.enabled else device.publish_attributes
-        if upgrade_clean_required or Config.clean:
+        if clean_on_start or Config.clean:
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=True)
         if not Config.clean:  # Publish HA device
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=False)
@@ -73,21 +73,21 @@ async def read_and_publish_device_sensors(config: ThreadConfig, upgrade_clean_re
     return
 
 
-def run_modbus_event_loop(device: ThreadConfig, upgrade_clean_required: bool, loop: asyncio.AbstractEventLoop):
+def run_modbus_event_loop(device: ThreadConfig, loop: asyncio.AbstractEventLoop):
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(read_and_publish_device_sensors(device, upgrade_clean_required, loop))
+        loop.run_until_complete(read_and_publish_device_sensors(device, loop))
     except Exception:
         logging.exception(f"{device.description} thread crashed !!!")
     finally:
         loop.close()
 
 
-async def start(configs: list[ThreadConfig], upgrade_clean_required: bool):
+async def start(configs: list[ThreadConfig]):
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(configs)) as executor:
         executions: list[concurrent.futures.Future] = []
         for config in configs:
-            executions.append(executor.submit(run_modbus_event_loop, config, upgrade_clean_required, asyncio.new_event_loop()))
+            executions.append(executor.submit(run_modbus_event_loop, config, asyncio.new_event_loop()))
         done, pending = concurrent.futures.wait(executions)
         for fut in done:
             try:

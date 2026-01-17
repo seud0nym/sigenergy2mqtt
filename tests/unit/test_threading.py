@@ -79,7 +79,7 @@ async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
     loop = asyncio.new_event_loop()
     orig_name = threading.current_thread().name
     try:
-        await threading_mod.read_and_publish_device_sensors(cfg, upgrade_clean_required=False, loop=loop)
+        await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
     finally:
         loop.close()
         threading.current_thread().name = orig_name
@@ -118,7 +118,7 @@ async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch
     loop = asyncio.new_event_loop()
     orig_name = threading.current_thread().name
     try:
-        await threading_mod.read_and_publish_device_sensors(cfg, upgrade_clean_required=False, loop=loop)
+        await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
     finally:
         loop.close()
         threading.current_thread().name = orig_name
@@ -142,7 +142,7 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
     loop = asyncio.new_event_loop()
     orig_name = threading.current_thread().name
     try:
-        threading_mod.run_modbus_event_loop(cfg, False, loop)
+        threading_mod.run_modbus_event_loop(cfg, loop)
     finally:
         threading.current_thread().name = orig_name
 
@@ -153,6 +153,6 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
     monkeypatch.setattr(threading_mod, "run_modbus_event_loop", bad_runner)
 
     # start should not raise
-    asyncio.run(threading_mod.start([cfg], upgrade_clean_required=False))
+    asyncio.run(threading_mod.start([cfg]))
     # asyncio.run() closes the running loop; restore a default loop for remaining tests
     asyncio.set_event_loop(asyncio.new_event_loop())

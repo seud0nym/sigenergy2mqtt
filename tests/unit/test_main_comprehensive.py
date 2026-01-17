@@ -267,7 +267,7 @@ async def test_async_main_with_services_enabled(clean_config, monkeypatch):
     def fake_thread_config(*args, **kwargs):
         cfg = MagicMock()
         cfg.has_devices = False
-        cfg.add_device = lambda *a: setattr(cfg, "has_devices", True)
+        cfg.add_device = lambda *a, **k: setattr(cfg, "has_devices", True)
         configs_list.append(cfg)
         return cfg
 

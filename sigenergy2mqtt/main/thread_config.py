@@ -10,6 +10,7 @@ from sigenergy2mqtt.sensors.base import Sensor
 class DeviceIndex:
     index: int
     device: Device
+    clean_on_start: bool = False
 
 
 @dataclass
@@ -31,6 +32,10 @@ class ThreadConfig:
         return [host.device for host in self._devices]
 
     @property
+    def device_init(self) -> list[tuple[Device, bool]]:
+        return [(host.device, host.clean_on_start) for host in self._devices]
+
+    @property
     def has_devices(self) -> bool:
         return len(self._devices) > 0
 
@@ -38,8 +43,8 @@ class ThreadConfig:
     def url(self) -> str:
         return self.name if self.host is None or self.host.isspace() else f"modbus://{self.host}:{self.port}"
 
-    def add_device(self, plant_index: int, device: Device) -> None:
-        self._devices.append(DeviceIndex(plant_index, device))
+    def add_device(self, plant_index: int, device: Device, clean_on_start: bool = False) -> None:
+        self._devices.append(DeviceIndex(plant_index, device, clean_on_start))
 
     def offline(self) -> None:
         for config in self._devices:

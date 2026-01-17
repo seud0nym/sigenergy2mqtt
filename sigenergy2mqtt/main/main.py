@@ -86,7 +86,7 @@ async def async_main() -> None:
 
     svc_thread_cfg = ThreadConfig(None, None, name="Services")
     if Config.metrics_enabled:
-        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
+        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A), clean_on_start=True)
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
             svc_thread_cfg.add_device(-1, service)
@@ -148,7 +148,7 @@ async def async_main() -> None:
     else:
         upgrade_detected = False
 
-    await start(configs, False)  # Removed upgrade_clean_required because it deletes associated statistics helper entities (#77)
+    await start(configs)
     logging.info("Shutdown completed")
 
 
