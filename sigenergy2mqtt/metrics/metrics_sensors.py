@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Any, cast
 
-from sigenergy2mqtt.common import ProtocolApplies
+from sigenergy2mqtt.common import Protocol, ProtocolApplies
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
@@ -262,7 +262,7 @@ class Started(MetricsSensor):
 
 
 class ProtocolVersion(MetricsSensor):
-    def __init__(self):
+    def __init__(self, protocol_version: Protocol):
         super().__init__(
             name="Protocol Version",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_protocol",
@@ -270,8 +270,7 @@ class ProtocolVersion(MetricsSensor):
             icon="mdi:book-information-variant",
         )
         self["entity_category"] = "diagnostic"
-        # Override state topic to match original: sigenergy2mqtt/metrics/modbus_protocol
-        # configure_mqtt_topics will handle it correctly with the suffix logic
+        self.protocol_version = protocol_version
 
     async def _update_internal_state(self, **kwargs) -> bool:
         value = self.protocol_version.value

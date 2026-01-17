@@ -28,7 +28,7 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ModbusWriteMin())
 
         self._add_read_sensor(sensors.Started())
-        self._add_read_sensor(sensors.ProtocolVersion())
+        self._add_read_sensor(sensors.ProtocolVersion(protocol_version))
         self._add_read_sensor(sensors.ProtocolPublished())
 
     async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
