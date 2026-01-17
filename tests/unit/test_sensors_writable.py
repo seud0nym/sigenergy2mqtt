@@ -151,6 +151,7 @@ class TestWritableSensorMixin:
 
             with pytest.raises(Exception, match="0x01 ILLEGAL FUNCTION"):
                 await sensor._write_registers(mock_modbus, 1, MagicMock())
+            assert sensor.force_publish is True
 
     @pytest.mark.asyncio
     async def test_write_registers_timeout(self, mock_modbus):
@@ -170,6 +171,7 @@ class TestWritableSensorMixin:
 
                 result = await sensor._write_registers(mock_modbus, 1, MagicMock())
                 assert result is False
+                assert sensor.force_publish is True
 
     @pytest.mark.asyncio
     async def test_write_registers_cancelled(self, mock_lock_factory, mock_modbus):
@@ -179,6 +181,7 @@ class TestWritableSensorMixin:
 
             result = await sensor._write_registers(mock_modbus, 1, MagicMock())
             assert result is False
+            assert sensor.force_publish is True
 
 
 class TestWriteOnlySensorLogic:

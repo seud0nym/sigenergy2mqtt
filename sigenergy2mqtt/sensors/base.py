@@ -617,9 +617,10 @@ class ModbusSensorMixin(SensorDebuggingMixin):
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS")
                     if self.debug_logging:
                         logging.debug(rr)
-                    logging.warning(f"{self.__class__.__name__} Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
-                    self._max_failures = 0
-                    self._max_failures_retry_interval = 0
+                    if source != "write_registers":
+                        logging.warning(f"{self.__class__.__name__} Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
+                        self._max_failures = 0
+                        self._max_failures_retry_interval = 0
                     raise Exception("0x02 ILLEGAL DATA ADDRESS")
                 case 3:
                     logging.error(f"{self.__class__.__name__} Modbus {source} returned 0x03 ILLEGAL DATA VALUE")
@@ -893,6 +894,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         else:
             registers = modbus_client.convert_to_registers(int(raw_value), self.data_type)
         method = "write_register" if len(registers) == 1 else "write_registers"
+        self.force_publish = True
         try:
             start = time.monotonic()
             async with ModbusLockFactory.get(modbus_client).lock(max_wait):
@@ -907,22 +909,19 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} {method}({self.address}, value={registers}, {device_id=}, {no_response_expected=}) [plant_index={self.plant_index}] took {elapsed:.3f}s")
             result = self._check_register_response(rr, method)
-            if result:
-                self.force_publish = True
             return result
         except asyncio.CancelledError:
             logging.warning(f"{self.__class__.__name__} Modbus write interrupted")
-            result = False
+            return False
         except asyncio.TimeoutError:
             logging.warning(f"{self.__class__.__name__} Modbus write failed to acquire lock within {max_wait}s")
-            result = False
+            return False
         except Exception as e:
             logging.error(f"{self.__class__.__name__} write_registers: {repr(e)}")
             # use module-level `Metrics` (set at import time) so tests can
             # patch either the module or the `Metrics` name.
             await Metrics.modbus_write_error()
             raise
-        return result
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
