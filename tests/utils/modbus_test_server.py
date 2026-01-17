@@ -197,6 +197,11 @@ class CustomDataBlock(ModbusSparseDataBlock):
         return result
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
+        if address in self.addresses:
+            sensor = self.addresses[address]
+            if hasattr(sensor, "_availability_control_sensor") and sensor._availability_control_sensor.__class__.__name__ == "RemoteEMS":
+                if sensor._availability_control_sensor.latest_raw_state == 0:
+                    return ExcCodes.ILLEGAL_ADDRESS
         self._written_addresses.append(address)
         _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
         return super().setValues(address, values)
