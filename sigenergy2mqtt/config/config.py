@@ -47,6 +47,12 @@ class Config:
         for device in cls.modbus:
             device.validate()
 
+            if not cls.ems_mode_check:
+                if device.registers.no_remote_ems:
+                    raise ValueError("When ems_mode_check is disabled, no_remote_ems must be False")
+                if not device.registers.read_write:
+                    raise ValueError("When ems_mode_check is disabled, read_write must be True")
+
         cls.mqtt.validate()
         cls.home_assistant.validate()
         cls.pvoutput.validate()
