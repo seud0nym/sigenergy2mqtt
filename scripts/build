@@ -51,9 +51,6 @@ cd resources
 python3 update_md.py
 cd - >> /dev/null
 
-echo -e "${GREEN}>>> Checking dependencies...${NC}"
-scripts/dependencies
-
 echo -e "${GREEN}>>> Running test suite...${NC}"
 pytest -q --disable-warnings || exit
 

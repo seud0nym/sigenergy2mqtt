@@ -2,7 +2,11 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 git restore sigenergy2mqtt/config/version.py
-. $(dirname $0)/build docker
+
+echo -e "${GREEN}>>> Checking dependencies...${NC}"
+scripts/dependencies
+
+. $(dirname $0)/build
 
 read -p "Confirm version bump? (y/n): " confirm
 if [[ "$confirm" != "y" ]]; then
