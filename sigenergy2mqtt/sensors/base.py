@@ -469,13 +469,9 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
                 if Config.home_assistant.enabled:
                     self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{repr(e)}")
                 if self._failures >= self._max_failures:
-                    logging.warning(
-                        f"{self.__class__.__name__} Publishing DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded: {self._failures}"
-                    )
-                    for sensor in self._derived_sensors.values():
-                        logging.warning(
-                            f"{sensor.__class__.__name__} Publishing DISABLED until {'restart' if self._next_retry is None else time.strftime('%c', time.localtime(self._next_retry))} - MAX_FAILURES exceeded ({self._failures}) for source sensor {self.__class__.__name__}"
-                        )
+                    next = "restart" if self._next_retry is None else time.strftime("%c", time.localtime(self._next_retry))
+                    affected = [s.__class__.__name__ for s in self._derived_sensors.values()]
+                    logging.warning(f"{self.__class__.__name__} Publishing DISABLED until {next} ({self._failures} failures >= {self._max_failures}) Affected derived sensors={','.join(affected)}")
             finally:
                 self.force_publish = False
         elif self.debug_logging:

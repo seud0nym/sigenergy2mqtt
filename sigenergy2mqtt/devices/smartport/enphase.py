@@ -94,11 +94,9 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
                             sensor.set_source_values(self, self._states)
                         self._failover_initiated = False
                         return True
-                    except ValueError as e:
-                        logging.error(f"{self.__class__.__name__} Invalid JSON response from {url}: {e}")
-                        raise
                     except Exception as e:
-                        logging.error(f"{self.__class__.__name__} Unhandled error from {url}: {repr(e)}")
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} Unhandled error when processing JSON from {url}: {e}")
                         raise
         except requests.exceptions.RequestException as e:
             logging.error(f"{self.__class__.__name__} Unhandled exception fetching data from {url} : {e}")
