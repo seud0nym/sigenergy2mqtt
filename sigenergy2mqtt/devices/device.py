@@ -144,14 +144,15 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             source_sensors: list[Sensor] = [s for s in from_sensors if s is not None]
         else:
             source_sensors = cast(list[Sensor], from_sensors)
-        if sensor.protocol_version > self.protocol_version:
-            if sensor.debug_logging:
-                logging.debug(f"{self.name} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
-            return
-        elif any(s for s in source_sensors if s.protocol_version > self.protocol_version):
-            if sensor.debug_logging:
-                logging.debug(f"{self.name} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
-            return
+        if self.protocol_version > Protocol.N_A:        
+            if sensor.protocol_version > self.protocol_version:
+                if sensor.debug_logging:
+                    logging.debug(f"{self.name} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
+                return
+            elif any(s for s in source_sensors if s.protocol_version > self.protocol_version):
+                if sensor.debug_logging:
+                    logging.debug(f"{self.name} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
+                return
         if len(source_sensors) == 0:
             logging.error(f"{self.name} cannot add {sensor.__class__.__name__} - No source sensors defined")
         else:
