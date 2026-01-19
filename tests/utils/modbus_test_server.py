@@ -21,6 +21,7 @@ from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
 from ruamel.yaml import YAML
 
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
 from tests.utils import cancel_sensor_futures, get_sensor_instances
@@ -32,11 +33,13 @@ _logger = logging.getLogger(__file__)
 
 
 class CustomMqttHandler:
-    def __init__(self, loop: asyncio.AbstractEventLoop):
+    def __init__(self, loop: asyncio.AbstractEventLoop, log_level: int = logging.INFO):
         self.connected = False
         self._topics = {}
         self._loop = loop
         self._reconnect_lock = threading.Lock()
+        self._logger = logging.getLogger("CustomMqttHandler")
+        self._logger.setLevel(log_level)
 
     def on_reconnect(self, client: mqtt.Client) -> None:
         if not self.connected:
@@ -44,18 +47,18 @@ class CustomMqttHandler:
                 if not self.connected:
                     self.connected = True
                     if len(self._topics) > 0:
-                        _logger.info("Reconnected to mqtt")
+                        self._logger.info("Reconnected to mqtt")
                         for topic in self._topics.keys():
                             result = client.unsubscribe(topic)
-                            _logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result}")
+                            self._logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result}")
                             result = client.subscribe(topic)
-                            _logger.debug(f"on_reconnect: subscribe('{topic}') -> {result}")
+                            self._logger.debug(f"on_reconnect: subscribe('{topic}') -> {result}")
 
     def on_message(self, topic: str, payload: str) -> None:
         value = str(payload).strip()
         if value and topic in self._topics:
             for method in self._topics[topic]:
-                _logger.debug(f"on_message: {method.__func__.__qualname__}('{topic}', {value})")
+                self._logger.debug(f"on_message: {method.__func__.__qualname__}('{topic}', {value})")
                 method(topic, value)
 
     def register(self, client: mqtt.Client, topic: str, handler) -> tuple[MQTTErrorCode, int | None]:
@@ -226,12 +229,14 @@ class CustomDataBlock(ModbusSparseDataBlock):
                 else:
                     for _ in range(0, sensor.count):
                         pre_read.append(0)
-            result = pre_read
+            result = pre_read if len(pre_read) == count else ExcCodes.ILLEGAL_ADDRESS
         _logger.debug(f"getValues({address}, {count}) -> {result}")
         return result
 
 
-async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, log_level: int = logging.INFO) -> None:
+async def run_async_server(
+    mqtt_client: Any, modbus_client: ModbusClient | None, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, protocol_version: Protocol = list(Protocol)[-1], log_level: int = logging.INFO
+) -> None:
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
     group_index: int = -1
@@ -241,8 +246,11 @@ async def run_async_server(mqtt_client: Any, modbus_client: ModbusClient | None,
     input_type = None
 
     _logger.info("Getting sensor instances...")
-    sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, pv_inverter_device_address=3)
-    sorted_sensors: list = sorted([s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")], key=lambda x: (x.device_address, x.address))
+    sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, protocol_version=protocol_version, pv_inverter_device_address=3, concrete_sensor_check=False)
+    sorted_sensors: list = sorted(
+        [s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")],
+        key=lambda x: (x.device_address, x.address),
+    )
     for sensor in sorted_sensors:
         if (
             device_address != sensor.device_address
@@ -350,10 +358,11 @@ def on_message(client: mqtt.Client, userdata: CustomMqttHandler, message) -> Non
 
 async def async_helper() -> None:
     _yaml = YAML(typ="safe", pure=True)
-    log_level: int = logging.INFO
+    modbus_log_level: int = logging.INFO
     with open("tests/utils/.modbus_test_server.yaml", "r") as f:
         config = _yaml.load(f)
-        mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop()))
+        mqtt_log_level = logging.getLevelNamesMapping()[config.get("mqtt", {}).get("log-level", "INFO")]
+        mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level))
         mqtt_client.username_pw_set(config.get("mqtt", {}).get("username"), config.get("mqtt", {}).get("password"))
         mqtt_client.connect(config.get("mqtt", {}).get("broker", "localhost"), config.get("mqtt", {}).get("port", 1883), 60)
         mqtt_client.on_disconnect = on_disconnect
@@ -361,9 +370,12 @@ async def async_helper() -> None:
         mqtt_client.on_message = on_message
         mqtt_client.loop_start()
         modbus_client = ModbusClient(config.get("modbus")[0].get("host"), port=config.get("modbus")[0].get("port", 502), timeout=1, retries=0)
-        log_level = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
+        modbus_log_level = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
+        protocol_version = config.get("modbus")[0].get("protocol-version", None)
+        if protocol_version:
+            protocol_version = Protocol(protocol_version)
 
-    await run_async_server(mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")), log_level=log_level)
+    await run_async_server(mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")), protocol_version=protocol_version, log_level=modbus_log_level)
 
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
