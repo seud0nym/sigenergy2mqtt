@@ -64,11 +64,11 @@ async def test_read_ahead_caching(mock_modbus_server):
     assert client._cache_hits == 0
 
     # Perform Read Ahead
-    # Range 31000-31010. 31004 is known to be populated (value 2).
-    # We use InputType.INPUT for 31004.
+    # Range 31000-31004 (5 contiguous registers). 31004 is OutputType (value 2).
+    # We use InputType.INPUT for these registers.
 
     start_addr = 31000
-    count = 10
+    count = 5  # Contiguous block: 31000-31004
 
     # Pre-read registers
     await client.read_ahead_registers(start_addr, count, device_id=1, input_type=InputType.INPUT)
@@ -98,8 +98,8 @@ async def test_read_ahead_caching(mock_modbus_server):
     assert client._cache_hits == 2
 
     # Test Cache MISS (Out of range)
-    # Read register 31020
-    rr3 = await client.read_input_registers(31020, count=1, device_id=1)
+    # Read register 31023 (outside cached range 31000-31004)
+    rr3 = await client.read_input_registers(31023, count=1, device_id=1)
     assert rr3 is not None
     assert not rr3.isError()
     assert client._cache_hits == 2  # Should NOT increment
