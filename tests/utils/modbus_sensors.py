@@ -23,6 +23,7 @@ async def get_sensor_instances(
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
+    concrete_sensor_check: bool = True,
 ) -> dict[str, Sensor]:
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
@@ -167,23 +168,24 @@ async def get_sensor_instances(
                 else:
                     add_sensor_instance(sensor)
 
-    previous = None
-    for address in sorted(registers.keys()):
-        sensor = registers[address]
-        count = sensor.count
-        if previous:
-            last_address, last_count = previous
-            if address not in (30500, 31000, 31500, 32000, 40000, 40500, 41000, 41500, 42000) and last_address + last_count < address:
-                logging.warning(
-                    f"Gap detected between register {last_address} (count={last_count} class={registers[last_address].__class__.__name__}) and register {address} (class={registers[address].__class__.__name__})"
-                )
-        for i in range(address + 1, address + count):
-            if i in registers:
-                logging.warning(f"Register {i} in {sensor.__class__.__name__} overlaps {registers[i].__class__.__name__}")
-        previous = (address, count)
-    for classname, count in classes.items():
-        if count == 0:
-            logging.warning(f"Class {classname} has not been used?")
+    if concrete_sensor_check:
+        previous = None
+        for address in sorted(registers.keys()):
+            sensor = registers[address]
+            count = sensor.count
+            if previous:
+                last_address, last_count = previous
+                if address not in (30500, 31000, 31500, 32000, 40000, 40500, 41000, 41500, 42000) and last_address + last_count < address:
+                    logging.warning(
+                        f"Gap detected between register {last_address} (count={last_count} class={registers[last_address].__class__.__name__}) and register {address} (class={registers[address].__class__.__name__})"
+                    )
+            for i in range(address + 1, address + count):
+                if i in registers:
+                    logging.warning(f"Register {i} in {sensor.__class__.__name__} overlaps {registers[i].__class__.__name__}")
+            previous = (address, count)
+        for classname, count in classes.items():
+            if count == 0:
+                logging.warning(f"Class {classname} has not been used?")
 
     return sensors
 
