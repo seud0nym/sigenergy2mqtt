@@ -74,10 +74,12 @@ async def async_main() -> None:
                     si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True)
                     if si_sensor:
                         si_sensor.publishable = False
-                else:
+                elif plant and protocol_version is not None and protocol_version >= Protocol.V2_0:
                     for device_address in device.ac_chargers:
                         charger = await make_ac_charger(plant_index, modbus, device_address, plant)
                         config.add_device(plant_index, charger)
+                elif protocol_version is not None and protocol_version < Protocol.V2_0:
+                    logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
                 logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
         else:
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
