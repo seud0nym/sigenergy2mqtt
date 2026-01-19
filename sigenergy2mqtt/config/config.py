@@ -22,7 +22,7 @@ class Config:
     origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
     clean: bool = False
-    consumption: ConsumptionMethod = ConsumptionMethod.CALCULATED
+    consumption: ConsumptionMethod = ConsumptionMethod.TOTAL
     ems_mode_check: bool = True
     log_level: int = logging.WARNING
     metrics_enabled: bool = True
