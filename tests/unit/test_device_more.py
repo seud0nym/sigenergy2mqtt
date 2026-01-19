@@ -23,6 +23,7 @@ class DummyReadable(ReadableSensorMixin):
         object.__setattr__(self, "device_address", device_address)
         object.__setattr__(self, "input_type", input_type)
         object.__setattr__(self, "debug_logging", debug_logging)
+        object.__setattr__(self, "protocol_version", Protocol.V1_8)
         object.__setattr__(self, "_publishable", publishable)
         object.__setattr__(self, "_states", [])
         object.__setattr__(self, "_derived_sensors", {})
@@ -48,6 +49,8 @@ class DummyReadable(ReadableSensorMixin):
 class DummyDerived(DerivedSensor):
     def __init__(self, unique_id="derived"):
         object.__setattr__(self, "unique_id", unique_id)
+        object.__setattr__(self, "protocol_version", Protocol.V1_8)
+        object.__setattr__(self, "debug_logging", False)
 
 
 def setup_module(module):
@@ -138,7 +141,8 @@ def test_add_read_sensor_rejects_non_readable_and_add_to_all_sets_parent():
 
 def test_add_derived_sensor_handles_none_and_unregistered():
     dev = Device("dev3", 0, "uid3", "mf", "mdl", Protocol.V1_8)
-    derived = object()
+    dev = Device("dev3", 0, "uid3", "mf", "mdl", Protocol.V1_8)
+    derived = DummyDerived()
     # all sources None -> no addition
     dev._add_derived_sensor(cast(Any, derived), None)
 

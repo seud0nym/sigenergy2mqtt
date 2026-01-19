@@ -144,6 +144,14 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             source_sensors: list[Sensor] = [s for s in from_sensors if s is not None]
         else:
             source_sensors = cast(list[Sensor], from_sensors)
+        if sensor.protocol_version > self.protocol_version:
+            if sensor.debug_logging:
+                logging.debug(f"{self.name} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
+            return
+        elif any(s for s in source_sensors if s.protocol_version > self.protocol_version):
+            if sensor.debug_logging:
+                logging.debug(f"{self.name} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
+            return
         if len(source_sensors) == 0:
             logging.error(f"{self.name} cannot add {sensor.__class__.__name__} - No source sensors defined")
         else:
@@ -151,12 +159,11 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 found = self.get_sensor(to_sensor.unique_id, search_children=search_children)
                 if not found:
                     logging.warning(f"{self.name} cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.__class__.__name__}")
+                elif isinstance(sensor, DerivedSensor):
+                    to_sensor.add_derived_sensor(sensor)
+                    self._add_to_all_sensors(sensor)
                 else:
-                    if isinstance(sensor, DerivedSensor):
-                        to_sensor.add_derived_sensor(sensor)
-                        self._add_to_all_sensors(sensor)
-                    else:
-                        logging.error(f"{self.name} cannot add {sensor.__class__.__name__} - not a DerivedSensor")
+                    logging.error(f"{self.name} cannot add {sensor.__class__.__name__} - not a DerivedSensor")
 
     def _add_read_sensor(self, sensor: Sensor, group: str | None = None) -> bool:
         if not isinstance(sensor, ReadableSensorMixin):
