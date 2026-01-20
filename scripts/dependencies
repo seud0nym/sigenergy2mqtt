@@ -25,6 +25,9 @@ for spec in \
     "build(>=1.3.0,<2.0.0)" \
     "twine(>=6.2.0,<7.0.0)" \
     "pip-autoremove(>=0.10.0,<1.0.0)" \
+    "pytest" \
+    "pytest-asyncio" \
+    "pytest-cov" \
 ; do
   check_pkg "$spec"
 done
