@@ -182,6 +182,7 @@ async def sensor_index():
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
                 f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
+                f.write(f"<tr><td>Sanity&nbsp;Check</td><td>{sensor._sanity}</td></tr>\n")
                 f.write("</table>\n")
         return count
 
@@ -473,7 +474,6 @@ async def compare_sensor_instances():
 def download_latest(path: str) -> None:
     OWNER = "TypQxQ"
     REPO = "Sigenergy-Local-Modbus"
-    FILE_PATH = "custom_components/sigen/modbusregisterdefinitions.py"
     BASE = f"https://api.github.com/repos/{OWNER}/{REPO}"
 
     file = Path(Path(path).name)
@@ -500,7 +500,7 @@ def download_latest(path: str) -> None:
 
     for b in branches:
         branch_name = b["name"]
-        commit = get_latest_commit_for_file(branch_name, FILE_PATH)
+        commit = get_latest_commit_for_file(branch_name, path)
         if not commit:
             continue
 
@@ -540,7 +540,16 @@ def download_latest(path: str) -> None:
 
 if __name__ == "__main__":
     logging.getLogger("root").setLevel(logging.INFO)
-    download_latest("custom_components/sigen/modbusregisterdefinitions.py")
+    try:
+        download_latest("custom_components/sigen/modbusregisterdefinitions.py")
+    except requests.exceptions.HTTPError:
+        if not os.path.exists("modbusregisterdefinitions.py"):
+            with open("modbusregisterdefinitions.py", 'a'):
+                os.utime("modbusregisterdefinitions.py", None)  # Set to now
+        else:
+            # Set both access and modification times to now
+            os.utime("modbusregisterdefinitions.py", None)
+        pass # Probably rate limited 
     loop = asyncio.new_event_loop()
     loop.run_until_complete(sensor_index())
     loop.run_until_complete(compare_sensor_instances())

@@ -78,3 +78,18 @@ class SanityCheck:
         elif self.min_raw is not None and self.max_raw is not None and not (self.min_raw <= value <= self.max_raw):
             raise ValueError(f"Raw {'delta' if self.delta else 'value'} {value} is not within sanity check range {self.min_raw} to {self.max_raw} ({state=} {previous_states=})")
         return True
+
+    def __repr__(self):
+        if self.min_raw is None and self.max_raw is None:
+            return "No sanity checking applied"
+        if self.delta:
+            if self.min_raw is None:
+                return f"The raw value is sanity checked to be a maximum of {self.max_raw}"
+            if self.max_raw is None:
+                return f"The raw value is sanity checked to be a minimum of {self.min_raw}"
+            return f"The raw value is sanity checked to be between {self.min_raw} and {self.max_raw}"
+        if self.min_raw is None:
+            return f"The delta of the raw value compared to the previous value is sanity checked to be a maximum of {self.max_raw}"
+        if self.max_raw is None:
+            return f"The delta of the raw value compared to the previous value is sanity checked to be a minimum of {self.min_raw}"
+        return f"The delta of the raw value compared to the previous value is sanity checked to be between {self.min_raw} and {self.max_raw}"
