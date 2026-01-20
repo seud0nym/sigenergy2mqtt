@@ -76,7 +76,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
         state_is = float(solar["activePower"])
         if state_is < 0:
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
+                logging.info(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
             state_is = 0.0
         self.set_state(state_is)
         latest = self._states.pop()
@@ -221,7 +221,12 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["actEnergyDlvd"])
+        value = values[-1][2]["actEnergyDlvd"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} actEnergyDlvd negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -265,7 +270,12 @@ class EnphaseCurrent(DerivedSensor):
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["current"])
+        value = values[-1][2]["current"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} current negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -294,7 +304,12 @@ class EnphaseFrequency(DerivedSensor):
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["freq"])
+        value = values[-1][2]["freq"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} freq negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -323,7 +338,12 @@ class EnphasePowerFactor(DerivedSensor):
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["pwrFactor"])
+        value = values[-1][2]["pwrFactor"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} pwrFactor negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -352,7 +372,12 @@ class EnphaseReactivePower(DerivedSensor):
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["reactivePower"])
+        value = values[-1][2]["reactivePower"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} reactivePower negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -381,7 +406,12 @@ class EnphaseVoltage(DerivedSensor):
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["voltage"])
+        value = values[-1][2]["voltage"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} voltage negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
