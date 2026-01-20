@@ -96,6 +96,7 @@ class ModbusReadErrors(MetricsSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_read_errors",
             object_id="sigenergy2mqtt_modbus_read_errors",
             icon="mdi:counter",
+            precision=0,
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
@@ -166,6 +167,7 @@ class ModbusWriteErrors(MetricsSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_write_errors",
             object_id="sigenergy2mqtt_modbus_write_errors",
             icon="mdi:counter",
+            precision=0,
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
@@ -236,6 +238,7 @@ class ModbusActiveLocks(MetricsSensor):
             unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_locks",
             object_id="sigenergy2mqtt_modbus_locks",
             icon="mdi:eye-lock",
+            precision=0,
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
