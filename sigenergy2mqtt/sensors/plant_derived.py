@@ -204,7 +204,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                 self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
                 self.protocol_version = Protocol.V2_8
 
-    def _set_latest_consumption(self):
+    def _set_latest_consumption(self) -> bool:
         if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
             return False
         consumed_power = sum([value.state for value in self._sources.values() if value.state and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
