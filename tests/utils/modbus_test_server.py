@@ -59,7 +59,7 @@ class CustomMqttHandler:
         if value and topic in self._topics:
             for method in self._topics[topic]:
                 self._logger.debug(f"on_message: {method.__func__.__qualname__}('{topic}', {value})")
-                method(topic, value)
+                method(topic, value, debug=self._logger.isEnabledFor(logging.DEBUG))
 
     def register(self, client: mqtt.Client, topic: str, handler) -> tuple[MQTTErrorCode, int | None]:
         if topic not in self._topics:
@@ -158,12 +158,13 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         _logger.warning(f"Sensor {sensor['name']} does not have a state_topic and cannot be updated via MQTT.")
         self._set_value(sensor, value, source)
 
-    def _handle_mqtt_message(self, topic: str, value: str) -> None:
+    def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
         sensor = self._topics.get(topic)
-        self._set_value(sensor, value, f"mqtt::{topic}")
+        self._set_value(sensor, value, f"mqtt::{topic}", debug=debug)
 
-    def _set_value(self, sensor, value: float | int | str, source: str = "") -> None:
-        _logger.debug(f"_set_value({sensor['name']}, {value}) [address={sensor.address} device_address={self.device_address} {source=}]")
+    def _set_value(self, sensor, value: float | int | str, source: str = "", debug: bool = False) -> None:
+        if debug or sensor.debug_logging:
+            _logger.debug(f"_set_value({sensor['name']}, {value}) [address={sensor.address} device_address={self.device_address} {source=}]")
         address = sensor.address
         if address in self._written_addresses:
             return  # Ignore messages for addresses that were just written to
@@ -196,7 +197,8 @@ class CustomDataBlock(ModbusSparseDataBlock):
         self._total_sleep_time += sleep_time
         await asyncio.sleep(sleep_time / 1000)
         result = self.getValues(address, count)
-        _logger.debug(f"async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
+        if address in self.addresses and self.addresses[address].debug_logging:
+            _logger.debug(f"async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
         return result
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
@@ -205,16 +207,20 @@ class CustomDataBlock(ModbusSparseDataBlock):
             if hasattr(sensor, "_availability_control_sensor") and sensor._availability_control_sensor.__class__.__name__ == "RemoteEMS":
                 if sensor._availability_control_sensor.latest_raw_state == 0:
                     return ExcCodes.ILLEGAL_ADDRESS
+        else:
+            sensor = None
         self._written_addresses.append(address)
-        _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
+        if sensor and sensor.debug_logging:
+            _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
         return super().setValues(address, values)
 
     def getValues(self, address, count=1) -> list[int] | list[bool] | ExcCodes:
+        sensor = None if address not in self.addresses else self.addresses[address]
         last_address = address + count - 1
         if address in self._reserved or last_address - count + 1 in self._reserved:
             # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
             result = ExcCodes.ILLEGAL_ADDRESS
-        elif address in self.addresses and self.addresses[address].count == count:
+        elif sensor and sensor.count == count:
             result = super().getValues(address, count)
         else:
             pre_read: list[int | bool] = []
@@ -230,12 +236,20 @@ class CustomDataBlock(ModbusSparseDataBlock):
                     for _ in range(0, sensor.count):
                         pre_read.append(0)
             result = pre_read if len(pre_read) == count else ExcCodes.ILLEGAL_ADDRESS
-        _logger.debug(f"getValues({address}, {count}) -> {result}")
+        if sensor and sensor.debug_logging:
+            _logger.debug(f"getValues({address}, {count}) -> {result}")
         return result
 
 
 async def run_async_server(
-    mqtt_client: Any, modbus_client: ModbusClient | None, use_simplified_topics: bool, host: str = "0.0.0.0", port: int = 502, protocol_version: Protocol = list(Protocol)[-1], log_level: int = logging.INFO
+    mqtt_client: Any,
+    modbus_client: ModbusClient | None,
+    use_simplified_topics: bool,
+    host: str = "0.0.0.0",
+    port: int = 502,
+    protocol_version: Protocol = list(Protocol)[-1],
+    log_level: int = logging.INFO,
+    registers_to_debug: list[int] = [],
 ) -> None:
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
@@ -261,6 +275,8 @@ async def run_async_server(
             group_index = group_index + 1
             groups[group_index] = []
         groups[group_index].append(sensor)
+        if sensor.address in registers_to_debug or 0 in registers_to_debug:
+            sensor.debug_logging = True
         address = sensor.address
         count = sensor.count
         device_address = sensor.device_address
@@ -269,7 +285,7 @@ async def run_async_server(
     if modbus_client:
         await prepopulate(modbus_client, groups)
 
-    _logger.setLevel(log_level)
+    _logger.setLevel(log_level if not any(registers_to_debug) else logging.DEBUG)
 
     _logger.info("Creating data blocks...")
     for sensor in sorted_sensors:
@@ -282,21 +298,41 @@ async def run_async_server(
     _logger.info("Starting ASYNC Modbus TCP Testing Server...")
     if log_level <= logging.INFO:
         logging.getLogger("pymodbus").setLevel(logging.INFO)
-    await StartAsyncTcpServer(
-        context=ModbusServerContext(devices=context, single=False),
-        identity=ModbusDeviceIdentification(
-            info_name={
-                "VendorName": "seud0nym",
-                "ProductCode": "sigenergy2mqtt",
-                "VendorUrl": "https://github.com/seud0nym/sigenergy2mqtt/",
-                "ProductName": "sigenergy2mqtt Testing Modbus Server",
-                "ModelName": "sigenergy2mqtt Testing Modbus Server",
-                "MajorMinorRevision": pymodbus_version,
-            }
-        ),
-        address=(host, port),
-        framer=FramerType.SOCKET,
-    )
+    try:
+        await asyncio.gather(
+            StartAsyncTcpServer(
+                context=ModbusServerContext(devices=context, single=False),
+                identity=ModbusDeviceIdentification(
+                    info_name={
+                        "VendorName": "seud0nym",
+                        "ProductCode": "sigenergy2mqtt",
+                        "VendorUrl": "https://github.com/seud0nym/sigenergy2mqtt/",
+                        "ProductName": "sigenergy2mqtt Testing Modbus Server",
+                        "ModelName": "sigenergy2mqtt Testing Modbus Server",
+                        "MajorMinorRevision": pymodbus_version,
+                    }
+                ),
+                address=(host, port),
+                framer=FramerType.SOCKET,
+            ),
+            simulate_grid_outage(context[247], wait_for_seconds=30, duration_seconds=30),
+        )
+    except asyncio.CancelledError as e:
+        _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
+
+
+async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: int, duration_seconds: int) -> None:
+    while True:
+        try:
+            _logger.info(f"Waiting for {wait_for_seconds} seconds before simulating grid outage for device address {data_block.device_address}...")
+            await asyncio.sleep(wait_for_seconds)
+            _logger.info(f"Simulating grid outage for device address {data_block.device_address} for {duration_seconds} seconds...")
+            await data_block.async_setValues(0x06, 30009, [1])
+            await asyncio.sleep(duration_seconds)
+            await data_block.async_setValues(0x06, 30009, [0])
+            _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
+        except asyncio.CancelledError:
+            break
 
 
 async def wait_for_server_start(host: str, port: int, timeout: float = 10.0) -> bool:
@@ -372,10 +408,13 @@ async def async_helper() -> None:
         modbus_client = ModbusClient(config.get("modbus")[0].get("host"), port=config.get("modbus")[0].get("port", 502), timeout=1, retries=0)
         modbus_log_level = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
         protocol_version = config.get("modbus")[0].get("protocol-version", None)
+        registers_to_debug = config.get("modbus")[0].get("registers_to_debug", [])
         if protocol_version:
             protocol_version = Protocol(protocol_version)
 
-    await run_async_server(mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")), protocol_version=protocol_version, log_level=modbus_log_level)
+    await run_async_server(
+        mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")), protocol_version=protocol_version, log_level=modbus_log_level, registers_to_debug=registers_to_debug
+    )
 
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
