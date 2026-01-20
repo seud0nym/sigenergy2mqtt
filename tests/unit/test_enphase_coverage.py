@@ -1,6 +1,7 @@
 """Comprehensive test coverage for sigenergy2mqtt/devices/smartport/enphase.py"""
 
 import asyncio
+import json
 import logging
 import os
 import time
@@ -205,6 +206,102 @@ class TestEnphasePVPowerGetToken:
             token = pv_power_sensor.get_token()
 
         assert token == "new_token"
+
+
+class TestEnphasePVPowerProcessMeterReading:
+    """Tests for EnphasePVPower._process_meter_reading - demonstrates JSON injection capability"""
+
+    def test_process_meter_reading_success(self, pv_power_sensor):
+        """Test processing a valid meter reading JSON response."""
+        # Inject JSON response directly - no HTTP mocking needed!
+        reading = [{"activePower": 2500.5, "actEnergyDlvd": 1000000, "current": 10.5, "freq": 50.0, "pwrFactor": 0.95, "reactivePower": 100, "voltage": 240}]
+
+        result = pv_power_sensor._process_meter_reading(reading)
+
+        assert result is True
+        assert pv_power_sensor._states[-1][1] == 2500.5
+        assert pv_power_sensor._states[-1][2] == reading[0]
+        assert pv_power_sensor._failover_initiated is False
+
+    def test_process_meter_reading_clamps_negative_power(self, pv_power_sensor):
+        """Test that negative activePower is clamped to 0.0."""
+        reading = [{"activePower": -150.0, "actEnergyDlvd": 1000000, "current": 0, "freq": 50.0, "pwrFactor": 0, "reactivePower": 0, "voltage": 240}]
+
+        result = pv_power_sensor._process_meter_reading(reading)
+
+        assert result is True
+        assert pv_power_sensor._states[-1][1] == 0.0
+
+    def test_process_meter_reading_with_debug_logging(self, pv_power_sensor):
+        """Test processing with debug logging enabled."""
+        pv_power_sensor.debug_logging = True
+        reading = [{"activePower": -50.0, "actEnergyDlvd": 500000, "current": 0, "freq": 50.0, "pwrFactor": 0, "reactivePower": 0, "voltage": 240}]
+
+        result = pv_power_sensor._process_meter_reading(reading)
+
+        assert result is True
+        assert pv_power_sensor._states[-1][1] == 0.0
+
+    def test_process_meter_reading_updates_derived_sensors(self, pv_power_sensor):
+        """Test that derived sensors are updated with new values."""
+        # Add a mock derived sensor
+        mock_derived = MagicMock()
+        pv_power_sensor._derived_sensors["TestDerived"] = mock_derived
+
+        reading = [{"activePower": 3000.0, "actEnergyDlvd": 2000000, "current": 12.5, "freq": 60.0, "pwrFactor": 0.98, "reactivePower": 50, "voltage": 230}]
+
+        result = pv_power_sensor._process_meter_reading(reading)
+
+        assert result is True
+        mock_derived.set_source_values.assert_called_once_with(pv_power_sensor, pv_power_sensor._states)
+
+    def test_process_meter_reading_missing_active_power_raises(self, pv_power_sensor):
+        """Test that missing activePower field raises KeyError."""
+        reading = [{"actEnergyDlvd": 1000000, "current": 10.5, "freq": 50.0}]
+
+        with pytest.raises(KeyError):
+            pv_power_sensor._process_meter_reading(reading)
+
+    def test_process_meter_reading_empty_list_raises(self, pv_power_sensor):
+        """Test that empty reading list raises IndexError."""
+        reading = []
+
+        with pytest.raises(IndexError):
+            pv_power_sensor._process_meter_reading(reading)
+
+    def test_process_meter_reading_invalid_power_type_raises(self, pv_power_sensor):
+        """Test that non-numeric activePower raises ValueError."""
+        reading = [{"activePower": "not_a_number", "actEnergyDlvd": 1000000}]
+
+        with pytest.raises(ValueError):
+            pv_power_sensor._process_meter_reading(reading)
+
+    def test_process_meter_reading_resets_failover_flag(self, pv_power_sensor):
+        """Test that successful processing resets the failover flag."""
+        pv_power_sensor._failover_initiated = True
+
+        reading = [{"activePower": 1500.0, "actEnergyDlvd": 1000000, "current": 6.5, "freq": 50.0, "pwrFactor": 0.92, "reactivePower": 75, "voltage": 235}]
+
+        result = pv_power_sensor._process_meter_reading(reading)
+
+        assert result is True
+        assert pv_power_sensor._failover_initiated is False
+
+    def test_process_meter_reading_from_file(self, pv_power_sensor, tmp_path):
+        """Demonstrate loading JSON from file for debugging - real-world use case."""
+        # This demonstrates how you can save real API responses for debugging
+        json_file = tmp_path / "enphase_response.json"
+        test_data = [{"activePower": 4250.75, "actEnergyDlvd": 5000000, "current": 18.2, "freq": 50.1, "pwrFactor": 0.99, "reactivePower": 25, "voltage": 238}]
+
+        # Save response to file (simulating captured API response)
+        json_file.write_text(json.dumps(test_data))
+
+        # Load and process it
+        loaded_data = json.loads(json_file.read_text())
+        result = pv_power_sensor._process_meter_reading(loaded_data)
+
+        assert result is True
+        assert pv_power_sensor._states[-1][1] == 4250.75
 
 
 class TestEnphasePVPowerUpdateInternalState:

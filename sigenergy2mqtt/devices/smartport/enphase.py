@@ -60,6 +60,32 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
         self._max_failures = 5
         self._max_failures_retry_interval = 30
 
+    def _process_meter_reading(self, reading: list[dict]) -> bool:
+        """Process the meter reading JSON response and update sensor state.
+
+        Args:
+            reading: The parsed JSON response from /ivp/meters/readings endpoint
+
+        Returns:
+            True if processing was successful
+
+        Raises:
+            Exception: If the reading format is invalid or required fields are missing
+        """
+        solar = reading[0]
+        state_is = float(solar["activePower"])
+        if state_is < 0:
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
+            state_is = 0.0
+        self.set_state(state_is)
+        latest = self._states.pop()
+        self._states.append((latest[0], latest[1], solar))  # type: ignore
+        for sensor in self._derived_sensors.values():
+            sensor.set_source_values(self, self._states)
+        self._failover_initiated = False
+        return True
+
     async def _update_internal_state(self, **kwargs) -> bool:
         reauthenticate = False if "reauthenticate" not in kwargs else kwargs["reauthenticate"]
         token = self.get_token(reauthenticate)
@@ -83,17 +109,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
                         reading = response.json()
                         if self.debug_logging:
                             logging.debug(f"{self.__class__.__name__} Response from {url}: JSON={json.dumps(reading)}")
-                        solar = reading[0]
-                        state_is = float(solar["activePower"])
-                        if state_is < 0:
-                            state_is = 0.0
-                        self.set_state(state_is)
-                        latest = self._states.pop()
-                        self._states.append((latest[0], latest[1], solar))  # type: ignore
-                        for sensor in self._derived_sensors.values():
-                            sensor.set_source_values(self, self._states)
-                        self._failover_initiated = False
-                        return True
+                        return self._process_meter_reading(reading)
                     except Exception as e:
                         if self.debug_logging:
                             logging.debug(f"{self.__class__.__name__} Unhandled error when processing JSON from {url}: {e}")
