@@ -151,6 +151,7 @@ async def sensor_index():
                                 f.write(" (Protocol V2.8+ only)")
                             f.write("</dd>")
                         f.write("</dl>")
+                        protocol = "N/A"
                     else:
                         f.write(f"{attributes['source']}")
                         if attributes["source"] in ILLEGAL_DATA_ADDRESSES:

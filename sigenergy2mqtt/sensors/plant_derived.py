@@ -492,7 +492,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
             precision=2,
         )
         self["enabled_by_default"] = True
-        self.protocol_version = 2.7
+        self.protocol_version = Protocol.V2_7
         self.plant_lifetime_pv_energy: float | None = None
         self.plant_3rd_party_lifetime_pv_energy: float | None = None
 
