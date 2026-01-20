@@ -86,8 +86,10 @@ async def fast_sleep(duration):
 @pytest.mark.asyncio
 async def test_modbus_exception_recovery(mock_config):
     dev = Device("test", 0, "sigen_uid", "mf", "mdl", Protocol.V1_8)
-    sensor = DummyModbusSensor("sigen_s1", address=100)
-    dev._add_read_sensor(cast(Sensor, sensor))
+    sensor1 = DummyModbusSensor("sigen_s1", address=100)
+    sensor2 = DummyModbusSensor("sigen_s1b", address=101)  # Add second sensor for multiple-sensor path
+    dev._add_read_sensor(cast(Sensor, sensor1))
+    dev._add_read_sensor(cast(Sensor, sensor2))
 
     mqtt_client = MagicMock()
     modbus_client = MockModbusClient()
@@ -100,9 +102,10 @@ async def test_modbus_exception_recovery(mock_config):
 
     with patch("sigenergy2mqtt.devices.device.ModbusLockFactory.get", return_value=mock_lock), patch("sigenergy2mqtt.devices.device.asyncio.sleep", side_effect=fast_sleep):
         dev._online = True
-        sensor.force_publish = True
+        sensor1.force_publish = True
+        sensor2.force_publish = True
 
-        task = asyncio.create_task(dev.publish_updates(modbus_client, mqtt_client, "test", sensor))
+        task = asyncio.create_task(dev.publish_updates(modbus_client, mqtt_client, "test", sensor1, sensor2))
 
         # Give it cycles to run:
         # 1. First scan (fails -> ModbusException)
@@ -117,7 +120,7 @@ async def test_modbus_exception_recovery(mock_config):
     # Verify calls
     assert modbus_client.close.called
     assert modbus_client.connect.called
-    assert len(sensor._states) > 0
+    assert len(sensor1._states) > 0
 
     # Check that lock was called both with and without timeout
     calls = mock_lock.lock.call_args_list

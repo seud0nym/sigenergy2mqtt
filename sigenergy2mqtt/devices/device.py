@@ -429,16 +429,16 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             if due_sensors:
                 try:
                     if modbus_client:
-                        async with lock.lock():
-                            # Optimize Modbus read-ahead for due Modbus sensors with contiguous addresses
-                            due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
-                            if multiple and len(due_modbus) > 0:
+                        due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
+                        if multiple and len(due_modbus) > 0:
+                            debug_read_ahead = any(s for s in due_modbus if s.debug_logging)
+                            async with lock.lock():
                                 read_ahead_start = 0.0
                                 if debug_logging:
                                     read_ahead_start = time.time()
-                                exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_logging)
+                                exception_code = await modbus_client.read_ahead_registers(first_address, count=count, device_id=device_address, input_type=input_type, trace=debug_read_ahead)
                                 if exception_code == 0:
-                                    if debug_logging:
+                                    if debug_read_ahead:
                                         logging.debug(f"{self.name} Sensor Scan Group [{name}] pre-read {first_address} to {last_address} ({count} registers) took {time.time() - read_ahead_start:.2f}s")
                                 else:
                                     match exception_code:
