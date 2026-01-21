@@ -182,7 +182,8 @@ async def sensor_index():
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
                 f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
-                f.write(f"<tr><td>Sanity&nbsp;Check</td><td>{sensor._sanity}</td></tr>\n")
+                if sensor._sanity.is_enabled:
+                    f.write(f"<tr><td>Sanity&nbsp;Check</td><td>{sensor._sanity}</td></tr>\n")
                 f.write("</table>\n")
         return count
 

@@ -134,8 +134,12 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         self._states: list[tuple[float, Any]] = []
         self._max_states: int = 2
 
-        self._sanity: SanityCheck = SanityCheck()
-        self._sanity.init(unit, state_class, getattr(self, "data_type", None))
+        self._sanity: SanityCheck = SanityCheck(
+            unit=unit,
+            device_class=device_class,
+            state_class=state_class,
+            data_type=getattr(self, "data_type", None),
+        )
 
         self._failures: int = 0
         self._max_failures: int = 10

@@ -593,7 +593,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>40001</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40005'>Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -607,7 +606,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40005</td></tr>
 <tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40049'>Active Power Regulation Gradient</a></h5>
 <table>
@@ -621,7 +619,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40049 (may not be available on all devices)</td></tr>
 <tr><td>Comment</td><td>Range:[0,5000]。Percentage of rated power adjusted per second</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30039'>Available Max Active Power</a></h5>
 <table>
@@ -649,7 +646,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30064</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30047'>Available Max Charging Power</a></h5>
 <table>
@@ -677,7 +674,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30066</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30049'>Available Max Discharging Power</a></h5>
 <table>
@@ -747,7 +744,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40046</td></tr>
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_battery_charging_power'>Battery Charging Power</a></h5>
 <table>
@@ -836,7 +832,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40047</td></tr>
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_consumed_power'>Consumed Power</a></h5>
 <table>
@@ -885,7 +880,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_charge_energy/state</td></tr>
 <tr><td>Source</td><td>&sum; of DailyChargeEnergy across all Inverters associated with the Plant</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_daily_consumed_energy'>Daily Consumption</a></h5>
 <table>
@@ -898,7 +893,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_consumed_energy/state</td></tr>
 <tr><td>Source</td><td>30092</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a maximum of 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_daily_discharge_energy'>Daily Discharge Energy</a></h5>
 <table>
@@ -910,7 +904,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>&sum; of DailyDischargeEnergy across all Inverters associated with the Plant</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_daily_pv_energy'>Daily PV Production</a></h5>
 <table>
@@ -922,7 +916,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_total_daily_pv_energy'>Daily Total PV Production</a></h5>
 <table>
@@ -934,7 +928,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_total_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30086'>Discharge Cut-Off SoC</a></h5>
 <table>
@@ -961,7 +955,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40048</td></tr>
 <tr><td>Comment</td><td>Range: [0.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30003'>EMS Work Mode</a></h5>
 <table>
@@ -1023,7 +1016,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40038</td></tr>
 <tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40040'>Grid Max Import Limit</a></h5>
 <table>
@@ -1037,7 +1029,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40040</td></tr>
 <tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40030'>Independent Phase Power Control</a></h5>
 <table>
@@ -1062,7 +1053,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_accumulated_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30200</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_lifetime_consumed_energy'>Lifetime Consumption</a></h5>
 <table>
@@ -1075,7 +1066,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_lifetime_consumed_energy/state</td></tr>
 <tr><td>Source</td><td>30094</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30208'>Lifetime DC EV Charge Energy</a></h5>
 <table>
@@ -1088,7 +1079,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_evdc_total_charge_energy/state</td></tr>
 <tr><td>Source</td><td>30208</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30212'>Lifetime DC EV Discharge Energy</a></h5>
 <table>
@@ -1101,7 +1092,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_evdc_total_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30212</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_accumulated_discharge_energy'>Lifetime Discharge Energy</a></h5>
 <table>
@@ -1114,7 +1105,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_accumulated_discharge_energy/state</td></tr>
 <tr><td>Source</td><td>30204</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30224'>Lifetime Generator Output Energy</a></h5>
 <table>
@@ -1127,7 +1118,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_total_generator_output_energy/state</td></tr>
 <tr><td>Source</td><td>30224</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30088'>Lifetime PV Production</a></h5>
 <table>
@@ -1140,7 +1131,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>30088</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30196'>Lifetime Third-Party PV Production</a></h5>
 <table>
@@ -1153,7 +1144,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_third_party_pv_lifetime_production/state</td></tr>
 <tr><td>Source</td><td>30196</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_lifetime_pv_energy'>Lifetime Total PV Production</a></h5>
 <table>
@@ -1165,7 +1156,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30010'>Max Active Power</a></h5>
 <table>
@@ -1207,7 +1198,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40032</td></tr>
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40034'>Max Discharging Limit</a></h5>
 <table>
@@ -1221,7 +1211,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40034</td></tr>
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_general_pcs_alarm'>PCS Alarms</a></h5>
 <table>
@@ -1233,7 +1222,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>Modbus Registers 30027 and 30028</td></tr>
 <tr><td>Comment</td><td>If any hybrid inverter has alarm, then this alarm will be set accordingly</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40042'>PCS Max Export Limit</a></h5>
 <table>
@@ -1247,7 +1235,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40042</td></tr>
 <tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40044'>PCS Max Import Limit</a></h5>
 <table>
@@ -1261,7 +1248,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40044</td></tr>
 <tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40036'>PV Max Power Limit</a></h5>
 <table>
@@ -1275,7 +1261,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40036</td></tr>
 <tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30035'>PV Power</a></h5>
 <table>
@@ -1314,7 +1299,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40008</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40020'>Phase A Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1328,7 +1312,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40020</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40023'>Phase A Q/S Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1342,7 +1325,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40023</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30021'>Phase A Reactive Power</a></h5>
 <table>
@@ -1369,7 +1351,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40014</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30017'>Phase B Active Power</a></h5>
 <table>
@@ -1396,7 +1377,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40010</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40021'>Phase B Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1410,7 +1390,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40021</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40024'>Phase B Q/S Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1424,7 +1403,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40024</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30023'>Phase B Reactive Power</a></h5>
 <table>
@@ -1451,7 +1429,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40016</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30019'>Phase C Active Power</a></h5>
 <table>
@@ -1478,7 +1455,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40012</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40022'>Phase C Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1492,7 +1468,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40022</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40025'>Phase C Q/S Fixed Adjustment Target Value</a></h5>
 <table>
@@ -1506,7 +1481,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40025</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30025'>Phase C Reactive Power</a></h5>
 <table>
@@ -1533,7 +1507,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40018</td></tr>
 <tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_plant_alarms'>Plant Alarms</a></h5>
 <table>
@@ -1544,7 +1517,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_alarms/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30280 and 30281</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40007'>Power Factor Adjustment Target Value</a></h5>
 <table>
@@ -1557,7 +1529,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40007</td></tr>
 <tr><td>Comment</td><td>Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40006'>Q/S Adjustment Target Value</a></h5>
 <table>
@@ -1571,7 +1542,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40006</td></tr>
 <tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_30068'>Rated Charging Power</a></h5>
 <table>
@@ -1610,7 +1580,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state</td></tr>
 <tr><td>Source</td><td>30083</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30033'>Reactive Power</a></h5>
 <table>
@@ -1637,7 +1607,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40003</td></tr>
 <tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_247_40029'>Remote EMS</a></h5>
 <table>
@@ -1699,7 +1668,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_01_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30098</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30148'>Smart Load 02 Power</a></h5>
 <table>
@@ -1725,7 +1694,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_02_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30100</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30150'>Smart Load 03 Power</a></h5>
 <table>
@@ -1751,7 +1720,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_03_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30102</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30152'>Smart Load 04 Power</a></h5>
 <table>
@@ -1777,7 +1746,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_04_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30104</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30154'>Smart Load 05 Power</a></h5>
 <table>
@@ -1803,7 +1772,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_05_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30106</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30156'>Smart Load 06 Power</a></h5>
 <table>
@@ -1829,7 +1798,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_06_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30108</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30158'>Smart Load 07 Power</a></h5>
 <table>
@@ -1855,7 +1824,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_07_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30110</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30160'>Smart Load 08 Power</a></h5>
 <table>
@@ -1881,7 +1850,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_08_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30112</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30162'>Smart Load 09 Power</a></h5>
 <table>
@@ -1907,7 +1876,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_09_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30114</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30164'>Smart Load 10 Power</a></h5>
 <table>
@@ -1933,7 +1902,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_10_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30116</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30166'>Smart Load 11 Power</a></h5>
 <table>
@@ -1959,7 +1928,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_11_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30118</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30168'>Smart Load 12 Power</a></h5>
 <table>
@@ -1985,7 +1954,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_12_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30120</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30170'>Smart Load 13 Power</a></h5>
 <table>
@@ -2011,7 +1980,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_13_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30122</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30172'>Smart Load 14 Power</a></h5>
 <table>
@@ -2037,7 +2006,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_14_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30124</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30174'>Smart Load 15 Power</a></h5>
 <table>
@@ -2063,7 +2032,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_15_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30126</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30176'>Smart Load 16 Power</a></h5>
 <table>
@@ -2089,7 +2058,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_16_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30128</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30178'>Smart Load 17 Power</a></h5>
 <table>
@@ -2115,7 +2084,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_17_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30130</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30180'>Smart Load 18 Power</a></h5>
 <table>
@@ -2141,7 +2110,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_18_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30132</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30182'>Smart Load 19 Power</a></h5>
 <table>
@@ -2167,7 +2136,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_19_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30134</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30184'>Smart Load 20 Power</a></h5>
 <table>
@@ -2193,7 +2162,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_20_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30136</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30186'>Smart Load 21 Power</a></h5>
 <table>
@@ -2219,7 +2188,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_21_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30138</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30188'>Smart Load 22 Power</a></h5>
 <table>
@@ -2245,7 +2214,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_22_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30140</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30190'>Smart Load 23 Power</a></h5>
 <table>
@@ -2271,7 +2240,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_23_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30142</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30192'>Smart Load 24 Power</a></h5>
 <table>
@@ -2297,7 +2266,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_smart_load_24_total_consumption/state</td></tr>
 <tr><td>Source</td><td>30144</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30000'>System Time</a></h5>
 <table>
@@ -2381,7 +2350,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_daily_export_energy/state</td></tr>
 <tr><td>Source</td><td>PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_daily_import_energy'>Daily Imported Energy</a></h5>
 <table>
@@ -2393,7 +2362,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_daily_import_energy/state</td></tr>
 <tr><td>Source</td><td>PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_export_power'>Export Power</a></h5>
 <table>
@@ -2453,7 +2422,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_lifetime_export_energy/state</td></tr>
 <tr><td>Source</td><td>30220</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_grid_sensor_lifetime_import_energy'>Lifetime Imported Energy</a></h5>
 <table>
@@ -2466,7 +2435,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_sensor_lifetime_import_energy/state</td></tr>
 <tr><td>Source</td><td>30216</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30052'>Phase A Active Power</a></h5>
 <table>
@@ -2579,7 +2548,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30232</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30244'>Total Charge Energy</a></h5>
 <table>
@@ -2593,7 +2562,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30244</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30228'>Total Common Load Consumption</a></h5>
 <table>
@@ -2607,7 +2576,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30228</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30252'>Total DC EV Charge Energy</a></h5>
 <table>
@@ -2621,7 +2590,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30252</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30256'>Total DC EV Discharge Energy</a></h5>
 <table>
@@ -2635,7 +2604,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30256</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30248'>Total Discharge Energy</a></h5>
 <table>
@@ -2649,7 +2618,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30248</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30264'>Total Exported Energy</a></h5>
 <table>
@@ -2663,7 +2632,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30264</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30268'>Total Generator Output Energy</a></h5>
 <table>
@@ -2677,7 +2646,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30268</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30260'>Total Imported Energy</a></h5>
 <table>
@@ -2691,7 +2660,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30260</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30236'>Total PV Production</a></h5>
 <table>
@@ -2705,7 +2674,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30236</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_247_30240'>Total Third-Party PV Production</a></h5>
 <table>
@@ -2719,7 +2688,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30240</td></tr>
 <tr><td>Comment</td><td>After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 
 ### Inverter
@@ -2763,7 +2732,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>41501</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_30613'>Active Power Fixed Value Adjustment Feedback</a></h5>
 <table>
@@ -2791,7 +2759,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>41505</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_30617'>Active Power Percentage Adjustment Feedback</a></h5>
 <table>
@@ -2847,7 +2814,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>31509</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a maximum of 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30525'>Firmware Version</a></h5>
 <table>
@@ -2859,7 +2825,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30525</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_30608'>Gateway Alarms</a></h5>
 <table>
@@ -2913,7 +2878,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>31511</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_001_31026'>MPTT Count</a></h5>
 <table>
@@ -3035,7 +3000,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30500</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_31004'>Output Type</a></h5>
 <table>
@@ -3072,7 +3036,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>Modbus Registers 30605 and 30606</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_31035'>PV Power</a></h5>
 <table>
@@ -3207,7 +3170,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>41507</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_30619'>Power Factor Adjustment Feedback</a></h5>
 <table>
@@ -3290,7 +3252,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>41503</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_30615'>Reactive Power Fixed Value Adjustment Feedback</a></h5>
 <table>
@@ -3332,7 +3293,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>41506</td></tr>
 <tr><td>Applicable To</td><td> PV Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_30578'>Running State</a></h5>
 <table>
@@ -3357,7 +3317,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30515</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_001_31040'>Shutdown Time</a></h5>
 <table>
@@ -3423,7 +3382,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30595</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30597'>Available Discharge Energy</a></h5>
 <table>
@@ -3437,7 +3396,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30597</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30603'>Average Cell Temperature</a></h5>
 <table>
@@ -3544,7 +3503,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30566</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a maximum of 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30572'>Daily Discharge Energy</a></h5>
 <table>
@@ -3558,7 +3516,6 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30572</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a maximum of 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30568'>Lifetime Charge Energy</a></h5>
 <table>
@@ -3572,7 +3529,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30568</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30574'>Lifetime Discharge Energy</a></h5>
 <table>
@@ -3586,7 +3543,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30574</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30620'>Max Battery Temperature</a></h5>
 <table>
@@ -3684,7 +3641,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>30548</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_30550'>Rated Charging Power</a></h5>
 <table>
@@ -4233,7 +4190,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv2_daily_energy'>PV String 2 Daily Production</a></h5>
 <table>
@@ -4246,7 +4203,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv3_daily_energy'>PV String 3 Daily Production</a></h5>
 <table>
@@ -4259,7 +4216,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv4_daily_energy'>PV String 4 Daily Production</a></h5>
 <table>
@@ -4272,7 +4229,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv5_daily_energy'>PV String 5 Daily Production</a></h5>
 <table>
@@ -4285,7 +4242,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv6_daily_energy'>PV String 6 Daily Production</a></h5>
 <table>
@@ -4298,7 +4255,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv7_daily_energy'>PV String 7 Daily Production</a></h5>
 <table>
@@ -4311,7 +4268,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv8_daily_energy'>PV String 8 Daily Production</a></h5>
 <table>
@@ -4324,7 +4281,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv9_daily_energy'>PV String 9 Daily Production</a></h5>
 <table>
@@ -4337,7 +4294,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv10_daily_energy'>PV String 10 Daily Production</a></h5>
 <table>
@@ -4350,7 +4307,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv11_daily_energy'>PV String 11 Daily Production</a></h5>
 <table>
@@ -4363,7 +4320,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv12_daily_energy'>PV String 12 Daily Production</a></h5>
 <table>
@@ -4376,7 +4333,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv13_daily_energy'>PV String 13 Daily Production</a></h5>
 <table>
@@ -4389,7 +4346,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv14_daily_energy'>PV String 14 Daily Production</a></h5>
 <table>
@@ -4402,7 +4359,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv15_daily_energy'>PV String 15 Daily Production</a></h5>
 <table>
@@ -4415,7 +4372,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv16_daily_energy'>PV String 16 Daily Production</a></h5>
 <table>
@@ -4428,7 +4385,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv17_daily_energy'>PV String 17 Daily Production</a></h5>
 <table>
@@ -4441,7 +4398,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv18_daily_energy'>PV String 18 Daily Production</a></h5>
 <table>
@@ -4454,7 +4411,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv19_daily_energy'>PV String 19 Daily Production</a></h5>
 <table>
@@ -4467,7 +4424,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv20_daily_energy'>PV String 20 Daily Production</a></h5>
 <table>
@@ -4480,7 +4437,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv21_daily_energy'>PV String 21 Daily Production</a></h5>
 <table>
@@ -4493,7 +4450,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv22_daily_energy'>PV String 22 Daily Production</a></h5>
 <table>
@@ -4506,7 +4463,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv23_daily_energy'>PV String 23 Daily Production</a></h5>
 <table>
@@ -4519,7 +4476,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv24_daily_energy'>PV String 24 Daily Production</a></h5>
 <table>
@@ -4532,7 +4489,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv25_daily_energy'>PV String 25 Daily Production</a></h5>
 <table>
@@ -4545,7 +4502,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv26_daily_energy'>PV String 26 Daily Production</a></h5>
 <table>
@@ -4558,7 +4515,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv27_daily_energy'>PV String 27 Daily Production</a></h5>
 <table>
@@ -4571,7 +4528,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv28_daily_energy'>PV String 28 Daily Production</a></h5>
 <table>
@@ -4584,7 +4541,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv29_daily_energy'>PV String 29 Daily Production</a></h5>
 <table>
@@ -4597,7 +4554,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv30_daily_energy'>PV String 30 Daily Production</a></h5>
 <table>
@@ -4610,7 +4567,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv31_daily_energy'>PV String 31 Daily Production</a></h5>
 <table>
@@ -4623,7 +4580,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv32_daily_energy'>PV String 32 Daily Production</a></h5>
 <table>
@@ -4636,7 +4593,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv33_daily_energy'>PV String 33 Daily Production</a></h5>
 <table>
@@ -4649,7 +4606,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv34_daily_energy'>PV String 34 Daily Production</a></h5>
 <table>
@@ -4662,7 +4619,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv35_daily_energy'>PV String 35 Daily Production</a></h5>
 <table>
@@ -4675,7 +4632,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv36_daily_energy'>PV String 36 Daily Production</a></h5>
 <table>
@@ -4688,7 +4645,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_lifetime_energy'>PV String 1 Lifetime Production</a></h5>
 <table>
@@ -4701,7 +4658,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv2_lifetime_energy'>PV String 2 Lifetime Production</a></h5>
 <table>
@@ -4714,7 +4671,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv3_lifetime_energy'>PV String 3 Lifetime Production</a></h5>
 <table>
@@ -4727,7 +4684,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv4_lifetime_energy'>PV String 4 Lifetime Production</a></h5>
 <table>
@@ -4740,7 +4697,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv5_lifetime_energy'>PV String 5 Lifetime Production</a></h5>
 <table>
@@ -4753,7 +4710,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv6_lifetime_energy'>PV String 6 Lifetime Production</a></h5>
 <table>
@@ -4766,7 +4723,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv7_lifetime_energy'>PV String 7 Lifetime Production</a></h5>
 <table>
@@ -4779,7 +4736,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv8_lifetime_energy'>PV String 8 Lifetime Production</a></h5>
 <table>
@@ -4792,7 +4749,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv9_lifetime_energy'>PV String 9 Lifetime Production</a></h5>
 <table>
@@ -4805,7 +4762,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv10_lifetime_energy'>PV String 10 Lifetime Production</a></h5>
 <table>
@@ -4818,7 +4775,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv11_lifetime_energy'>PV String 11 Lifetime Production</a></h5>
 <table>
@@ -4831,7 +4788,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv12_lifetime_energy'>PV String 12 Lifetime Production</a></h5>
 <table>
@@ -4844,7 +4801,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv13_lifetime_energy'>PV String 13 Lifetime Production</a></h5>
 <table>
@@ -4857,7 +4814,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv14_lifetime_energy'>PV String 14 Lifetime Production</a></h5>
 <table>
@@ -4870,7 +4827,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv15_lifetime_energy'>PV String 15 Lifetime Production</a></h5>
 <table>
@@ -4883,7 +4840,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv16_lifetime_energy'>PV String 16 Lifetime Production</a></h5>
 <table>
@@ -4896,7 +4853,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv17_lifetime_energy'>PV String 17 Lifetime Production</a></h5>
 <table>
@@ -4909,7 +4866,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv18_lifetime_energy'>PV String 18 Lifetime Production</a></h5>
 <table>
@@ -4922,7 +4879,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv19_lifetime_energy'>PV String 19 Lifetime Production</a></h5>
 <table>
@@ -4935,7 +4892,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv20_lifetime_energy'>PV String 20 Lifetime Production</a></h5>
 <table>
@@ -4948,7 +4905,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv21_lifetime_energy'>PV String 21 Lifetime Production</a></h5>
 <table>
@@ -4961,7 +4918,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv22_lifetime_energy'>PV String 22 Lifetime Production</a></h5>
 <table>
@@ -4974,7 +4931,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv23_lifetime_energy'>PV String 23 Lifetime Production</a></h5>
 <table>
@@ -4987,7 +4944,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv24_lifetime_energy'>PV String 24 Lifetime Production</a></h5>
 <table>
@@ -5000,7 +4957,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv25_lifetime_energy'>PV String 25 Lifetime Production</a></h5>
 <table>
@@ -5013,7 +4970,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv26_lifetime_energy'>PV String 26 Lifetime Production</a></h5>
 <table>
@@ -5026,7 +4983,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv27_lifetime_energy'>PV String 27 Lifetime Production</a></h5>
 <table>
@@ -5039,7 +4996,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv28_lifetime_energy'>PV String 28 Lifetime Production</a></h5>
 <table>
@@ -5052,7 +5009,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv29_lifetime_energy'>PV String 29 Lifetime Production</a></h5>
 <table>
@@ -5065,7 +5022,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv30_lifetime_energy'>PV String 30 Lifetime Production</a></h5>
 <table>
@@ -5078,7 +5035,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv31_lifetime_energy'>PV String 31 Lifetime Production</a></h5>
 <table>
@@ -5091,7 +5048,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv32_lifetime_energy'>PV String 32 Lifetime Production</a></h5>
 <table>
@@ -5104,7 +5061,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv33_lifetime_energy'>PV String 33 Lifetime Production</a></h5>
 <table>
@@ -5117,7 +5074,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv34_lifetime_energy'>PV String 34 Lifetime Production</a></h5>
 <table>
@@ -5130,7 +5087,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv35_lifetime_energy'>PV String 35 Lifetime Production</a></h5>
 <table>
@@ -5143,7 +5100,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv36_lifetime_energy'>PV String 36 Lifetime Production</a></h5>
 <table>
@@ -5156,7 +5113,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Riemann &sum; of PVStringPower</td></tr>
 <tr><td>Applicable To</td><td></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_power'>PV String 1 Power</a></h5>
 <table>
@@ -6105,7 +6062,6 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_alarm/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 32012, 32013, and 32014</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_002_32003'>Charging Power</a></h5>
 <table>
@@ -6145,7 +6101,6 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>42001</td></tr>
 <tr><td>Comment</td><td>Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>No sanity checking applied</td></tr>
 </table>
 <h5><a id='sigen_0_002_32007'>Rated Current</a></h5>
 <table>
@@ -6209,7 +6164,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ac_charger_2_total_energy_consumed/state</td></tr>
 <tr><td>Source</td><td>32001</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.0</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 
 ### DC Charger
@@ -6236,7 +6191,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>31505</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The delta of the raw value compared to the previous value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
 </table>
 <h5><a id='sigen_0_001_31507'>Current Charging Duration</a></h5>
 <table>
@@ -6340,7 +6295,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_frequency'>Frequency</a></h5>
 <table>
@@ -6364,7 +6319,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
 <tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be between 0 and 500000.0</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The raw value is sanity checked to be a minimum of 0</td></tr>
 </table>
 <h5><a id='sigen_0_enphase_123456789012_active_power'>PV Power</a></h5>
 <table>

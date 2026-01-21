@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
-from .const import StateClass, UnitOfEnergy, UnitOfPower
+from .const import DeviceClass, StateClass, UnitOfEnergy, UnitOfPower
 
 
 @dataclass
@@ -26,10 +26,31 @@ class SanityCheck:
     max_raw: float | int | None = None
     delta: bool = False
 
-    def init(self, unit: str | None, state_class: StateClass | None, data_type: ModbusDataType | None) -> None:
+    def __init__(
+        self,
+        unit: str | None = None,
+        device_class: DeviceClass | None = None,
+        state_class: StateClass | None = None,
+        data_type: ModbusDataType | None = None,
+        min_raw: float | int | None = None,
+        max_raw: float | int | None = None,
+        delta: bool | None = None,
+    ) -> None:
+        self.min_raw = min_raw
+        self.max_raw = max_raw
+        if delta is None:
+            if state_class == StateClass.TOTAL_INCREASING:
+                self.delta = True
+                self.min_raw = 0
+            elif device_class == DeviceClass.ENERGY:
+                self.delta = True
+            else:
+                self.delta = False
+
         if self.min_raw is not None or self.max_raw is not None:
-            # Already initialized
+            # Already initialized via parameters
             return
+
         match data_type:
             case ModbusDataType.INT16:
                 self.min_raw = -32768
@@ -52,11 +73,27 @@ class SanityCheck:
         match unit:
             case UnitOfPower.WATT | UnitOfEnergy.WATT_HOUR | UnitOfPower.KILO_WATT | UnitOfEnergy.KILO_WATT_HOUR:
                 self.max_raw = Config.sanity_check_default_kw * 1000 if not self.max_raw else min(Config.sanity_check_default_kw * 1000, self.max_raw)
-        if state_class == StateClass.TOTAL_INCREASING:
-            self.delta = True
-            self.min_raw = 0
-        elif self.min_raw is not None and self.max_raw is not None:
+        if self.min_raw is not None and self.max_raw is not None:
             self.min_raw = max(self.max_raw * -1, self.min_raw)
+
+    def __repr__(self):
+        if self.min_raw is None and self.max_raw is None:
+            return "Sanity checking disabled"
+        if self.delta:
+            if self.min_raw is None:
+                return f"The raw value is sanity checked to be a maximum of {self.max_raw}"
+            if self.max_raw is None:
+                return f"The raw value is sanity checked to be a minimum of {self.min_raw}"
+            return f"The raw value is sanity checked to be between {self.min_raw} and {self.max_raw}"
+        if self.min_raw is None:
+            return f"The delta of the raw value compared to the previous value is sanity checked to be a maximum of {self.max_raw}"
+        if self.max_raw is None:
+            return f"The delta of the raw value compared to the previous value is sanity checked to be a minimum of {self.min_raw}"
+        return f"The delta of the raw value compared to the previous value is sanity checked to be between {self.min_raw} and {self.max_raw}"
+
+    @property
+    def is_enabled(self) -> bool:
+        return self.min_raw is not None or self.max_raw is not None
 
     def check(self, state: float | int, previous_states: list[tuple[float, float | int | str]]) -> bool:
         if state is None or not isinstance(state, (float, int)) or (self.min_raw is None and self.max_raw is None) or (self.delta and len(previous_states) == 0):
@@ -64,7 +101,7 @@ class SanityCheck:
         if self.delta:
             if len(previous_states) > 0 and isinstance(previous_states[-1][1], (float, int)):
                 previous_value = previous_states[-1][1]
-                value = state - previous_value
+                value = state - previous_value  # pyrefly: ignore
             else:
                 return True
         else:
@@ -78,18 +115,3 @@ class SanityCheck:
         elif self.min_raw is not None and self.max_raw is not None and not (self.min_raw <= value <= self.max_raw):
             raise ValueError(f"Raw {'delta' if self.delta else 'value'} {value} is not within sanity check range {self.min_raw} to {self.max_raw} ({state=} {previous_states=})")
         return True
-
-    def __repr__(self):
-        if self.min_raw is None and self.max_raw is None:
-            return "No sanity checking applied"
-        if self.delta:
-            if self.min_raw is None:
-                return f"The raw value is sanity checked to be a maximum of {self.max_raw}"
-            if self.max_raw is None:
-                return f"The raw value is sanity checked to be a minimum of {self.min_raw}"
-            return f"The raw value is sanity checked to be between {self.min_raw} and {self.max_raw}"
-        if self.min_raw is None:
-            return f"The delta of the raw value compared to the previous value is sanity checked to be a maximum of {self.max_raw}"
-        if self.max_raw is None:
-            return f"The delta of the raw value compared to the previous value is sanity checked to be a minimum of {self.min_raw}"
-        return f"The delta of the raw value compared to the previous value is sanity checked to be between {self.min_raw} and {self.max_raw}"

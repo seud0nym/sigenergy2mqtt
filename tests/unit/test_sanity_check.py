@@ -6,17 +6,21 @@ from sigenergy2mqtt.sensors.sanity_check import SanityCheck
 
 
 class TestSanityCheck:
-
     def test_init_default(self):
-        sc = SanityCheck()
-        sc.init(unit="W", state_class=None, data_type=ModbusClient.DATATYPE.UINT16)
+        sc = SanityCheck(unit="W", state_class=None, data_type=ModbusClient.DATATYPE.UINT16)
         assert sc.min_raw == 0
         assert sc.max_raw is not None  # Should be set based on UINT16
         assert sc.delta is False
 
     def test_init_delta(self):
-        sc = SanityCheck()
-        sc.init(unit="kWh", state_class=StateClass.TOTAL_INCREASING, data_type=ModbusClient.DATATYPE.UINT32)
+        sc = SanityCheck(unit="kWh", state_class=StateClass.TOTAL_INCREASING, data_type=ModbusClient.DATATYPE.UINT32)
+        assert sc.delta is True
+        assert sc.min_raw == 0
+
+    def test_init_energy_device_class(self):
+        from sigenergy2mqtt.sensors.const import DeviceClass
+
+        sc = SanityCheck(unit="kWh", state_class=None, data_type=ModbusClient.DATATYPE.UINT32, device_class=DeviceClass.ENERGY)
         assert sc.delta is True
         assert sc.min_raw == 0
 
