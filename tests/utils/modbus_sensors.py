@@ -4,6 +4,8 @@ import os
 import sys
 from typing import cast
 
+from sigenergy2mqtt.devices import Device
+
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from sigenergy2mqtt.common import DeviceType, Protocol, ProtocolApplies
@@ -18,13 +20,15 @@ from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, Plant
 async def get_sensor_instances(
     hass: bool = False,
     plant_index: int = 0,
-    protocol_version: Protocol = list(Protocol)[-1],
+    protocol_version: Protocol | None = None,
     hybrid_inverter_device_address: int = 1,
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
     concrete_sensor_check: bool = True,
 ) -> dict[str, Sensor]:
+    if protocol_version is None:
+        protocol_version = list(Protocol)[-1]
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
     Config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
@@ -157,7 +161,7 @@ async def get_sensor_instances(
     # add_sensor_instance(pv_model)
     # add_sensor_instance(pv_serial)
     for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
-        devices = [parent]
+        devices: list[Device] = [parent]
         devices.extend(parent.children)
         for device in devices:
             for sensor in device.sensors.values():
