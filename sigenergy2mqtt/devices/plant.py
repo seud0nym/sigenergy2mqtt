@@ -203,7 +203,7 @@ class PowerPlant(ModbusDevice):
         plant_consumed_power = derived.PlantConsumedPower(plant_index, method=consumption_source)
         match plant_consumed_power.method:
             case ConsumptionMethod.CALCULATED:
-                grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)
+                grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)  # pyrefly: ignore
                 assert grid_status is not None, "Grid Status sensor not found for Plant Consumed Power calculation"
                 self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, grid_status, search_children=True)
             case ConsumptionMethod.GENERAL:
