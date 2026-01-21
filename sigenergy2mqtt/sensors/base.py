@@ -381,8 +381,8 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
             if self.unit:
                 attributes["unit-of-measurement"] = self.unit
         attributes["sensor-class"] = self.__class__.__name__
-        if self.protocol_version:
-            attributes["since-protocol"] = f"V{self.protocol_version}"
+        if self.protocol_version and self.protocol_version != Protocol.N_A:
+            attributes["since-protocol"] = f"V{self.protocol_version.value}"
         if self._gain:
             attributes["gain"] = self._gain
         if isinstance(self, ReadableSensorMixin):
@@ -735,7 +735,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = self.address
+        attributes["source"] = F"Register {self.address}"
         return attributes
 
 
