@@ -1152,16 +1152,16 @@ class NumericSensor(ReadWriteSensor):
         self["mode"] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
         self["step"] = 1 if precision is None else 10**-precision
         if "min" in self and isinstance(self["min"], (int, float)):
-            self._sanity.min_raw = int(self["min"] * gain) if gain else int(self["min"])
+            self._sanity.min_raw = int(self["min"] * gain) if gain else int(self["min"]) # pyright: ignore[reportArgumentType, reportOperatorIssue]
         elif "min" in self and isinstance(self["min"], tuple):
-            min_val = min(self["min"])
-            self._sanity.min_raw = int(min_val * gain) if gain else int(min_val)
+            min_val = min(self["min"]) # pyright: ignore[reportArgumentType]
+            self._sanity.min_raw = int(min_val * gain) if gain else int(min_val) # pyright: ignore[reportOperatorIssue]
 
         if "max" in self and isinstance(self["max"], (int, float)):
-            self._sanity.max_raw = int(self["max"] * gain) if gain else int(self["max"])
+            self._sanity.max_raw = int(self["max"] * gain) if gain else int(self["max"]) # pyright: ignore[reportArgumentType, reportOperatorIssue]
         elif "max" in self and isinstance(self["max"], tuple):
-            max_val = max(self["max"])
-            self._sanity.max_raw = int(max_val * gain) if gain else int(max_val)
+            max_val = max(self["max"]) # pyright: ignore[reportArgumentType]
+            self._sanity.max_raw = int(max_val * gain) if gain else int(max_val) # pyright: ignore[reportOperatorIssue]
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = super().get_discovery_components()
@@ -1724,7 +1724,7 @@ class RunningStateSensor(ReadOnlySensor):
             "Environmental Abnormality",  # 7
         ]
         self._sanity.min_raw = 0
-        self._sanity.max_raw = len(self["options"]) - 1
+        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

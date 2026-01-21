@@ -121,7 +121,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "Time-Based Control",  # 9
         ]
         self._sanity.min_raw = 0
-        self._sanity.max_raw = len(self["options"]) - 1
+        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -161,7 +161,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             "Connected",  # 1
         ]
         self._sanity.min_raw = 0
-        self._sanity.max_raw = len(self["options"]) - 1
+        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -264,7 +264,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             "Off Grid (manual)",  # 2
         ]
         self._sanity.min_raw = 0
-        self._sanity.max_raw = len(self["options"]) - 1
+        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

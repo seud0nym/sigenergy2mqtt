@@ -1229,7 +1229,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/N",  # 3
         ]
         self._sanity.min_raw = 0
-        self._sanity.max_raw = len(self["options"]) - 1
+        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1807,7 +1807,7 @@ class DCChargerRunningState(ReadOnlySensor):
             "Scheduled",  # 5
         ]
         self._sanity.min_raw = 0
-        self._sanity.max_raw = len(self["options"]) - 1
+        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
