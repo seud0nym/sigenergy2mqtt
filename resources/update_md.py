@@ -127,7 +127,7 @@ async def sensor_index():
                 f.write(f"{sensor['name']}")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
-                f.write(f"<tr><td>Sensor&nbsp;Class</td><td>{sensor.__class__.__name__}</td></tr>\n")
+                f.write(f"<tr><td>Sensor&nbsp;Class</td><td>{sensor_name}</td></tr>\n")
                 if isinstance(sensor, ReadableSensorMixin):
                     f.write(f"<tr><td>Scan&nbsp;Interval</td><td>{sensor.scan_interval}s</td></tr>\n")
                 if isinstance(sensor, Sensor) and sensor.unit:
@@ -372,7 +372,7 @@ async def compare_sensor_instances():
     sensor_instances = await get_sensor_instances(hass=True)
     registers = invert_dict_by_field(sensor_instances, "address")
 
-    from modbusregisterdefinitions import (
+    from modbusregisterdefinitions import (  # pyrefly: ignore
         AC_CHARGER_PARAMETER_REGISTERS,
         AC_CHARGER_RUNNING_INFO_REGISTERS,
         DC_CHARGER_PARAMETER_REGISTERS,
@@ -499,7 +499,7 @@ def download_latest(path: str) -> None:
     branches = get_branches()
     latest = None
 
-    for b in branches:
+    for b in branches:  # pyrefly: ignore
         branch_name = b["name"]
         commit = get_latest_commit_for_file(branch_name, path)
         if not commit:
@@ -545,12 +545,12 @@ if __name__ == "__main__":
         download_latest("custom_components/sigen/modbusregisterdefinitions.py")
     except requests.exceptions.HTTPError:
         if not os.path.exists("modbusregisterdefinitions.py"):
-            with open("modbusregisterdefinitions.py", 'a'):
+            with open("modbusregisterdefinitions.py", "a"):
                 os.utime("modbusregisterdefinitions.py", None)  # Set to now
         else:
             # Set both access and modification times to now
             os.utime("modbusregisterdefinitions.py", None)
-        pass # Probably rate limited 
+        pass  # Probably rate limited
     loop = asyncio.new_event_loop()
     loop.run_until_complete(sensor_index())
     loop.run_until_complete(compare_sensor_instances())
