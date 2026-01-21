@@ -1206,7 +1206,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40032</td></tr>
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value is sanity checked to be between 0.0 and 12.6 (raw=0-12600)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value is sanity checked to be between 0.0 and 4294967.29 (raw=0-4294967295)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40034'>Max Discharging Limit</a></h5>
 <table>
@@ -1220,7 +1220,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Source</td><td>40034</td></tr>
 <tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value is sanity checked to be between 0.0 and 13.68 (raw=0-13680)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value is sanity checked to be between 0.0 and 4294967.29 (raw=0-4294967295)</td></tr>
 </table>
 <h5><a id='sigen_0_general_pcs_alarm'>PCS Alarms</a></h5>
 <table>

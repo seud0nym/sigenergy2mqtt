@@ -527,6 +527,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_charging_power,
             protocol_version=Protocol.V1_8,
         )
+        self._sanity.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -555,6 +556,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_discharging_power,
             protocol_version=Protocol.V1_8,
         )
+        self._sanity.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
