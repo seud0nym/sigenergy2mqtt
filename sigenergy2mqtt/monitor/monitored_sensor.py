@@ -12,7 +12,7 @@ class MonitoredSensor:
 
     @property
     def is_overdue(self) -> bool:
-        return not self.notified and self.last_seen + (self.scan_interval * 2) < time.time()
+        return not self.notified and self.last_seen + (self.scan_interval * 3) < time.time()
 
     @property
     def name(self) -> str:
