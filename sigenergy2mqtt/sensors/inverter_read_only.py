@@ -1228,6 +1228,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/L3/N",  # 2
             "L1/L2/N",  # 3
         ]
+        self._sanity.min_raw = 0
+        self._sanity.max_raw = len(self["options"]) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1372,8 +1374,8 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                 apparent_power = math.sqrt(active_power**2 + reactive_power**2)
                 power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
                 if self.debug_logging:
-                    active_power_time = cast(float, self._active_power.latest_time)
-                    reactive_power_time = cast(float, self._reactive_power.latest_time)
+                    active_power_time = cast(float, self._active_power.latest_time)  # pyrefly: ignore
+                    reactive_power_time = cast(float, self._reactive_power.latest_time)  # pyrefly: ignore
                     logging.debug(
                         f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
                     )
@@ -1804,6 +1806,8 @@ class DCChargerRunningState(ReadOnlySensor):
             "Fault",  # 4
             "Scheduled",  # 5
         ]
+        self._sanity.min_raw = 0
+        self._sanity.max_raw = len(self["options"]) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

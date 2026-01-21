@@ -1,19 +1,11 @@
 import asyncio
-import datetime
-import html
-import json
-import logging
 import os
-import re
-import sys
 import time
-from pathlib import Path
-from typing import Any, Iterable, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol, RegisterAccess
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     Alarm1Sensor,
@@ -22,15 +14,11 @@ from sigenergy2mqtt.sensors.base import (
     Alarm4Sensor,
     Alarm5Sensor,
     AlarmCombinedSensor,
-    AlarmSensor,
-    AvailabilityMixin,
     DerivedSensor,
     EnergyDailyAccumulationSensor,
-    Metrics,
     ModbusLockFactory,
     ModbusSensorMixin,
     NumericSensor,
-    ObservableMixin,
     PVPowerSensor,
     ReadableSensorMixin,
     ReadOnlySensor,
@@ -39,7 +27,6 @@ from sigenergy2mqtt.sensors.base import (
     RunningStateSensor,
     SelectSensor,
     Sensor,
-    SubstituteMixin,
     SwitchSensor,
     TimestampSensor,
     TypedSensorMixin,
@@ -98,7 +85,7 @@ class TestSensorBaseLogicCoverage:
     def test_sensor_init_assertions(self, mock_config):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # Duplicate unique_id between DIFFERENT classes
-            s1 = DummySensor("S1", "sigenergy_u1", "sigenergy_o1", "W", None, None, None, 1.0, 0)
+            DummySensor("S1", "sigenergy_u1", "sigenergy_o1", "W", None, None, None, 1.0, 0)
             with pytest.raises(AssertionError, match="unique_id sigenergy_u1 has already been used for class DummySensor"):
                 OtherSensor("S2", "sigenergy_u1", "sigenergy_o2", "W", None, None, None, 1.0, 0)
 
@@ -632,10 +619,15 @@ class TestSpecializedSensors:
             s.set_latest_state(50)
             assert await s.get_state(modbus_client=modbus_client) == 50.0
 
-            s.set_latest_state(-10)
-            assert await s.get_state(modbus_client=modbus_client) == 0.0
-            s.set_latest_state(110)
-            assert await s.get_state(modbus_client=modbus_client) == 100.0
+            from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+
+            with pytest.raises(SanityCheckException):
+                s.set_latest_state(-10)
+            # assert await s.get_state(modbus_client=modbus_client) == 0.0
+
+            with pytest.raises(SanityCheckException):
+                s.set_latest_state(110)
+            # assert await s.get_state(modbus_client=modbus_client) == 100.0
 
             assert await s.value_is_valid(None, 50) is True
             assert await s.value_is_valid(None, -1) is False
@@ -659,9 +651,13 @@ class TestSpecializedSensors:
 
             s.set_latest_state(1)
             assert await s.get_state(modbus_client=modbus_client) == "On"
-            s.set_latest_state(99)
-            result = await s.get_state(modbus_client=modbus_client)
-            assert result in ["Unknown Mode: 99", "Unknown Mode: 99.0"]
+
+            from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+
+            with pytest.raises(SanityCheckException):
+                s.set_latest_state(99)
+            # result = await s.get_state(modbus_client=modbus_client)
+            # assert result in ["Unknown Mode: 99", "Unknown Mode: 99.0"]
 
             assert await s.value_is_valid(None, "On") is True
             assert await s.value_is_valid(None, "1") is True
@@ -978,12 +974,16 @@ class TestWave7Booster:
 
             # Range checks with tuples
             # Value < min tuple range
-            s.set_latest_state(-5)
-            assert await s.get_state(modbus_client=modbus_client) == 0.0  # clamped to min(min_tuple)
+            from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+
+            with pytest.raises(SanityCheckException):
+                s.set_latest_state(-5)
+            # assert await s.get_state(modbus_client=modbus_client) == 0.0  # clamped to min(min_tuple)
 
             # Value > max tuple range
-            s.set_latest_state(105)
-            assert await s.get_state(modbus_client=modbus_client) == 100.0  # clamped to max(max_tuple)
+            with pytest.raises(SanityCheckException):
+                s.set_latest_state(105)
+            # assert await s.get_state(modbus_client=modbus_client) == 100.0  # clamped to max(max_tuple)
 
             # set_value None
             assert await s.set_value(modbus_client, MagicMock(), None, s["command_topic"], MagicMock()) is False

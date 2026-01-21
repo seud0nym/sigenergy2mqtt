@@ -133,6 +133,8 @@ class TestBaseCoverage:
         )
         with patch.object(NumericSensor, "_update_internal_state", new_callable=AsyncMock) as mock_update:
             mock_update.return_value = True
-            sensor.set_latest_state(150.0)
-            state = await sensor.get_state(republish=True)
-            assert state == 100.0
+
+            from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+
+            with pytest.raises(SanityCheckException):
+                sensor.set_latest_state(150.0)

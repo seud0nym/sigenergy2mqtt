@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
 from .const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
-from .sanity_check import SanityCheck
+from .sanity_check import SanityCheck, SanityCheckException
 
 
 # Provide a small runtime proxy for ModbusLockFactory so other modules/tests
@@ -138,8 +138,13 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
             unit=unit,
             device_class=device_class,
             state_class=state_class,
+            gain=gain,
+            precision=precision,
             data_type=getattr(self, "data_type", None),
+            delta=False if any(v in self.__class__.__name__ for v in ["Available", "Rated", "Adjustment", "Limit "]) else None,
         )
+        if any(v in self.__class__.__name__ for v in ["Available", "Rated", "Adjustment", "Limit "]):
+            assert self._sanity.delta is False
 
         self._failures: int = 0
         self._max_failures: int = 10
@@ -462,12 +467,16 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
             except Exception as e:
                 logging.warning(f"{self.__class__.__name__} Publishing SKIPPED: Failed to get state ({repr(e)})")
                 if modbus_client and modbus_client.connected:
-                    self._failures += 1
-                    self._next_retry = (
-                        None if self._failures < self._max_failures or self._max_failures_retry_interval == 0 else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
-                    )
-                    if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
+                    if isinstance(e, SanityCheckException) and not Config.sanity_check_failures_increment:
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} SanityCheck failure ignored for failure counting ({self._failures} failures)")
+                    else:
+                        self._failures += 1
+                        self._next_retry = (
+                            None if self._failures < self._max_failures or self._max_failures_retry_interval == 0 else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
+                        )
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} {self._failures=} {self._max_failures=} {self._next_retry=}")
                 else:
                     raise
                 if Config.home_assistant.enabled:
@@ -1097,8 +1106,8 @@ class NumericSensor(ReadWriteSensor):
         gain: float | None,
         precision: int | None,
         protocol_version: Protocol,
-        minimum: float | tuple[float, float] = 0.0,
-        maximum: float | tuple[float, float] = 100.0,
+        minimum: float | tuple[float, float] | None = None,
+        maximum: float | tuple[float, float] | None = None,
     ):
         super().__init__(
             availability_control_sensor,
@@ -1119,25 +1128,46 @@ class NumericSensor(ReadWriteSensor):
             precision,
             protocol_version,
         )
-        assert (isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)) and minimum < maximum) or (
-            isinstance(minimum, (tuple))
-            and isinstance(maximum, (tuple))
-            and len(minimum) == len(maximum)
-            and all(isinstance(mn, (int, float)) and isinstance(mx, (int, float)) and mn < mx for mn, mx in zip(minimum, maximum))
+        assert (
+            minimum is None
+            or maximum is None
+            or (isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)) and minimum < maximum)
+            or (
+                isinstance(minimum, (tuple))
+                and isinstance(maximum, (tuple))
+                and len(minimum) == len(maximum)
+                and all(isinstance(mn, (int, float)) and isinstance(mx, (int, float)) and mn < mx for mn, mx in zip(minimum, maximum))
+            )
         ), f"{self.__class__.__name__} Invalid min/max values: {minimum}/{maximum}"
         self["platform"] = "number"
-        self["min"] = float(minimum) if isinstance(minimum, (float, int)) else cast(tuple, minimum) if isinstance(minimum, tuple) else minimum  # Must NOT be raw value, and *may* be a tuple of display values!
-        self["max"] = float(maximum) if isinstance(maximum, (float, int)) else cast(tuple, maximum) if isinstance(maximum, tuple) else maximum  # Must NOT be raw value, and *may* be a tuple of display values!
+        if minimum is None and maximum is None and unit == PERCENTAGE:
+            self["min"] = 0.0
+            self["max"] = 100.0
+        if minimum is not None:  # Must NOT be raw value, and *may* be a tuple of display values!
+            self["min"] = float(minimum) if isinstance(minimum, (float, int)) else cast(tuple, minimum) if isinstance(minimum, tuple) else minimum
+        elif minimum is None and maximum is not None:
+            self["min"] = 0.0 if isinstance(maximum, float) else 0
+        if maximum is not None:  # Must NOT be raw value, and *may* be a tuple of display values!
+            self["max"] = float(maximum) if isinstance(maximum, (float, int)) else cast(tuple, maximum) if isinstance(maximum, tuple) else maximum
         self["mode"] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
         self["step"] = 1 if precision is None else 10**-precision
-        self._sanity.min_raw = None
-        self._sanity.max_raw = None
+        if "min" in self and isinstance(self["min"], (int, float)):
+            self._sanity.min_raw = int(self["min"] * gain) if gain else int(self["min"])
+        elif "min" in self and isinstance(self["min"], tuple):
+            min_val = min(self["min"])
+            self._sanity.min_raw = int(min_val * gain) if gain else int(min_val)
+
+        if "max" in self and isinstance(self["max"], (int, float)):
+            self._sanity.max_raw = int(self["max"] * gain) if gain else int(self["max"])
+        elif "max" in self and isinstance(self["max"], tuple):
+            max_val = max(self["max"])
+            self._sanity.max_raw = int(max_val * gain) if gain else int(max_val)
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = super().get_discovery_components()
-        if isinstance(components[self.unique_id]["min"], (tuple, list)):
+        if "min" in self and isinstance(components[self.unique_id]["min"], (tuple, list)):
             components[self.unique_id]["min"] = min(cast(Iterable[float], self["min"]))
-        if isinstance(components[self.unique_id]["max"], (tuple, list)):
+        if "max" in self and isinstance(components[self.unique_id]["max"], (tuple, list)):
             components[self.unique_id]["max"] = max(cast(Iterable[float], self["max"]))
         return components
 
@@ -1145,22 +1175,22 @@ class NumericSensor(ReadWriteSensor):
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
         if isinstance(state, (float, int)):
             value = float(state) if not raw else cast(float, self._apply_gain_and_precision(state))
-            if isinstance(self["min"], float) and value < cast(float, self["min"]):
+            if "min" in self and isinstance(self["min"], float) and value < cast(float, self["min"]):
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} value={state} < minimum={self['min']}")
                 value = state
                 state = cast(float, self["min"]) if not raw else cast(float, self["min"]) * self.gain
-            elif isinstance(self["max"], float) and value > cast(float, self["max"]):
+            elif "max" in self and isinstance(self["max"], float) and value > cast(float, self["max"]):
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} value={state} > maximum={self['max']}")
                 value = state
                 state = cast(float, self["max"]) if not raw else cast(float, self["max"]) * self.gain
-            elif isinstance(self["min"], tuple) and value < 0 and not min(self["min"]) <= value <= max(self["min"]):  # pyright: ignore[reportOperatorIssue, reportArgumentType]
+            elif "min" in self and isinstance(self["min"], tuple) and value < 0 and not min(self["min"]) <= value <= max(self["min"]):  # pyright: ignore[reportOperatorIssue, reportArgumentType]
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} value={state} not in range {self['min']}")
                 value = state
                 state = min(self["min"]) if not raw else min(self["min"]) * self.gain  # pyright: ignore[reportOperatorIssue, reportArgumentType]
-            elif isinstance(self["max"], tuple) and value > 0 and not min(self["max"]) <= value <= max(self["max"]):  # pyright: ignore[reportOperatorIssue, reportArgumentType]
+            elif "max" in self and isinstance(self["max"], tuple) and value > 0 and not min(self["max"]) <= value <= max(self["max"]):  # pyright: ignore[reportOperatorIssue, reportArgumentType]
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} value={state} > not in range {self['max']}")
                 value = state
@@ -1237,9 +1267,11 @@ class SelectSensor(ReadWriteSensor):
             precision=None,
             protocol_version=protocol_version,
         )
+        assert all([isinstance(o, str) for o in options]), "options must be a non-empty list of strings"
         self["platform"] = "select"
         self["options"] = options
-        assert all([isinstance(o, str) for o in options]), "options must be a non-empty list of strings"
+        self._sanity.min_raw = 0
+        self._sanity.max_raw = len(options) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1320,6 +1352,8 @@ class SwitchSensor(ReadWriteSensor):
         self["payload_on"] = 1
         self["state_off"] = 0
         self["state_on"] = 1
+        self._sanity.min_raw = 0
+        self._sanity.max_raw = 1
 
     async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         try:
@@ -1689,6 +1723,8 @@ class RunningStateSensor(ReadOnlySensor):
             "",  # 6
             "Environmental Abnormality",  # 7
         ]
+        self._sanity.min_raw = 0
+        self._sanity.max_raw = len(self["options"]) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

@@ -26,7 +26,9 @@ class Config:
     ems_mode_check: bool = True
     log_level: int = logging.WARNING
     metrics_enabled: bool = True
+
     sanity_check_default_kw: float = 500.0
+    sanity_check_failures_increment: bool = False
 
     modbus: list[ModbusConfiguration] = []
     home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
@@ -137,6 +139,8 @@ class Config:
                             overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
+                        case const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT:
+                            overrides["sanity-check-failures-increment"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
                             overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
@@ -351,8 +355,6 @@ class Config:
     def _configure(data: dict, override: bool = False) -> None:
         for name in data.keys() if data else {}:
             match name:
-                case "home-assistant":
-                    Config.home_assistant.configure(data[name], override)
                 case "consumption":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: consumption = {data[name]}")
                     Config.consumption = ConsumptionMethod(
@@ -369,18 +371,11 @@ class Config:
                             ),
                         )
                     )
+                case "home-assistant":
+                    Config.home_assistant.configure(data[name], override)
                 case "log-level":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: log-level = {data[name]}")
                     Config.log_level = check_log_level(data[name], name)
-                case "sanity-check-default-kw":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
-                    Config.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))
-                case "no-ems-mode-check":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-ems-mode-check = {data[name]}")
-                    Config.ems_mode_check = not check_bool(data[name], name)
-                case "no-metrics":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
-                    Config.metrics_enabled = not check_bool(data[name], name)
                 case "mqtt":
                     Config.mqtt.configure(data[name], override)
                 case "modbus":
@@ -397,8 +392,20 @@ class Config:
                             index += 1
                     else:
                         raise ValueError("modbus configuration element must contain a list of Sigenergy hosts")
+                case "no-ems-mode-check":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-ems-mode-check = {data[name]}")
+                    Config.ems_mode_check = not check_bool(data[name], name)
+                case "no-metrics":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
+                    Config.metrics_enabled = not check_bool(data[name], name)
                 case "pvoutput":
                     Config.pvoutput.configure(data[name], override)
+                case "sanity-check-default-kw":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
+                    Config.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))
+                case "sanity-check-failures-increment":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-failures-increment = {data[name]}")
+                    Config.sanity_check_failures_increment = check_bool(data[name], name)
                 case "sensor-debug-logging":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sensor-debug-logging = {data[name]}")
                     Config.sensor_debug_logging = check_bool(data[name], name)

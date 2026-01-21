@@ -33,6 +33,13 @@ consumption: calculated
 #                 to the delta value. Readings outside of the range are
 #                 ignored.    
 sanity-check-default-kw: 500.0
+# sanity-check-failures-increment
+#   added: 2026.1.21
+#   default: false
+#   description:  If true, the number of sensor read failures will be
+#                 incremented when a sanity check fails. If false, the
+#                 number of sensor read failures will not be incremented.
+sanity-check-failures-increment: false
 # no-ems-mode-check
 #   added: 2026.1.13
 #   default: false
