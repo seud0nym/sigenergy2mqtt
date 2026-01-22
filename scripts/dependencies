@@ -28,6 +28,7 @@ for spec in \
     "pytest" \
     "pytest-asyncio" \
     "pytest-cov" \
+    "pytest-xdist" \
 ; do
   check_pkg "$spec"
 done

@@ -15,10 +15,13 @@ class Translator:
         self._locales_dir = Path(__file__).parent / "locales"
         self._cache: dict[str, dict[str, Any]] = {}
         self._yaml = YAML(typ="safe", pure=True)
+        self._available_locales: list[str] | None = None
 
     def get_available_locales(self) -> list[str]:
-        """Return a list of available locale codes."""
-        return sorted([f.stem for f in self._locales_dir.glob("*.yaml")])
+        """Return a list of available locale codes (cached)."""
+        if self._available_locales is None:
+            self._available_locales = sorted([f.stem for f in self._locales_dir.glob("*.yaml")])
+        return self._available_locales
 
     def load(self, locale: str):
         if self._locale == locale and self._translations:
@@ -36,6 +39,7 @@ class Translator:
         self._translations = {}
         self._fallback_translations = {}
         self._cache = {}
+        self._available_locales = None
         # We don't need to reset self._yaml as it is stateless regarding translations
 
     def set_translations(self, locale: str, data: dict[str, Any]):
@@ -116,7 +120,7 @@ def get_available_locales() -> list[str]:
 
 def get_default_locale() -> str:
     """Determine the default locale based on system settings and available translations."""
-    locales_dir = Path(__file__).parent / "locales"
+    available = get_available_locales()
 
     # Try locale module first
     try:
@@ -124,7 +128,7 @@ def get_default_locale() -> str:
         sys_lang, _ = locale.getlocale()
         if sys_lang:
             lang = sys_lang.split("_")[0].lower()
-            if (locales_dir / f"{lang}.yaml").exists():
+            if lang in available:
                 return lang
     except Exception:
         pass
@@ -134,7 +138,7 @@ def get_default_locale() -> str:
         sys_lang, _ = locale.getdefaultlocale()
         if sys_lang:
             lang = sys_lang.split("_")[0].lower()
-            if (locales_dir / f"{lang}.yaml").exists():
+            if lang in available:
                 return lang
     except Exception:
         pass
@@ -144,7 +148,7 @@ def get_default_locale() -> str:
     if lang_env:
         # Handle formats like en_US.UTF-8 or en_US:en
         lang = lang_env.split("_")[0].split(".")[0].split(":")[0].lower()
-        if (locales_dir / f"{lang}.yaml").exists():
+        if lang in available:
             return lang
 
     return "en"

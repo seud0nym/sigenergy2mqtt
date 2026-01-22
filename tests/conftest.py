@@ -26,10 +26,41 @@ with patch.object(sys, "argv", ["sigenergy2mqtt"]):
 
 
 @pytest.fixture(autouse=True)
-def mock_persistent_state_path(tmp_path):
-    """Global fixture to ensure persistent_state_path is always a temp dir."""
-    with patch("sigenergy2mqtt.config.Config.persistent_state_path", tmp_path):
+def mock_persistent_state_path(request, tmp_path):
+    """Global fixture to ensure persistent_state_path is always a temp dir.
+
+    Use @pytest.mark.no_persistent_state_mock to disable this mock.
+    """
+    if "no_persistent_state_mock" in [m.name for m in request.node.iter_markers()]:
         yield tmp_path
+    else:
+        with patch("sigenergy2mqtt.config.Config.persistent_state_path", tmp_path):
+            yield tmp_path
+
+
+@pytest.fixture(autouse=True)
+def mock_locale_detection(request):
+    """Global fixture to mock locale detection, avoiding slow system calls.
+
+    Use @pytest.mark.no_locale_mock to disable this mock for specific tests.
+    """
+    if "no_locale_mock" in [m.name for m in request.node.iter_markers()]:
+        yield
+    else:
+        with patch("sigenergy2mqtt.i18n.get_default_locale", return_value="en"):
+            yield
+
+
+@pytest.fixture(autouse=True)
+def reset_config():
+    """Global fixture to ensure Config is reset for every test."""
+    from sigenergy2mqtt.config import Config
+
+    Config.reset()
+    Config.reload()
+    yield
+    Config.reset()
+    Config.reload()
 
 
 @pytest.fixture(autouse=True)

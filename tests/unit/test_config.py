@@ -92,11 +92,12 @@ class TestConfigDefaults:
         """Test default sanity check value."""
         assert Config.sanity_check_default_kw == 500.0
 
+    @pytest.mark.no_persistent_state_mock
     def test_default_persistent_state_path(self):
         """Test default persistent state path."""
         # It might be "." or an absolute path depending on environment access
         path = Config.persistent_state_path
-        assert path == "." or (hasattr(path, "is_absolute") and path.is_absolute())
+        assert str(path) == "." or (hasattr(path, "is_absolute") and path.is_absolute())
 
     def test_default_ems_mode_check(self):
         """Test default ems_mode_check flag."""

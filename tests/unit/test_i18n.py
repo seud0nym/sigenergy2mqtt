@@ -180,6 +180,7 @@ def test_get_available_locales():
     assert len(locales) >= 1
 
 
+@pytest.mark.no_locale_mock
 def test_get_default_locale_fallback():
     # Test fallback to 'en' when system locale is not available
     with patch("locale.getlocale", return_value=(None, None)):
@@ -189,6 +190,7 @@ def test_get_default_locale_fallback():
                 assert i18n.get_default_locale() == "en"
 
 
+@pytest.mark.no_locale_mock
 def test_get_default_locale_system():
     # Test picking up system locale if it exists
     # We'll mock the exists check for a fake locale

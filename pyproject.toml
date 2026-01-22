@@ -27,6 +27,7 @@ test = [
   "pytest",
   "pytest-asyncio",
   "pytest-cov",
+  "pytest-xdist",
 ]
 
 [tool.hatch.envs.default]
@@ -36,6 +37,11 @@ scripts.cov = "pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "-n auto --dist loadscope"
+markers = [
+    "no_locale_mock: disable global mock of i18n.get_default_locale",
+    "no_persistent_state_mock: disable global mock of Config.persistent_state_path",
+]
 
 [project.scripts]
 sigenergy2mqtt = "sigenergy2mqtt.__main__:main"

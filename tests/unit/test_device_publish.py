@@ -103,7 +103,8 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         return True
 
 
-def test_publish_updates_runs_one_iteration(monkeypatch):
+@pytest.mark.asyncio
+async def test_publish_updates_runs_one_iteration(monkeypatch):
     dev = Device("devpub", 0, "uidpub", "mf", "mdl", Protocol.V1_8)
 
     # create two modbus sensors
@@ -133,15 +134,15 @@ def test_publish_updates_runs_one_iteration(monkeypatch):
 
     coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, mqtt), "grp", s1, s2)
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait_for(coro, timeout=5))
+    await asyncio.wait_for(coro, timeout=5)
 
     # after run, sensors should have set latest_interval
     assert s1.latest_interval == pytest.approx(1, rel=1e-3)
     assert s2.latest_interval == pytest.approx(1, rel=1e-3)
 
 
-def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
+@pytest.mark.asyncio
+async def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     """If read_ahead_registers returns code 2 the code should disable multiple pre-reads and still publish sensors."""
     dev = Device("devpub2", 0, "uidpub2", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
@@ -173,15 +174,15 @@ def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     from sigenergy2mqtt.modbus.client import ModbusClient
 
     coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait_for(coro, timeout=5))
+    await asyncio.wait_for(coro, timeout=5)
 
     assert modbus.read_ahead_called >= 1
     # sensor was published (states appended)
     assert len(s1._states) >= 1
 
 
-def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
+@pytest.mark.asyncio
+async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     """If ModbusException occurs the device attempts to reconnect via modbus.connect."""
     from pymodbus import ModbusException
 
@@ -240,8 +241,7 @@ def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     from sigenergy2mqtt.modbus.client import ModbusClient
 
     coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
-    loop = asyncio.get_event_loop()
     # run but allow the reconnect logic to be exercised
-    loop.run_until_complete(asyncio.wait_for(coro, timeout=5))
+    await asyncio.wait_for(coro, timeout=5)
 
     assert modbus.connect_called >= 1
