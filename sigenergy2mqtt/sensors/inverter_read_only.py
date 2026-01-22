@@ -840,7 +840,7 @@ class InverterPCSAlarm(AlarmCombinedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 30605 and 30606"
+        attributes["source"] = "Modbus Registers 30605-30606"
         return attributes
 
 

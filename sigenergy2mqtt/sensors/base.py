@@ -735,7 +735,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = F"Register {self.address}"
+        attributes["source"] = f"Modbus Register {self.address}" if self.count == 1 else f"Modbus Registers {self.address}-{self.address + self.count - 1}"
         return attributes
 
 
@@ -1152,16 +1152,16 @@ class NumericSensor(ReadWriteSensor):
         self["mode"] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
         self["step"] = 1 if precision is None else 10**-precision
         if "min" in self and isinstance(self["min"], (int, float)):
-            self._sanity.min_raw = int(self["min"] * gain) if gain else int(self["min"]) # pyright: ignore[reportArgumentType, reportOperatorIssue]
+            self._sanity.min_raw = int(self["min"] * gain) if gain else int(self["min"])  # pyright: ignore[reportArgumentType, reportOperatorIssue]
         elif "min" in self and isinstance(self["min"], tuple):
-            min_val = min(self["min"]) # pyright: ignore[reportArgumentType]
-            self._sanity.min_raw = int(min_val * gain) if gain else int(min_val) # pyright: ignore[reportOperatorIssue]
+            min_val = min(self["min"])  # pyright: ignore[reportArgumentType]
+            self._sanity.min_raw = int(min_val * gain) if gain else int(min_val)  # pyright: ignore[reportOperatorIssue]
 
         if "max" in self and isinstance(self["max"], (int, float)):
-            self._sanity.max_raw = int(self["max"] * gain) if gain else int(self["max"]) # pyright: ignore[reportArgumentType, reportOperatorIssue]
+            self._sanity.max_raw = int(self["max"] * gain) if gain else int(self["max"])  # pyright: ignore[reportArgumentType, reportOperatorIssue]
         elif "max" in self and isinstance(self["max"], tuple):
-            max_val = max(self["max"]) # pyright: ignore[reportArgumentType]
-            self._sanity.max_raw = int(max_val * gain) if gain else int(max_val) # pyright: ignore[reportOperatorIssue]
+            max_val = max(self["max"])  # pyright: ignore[reportArgumentType]
+            self._sanity.max_raw = int(max_val * gain) if gain else int(max_val)  # pyright: ignore[reportOperatorIssue]
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = super().get_discovery_components()

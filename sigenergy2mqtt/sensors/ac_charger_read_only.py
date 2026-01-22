@@ -317,5 +317,5 @@ class ACChargerAlarms(AlarmCombinedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 32012, 32013, and 32014"
+        attributes["source"] = "Modbus Registers 32012-32014"
         return attributes
