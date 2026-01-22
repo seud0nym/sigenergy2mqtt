@@ -372,7 +372,7 @@ async def compare_sensor_instances():
     sensor_instances = await get_sensor_instances(hass=True)
     registers = invert_dict_by_field(sensor_instances, "address")
 
-    from modbusregisterdefinitions import (  # pyrefly: ignore
+    from resources.modbusregisterdefinitions import (
         AC_CHARGER_PARAMETER_REGISTERS,
         AC_CHARGER_RUNNING_INFO_REGISTERS,
         DC_CHARGER_PARAMETER_REGISTERS,
