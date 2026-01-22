@@ -23,6 +23,7 @@ class MetricsSensor(ReadableSensorMixin):
         precision: int | None = None,
         **kwargs,
     ):
+        scan_interval = kwargs.pop("scan_interval", 1)
         super().__init__(
             name=name,
             unique_id=unique_id,
@@ -33,7 +34,7 @@ class MetricsSensor(ReadableSensorMixin):
             icon=icon,
             gain=None,
             precision=precision,
-            scan_interval=kwargs.get("scan_interval", 1),
+            scan_interval=scan_interval,
             **kwargs,
         )
         self["enabled_by_default"] = True
