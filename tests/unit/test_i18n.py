@@ -171,3 +171,27 @@ def test_attributes_translation():
     sensor = MockReadOnlySensor()
     attrs = sensor.get_attributes()
     assert attrs["source"] == "Registre Modbus 30000"
+
+
+def test_get_available_locales():
+    locales = i18n.get_available_locales()
+    assert "en" in locales
+    # Since we only have en.yaml in the repo, it should be at least ['en']
+    assert len(locales) >= 1
+
+
+def test_get_default_locale_fallback():
+    # Test fallback to 'en' when system locale is not available
+    with patch("locale.getlocale", return_value=(None, None)):
+        with patch("locale.getdefaultlocale", return_value=("de_DE", "UTF-8")):
+            with patch("os.environ.get", return_value=None):
+                # Assuming de.yaml does NOT exist
+                assert i18n.get_default_locale() == "en"
+
+
+def test_get_default_locale_system():
+    # Test picking up system locale if it exists
+    # We'll mock the exists check for a fake locale
+    with patch("locale.getlocale", return_value=("fr_FR", "UTF-8")):
+        with patch("sigenergy2mqtt.i18n.Path.exists", return_value=True):
+            assert i18n.get_default_locale() == "fr"

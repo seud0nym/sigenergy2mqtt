@@ -55,7 +55,7 @@ class Config:
         cls.log_level = logging.WARNING
         cls.metrics_enabled = True
 
-        cls.locale = "en"
+        cls.locale = i18n.get_default_locale()
 
         cls.sanity_check_default_kw = 500.0
         cls.sanity_check_failures_increment = False
@@ -177,7 +177,12 @@ class Config:
                         case const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT:
                             overrides["sanity-check-failures-increment"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_LOCALE:
-                            overrides["locale"] = check_string(os.environ[key], key, allow_empty=False, allow_none=False)
+                            try:
+                                overrides["locale"] = check_string(os.environ[key], key, *i18n.get_available_locales(), allow_empty=False, allow_none=False)
+                            except ValueError:
+                                default = i18n.get_default_locale()
+                                logging.warning(f"Invalid locale '{os.environ[key]}' for {key}, falling back to '{default}'")
+                                overrides["locale"] = default
                         case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
                             overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
@@ -412,7 +417,12 @@ class Config:
                     )
                 case "locale":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: locale = {data[name]}")
-                    Config.locale = cast(str, check_string(data[name], name, allow_empty=False, allow_none=False))
+                    try:
+                        Config.locale = cast(str, check_string(data[name], name, *i18n.get_available_locales(), allow_empty=False, allow_none=False))
+                    except ValueError:
+                        default = i18n.get_default_locale()
+                        logging.warning(f"Invalid locale '{data[name]}' for {name}, falling back to '{default}'")
+                        Config.locale = default
                 case "home-assistant":
                     Config.home_assistant.configure(data[name], override)
                 case "log-level":

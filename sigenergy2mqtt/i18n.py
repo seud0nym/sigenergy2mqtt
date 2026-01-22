@@ -1,4 +1,6 @@
+import locale
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +15,10 @@ class Translator:
         self._locales_dir = Path(__file__).parent / "locales"
         self._cache: dict[str, dict[str, Any]] = {}
         self._yaml = YAML(typ="safe", pure=True)
+
+    def get_available_locales(self) -> list[str]:
+        """Return a list of available locale codes."""
+        return sorted([f.stem for f in self._locales_dir.glob("*.yaml")])
 
     def load(self, locale: str):
         if self._locale == locale and self._translations:
@@ -102,3 +108,43 @@ def reset():
 
 def set_translations(locale: str, data: dict[str, Any]):
     _translator.set_translations(locale, data)
+
+
+def get_available_locales() -> list[str]:
+    return _translator.get_available_locales()
+
+
+def get_default_locale() -> str:
+    """Determine the default locale based on system settings and available translations."""
+    locales_dir = Path(__file__).parent / "locales"
+
+    # Try locale module first
+    try:
+        # First try getlocale() which is not deprecated
+        sys_lang, _ = locale.getlocale()
+        if sys_lang:
+            lang = sys_lang.split("_")[0].lower()
+            if (locales_dir / f"{lang}.yaml").exists():
+                return lang
+    except Exception:
+        pass
+
+    try:
+        # Fallback to getdefaultlocale() if getlocale() didn't work
+        sys_lang, _ = locale.getdefaultlocale()
+        if sys_lang:
+            lang = sys_lang.split("_")[0].lower()
+            if (locales_dir / f"{lang}.yaml").exists():
+                return lang
+    except Exception:
+        pass
+
+    # Try LANG environment variable as fallback
+    lang_env = os.environ.get("LANG")
+    if lang_env:
+        # Handle formats like en_US.UTF-8 or en_US:en
+        lang = lang_env.split("_")[0].split(".")[0].split(":")[0].lower()
+        if (locales_dir / f"{lang}.yaml").exists():
+            return lang
+
+    return "en"
