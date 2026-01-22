@@ -1,0 +1,737 @@
+AlarmSensor:
+  no_alarm: No Alarm
+  unknown_alarm: Unknown (bit{bit}∈{value})
+ReadOnlySensor:
+  attributes:
+    source: Modbus Register {address}
+    source_range: Modbus Registers {start}-{end}
+MqttOverriddenSensor:
+  attributes:
+    source: MQTT Override
+MonitorService:
+  name: Sigenergy Monitor
+MetricsService:
+  name: Sigenergy Metrics
+ModbusCacheHits:
+  name: Modbus Cache Hits
+ModbusReadsPerSecond:
+  name: Modbus Reads/second
+ModbusReadErrors:
+  name: Modbus Read Errors
+ModbusReadMax:
+  name: Modbus Read Max
+ModbusReadMean:
+  name: Modbus Read Mean
+ModbusReadMin:
+  name: Modbus Read Min
+ModbusWriteErrors:
+  name: Modbus Write Errors
+ModbusWriteMax:
+  name: Modbus Write Max
+ModbusWriteMean:
+  name: Modbus Write Mean
+ModbusWriteMin:
+  name: Modbus Write Min
+ModbusActiveLocks:
+  name: Modbus Active Locks
+Started:
+  name: Started
+ProtocolVersion:
+  name: Protocol Version
+ProtocolPublished:
+  name: Protocol Published
+ACChargerStatus:
+  name: AC Charger Stop/Start
+  attributes:
+    comment: 0:Start 1:Stop
+ACChargerOutputCurrent:
+  name: Output Current
+  attributes:
+    comment: "Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']"
+PlantStatus:
+  name: Plant Power On/Off
+  attributes:
+    comment: 0:Stop 1:Start
+ActivePowerFixedAdjustmentTargetValue:
+  name: Active Power Fixed Adjustment Target Value
+ReactivePowerFixedAdjustmentTargetValue:
+  name: Reactive Power Fixed Adjustment Target Value
+  attributes:
+    comment: 'Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode'
+ActivePowerPercentageAdjustmentTargetValue:
+  name: Active Power Percentage Adjustment Target Value
+  attributes:
+    comment: 'Range: [-100.00,100.00]'
+QSAdjustmentTargetValue:
+  name: Q/S Adjustment Target Value
+  attributes:
+    comment: 'Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode'
+PowerFactorAdjustmentTargetValue:
+  name: Power Factor Adjustment Target Value
+  attributes:
+    comment: 'Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode'
+IndependentPhasePowerControl:
+  name: Independent Phase Power Control
+  attributes:
+    comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
+PhaseActivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Valid only when Output Type is L1/L2/L3/N
+PhaseReactivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Valid only when Output Type is L1/L2/L3/N
+PhaseActivePowerPercentageAdjustmentTargetValue:
+  attributes:
+    comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]'
+PhaseQSAdjustmentTargetValue:
+  attributes:
+    comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
+Reserved40026:
+  name: Reserved
+RemoteEMS:
+  name: Remote EMS
+  attributes:
+    comment: When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS
+RemoteEMSControlMode:
+  name: Remote EMS Control Mode
+MaxChargingLimit:
+  name: Max Charging Limit
+MaxDischargingLimit:
+  name: Max Discharging Limit
+PVMaxPowerLimit:
+  name: PV Max Power Limit
+  attributes:
+    comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
+GridMaxExportLimit:
+  name: Grid Max Export Limit
+  attributes:
+    comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+GridMaxImportLimit:
+  name: Grid Max Import Limit
+  attributes:
+    comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+PCSMaxExportLimit:
+  name: PCS Max Export Limit
+  attributes:
+    comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+PCSMaxImportLimit:
+  name: PCS Max Import Limit
+  attributes:
+    comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+ESSBackupSOC:
+  name: Backup SoC
+  attributes:
+    comment: 'Range: [0.00,100.00]'
+ESSChargeCutOffSOC:
+  name: Charge Cut-Off SoC
+  attributes:
+    comment: 'Range: [0.00,100.00]'
+ESSDischargeCutOffSOC:
+  name: Discharge Cut-Off SoC
+  attributes:
+    comment: 'Range: [0.00,100.00]'
+ActivePowerRegulationGradient:
+  name: Active Power Regulation Gradient
+  attributes:
+    comment: Range:[0,5000]。Percentage of rated power adjusted per second
+GridCodeLVRT:
+  name: Low Voltage Ride Through
+GridCodeLVRTReactivePowerCompensationFactor:
+  name: LVRT Reactive Power Compensation Factor
+  attributes:
+    comment: 'Range: [0,10.0]'
+GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: LVRT Negative Sequence Reactive Power Compensation Factor
+  attributes:
+    comment: 'Range: [0,10.0]'
+GridCodeLVRTMode:
+  name: LVRT Mode
+GridCodeLVRTVoltageProtectionBlocking:
+  name: LVRT Grid Voltage Protection Blocking
+GridCodeHVRT:
+  name: High Voltage Ride Through
+GridCodeHVRTReactivePowerCompensationFactor:
+  name: HVRT Reactive Power Compensation Factor
+  attributes:
+    comment: 'Range: [0,10.0]'
+GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: HVRT Negative Sequence Reactive Power Compensation Factor
+  attributes:
+    comment: 'Range: [0,10.0]'
+GridCodeHVRTMode:
+  name: HVRT Mode
+GridCodeHVRTVoltageProtectionBlocking:
+  name: HVRT Grid Voltage Protection Blocking
+GridCodeOverFrequencyDerating:
+  name: Over Frequency Derating
+GridCodeOverFrequencyDeratingPowerRampRate:
+  name: Over Frequency Derating Power Ramp Rate
+  attributes:
+    comment: 'Range: [0,100.0]'
+GridCodeOverFrequencyDeratingTriggerFrequency:
+  name: Over Frequency Derating Trigger Frequency
+  attributes:
+    comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+GridCodeOverFrequencyDeratingCutOffFrequency:
+  name: Over Frequency Derating Cut-Off Frequency
+  attributes:
+    comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+GridCodeUnderFrequencyPowerBoost:
+  name: Under-Frequency Power Boost
+GridCodeUnderFrequencyPowerBoostPowerRampRate:
+  name: Under-Frequency Power Boost Power Ramp Rate
+  attributes:
+    comment: 'Range: [0,100.0]'
+GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+  name: Under-Frequency Power Boost Trigger Frequency
+  attributes:
+    comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+  name: Under-Frequency Power Boost Cut-Off Frequency
+  attributes:
+    comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+InverterModel:
+  name: Model
+InverterSerialNumber:
+  name: Serial Number
+InverterFirmwareVersion:
+  name: Firmware Version
+RatedActivePower:
+  name: Rated Active Power
+MaxRatedApparentPower:
+  name: Max Rated Apparent Power
+InverterMaxActivePower:
+  name: Max Active Power
+MaxAbsorptionPower:
+  name: Max Absorption Power
+RatedBatteryCapacity:
+  name: Rated Battery Capacity
+RatedChargingPower:
+  name: Rated Charging Power
+RatedDischargingPower:
+  name: Rated Discharging Power
+ReservedDailyExportEnergy:
+  name: Daily Energy Exported
+ReservedAccumulatedExportEnergy:
+  name: Lifetime Energy Exported
+ReservedDailyImportEnergy:
+  name: Daily Energy Imported
+ReservedAccumulatedImportEnergy:
+  name: Lifetime Energy Imported
+DailyChargeEnergy:
+  name: Daily Charge Energy
+AccumulatedChargeEnergy:
+  name: Lifetime Charge Energy
+DailyDischargeEnergy:
+  name: Daily Discharge Energy
+AccumulatedDischargeEnergy:
+  name: Lifetime Discharge Energy
+InverterRunningState:
+  name: Running State
+MaxActivePowerAdjustment:
+  name: Max Active Power Adjustment
+MinActivePowerAdjustment:
+  name: Min Active Power Adjustment
+MaxReactivePowerAdjustment:
+  name: Max Reactive Power Adjustment
+MinReactivePowerAdjustment:
+  name: Min Reactive Power Adjustment
+ActivePower:
+  name: Active Power
+ReactivePower:
+  name: Reactive Power
+MaxBatteryChargePower:
+  name: Max Charge Power
+MaxBatteryDischargePower:
+  name: Max Discharge Power
+AvailableBatteryChargeEnergy:
+  name: Available Charge Energy
+AvailableBatteryDischargeEnergy:
+  name: Available Discharge Energy
+ChargeDischargePower:
+  name: Battery Power
+InverterBatterySoC:
+  name: Battery SoC
+InverterBatterySoH:
+  name: Battery SoH
+AverageCellTemperature:
+  name: Average Cell Temperature
+AverageCellVoltage:
+  name: Average Cell Voltage
+InverterAlarm1:
+  name: PCS Alarms 1
+InverterAlarm2:
+  name: PCS Alarms 2
+InverterPCSAlarm:
+  name: PCS Alarms
+  attributes:
+    source: Modbus Registers 30605-30606
+InverterAlarm3:
+  name: Alarms
+InverterAlarm4:
+  name: Gateway Alarms
+InverterAlarm5:
+  name: Alarms
+Reserved30610:
+  name: Reserved
+InverterActivePowerFixedValueAdjustmentFeedback:
+  name: Active Power Fixed Value Adjustment Feedback
+InverterReactivePowerFixedValueAdjustmentFeedback:
+  name: Reactive Power Fixed Value Adjustment Feedback
+InverterActivePowerPercentageAdjustmentFeedback:
+  name: Active Power Percentage Adjustment Feedback
+InverterReactivePowerPercentageAdjustmentFeedback:
+  name: Reactive Power Percentage Adjustment Feedback
+InverterPowerFactorAdjustmentFeedback:
+  name: Power Factor Adjustment Feedback
+InverterMaxBatteryTemperature:
+  name: Max Battery Temperature
+InverterMinBatteryTemperature:
+  name: Min Battery Temperature
+InverterMaxCellVoltage:
+  name: Max Cell Voltage
+InverterMinCellVoltage:
+  name: Min Cell Voltage
+RatedGridVoltage:
+  name: Rated Grid Voltage
+RatedGridFrequency:
+  name: Rated Grid Frequency
+GridFrequency:
+  name: Grid Frequency
+InverterTemperature:
+  name: Temperature
+OutputType:
+  name: Output Type
+  options:
+    '0': L/N
+    '1': L1/L2/L3
+    '2': L1/L2/L3/N
+    '3': L1/L2/N
+PowerFactor:
+  name: Power Factor
+PACKBCUCount:
+  name: PACK/BCU Count
+PVStringCount:
+  name: PV String Count
+MPTTCount:
+  name: MPTT Count
+PVCurrentSensor:
+  name: Current
+PVVoltageSensor:
+  name: Voltage
+InverterPVPower:
+  name: PV Power
+InsulationResistance:
+  name: Insulation Resistance
+StartupTime:
+  name: Startup Time
+ShutdownTime:
+  name: Shutdown Time
+DCChargerVehicleBatteryVoltage:
+  name: Vehicle Battery Voltage
+DCChargerVehicleChargingCurrent:
+  name: Vehicle Charging Current
+DCChargerOutputPower:
+  name: Output Power
+DCChargerVehicleSoC:
+  name: Vehicle SoC
+DCChargerCurrentChargingCapacity:
+  name: Current Charging Capacity
+  attributes:
+    comment: Single time
+DCChargerCurrentChargingDuration:
+  name: Current Charging Duration
+  attributes:
+    comment: Single time
+InverterPVDailyGeneration:
+  name: Daily Production
+InverterPVLifetimeGeneration:
+  name: Lifetime Production
+DCChargerRunningState:
+  name: Running State
+  options:
+    '0': Idle
+    '1': Occupied (Charging Gun plugged in but not detected)
+    '2': Preparing (Establishing communication)
+    '3': Charging
+    '4': Fault
+    '5': Scheduled
+SystemTime:
+  name: System Time
+SystemTimeZone:
+  name: System Time Zone
+EMSWorkMode:
+  name: EMS Work Mode
+  options:
+    '0': Max Self Consumption
+    '1': Sigen AI
+    '2': Time of Use
+    '5': Full Feed-in to Grid
+    '6': VPP Scheduling
+    '7': Remote EMS
+    '9': Time-Based Control
+GridSensorStatus:
+  name: Grid Sensor Status
+  options:
+    '0': Not Connected
+    '1': Connected
+  attributes:
+    comment: Gateway or meter connection status
+GridSensorActivePower:
+  name: Active Power
+  attributes:
+    comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
+GridSensorReactivePower:
+  name: Reactive Power
+  attributes:
+    comment: Data collected from grid sensor at grid to system checkpoint
+GridStatus:
+  name: Grid Status
+  options:
+    '0': On Grid
+    '1': Off Grid (auto)
+    '2': Off Grid (manual)
+MaxActivePower:
+  name: Max Active Power
+  attributes:
+    comment: This should be the base value of all active power adjustment actions
+MaxApparentPower:
+  name: Max Apparent Power
+  attributes:
+    comment: This should be the base value of all reactive power adjustment actions
+PlantBatterySoC:
+  name: Battery SoC
+GeneralAlarm1:
+  name: PCS Alarms 1
+  attributes:
+    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+GeneralAlarm2:
+  name: PCS Alarms 2
+  attributes:
+    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+GeneralPCSAlarm:
+  name: PCS Alarms
+  attributes:
+    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+    source: Modbus Registers 30027-30028
+GeneralAlarm3:
+  name: ESS Alarms
+  attributes:
+    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+GeneralAlarm4:
+  name: Gateway Alarms
+  attributes:
+    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+PlantActivePower:
+  name: Active Power
+PlantReactivePower:
+  name: Reactive Power
+PlantPVPower:
+  name: PV Power
+BatteryPower:
+  name: Battery Power
+  attributes:
+    comment: 'ESS Power: <0 = discharging >0 = charging'
+AvailableMaxActivePower:
+  name: Available Max Active Power
+  attributes:
+    comment: Feed to the AC terminal. Count only the running inverters
+AvailableMinActivePower:
+  name: Available Min Active Power
+  attributes:
+    comment: Absorb from the AC terminal. Count only the running inverters
+AvailableMaxReactivePower:
+  name: Available Max Reactive Power
+  attributes:
+    comment: Feed to the AC terminal. Count only the running inverters
+AvailableMinReactivePower:
+  name: Available Min Reactive Power
+  attributes:
+    comment: Absorb from the AC terminal. Count only the running inverters
+AvailableMaxChargingPower:
+  name: Available Max Charging Power
+  attributes:
+    comment: Count only the running inverters
+AvailableMaxDischargingPower:
+  name: Available Max Discharging Power
+  attributes:
+    comment: Absorb from the AC terminal. Count only the running inverters
+PlantRunningState:
+  name: Running State
+GridPhaseActivePower:
+  attributes:
+    comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
+GridPhaseReactivePower:
+  attributes:
+    comment: Data collected from grid sensor at grid to system checkpoint
+AvailableMaxChargingCapacity:
+  name: Available Max Charging Capacity
+  attributes:
+    comment: Count only the running inverters
+AvailableMaxDischargingCapacity:
+  name: Available Max Discharging Capacity
+  attributes:
+    comment: Count only the running inverters
+PlantRatedChargingPower:
+  name: Rated Charging Power
+PlantRatedDischargingPower:
+  name: Rated Discharging Power
+GeneralAlarm5:
+  name: DC Charger Alarms
+  attributes:
+    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+Reserved30073:
+  name: Reserved
+PlantRatedEnergyCapacity:
+  name: Rated Energy Capacity
+ChargeCutOffSoC:
+  name: Charge Cut-Off SoC
+DischargeCutOffSoC:
+  name: Discharge Cut-Off SoC
+PlantBatterySoH:
+  name: Battery SoH
+  attributes:
+    comment: This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight
+PlantPVTotalGeneration:
+  name: Lifetime PV Production
+TotalLoadDailyConsumption:
+  name: Daily Consumption
+TotalLoadConsumption:
+  name: Lifetime Consumption
+ThirdPartyPVPower:
+  name: Third-Party PV Power
+ThirdPartyLifetimePVEnergy:
+  name: Lifetime Third-Party PV Production
+ESSTotalChargedEnergy:
+  name: Lifetime Charge Energy
+ESSTotalDischargedEnergy:
+  name: Lifetime Discharge Energy
+EVDCTotalChargedEnergy:
+  name: Lifetime DC EV Charge Energy
+EVDCTotalDischargedEnergy:
+  name: Lifetime DC EV Discharge Energy
+PlantTotalImportedEnergy:
+  name: Lifetime Imported Energy
+PlantTotalExportedEnergy:
+  name: Lifetime Exported Energy
+PlantTotalGeneratorOutputEnergy:
+  name: Lifetime Generator Output Energy
+StatisticsInterfaceSensor:
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+SITotalCommonLoadConsumption:
+  name: Total Common Load Consumption
+SITotalEVACChargedEnergy:
+  name: Total AC EV Charge Energy
+SITotalSelfPVGeneration:
+  name: Total PV Production
+SITotalThirdPartyPVGeneration:
+  name: Total Third-Party PV Production
+SITotalChargedEnergy:
+  name: Total Charge Energy
+SITotalDischargedEnergy:
+  name: Total Discharge Energy
+SITotalEVDCChargedEnergy:
+  name: Total DC EV Charge Energy
+SITotalEVDCDischargedEnergy:
+  name: Total DC EV Discharge Energy
+SITotalImportedEnergy:
+  name: Total Imported Energy
+SITotalExportedEnergy:
+  name: Total Exported Energy
+SITotalGeneratorOutputEnergy:
+  name: Total Generator Output Energy
+ReservedPVTotalGenerationToday:
+  name: PV Total Generation Today
+ReservedPVTotalGenerationYesterday:
+  name: PV Total Generation Yesterday
+GridCodeRatedFrequency:
+  name: Rated Frequency
+GridCodeRatedVoltage:
+  name: Rated Voltage
+CurrentControlCommandValue:
+  name: Current Control Command Value
+  attributes:
+    comment: Use of Remote Output Control in Japan
+Alarm6:
+  name: Alarm 6
+Alarm7:
+  name: Alarm 7
+PlantAlarms:
+  name: Plant Alarms
+  attributes:
+    source: Modbus Registers 30280-30281
+GeneralLoadPower:
+  name: General Load Power
+TotalLoadPower:
+  name: Total Load Power
+BatteryChargingPower:
+  name: Battery Charging Power
+  attributes:
+    source: BatteryPower &gt; 0
+BatteryDischargingPower:
+  name: Battery Discharging Power
+  attributes:
+    source: BatteryPower &lt; 0 &times; -1
+GridSensorExportPower:
+  name: Export Power
+  attributes:
+    source: GridSensorActivePower &lt; 0 &times; -1
+GridSensorImportPower:
+  name: Import Power
+  attributes:
+    source: GridSensorActivePower &gt; 0
+PlantConsumedPower:
+  name: Consumed Power
+  attributes:
+    source: TotalLoadPower
+TotalPVPower:
+  name: Total PV Power
+  attributes:
+    source: PV Power + Third-Party PV Power
+GridSensorDailyExportEnergy:
+  name: Daily Exported Energy
+  attributes:
+    source: PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight
+GridSensorDailyImportEnergy:
+  name: Daily Imported Energy
+  attributes:
+    source: PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight
+TotalLifetimePVEnergy:
+  name: Lifetime Total PV Production
+  attributes:
+    source: '&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
+TotalDailyPVEnergy:
+  name: Daily Total PV Production
+  attributes:
+    source: TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight
+PlantDailyPVEnergy:
+  name: Daily PV Production
+  attributes:
+    source: PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight
+PlantDailyChargeEnergy:
+  name: Daily Charge Energy
+  attributes:
+    source: '&sum; of DailyChargeEnergy across all Inverters associated with the Plant'
+PlantDailyDischargeEnergy:
+  name: Daily Discharge Energy
+  attributes:
+    source: '&sum; of DailyDischargeEnergy across all Inverters associated with the Plant'
+InverterBatteryChargingPower:
+  name: Battery Charging Power
+  attributes:
+    source: ChargeDischargePower &gt; 0
+InverterBatteryDischargingPower:
+  name: Battery Discharging Power
+  attributes:
+    source: ChargeDischargePower &lt; 0 &times; -1
+PVStringPower:
+  name: Power
+  attributes:
+    source: PVVoltageSensor &times; PVCurrentSensor
+PVStringLifetimeEnergy:
+  name: Lifetime Production
+  attributes:
+    source: Riemann &sum; of PVStringPower
+PVStringDailyEnergy:
+  name: Daily Production
+  attributes:
+    source: PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight
+RunningStateSensor:
+  options:
+    '0': Standby
+    '1': Normal
+    '2': Fault
+    '3': Power-Off
+    '7': Environmental Abnormality
+ACChargerRunningState:
+  name: Running State
+  options:
+    '0': Initialising
+    '1': EV not connected
+    '2': Charger and EV not ready
+    '3': Charger ready; EV not ready
+    '4': Charger not ready; EV ready
+    '5': Charging
+    '6': Fault
+    '7': Error
+ACChargerTotalEnergyConsumed:
+  name: Total Energy Consumed
+ACChargerChargingPower:
+  name: Charging Power
+ACChargerRatedPower:
+  name: Rated Power
+ACChargerRatedCurrent:
+  name: Rated Current
+ACChargerRatedVoltage:
+  name: Rated Voltage
+ACChargerInputBreaker:
+  name: Input Breaker
+ACChargerAlarm1:
+  name: Alarm 1
+ACChargerAlarm2:
+  name: Alarm 2
+ACChargerAlarm3:
+  name: Alarm 3
+ACChargerAlarms:
+  name: Alarms
+  attributes:
+    source: Modbus Registers 32012-32014
+InverterStatus:
+  name: Inverter Power On/Off
+  attributes:
+    comment: 0:Stop 1:Start
+ReservedGridCode:
+  name: Grid Code
+DCChargerStatus:
+  name: DC Charger Stop/Start
+  attributes:
+    comment: 0:Start 1:Stop
+ReservedInverterRemoteEMSDispatch:
+  name: Remote EMS Dispatch
+InverterActivePowerFixedValueAdjustment:
+  name: Active Power Fixed Value Adjustment
+InverterReactivePowerFixedValueAdjustment:
+  name: Reactive Power Fixed Value Adjustment
+InverterActivePowerPercentageAdjustment:
+  name: Active Power Percentage Adjustment
+InverterReactivePowerQSAdjustment:
+  name: Reactive Power Q/S Adjustment
+InverterPowerFactorAdjustment:
+  name: Power Factor Adjustment
+PVOutputOutputService:
+  name: PVOutput Add Output Service
+PVOutputStatusService:
+  name: PVOutput Add Status Service
+EnphasePVPower:
+  name: PV Power
+  attributes:
+    source: Enphase Envoy API
+EnphaseLifetimePVEnergy:
+  name: Lifetime Production
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived
+EnphaseDailyPVEnergy:
+  name: Daily Production
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived
+EnphaseCurrent:
+  name: Current
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived
+EnphaseFrequency:
+  name: Frequency
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived
+EnphasePowerFactor:
+  name: Power Factor
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived
+EnphaseReactivePower:
+  name: Reactive Power
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived
+EnphaseVoltage:
+  name: Voltage
+  attributes:
+    source: Enphase Envoy API when EnphasePVPower derived

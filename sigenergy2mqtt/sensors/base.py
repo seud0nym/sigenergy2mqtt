@@ -18,6 +18,7 @@ from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter, RegisterAccess
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 if TYPE_CHECKING:
@@ -112,7 +113,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         self._protocol_version = protocol_version
 
         self["platform"] = "sensor"
-        self["name"] = name
+        self["name"] = _t(f"{self.__class__.__name__}.name", name)
         self["object_id"] = object_id
         self["unique_id"] = unique_id
         self["device_class"] = device_class
@@ -424,7 +425,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = dict((k, v) for k, v in self.items() if v is not None)
         if "options" in self:
-            components["options"] = [x for x in cast(list[str], self["options"]) if x is not None]
+            components["options"] = [_t(f"{self.__class__.__name__}.options.{i}", x) for i, x in enumerate(cast(list[str], self["options"])) if x is not None]
         return {self.unique_id: dict(components)}
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
@@ -735,7 +736,11 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = f"Modbus Register {self.address}" if self.count == 1 else f"Modbus Registers {self.address}-{self.address + self.count - 1}"
+        source_key = "ReadOnlySensor.attributes.source" if self.count == 1 else "ReadOnlySensor.attributes.source_range"
+        source_default = f"Modbus Register {self.address}" if self.count == 1 else f"Modbus Registers {self.address}-{self.address + self.count - 1}"
+        attributes["source"] = _t(source_key, source_default).format(address=self.address, start=self.address, end=self.address + self.count - 1)
+        if "comment" in self:
+            attributes["comment"] = _t(f"{self.__class__.__name__}.comment", cast(str, self["comment"]))
         return attributes
 
 
@@ -1419,7 +1424,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         if raw:
             return value
         elif value is None or value == 0 or (isinstance(value, list) and sum(cast(list[int], value)) == 0) or value == 65535:
-            return self.NO_ALARM
+            return _t("AlarmSensor.no_alarm", self.NO_ALARM)
         else:
             if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
                 logging.warning(f"{self.__class__.__name__} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
@@ -1432,9 +1437,9 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                     if alarm & (1 << bit_position):
                         description = self.decode_alarm_bit(bit_position)
                         if description:
-                            active_alarms.append(description)
+                            active_alarms.append(_t(f"{self.__class__.__name__}.alarm.{bit_position}", description))
                         else:
-                            active_alarms.append(f"Unknown (bit{bit_position}∈{value})")
+                            active_alarms.append(_t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value})").format(bit=bit_position, value=value))
                             logging.warning(f"{self.__class__.__name__} Unknown {self.alarm_type} alarm bit {bit_position} set in value {value}")
             except TypeError as e:
                 logging.warning(f"{self.__class__.__name__} Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")

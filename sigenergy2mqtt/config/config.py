@@ -7,6 +7,7 @@ from typing import Any, cast
 
 from ruamel.yaml import YAML
 
+from sigenergy2mqtt import i18n
 from sigenergy2mqtt.common import ConsumptionMethod
 
 from . import const, version
@@ -19,27 +20,61 @@ from .validation import check_bool, check_float, check_host, check_int, check_in
 
 
 class Config:
-    origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
+    origin: dict[str, str]
 
-    clean: bool = False
-    consumption: ConsumptionMethod = ConsumptionMethod.TOTAL
-    ems_mode_check: bool = True
-    log_level: int = logging.WARNING
-    metrics_enabled: bool = True
+    clean: bool
+    consumption: ConsumptionMethod
+    ems_mode_check: bool
+    log_level: int
+    metrics_enabled: bool
 
-    sanity_check_default_kw: float = 500.0
-    sanity_check_failures_increment: bool = False
+    locale: str
 
-    modbus: list[ModbusConfiguration] = []
-    home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
-    mqtt: MqttConfiguration = MqttConfiguration()
-    pvoutput: PVOutputConfiguration = PVOutputConfiguration()
-    sensor_debug_logging: bool = False
-    sensor_overrides: dict[str, dict[str, bool | int | float | str | list[int] | ModuleType | None]] = {}
+    sanity_check_default_kw: float
+    sanity_check_failures_increment: bool
 
-    persistent_state_path: Path = Path(".")
+    modbus: list[ModbusConfiguration]
+    home_assistant: HomeAssistantConfiguration
+    mqtt: MqttConfiguration
+    pvoutput: PVOutputConfiguration
 
-    _source: str | None = None
+    sensor_debug_logging: bool
+    sensor_overrides: dict[str, dict[str, bool | int | float | str | list[int] | ModuleType | None]]
+
+    persistent_state_path: Path
+
+    _source: str | None
+
+    @classmethod
+    def _apply_defaults(cls):
+        cls.origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
+
+        cls.clean = False
+        cls.consumption = ConsumptionMethod.TOTAL
+        cls.ems_mode_check = True
+        cls.log_level = logging.WARNING
+        cls.metrics_enabled = True
+
+        cls.locale = "en"
+
+        cls.sanity_check_default_kw = 500.0
+        cls.sanity_check_failures_increment = False
+
+        cls.modbus = []
+        cls.home_assistant = HomeAssistantConfiguration()
+        cls.mqtt = MqttConfiguration()
+        cls.pvoutput = PVOutputConfiguration()
+
+        cls.sensor_debug_logging = False
+        cls.sensor_overrides = {}
+
+        cls.persistent_state_path = Path(".")
+
+        cls._source = None
+
+    @classmethod
+    def reset(cls):
+        cls._apply_defaults()
 
     @classmethod
     def validate(cls) -> None:
@@ -141,6 +176,8 @@ class Config:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
                         case const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT:
                             overrides["sanity-check-failures-increment"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_LOCALE:
+                            overrides["locale"] = check_string(os.environ[key], key, allow_empty=False, allow_none=False)
                         case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
                             overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
@@ -324,6 +361,8 @@ class Config:
 
         cls._configure(overrides, True)
 
+        i18n.load(cls.locale)
+
         if auto_discovered:
             if isinstance(auto_discovered, list):
                 for device in auto_discovered:
@@ -371,6 +410,9 @@ class Config:
                             ),
                         )
                     )
+                case "locale":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: locale = {data[name]}")
+                    Config.locale = cast(str, check_string(data[name], name, allow_empty=False, allow_none=False))
                 case "home-assistant":
                     Config.home_assistant.configure(data[name], override)
                 case "log-level":
@@ -448,3 +490,6 @@ class Config:
                         raise ValueError("sensor-overrides configuration elements must contain a list of class names, each followed by options and their values")
                 case _:
                     raise ValueError(f"Configuration contains unknown element '{name}'")
+
+
+Config._apply_defaults()

@@ -12,6 +12,7 @@ from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import DeviceType, Protocol, RegisterAccess
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -60,6 +61,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         self._rediscover = False
         self._online: asyncio.Future | bool | None = None
 
+        name = _t(f"{self.__class__.__name__}.name", name)
         self["name"] = self.name = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
         self["ids"] = [unique_id]
         self["mf"] = manufacturer

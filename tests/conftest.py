@@ -1,6 +1,5 @@
 import os
 import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -31,3 +30,14 @@ def mock_persistent_state_path(tmp_path):
     """Global fixture to ensure persistent_state_path is always a temp dir."""
     with patch("sigenergy2mqtt.config.Config.persistent_state_path", tmp_path):
         yield tmp_path
+
+
+@pytest.fixture(autouse=True)
+def reset_i18n():
+    """Global fixture to ensure i18n is reset for every test."""
+    from sigenergy2mqtt import i18n
+
+    i18n.reset()
+    i18n.load("en")
+    yield
+    i18n.reset()
