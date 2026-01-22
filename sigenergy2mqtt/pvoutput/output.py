@@ -105,7 +105,7 @@ class PVOutputOutputService(Service):
             else:
                 uploaded = False
                 self.logger.info(f"{self.__class__.__name__} Skipped uploading unchanged {payload=}")
-            if last_upload_of_day or not changed:
+            if last_upload_of_day:
                 matches = await self._verify(payload, force=last_upload_of_day)
                 if matches:
                     break
@@ -113,7 +113,7 @@ class PVOutputOutputService(Service):
                     changed = True  # Force re-upload if verification failed
                     if last_upload_of_day and attempt > 1:
                         break
-            elif uploaded or not changed:
+            elif uploaded:
                 break
         self.logger.debug(f"{self.__class__.__name__} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
         if changed and Config.pvoutput.output_hour == -1:
