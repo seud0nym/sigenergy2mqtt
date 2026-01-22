@@ -183,9 +183,9 @@ def test_get_available_locales():
 def test_get_default_locale_fallback():
     # Test fallback to 'en' when system locale is not available
     with patch("locale.getlocale", return_value=(None, None)):
-        with patch("locale.getdefaultlocale", return_value=("de_DE", "UTF-8")):
+        with patch("locale.getdefaultlocale", return_value=("xx_XX", "UTF-8")):
             with patch("os.environ.get", return_value=None):
-                # Assuming de.yaml does NOT exist
+                # xx.yaml does NOT exist, so should fall back to 'en'
                 assert i18n.get_default_locale() == "en"
 
 
