@@ -47,6 +47,7 @@ class BatteryChargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
+        self._sanity.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -78,10 +79,11 @@ class BatteryDischargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
+        self._sanity.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "BatteryPower &lt; 0"
+        attributes["source"] = "BatteryPower &lt; 0 &times; -1"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: list) -> bool:
