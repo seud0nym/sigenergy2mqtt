@@ -1176,9 +1176,9 @@ class TestWave9Booster:
             assert s.precision == 3
             assert s.publishable is False
             assert s.publish_raw is True
-            assert s._sanity.delta == 10
-            assert s._sanity.max_raw == 1000
-            assert s._sanity.min_raw == -1000
+            assert s.sanity_check.delta == 10
+            assert s.sanity_check.max_raw == 1000
+            assert s.sanity_check.min_raw == -1000
             assert s["unit_of_measurement"] == "km"
             assert s.device_class == DeviceClass.ENERGY
             assert s["state_class"] == StateClass.TOTAL

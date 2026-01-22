@@ -134,18 +134,6 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         self._states: list[tuple[float, Any]] = []
         self._max_states: int = 2
 
-        self._sanity: SanityCheck = SanityCheck(
-            unit=unit,
-            device_class=device_class,
-            state_class=state_class,
-            gain=gain,
-            precision=precision,
-            data_type=getattr(self, "data_type", None),
-            delta=False if any(v in self.__class__.__name__ for v in ["Available", "Rated", "Adjustment", "Limit "]) else None,
-        )
-        if any(v in self.__class__.__name__ for v in ["Available", "Rated", "Adjustment", "Limit "]):
-            assert self._sanity.delta is False
-
         self._failures: int = 0
         self._max_failures: int = 10
         self._max_failures_retry_interval: int = 0
@@ -163,6 +151,18 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         self.state_class: StateClass | None = state_class
         self.unit: str | None = unit
         self.unique_id: str = unique_id
+
+        self.sanity_check: SanityCheck = SanityCheck(
+            unit=unit,
+            device_class=device_class,
+            state_class=state_class,
+            gain=gain,
+            precision=precision,
+            data_type=getattr(self, "data_type", None),
+            delta=False if any(v in self.__class__.__name__ for v in ["Available", "Rated", "Adjustment", "Limit "]) else None,
+        )
+        if any(v in self.__class__.__name__ for v in ["Available", "Rated", "Adjustment", "Limit "]):
+            assert self.sanity_check.delta is False
 
     # region Properties
     @property
@@ -315,15 +315,15 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
                 if "publish-raw" in overrides and self.publish_raw != overrides["publish-raw"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'publish-raw' override ({overrides['publish-raw']})")
                     self.publish_raw = overrides["publish-raw"]
-                if "sanity-check-delta" in overrides and self._sanity.delta != overrides["sanity-check-delta"]:
+                if "sanity-check-delta" in overrides and self.sanity_check.delta != overrides["sanity-check-delta"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-delta' override ({overrides['sanity-check-delta']})")
-                    self._sanity.delta = overrides["sanity-check-delta"]
-                if "sanity-check-max-value" in overrides and self._sanity.max_raw != overrides["sanity-check-max-value"]:
+                    self.sanity_check.delta = overrides["sanity-check-delta"]
+                if "sanity-check-max-value" in overrides and self.sanity_check.max_raw != overrides["sanity-check-max-value"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-max-value' override ({overrides['sanity-check-max-value']})")
-                    self._sanity.max_raw = overrides["sanity-check-max-value"]
-                if "sanity-check-min-value" in overrides and self._sanity.min_raw != overrides["sanity-check-min-value"]:
+                    self.sanity_check.max_raw = overrides["sanity-check-max-value"]
+                if "sanity-check-min-value" in overrides and self.sanity_check.min_raw != overrides["sanity-check-min-value"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'sanity-check-min-value' override ({overrides['sanity-check-min-value']})")
-                    self._sanity.min_raw = overrides["sanity-check-min-value"]
+                    self.sanity_check.min_raw = overrides["sanity-check-min-value"]
                 if "unit-of-measurement" in overrides and self["unit_of_measurement"] != overrides["unit-of-measurement"]:
                     logging.debug(f"{self.__class__.__name__} Applying {identifier} 'unit-of-measurement' override ({overrides['unit-of-measurement']})")
                     self["unit_of_measurement"] = overrides["unit-of-measurement"]
@@ -515,7 +515,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
             sensor.set_source_values(self, self._states)
 
     def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:  # Updates the latest state of this sensor, WITHOUT passing the updated state to any derived sensors.
-        if isinstance(state, str) or (isinstance(state, (int, float)) and self._sanity.check(state, self._states)):
+        if isinstance(state, str) or (isinstance(state, (int, float)) and self.sanity_check.is_sane(state, self._states)):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Acquired raw {state=}")
             self._states.append((time.time(), state))
@@ -1152,16 +1152,16 @@ class NumericSensor(ReadWriteSensor):
         self["mode"] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
         self["step"] = 1 if precision is None else 10**-precision
         if "min" in self and isinstance(self["min"], (int, float)):
-            self._sanity.min_raw = int(self["min"] * gain) if gain else int(self["min"])  # pyright: ignore[reportArgumentType, reportOperatorIssue]
+            self.sanity_check.min_raw = int(self["min"] * gain) if gain else int(self["min"])  # pyright: ignore[reportArgumentType, reportOperatorIssue]
         elif "min" in self and isinstance(self["min"], tuple):
             min_val = min(self["min"])  # pyright: ignore[reportArgumentType]
-            self._sanity.min_raw = int(min_val * gain) if gain else int(min_val)  # pyright: ignore[reportOperatorIssue]
+            self.sanity_check.min_raw = int(min_val * gain) if gain else int(min_val)  # pyright: ignore[reportOperatorIssue]
 
         if "max" in self and isinstance(self["max"], (int, float)):
-            self._sanity.max_raw = int(self["max"] * gain) if gain else int(self["max"])  # pyright: ignore[reportArgumentType, reportOperatorIssue]
+            self.sanity_check.max_raw = int(self["max"] * gain) if gain else int(self["max"])  # pyright: ignore[reportArgumentType, reportOperatorIssue]
         elif "max" in self and isinstance(self["max"], tuple):
             max_val = max(self["max"])  # pyright: ignore[reportArgumentType]
-            self._sanity.max_raw = int(max_val * gain) if gain else int(max_val)  # pyright: ignore[reportOperatorIssue]
+            self.sanity_check.max_raw = int(max_val * gain) if gain else int(max_val)  # pyright: ignore[reportOperatorIssue]
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = super().get_discovery_components()
@@ -1270,8 +1270,8 @@ class SelectSensor(ReadWriteSensor):
         assert all([isinstance(o, str) for o in options]), "options must be a non-empty list of strings"
         self["platform"] = "select"
         self["options"] = options
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(options) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(options) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1352,8 +1352,8 @@ class SwitchSensor(ReadWriteSensor):
         self["payload_on"] = 1
         self["state_off"] = 0
         self["state_on"] = 1
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = 1
 
     async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         try:
@@ -1723,8 +1723,8 @@ class RunningStateSensor(ReadOnlySensor):
             "",  # 6
             "Environmental Abnormality",  # 7
         ]
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

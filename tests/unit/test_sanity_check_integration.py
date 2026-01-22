@@ -49,8 +49,8 @@ class TestSanityCheckIntegration:
 
         # Raw min should be 5.0 * 10 = 50
         # Raw max should be 20.0 * 10 = 200
-        assert sensor._sanity.min_raw == 50
-        assert sensor._sanity.max_raw == 200
+        assert sensor.sanity_check.min_raw == 50
+        assert sensor.sanity_check.max_raw == 200
 
     def test_select_sensor_sanity_check_initialization(self):
         options = ["A", "B", "C"]
@@ -67,8 +67,8 @@ class TestSanityCheckIntegration:
         )
 
         # Raw values are indices 0, 1, 2
-        assert sensor._sanity.min_raw == 0
-        assert sensor._sanity.max_raw == 2
+        assert sensor.sanity_check.min_raw == 0
+        assert sensor.sanity_check.max_raw == 2
 
     @pytest.mark.asyncio
     async def test_sensor_publish_sanity_failure_increment(self, mock_mqtt_client, mock_modbus_client):
@@ -97,8 +97,8 @@ class TestSanityCheckIntegration:
             maximum=20,
         )
 
-        # Mock get_state to return value outside range via _sanity.check (which is called in set_state)
-        # However, Sensor.get_state calls modbus read -> _update_internal_state -> set_latest_state -> set_state -> sanity.check
+        # Mock get_state to return value outside range via sanity_check.is_sane (which is called in set_state)
+        # However, Sensor.get_state calls modbus read -> _update_internal_state -> set_latest_state -> set_state -> sanity.is_sane
         # We can mock modbus read to return invalid raw value.
 
         # Raw value 5 (below min 10)
@@ -154,7 +154,7 @@ class TestSanityCheckIntegration:
         assert sensor._states[-1][1] == 15
 
         # Invalid update: SanityCheckException
-        # Note: set_state usually catches nothing, but it calls sanity.check which raises SanityCheckException
+        # Note: set_state usually catches nothing, but it calls sanity.is_sane which raises SanityCheckException
         # In actual flow, exceptions are caught in publish. Here we test set_state directly.
 
         with pytest.raises(SanityCheckException):

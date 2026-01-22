@@ -377,7 +377,7 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
 
 class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
@@ -424,7 +424,7 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
 
 class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
@@ -778,8 +778,8 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class AverageCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1033,8 +1033,8 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
@@ -1058,8 +1058,8 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1197,8 +1197,8 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1228,8 +1228,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/L3/N",  # 2
             "L1/L2/N",  # 3
         ]
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1358,8 +1358,8 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
-        self._sanity.min_raw = 0  # 0.0
-        self._sanity.max_raw = 1000  # 1.0
+        self.sanity_check.min_raw = 0  # 0.0
+        self.sanity_check.max_raw = 1000  # 1.0
         self._max_failures_retry_interval = 300
         self._active_power = active_power
         self._reactive_power = reactive_power
@@ -1740,7 +1740,7 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
@@ -1806,8 +1806,8 @@ class DCChargerRunningState(ReadOnlySensor):
             "Fault",  # 4
             "Scheduled",  # 5
         ]
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

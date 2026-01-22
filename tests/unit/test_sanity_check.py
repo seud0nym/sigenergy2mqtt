@@ -26,27 +26,27 @@ class TestSanityCheck:
 
     def test_check_value_in_range(self):
         sc = SanityCheck(min_raw=0, max_raw=100, delta=False)
-        assert sc.check(50, []) is True
+        assert sc.is_sane(50, []) is True
 
     def test_check_value_out_of_range(self):
         sc = SanityCheck(min_raw=0, max_raw=100, delta=False)
         with pytest.raises(SanityCheckException):
-            sc.check(150, [])
+            sc.is_sane(150, [])
         with pytest.raises(SanityCheckException):
-            sc.check(-1, [])
+            sc.is_sane(-1, [])
 
     def test_check_delta_valid(self):
         sc = SanityCheck(min_raw=0, max_raw=100, delta=True)
         # Previous state: 100, Current state: 110. Delta = 10. Valid.
         # Note: previous_states is list[tuple[timestamp, value]]
-        assert sc.check(110, [(0, 100)]) is True
+        assert sc.is_sane(110, [(0, 100)]) is True
 
     def test_check_delta_invalid(self):
         sc = SanityCheck(min_raw=0, max_raw=10, delta=True)
         # Previous state: 100, Current state: 120. Delta = 20. Invalid.
         with pytest.raises(SanityCheckException):
-            sc.check(120, [(0, 100)])
+            sc.is_sane(120, [(0, 100)])
 
     def test_check_no_previous_state_delta(self):
         sc = SanityCheck(min_raw=0, max_raw=100, delta=True)
-        assert sc.check(100, []) is True
+        assert sc.is_sane(100, []) is True

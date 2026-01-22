@@ -47,7 +47,7 @@ class BatteryChargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
-        self._sanity.min_raw = 0.0
+        self.sanity_check.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -79,7 +79,7 @@ class BatteryDischargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
-        self._sanity.min_raw = 0.0
+        self.sanity_check.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -193,7 +193,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         self.plant_index = plant_index
         self.method = method
         self._grid_status: int | None = None
-        self._sanity.min_raw = 0.0
+        self.sanity_check.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
         match self.method:
             case ConsumptionMethod.CALCULATED:

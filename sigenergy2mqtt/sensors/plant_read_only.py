@@ -120,8 +120,8 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "",  # 8
             "Time-Based Control",  # 9
         ]
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -160,8 +160,8 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             "Not Connected",  # 0
             "Connected",  # 1
         ]
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -201,8 +201,8 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.max_raw = 100000  # 100kW
-        self._sanity.min_raw = -100000  # -100kW
+        self.sanity_check.max_raw = 100000  # 100kW
+        self.sanity_check.min_raw = -100000  # -100kW
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -263,8 +263,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             "Off Grid (auto)",  # 1
             "Off Grid (manual)",  # 2
         ]
-        self._sanity.min_raw = 0
-        self._sanity.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1127,7 +1127,7 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components: dict[str, dict[str, Any]] = super().get_discovery_components()

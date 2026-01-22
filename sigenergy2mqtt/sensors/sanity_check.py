@@ -132,7 +132,7 @@ class SanityCheck:
     def is_enabled(self) -> bool:
         return self.min_raw is not None or self.max_raw is not None
 
-    def check(self, state: float | int, previous_states: list[tuple[float, float | int | str]]) -> bool:
+    def is_sane(self, state: float | int, previous_states: list[tuple[float, float | int | str]]) -> bool:
         if state is None or not isinstance(state, (float, int)) or (self.min_raw is None and self.max_raw is None) or (self.delta and len(previous_states) == 0):
             return True
         if self.delta:
