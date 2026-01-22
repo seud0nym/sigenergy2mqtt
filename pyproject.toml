@@ -54,4 +54,7 @@ include = ["sigenergy2mqtt/**"]
 include = ["sigenergy2mqtt/**"]
 
 [tool.pyright]
+extraPaths = ["./sigenergy2mqtt"]
+exclude = ["tests"]
 ignore = ["tests"]
+typeCheckingMode = "standard"

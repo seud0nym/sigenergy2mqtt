@@ -26,6 +26,7 @@
         "EVDC",
         "Gcal",
         "GIGA",
+        "gridsensor",
         "HACS",
         "HASS",
         "hassio",
@@ -38,8 +39,10 @@
         "kvar",
         "lastindex",
         "levelname",
+        "LICEN",
         "lvrt",
         "MAINPID",
+        "maxfail",
         "Mcal",
         "MILLIWATT",
         "mktime",
@@ -52,13 +55,19 @@
         "PACKBCUCount",
         "paho",
         "pdst",
+        "plantstatistics",
+        "powerplant",
         "preread",
         "proc",
+        "psutil",
         "pvoutput",
+        "pvstring",
         "pymodbus",
         "pypi",
+        "pytest",
         "rootfs",
         "ruamel",
+        "sdist",
         "seud0nym",
         "SIEVDC",
         "sigen",
@@ -67,6 +76,7 @@
         "SIGUSR",
         "SMARTPORT",
         "teardown",
+        "testpaths",
         "tm_isdst",
         "tm_mday",
         "tm_wday",
@@ -83,16 +93,6 @@
         "source.organizeImports": "explicit"
     },
     "python.analysis.diagnosticMode": "workspace",
-    "python.analysis.extraPaths": [
-        "./sigenergy2mqtt"
-    ],
-    "python.analysis.exclude": [
-        "tests"
-    ],
-    "python.analysis.ignore": [
-        "tests"
-    ],
-    "python.analysis.typeCheckingMode": "standard",
     "python.pyrefly.displayTypeErrors": "force-on",
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
