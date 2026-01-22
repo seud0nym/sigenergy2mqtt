@@ -13,9 +13,9 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 if not os.getcwd().endswith("resources"):
     os.chdir("resources")
 
-
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources")))
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
