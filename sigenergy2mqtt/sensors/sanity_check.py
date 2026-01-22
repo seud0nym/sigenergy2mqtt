@@ -30,8 +30,9 @@ class SanityCheck:
     min_raw: float | int | None = None
     max_raw: float | int | None = None
     delta: bool = False
-    gain: float | None = None
-    precision: int | None = None
+    _gain: float | None = None
+    _precision: int | None = None
+    _unit: str | None = None
 
     def __init__(
         self,
@@ -47,8 +48,9 @@ class SanityCheck:
     ) -> None:
         self.min_raw = min_raw
         self.max_raw = max_raw
-        self.gain = gain
-        self.precision = precision
+        self._gain = gain
+        self._precision = precision
+        self._unit = unit
         if delta is None:
             if state_class == const.StateClass.TOTAL_INCREASING:
                 self.delta = True
@@ -93,34 +95,38 @@ class SanityCheck:
 
     def __repr__(self):
         if self.min_raw is None and self.max_raw is None:
-            return "Sanity checking disabled"
-        min_value = self._raw2value(self.min_raw)
-        max_value = self._raw2value(self.max_raw)
-        min_raw_str = f" (raw={self.min_raw})" if self.min_raw != min_value else ""
-        max_raw_str = f" (raw={self.max_raw})" if self.max_raw != max_value else ""
-        range_str = (f" (raw={self.min_raw}-{self.max_raw})" if float(self.min_raw) != min_value or float(self.max_raw) != max_value else "") if self.min_raw is not None and self.max_raw is not None else ""
+            return "Disabled"
+        min_val_str: str | None = self._raw2value(self.min_raw)
+        max_val_str: str | None = self._raw2value(self.max_raw)
+        min_raw_str: str = f" (raw value ≧ {int(cast(float, self.min_raw))})" if self.min_raw is not None and f"{self.min_raw}{self._unit}" != min_val_str else ""
+        max_raw_str: str = f" (raw value ≦ {int(cast(float, self.max_raw))})" if self.max_raw is not None and f"{self.max_raw}{self._unit}" != max_val_str else ""
+        range_str = (
+            (f" ({int(cast(float, self.min_raw))} ≦ raw value ≦ {int(cast(float, self.max_raw))})" if f"{self.min_raw}{self._unit}" != min_val_str or f"{self.max_raw}{self._unit}" != max_val_str else "")
+            if self.min_raw is not None and self.max_raw is not None
+            else ""
+        )
         if self.delta:
             if self.min_raw is None:
-                return f"The delta of the value compared to the previous value is sanity checked to be a maximum of {max_value}{max_raw_str}"
+                return f"The delta of the value compared to the previous value must be a maximum of {max_val_str}{max_raw_str}"
             if self.max_raw is None:
-                return f"The delta of the value compared to the previous value is sanity checked to be a minimum of {min_value}{min_raw_str}"
-            return f"The delta of the value compared to the previous value is sanity checked to be between {min_value} and {max_value}{range_str}"
+                return f"The delta of the value compared to the previous value must be a minimum of {min_val_str}{min_raw_str}"
+            return f"The delta of the value compared to the previous value must be between {min_val_str} and {max_val_str}{range_str}"
         if self.min_raw is None:
-            return f"The value is sanity checked to be a maximum of {max_value}{max_raw_str}"
+            return f"The value must be a maximum of {max_val_str}{max_raw_str}"
         if self.max_raw is None:
-            return f"The value is sanity checked to be a minimum of {min_value}{min_raw_str}"
-        return f"The value is sanity checked to be between {min_value} and {max_value}{range_str}"
+            return f"The value must be a minimum of {min_val_str}{min_raw_str}"
+        return f"The value must be between {min_val_str} and {max_val_str}{range_str}"
 
-    def _raw2value(self, raw: float | int | None) -> float | int | None:
+    def _raw2value(self, raw: float | int | None) -> str | None:
         if raw is None:
             return raw
-        if self.gain is not None:
-            raw /= self.gain
-        if isinstance(raw, float) and self.precision is not None:
-            raw = round(raw, self.precision)
-            if self.precision == 0:
+        if self._gain is not None:
+            raw /= self._gain
+        if isinstance(raw, float) and self._precision is not None:
+            raw = round(raw, self._precision)
+            if self._precision == 0:
                 raw = int(cast(float, raw))
-        return raw
+        return f"{raw} {self._unit if self._unit else ''}"
 
     @property
     def is_enabled(self) -> bool:
