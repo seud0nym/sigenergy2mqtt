@@ -163,9 +163,9 @@ class Service(Device):
                 and "X-Rate-Limit-Remaining" in response.headers
                 and int(response.headers["X-Rate-Limit-Remaining"]) < 10
             ):
-                self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable]
+                self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable] # pyrefly: ignore
                 try:
-                    await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]
+                    await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]  # pyrefly: ignore
                 except asyncio.CancelledError:
                     logging.debug(f"{self.__class__.__name__} reset sleep interrupted")
                     break
