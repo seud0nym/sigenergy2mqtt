@@ -2,7 +2,7 @@ import logging
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
@@ -11,7 +11,7 @@ from .const import UnitOfPower
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 
 
-class InverterBatteryChargingPower(DerivedSensor):
+class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
         super().__init__(
             name="Battery Charging Power",
@@ -42,7 +42,7 @@ class InverterBatteryChargingPower(DerivedSensor):
         return True
 
 
-class InverterBatteryDischargingPower(DerivedSensor):
+class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
         super().__init__(
             name="Battery Discharging Power",
@@ -73,7 +73,7 @@ class InverterBatteryDischargingPower(DerivedSensor):
         return True
 
 
-class PVStringPower(DerivedSensor):
+class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, voltage: PVVoltageSensor, current: PVCurrentSensor):
         super().__init__(
             name="Power",
@@ -127,7 +127,7 @@ class PVStringPower(DerivedSensor):
         return True
 
 
-class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
+class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringPower):
         super().__init__(
             name="Lifetime Production",
@@ -144,7 +144,7 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor):
         return attributes
 
 
-class PVStringDailyEnergy(EnergyDailyAccumulationSensor):
+class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringLifetimeEnergy):
         super().__init__(
             name="Daily Production",
