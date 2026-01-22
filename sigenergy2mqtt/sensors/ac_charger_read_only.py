@@ -42,7 +42,7 @@ class ACChargerRunningState(ReadOnlySensor):
             "Error",  # 7
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -249,14 +249,6 @@ class ACChargerAlarm2(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "5002_1: Leak current detection circuit fault"
@@ -287,14 +279,6 @@ class ACChargerAlarm3(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "5003: Too high internal temperature"
