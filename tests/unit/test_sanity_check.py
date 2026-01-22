@@ -47,6 +47,89 @@ class TestSanityCheck:
         with pytest.raises(SanityCheckException):
             sc.is_sane(120, [(0, 100)])
 
-    def test_check_no_previous_state_delta(self):
-        sc = SanityCheck(min_raw=0, max_raw=100, delta=True)
-        assert sc.is_sane(100, []) is True
+    def test_init_all_datatypes(self):
+        from sigenergy2mqtt.modbus.types import ModbusDataType
+
+        # Note: SanityCheck.min_raw is capped at max_raw * -1 for signed types
+        assert SanityCheck(data_type=ModbusDataType.INT16).min_raw == -32767
+        assert SanityCheck(data_type=ModbusDataType.INT16).max_raw == 32767
+
+        sc = SanityCheck(data_type=ModbusDataType.INT32)
+        assert sc.min_raw == -2147483647
+        assert sc.max_raw == 2147483647
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT32)
+        assert sc.min_raw == 0
+        assert sc.max_raw == 4294967295
+
+        sc = SanityCheck(data_type=ModbusDataType.INT64)
+        assert sc.min_raw == -9223372036854775807
+        assert sc.max_raw == 9223372036854775807
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT64)
+        assert sc.min_raw == 0
+        assert sc.max_raw == 18446744073709551615
+
+    def test_init_percentage(self):
+        from sigenergy2mqtt.sensors.const import PERCENTAGE
+
+        sc = SanityCheck(unit=PERCENTAGE, gain=10)
+        assert sc.max_raw == 1000
+
+    def test_repr(self):
+        from sigenergy2mqtt.sensors.const import PERCENTAGE
+
+        sc = SanityCheck(min_raw=0, max_raw=100, unit=PERCENTAGE)
+        r = repr(sc)
+        assert "between 0 % and 100 %" in r
+
+        sc = SanityCheck()
+        assert repr(sc) == "Disabled"
+
+        # Delta repr
+        sc = SanityCheck(min_raw=0, max_raw=10, delta=True, unit="V")
+        r = repr(sc)
+        assert "delta of the value" in r
+        assert "between 0 V and 10 V" in r
+
+        # Only max
+        sc = SanityCheck(max_raw=100)
+        r = repr(sc)
+        assert "maximum of 100" in r
+
+        # Only min
+        sc = SanityCheck(min_raw=10)
+        r = repr(sc)
+        assert "minimum of 10" in r
+
+    def test_raw2value(self):
+        sc = SanityCheck(gain=10, precision=2, unit="A")
+        assert sc._raw2value(123) == "12.3 A"
+
+        sc = SanityCheck(gain=1, precision=0, unit="X")
+        assert sc._raw2value(123.6) == "124 X"
+
+        assert sc._raw2value(None) is None
+
+    def test_is_enabled(self):
+        assert SanityCheck(min_raw=0).is_enabled is True
+        assert SanityCheck(max_raw=100).is_enabled is True
+        assert SanityCheck().is_enabled is False
+
+    def test_is_sane_only_min_max(self):
+        # Only max
+        sc = SanityCheck(max_raw=100)
+        assert sc.is_sane(50, []) is True
+        with pytest.raises(SanityCheckException):
+            sc.is_sane(150, [])
+
+        # Only min
+        sc = SanityCheck(min_raw=0)
+        assert sc.is_sane(50, []) is True
+        with pytest.raises(SanityCheckException):
+            sc.is_sane(-50, [])
+
+    def test_is_sane_delta_no_numeric_previous(self):
+        sc = SanityCheck(delta=True, max_raw=10)
+        # Previous state is a string
+        assert sc.is_sane(100, [(0, "unknown")]) is True
