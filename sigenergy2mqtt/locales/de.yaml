@@ -1,0 +1,738 @@
+# German translations for sigenergy2mqtt
+AlarmSensor:
+  no_alarm: Kein Alarm
+  unknown_alarm: Unbekannt (bit{bit}∈{value})
+ReadOnlySensor:
+  attributes:
+    source: Modbus-Register {address}
+    source_range: Modbus-Register {start}-{end}
+MqttOverriddenSensor:
+  attributes:
+    source: MQTT-Überschreibung
+MonitorService:
+  name: Sigenergy-Monitor
+MetricsService:
+  name: Sigenergy-Metriken
+ModbusCacheHits:
+  name: Modbus-Cache-Treffer
+ModbusReadsPerSecond:
+  name: Modbus-Lesevorgänge/Sekunde
+ModbusReadErrors:
+  name: Modbus-Lesefehler
+ModbusReadMax:
+  name: Modbus-Lesen Max
+ModbusReadMean:
+  name: Modbus-Lesen Mittel
+ModbusReadMin:
+  name: Modbus-Lesen Min
+ModbusWriteErrors:
+  name: Modbus-Schreibfehler
+ModbusWriteMax:
+  name: Modbus-Schreiben Max
+ModbusWriteMean:
+  name: Modbus-Schreiben Mittel
+ModbusWriteMin:
+  name: Modbus-Schreiben Min
+ModbusActiveLocks:
+  name: Aktive Modbus-Sperren
+Started:
+  name: Gestartet
+ProtocolVersion:
+  name: Protokollversion
+ProtocolPublished:
+  name: Protokoll veröffentlicht
+ACChargerStatus:
+  name: AC-Ladegerät Start/Stopp
+  attributes:
+    comment: 0:Start 1:Stopp
+ACChargerOutputCurrent:
+  name: Ausgangsstrom
+  attributes:
+    comment: "Bereich: [6, kleiner von 'AC-Ladegerät Nennstrom' und 'AC-Ladegerät Eingangsschutzschalter Nennstrom']"
+PlantStatus:
+  name: Anlage Ein/Aus
+  attributes:
+    comment: 0:Stopp 1:Start
+ActivePowerFixedAdjustmentTargetValue:
+  name: Zielwert Wirkleistung Festwertanpassung
+ReactivePowerFixedAdjustmentTargetValue:
+  name: Zielwert Blindleistung Festwertanpassung
+  attributes:
+    comment: "Bereich: [-60,00 * Basiswert, 60,00 * Basiswert]. Gilt global unabhängig vom EMS-Betriebsmodus"
+ActivePowerPercentageAdjustmentTargetValue:
+  name: Zielwert Wirkleistung Prozentanpassung
+  attributes:
+    comment: "Bereich: [-100,00, 100,00]"
+QSAdjustmentTargetValue:
+  name: Zielwert Q/S-Anpassung
+  attributes:
+    comment: "Bereich: [-60,0, 60,00]. Gilt global unabhängig vom EMS-Betriebsmodus"
+PowerFactorAdjustmentTargetValue:
+  name: Zielwert Leistungsfaktoranpassung
+  attributes:
+    comment: "Bereich: [(-1,0, -0,8) U (0,8, 1,0)]. Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus"
+IndependentPhasePowerControl:
+  name: Unabhängige Phasenleistungssteuerung
+  attributes:
+    comment: Nur gültig bei Ausgangstyp L1/L2/L3/N. Um unabhängige Phasensteuerung zu aktivieren, muss dieser Parameter aktiviert sein
+PhaseActivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Nur gültig bei Ausgangstyp L1/L2/L3/N
+PhaseReactivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Nur gültig bei Ausgangstyp L1/L2/L3/N
+PhaseActivePowerPercentageAdjustmentTargetValue:
+  attributes:
+    comment: "Nur gültig bei Ausgangstyp L1/L2/L3/N. Bereich: [-100,00, 100,00]"
+PhaseQSAdjustmentTargetValue:
+  attributes:
+    comment: "Nur gültig bei Ausgangstyp L1/L2/L3/N. Bereich: [-60,00, 60,00]"
+Reserved40026:
+  name: Reserviert
+RemoteEMS:
+  name: Fern-EMS
+  attributes:
+    comment: Wenn EMS ferngesteuert werden soll, muss dieses Register aktiviert werden. Bei Aktivierung wechselt der EMS-Arbeitsmodus (30003) der Anlage zu RemoteEMS
+RemoteEMSControlMode:
+  name: Fern-EMS-Steuerungsmodus
+MaxChargingLimit:
+  name: Max. Ladegrenze
+MaxDischargingLimit:
+  name: Max. Entladegrenze
+PVMaxPowerLimit:
+  name: PV Max. Leistungsgrenze
+  attributes:
+    comment: Wirksam wenn Fern-EMS-Steuerungsmodus (40031) auf Befehlsladung/-entladung eingestellt ist
+GridMaxExportLimit:
+  name: Netz Max. Exportgrenze
+  attributes:
+    comment: Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus
+GridMaxImportLimit:
+  name: Netz Max. Importgrenze
+  attributes:
+    comment: Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus
+PCSMaxExportLimit:
+  name: PCS Max. Exportgrenze
+  attributes:
+    comment: "Bereich: [0, 0xFFFFFFFE]. Bei Wert 0xFFFFFFFF ist Register ungültig. In allen anderen Fällen gilt es global."
+PCSMaxImportLimit:
+  name: PCS Max. Importgrenze
+  attributes:
+    comment: "Bereich: [0, 0xFFFFFFFE]. Bei Wert 0xFFFFFFFF ist Register ungültig. In allen anderen Fällen gilt es global."
+ESSBackupSOC:
+  name: Backup-SoC
+  attributes:
+    comment: "Bereich: [0,00, 100,00]"
+ESSChargeCutOffSOC:
+  name: Ladungsabschalt-SoC
+  attributes:
+    comment: "Bereich: [0,00, 100,00]"
+ESSDischargeCutOffSOC:
+  name: Entladungsabschalt-SoC
+  attributes:
+    comment: "Bereich: [0,00, 100,00]"
+ActivePowerRegulationGradient:
+  name: Wirkleistungsregelungsgradient
+  attributes:
+    comment: "Bereich: [0, 5000]. Prozent der Nennleistung angepasst pro Sekunde"
+GridCodeLVRT:
+  name: Niederspannungsdurchfahrt
+GridCodeLVRTReactivePowerCompensationFactor:
+  name: LVRT Blindleistungskompensationsfaktor
+  attributes:
+    comment: "Bereich: [0, 10,0]"
+GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: LVRT Gegensystem-Blindleistungskompensationsfaktor
+  attributes:
+    comment: "Bereich: [0, 10,0]"
+GridCodeLVRTMode:
+  name: LVRT-Modus
+GridCodeLVRTVoltageProtectionBlocking:
+  name: LVRT Netzspannungsschutzblockierung
+GridCodeHVRT:
+  name: Hochspannungsdurchfahrt
+GridCodeHVRTReactivePowerCompensationFactor:
+  name: HVRT Blindleistungskompensationsfaktor
+  attributes:
+    comment: "Bereich: [0, 10,0]"
+GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: HVRT Gegensystem-Blindleistungskompensationsfaktor
+  attributes:
+    comment: "Bereich: [0, 10,0]"
+GridCodeHVRTMode:
+  name: HVRT-Modus
+GridCodeHVRTVoltageProtectionBlocking:
+  name: HVRT Netzspannungsschutzblockierung
+GridCodeOverFrequencyDerating:
+  name: Überfrequenz-Abregelung
+GridCodeOverFrequencyDeratingPowerRampRate:
+  name: Überfrequenz-Abregelung Leistungsrampenrate
+  attributes:
+    comment: "Bereich: [0, 100,0]"
+GridCodeOverFrequencyDeratingTriggerFrequency:
+  name: Überfrequenz-Abregelung Auslösefrequenz
+  attributes:
+    comment: "Bereich: [1,0*Fn, 1,2*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
+GridCodeOverFrequencyDeratingCutOffFrequency:
+  name: Überfrequenz-Abregelung Abschaltfrequenz
+  attributes:
+    comment: "Bereich: [1,0*Fn, 1,2*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
+GridCodeUnderFrequencyPowerBoost:
+  name: Unterfrequenz-Leistungsverstärkung
+GridCodeUnderFrequencyPowerBoostPowerRampRate:
+  name: Unterfrequenz-Leistungsverstärkung Leistungsrampenrate
+  attributes:
+    comment: "Bereich: [0, 100,0]"
+GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+  name: Unterfrequenz-Leistungsverstärkung Auslösefrequenz
+  attributes:
+    comment: "Bereich: [0,8*Fn, 1,0*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
+GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+  name: Unterfrequenz-Leistungsverstärkung Abschaltfrequenz
+  attributes:
+    comment: "Bereich: [0,8*Fn, 1,0*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
+InverterModel:
+  name: Modell
+InverterSerialNumber:
+  name: Seriennummer
+InverterFirmwareVersion:
+  name: Firmware-Version
+RatedActivePower:
+  name: Nennwirkleistung
+MaxRatedApparentPower:
+  name: Max. Nennscheinleistung
+InverterMaxActivePower:
+  name: Max. Wirkleistung
+MaxAbsorptionPower:
+  name: Max. Aufnahmeleistung
+RatedBatteryCapacity:
+  name: Nennbatteriekapazität
+RatedChargingPower:
+  name: Nennladeleistung
+RatedDischargingPower:
+  name: Nennentladeleistung
+ReservedDailyExportEnergy:
+  name: Tägliche Exportenergie
+ReservedAccumulatedExportEnergy:
+  name: Gesamte Exportenergie
+ReservedDailyImportEnergy:
+  name: Tägliche Importenergie
+ReservedAccumulatedImportEnergy:
+  name: Gesamte Importenergie
+DailyChargeEnergy:
+  name: Tägliche Ladeenergie
+AccumulatedChargeEnergy:
+  name: Gesamte Ladeenergie
+DailyDischargeEnergy:
+  name: Tägliche Entladeenergie
+AccumulatedDischargeEnergy:
+  name: Gesamte Entladeenergie
+InverterRunningState:
+  name: Betriebszustand
+MaxActivePowerAdjustment:
+  name: Max. Wirkleistungsanpassung
+MinActivePowerAdjustment:
+  name: Min. Wirkleistungsanpassung
+MaxReactivePowerAdjustment:
+  name: Max. Blindleistungsanpassung
+MinReactivePowerAdjustment:
+  name: Min. Blindleistungsanpassung
+ActivePower:
+  name: Wirkleistung
+ReactivePower:
+  name: Blindleistung
+MaxBatteryChargePower:
+  name: Max. Ladeleistung
+MaxBatteryDischargePower:
+  name: Max. Entladeleistung
+AvailableBatteryChargeEnergy:
+  name: Verfügbare Ladeenergie
+AvailableBatteryDischargeEnergy:
+  name: Verfügbare Entladeenergie
+ChargeDischargePower:
+  name: Batterieleistung
+InverterBatterySoC:
+  name: Batterie-SoC
+InverterBatterySoH:
+  name: Batterie-SoH
+AverageCellTemperature:
+  name: Durchschnittliche Zellentemperatur
+AverageCellVoltage:
+  name: Durchschnittliche Zellenspannung
+InverterAlarm1:
+  name: PCS-Alarme 1
+InverterAlarm2:
+  name: PCS-Alarme 2
+InverterPCSAlarm:
+  name: PCS-Alarme
+  attributes:
+    source: Modbus-Register 30605-30606
+InverterAlarm3:
+  name: Alarme
+InverterAlarm4:
+  name: Gateway-Alarme
+InverterAlarm5:
+  name: Alarme
+Reserved30610:
+  name: Reserviert
+InverterActivePowerFixedValueAdjustmentFeedback:
+  name: Rückmeldung Wirkleistung Festwertanpassung
+InverterReactivePowerFixedValueAdjustmentFeedback:
+  name: Rückmeldung Blindleistung Festwertanpassung
+InverterActivePowerPercentageAdjustmentFeedback:
+  name: Rückmeldung Wirkleistung Prozentanpassung
+InverterReactivePowerPercentageAdjustmentFeedback:
+  name: Rückmeldung Blindleistung Prozentanpassung
+InverterPowerFactorAdjustmentFeedback:
+  name: Rückmeldung Leistungsfaktoranpassung
+InverterMaxBatteryTemperature:
+  name: Max. Batterietemperatur
+InverterMinBatteryTemperature:
+  name: Min. Batterietemperatur
+InverterMaxCellVoltage:
+  name: Max. Zellenspannung
+InverterMinCellVoltage:
+  name: Min. Zellenspannung
+RatedGridVoltage:
+  name: Netz-Nennspannung
+RatedGridFrequency:
+  name: Netz-Nennfrequenz
+GridFrequency:
+  name: Netzfrequenz
+InverterTemperature:
+  name: Temperatur
+OutputType:
+  name: Ausgangstyp
+  options:
+    "0": L/N
+    "1": L1/L2/L3
+    "2": L1/L2/L3/N
+    "3": L1/L2/N
+PowerFactor:
+  name: Leistungsfaktor
+PACKBCUCount:
+  name: PACK/BCU-Anzahl
+PVStringCount:
+  name: PV-String-Anzahl
+MPTTCount:
+  name: MPPT-Anzahl
+PVCurrentSensor:
+  name: Strom
+PVVoltageSensor:
+  name: Spannung
+InverterPVPower:
+  name: PV-Leistung
+InsulationResistance:
+  name: Isolationswiderstand
+StartupTime:
+  name: Startzeit
+ShutdownTime:
+  name: Abschaltzeit
+DCChargerVehicleBatteryVoltage:
+  name: Fahrzeugbatteriespannung
+DCChargerVehicleChargingCurrent:
+  name: Fahrzeugladestrom
+DCChargerOutputPower:
+  name: Ausgangsleistung
+DCChargerVehicleSoC:
+  name: Fahrzeug-SoC
+DCChargerCurrentChargingCapacity:
+  name: Aktuelle Ladekapazität
+  attributes:
+    comment: Einzelvorgang
+DCChargerCurrentChargingDuration:
+  name: Aktuelle Ladedauer
+  attributes:
+    comment: Einzelvorgang
+InverterPVDailyGeneration:
+  name: Tägliche Produktion
+InverterPVLifetimeGeneration:
+  name: Gesamtproduktion
+DCChargerRunningState:
+  name: Betriebszustand
+  options:
+    "0": Leerlauf
+    "1": Belegt (Ladestecker eingesteckt aber nicht erkannt)
+    "2": Vorbereitung (Kommunikation wird hergestellt)
+    "3": Laden
+    "4": Fehler
+    "5": Geplant
+SystemTime:
+  name: Systemzeit
+SystemTimeZone:
+  name: Systemzeitzone
+EMSWorkMode:
+  name: EMS-Betriebsmodus
+  options:
+    "0": Max. Eigenverbrauch
+    "1": Sigen-KI
+    "2": Zeitabhängiger Tarif
+    "5": Vollständige Netzeinspeisung
+    "6": VPP-Planung
+    "7": Fern-EMS
+    "9": Zeitbasierte Steuerung
+GridSensorStatus:
+  name: Netzsensorstatus
+  options:
+    "0": Nicht verbunden
+    "1": Verbunden
+  attributes:
+    comment: Gateway- oder Zählerverbindungsstatus
+GridSensorActivePower:
+  name: Wirkleistung
+  attributes:
+    comment: "Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten; >0 Netzbezug; <0 Netzeinspeisung"
+GridSensorReactivePower:
+  name: Blindleistung
+  attributes:
+    comment: Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten
+GridStatus:
+  name: Netzstatus
+  options:
+    "0": Am Netz
+    "1": Inselbetrieb (auto)
+    "2": Inselbetrieb (manuell)
+MaxActivePower:
+  name: Max. Wirkleistung
+  attributes:
+    comment: Dies sollte der Basiswert für alle Wirkleistungsanpassungen sein
+MaxApparentPower:
+  name: Max. Scheinleistung
+  attributes:
+    comment: Dies sollte der Basiswert für alle Blindleistungsanpassungen sein
+PlantBatterySoC:
+  name: Batterie-SoC
+GeneralAlarm1:
+  name: PCS-Alarme 1
+  attributes:
+    comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+GeneralAlarm2:
+  name: PCS-Alarme 2
+  attributes:
+    comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+GeneralPCSAlarm:
+  name: PCS-Alarme
+  attributes:
+    comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+    source: Modbus-Register 30027-30028
+GeneralAlarm3:
+  name: ESS-Alarme
+  attributes:
+    comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+GeneralAlarm4:
+  name: Gateway-Alarme
+  attributes:
+    comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+PlantActivePower:
+  name: Wirkleistung
+PlantReactivePower:
+  name: Blindleistung
+PlantPVPower:
+  name: PV-Leistung
+BatteryPower:
+  name: Batterieleistung
+  attributes:
+    comment: "ESS-Leistung: <0 = Entladen, >0 = Laden"
+AvailableMaxActivePower:
+  name: Verfügbare Max. Wirkleistung
+  attributes:
+    comment: Einspeisung am AC-Anschluss. Nur laufende Wechselrichter gezählt
+AvailableMinActivePower:
+  name: Verfügbare Min. Wirkleistung
+  attributes:
+    comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
+AvailableMaxReactivePower:
+  name: Verfügbare Max. Blindleistung
+  attributes:
+    comment: Einspeisung am AC-Anschluss. Nur laufende Wechselrichter gezählt
+AvailableMinReactivePower:
+  name: Verfügbare Min. Blindleistung
+  attributes:
+    comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
+AvailableMaxChargingPower:
+  name: Verfügbare Max. Ladeleistung
+  attributes:
+    comment: Nur laufende Wechselrichter gezählt
+AvailableMaxDischargingPower:
+  name: Verfügbare Max. Entladeleistung
+  attributes:
+    comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
+PlantRunningState:
+  name: Betriebszustand
+GridPhaseActivePower:
+  attributes:
+    comment: "Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten; >0 Netzbezug; <0 Netzeinspeisung"
+GridPhaseReactivePower:
+  attributes:
+    comment: Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten
+AvailableMaxChargingCapacity:
+  name: Verfügbare Max. Ladekapazität
+  attributes:
+    comment: Nur laufende Wechselrichter gezählt
+AvailableMaxDischargingCapacity:
+  name: Verfügbare Max. Entladekapazität
+  attributes:
+    comment: Nur laufende Wechselrichter gezählt
+PlantRatedChargingPower:
+  name: Nennladeleistung
+PlantRatedDischargingPower:
+  name: Nennentladeleistung
+GeneralAlarm5:
+  name: DC-Ladegerät-Alarme
+  attributes:
+    comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+Reserved30073:
+  name: Reserviert
+PlantRatedEnergyCapacity:
+  name: Nenn-Energiekapazität
+ChargeCutOffSoC:
+  name: Ladungsabschalt-SoC
+DischargeCutOffSoC:
+  name: Entladungsabschalt-SoC
+PlantBatterySoH:
+  name: Batterie-SoH
+  attributes:
+    comment: Dieser Wert ist der gewichtete Durchschnitt des SoH aller ESS-Geräte in der Anlage, mit der jeweiligen Nennkapazität als Gewichtung
+PlantPVTotalGeneration:
+  name: Gesamte PV-Produktion
+TotalLoadDailyConsumption:
+  name: Täglicher Verbrauch
+TotalLoadConsumption:
+  name: Gesamtverbrauch
+ThirdPartyPVPower:
+  name: Drittanbieter-PV-Leistung
+ThirdPartyLifetimePVEnergy:
+  name: Gesamte Drittanbieter-PV-Produktion
+ESSTotalChargedEnergy:
+  name: Gesamte Ladeenergie
+ESSTotalDischargedEnergy:
+  name: Gesamte Entladeenergie
+EVDCTotalChargedEnergy:
+  name: Gesamte DC-EV-Ladeenergie
+EVDCTotalDischargedEnergy:
+  name: Gesamte DC-EV-Entladeenergie
+PlantTotalImportedEnergy:
+  name: Gesamte Importenergie
+PlantTotalExportedEnergy:
+  name: Gesamte Exportenergie
+PlantTotalGeneratorOutputEnergy:
+  name: Gesamte Generatorausgangsenergie
+StatisticsInterfaceSensor:
+  attributes:
+    comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+SITotalCommonLoadConsumption:
+  name: Gesamter Allgemeiner Lastverbrauch
+SITotalEVACChargedEnergy:
+  name: Gesamte AC-EV-Ladeenergie
+SITotalSelfPVGeneration:
+  name: Gesamte PV-Produktion
+SITotalThirdPartyPVGeneration:
+  name: Gesamte Drittanbieter-PV-Produktion
+SITotalChargedEnergy:
+  name: Gesamte Ladeenergie
+SITotalDischargedEnergy:
+  name: Gesamte Entladeenergie
+SITotalEVDCChargedEnergy:
+  name: Gesamte DC-EV-Ladeenergie
+SITotalEVDCDischargedEnergy:
+  name: Gesamte DC-EV-Entladeenergie
+SITotalImportedEnergy:
+  name: Gesamte Importenergie
+SITotalExportedEnergy:
+  name: Gesamte Exportenergie
+SITotalGeneratorOutputEnergy:
+  name: Gesamte Generatorausgangsenergie
+ReservedPVTotalGenerationToday:
+  name: PV-Gesamterzeugung Heute
+ReservedPVTotalGenerationYesterday:
+  name: PV-Gesamterzeugung Gestern
+GridCodeRatedFrequency:
+  name: Nennfrequenz
+GridCodeRatedVoltage:
+  name: Nennspannung
+CurrentControlCommandValue:
+  name: Aktueller Steuerbefehlswert
+  attributes:
+    comment: Verwendung der Fernausgangssteuerung in Japan
+Alarm6:
+  name: Alarm 6
+Alarm7:
+  name: Alarm 7
+PlantAlarms:
+  name: Anlagenalarme
+  attributes:
+    source: Modbus-Register 30280-30281
+GeneralLoadPower:
+  name: Allgemeine Lastleistung
+TotalLoadPower:
+  name: Gesamtlastleistung
+BatteryChargingPower:
+  name: Batterieladeleistung
+  attributes:
+    source: BatteryPower > 0
+BatteryDischargingPower:
+  name: Batterieentladeleistung
+  attributes:
+    source: BatteryPower < 0 × -1
+GridSensorExportPower:
+  name: Exportleistung
+  attributes:
+    source: GridSensorActivePower < 0 × -1
+GridSensorImportPower:
+  name: Importleistung
+  attributes:
+    source: GridSensorActivePower > 0
+PlantConsumedPower:
+  name: Verbrauchte Leistung
+  attributes:
+    source: TotalLoadPower
+TotalPVPower:
+  name: Gesamte PV-Leistung
+  attributes:
+    source: PV-Leistung + Drittanbieter-PV-Leistung
+GridSensorDailyExportEnergy:
+  name: Tägliche Exportenergie
+  attributes:
+    source: PlantTotalExportedEnergy − PlantTotalExportedEnergy um Mitternacht
+GridSensorDailyImportEnergy:
+  name: Tägliche Importenergie
+  attributes:
+    source: PlantTotalImportedEnergy − PlantTotalImportedEnergy um Mitternacht
+TotalLifetimePVEnergy:
+  name: Gesamte PV-Produktion
+  attributes:
+    source: "Σ von PlantPVTotalGeneration und ThirdPartyLifetimePVEnergy"
+TotalDailyPVEnergy:
+  name: Tägliche Gesamt-PV-Produktion
+  attributes:
+    source: TotalLifetimePVEnergy − TotalLifetimePVEnergy um Mitternacht
+PlantDailyPVEnergy:
+  name: Tägliche PV-Produktion
+  attributes:
+    source: PlantLifetimePVEnergy − PlantLifetimePVEnergy um Mitternacht
+PlantDailyChargeEnergy:
+  name: Tägliche Ladeenergie
+  attributes:
+    source: "Σ von DailyChargeEnergy über alle mit der Anlage verbundenen Wechselrichter"
+PlantDailyDischargeEnergy:
+  name: Tägliche Entladeenergie
+  attributes:
+    source: "Σ von DailyDischargeEnergy über alle mit der Anlage verbundenen Wechselrichter"
+InverterBatteryChargingPower:
+  name: Batterieladeleistung
+  attributes:
+    source: ChargeDischargePower > 0
+InverterBatteryDischargingPower:
+  name: Batterieentladeleistung
+  attributes:
+    source: ChargeDischargePower < 0 × -1
+PVStringPower:
+  name: Leistung
+  attributes:
+    source: PVVoltageSensor × PVCurrentSensor
+PVStringLifetimeEnergy:
+  name: Gesamtproduktion
+  attributes:
+    source: Riemann Σ von PVStringPower
+PVStringDailyEnergy:
+  name: Tägliche Produktion
+  attributes:
+    source: PVStringLifetimeEnergy − PVStringLifetimeEnergy um Mitternacht
+RunningStateSensor:
+  options:
+    "0": Standby
+    "1": Normal
+    "2": Fehler
+    "3": Ausgeschaltet
+    "7": Umgebungsanomalie
+ACChargerRunningState:
+  name: Betriebszustand
+  options:
+    "0": Initialisierung
+    "1": EV nicht verbunden
+    "2": Ladegerät und EV nicht bereit
+    "3": Ladegerät bereit; EV nicht bereit
+    "4": Ladegerät nicht bereit; EV bereit
+    "5": Laden
+    "6": Fehler
+    "7": Störung
+ACChargerTotalEnergyConsumed:
+  name: Gesamter Energieverbrauch
+ACChargerChargingPower:
+  name: Ladeleistung
+ACChargerRatedPower:
+  name: Nennleistung
+ACChargerRatedCurrent:
+  name: Nennstrom
+ACChargerRatedVoltage:
+  name: Nennspannung
+ACChargerInputBreaker:
+  name: Eingangsschutzschalter
+ACChargerAlarm1:
+  name: Alarm 1
+ACChargerAlarm2:
+  name: Alarm 2
+ACChargerAlarm3:
+  name: Alarm 3
+ACChargerAlarms:
+  name: Alarme
+  attributes:
+    source: Modbus-Register 32012-32014
+InverterStatus:
+  name: Wechselrichter Ein/Aus
+  attributes:
+    comment: 0:Stopp 1:Start
+ReservedGridCode:
+  name: Netzcode
+DCChargerStatus:
+  name: DC-Ladegerät Start/Stopp
+  attributes:
+    comment: 0:Start 1:Stopp
+ReservedInverterRemoteEMSDispatch:
+  name: Fern-EMS-Dispatch
+InverterActivePowerFixedValueAdjustment:
+  name: Wirkleistung Festwertanpassung
+InverterReactivePowerFixedValueAdjustment:
+  name: Blindleistung Festwertanpassung
+InverterActivePowerPercentageAdjustment:
+  name: Wirkleistung Prozentanpassung
+InverterReactivePowerQSAdjustment:
+  name: Blindleistung Q/S-Anpassung
+InverterPowerFactorAdjustment:
+  name: Leistungsfaktoranpassung
+PVOutputOutputService:
+  name: PVOutput Ausgabe-Service hinzufügen
+PVOutputStatusService:
+  name: PVOutput Status-Service hinzufügen
+EnphasePVPower:
+  name: PV-Leistung
+  attributes:
+    source: Enphase Envoy API
+EnphaseLifetimePVEnergy:
+  name: Gesamtproduktion
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung
+EnphaseDailyPVEnergy:
+  name: Tägliche Produktion
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung
+EnphaseCurrent:
+  name: Strom
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung
+EnphaseFrequency:
+  name: Frequenz
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung
+EnphasePowerFactor:
+  name: Leistungsfaktor
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung
+EnphaseReactivePower:
+  name: Blindleistung
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung
+EnphaseVoltage:
+  name: Spannung
+  attributes:
+    source: Enphase Envoy API bei EnphasePVPower-Ableitung

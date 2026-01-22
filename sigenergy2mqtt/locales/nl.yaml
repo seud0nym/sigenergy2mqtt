@@ -1,0 +1,738 @@
+# Dutch translations for sigenergy2mqtt
+AlarmSensor:
+  no_alarm: Geen Alarm
+  unknown_alarm: Onbekend (bit{bit}∈{value})
+ReadOnlySensor:
+  attributes:
+    source: Modbus Register {address}
+    source_range: Modbus Registers {start}-{end}
+MqttOverriddenSensor:
+  attributes:
+    source: MQTT Override
+MonitorService:
+  name: Sigenergy Monitor
+MetricsService:
+  name: Sigenergy Metrics
+ModbusCacheHits:
+  name: Modbus Cache Hits
+ModbusReadsPerSecond:
+  name: Modbus Lezingen/seconde
+ModbusReadErrors:
+  name: Modbus Leesfouten
+ModbusReadMax:
+  name: Modbus Lezen Max
+ModbusReadMean:
+  name: Modbus Lezen Gemiddeld
+ModbusReadMin:
+  name: Modbus Lezen Min
+ModbusWriteErrors:
+  name: Modbus Schrijffouten
+ModbusWriteMax:
+  name: Modbus Schrijven Max
+ModbusWriteMean:
+  name: Modbus Schrijven Gemiddeld
+ModbusWriteMin:
+  name: Modbus Schrijven Min
+ModbusActiveLocks:
+  name: Actieve Modbus Vergrendelingen
+Started:
+  name: Gestart
+ProtocolVersion:
+  name: Protocolversie
+ProtocolPublished:
+  name: Protocol Gepubliceerd
+ACChargerStatus:
+  name: AC Lader Start/Stop
+  attributes:
+    comment: 0:Start 1:Stop
+ACChargerOutputCurrent:
+  name: Uitgangsstroom
+  attributes:
+    comment: "Bereik: [6, kleinste van 'AC Lader Nominale Stroom' en 'AC Lader Ingangsschakelaar Nominale Stroom']"
+PlantStatus:
+  name: Installatie Aan/Uit
+  attributes:
+    comment: 0:Stop 1:Start
+ActivePowerFixedAdjustmentTargetValue:
+  name: Actief Vermogen Vast Instelwaarde
+ReactivePowerFixedAdjustmentTargetValue:
+  name: Reactief Vermogen Vast Instelwaarde
+  attributes:
+    comment: "Bereik: [-60,00 * basiswaarde, 60,00 * basiswaarde]. Geldt globaal ongeacht de EMS-bedrijfsmodus"
+ActivePowerPercentageAdjustmentTargetValue:
+  name: Actief Vermogen Percentage Instelwaarde
+  attributes:
+    comment: "Bereik: [-100,00, 100,00]"
+QSAdjustmentTargetValue:
+  name: Q/S Instelwaarde
+  attributes:
+    comment: "Bereik: [-60,0, 60,00]. Geldt globaal ongeacht de EMS-bedrijfsmodus"
+PowerFactorAdjustmentTargetValue:
+  name: Arbeidsfactor Instelwaarde
+  attributes:
+    comment: "Bereik: [(-1,0, -0,8) U (0,8, 1,0)]. Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus"
+IndependentPhasePowerControl:
+  name: Onafhankelijke Fasevermogensregeling
+  attributes:
+    comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Om onafhankelijke faseregeling in te schakelen, moet deze parameter zijn ingeschakeld
+PhaseActivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is
+PhaseReactivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is
+PhaseActivePowerPercentageAdjustmentTargetValue:
+  attributes:
+    comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-100,00, 100,00]"
+PhaseQSAdjustmentTargetValue:
+  attributes:
+    comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-60,00, 60,00]"
+Reserved40026:
+  name: Gereserveerd
+RemoteEMS:
+  name: Extern EMS
+  attributes:
+    comment: Wanneer EMS op afstand moet worden aangestuurd, moet dit register worden ingeschakeld. Wanneer ingeschakeld, schakelt de EMS-werkmodus (30003) van de installatie over naar RemoteEMS
+RemoteEMSControlMode:
+  name: Externe EMS Regelmodus
+MaxChargingLimit:
+  name: Max Laadlimiet
+MaxDischargingLimit:
+  name: Max Ontlaadlimiet
+PVMaxPowerLimit:
+  name: PV Max Vermogenslimiet
+  attributes:
+    comment: Van kracht wanneer externe EMS-regelmodus (40031) is ingesteld op Commando Laden/Ontladen
+GridMaxExportLimit:
+  name: Net Max Exportlimiet
+  attributes:
+    comment: Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus
+GridMaxImportLimit:
+  name: Net Max Importlimiet
+  attributes:
+    comment: Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus
+PCSMaxExportLimit:
+  name: PCS Max Exportlimiet
+  attributes:
+    comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig. In alle andere gevallen geldt het globaal."
+PCSMaxImportLimit:
+  name: PCS Max Importlimiet
+  attributes:
+    comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig. In alle andere gevallen geldt het globaal."
+ESSBackupSOC:
+  name: Backup SoC
+  attributes:
+    comment: "Bereik: [0,00, 100,00]"
+ESSChargeCutOffSOC:
+  name: Laad Afkap SoC
+  attributes:
+    comment: "Bereik: [0,00, 100,00]"
+ESSDischargeCutOffSOC:
+  name: Ontlaad Afkap SoC
+  attributes:
+    comment: "Bereik: [0,00, 100,00]"
+ActivePowerRegulationGradient:
+  name: Actief Vermogen Regelgradiënt
+  attributes:
+    comment: "Bereik: [0, 5000]. Percentage van nominaal vermogen aangepast per seconde"
+GridCodeLVRT:
+  name: Laagspanning Doorrijden
+GridCodeLVRTReactivePowerCompensationFactor:
+  name: LVRT Reactief Vermogen Compensatiefactor
+  attributes:
+    comment: "Bereik: [0, 10,0]"
+GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: LVRT Negatieve Sequentie Reactief Vermogen Compensatiefactor
+  attributes:
+    comment: "Bereik: [0, 10,0]"
+GridCodeLVRTMode:
+  name: LVRT Modus
+GridCodeLVRTVoltageProtectionBlocking:
+  name: LVRT Netspanningsbeveiliging Blokkering
+GridCodeHVRT:
+  name: Hoogspanning Doorrijden
+GridCodeHVRTReactivePowerCompensationFactor:
+  name: HVRT Reactief Vermogen Compensatiefactor
+  attributes:
+    comment: "Bereik: [0, 10,0]"
+GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: HVRT Negatieve Sequentie Reactief Vermogen Compensatiefactor
+  attributes:
+    comment: "Bereik: [0, 10,0]"
+GridCodeHVRTMode:
+  name: HVRT Modus
+GridCodeHVRTVoltageProtectionBlocking:
+  name: HVRT Netspanningsbeveiliging Blokkering
+GridCodeOverFrequencyDerating:
+  name: Overfrequentie Afregeling
+GridCodeOverFrequencyDeratingPowerRampRate:
+  name: Overfrequentie Afregeling Vermogensopbouwsnelheid
+  attributes:
+    comment: "Bereik: [0, 100,0]"
+GridCodeOverFrequencyDeratingTriggerFrequency:
+  name: Overfrequentie Afregeling Triggerfrequentie
+  attributes:
+    comment: "Bereik: [1,0*Fn, 1,2*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+GridCodeOverFrequencyDeratingCutOffFrequency:
+  name: Overfrequentie Afregeling Afkapfrequentie
+  attributes:
+    comment: "Bereik: [1,0*Fn, 1,2*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+GridCodeUnderFrequencyPowerBoost:
+  name: Onderfrequentie Vermogensverhoging
+GridCodeUnderFrequencyPowerBoostPowerRampRate:
+  name: Onderfrequentie Vermogensverhoging Opbouwsnelheid
+  attributes:
+    comment: "Bereik: [0, 100,0]"
+GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+  name: Onderfrequentie Vermogensverhoging Triggerfrequentie
+  attributes:
+    comment: "Bereik: [0,8*Fn, 1,0*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+  name: Onderfrequentie Vermogensverhoging Afkapfrequentie
+  attributes:
+    comment: "Bereik: [0,8*Fn, 1,0*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+InverterModel:
+  name: Model
+InverterSerialNumber:
+  name: Serienummer
+InverterFirmwareVersion:
+  name: Firmwareversie
+RatedActivePower:
+  name: Nominaal Actief Vermogen
+MaxRatedApparentPower:
+  name: Max Nominaal Schijnbaar Vermogen
+InverterMaxActivePower:
+  name: Max Actief Vermogen
+MaxAbsorptionPower:
+  name: Max Absorptievermogen
+RatedBatteryCapacity:
+  name: Nominale Batterijcapaciteit
+RatedChargingPower:
+  name: Nominaal Laadvermogen
+RatedDischargingPower:
+  name: Nominaal Ontlaadvermogen
+ReservedDailyExportEnergy:
+  name: Dagelijkse Geëxporteerde Energie
+ReservedAccumulatedExportEnergy:
+  name: Totaal Geëxporteerde Energie
+ReservedDailyImportEnergy:
+  name: Dagelijkse Geïmporteerde Energie
+ReservedAccumulatedImportEnergy:
+  name: Totaal Geïmporteerde Energie
+DailyChargeEnergy:
+  name: Dagelijkse Laadenergie
+AccumulatedChargeEnergy:
+  name: Totale Laadenergie
+DailyDischargeEnergy:
+  name: Dagelijkse Ontlaadenergie
+AccumulatedDischargeEnergy:
+  name: Totale Ontlaadenergie
+InverterRunningState:
+  name: Bedrijfsstatus
+MaxActivePowerAdjustment:
+  name: Max Actief Vermogen Aanpassing
+MinActivePowerAdjustment:
+  name: Min Actief Vermogen Aanpassing
+MaxReactivePowerAdjustment:
+  name: Max Reactief Vermogen Aanpassing
+MinReactivePowerAdjustment:
+  name: Min Reactief Vermogen Aanpassing
+ActivePower:
+  name: Actief Vermogen
+ReactivePower:
+  name: Reactief Vermogen
+MaxBatteryChargePower:
+  name: Max Laadvermogen
+MaxBatteryDischargePower:
+  name: Max Ontlaadvermogen
+AvailableBatteryChargeEnergy:
+  name: Beschikbare Laadenergie
+AvailableBatteryDischargeEnergy:
+  name: Beschikbare Ontlaadenergie
+ChargeDischargePower:
+  name: Batterijvermogen
+InverterBatterySoC:
+  name: Batterij SoC
+InverterBatterySoH:
+  name: Batterij SoH
+AverageCellTemperature:
+  name: Gemiddelde Celtemperatuur
+AverageCellVoltage:
+  name: Gemiddelde Celspanning
+InverterAlarm1:
+  name: PCS Alarmen 1
+InverterAlarm2:
+  name: PCS Alarmen 2
+InverterPCSAlarm:
+  name: PCS Alarmen
+  attributes:
+    source: Modbus Registers 30605-30606
+InverterAlarm3:
+  name: Alarmen
+InverterAlarm4:
+  name: Gateway Alarmen
+InverterAlarm5:
+  name: Alarmen
+Reserved30610:
+  name: Gereserveerd
+InverterActivePowerFixedValueAdjustmentFeedback:
+  name: Actief Vermogen Vaste Waarde Aanpassing Feedback
+InverterReactivePowerFixedValueAdjustmentFeedback:
+  name: Reactief Vermogen Vaste Waarde Aanpassing Feedback
+InverterActivePowerPercentageAdjustmentFeedback:
+  name: Actief Vermogen Percentage Aanpassing Feedback
+InverterReactivePowerPercentageAdjustmentFeedback:
+  name: Reactief Vermogen Percentage Aanpassing Feedback
+InverterPowerFactorAdjustmentFeedback:
+  name: Arbeidsfactor Aanpassing Feedback
+InverterMaxBatteryTemperature:
+  name: Max Batterijtemperatuur
+InverterMinBatteryTemperature:
+  name: Min Batterijtemperatuur
+InverterMaxCellVoltage:
+  name: Max Celspanning
+InverterMinCellVoltage:
+  name: Min Celspanning
+RatedGridVoltage:
+  name: Nominale Netspanning
+RatedGridFrequency:
+  name: Nominale Netfrequentie
+GridFrequency:
+  name: Netfrequentie
+InverterTemperature:
+  name: Temperatuur
+OutputType:
+  name: Uitgangstype
+  options:
+    "0": L/N
+    "1": L1/L2/L3
+    "2": L1/L2/L3/N
+    "3": L1/L2/N
+PowerFactor:
+  name: Arbeidsfactor
+PACKBCUCount:
+  name: PACK/BCU Aantal
+PVStringCount:
+  name: PV String Aantal
+MPTTCount:
+  name: MPPT Aantal
+PVCurrentSensor:
+  name: Stroom
+PVVoltageSensor:
+  name: Spanning
+InverterPVPower:
+  name: PV Vermogen
+InsulationResistance:
+  name: Isolatieweerstand
+StartupTime:
+  name: Opstarttijd
+ShutdownTime:
+  name: Uitschakeltijd
+DCChargerVehicleBatteryVoltage:
+  name: Voertuig Batterijspanning
+DCChargerVehicleChargingCurrent:
+  name: Voertuig Laadstroom
+DCChargerOutputPower:
+  name: Uitgangsvermogen
+DCChargerVehicleSoC:
+  name: Voertuig SoC
+DCChargerCurrentChargingCapacity:
+  name: Huidige Laadcapaciteit
+  attributes:
+    comment: Eenmalig
+DCChargerCurrentChargingDuration:
+  name: Huidige Laadduur
+  attributes:
+    comment: Eenmalig
+InverterPVDailyGeneration:
+  name: Dagelijkse Productie
+InverterPVLifetimeGeneration:
+  name: Totale Productie
+DCChargerRunningState:
+  name: Bedrijfsstatus
+  options:
+    "0": Inactief
+    "1": Bezet (Laadpistool aangesloten maar niet gedetecteerd)
+    "2": Voorbereiden (Communicatie opzetten)
+    "3": Laden
+    "4": Storing
+    "5": Gepland
+SystemTime:
+  name: Systeemtijd
+SystemTimeZone:
+  name: Systeemtijdzone
+EMSWorkMode:
+  name: EMS Werkmodus
+  options:
+    "0": Max Eigen Verbruik
+    "1": Sigen AI
+    "2": Tijd van Gebruik
+    "5": Volledige Netlevering
+    "6": VPP Planning
+    "7": Extern EMS
+    "9": Tijdgebaseerde Regeling
+GridSensorStatus:
+  name: Netsensor Status
+  options:
+    "0": Niet Verbonden
+    "1": Verbonden
+  attributes:
+    comment: Gateway of meter verbindingsstatus
+GridSensorActivePower:
+  name: Actief Vermogen
+  attributes:
+    comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt; >0 kopen van net; <0 verkopen aan net"
+GridSensorReactivePower:
+  name: Reactief Vermogen
+  attributes:
+    comment: Gegevens verzameld door netsensor bij net-naar-systeem controlepunt
+GridStatus:
+  name: Netstatus
+  options:
+    "0": Aan Net
+    "1": Eiland (auto)
+    "2": Eiland (handmatig)
+MaxActivePower:
+  name: Max Actief Vermogen
+  attributes:
+    comment: Dit moet de basiswaarde zijn van alle actief vermogen aanpassingsacties
+MaxApparentPower:
+  name: Max Schijnbaar Vermogen
+  attributes:
+    comment: Dit moet de basiswaarde zijn van alle reactief vermogen aanpassingsacties
+PlantBatterySoC:
+  name: Batterij SoC
+GeneralAlarm1:
+  name: PCS Alarmen 1
+  attributes:
+    comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+GeneralAlarm2:
+  name: PCS Alarmen 2
+  attributes:
+    comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+GeneralPCSAlarm:
+  name: PCS Alarmen
+  attributes:
+    comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+    source: Modbus Registers 30027-30028
+GeneralAlarm3:
+  name: ESS Alarmen
+  attributes:
+    comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+GeneralAlarm4:
+  name: Gateway Alarmen
+  attributes:
+    comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+PlantActivePower:
+  name: Actief Vermogen
+PlantReactivePower:
+  name: Reactief Vermogen
+PlantPVPower:
+  name: PV Vermogen
+BatteryPower:
+  name: Batterijvermogen
+  attributes:
+    comment: "ESS Vermogen: <0 = ontladen, >0 = laden"
+AvailableMaxActivePower:
+  name: Beschikbaar Max Actief Vermogen
+  attributes:
+    comment: Levering aan AC-terminal. Telt alleen draaiende omvormers
+AvailableMinActivePower:
+  name: Beschikbaar Min Actief Vermogen
+  attributes:
+    comment: Opname van AC-terminal. Telt alleen draaiende omvormers
+AvailableMaxReactivePower:
+  name: Beschikbaar Max Reactief Vermogen
+  attributes:
+    comment: Levering aan AC-terminal. Telt alleen draaiende omvormers
+AvailableMinReactivePower:
+  name: Beschikbaar Min Reactief Vermogen
+  attributes:
+    comment: Opname van AC-terminal. Telt alleen draaiende omvormers
+AvailableMaxChargingPower:
+  name: Beschikbaar Max Laadvermogen
+  attributes:
+    comment: Telt alleen draaiende omvormers
+AvailableMaxDischargingPower:
+  name: Beschikbaar Max Ontlaadvermogen
+  attributes:
+    comment: Opname van AC-terminal. Telt alleen draaiende omvormers
+PlantRunningState:
+  name: Bedrijfsstatus
+GridPhaseActivePower:
+  attributes:
+    comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt; >0 kopen van net; <0 verkopen aan net"
+GridPhaseReactivePower:
+  attributes:
+    comment: Gegevens verzameld door netsensor bij net-naar-systeem controlepunt
+AvailableMaxChargingCapacity:
+  name: Beschikbare Max Laadcapaciteit
+  attributes:
+    comment: Telt alleen draaiende omvormers
+AvailableMaxDischargingCapacity:
+  name: Beschikbare Max Ontlaadcapaciteit
+  attributes:
+    comment: Telt alleen draaiende omvormers
+PlantRatedChargingPower:
+  name: Nominaal Laadvermogen
+PlantRatedDischargingPower:
+  name: Nominaal Ontlaadvermogen
+GeneralAlarm5:
+  name: DC Lader Alarmen
+  attributes:
+    comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+Reserved30073:
+  name: Gereserveerd
+PlantRatedEnergyCapacity:
+  name: Nominale Energiecapaciteit
+ChargeCutOffSoC:
+  name: Laad Afkap SoC
+DischargeCutOffSoC:
+  name: Ontlaad Afkap SoC
+PlantBatterySoH:
+  name: Batterij SoH
+  attributes:
+    comment: Deze waarde is het gewogen gemiddelde van de SoH van alle ESS-apparaten in de installatie, met elke nominale capaciteit als gewicht
+PlantPVTotalGeneration:
+  name: Totale PV Productie
+TotalLoadDailyConsumption:
+  name: Dagelijks Verbruik
+TotalLoadConsumption:
+  name: Totaal Verbruik
+ThirdPartyPVPower:
+  name: Derde Partij PV Vermogen
+ThirdPartyLifetimePVEnergy:
+  name: Totale Derde Partij PV Productie
+ESSTotalChargedEnergy:
+  name: Totale Geladen Energie
+ESSTotalDischargedEnergy:
+  name: Totale Ontladen Energie
+EVDCTotalChargedEnergy:
+  name: Totale DC EV Laadenergie
+EVDCTotalDischargedEnergy:
+  name: Totale DC EV Ontlaadenergie
+PlantTotalImportedEnergy:
+  name: Totaal Geïmporteerde Energie
+PlantTotalExportedEnergy:
+  name: Totaal Geëxporteerde Energie
+PlantTotalGeneratorOutputEnergy:
+  name: Totale Generator Uitgangsenergie
+StatisticsInterfaceSensor:
+  attributes:
+    comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+SITotalCommonLoadConsumption:
+  name: Totaal Algemeen Lastverbruik
+SITotalEVACChargedEnergy:
+  name: Totale AC EV Laadenergie
+SITotalSelfPVGeneration:
+  name: Totale PV Productie
+SITotalThirdPartyPVGeneration:
+  name: Totale Derde Partij PV Productie
+SITotalChargedEnergy:
+  name: Totale Geladen Energie
+SITotalDischargedEnergy:
+  name: Totale Ontladen Energie
+SITotalEVDCChargedEnergy:
+  name: Totale DC EV Laadenergie
+SITotalEVDCDischargedEnergy:
+  name: Totale DC EV Ontlaadenergie
+SITotalImportedEnergy:
+  name: Totaal Geïmporteerde Energie
+SITotalExportedEnergy:
+  name: Totaal Geëxporteerde Energie
+SITotalGeneratorOutputEnergy:
+  name: Totale Generator Uitgangsenergie
+ReservedPVTotalGenerationToday:
+  name: PV Totale Productie Vandaag
+ReservedPVTotalGenerationYesterday:
+  name: PV Totale Productie Gisteren
+GridCodeRatedFrequency:
+  name: Nominale Frequentie
+GridCodeRatedVoltage:
+  name: Nominale Spanning
+CurrentControlCommandValue:
+  name: Huidige Regelcommandowaarde
+  attributes:
+    comment: Gebruik van Externe Uitgangsregeling in Japan
+Alarm6:
+  name: Alarm 6
+Alarm7:
+  name: Alarm 7
+PlantAlarms:
+  name: Installatie Alarmen
+  attributes:
+    source: Modbus Registers 30280-30281
+GeneralLoadPower:
+  name: Algemeen Lastvermogen
+TotalLoadPower:
+  name: Totaal Lastvermogen
+BatteryChargingPower:
+  name: Batterij Laadvermogen
+  attributes:
+    source: BatteryPower > 0
+BatteryDischargingPower:
+  name: Batterij Ontlaadvermogen
+  attributes:
+    source: BatteryPower < 0 × -1
+GridSensorExportPower:
+  name: Exportvermogen
+  attributes:
+    source: GridSensorActivePower < 0 × -1
+GridSensorImportPower:
+  name: Importvermogen
+  attributes:
+    source: GridSensorActivePower > 0
+PlantConsumedPower:
+  name: Verbruikt Vermogen
+  attributes:
+    source: TotalLoadPower
+TotalPVPower:
+  name: Totaal PV Vermogen
+  attributes:
+    source: PV Vermogen + Derde Partij PV Vermogen
+GridSensorDailyExportEnergy:
+  name: Dagelijks Geëxporteerde Energie
+  attributes:
+    source: PlantTotalExportedEnergy − PlantTotalExportedEnergy om middernacht
+GridSensorDailyImportEnergy:
+  name: Dagelijks Geïmporteerde Energie
+  attributes:
+    source: PlantTotalImportedEnergy − PlantTotalImportedEnergy om middernacht
+TotalLifetimePVEnergy:
+  name: Totale PV Productie
+  attributes:
+    source: "Σ van PlantPVTotalGeneration en ThirdPartyLifetimePVEnergy"
+TotalDailyPVEnergy:
+  name: Dagelijkse Totale PV Productie
+  attributes:
+    source: TotalLifetimePVEnergy − TotalLifetimePVEnergy om middernacht
+PlantDailyPVEnergy:
+  name: Dagelijkse PV Productie
+  attributes:
+    source: PlantLifetimePVEnergy − PlantLifetimePVEnergy om middernacht
+PlantDailyChargeEnergy:
+  name: Dagelijkse Laadenergie
+  attributes:
+    source: "Σ van DailyChargeEnergy over alle Omvormers geassocieerd met de Installatie"
+PlantDailyDischargeEnergy:
+  name: Dagelijkse Ontlaadenergie
+  attributes:
+    source: "Σ van DailyDischargeEnergy over alle Omvormers geassocieerd met de Installatie"
+InverterBatteryChargingPower:
+  name: Batterij Laadvermogen
+  attributes:
+    source: ChargeDischargePower > 0
+InverterBatteryDischargingPower:
+  name: Batterij Ontlaadvermogen
+  attributes:
+    source: ChargeDischargePower < 0 × -1
+PVStringPower:
+  name: Vermogen
+  attributes:
+    source: PVVoltageSensor × PVCurrentSensor
+PVStringLifetimeEnergy:
+  name: Totale Productie
+  attributes:
+    source: Riemann Σ van PVStringPower
+PVStringDailyEnergy:
+  name: Dagelijkse Productie
+  attributes:
+    source: PVStringLifetimeEnergy − PVStringLifetimeEnergy om middernacht
+RunningStateSensor:
+  options:
+    "0": Standby
+    "1": Normaal
+    "2": Storing
+    "3": Uitgeschakeld
+    "7": Omgevingsafwijking
+ACChargerRunningState:
+  name: Bedrijfsstatus
+  options:
+    "0": Initialiseren
+    "1": EV niet verbonden
+    "2": Lader en EV niet klaar
+    "3": Lader klaar; EV niet klaar
+    "4": Lader niet klaar; EV klaar
+    "5": Laden
+    "6": Storing
+    "7": Fout
+ACChargerTotalEnergyConsumed:
+  name: Totaal Verbruikte Energie
+ACChargerChargingPower:
+  name: Laadvermogen
+ACChargerRatedPower:
+  name: Nominaal Vermogen
+ACChargerRatedCurrent:
+  name: Nominale Stroom
+ACChargerRatedVoltage:
+  name: Nominale Spanning
+ACChargerInputBreaker:
+  name: Ingangsschakelaar
+ACChargerAlarm1:
+  name: Alarm 1
+ACChargerAlarm2:
+  name: Alarm 2
+ACChargerAlarm3:
+  name: Alarm 3
+ACChargerAlarms:
+  name: Alarmen
+  attributes:
+    source: Modbus Registers 32012-32014
+InverterStatus:
+  name: Omvormer Aan/Uit
+  attributes:
+    comment: 0:Stop 1:Start
+ReservedGridCode:
+  name: Netcode
+DCChargerStatus:
+  name: DC Lader Start/Stop
+  attributes:
+    comment: 0:Start 1:Stop
+ReservedInverterRemoteEMSDispatch:
+  name: Extern EMS Dispatch
+InverterActivePowerFixedValueAdjustment:
+  name: Actief Vermogen Vaste Waarde Aanpassing
+InverterReactivePowerFixedValueAdjustment:
+  name: Reactief Vermogen Vaste Waarde Aanpassing
+InverterActivePowerPercentageAdjustment:
+  name: Actief Vermogen Percentage Aanpassing
+InverterReactivePowerQSAdjustment:
+  name: Reactief Vermogen Q/S Aanpassing
+InverterPowerFactorAdjustment:
+  name: Arbeidsfactor Aanpassing
+PVOutputOutputService:
+  name: PVOutput Uitgang Service Toevoegen
+PVOutputStatusService:
+  name: PVOutput Status Service Toevoegen
+EnphasePVPower:
+  name: PV Vermogen
+  attributes:
+    source: Enphase Envoy API
+EnphaseLifetimePVEnergy:
+  name: Totale Productie
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower
+EnphaseDailyPVEnergy:
+  name: Dagelijkse Productie
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower
+EnphaseCurrent:
+  name: Stroom
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower
+EnphaseFrequency:
+  name: Frequentie
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower
+EnphasePowerFactor:
+  name: Arbeidsfactor
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower
+EnphaseReactivePower:
+  name: Reactief Vermogen
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower
+EnphaseVoltage:
+  name: Spanning
+  attributes:
+    source: Enphase Envoy API bij afleiding EnphasePVPower

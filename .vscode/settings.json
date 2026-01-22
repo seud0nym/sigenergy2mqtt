@@ -1,4 +1,11 @@
 {
+    "cSpell.ignorePaths": [
+        ".git/{index,*refs,*HEAD}",
+        ".git/{info,lfs,logs,refs,objects}/**",
+        ".vscode",
+        "sigenergy2mqtt/locales",
+        "tests",
+    ],
     "cSpell.words": [
         "_mids",
         "ACCHARGER",

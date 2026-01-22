@@ -1,0 +1,738 @@
+# Korean translations for sigenergy2mqtt
+AlarmSensor:
+  no_alarm: 알람 없음
+  unknown_alarm: 알 수 없음 (bit{bit}∈{value})
+ReadOnlySensor:
+  attributes:
+    source: Modbus 레지스터 {address}
+    source_range: Modbus 레지스터 {start}-{end}
+MqttOverriddenSensor:
+  attributes:
+    source: MQTT 재정의
+MonitorService:
+  name: Sigenergy 모니터
+MetricsService:
+  name: Sigenergy 메트릭
+ModbusCacheHits:
+  name: Modbus 캐시 적중
+ModbusReadsPerSecond:
+  name: Modbus 읽기/초
+ModbusReadErrors:
+  name: Modbus 읽기 오류
+ModbusReadMax:
+  name: Modbus 읽기 최대
+ModbusReadMean:
+  name: Modbus 읽기 평균
+ModbusReadMin:
+  name: Modbus 읽기 최소
+ModbusWriteErrors:
+  name: Modbus 쓰기 오류
+ModbusWriteMax:
+  name: Modbus 쓰기 최대
+ModbusWriteMean:
+  name: Modbus 쓰기 평균
+ModbusWriteMin:
+  name: Modbus 쓰기 최소
+ModbusActiveLocks:
+  name: Modbus 활성 잠금
+Started:
+  name: 시작됨
+ProtocolVersion:
+  name: 프로토콜 버전
+ProtocolPublished:
+  name: 프로토콜 게시됨
+ACChargerStatus:
+  name: AC 충전기 시작/정지
+  attributes:
+    comment: 0:시작 1:정지
+ACChargerOutputCurrent:
+  name: 출력 전류
+  attributes:
+    comment: "범위: [6, 'AC 충전기 정격 전류'와 'AC 충전기 입력 차단기 정격 전류' 중 작은 값]"
+PlantStatus:
+  name: 발전소 전원 켜기/끄기
+  attributes:
+    comment: 0:정지 1:시작
+ActivePowerFixedAdjustmentTargetValue:
+  name: 유효 전력 고정 조정 목표값
+ReactivePowerFixedAdjustmentTargetValue:
+  name: 무효 전력 고정 조정 목표값
+  attributes:
+    comment: "범위: [-60.00 * 기준값, 60.00 * 기준값]. EMS 작동 모드와 관계없이 전역적으로 적용됨"
+ActivePowerPercentageAdjustmentTargetValue:
+  name: 유효 전력 백분율 조정 목표값
+  attributes:
+    comment: "범위: [-100.00, 100.00]"
+QSAdjustmentTargetValue:
+  name: Q/S 조정 목표값
+  attributes:
+    comment: "범위: [-60.0, 60.00]. EMS 작동 모드와 관계없이 전역적으로 적용됨"
+PowerFactorAdjustmentTargetValue:
+  name: 역률 조정 목표값
+  attributes:
+    comment: "범위: [(-1.0, -0.8) U (0.8, 1.0)]. 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨"
+IndependentPhasePowerControl:
+  name: 독립 상 전력 제어
+  attributes:
+    comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함. 독립 상 제어를 활성화하려면 이 매개변수를 활성화해야 함
+PhaseActivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함
+PhaseReactivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함
+PhaseActivePowerPercentageAdjustmentTargetValue:
+  attributes:
+    comment: "출력 유형이 L1/L2/L3/N인 경우에만 유효함. 범위: [-100.00, 100.00]"
+PhaseQSAdjustmentTargetValue:
+  attributes:
+    comment: "출력 유형이 L1/L2/L3/N인 경우에만 유효함. 범위: [-60.00, 60.00]"
+Reserved40026:
+  name: 예약됨
+RemoteEMS:
+  name: 원격 EMS
+  attributes:
+    comment: EMS를 원격으로 제어해야 할 때 이 레지스터를 활성화해야 함. 활성화되면 발전소의 EMS 작업 모드(30003)가 RemoteEMS로 전환됨
+RemoteEMSControlMode:
+  name: 원격 EMS 제어 모드
+MaxChargingLimit:
+  name: 최대 충전 제한
+MaxDischargingLimit:
+  name: 최대 방전 제한
+PVMaxPowerLimit:
+  name: PV 최대 전력 제한
+  attributes:
+    comment: 원격 EMS 제어 모드(40031)가 명령 충전/방전으로 설정된 경우 적용됨
+GridMaxExportLimit:
+  name: 계통 최대 수출 제한
+  attributes:
+    comment: 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨
+GridMaxImportLimit:
+  name: 계통 최대 수입 제한
+  attributes:
+    comment: 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨
+PCSMaxExportLimit:
+  name: PCS 최대 수출 제한
+  attributes:
+    comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로 적용됨."
+PCSMaxImportLimit:
+  name: PCS 최대 수입 제한
+  attributes:
+    comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로 적용됨."
+ESSBackupSOC:
+  name: 백업 SoC
+  attributes:
+    comment: "범위: [0.00, 100.00]"
+ESSChargeCutOffSOC:
+  name: 충전 차단 SoC
+  attributes:
+    comment: "범위: [0.00, 100.00]"
+ESSDischargeCutOffSOC:
+  name: 방전 차단 SoC
+  attributes:
+    comment: "범위: [0.00, 100.00]"
+ActivePowerRegulationGradient:
+  name: 유효 전력 조정 기울기
+  attributes:
+    comment: "범위: [0, 5000]. 초당 조정되는 정격 전력 비율"
+GridCodeLVRT:
+  name: 저전압 내성
+GridCodeLVRTReactivePowerCompensationFactor:
+  name: LVRT 무효 전력 보상 계수
+  attributes:
+    comment: "범위: [0, 10.0]"
+GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: LVRT 역상 무효 전력 보상 계수
+  attributes:
+    comment: "범위: [0, 10.0]"
+GridCodeLVRTMode:
+  name: LVRT 모드
+GridCodeLVRTVoltageProtectionBlocking:
+  name: LVRT 계통 전압 보호 차단
+GridCodeHVRT:
+  name: 고전압 내성
+GridCodeHVRTReactivePowerCompensationFactor:
+  name: HVRT 무효 전력 보상 계수
+  attributes:
+    comment: "범위: [0, 10.0]"
+GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: HVRT 역상 무효 전력 보상 계수
+  attributes:
+    comment: "범위: [0, 10.0]"
+GridCodeHVRTMode:
+  name: HVRT 모드
+GridCodeHVRTVoltageProtectionBlocking:
+  name: HVRT 계통 전압 보호 차단
+GridCodeOverFrequencyDerating:
+  name: 과주파수 디레이팅
+GridCodeOverFrequencyDeratingPowerRampRate:
+  name: 과주파수 디레이팅 전력 램프율
+  attributes:
+    comment: "범위: [0, 100.0]"
+GridCodeOverFrequencyDeratingTriggerFrequency:
+  name: 과주파수 디레이팅 트리거 주파수
+  attributes:
+    comment: "범위: [1.0*Fn, 1.2*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
+GridCodeOverFrequencyDeratingCutOffFrequency:
+  name: 과주파수 디레이팅 차단 주파수
+  attributes:
+    comment: "범위: [1.0*Fn, 1.2*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
+GridCodeUnderFrequencyPowerBoost:
+  name: 저주파수 전력 부스트
+GridCodeUnderFrequencyPowerBoostPowerRampRate:
+  name: 저주파수 전력 부스트 전력 램프율
+  attributes:
+    comment: "범위: [0, 100.0]"
+GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+  name: 저주파수 전력 부스트 트리거 주파수
+  attributes:
+    comment: "범위: [0.8*Fn, 1.0*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
+GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+  name: 저주파수 전력 부스트 차단 주파수
+  attributes:
+    comment: "범위: [0.8*Fn, 1.0*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
+InverterModel:
+  name: 모델
+InverterSerialNumber:
+  name: 일련 번호
+InverterFirmwareVersion:
+  name: 펌웨어 버전
+RatedActivePower:
+  name: 정격 유효 전력
+MaxRatedApparentPower:
+  name: 최대 정격 피상 전력
+InverterMaxActivePower:
+  name: 최대 유효 전력
+MaxAbsorptionPower:
+  name: 최대 흡수 전력
+RatedBatteryCapacity:
+  name: 정격 배터리 용량
+RatedChargingPower:
+  name: 정격 충전 전력
+RatedDischargingPower:
+  name: 정격 방전 전력
+ReservedDailyExportEnergy:
+  name: 일일 수출 에너지
+ReservedAccumulatedExportEnergy:
+  name: 누적 수출 에너지
+ReservedDailyImportEnergy:
+  name: 일일 수입 에너지
+ReservedAccumulatedImportEnergy:
+  name: 누적 수입 에너지
+DailyChargeEnergy:
+  name: 일일 충전 에너지
+AccumulatedChargeEnergy:
+  name: 누적 충전 에너지
+DailyDischargeEnergy:
+  name: 일일 방전 에너지
+AccumulatedDischargeEnergy:
+  name: 누적 방전 에너지
+InverterRunningState:
+  name: 운전 상태
+MaxActivePowerAdjustment:
+  name: 최대 유효 전력 조정
+MinActivePowerAdjustment:
+  name: 최소 유효 전력 조정
+MaxReactivePowerAdjustment:
+  name: 최대 무효 전력 조정
+MinReactivePowerAdjustment:
+  name: 최소 무효 전력 조정
+ActivePower:
+  name: 유효 전력
+ReactivePower:
+  name: 무효 전력
+MaxBatteryChargePower:
+  name: 최대 충전 전력
+MaxBatteryDischargePower:
+  name: 최대 방전 전력
+AvailableBatteryChargeEnergy:
+  name: 사용 가능 충전 에너지
+AvailableBatteryDischargeEnergy:
+  name: 사용 가능 방전 에너지
+ChargeDischargePower:
+  name: 배터리 전력
+InverterBatterySoC:
+  name: 배터리 SoC
+InverterBatterySoH:
+  name: 배터리 SoH
+AverageCellTemperature:
+  name: 평균 셀 온도
+AverageCellVoltage:
+  name: 평균 셀 전압
+InverterAlarm1:
+  name: PCS 알람 1
+InverterAlarm2:
+  name: PCS 알람 2
+InverterPCSAlarm:
+  name: PCS 알람
+  attributes:
+    source: Modbus 레지스터 30605-30606
+InverterAlarm3:
+  name: 알람
+InverterAlarm4:
+  name: 게이트웨이 알람
+InverterAlarm5:
+  name: 알람
+Reserved30610:
+  name: 예약됨
+InverterActivePowerFixedValueAdjustmentFeedback:
+  name: 유효 전력 고정값 조정 피드백
+InverterReactivePowerFixedValueAdjustmentFeedback:
+  name: 무효 전력 고정값 조정 피드백
+InverterActivePowerPercentageAdjustmentFeedback:
+  name: 유효 전력 백분율 조정 피드백
+InverterReactivePowerPercentageAdjustmentFeedback:
+  name: 무효 전력 백분율 조정 피드백
+InverterPowerFactorAdjustmentFeedback:
+  name: 역률 조정 피드백
+InverterMaxBatteryTemperature:
+  name: 최대 배터리 온도
+InverterMinBatteryTemperature:
+  name: 최소 배터리 온도
+InverterMaxCellVoltage:
+  name: 최대 셀 전압
+InverterMinCellVoltage:
+  name: 최소 셀 전압
+RatedGridVoltage:
+  name: 계통 정격 전압
+RatedGridFrequency:
+  name: 계통 정격 주파수
+GridFrequency:
+  name: 계통 주파수
+InverterTemperature:
+  name: 온도
+OutputType:
+  name: 출력 유형
+  options:
+    "0": L/N
+    "1": L1/L2/L3
+    "2": L1/L2/L3/N
+    "3": L1/L2/N
+PowerFactor:
+  name: 역률
+PACKBCUCount:
+  name: PACK/BCU 수
+PVStringCount:
+  name: PV 스트링 수
+MPTTCount:
+  name: MPPT 수
+PVCurrentSensor:
+  name: 전류
+PVVoltageSensor:
+  name: 전압
+InverterPVPower:
+  name: PV 전력
+InsulationResistance:
+  name: 절연 저항
+StartupTime:
+  name: 시작 시간
+ShutdownTime:
+  name: 종료 시간
+DCChargerVehicleBatteryVoltage:
+  name: 차량 배터리 전압
+DCChargerVehicleChargingCurrent:
+  name: 차량 충전 전류
+DCChargerOutputPower:
+  name: 출력 전력
+DCChargerVehicleSoC:
+  name: 차량 SoC
+DCChargerCurrentChargingCapacity:
+  name: 현재 충전 용량
+  attributes:
+    comment: 단회
+DCChargerCurrentChargingDuration:
+  name: 현재 충전 시간
+  attributes:
+    comment: 단회
+InverterPVDailyGeneration:
+  name: 일일 생산량
+InverterPVLifetimeGeneration:
+  name: 누적 생산량
+DCChargerRunningState:
+  name: 운전 상태
+  options:
+    "0": 유휴
+    "1": 사용 중 (충전 건이 연결되었지만 감지되지 않음)
+    "2": 준비 중 (통신 설정 중)
+    "3": 충전 중
+    "4": 고장
+    "5": 예약됨
+SystemTime:
+  name: 시스템 시간
+SystemTimeZone:
+  name: 시스템 시간대
+EMSWorkMode:
+  name: EMS 작업 모드
+  options:
+    "0": 최대 자가소비
+    "1": Sigen AI
+    "2": 시간대별 요금
+    "5": 전량 계통 연계
+    "6": VPP 스케줄링
+    "7": 원격 EMS
+    "9": 시간 기반 제어
+GridSensorStatus:
+  name: 계통 센서 상태
+  options:
+    "0": 연결 안 됨
+    "1": 연결됨
+  attributes:
+    comment: 게이트웨이 또는 계량기 연결 상태
+GridSensorActivePower:
+  name: 유효 전력
+  attributes:
+    comment: "계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터; >0 계통에서 구매; <0 계통에 판매"
+GridSensorReactivePower:
+  name: 무효 전력
+  attributes:
+    comment: 계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터
+GridStatus:
+  name: 계통 상태
+  options:
+    "0": 계통 연계
+    "1": 독립 운전 (자동)
+    "2": 독립 운전 (수동)
+MaxActivePower:
+  name: 최대 유효 전력
+  attributes:
+    comment: 이것은 모든 유효 전력 조정 작업의 기준값이어야 함
+MaxApparentPower:
+  name: 최대 피상 전력
+  attributes:
+    comment: 이것은 모든 무효 전력 조정 작업의 기준값이어야 함
+PlantBatterySoC:
+  name: 배터리 SoC
+GeneralAlarm1:
+  name: PCS 알람 1
+  attributes:
+    comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+GeneralAlarm2:
+  name: PCS 알람 2
+  attributes:
+    comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+GeneralPCSAlarm:
+  name: PCS 알람
+  attributes:
+    comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+    source: Modbus 레지스터 30027-30028
+GeneralAlarm3:
+  name: ESS 알람
+  attributes:
+    comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+GeneralAlarm4:
+  name: 게이트웨이 알람
+  attributes:
+    comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+PlantActivePower:
+  name: 유효 전력
+PlantReactivePower:
+  name: 무효 전력
+PlantPVPower:
+  name: PV 전력
+BatteryPower:
+  name: 배터리 전력
+  attributes:
+    comment: "ESS 전력: <0 = 방전, >0 = 충전"
+AvailableMaxActivePower:
+  name: 사용 가능 최대 유효 전력
+  attributes:
+    comment: AC 단자로 공급. 가동 중인 인버터만 계수
+AvailableMinActivePower:
+  name: 사용 가능 최소 유효 전력
+  attributes:
+    comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
+AvailableMaxReactivePower:
+  name: 사용 가능 최대 무효 전력
+  attributes:
+    comment: AC 단자로 공급. 가동 중인 인버터만 계수
+AvailableMinReactivePower:
+  name: 사용 가능 최소 무효 전력
+  attributes:
+    comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
+AvailableMaxChargingPower:
+  name: 사용 가능 최대 충전 전력
+  attributes:
+    comment: 가동 중인 인버터만 계수
+AvailableMaxDischargingPower:
+  name: 사용 가능 최대 방전 전력
+  attributes:
+    comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
+PlantRunningState:
+  name: 운전 상태
+GridPhaseActivePower:
+  attributes:
+    comment: "계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터; >0 계통에서 구매; <0 계통에 판매"
+GridPhaseReactivePower:
+  attributes:
+    comment: 계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터
+AvailableMaxChargingCapacity:
+  name: 사용 가능 최대 충전 용량
+  attributes:
+    comment: 가동 중인 인버터만 계수
+AvailableMaxDischargingCapacity:
+  name: 사용 가능 최대 방전 용량
+  attributes:
+    comment: 가동 중인 인버터만 계수
+PlantRatedChargingPower:
+  name: 정격 충전 전력
+PlantRatedDischargingPower:
+  name: 정격 방전 전력
+GeneralAlarm5:
+  name: DC 충전기 알람
+  attributes:
+    comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+Reserved30073:
+  name: 예약됨
+PlantRatedEnergyCapacity:
+  name: 정격 에너지 용량
+ChargeCutOffSoC:
+  name: 충전 차단 SoC
+DischargeCutOffSoC:
+  name: 방전 차단 SoC
+PlantBatterySoH:
+  name: 배터리 SoH
+  attributes:
+    comment: 이 값은 발전소 내 모든 ESS 장치의 SoH의 가중 평균이며, 각 정격 용량을 가중치로 사용
+PlantPVTotalGeneration:
+  name: 누적 PV 생산량
+TotalLoadDailyConsumption:
+  name: 일일 소비량
+TotalLoadConsumption:
+  name: 누적 소비량
+ThirdPartyPVPower:
+  name: 제3자 PV 전력
+ThirdPartyLifetimePVEnergy:
+  name: 제3자 PV 누적 생산량
+ESSTotalChargedEnergy:
+  name: 누적 충전 에너지
+ESSTotalDischargedEnergy:
+  name: 누적 방전 에너지
+EVDCTotalChargedEnergy:
+  name: DC EV 누적 충전 에너지
+EVDCTotalDischargedEnergy:
+  name: DC EV 누적 방전 에너지
+PlantTotalImportedEnergy:
+  name: 누적 수입 에너지
+PlantTotalExportedEnergy:
+  name: 누적 수출 에너지
+PlantTotalGeneratorOutputEnergy:
+  name: 발전기 누적 출력 에너지
+StatisticsInterfaceSensor:
+  attributes:
+    comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+SITotalCommonLoadConsumption:
+  name: 공통 부하 총 소비량
+SITotalEVACChargedEnergy:
+  name: AC EV 총 충전 에너지
+SITotalSelfPVGeneration:
+  name: PV 총 생산량
+SITotalThirdPartyPVGeneration:
+  name: 제3자 PV 총 생산량
+SITotalChargedEnergy:
+  name: 총 충전 에너지
+SITotalDischargedEnergy:
+  name: 총 방전 에너지
+SITotalEVDCChargedEnergy:
+  name: DC EV 총 충전 에너지
+SITotalEVDCDischargedEnergy:
+  name: DC EV 총 방전 에너지
+SITotalImportedEnergy:
+  name: 총 수입 에너지
+SITotalExportedEnergy:
+  name: 총 수출 에너지
+SITotalGeneratorOutputEnergy:
+  name: 발전기 총 출력 에너지
+ReservedPVTotalGenerationToday:
+  name: 오늘 PV 총 생산량
+ReservedPVTotalGenerationYesterday:
+  name: 어제 PV 총 생산량
+GridCodeRatedFrequency:
+  name: 정격 주파수
+GridCodeRatedVoltage:
+  name: 정격 전압
+CurrentControlCommandValue:
+  name: 현재 제어 명령 값
+  attributes:
+    comment: 일본에서 원격 출력 제어 사용
+Alarm6:
+  name: 알람 6
+Alarm7:
+  name: 알람 7
+PlantAlarms:
+  name: 발전소 알람
+  attributes:
+    source: Modbus 레지스터 30280-30281
+GeneralLoadPower:
+  name: 일반 부하 전력
+TotalLoadPower:
+  name: 총 부하 전력
+BatteryChargingPower:
+  name: 배터리 충전 전력
+  attributes:
+    source: BatteryPower > 0
+BatteryDischargingPower:
+  name: 배터리 방전 전력
+  attributes:
+    source: BatteryPower < 0 × -1
+GridSensorExportPower:
+  name: 수출 전력
+  attributes:
+    source: GridSensorActivePower < 0 × -1
+GridSensorImportPower:
+  name: 수입 전력
+  attributes:
+    source: GridSensorActivePower > 0
+PlantConsumedPower:
+  name: 소비 전력
+  attributes:
+    source: TotalLoadPower
+TotalPVPower:
+  name: 총 PV 전력
+  attributes:
+    source: PV 전력 + 제3자 PV 전력
+GridSensorDailyExportEnergy:
+  name: 일일 수출 에너지
+  attributes:
+    source: PlantTotalExportedEnergy − 자정의 PlantTotalExportedEnergy
+GridSensorDailyImportEnergy:
+  name: 일일 수입 에너지
+  attributes:
+    source: PlantTotalImportedEnergy − 자정의 PlantTotalImportedEnergy
+TotalLifetimePVEnergy:
+  name: 누적 총 PV 생산량
+  attributes:
+    source: "PlantPVTotalGeneration과 ThirdPartyLifetimePVEnergy의 합계"
+TotalDailyPVEnergy:
+  name: 일일 총 PV 생산량
+  attributes:
+    source: TotalLifetimePVEnergy − 자정의 TotalLifetimePVEnergy
+PlantDailyPVEnergy:
+  name: 일일 PV 생산량
+  attributes:
+    source: PlantLifetimePVEnergy − 자정의 PlantLifetimePVEnergy
+PlantDailyChargeEnergy:
+  name: 일일 충전 에너지
+  attributes:
+    source: "발전소와 연결된 모든 인버터의 DailyChargeEnergy 합계"
+PlantDailyDischargeEnergy:
+  name: 일일 방전 에너지
+  attributes:
+    source: "발전소와 연결된 모든 인버터의 DailyDischargeEnergy 합계"
+InverterBatteryChargingPower:
+  name: 배터리 충전 전력
+  attributes:
+    source: ChargeDischargePower > 0
+InverterBatteryDischargingPower:
+  name: 배터리 방전 전력
+  attributes:
+    source: ChargeDischargePower < 0 × -1
+PVStringPower:
+  name: 전력
+  attributes:
+    source: PVVoltageSensor × PVCurrentSensor
+PVStringLifetimeEnergy:
+  name: 누적 생산량
+  attributes:
+    source: PVStringPower의 리만 합
+PVStringDailyEnergy:
+  name: 일일 생산량
+  attributes:
+    source: PVStringLifetimeEnergy − 자정의 PVStringLifetimeEnergy
+RunningStateSensor:
+  options:
+    "0": 대기
+    "1": 정상
+    "2": 고장
+    "3": 전원 꺼짐
+    "7": 환경 이상
+ACChargerRunningState:
+  name: 운전 상태
+  options:
+    "0": 초기화 중
+    "1": EV 연결 안 됨
+    "2": 충전기와 EV 준비 안 됨
+    "3": 충전기 준비됨; EV 준비 안 됨
+    "4": 충전기 준비 안 됨; EV 준비됨
+    "5": 충전 중
+    "6": 고장
+    "7": 오류
+ACChargerTotalEnergyConsumed:
+  name: 총 소비 에너지
+ACChargerChargingPower:
+  name: 충전 전력
+ACChargerRatedPower:
+  name: 정격 전력
+ACChargerRatedCurrent:
+  name: 정격 전류
+ACChargerRatedVoltage:
+  name: 정격 전압
+ACChargerInputBreaker:
+  name: 입력 차단기
+ACChargerAlarm1:
+  name: 알람 1
+ACChargerAlarm2:
+  name: 알람 2
+ACChargerAlarm3:
+  name: 알람 3
+ACChargerAlarms:
+  name: 알람
+  attributes:
+    source: Modbus 레지스터 32012-32014
+InverterStatus:
+  name: 인버터 전원 켜기/끄기
+  attributes:
+    comment: 0:정지 1:시작
+ReservedGridCode:
+  name: 계통 규정
+DCChargerStatus:
+  name: DC 충전기 시작/정지
+  attributes:
+    comment: 0:시작 1:정지
+ReservedInverterRemoteEMSDispatch:
+  name: 원격 EMS 디스패치
+InverterActivePowerFixedValueAdjustment:
+  name: 유효 전력 고정값 조정
+InverterReactivePowerFixedValueAdjustment:
+  name: 무효 전력 고정값 조정
+InverterActivePowerPercentageAdjustment:
+  name: 유효 전력 백분율 조정
+InverterReactivePowerQSAdjustment:
+  name: 무효 전력 Q/S 조정
+InverterPowerFactorAdjustment:
+  name: 역률 조정
+PVOutputOutputService:
+  name: PVOutput 출력 서비스 추가
+PVOutputStatusService:
+  name: PVOutput 상태 서비스 추가
+EnphasePVPower:
+  name: PV 전력
+  attributes:
+    source: Enphase Envoy API
+EnphaseLifetimePVEnergy:
+  name: 누적 생산량
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API
+EnphaseDailyPVEnergy:
+  name: 일일 생산량
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API
+EnphaseCurrent:
+  name: 전류
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API
+EnphaseFrequency:
+  name: 주파수
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API
+EnphasePowerFactor:
+  name: 역률
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API
+EnphaseReactivePower:
+  name: 무효 전력
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API
+EnphaseVoltage:
+  name: 전압
+  attributes:
+    source: EnphasePVPower 파생 시 Enphase Envoy API

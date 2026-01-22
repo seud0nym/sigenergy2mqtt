@@ -1,0 +1,738 @@
+# Japanese translations for sigenergy2mqtt
+AlarmSensor:
+  no_alarm: アラームなし
+  unknown_alarm: 不明 (bit{bit}∈{value})
+ReadOnlySensor:
+  attributes:
+    source: Modbusレジスタ {address}
+    source_range: Modbusレジスタ {start}-{end}
+MqttOverriddenSensor:
+  attributes:
+    source: MQTTオーバーライド
+MonitorService:
+  name: Sigenergyモニター
+MetricsService:
+  name: Sigenergyメトリクス
+ModbusCacheHits:
+  name: Modbusキャッシュヒット
+ModbusReadsPerSecond:
+  name: Modbus読み取り/秒
+ModbusReadErrors:
+  name: Modbus読み取りエラー
+ModbusReadMax:
+  name: Modbus読み取り最大
+ModbusReadMean:
+  name: Modbus読み取り平均
+ModbusReadMin:
+  name: Modbus読み取り最小
+ModbusWriteErrors:
+  name: Modbus書き込みエラー
+ModbusWriteMax:
+  name: Modbus書き込み最大
+ModbusWriteMean:
+  name: Modbus書き込み平均
+ModbusWriteMin:
+  name: Modbus書き込み最小
+ModbusActiveLocks:
+  name: Modbusアクティブロック
+Started:
+  name: 起動済み
+ProtocolVersion:
+  name: プロトコルバージョン
+ProtocolPublished:
+  name: プロトコル公開
+ACChargerStatus:
+  name: AC充電器 開始/停止
+  attributes:
+    comment: 0:開始 1:停止
+ACChargerOutputCurrent:
+  name: 出力電流
+  attributes:
+    comment: "範囲：[6, 'AC充電器定格電流'と'AC充電器入力ブレーカー定格電流'の小さい方]"
+PlantStatus:
+  name: 発電所 電源オン/オフ
+  attributes:
+    comment: 0:停止 1:開始
+ActivePowerFixedAdjustmentTargetValue:
+  name: 有効電力固定調整目標値
+ReactivePowerFixedAdjustmentTargetValue:
+  name: 無効電力固定調整目標値
+  attributes:
+    comment: "範囲：[-60.00 * 基準値, 60.00 * 基準値]。EMS動作モードに関係なくグローバルに有効"
+ActivePowerPercentageAdjustmentTargetValue:
+  name: 有効電力パーセンテージ調整目標値
+  attributes:
+    comment: "範囲：[-100.00, 100.00]"
+QSAdjustmentTargetValue:
+  name: Q/S調整目標値
+  attributes:
+    comment: "範囲：[-60.0, 60.00]。EMS動作モードに関係なくグローバルに有効"
+PowerFactorAdjustmentTargetValue:
+  name: 力率調整目標値
+  attributes:
+    comment: "範囲：[(-1.0, -0.8) U (0.8, 1.0)]。系統センサーが必要。EMS動作モードに関係なくグローバルに有効"
+IndependentPhasePowerControl:
+  name: 独立相電力制御
+  attributes:
+    comment: 出力タイプがL1/L2/L3/Nの場合のみ有効。独立相制御を有効にするには、このパラメータを有効にする必要があります
+PhaseActivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: 出力タイプがL1/L2/L3/Nの場合のみ有効
+PhaseReactivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: 出力タイプがL1/L2/L3/Nの場合のみ有効
+PhaseActivePowerPercentageAdjustmentTargetValue:
+  attributes:
+    comment: "出力タイプがL1/L2/L3/Nの場合のみ有効。範囲：[-100.00, 100.00]"
+PhaseQSAdjustmentTargetValue:
+  attributes:
+    comment: "出力タイプがL1/L2/L3/Nの場合のみ有効。範囲：[-60.00, 60.00]"
+Reserved40026:
+  name: 予約
+RemoteEMS:
+  name: リモートEMS
+  attributes:
+    comment: EMSをリモートで制御する必要がある場合、このレジスタを有効にする必要があります。有効にすると、発電所のEMS作業モード（30003）がRemoteEMSに切り替わります
+RemoteEMSControlMode:
+  name: リモートEMS制御モード
+MaxChargingLimit:
+  name: 最大充電制限
+MaxDischargingLimit:
+  name: 最大放電制限
+PVMaxPowerLimit:
+  name: PV最大電力制限
+  attributes:
+    comment: リモートEMS制御モード（40031）がコマンド充放電に設定されている場合に有効
+GridMaxExportLimit:
+  name: 系統最大輸出制限
+  attributes:
+    comment: 系統センサーが必要。EMS動作モードに関係なくグローバルに有効
+GridMaxImportLimit:
+  name: 系統最大輸入制限
+  attributes:
+    comment: 系統センサーが必要。EMS動作モードに関係なくグローバルに有効
+PCSMaxExportLimit:
+  name: PCS最大輸出制限
+  attributes:
+    comment: "範囲：[0, 0xFFFFFFFE]。値が0xFFFFFFFFの場合、レジスタは無効。その他の場合、グローバルに有効。"
+PCSMaxImportLimit:
+  name: PCS最大輸入制限
+  attributes:
+    comment: "範囲：[0, 0xFFFFFFFE]。値が0xFFFFFFFFの場合、レジスタは無効。その他の場合、グローバルに有効。"
+ESSBackupSOC:
+  name: バックアップSoC
+  attributes:
+    comment: "範囲：[0.00, 100.00]"
+ESSChargeCutOffSOC:
+  name: 充電カットオフSoC
+  attributes:
+    comment: "範囲：[0.00, 100.00]"
+ESSDischargeCutOffSOC:
+  name: 放電カットオフSoC
+  attributes:
+    comment: "範囲：[0.00, 100.00]"
+ActivePowerRegulationGradient:
+  name: 有効電力調整勾配
+  attributes:
+    comment: "範囲：[0, 5000]。毎秒調整される定格電力の割合"
+GridCodeLVRT:
+  name: 低電圧ライドスルー
+GridCodeLVRTReactivePowerCompensationFactor:
+  name: LVRT無効電力補償係数
+  attributes:
+    comment: "範囲：[0, 10.0]"
+GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: LVRT逆相無効電力補償係数
+  attributes:
+    comment: "範囲：[0, 10.0]"
+GridCodeLVRTMode:
+  name: LVRTモード
+GridCodeLVRTVoltageProtectionBlocking:
+  name: LVRT系統電圧保護ブロッキング
+GridCodeHVRT:
+  name: 高電圧ライドスルー
+GridCodeHVRTReactivePowerCompensationFactor:
+  name: HVRT無効電力補償係数
+  attributes:
+    comment: "範囲：[0, 10.0]"
+GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: HVRT逆相無効電力補償係数
+  attributes:
+    comment: "範囲：[0, 10.0]"
+GridCodeHVRTMode:
+  name: HVRTモード
+GridCodeHVRTVoltageProtectionBlocking:
+  name: HVRT系統電圧保護ブロッキング
+GridCodeOverFrequencyDerating:
+  name: 過周波数デレーティング
+GridCodeOverFrequencyDeratingPowerRampRate:
+  name: 過周波数デレーティング電力ランプレート
+  attributes:
+    comment: "範囲：[0, 100.0]"
+GridCodeOverFrequencyDeratingTriggerFrequency:
+  name: 過周波数デレーティングトリガー周波数
+  attributes:
+    comment: "範囲：[1.0*Fn, 1.2*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
+GridCodeOverFrequencyDeratingCutOffFrequency:
+  name: 過周波数デレーティングカットオフ周波数
+  attributes:
+    comment: "範囲：[1.0*Fn, 1.2*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
+GridCodeUnderFrequencyPowerBoost:
+  name: 低周波数電力ブースト
+GridCodeUnderFrequencyPowerBoostPowerRampRate:
+  name: 低周波数電力ブースト電力ランプレート
+  attributes:
+    comment: "範囲：[0, 100.0]"
+GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+  name: 低周波数電力ブーストトリガー周波数
+  attributes:
+    comment: "範囲：[0.8*Fn, 1.0*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
+GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+  name: 低周波数電力ブーストカットオフ周波数
+  attributes:
+    comment: "範囲：[0.8*Fn, 1.0*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
+InverterModel:
+  name: モデル
+InverterSerialNumber:
+  name: シリアル番号
+InverterFirmwareVersion:
+  name: ファームウェアバージョン
+RatedActivePower:
+  name: 定格有効電力
+MaxRatedApparentPower:
+  name: 最大定格皮相電力
+InverterMaxActivePower:
+  name: 最大有効電力
+MaxAbsorptionPower:
+  name: 最大吸収電力
+RatedBatteryCapacity:
+  name: 定格バッテリー容量
+RatedChargingPower:
+  name: 定格充電電力
+RatedDischargingPower:
+  name: 定格放電電力
+ReservedDailyExportEnergy:
+  name: 日次輸出電力量
+ReservedAccumulatedExportEnergy:
+  name: 累計輸出電力量
+ReservedDailyImportEnergy:
+  name: 日次輸入電力量
+ReservedAccumulatedImportEnergy:
+  name: 累計輸入電力量
+DailyChargeEnergy:
+  name: 日次充電電力量
+AccumulatedChargeEnergy:
+  name: 累計充電電力量
+DailyDischargeEnergy:
+  name: 日次放電電力量
+AccumulatedDischargeEnergy:
+  name: 累計放電電力量
+InverterRunningState:
+  name: 運転状態
+MaxActivePowerAdjustment:
+  name: 最大有効電力調整
+MinActivePowerAdjustment:
+  name: 最小有効電力調整
+MaxReactivePowerAdjustment:
+  name: 最大無効電力調整
+MinReactivePowerAdjustment:
+  name: 最小無効電力調整
+ActivePower:
+  name: 有効電力
+ReactivePower:
+  name: 無効電力
+MaxBatteryChargePower:
+  name: 最大充電電力
+MaxBatteryDischargePower:
+  name: 最大放電電力
+AvailableBatteryChargeEnergy:
+  name: 利用可能充電電力量
+AvailableBatteryDischargeEnergy:
+  name: 利用可能放電電力量
+ChargeDischargePower:
+  name: バッテリー電力
+InverterBatterySoC:
+  name: バッテリーSoC
+InverterBatterySoH:
+  name: バッテリーSoH
+AverageCellTemperature:
+  name: 平均セル温度
+AverageCellVoltage:
+  name: 平均セル電圧
+InverterAlarm1:
+  name: PCSアラーム1
+InverterAlarm2:
+  name: PCSアラーム2
+InverterPCSAlarm:
+  name: PCSアラーム
+  attributes:
+    source: Modbusレジスタ 30605-30606
+InverterAlarm3:
+  name: アラーム
+InverterAlarm4:
+  name: ゲートウェイアラーム
+InverterAlarm5:
+  name: アラーム
+Reserved30610:
+  name: 予約
+InverterActivePowerFixedValueAdjustmentFeedback:
+  name: 有効電力固定値調整フィードバック
+InverterReactivePowerFixedValueAdjustmentFeedback:
+  name: 無効電力固定値調整フィードバック
+InverterActivePowerPercentageAdjustmentFeedback:
+  name: 有効電力パーセンテージ調整フィードバック
+InverterReactivePowerPercentageAdjustmentFeedback:
+  name: 無効電力パーセンテージ調整フィードバック
+InverterPowerFactorAdjustmentFeedback:
+  name: 力率調整フィードバック
+InverterMaxBatteryTemperature:
+  name: 最高バッテリー温度
+InverterMinBatteryTemperature:
+  name: 最低バッテリー温度
+InverterMaxCellVoltage:
+  name: 最高セル電圧
+InverterMinCellVoltage:
+  name: 最低セル電圧
+RatedGridVoltage:
+  name: 系統定格電圧
+RatedGridFrequency:
+  name: 系統定格周波数
+GridFrequency:
+  name: 系統周波数
+InverterTemperature:
+  name: 温度
+OutputType:
+  name: 出力タイプ
+  options:
+    "0": L/N
+    "1": L1/L2/L3
+    "2": L1/L2/L3/N
+    "3": L1/L2/N
+PowerFactor:
+  name: 力率
+PACKBCUCount:
+  name: PACK/BCU数
+PVStringCount:
+  name: PVストリング数
+MPTTCount:
+  name: MPPT数
+PVCurrentSensor:
+  name: 電流
+PVVoltageSensor:
+  name: 電圧
+InverterPVPower:
+  name: PV電力
+InsulationResistance:
+  name: 絶縁抵抗
+StartupTime:
+  name: 起動時間
+ShutdownTime:
+  name: 停止時間
+DCChargerVehicleBatteryVoltage:
+  name: 車両バッテリー電圧
+DCChargerVehicleChargingCurrent:
+  name: 車両充電電流
+DCChargerOutputPower:
+  name: 出力電力
+DCChargerVehicleSoC:
+  name: 車両SoC
+DCChargerCurrentChargingCapacity:
+  name: 現在の充電容量
+  attributes:
+    comment: 単回
+DCChargerCurrentChargingDuration:
+  name: 現在の充電時間
+  attributes:
+    comment: 単回
+InverterPVDailyGeneration:
+  name: 日次発電量
+InverterPVLifetimeGeneration:
+  name: 累計発電量
+DCChargerRunningState:
+  name: 運転状態
+  options:
+    "0": アイドル
+    "1": 使用中（充電ガンが接続されているが検出されない）
+    "2": 準備中（通信確立中）
+    "3": 充電中
+    "4": 故障
+    "5": 予約済み
+SystemTime:
+  name: システム時間
+SystemTimeZone:
+  name: システムタイムゾーン
+EMSWorkMode:
+  name: EMS動作モード
+  options:
+    "0": 最大自家消費
+    "1": Sigen AI
+    "2": 時間帯別料金
+    "5": 全量系統連系
+    "6": VPPスケジューリング
+    "7": リモートEMS
+    "9": 時間ベース制御
+GridSensorStatus:
+  name: 系統センサー状態
+  options:
+    "0": 未接続
+    "1": 接続済み
+  attributes:
+    comment: ゲートウェイまたはメーターの接続状態
+GridSensorActivePower:
+  name: 有効電力
+  attributes:
+    comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
+GridSensorReactivePower:
+  name: 無効電力
+  attributes:
+    comment: 系統センサーで系統からシステムへのチェックポイントで収集されたデータ
+GridStatus:
+  name: 系統状態
+  options:
+    "0": 系統連系
+    "1": オフグリッド（自動）
+    "2": オフグリッド（手動）
+MaxActivePower:
+  name: 最大有効電力
+  attributes:
+    comment: これはすべての有効電力調整アクションの基準値であるべきです
+MaxApparentPower:
+  name: 最大皮相電力
+  attributes:
+    comment: これはすべての無効電力調整アクションの基準値であるべきです
+PlantBatterySoC:
+  name: バッテリーSoC
+GeneralAlarm1:
+  name: PCSアラーム1
+  attributes:
+    comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+GeneralAlarm2:
+  name: PCSアラーム2
+  attributes:
+    comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+GeneralPCSAlarm:
+  name: PCSアラーム
+  attributes:
+    comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+    source: Modbusレジスタ 30027-30028
+GeneralAlarm3:
+  name: ESSアラーム
+  attributes:
+    comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+GeneralAlarm4:
+  name: ゲートウェイアラーム
+  attributes:
+    comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+PlantActivePower:
+  name: 有効電力
+PlantReactivePower:
+  name: 無効電力
+PlantPVPower:
+  name: PV電力
+BatteryPower:
+  name: バッテリー電力
+  attributes:
+    comment: "ESS電力：<0 = 放電、>0 = 充電"
+AvailableMaxActivePower:
+  name: 利用可能最大有効電力
+  attributes:
+    comment: AC端子への供給。稼働中のインバーターのみをカウント
+AvailableMinActivePower:
+  name: 利用可能最小有効電力
+  attributes:
+    comment: AC端子からの吸収。稼働中のインバーターのみをカウント
+AvailableMaxReactivePower:
+  name: 利用可能最大無効電力
+  attributes:
+    comment: AC端子への供給。稼働中のインバーターのみをカウント
+AvailableMinReactivePower:
+  name: 利用可能最小無効電力
+  attributes:
+    comment: AC端子からの吸収。稼働中のインバーターのみをカウント
+AvailableMaxChargingPower:
+  name: 利用可能最大充電電力
+  attributes:
+    comment: 稼働中のインバーターのみをカウント
+AvailableMaxDischargingPower:
+  name: 利用可能最大放電電力
+  attributes:
+    comment: AC端子からの吸収。稼働中のインバーターのみをカウント
+PlantRunningState:
+  name: 運転状態
+GridPhaseActivePower:
+  attributes:
+    comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
+GridPhaseReactivePower:
+  attributes:
+    comment: 系統センサーで系統からシステムへのチェックポイントで収集されたデータ
+AvailableMaxChargingCapacity:
+  name: 利用可能最大充電容量
+  attributes:
+    comment: 稼働中のインバーターのみをカウント
+AvailableMaxDischargingCapacity:
+  name: 利用可能最大放電容量
+  attributes:
+    comment: 稼働中のインバーターのみをカウント
+PlantRatedChargingPower:
+  name: 定格充電電力
+PlantRatedDischargingPower:
+  name: 定格放電電力
+GeneralAlarm5:
+  name: DC充電器アラーム
+  attributes:
+    comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+Reserved30073:
+  name: 予約
+PlantRatedEnergyCapacity:
+  name: 定格エネルギー容量
+ChargeCutOffSoC:
+  name: 充電カットオフSoC
+DischargeCutOffSoC:
+  name: 放電カットオフSoC
+PlantBatterySoH:
+  name: バッテリーSoH
+  attributes:
+    comment: この値は、発電所内のすべてのESS機器のSoHの加重平均であり、各定格容量を重みとしています
+PlantPVTotalGeneration:
+  name: 累計PV発電量
+TotalLoadDailyConsumption:
+  name: 日次消費電力量
+TotalLoadConsumption:
+  name: 累計消費電力量
+ThirdPartyPVPower:
+  name: サードパーティPV電力
+ThirdPartyLifetimePVEnergy:
+  name: サードパーティPV累計発電量
+ESSTotalChargedEnergy:
+  name: 累計充電電力量
+ESSTotalDischargedEnergy:
+  name: 累計放電電力量
+EVDCTotalChargedEnergy:
+  name: DC EV累計充電電力量
+EVDCTotalDischargedEnergy:
+  name: DC EV累計放電電力量
+PlantTotalImportedEnergy:
+  name: 累計購入電力量
+PlantTotalExportedEnergy:
+  name: 累計売電電力量
+PlantTotalGeneratorOutputEnergy:
+  name: 発電機累計出力電力量
+StatisticsInterfaceSensor:
+  attributes:
+    comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+SITotalCommonLoadConsumption:
+  name: 共通負荷合計消費電力量
+SITotalEVACChargedEnergy:
+  name: AC EV合計充電電力量
+SITotalSelfPVGeneration:
+  name: PV合計発電量
+SITotalThirdPartyPVGeneration:
+  name: サードパーティPV合計発電量
+SITotalChargedEnergy:
+  name: 合計充電電力量
+SITotalDischargedEnergy:
+  name: 合計放電電力量
+SITotalEVDCChargedEnergy:
+  name: DC EV合計充電電力量
+SITotalEVDCDischargedEnergy:
+  name: DC EV合計放電電力量
+SITotalImportedEnergy:
+  name: 合計購入電力量
+SITotalExportedEnergy:
+  name: 合計売電電力量
+SITotalGeneratorOutputEnergy:
+  name: 発電機合計出力電力量
+ReservedPVTotalGenerationToday:
+  name: 本日のPV合計発電量
+ReservedPVTotalGenerationYesterday:
+  name: 昨日のPV合計発電量
+GridCodeRatedFrequency:
+  name: 定格周波数
+GridCodeRatedVoltage:
+  name: 定格電圧
+CurrentControlCommandValue:
+  name: 現在の制御コマンド値
+  attributes:
+    comment: 日本でのリモート出力制御の使用
+Alarm6:
+  name: アラーム6
+Alarm7:
+  name: アラーム7
+PlantAlarms:
+  name: 発電所アラーム
+  attributes:
+    source: Modbusレジスタ 30280-30281
+GeneralLoadPower:
+  name: 一般負荷電力
+TotalLoadPower:
+  name: 合計負荷電力
+BatteryChargingPower:
+  name: バッテリー充電電力
+  attributes:
+    source: BatteryPower > 0
+BatteryDischargingPower:
+  name: バッテリー放電電力
+  attributes:
+    source: BatteryPower < 0 × -1
+GridSensorExportPower:
+  name: 売電電力
+  attributes:
+    source: GridSensorActivePower < 0 × -1
+GridSensorImportPower:
+  name: 購入電力
+  attributes:
+    source: GridSensorActivePower > 0
+PlantConsumedPower:
+  name: 消費電力
+  attributes:
+    source: TotalLoadPower
+TotalPVPower:
+  name: 合計PV電力
+  attributes:
+    source: PV電力 + サードパーティPV電力
+GridSensorDailyExportEnergy:
+  name: 日次売電電力量
+  attributes:
+    source: PlantTotalExportedEnergy − 深夜0時のPlantTotalExportedEnergy
+GridSensorDailyImportEnergy:
+  name: 日次購入電力量
+  attributes:
+    source: PlantTotalImportedEnergy − 深夜0時のPlantTotalImportedEnergy
+TotalLifetimePVEnergy:
+  name: 累計合計PV発電量
+  attributes:
+    source: "PlantPVTotalGenerationとThirdPartyLifetimePVEnergyの合計"
+TotalDailyPVEnergy:
+  name: 日次合計PV発電量
+  attributes:
+    source: TotalLifetimePVEnergy − 深夜0時のTotalLifetimePVEnergy
+PlantDailyPVEnergy:
+  name: 日次PV発電量
+  attributes:
+    source: PlantLifetimePVEnergy − 深夜0時のPlantLifetimePVEnergy
+PlantDailyChargeEnergy:
+  name: 日次充電電力量
+  attributes:
+    source: "発電所に関連付けられたすべてのインバーターのDailyChargeEnergyの合計"
+PlantDailyDischargeEnergy:
+  name: 日次放電電力量
+  attributes:
+    source: "発電所に関連付けられたすべてのインバーターのDailyDischargeEnergyの合計"
+InverterBatteryChargingPower:
+  name: バッテリー充電電力
+  attributes:
+    source: ChargeDischargePower > 0
+InverterBatteryDischargingPower:
+  name: バッテリー放電電力
+  attributes:
+    source: ChargeDischargePower < 0 × -1
+PVStringPower:
+  name: 電力
+  attributes:
+    source: PVVoltageSensor × PVCurrentSensor
+PVStringLifetimeEnergy:
+  name: 累計発電量
+  attributes:
+    source: PVStringPowerのリーマン和
+PVStringDailyEnergy:
+  name: 日次発電量
+  attributes:
+    source: PVStringLifetimeEnergy − 深夜0時のPVStringLifetimeEnergy
+RunningStateSensor:
+  options:
+    "0": スタンバイ
+    "1": 正常
+    "2": 故障
+    "3": 電源オフ
+    "7": 環境異常
+ACChargerRunningState:
+  name: 運転状態
+  options:
+    "0": 初期化中
+    "1": EV未接続
+    "2": 充電器とEV準備未完了
+    "3": 充電器準備完了；EV準備未完了
+    "4": 充電器準備未完了；EV準備完了
+    "5": 充電中
+    "6": 故障
+    "7": エラー
+ACChargerTotalEnergyConsumed:
+  name: 合計消費電力量
+ACChargerChargingPower:
+  name: 充電電力
+ACChargerRatedPower:
+  name: 定格電力
+ACChargerRatedCurrent:
+  name: 定格電流
+ACChargerRatedVoltage:
+  name: 定格電圧
+ACChargerInputBreaker:
+  name: 入力ブレーカー
+ACChargerAlarm1:
+  name: アラーム1
+ACChargerAlarm2:
+  name: アラーム2
+ACChargerAlarm3:
+  name: アラーム3
+ACChargerAlarms:
+  name: アラーム
+  attributes:
+    source: Modbusレジスタ 32012-32014
+InverterStatus:
+  name: インバーター電源オン/オフ
+  attributes:
+    comment: 0:停止 1:開始
+ReservedGridCode:
+  name: 系統規程
+DCChargerStatus:
+  name: DC充電器 開始/停止
+  attributes:
+    comment: 0:開始 1:停止
+ReservedInverterRemoteEMSDispatch:
+  name: リモートEMSディスパッチ
+InverterActivePowerFixedValueAdjustment:
+  name: 有効電力固定値調整
+InverterReactivePowerFixedValueAdjustment:
+  name: 無効電力固定値調整
+InverterActivePowerPercentageAdjustment:
+  name: 有効電力パーセンテージ調整
+InverterReactivePowerQSAdjustment:
+  name: 無効電力Q/S調整
+InverterPowerFactorAdjustment:
+  name: 力率調整
+PVOutputOutputService:
+  name: PVOutput出力サービス追加
+PVOutputStatusService:
+  name: PVOutputステータスサービス追加
+EnphasePVPower:
+  name: PV電力
+  attributes:
+    source: Enphase Envoy API
+EnphaseLifetimePVEnergy:
+  name: 累計発電量
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API
+EnphaseDailyPVEnergy:
+  name: 日次発電量
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API
+EnphaseCurrent:
+  name: 電流
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API
+EnphaseFrequency:
+  name: 周波数
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API
+EnphasePowerFactor:
+  name: 力率
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API
+EnphaseReactivePower:
+  name: 無効電力
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API
+EnphaseVoltage:
+  name: 電圧
+  attributes:
+    source: EnphasePVPower導出時のEnphase Envoy API

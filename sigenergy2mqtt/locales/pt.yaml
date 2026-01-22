@@ -1,0 +1,738 @@
+# Portuguese translations for sigenergy2mqtt
+AlarmSensor:
+  no_alarm: Sem Alarme
+  unknown_alarm: Desconhecido (bit{bit}∈{value})
+ReadOnlySensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+MqttOverriddenSensor:
+  attributes:
+    source: Substituição MQTT
+MonitorService:
+  name: Monitor Sigenergy
+MetricsService:
+  name: Métricas Sigenergy
+ModbusCacheHits:
+  name: Acertos de Cache Modbus
+ModbusReadsPerSecond:
+  name: Leituras Modbus/segundo
+ModbusReadErrors:
+  name: Erros de Leitura Modbus
+ModbusReadMax:
+  name: Leitura Modbus Máx
+ModbusReadMean:
+  name: Leitura Modbus Média
+ModbusReadMin:
+  name: Leitura Modbus Mín
+ModbusWriteErrors:
+  name: Erros de Escrita Modbus
+ModbusWriteMax:
+  name: Escrita Modbus Máx
+ModbusWriteMean:
+  name: Escrita Modbus Média
+ModbusWriteMin:
+  name: Escrita Modbus Mín
+ModbusActiveLocks:
+  name: Bloqueios Modbus Ativos
+Started:
+  name: Iniciado
+ProtocolVersion:
+  name: Versão do Protocolo
+ProtocolPublished:
+  name: Protocolo Publicado
+ACChargerStatus:
+  name: Carregador CA Iniciar/Parar
+  attributes:
+    comment: 0:Iniciar 1:Parar
+ACChargerOutputCurrent:
+  name: Corrente de Saída
+  attributes:
+    comment: "Intervalo: [6, menor entre 'Corrente Nominal do Carregador CA' e 'Corrente Nominal do Disjuntor de Entrada do Carregador CA']"
+PlantStatus:
+  name: Central Ligar/Desligar
+  attributes:
+    comment: 0:Parar 1:Iniciar
+ActivePowerFixedAdjustmentTargetValue:
+  name: Valor Alvo de Ajuste Fixo de Potência Ativa
+ReactivePowerFixedAdjustmentTargetValue:
+  name: Valor Alvo de Ajuste Fixo de Potência Reativa
+  attributes:
+    comment: "Intervalo: [-60,00 * valor base, 60,00 * valor base]. Aplica-se globalmente independentemente do modo de operação EMS"
+ActivePowerPercentageAdjustmentTargetValue:
+  name: Valor Alvo de Ajuste Percentual de Potência Ativa
+  attributes:
+    comment: "Intervalo: [-100,00, 100,00]"
+QSAdjustmentTargetValue:
+  name: Valor Alvo de Ajuste Q/S
+  attributes:
+    comment: "Intervalo: [-60,0, 60,00]. Aplica-se globalmente independentemente do modo de operação EMS"
+PowerFactorAdjustmentTargetValue:
+  name: Valor Alvo de Ajuste do Fator de Potência
+  attributes:
+    comment: "Intervalo: [(-1,0, -0,8) U (0,8, 1,0)]. Sensor de rede necessário. Aplica-se globalmente independentemente do modo de operação EMS"
+IndependentPhasePowerControl:
+  name: Controlo de Potência de Fase Independente
+  attributes:
+    comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Para ativar o controlo de fase independente, este parâmetro deve ser ativado
+PhaseActivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
+PhaseReactivePowerFixedAdjustmentTargetValue:
+  attributes:
+    comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
+PhaseActivePowerPercentageAdjustmentTargetValue:
+  attributes:
+    comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-100,00, 100,00]"
+PhaseQSAdjustmentTargetValue:
+  attributes:
+    comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-60,00, 60,00]"
+Reserved40026:
+  name: Reservado
+RemoteEMS:
+  name: EMS Remoto
+  attributes:
+    comment: Quando necessário controlar o EMS remotamente, este registo precisa estar ativado. Quando ativado, o Modo de Trabalho EMS da central (30003) mudará para RemoteEMS
+RemoteEMSControlMode:
+  name: Modo de Controlo EMS Remoto
+MaxChargingLimit:
+  name: Limite Máximo de Carga
+MaxDischargingLimit:
+  name: Limite Máximo de Descarga
+PVMaxPowerLimit:
+  name: Limite de Potência Máx PV
+  attributes:
+    comment: Efetivo quando o modo de controlo EMS remoto (40031) está definido para Carga/Descarga por Comando
+GridMaxExportLimit:
+  name: Limite Máx de Exportação para Rede
+  attributes:
+    comment: Sensor de rede necessário. Aplica-se globalmente independentemente do modo de operação EMS
+GridMaxImportLimit:
+  name: Limite Máx de Importação da Rede
+  attributes:
+    comment: Sensor de rede necessário. Aplica-se globalmente independentemente do modo de operação EMS
+PCSMaxExportLimit:
+  name: Limite Máx de Exportação PCS
+  attributes:
+    comment: "Intervalo: [0, 0xFFFFFFFE]. Com valor 0xFFFFFFFF, o registo não é válido. Em todos os outros casos, aplica-se globalmente."
+PCSMaxImportLimit:
+  name: Limite Máx de Importação PCS
+  attributes:
+    comment: "Intervalo: [0, 0xFFFFFFFE]. Com valor 0xFFFFFFFF, o registo não é válido. Em todos os outros casos, aplica-se globalmente."
+ESSBackupSOC:
+  name: SoC de Backup
+  attributes:
+    comment: "Intervalo: [0,00, 100,00]"
+ESSChargeCutOffSOC:
+  name: SoC de Corte de Carga
+  attributes:
+    comment: "Intervalo: [0,00, 100,00]"
+ESSDischargeCutOffSOC:
+  name: SoC de Corte de Descarga
+  attributes:
+    comment: "Intervalo: [0,00, 100,00]"
+ActivePowerRegulationGradient:
+  name: Gradiente de Regulação de Potência Ativa
+  attributes:
+    comment: "Intervalo: [0, 5000]. Percentagem de potência nominal ajustada por segundo"
+GridCodeLVRT:
+  name: Tolerância a Baixa Tensão
+GridCodeLVRTReactivePowerCompensationFactor:
+  name: Fator de Compensação de Potência Reativa LVRT
+  attributes:
+    comment: "Intervalo: [0, 10,0]"
+GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: Fator de Compensação de Potência Reativa de Sequência Negativa LVRT
+  attributes:
+    comment: "Intervalo: [0, 10,0]"
+GridCodeLVRTMode:
+  name: Modo LVRT
+GridCodeLVRTVoltageProtectionBlocking:
+  name: Bloqueio de Proteção de Tensão de Rede LVRT
+GridCodeHVRT:
+  name: Tolerância a Alta Tensão
+GridCodeHVRTReactivePowerCompensationFactor:
+  name: Fator de Compensação de Potência Reativa HVRT
+  attributes:
+    comment: "Intervalo: [0, 10,0]"
+GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+  name: Fator de Compensação de Potência Reativa de Sequência Negativa HVRT
+  attributes:
+    comment: "Intervalo: [0, 10,0]"
+GridCodeHVRTMode:
+  name: Modo HVRT
+GridCodeHVRTVoltageProtectionBlocking:
+  name: Bloqueio de Proteção de Tensão de Rede HVRT
+GridCodeOverFrequencyDerating:
+  name: Redução por Sobrefrequência
+GridCodeOverFrequencyDeratingPowerRampRate:
+  name: Taxa de Rampa de Potência por Sobrefrequência
+  attributes:
+    comment: "Intervalo: [0, 100,0]"
+GridCodeOverFrequencyDeratingTriggerFrequency:
+  name: Frequência de Ativação por Sobrefrequência
+  attributes:
+    comment: "Intervalo: [1,0*Fn, 1,2*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+GridCodeOverFrequencyDeratingCutOffFrequency:
+  name: Frequência de Corte por Sobrefrequência
+  attributes:
+    comment: "Intervalo: [1,0*Fn, 1,2*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+GridCodeUnderFrequencyPowerBoost:
+  name: Aumento de Potência por Subfrequência
+GridCodeUnderFrequencyPowerBoostPowerRampRate:
+  name: Taxa de Rampa de Potência por Subfrequência
+  attributes:
+    comment: "Intervalo: [0, 100,0]"
+GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+  name: Frequência de Ativação por Subfrequência
+  attributes:
+    comment: "Intervalo: [0,8*Fn, 1,0*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+  name: Frequência de Corte por Subfrequência
+  attributes:
+    comment: "Intervalo: [0,8*Fn, 1,0*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+InverterModel:
+  name: Modelo
+InverterSerialNumber:
+  name: Número de Série
+InverterFirmwareVersion:
+  name: Versão de Firmware
+RatedActivePower:
+  name: Potência Ativa Nominal
+MaxRatedApparentPower:
+  name: Potência Aparente Nominal Máx
+InverterMaxActivePower:
+  name: Potência Ativa Máx
+MaxAbsorptionPower:
+  name: Potência de Absorção Máx
+RatedBatteryCapacity:
+  name: Capacidade de Bateria Nominal
+RatedChargingPower:
+  name: Potência de Carga Nominal
+RatedDischargingPower:
+  name: Potência de Descarga Nominal
+ReservedDailyExportEnergy:
+  name: Energia Exportada Diária
+ReservedAccumulatedExportEnergy:
+  name: Energia Exportada Total
+ReservedDailyImportEnergy:
+  name: Energia Importada Diária
+ReservedAccumulatedImportEnergy:
+  name: Energia Importada Total
+DailyChargeEnergy:
+  name: Energia de Carga Diária
+AccumulatedChargeEnergy:
+  name: Energia de Carga Total
+DailyDischargeEnergy:
+  name: Energia de Descarga Diária
+AccumulatedDischargeEnergy:
+  name: Energia de Descarga Total
+InverterRunningState:
+  name: Estado de Funcionamento
+MaxActivePowerAdjustment:
+  name: Ajuste de Potência Ativa Máx
+MinActivePowerAdjustment:
+  name: Ajuste de Potência Ativa Mín
+MaxReactivePowerAdjustment:
+  name: Ajuste de Potência Reativa Máx
+MinReactivePowerAdjustment:
+  name: Ajuste de Potência Reativa Mín
+ActivePower:
+  name: Potência Ativa
+ReactivePower:
+  name: Potência Reativa
+MaxBatteryChargePower:
+  name: Potência de Carga Máx
+MaxBatteryDischargePower:
+  name: Potência de Descarga Máx
+AvailableBatteryChargeEnergy:
+  name: Energia de Carga Disponível
+AvailableBatteryDischargeEnergy:
+  name: Energia de Descarga Disponível
+ChargeDischargePower:
+  name: Potência da Bateria
+InverterBatterySoC:
+  name: SoC da Bateria
+InverterBatterySoH:
+  name: SoH da Bateria
+AverageCellTemperature:
+  name: Temperatura Média das Células
+AverageCellVoltage:
+  name: Tensão Média das Células
+InverterAlarm1:
+  name: Alarmes PCS 1
+InverterAlarm2:
+  name: Alarmes PCS 2
+InverterPCSAlarm:
+  name: Alarmes PCS
+  attributes:
+    source: Registos Modbus 30605-30606
+InverterAlarm3:
+  name: Alarmes
+InverterAlarm4:
+  name: Alarmes de Gateway
+InverterAlarm5:
+  name: Alarmes
+Reserved30610:
+  name: Reservado
+InverterActivePowerFixedValueAdjustmentFeedback:
+  name: Feedback de Ajuste de Valor Fixo de Potência Ativa
+InverterReactivePowerFixedValueAdjustmentFeedback:
+  name: Feedback de Ajuste de Valor Fixo de Potência Reativa
+InverterActivePowerPercentageAdjustmentFeedback:
+  name: Feedback de Ajuste Percentual de Potência Ativa
+InverterReactivePowerPercentageAdjustmentFeedback:
+  name: Feedback de Ajuste Percentual de Potência Reativa
+InverterPowerFactorAdjustmentFeedback:
+  name: Feedback de Ajuste do Fator de Potência
+InverterMaxBatteryTemperature:
+  name: Temperatura da Bateria Máx
+InverterMinBatteryTemperature:
+  name: Temperatura da Bateria Mín
+InverterMaxCellVoltage:
+  name: Tensão da Célula Máx
+InverterMinCellVoltage:
+  name: Tensão da Célula Mín
+RatedGridVoltage:
+  name: Tensão de Rede Nominal
+RatedGridFrequency:
+  name: Frequência de Rede Nominal
+GridFrequency:
+  name: Frequência de Rede
+InverterTemperature:
+  name: Temperatura
+OutputType:
+  name: Tipo de Saída
+  options:
+    "0": L/N
+    "1": L1/L2/L3
+    "2": L1/L2/L3/N
+    "3": L1/L2/N
+PowerFactor:
+  name: Fator de Potência
+PACKBCUCount:
+  name: Contagem PACK/BCU
+PVStringCount:
+  name: Contagem de Strings PV
+MPTTCount:
+  name: Contagem MPPT
+PVCurrentSensor:
+  name: Corrente
+PVVoltageSensor:
+  name: Tensão
+InverterPVPower:
+  name: Potência PV
+InsulationResistance:
+  name: Resistência de Isolamento
+StartupTime:
+  name: Hora de Início
+ShutdownTime:
+  name: Hora de Desligamento
+DCChargerVehicleBatteryVoltage:
+  name: Tensão da Bateria do Veículo
+DCChargerVehicleChargingCurrent:
+  name: Corrente de Carga do Veículo
+DCChargerOutputPower:
+  name: Potência de Saída
+DCChargerVehicleSoC:
+  name: SoC do Veículo
+DCChargerCurrentChargingCapacity:
+  name: Capacidade de Carga Atual
+  attributes:
+    comment: Sessão única
+DCChargerCurrentChargingDuration:
+  name: Duração de Carga Atual
+  attributes:
+    comment: Sessão única
+InverterPVDailyGeneration:
+  name: Produção Diária
+InverterPVLifetimeGeneration:
+  name: Produção Total
+DCChargerRunningState:
+  name: Estado de Funcionamento
+  options:
+    "0": Inativo
+    "1": Ocupado (Pistola de carga ligada mas não detetada)
+    "2": A preparar (A estabelecer comunicação)
+    "3": A carregar
+    "4": Falha
+    "5": Programado
+SystemTime:
+  name: Hora do Sistema
+SystemTimeZone:
+  name: Fuso Horário do Sistema
+EMSWorkMode:
+  name: Modo de Trabalho EMS
+  options:
+    "0": Autoconsumo Máx
+    "1": Sigen IA
+    "2": Tarifas Horárias
+    "5": Injeção Total na Rede
+    "6": Programação VPP
+    "7": EMS Remoto
+    "9": Controlo Baseado no Tempo
+GridSensorStatus:
+  name: Estado do Sensor de Rede
+  options:
+    "0": Não Ligado
+    "1": Ligado
+  attributes:
+    comment: Estado de ligação do gateway ou contador
+GridSensorActivePower:
+  name: Potência Ativa
+  attributes:
+    comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
+GridSensorReactivePower:
+  name: Potência Reativa
+  attributes:
+    comment: Dados recolhidos do sensor de rede no ponto de controlo rede/sistema
+GridStatus:
+  name: Estado da Rede
+  options:
+    "0": Ligado à Rede
+    "1": Ilha (auto)
+    "2": Ilha (manual)
+MaxActivePower:
+  name: Potência Ativa Máx
+  attributes:
+    comment: Este deve ser o valor base de todas as ações de ajuste de potência ativa
+MaxApparentPower:
+  name: Potência Aparente Máx
+  attributes:
+    comment: Este deve ser o valor base de todas as ações de ajuste de potência reativa
+PlantBatterySoC:
+  name: SoC da Bateria
+GeneralAlarm1:
+  name: Alarmes PCS 1
+  attributes:
+    comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+GeneralAlarm2:
+  name: Alarmes PCS 2
+  attributes:
+    comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+GeneralPCSAlarm:
+  name: Alarmes PCS
+  attributes:
+    comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+    source: Registos Modbus 30027-30028
+GeneralAlarm3:
+  name: Alarmes ESS
+  attributes:
+    comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+GeneralAlarm4:
+  name: Alarmes de Gateway
+  attributes:
+    comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+PlantActivePower:
+  name: Potência Ativa
+PlantReactivePower:
+  name: Potência Reativa
+PlantPVPower:
+  name: Potência PV
+BatteryPower:
+  name: Potência da Bateria
+  attributes:
+    comment: "Potência ESS: <0 = descarga, >0 = carga"
+AvailableMaxActivePower:
+  name: Potência Ativa Máx Disponível
+  attributes:
+    comment: Injeção no terminal CA. Conta apenas inversores em funcionamento
+AvailableMinActivePower:
+  name: Potência Ativa Mín Disponível
+  attributes:
+    comment: Absorção do terminal CA. Conta apenas inversores em funcionamento
+AvailableMaxReactivePower:
+  name: Potência Reativa Máx Disponível
+  attributes:
+    comment: Injeção no terminal CA. Conta apenas inversores em funcionamento
+AvailableMinReactivePower:
+  name: Potência Reativa Mín Disponível
+  attributes:
+    comment: Absorção do terminal CA. Conta apenas inversores em funcionamento
+AvailableMaxChargingPower:
+  name: Potência de Carga Máx Disponível
+  attributes:
+    comment: Conta apenas inversores em funcionamento
+AvailableMaxDischargingPower:
+  name: Potência de Descarga Máx Disponível
+  attributes:
+    comment: Absorção do terminal CA. Conta apenas inversores em funcionamento
+PlantRunningState:
+  name: Estado de Funcionamento
+GridPhaseActivePower:
+  attributes:
+    comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
+GridPhaseReactivePower:
+  attributes:
+    comment: Dados recolhidos do sensor de rede no ponto de controlo rede/sistema
+AvailableMaxChargingCapacity:
+  name: Capacidade de Carga Máx Disponível
+  attributes:
+    comment: Conta apenas inversores em funcionamento
+AvailableMaxDischargingCapacity:
+  name: Capacidade de Descarga Máx Disponível
+  attributes:
+    comment: Conta apenas inversores em funcionamento
+PlantRatedChargingPower:
+  name: Potência de Carga Nominal
+PlantRatedDischargingPower:
+  name: Potência de Descarga Nominal
+GeneralAlarm5:
+  name: Alarmes de Carregador CC
+  attributes:
+    comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+Reserved30073:
+  name: Reservado
+PlantRatedEnergyCapacity:
+  name: Capacidade Energética Nominal
+ChargeCutOffSoC:
+  name: SoC de Corte de Carga
+DischargeCutOffSoC:
+  name: SoC de Corte de Descarga
+PlantBatterySoH:
+  name: SoH da Bateria
+  attributes:
+    comment: Este valor é a média ponderada do SoH de todos os dispositivos ESS na central, com cada capacidade nominal como peso
+PlantPVTotalGeneration:
+  name: Produção PV Total
+TotalLoadDailyConsumption:
+  name: Consumo Diário
+TotalLoadConsumption:
+  name: Consumo Total
+ThirdPartyPVPower:
+  name: Potência PV de Terceiros
+ThirdPartyLifetimePVEnergy:
+  name: Produção PV de Terceiros Total
+ESSTotalChargedEnergy:
+  name: Energia Carregada Total
+ESSTotalDischargedEnergy:
+  name: Energia Descarregada Total
+EVDCTotalChargedEnergy:
+  name: Energia de Carga CC VE Total
+EVDCTotalDischargedEnergy:
+  name: Energia de Descarga CC VE Total
+PlantTotalImportedEnergy:
+  name: Energia Importada Total
+PlantTotalExportedEnergy:
+  name: Energia Exportada Total
+PlantTotalGeneratorOutputEnergy:
+  name: Energia de Saída do Gerador Total
+StatisticsInterfaceSensor:
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+SITotalCommonLoadConsumption:
+  name: Consumo de Carga Comum Total
+SITotalEVACChargedEnergy:
+  name: Energia de Carga CA VE Total
+SITotalSelfPVGeneration:
+  name: Produção PV Total
+SITotalThirdPartyPVGeneration:
+  name: Produção PV de Terceiros Total
+SITotalChargedEnergy:
+  name: Energia Carregada Total
+SITotalDischargedEnergy:
+  name: Energia Descarregada Total
+SITotalEVDCChargedEnergy:
+  name: Energia de Carga CC VE Total
+SITotalEVDCDischargedEnergy:
+  name: Energia de Descarga CC VE Total
+SITotalImportedEnergy:
+  name: Energia Importada Total
+SITotalExportedEnergy:
+  name: Energia Exportada Total
+SITotalGeneratorOutputEnergy:
+  name: Energia de Saída do Gerador Total
+ReservedPVTotalGenerationToday:
+  name: Produção PV Total Hoje
+ReservedPVTotalGenerationYesterday:
+  name: Produção PV Total Ontem
+GridCodeRatedFrequency:
+  name: Frequência Nominal
+GridCodeRatedVoltage:
+  name: Tensão Nominal
+CurrentControlCommandValue:
+  name: Valor do Comando de Controlo Atual
+  attributes:
+    comment: Uso do Controlo de Saída Remota no Japão
+Alarm6:
+  name: Alarme 6
+Alarm7:
+  name: Alarme 7
+PlantAlarms:
+  name: Alarmes da Central
+  attributes:
+    source: Registos Modbus 30280-30281
+GeneralLoadPower:
+  name: Potência de Carga Geral
+TotalLoadPower:
+  name: Potência de Carga Total
+BatteryChargingPower:
+  name: Potência de Carga da Bateria
+  attributes:
+    source: BatteryPower > 0
+BatteryDischargingPower:
+  name: Potência de Descarga da Bateria
+  attributes:
+    source: BatteryPower < 0 × -1
+GridSensorExportPower:
+  name: Potência de Exportação
+  attributes:
+    source: GridSensorActivePower < 0 × -1
+GridSensorImportPower:
+  name: Potência de Importação
+  attributes:
+    source: GridSensorActivePower > 0
+PlantConsumedPower:
+  name: Potência Consumida
+  attributes:
+    source: TotalLoadPower
+TotalPVPower:
+  name: Potência PV Total
+  attributes:
+    source: Potência PV + Potência PV de Terceiros
+GridSensorDailyExportEnergy:
+  name: Energia Exportada Diária
+  attributes:
+    source: PlantTotalExportedEnergy − PlantTotalExportedEnergy à meia-noite
+GridSensorDailyImportEnergy:
+  name: Energia Importada Diária
+  attributes:
+    source: PlantTotalImportedEnergy − PlantTotalImportedEnergy à meia-noite
+TotalLifetimePVEnergy:
+  name: Produção PV Total
+  attributes:
+    source: "Σ de PlantPVTotalGeneration e ThirdPartyLifetimePVEnergy"
+TotalDailyPVEnergy:
+  name: Produção PV Diária Total
+  attributes:
+    source: TotalLifetimePVEnergy − TotalLifetimePVEnergy à meia-noite
+PlantDailyPVEnergy:
+  name: Produção PV Diária
+  attributes:
+    source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à meia-noite
+PlantDailyChargeEnergy:
+  name: Energia de Carga Diária
+  attributes:
+    source: "Σ de DailyChargeEnergy em todos os Inversores associados à Central"
+PlantDailyDischargeEnergy:
+  name: Energia de Descarga Diária
+  attributes:
+    source: "Σ de DailyDischargeEnergy em todos os Inversores associados à Central"
+InverterBatteryChargingPower:
+  name: Potência de Carga da Bateria
+  attributes:
+    source: ChargeDischargePower > 0
+InverterBatteryDischargingPower:
+  name: Potência de Descarga da Bateria
+  attributes:
+    source: ChargeDischargePower < 0 × -1
+PVStringPower:
+  name: Potência
+  attributes:
+    source: PVVoltageSensor × PVCurrentSensor
+PVStringLifetimeEnergy:
+  name: Produção Total
+  attributes:
+    source: Σ Riemann de PVStringPower
+PVStringDailyEnergy:
+  name: Produção Diária
+  attributes:
+    source: PVStringLifetimeEnergy − PVStringLifetimeEnergy à meia-noite
+RunningStateSensor:
+  options:
+    "0": Em Espera
+    "1": Normal
+    "2": Falha
+    "3": Desligado
+    "7": Anomalia Ambiental
+ACChargerRunningState:
+  name: Estado de Funcionamento
+  options:
+    "0": A inicializar
+    "1": VE não ligado
+    "2": Carregador e VE não prontos
+    "3": Carregador pronto; VE não pronto
+    "4": Carregador não pronto; VE pronto
+    "5": A carregar
+    "6": Falha
+    "7": Erro
+ACChargerTotalEnergyConsumed:
+  name: Energia Total Consumida
+ACChargerChargingPower:
+  name: Potência de Carga
+ACChargerRatedPower:
+  name: Potência Nominal
+ACChargerRatedCurrent:
+  name: Corrente Nominal
+ACChargerRatedVoltage:
+  name: Tensão Nominal
+ACChargerInputBreaker:
+  name: Disjuntor de Entrada
+ACChargerAlarm1:
+  name: Alarme 1
+ACChargerAlarm2:
+  name: Alarme 2
+ACChargerAlarm3:
+  name: Alarme 3
+ACChargerAlarms:
+  name: Alarmes
+  attributes:
+    source: Registos Modbus 32012-32014
+InverterStatus:
+  name: Inversor Ligar/Desligar
+  attributes:
+    comment: 0:Parar 1:Iniciar
+ReservedGridCode:
+  name: Código de Rede
+DCChargerStatus:
+  name: Carregador CC Iniciar/Parar
+  attributes:
+    comment: 0:Iniciar 1:Parar
+ReservedInverterRemoteEMSDispatch:
+  name: Despacho EMS Remoto
+InverterActivePowerFixedValueAdjustment:
+  name: Ajuste de Valor Fixo de Potência Ativa
+InverterReactivePowerFixedValueAdjustment:
+  name: Ajuste de Valor Fixo de Potência Reativa
+InverterActivePowerPercentageAdjustment:
+  name: Ajuste Percentual de Potência Ativa
+InverterReactivePowerQSAdjustment:
+  name: Ajuste Q/S de Potência Reativa
+InverterPowerFactorAdjustment:
+  name: Ajuste do Fator de Potência
+PVOutputOutputService:
+  name: Adicionar Serviço de Saída PVOutput
+PVOutputStatusService:
+  name: Adicionar Serviço de Estado PVOutput
+EnphasePVPower:
+  name: Potência PV
+  attributes:
+    source: API Enphase Envoy
+EnphaseLifetimePVEnergy:
+  name: Produção Total
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
+EnphaseDailyPVEnergy:
+  name: Produção Diária
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
+EnphaseCurrent:
+  name: Corrente
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
+EnphaseFrequency:
+  name: Frequência
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
+EnphasePowerFactor:
+  name: Fator de Potência
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
+EnphaseReactivePower:
+  name: Potência Reativa
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
+EnphaseVoltage:
+  name: Tensão
+  attributes:
+    source: API Enphase Envoy ao derivar EnphasePVPower
