@@ -47,7 +47,7 @@ sys.exit(main())
 print("```")
 ' --help >resources/configuration/CLI.md 2>/dev/null
 date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 resources/configuration/CLI.md updated"
-cd resources
+cd scripts
 python3 update_md.py
 cd - >> /dev/null
 
