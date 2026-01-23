@@ -1,4 +1,4 @@
-# Simplified Chinese translations for sigenergy2mqtt
+# Simplified Chinese translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: 无告警
   unknown_alarm: 未知 (bit{bit}∈{value})

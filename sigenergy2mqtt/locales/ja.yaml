@@ -1,4 +1,4 @@
-# Japanese translations for sigenergy2mqtt
+# Japanese translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: アラームなし
   unknown_alarm: 不明 (bit{bit}∈{value})

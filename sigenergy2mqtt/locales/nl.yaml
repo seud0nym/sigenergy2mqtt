@@ -1,4 +1,4 @@
-# Dutch translations for sigenergy2mqtt
+# Dutch translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: Geen Alarm
   unknown_alarm: Onbekend (bit{bit}∈{value})

@@ -1,4 +1,4 @@
-# Italian translations for sigenergy2mqtt
+# Italian translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: Nessun Allarme
   unknown_alarm: Sconosciuto (bit{bit}∈{value})

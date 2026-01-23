@@ -1,4 +1,4 @@
-# Korean translations for sigenergy2mqtt
+# Korean translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: 알람 없음
   unknown_alarm: 알 수 없음 (bit{bit}∈{value})

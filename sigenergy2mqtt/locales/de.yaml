@@ -1,4 +1,4 @@
-# German translations for sigenergy2mqtt
+# German translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: Kein Alarm
   unknown_alarm: Unbekannt (bit{bit}∈{value})

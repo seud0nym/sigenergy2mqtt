@@ -1,4 +1,4 @@
-# French translations for sigenergy2mqtt
+# French translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: Aucune Alarme
   unknown_alarm: Inconnu (bit{bit}∈{value})

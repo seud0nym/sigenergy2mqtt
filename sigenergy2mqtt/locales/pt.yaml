@@ -1,4 +1,4 @@
-# Portuguese translations for sigenergy2mqtt
+# Portuguese translations for sigenergy2mqtt created by Claude Opus 4.5
 AlarmSensor:
   no_alarm: Sem Alarme
   unknown_alarm: Desconhecido (bit{bit}∈{value})
