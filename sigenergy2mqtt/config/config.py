@@ -195,8 +195,6 @@ class Config:
                             overrides["home-assistant"]["entity-id-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
                             overrides["home-assistant"]["device-name-prefix"] = check_string(os.environ[key], key)
-                        case const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY:
-                            overrides["home-assistant"]["discovery-only"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
                             overrides["home-assistant"]["discovery-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:

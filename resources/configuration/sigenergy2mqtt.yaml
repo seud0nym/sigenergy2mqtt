@@ -66,11 +66,6 @@ home-assistant:
   #   default: ""
   #   description:  An optional prefix to be prepended to MQTT device names.
   device-name-prefix: homeassistant
-  # discovery-only
-  #   default: false
-  #   description:  Causes sigenergy2mqtt to exit after publishing auto-discovery
-  #                 to Home Assistant. Valid values are true or false.
-  discovery-only: false
   # discovery-prefix
   #   default: homeassistant
   #   description:  The Home Assistant discovery prefix. Only specify if you

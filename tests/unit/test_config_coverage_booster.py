@@ -49,7 +49,6 @@ class TestConfigEnvironmentOverrides:
             const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX: "true",
             const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX: "ha_prefix",
             const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX: "ha_dev_prefix",
-            const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY: "true",
             const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX: "ha_disc_prefix",
             const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX: "ha_uid_prefix",
             const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS: "true",
@@ -133,7 +132,6 @@ class TestConfigEnvironmentOverrides:
         assert Config.home_assistant.edit_percentage_with_box is True
         assert Config.home_assistant.entity_id_prefix == "ha_prefix"
         assert Config.home_assistant.device_name_prefix == "ha_dev_prefix"
-        assert Config.home_assistant.discovery_only is True
         assert Config.home_assistant.discovery_prefix == "ha_disc_prefix"
         assert Config.home_assistant.unique_id_prefix == "ha_uid_prefix"
         assert Config.home_assistant.use_simplified_topics is True

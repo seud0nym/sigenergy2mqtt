@@ -42,8 +42,6 @@ class HomeAssistantConfiguration:
                     match field:
                         case "device-name-prefix":
                             self.device_name_prefix = cast(str, check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=True))
-                        case "discovery-only":
-                            self.discovery_only = check_bool(value, f"home-assistant.{field}")
                         case "discovery-prefix":
                             self.discovery_prefix = cast(str, check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False))
                         case "edit-pct-box":

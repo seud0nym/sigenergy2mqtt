@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import threading
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -156,3 +157,39 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
     asyncio.run(threading_mod.start([cfg]))
     # asyncio.run() closes the running loop; restore a default loop for remaining tests
     asyncio.set_event_loop(asyncio.new_event_loop())
+
+
+@pytest.mark.asyncio
+async def test_read_and_publish_device_sensors_discovery_only(monkeypatch):
+    """Verify that discovery_only mode doesn't schedule tasks but still connects to modbus."""
+    monkeypatch.setattr(Config, "clean", False)
+    monkeypatch.setattr(Config, "home_assistant", type("HA", (), {"enabled": True, "discovery_only": True}))
+    monkeypatch.setattr(Config.mqtt, "client_id_prefix", "sigen")
+    monkeypatch.setattr(Config.mqtt, "broker", "localhost")
+    monkeypatch.setattr(Config.mqtt, "port", 1883)
+
+    cfg = ThreadConfig("127.0.0.1", 502, name="DiscoveryOnly")
+    mock_device = DummyDevice("disc_only")
+    mock_device.schedule = MagicMock(return_value=[])
+    cfg.add_device(0, mock_device)
+
+    mock_mqtt_client = DummyMQTTClient()
+    mock_mqtt_handler = DummyMQTTHandler()
+    monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mock_mqtt_client, mock_mqtt_handler))
+
+    # Mock Modbus
+    mock_modbus = MagicMock()
+    monkeypatch.setattr(threading_mod.ModbusClientFactory, "get_client", AsyncMock(return_value=mock_modbus))
+
+    loop = asyncio.new_event_loop()
+    orig_name = threading.current_thread().name
+    try:
+        await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
+    finally:
+        loop.close()
+        threading.current_thread().name = orig_name
+
+    # Should NOT have scheduled tasks
+    mock_device.schedule.assert_not_called()
+    # Should have closed MQTT
+    assert mock_mqtt_client.loop_stopped is True

@@ -29,7 +29,6 @@ class TestHomeAssistantConfiguration:
             {
                 "enabled": True,
                 "device-name-prefix": "MyHome",
-                "discovery-only": True,
                 "discovery-prefix": "ha",
                 "edit-pct-box": True,
                 "entity-id-prefix": "test_sigen",
@@ -40,7 +39,7 @@ class TestHomeAssistantConfiguration:
             }
         )
         assert config.device_name_prefix == "MyHome"
-        assert config.discovery_only is True
+        assert config.discovery_only is False
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
         assert config.entity_id_prefix == "test_sigen"
@@ -62,10 +61,10 @@ class TestHomeAssistantConfiguration:
     def test_configure_false_values(self):
         config = HomeAssistantConfiguration()
         # Set to True first
-        config.configure({"enabled": True, "discovery-only": True, "edit-pct-box": True, "sensors-enabled-by-default": True, "use-simplified-topics": True})
+        config.configure({"enabled": True, "edit-pct-box": True, "sensors-enabled-by-default": True, "use-simplified-topics": True})
         assert config.enabled is True
         # Now set to False (keep enabled=True so other fields are processed)
-        config.configure({"enabled": True, "discovery-only": False, "edit-pct-box": False, "sensors-enabled-by-default": False, "use-simplified-topics": False})
+        config.configure({"enabled": True, "edit-pct-box": False, "sensors-enabled-by-default": False, "use-simplified-topics": False})
         assert config.enabled is True
         assert config.discovery_only is False
         assert config.edit_percentage_with_box is False

@@ -172,7 +172,7 @@ _parser.add_argument(
 _parser.add_argument(
     "--hass-discovery-only",
     action="store_true",
-    dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY,
+    dest="discovery_only",
     help="Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.",
 )
 # endregion
@@ -658,9 +658,11 @@ for arg in vars(_args):
     if arg == "clean":
         Config.clean = _args.clean
         continue
+    elif arg == "discovery_only":
+        Config.home_assistant.discovery_only = _args.discovery_only
+        continue
     elif (
         arg == const.SIGENERGY2MQTT_HASS_ENABLED
-        or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
         or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
         or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
         or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
