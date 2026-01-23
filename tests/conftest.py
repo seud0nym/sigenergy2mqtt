@@ -26,7 +26,7 @@ with patch.object(sys, "argv", ["sigenergy2mqtt"]):
 
 
 @pytest.fixture(autouse=True)
-def mock_persistent_state_path(request, tmp_path):
+def mock_persistent_state_path(request, tmp_path, reset_config):
     """Global fixture to ensure persistent_state_path is always a temp dir.
 
     Use @pytest.mark.no_persistent_state_mock to disable this mock.
