@@ -28,9 +28,9 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
     mqtt_client_id = f"{Config.mqtt.client_id_prefix}_{config.description}"
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
-    for device, clean_on_start in config.device_init:
+    for device in config.device_init:
         method = device.publish_discovery if Config.home_assistant.enabled else device.publish_attributes
-        if clean_on_start or Config.clean:
+        if Config.clean:
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=True)
         if not Config.clean:  # Publish HA device
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=False)
