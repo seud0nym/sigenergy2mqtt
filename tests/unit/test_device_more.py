@@ -82,10 +82,10 @@ def test_sensor_group_scan_interval_empty_and_with_sensors():
     assert sg.scan_interval == 5
 
 
-def test_device_online_setter_and_rediscover():
+async def test_device_online_setter_and_rediscover():
     dev = Device("dev", 0, "uid", "mf", "mdl", Protocol.V1_8)
     # set online future
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     fut = loop.create_future()
     dev.online = fut
     assert dev._online is fut

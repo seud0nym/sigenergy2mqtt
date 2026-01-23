@@ -79,7 +79,7 @@ async def test_monitor_marks_overdue_and_stops():
     svc._topics[topic] = ms
 
     # mark service as online by providing a Future
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     fut = loop.create_future()
     svc.online = fut
 

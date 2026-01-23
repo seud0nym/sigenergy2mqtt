@@ -45,7 +45,7 @@ async def test_device_online_future_cancel(monkeypatch):
 
     dev = Device("TDev", 0, "uid123", "mf", "mdl", Protocol.V1_8)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     fut = loop.create_future()
     dev.online = fut
     assert dev._online is fut
