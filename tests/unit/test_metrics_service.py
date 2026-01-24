@@ -75,7 +75,7 @@ class TestMetricsService:
         service = MetricsService(Protocol.V2_4)
 
         # Mock Metrics values
-        Metrics.sigenergy2mqtt_modbus_reads = 100
+        Metrics.sigenergy2mqtt_modbus_register_reads = 100
         Metrics._started = 1000.0
 
         with patch("time.monotonic", return_value=1010.0):  # 10 seconds elapsed

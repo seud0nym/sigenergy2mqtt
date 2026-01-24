@@ -133,14 +133,14 @@ class TestMetricsRead:
     @pytest.fixture(autouse=True)
     def reset_metrics(self):
         """Reset Metrics state before each test."""
-        original_reads = Metrics.sigenergy2mqtt_modbus_reads
+        original_reads = Metrics.sigenergy2mqtt_modbus_register_reads
         original_total = Metrics.sigenergy2mqtt_modbus_read_total
         original_max = Metrics.sigenergy2mqtt_modbus_read_max
         original_mean = Metrics.sigenergy2mqtt_modbus_read_mean
         original_min = Metrics.sigenergy2mqtt_modbus_read_min
 
         # Reset to initial state
-        Metrics.sigenergy2mqtt_modbus_reads = 0
+        Metrics.sigenergy2mqtt_modbus_register_reads = 0
         Metrics.sigenergy2mqtt_modbus_read_total = 0.0
         Metrics.sigenergy2mqtt_modbus_read_max = 0.0
         Metrics.sigenergy2mqtt_modbus_read_mean = 0.0
@@ -149,7 +149,7 @@ class TestMetricsRead:
         yield
 
         # Restore original state
-        Metrics.sigenergy2mqtt_modbus_reads = original_reads
+        Metrics.sigenergy2mqtt_modbus_register_reads = original_reads
         Metrics.sigenergy2mqtt_modbus_read_total = original_total
         Metrics.sigenergy2mqtt_modbus_read_max = original_max
         Metrics.sigenergy2mqtt_modbus_read_mean = original_mean
@@ -160,7 +160,7 @@ class TestMetricsRead:
         """Test successful read metrics collection."""
         await Metrics.modbus_read(registers=10, seconds=0.05)
 
-        assert Metrics.sigenergy2mqtt_modbus_reads == 10
+        assert Metrics.sigenergy2mqtt_modbus_register_reads == 10
         assert Metrics.sigenergy2mqtt_modbus_read_total == 50.0  # 0.05 * 1000
         assert Metrics.sigenergy2mqtt_modbus_read_max == 50.0
         assert Metrics.sigenergy2mqtt_modbus_read_min == 50.0
@@ -175,7 +175,7 @@ class TestMetricsRead:
 
         assert Metrics.sigenergy2mqtt_modbus_read_max == 150.0
         assert Metrics.sigenergy2mqtt_modbus_read_min == 50.0
-        assert Metrics.sigenergy2mqtt_modbus_reads == 15
+        assert Metrics.sigenergy2mqtt_modbus_register_reads == 15
 
     @pytest.mark.asyncio
     async def test_modbus_read_mean_calculation(self):

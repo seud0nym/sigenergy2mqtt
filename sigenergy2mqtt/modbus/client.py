@@ -79,6 +79,7 @@ class ModbusClient(AsyncModbusTcpClient):
             self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
+        result: int = -1
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
         if rr:
             if device_id not in self._read_ahead_pdu:
@@ -87,8 +88,12 @@ class ModbusClient(AsyncModbusTcpClient):
                 self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})  # Set registers to None to prevent unexpected values
             else:
                 self._read_ahead_pdu[device_id].update({key: ReadAhead(address, count, device_id, input_type, rr) for key in range(address, address + count)})
-            return rr.exception_code
-        return -1
+            result = rr.exception_code
+        if result == 0:
+            await Metrics.modbus_cache_fill()
+        else:
+            await Metrics.modbus_read_error()
+        return result
 
     async def read_holding_registers(self, address, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.HOLDING, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)

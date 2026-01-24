@@ -10,14 +10,18 @@ class Metrics:
 
     _started: float = time.monotonic()
 
+    sigenergy2mqtt_modbus_cache_fill_reads: int = 0
     sigenergy2mqtt_modbus_cache_hit_percentage: float = 0.0
 
     sigenergy2mqtt_modbus_reads: int = 0
+    sigenergy2mqtt_modbus_register_reads: int = 0
     sigenergy2mqtt_modbus_read_total: float = 0.0
     sigenergy2mqtt_modbus_read_max: float = 0.0
     sigenergy2mqtt_modbus_read_mean: float = 0.0
     sigenergy2mqtt_modbus_read_min: float = float("inf")
     sigenergy2mqtt_modbus_read_errors: int = 0
+
+    sigenergy2mqtt_modbus_physical_read_percentage: float = 0.0
 
     sigenergy2mqtt_modbus_writes: int = 0
     sigenergy2mqtt_modbus_write_total: float = 0.0
@@ -45,6 +49,14 @@ class Metrics:
                 Metrics._lock.release()
 
     @classmethod
+    async def modbus_cache_fill(cls) -> None:
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_modbus_cache_fill_reads += 1
+        except Exception as exc:
+            logging.warning(f"Error during modbus cache metrics collection: {repr(exc)}")
+
+    @classmethod
     async def modbus_cache_hits(cls, reads: int, hits: int) -> None:
         try:
             percentage = round(hits / reads * 100.0, 2)
@@ -60,11 +72,13 @@ class Metrics:
             read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
             read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
             async with cls.lock(timeout=1):
-                cls.sigenergy2mqtt_modbus_reads += registers
+                cls.sigenergy2mqtt_modbus_reads += 1
+                cls.sigenergy2mqtt_modbus_physical_read_percentage = round(cls.sigenergy2mqtt_modbus_cache_fill_reads / cls.sigenergy2mqtt_modbus_reads * 100.0, 2)
+                cls.sigenergy2mqtt_modbus_register_reads += registers
                 cls.sigenergy2mqtt_modbus_read_total += elapsed
                 cls.sigenergy2mqtt_modbus_read_max = read_max
                 cls.sigenergy2mqtt_modbus_read_min = read_min
-                cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_reads if cls.sigenergy2mqtt_modbus_reads > 0 else 0.0
+                cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_register_reads if cls.sigenergy2mqtt_modbus_register_reads > 0 else 0.0
         except Exception as exc:
             logging.warning(f"Error during modbus read metrics collection: {repr(exc)}")
 

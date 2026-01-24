@@ -125,8 +125,11 @@ class TestModbusClient:
             with patch("pymodbus.client.AsyncModbusTcpClient.read_holding_registers", new_callable=AsyncMock) as mock_read:
                 mock_read.return_value = mock_pdu
 
-                result = await client._read_registers(address=100, count=1, device_id=1, input_type=InputType.HOLDING, use_pre_read=False)
+                result = await client._read_registers(address=100, count=10, device_id=1, input_type=InputType.HOLDING, use_pre_read=False)
 
+                # Verify metrics called with count=10
+                mock_metrics.modbus_read.assert_awaited_once()
+                assert mock_metrics.modbus_read.call_args[0][0] == 10
                 mock_read.assert_awaited_once()
                 assert result is mock_pdu
 
@@ -220,11 +223,15 @@ class TestModbusClient:
         """Test read_ahead_registers stores response in cache."""
         with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
             mock_metrics.modbus_read = AsyncMock()
+            mock_metrics.modbus_cache_fill = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_input_registers", new_callable=AsyncMock) as mock_read:
                 mock_read.return_value = mock_pdu
 
                 await client.read_ahead_registers(address=100, count=5, device_id=1, input_type=InputType.INPUT)
+
+                # Verify cache fill metric called
+                mock_metrics.modbus_cache_fill.assert_awaited_once()
 
                 # Cache should be populated
                 assert 1 in client._read_ahead_pdu

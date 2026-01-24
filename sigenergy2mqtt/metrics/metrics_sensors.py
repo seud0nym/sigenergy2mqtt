@@ -69,7 +69,24 @@ class ModbusCacheHits(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = getattr(Metrics, "sigenergy2mqtt_modbus_cache_hit_percentage", 0.0)
+        new_state = Metrics.sigenergy2mqtt_modbus_cache_hit_percentage
+        self.set_latest_state(new_state)
+        return True
+
+
+class ModbusPhysicalReads(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="Modbus Physical Reads",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_physical_reads",
+            object_id="sigenergy2mqtt_modbus_physical_reads",
+            unit=PERCENTAGE,
+            icon="mdi:percent",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_modbus_physical_read_percentage
         self.set_latest_state(new_state)
         return True
 
@@ -85,7 +102,7 @@ class ModbusReadsPerSecond(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_reads / (time.monotonic() - Metrics._started)
+        value = Metrics.sigenergy2mqtt_modbus_register_reads / (time.monotonic() - Metrics._started)
         self.set_latest_state(value)
         return True
 
@@ -101,7 +118,7 @@ class ModbusReadErrors(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = getattr(Metrics, "sigenergy2mqtt_modbus_read_errors", 0)
+        new_state = Metrics.sigenergy2mqtt_modbus_read_errors
         self.set_latest_state(new_state)
         return True
 
@@ -118,7 +135,7 @@ class ModbusReadMax(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_modbus_read_max", 0.0)
+        value = Metrics.sigenergy2mqtt_modbus_read_max
         if value == float("inf"):
             value = 0.0
         self.set_latest_state(value)
@@ -137,7 +154,7 @@ class ModbusReadMean(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_modbus_read_mean", 0.0)
+        value = Metrics.sigenergy2mqtt_modbus_read_mean
         self.set_latest_state(value)
         return True
 
@@ -154,7 +171,7 @@ class ModbusReadMin(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_modbus_read_min", 0.0)
+        value = Metrics.sigenergy2mqtt_modbus_read_min
         if value == float("inf"):
             value = 0.0
         self.set_latest_state(value)
@@ -172,7 +189,7 @@ class ModbusWriteErrors(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = getattr(Metrics, "sigenergy2mqtt_modbus_write_errors", 0)
+        new_state = Metrics.sigenergy2mqtt_modbus_write_errors
         self.set_latest_state(new_state)
         return True
 
@@ -189,7 +206,7 @@ class ModbusWriteMax(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_modbus_write_max", 0.0)
+        value = Metrics.sigenergy2mqtt_modbus_write_max
         if value == float("inf"):
             value = 0.0
         self.set_latest_state(value)
@@ -208,7 +225,7 @@ class ModbusWriteMean(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_modbus_write_mean", 0.0)
+        value = Metrics.sigenergy2mqtt_modbus_write_mean
         self.set_latest_state(value)
         return True
 
@@ -225,7 +242,7 @@ class ModbusWriteMin(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_modbus_write_min", 0.0)
+        value = Metrics.sigenergy2mqtt_modbus_write_min
         if value == float("inf"):
             value = 0.0
         self.set_latest_state(value)
@@ -260,7 +277,7 @@ class Started(MetricsSensor):
         self["entity_category"] = "diagnostic"
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = getattr(Metrics, "sigenergy2mqtt_started", None)
+        value = Metrics.sigenergy2mqtt_started
         self.set_latest_state(str(value) if value else "")
         return True
 

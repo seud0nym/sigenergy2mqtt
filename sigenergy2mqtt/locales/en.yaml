@@ -14,6 +14,8 @@ MetricsService:
   name: Sigenergy Metrics
 ModbusCacheHits:
   name: Modbus Cache Hits
+ModbusPhysicalReads:
+  name: Modbus Physical Reads
 ModbusReadsPerSecond:
   name: Modbus Reads/second
 ModbusReadErrors:

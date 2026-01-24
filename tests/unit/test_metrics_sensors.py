@@ -1,15 +1,15 @@
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.metrics.metrics_sensors import (
     MetricsSensor,
     ModbusActiveLocks,
     ModbusCacheHits,
+    ModbusPhysicalReads,
     ModbusReadErrors,
     ModbusReadMax,
     ModbusReadMean,
@@ -69,11 +69,20 @@ class TestModbusCacheHits:
         assert sensor.latest_raw_state == 45.5
 
 
+class TestModbusPhysicalReads:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = ModbusPhysicalReads()
+        Metrics.sigenergy2mqtt_modbus_physical_read_percentage = 12.34
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 12.34
+
+
 class TestModbusReadsPerSecond:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
         sensor = ModbusReadsPerSecond()
-        Metrics.sigenergy2mqtt_modbus_reads = 100
+        Metrics.sigenergy2mqtt_modbus_register_reads = 100
         Metrics._started = time.monotonic() - 10
         await sensor._update_internal_state()
         # Roughly 10 reads per second

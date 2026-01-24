@@ -17,6 +17,7 @@ class MetricsService(Device):
 
         self._add_read_sensor(sensors.ModbusActiveLocks())
         self._add_read_sensor(sensors.ModbusCacheHits())
+        self._add_read_sensor(sensors.ModbusPhysicalReads())
         self._add_read_sensor(sensors.ModbusReadsPerSecond())
         self._add_read_sensor(sensors.ModbusReadErrors())
         self._add_read_sensor(sensors.ModbusReadMax())
