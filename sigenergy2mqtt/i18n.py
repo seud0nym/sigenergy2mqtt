@@ -102,8 +102,14 @@ def load(locale: str):
     _translator.load(locale)
 
 
-def _t(key: str, default: str | None = None) -> str:
-    return _translator.translate(key, default)
+def _t(key: str, default: str | None = None, debugging: bool = False) -> str:
+    translation = _translator.translate(key, default)
+    if _translator._locale != "en":
+        if debugging:
+            logging.debug(f"{key} : {default=} {translation=}")
+        if translation == default:
+            logging.warning(f"{key} Failed to translate! Using {default=}")
+    return translation
 
 
 def reset():

@@ -29,7 +29,7 @@ async def test_alarm_combined_sensor_translation_bug():
 
     # Mock _t to simulate non-English translation
     # When "No Alarm" is translated, it returns "Aucune Alarme"
-    def mock_translation(key, default):
+    def mock_translation(key, default, debugging=False):
         if key == "AlarmSensor.no_alarm":
             return "Aucune Alarme"
         return default
