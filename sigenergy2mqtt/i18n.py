@@ -2,16 +2,18 @@ import locale
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from ruamel.yaml import YAML
+
+DEFAULT_LOCALE: Final[str] = "en"
 
 
 class Translator:
     def __init__(self):
         self._translations: dict[str, Any] = {}
         self._fallback_translations: dict[str, Any] = {}
-        self._locale: str = "en"
+        self._locale: str = DEFAULT_LOCALE
         self._translations_dir = Path(__file__).parent / "translations"
         self._cache: dict[str, dict[str, Any]] = {}
         self._yaml = YAML(typ="safe", pure=True)
@@ -29,13 +31,13 @@ class Translator:
 
         self._locale = locale
         self._translations = self._load_file(locale)
-        if locale != "en":
-            self._fallback_translations = self._load_file("en")
+        if locale != DEFAULT_LOCALE:
+            self._fallback_translations = self._load_file(DEFAULT_LOCALE)
         else:
             self._fallback_translations = self._translations
 
     def reset(self):
-        self._locale = "en"
+        self._locale = DEFAULT_LOCALE
         self._translations = {}
         self._fallback_translations = {}
         self._cache = {}
@@ -47,7 +49,7 @@ class Translator:
         self._cache[locale] = data
         if self._locale == locale:
             self._translations = data
-        if locale == "en":
+        if locale == DEFAULT_LOCALE:
             self._fallback_translations = data
 
     def _load_file(self, locale: str) -> dict[str, Any]:
@@ -56,7 +58,7 @@ class Translator:
 
         file_path = self._translations_dir / f"{locale}.yaml"
         if not file_path.exists():
-            if locale != "en":
+            if locale != DEFAULT_LOCALE:
                 logging.warning(f"Translation file not found: {file_path}")
             return {}
 
@@ -69,21 +71,21 @@ class Translator:
             logging.error(f"Failed to load translation file {file_path}: {e}")
             return {}
 
-    def translate(self, key: str, default: str | None = None) -> str:
+    def translate(self, key: str, default: str | None = None) -> tuple[str, str, bool]:
         # Key format: "ClassName.field" or "ClassName.field.index"
         parts = key.split(".")
 
         # Try primary locale
         value = self._get_nested(self._translations, parts)
         if value is not None:
-            return str(value)
+            return str(value), self._locale, True
 
         # Try fallback locale (English)
         value = self._get_nested(self._fallback_translations, parts)
         if value is not None:
-            return str(value)
+            return str(value), DEFAULT_LOCALE, False
 
-        return default if default is not None else key
+        return default if default is not None else key, DEFAULT_LOCALE, False
 
     def _get_nested(self, data: dict, parts: list[str]) -> Any:
         current = data
@@ -103,12 +105,11 @@ def load(locale: str):
 
 
 def _t(key: str, default: str | None = None, debugging: bool = False) -> str:
-    translation = _translator.translate(key, default)
-    if _translator._locale != "en":
+    translation, locale, translated = _translator.translate(key, default)
+    if not translated:
         if debugging:
-            logging.debug(f"{key} : {default=} {translation=}")
-        if translation == default:
-            logging.warning(f"{key} Failed to translate! Using {default=}")
+            logging.debug(f"{key} : {default=} {translation=} [{locale}]")
+        logging.warning(f"{key} Failed to translate! Using {default=}")
     return translation
 
 
@@ -157,4 +158,4 @@ def get_default_locale() -> str:
         if lang in available:
             return lang
 
-    return "en"
+    return DEFAULT_LOCALE
