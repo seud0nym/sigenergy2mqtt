@@ -136,15 +136,15 @@ PCSMaxImportLimit:
   attributes:
     comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig. In alle andere gevallen geldt het globaal."
 ESSBackupSOC:
-  name: Backup SoC
+  name: Backup Laadtoestand
   attributes:
     comment: "Bereik: [0,00, 100,00]"
 ESSChargeCutOffSOC:
-  name: Laad Afkap SoC
+  name: Laad Afkap Laadtoestand
   attributes:
     comment: "Bereik: [0,00, 100,00]"
 ESSDischargeCutOffSOC:
-  name: Ontlaad Afkap SoC
+  name: Ontlaad Afkap Laadtoestand
   attributes:
     comment: "Bereik: [0,00, 100,00]"
 ActivePowerRegulationGradient:
@@ -280,9 +280,9 @@ AvailableBatteryDischargeEnergy:
 ChargeDischargePower:
   name: Batterijvermogen
 InverterBatterySoC:
-  name: Batterij SoC
+  name: Batterij Laadtoestand
 InverterBatterySoH:
-  name: Batterij SoH
+  name: Batterij Gezondheidstoestand
 AverageCellTemperature:
   name: Gemiddelde Celtemperatuur
 AverageCellVoltage:
@@ -363,7 +363,7 @@ DCChargerVehicleChargingCurrent:
 DCChargerOutputPower:
   name: Uitgangsvermogen
 DCChargerVehicleSoC:
-  name: Voertuig SoC
+  name: Voertuig Laadtoestand
 DCChargerCurrentChargingCapacity:
   name: Huidige Laadcapaciteit
   attributes:
@@ -429,7 +429,7 @@ MaxApparentPower:
   attributes:
     comment: Dit moet de basiswaarde zijn van alle reactief vermogen aanpassingsacties
 PlantBatterySoC:
-  name: Batterij SoC
+  name: Batterij Laadtoestand
 GeneralAlarm1:
   name: PCS Alarmen 1
   attributes:
@@ -516,13 +516,13 @@ Reserved30073:
 PlantRatedEnergyCapacity:
   name: Nominale Energiecapaciteit
 ChargeCutOffSoC:
-  name: Laad Afkap SoC
+  name: Laad Afkap Laadtoestand
 DischargeCutOffSoC:
-  name: Ontlaad Afkap SoC
+  name: Ontlaad Afkap Laadtoestand
 PlantBatterySoH:
-  name: Batterij SoH
+  name: Batterij Gezondheidstoestand
   attributes:
-    comment: Deze waarde is het gewogen gemiddelde van de SoH van alle ESS-apparaten in de installatie, met elke nominale capaciteit als gewicht
+    comment: Deze waarde is het gewogen gemiddelde van de gezondheidstoestand van alle ESS-apparaten in de installatie, met elke nominale capaciteit als gewicht
 PlantPVTotalGeneration:
   name: Totale PV Productie
 TotalLoadDailyConsumption:

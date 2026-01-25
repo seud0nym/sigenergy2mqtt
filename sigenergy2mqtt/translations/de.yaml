@@ -136,15 +136,15 @@ PCSMaxImportLimit:
   attributes:
     comment: "Bereich: [0, 0xFFFFFFFE]. Bei Wert 0xFFFFFFFF ist Register ungültig. In allen anderen Fällen gilt es global."
 ESSBackupSOC:
-  name: Backup-SoC
+  name: Backup-Ladezustand
   attributes:
     comment: "Bereich: [0,00, 100,00]"
 ESSChargeCutOffSOC:
-  name: Ladungsabschalt-SoC
+  name: Ladungsabschalt-Ladezustand
   attributes:
     comment: "Bereich: [0,00, 100,00]"
 ESSDischargeCutOffSOC:
-  name: Entladungsabschalt-SoC
+  name: Entladungsabschalt-Ladezustand
   attributes:
     comment: "Bereich: [0,00, 100,00]"
 ActivePowerRegulationGradient:
@@ -280,9 +280,9 @@ AvailableBatteryDischargeEnergy:
 ChargeDischargePower:
   name: Batterieleistung
 InverterBatterySoC:
-  name: Batterie-SoC
+  name: Batterie-Ladezustand
 InverterBatterySoH:
-  name: Batterie-SoH
+  name: Batterie-Gesundheitszustand
 AverageCellTemperature:
   name: Durchschnittliche Zellentemperatur
 AverageCellVoltage:
@@ -363,7 +363,7 @@ DCChargerVehicleChargingCurrent:
 DCChargerOutputPower:
   name: Ausgangsleistung
 DCChargerVehicleSoC:
-  name: Fahrzeug-SoC
+  name: Fahrzeug-Ladezustand
 DCChargerCurrentChargingCapacity:
   name: Aktuelle Ladekapazität
   attributes:
@@ -429,7 +429,7 @@ MaxApparentPower:
   attributes:
     comment: Dies sollte der Basiswert für alle Blindleistungsanpassungen sein
 PlantBatterySoC:
-  name: Batterie-SoC
+  name: Batterie-Ladezustand
 GeneralAlarm1:
   name: PCS-Alarme 1
   attributes:
@@ -516,13 +516,13 @@ Reserved30073:
 PlantRatedEnergyCapacity:
   name: Nenn-Energiekapazität
 ChargeCutOffSoC:
-  name: Ladungsabschalt-SoC
+  name: Ladungsabschalt-Ladezustand
 DischargeCutOffSoC:
-  name: Entladungsabschalt-SoC
+  name: Entladungsabschalt-Ladezustand
 PlantBatterySoH:
-  name: Batterie-SoH
+  name: Batterie-Gesundheitszustand
   attributes:
-    comment: Dieser Wert ist der gewichtete Durchschnitt des SoH aller ESS-Geräte in der Anlage, mit der jeweiligen Nennkapazität als Gewichtung
+    comment: Dieser Wert ist der gewichtete Durchschnitt des Gesundheitszustands aller ESS-Geräte in der Anlage, mit der jeweiligen Nennkapazität als Gewichtung
 PlantPVTotalGeneration:
   name: Gesamte PV-Produktion
 TotalLoadDailyConsumption:

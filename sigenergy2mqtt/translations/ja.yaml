@@ -136,15 +136,15 @@ PCSMaxImportLimit:
   attributes:
     comment: "範囲：[0, 0xFFFFFFFE]。値が0xFFFFFFFFの場合、レジスタは無効。その他の場合、グローバルに有効。"
 ESSBackupSOC:
-  name: バックアップSoC
+  name: バックアップ充電率
   attributes:
     comment: "範囲：[0.00, 100.00]"
 ESSChargeCutOffSOC:
-  name: 充電カットオフSoC
+  name: 充電カットオフ率
   attributes:
     comment: "範囲：[0.00, 100.00]"
 ESSDischargeCutOffSOC:
-  name: 放電カットオフSoC
+  name: 放電カットオフ率
   attributes:
     comment: "範囲：[0.00, 100.00]"
 ActivePowerRegulationGradient:
@@ -280,9 +280,9 @@ AvailableBatteryDischargeEnergy:
 ChargeDischargePower:
   name: バッテリー電力
 InverterBatterySoC:
-  name: バッテリーSoC
+  name: バッテリー充電率
 InverterBatterySoH:
-  name: バッテリーSoH
+  name: バッテリー健全度
 AverageCellTemperature:
   name: 平均セル温度
 AverageCellVoltage:
@@ -363,7 +363,7 @@ DCChargerVehicleChargingCurrent:
 DCChargerOutputPower:
   name: 出力電力
 DCChargerVehicleSoC:
-  name: 車両SoC
+  name: 車両充電率
 DCChargerCurrentChargingCapacity:
   name: 現在の充電容量
   attributes:
@@ -429,7 +429,7 @@ MaxApparentPower:
   attributes:
     comment: これはすべての無効電力調整アクションの基準値であるべきです
 PlantBatterySoC:
-  name: バッテリーSoC
+  name: バッテリー充電率
 GeneralAlarm1:
   name: PCSアラーム1
   attributes:
@@ -516,13 +516,13 @@ Reserved30073:
 PlantRatedEnergyCapacity:
   name: 定格エネルギー容量
 ChargeCutOffSoC:
-  name: 充電カットオフSoC
+  name: 充電カットオフ率
 DischargeCutOffSoC:
-  name: 放電カットオフSoC
+  name: 放電カットオフ率
 PlantBatterySoH:
-  name: バッテリーSoH
+  name: バッテリー健全度
   attributes:
-    comment: この値は、発電所内のすべてのESS機器のSoHの加重平均であり、各定格容量を重みとしています
+    comment: この値は、発電所内のすべてのESS機器の健全度の加重平均であり、各定格容量を重みとしています
 PlantPVTotalGeneration:
   name: 累計PV発電量
 TotalLoadDailyConsumption:

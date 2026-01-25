@@ -136,15 +136,15 @@ PCSMaxImportLimit:
   attributes:
     comment: "范围：[0, 0xFFFFFFFE]。当值为0xFFFFFFFF时，寄存器无效。其他情况下全局生效。"
 ESSBackupSOC:
-  name: 备用SoC
+  name: 备用荷电状态
   attributes:
     comment: "范围：[0.00, 100.00]"
 ESSChargeCutOffSOC:
-  name: 充电截止SoC
+  name: 充电截止荷电状态
   attributes:
     comment: "范围：[0.00, 100.00]"
 ESSDischargeCutOffSOC:
-  name: 放电截止SoC
+  name: 放电截止荷电状态
   attributes:
     comment: "范围：[0.00, 100.00]"
 ActivePowerRegulationGradient:
@@ -280,9 +280,9 @@ AvailableBatteryDischargeEnergy:
 ChargeDischargePower:
   name: 电池功率
 InverterBatterySoC:
-  name: 电池SoC
+  name: 电池荷电状态
 InverterBatterySoH:
-  name: 电池SoH
+  name: 电池健康状态
 AverageCellTemperature:
   name: 平均电芯温度
 AverageCellVoltage:
@@ -363,7 +363,7 @@ DCChargerVehicleChargingCurrent:
 DCChargerOutputPower:
   name: 输出功率
 DCChargerVehicleSoC:
-  name: 车辆SoC
+  name: 车辆荷电状态
 DCChargerCurrentChargingCapacity:
   name: 当前充电容量
   attributes:
@@ -429,7 +429,7 @@ MaxApparentPower:
   attributes:
     comment: 这应该是所有无功功率调节操作的基准值
 PlantBatterySoC:
-  name: 电池SoC
+  name: 电池荷电状态
 GeneralAlarm1:
   name: PCS告警1
   attributes:
@@ -516,13 +516,13 @@ Reserved30073:
 PlantRatedEnergyCapacity:
   name: 额定能量容量
 ChargeCutOffSoC:
-  name: 充电截止SoC
+  name: 充电截止荷电状态
 DischargeCutOffSoC:
-  name: 放电截止SoC
+  name: 放电截止荷电状态
 PlantBatterySoH:
-  name: 电池SoH
+  name: 电池健康状态
   attributes:
-    comment: 该值是电站中所有ESS设备SoH的加权平均值，以各自额定容量为权重
+    comment: 该值是电站中所有ESS设备健康状态的加权平均值，以各自额定容量为权重
 PlantPVTotalGeneration:
   name: PV累计发电量
 TotalLoadDailyConsumption:

@@ -136,15 +136,15 @@ PCSMaxImportLimit:
   attributes:
     comment: "Rango: [0, 0xFFFFFFFE]. Con valor 0xFFFFFFFF, el registro no es válido. En todos los demás casos, se aplica globalmente."
 ESSBackupSOC:
-  name: SoC de Respaldo
+  name: Estado de carga de respaldo
   attributes:
     comment: "Rango: [0,00, 100,00]"
 ESSChargeCutOffSOC:
-  name: SoC de Corte de Carga
+  name: Estado de carga de corte de carga
   attributes:
     comment: "Rango: [0,00, 100,00]"
 ESSDischargeCutOffSOC:
-  name: SoC de Corte de Descarga
+  name: Estado de carga de corte de descarga
   attributes:
     comment: "Rango: [0,00, 100,00]"
 ActivePowerRegulationGradient:
@@ -280,9 +280,9 @@ AvailableBatteryDischargeEnergy:
 ChargeDischargePower:
   name: Potencia de Batería
 InverterBatterySoC:
-  name: SoC de Batería
+  name: Estado de carga de batería
 InverterBatterySoH:
-  name: SoH de Batería
+  name: Estado de salud de batería
 AverageCellTemperature:
   name: Temperatura Promedio de Celdas
 AverageCellVoltage:
@@ -363,7 +363,7 @@ DCChargerVehicleChargingCurrent:
 DCChargerOutputPower:
   name: Potencia de Salida
 DCChargerVehicleSoC:
-  name: SoC del Vehículo
+  name: Estado de carga del vehículo
 DCChargerCurrentChargingCapacity:
   name: Capacidad de Carga Actual
   attributes:
@@ -429,7 +429,7 @@ MaxApparentPower:
   attributes:
     comment: Este debería ser el valor base de todas las acciones de ajuste de potencia reactiva
 PlantBatterySoC:
-  name: SoC de Batería
+  name: Estado de carga de batería
 GeneralAlarm1:
   name: Alarmas PCS 1
   attributes:
@@ -516,13 +516,13 @@ Reserved30073:
 PlantRatedEnergyCapacity:
   name: Capacidad Energética Nominal
 ChargeCutOffSoC:
-  name: SoC de Corte de Carga
+  name: Estado de carga de corte de carga
 DischargeCutOffSoC:
-  name: SoC de Corte de Descarga
+  name: Estado de carga de corte de descarga
 PlantBatterySoH:
-  name: SoH de Batería
+  name: Estado de salud de batería
   attributes:
-    comment: Este valor es el promedio ponderado del SoH de todos los dispositivos ESS en la planta, con cada capacidad nominal como peso
+    comment: Este valor es el promedio ponderado del estado de salud de todos los dispositivos ESS en la planta, con cada capacidad nominal como peso
 PlantPVTotalGeneration:
   name: Producción PV Total
 TotalLoadDailyConsumption:

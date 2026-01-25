@@ -136,15 +136,15 @@ PCSMaxImportLimit:
   attributes:
     comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로 적용됨."
 ESSBackupSOC:
-  name: 백업 SoC
+  name: 백업 충전율
   attributes:
     comment: "범위: [0.00, 100.00]"
 ESSChargeCutOffSOC:
-  name: 충전 차단 SoC
+  name: 충전 차단율
   attributes:
     comment: "범위: [0.00, 100.00]"
 ESSDischargeCutOffSOC:
-  name: 방전 차단 SoC
+  name: 방전 차단율
   attributes:
     comment: "범위: [0.00, 100.00]"
 ActivePowerRegulationGradient:
@@ -280,9 +280,9 @@ AvailableBatteryDischargeEnergy:
 ChargeDischargePower:
   name: 배터리 전력
 InverterBatterySoC:
-  name: 배터리 SoC
+  name: 배터리 충전율
 InverterBatterySoH:
-  name: 배터리 SoH
+  name: 배터리 건강상태
 AverageCellTemperature:
   name: 평균 셀 온도
 AverageCellVoltage:
@@ -363,7 +363,7 @@ DCChargerVehicleChargingCurrent:
 DCChargerOutputPower:
   name: 출력 전력
 DCChargerVehicleSoC:
-  name: 차량 SoC
+  name: 차량 충전율
 DCChargerCurrentChargingCapacity:
   name: 현재 충전 용량
   attributes:
@@ -429,7 +429,7 @@ MaxApparentPower:
   attributes:
     comment: 이것은 모든 무효 전력 조정 작업의 기준값이어야 함
 PlantBatterySoC:
-  name: 배터리 SoC
+  name: 배터리 충전율
 GeneralAlarm1:
   name: PCS 알람 1
   attributes:
@@ -516,13 +516,13 @@ Reserved30073:
 PlantRatedEnergyCapacity:
   name: 정격 에너지 용량
 ChargeCutOffSoC:
-  name: 충전 차단 SoC
+  name: 충전 차단율
 DischargeCutOffSoC:
-  name: 방전 차단 SoC
+  name: 방전 차단율
 PlantBatterySoH:
-  name: 배터리 SoH
+  name: 배터리 건강상태
   attributes:
-    comment: 이 값은 발전소 내 모든 ESS 장치의 SoH의 가중 평균이며, 각 정격 용량을 가중치로 사용
+    comment: 이 값은 발전소 내 모든 ESS 장치의 건강상태의 가중 평균이며, 각 정격 용량을 가중치로 사용
 PlantPVTotalGeneration:
   name: 누적 PV 생산량
 TotalLoadDailyConsumption:
