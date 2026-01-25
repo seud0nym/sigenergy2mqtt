@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Valido solo quando il Tipo di Uscita è L1/L2/L3/N
+  name: Valore target regolazione fissa potenza attiva fase {phase}
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Valido solo quando il Tipo di Uscita è L1/L2/L3/N
+  name: Valore target regolazione fissa potenza reattiva fase {phase}
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Intervallo: [-100,00, 100,00]"
+  name: Valore target regolazione percentuale potenza attiva fase {phase}
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Intervallo: [-60,00, 60,00]"
+  name: Valore target regolazione fissa Q/S fase {phase}
 Reserved40026:
   name: Riservato
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "Dati raccolti dal sensore di rete al punto di controllo rete/sistema; >0 acquisto dalla rete; <0 vendita alla rete"
+  name: Potenza attiva fase {phase}
 GridPhaseReactivePower:
   attributes:
     comment: Dati raccolti dal sensore di rete al punto di controllo rete/sistema
+  name: Potenza reattiva fase {phase}
 AvailableMaxChargingCapacity:
   name: Capacità di Carica Max Disponibile
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: Accendere
   name_off: Spegnere
+LineVoltage:
+  name: '{phase} Tensione di linea'
+PhaseVoltage:
+  name: Tensione di fase
+PhaseCurrent:
+  name: Corrente di fase
+PlantPhaseActivePower:
+  name: Potenza attiva fase {phase}
+PlantPhaseReactivePower:
+  name: Potenza reattiva fase {phase}
+SmartLoadTotalConsumption:
+  name: Consumo totale carico intelligente {smart_load_index}
+SmartLoadPower:
+  name: Potenza carico intelligente {smart_load_index}
+ReservedGridPhaseVoltage:
+  name: Tensione fase {phase}
+ReservedGridPhaseCurrent:
+  name: Corrente fase {phase}

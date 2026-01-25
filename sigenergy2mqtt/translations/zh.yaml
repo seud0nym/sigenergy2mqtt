@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: 仅当输出类型为L1/L2/L3/N时有效
+  name: 相 {phase} 有功功率固定调节目标值
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: 仅当输出类型为L1/L2/L3/N时有效
+  name: 相 {phase} 无功功率固定调节目标值
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "仅当输出类型为L1/L2/L3/N时有效。范围：[-100.00, 100.00]"
+  name: 相 {phase} 有功功率百分比调节目标值
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "仅当输出类型为L1/L2/L3/N时有效。范围：[-60.00, 60.00]"
+  name: 相 {phase} Q/S 固定调节目标值
 Reserved40026:
   name: 保留
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: 从电网传感器在电网到系统检查点收集的数据；>0 从电网购买；<0 卖给电网
+  name: 相 {phase} 有功功率
 GridPhaseReactivePower:
   attributes:
     comment: 从电网传感器在电网到系统检查点收集的数据
+  name: 相 {phase} 无功功率
 AvailableMaxChargingCapacity:
   name: 可用最大充电容量
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: 开机
   name_off: 关机
+LineVoltage:
+  name: '{phase} 线电压'
+PhaseVoltage:
+  name: 相电压
+PhaseCurrent:
+  name: 相电流
+PlantPhaseActivePower:
+  name: 相 {phase} 有功功率
+PlantPhaseReactivePower:
+  name: 相 {phase} 无功功率
+SmartLoadTotalConsumption:
+  name: 智能负载 {smart_load_index} 总消耗
+SmartLoadPower:
+  name: 智能负载 {smart_load_index} 功率
+ReservedGridPhaseVoltage:
+  name: 相 {phase} 电压
+ReservedGridPhaseCurrent:
+  name: 相 {phase} 电流

@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Válido solo cuando el Tipo de Salida es L1/L2/L3/N
+  name: Valor objetivo de ajuste fijo de potencia activa de fase {phase}
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Válido solo cuando el Tipo de Salida es L1/L2/L3/N
+  name: Valor objetivo de ajuste fijo de potencia reactiva de fase {phase}
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Válido solo cuando el Tipo de Salida es L1/L2/L3/N. Rango: [-100,00, 100,00]"
+  name: Valor objetivo de ajuste de porcentaje de potencia activa de fase {phase}
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Válido solo cuando el Tipo de Salida es L1/L2/L3/N. Rango: [-60,00, 60,00]"
+  name: Valor objetivo de ajuste fijo Q/S de fase {phase}
 Reserved40026:
   name: Reservado
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "Datos recopilados del sensor de red en el punto de control red/sistema; >0 compra de red; <0 venta a red"
+  name: Potencia activa de fase {phase}
 GridPhaseReactivePower:
   attributes:
     comment: Datos recopilados del sensor de red en el punto de control red/sistema
+  name: Potencia reactiva de fase {phase}
 AvailableMaxChargingCapacity:
   name: Capacidad de Carga Máx Disponible
   attributes:
@@ -920,3 +926,21 @@ cli:
 WriteOnlySensor:
   name_on: Encender
   name_off: Apagar
+LineVoltage:
+  name: '{phase} Voltaje de línea'
+PhaseVoltage:
+  name: Voltaje de fase
+PhaseCurrent:
+  name: Corriente de fase
+PlantPhaseActivePower:
+  name: Potencia activa de fase {phase}
+PlantPhaseReactivePower:
+  name: Potencia reactiva de fase {phase}
+SmartLoadTotalConsumption:
+  name: Consumo total de carga inteligente {smart_load_index}
+SmartLoadPower:
+  name: Potencia de carga inteligente {smart_load_index}
+ReservedGridPhaseVoltage:
+  name: Voltaje de fase {phase}
+ReservedGridPhaseCurrent:
+  name: Corriente de fase {phase}

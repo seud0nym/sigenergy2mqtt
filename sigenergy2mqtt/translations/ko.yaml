@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함
+  name: 페이즈 {phase} 유효 전력 고정 조정 목표값
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함
+  name: 페이즈 {phase} 무효 전력 고정 조정 목표값
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "출력 유형이 L1/L2/L3/N인 경우에만 유효함. 범위: [-100.00, 100.00]"
+  name: 페이즈 {phase} 유효 전력 백분율 조정 목표값
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "출력 유형이 L1/L2/L3/N인 경우에만 유효함. 범위: [-60.00, 60.00]"
+  name: 페이즈 {phase} Q/S 고정 조정 목표값
 Reserved40026:
   name: 예약됨
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터; >0 계통에서 구매; <0 계통에 판매"
+  name: 페이즈 {phase} 유효 전력
 GridPhaseReactivePower:
   attributes:
     comment: 계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터
+  name: 페이즈 {phase} 무효 전력
 AvailableMaxChargingCapacity:
   name: 사용 가능 최대 충전 용량
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: 전원 켜기
   name_off: 전원 끄기
+LineVoltage:
+  name: '{phase} 선간 전압'
+PhaseVoltage:
+  name: 상전압
+PhaseCurrent:
+  name: 상전류
+PlantPhaseActivePower:
+  name: 페이즈 {phase} 유효 전력
+PlantPhaseReactivePower:
+  name: 페이즈 {phase} 무효 전력
+SmartLoadTotalConsumption:
+  name: 스마트 부하 {smart_load_index} 총 소비량
+SmartLoadPower:
+  name: 스마트 부하 {smart_load_index} 전력
+ReservedGridPhaseVoltage:
+  name: 페이즈 {phase} 전압
+ReservedGridPhaseCurrent:
+  name: 페이즈 {phase} 전류

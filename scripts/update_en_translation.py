@@ -30,6 +30,30 @@ class TranslationExtractor(ast.NodeVisitor):
         self.is_resettable = False
         self.resettable_bases = {"ResettableAccumulationSensor", "EnergyDailyAccumulationSensor", "EnergyLifetimeAccumulationSensor"}
 
+    def _get_string_values(self, node):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return [node.value]
+        if isinstance(node, ast.JoinedStr):
+            parts = []
+            for val in node.values:
+                if isinstance(val, ast.Constant):
+                    parts.append(str(val.value))
+                elif isinstance(val, ast.FormattedValue):
+                    # Try to extract the name if it's a simple variable or expression
+                    if isinstance(val.value, ast.Name):
+                        parts.append(f"{{{val.value.id}}}")
+                    elif isinstance(val.value, ast.Attribute) and isinstance(val.value.value, ast.Name):
+                        parts.append(f"{{{val.value.value.id}.{val.value.attr}}}")
+                    elif isinstance(val.value, ast.Call) and isinstance(val.value.func, ast.Attribute) and val.value.func.attr == "lower":
+                        if isinstance(val.value.func.value, ast.Name):
+                            parts.append(f"{{{val.value.func.value.id}}}")
+                    else:
+                        parts.append("{}")
+            return ["".join(parts)]
+        if isinstance(node, ast.IfExp):
+            return self._get_string_values(node.body) + self._get_string_values(node.orelse)
+        return []
+
     def visit_ClassDef(self, node):
         prev_class = self.current_class
         prev_resettable = self.is_resettable
@@ -56,16 +80,20 @@ class TranslationExtractor(ast.NodeVisitor):
             if isinstance(node.func.value, ast.Call) and isinstance(node.func.value.func, ast.Name) and node.func.value.func.id == "super":
                 name_value = None
                 for keyword in node.keywords:
-                    if keyword.arg == "name" and isinstance(keyword.value, ast.Constant):
-                        name_value = keyword.value.value
-                        self._add_translation(self.current_class, "name", name_value)
-                    elif keyword.arg in ["name_off", "name_on"] and isinstance(keyword.value, ast.Constant):
-                        self._add_translation(self.current_class, keyword.arg, keyword.value.value)
+                    if keyword.arg == "name":
+                        names = self._get_string_values(keyword.value)
+                        if names:
+                            name_value = names[0]
+                            self._add_translation(self.current_class, "name", name_value)
+                    elif keyword.arg in ["name_off", "name_on"]:
+                        names = self._get_string_values(keyword.value)
+                        if names:
+                            self._add_translation(self.current_class, keyword.arg, names[0])
                 # Handle positional name if it's the first argument
-                if node.args and isinstance(node.args[0], ast.Constant):
-                    # But only if it's likely a name (string)
-                    if isinstance(node.args[0].value, str):
-                        name_value = node.args[0].value
+                if node.args:
+                    names = self._get_string_values(node.args[0])
+                    if names:
+                        name_value = names[0]
                         self._add_translation(self.current_class, "name", name_value)
 
                 # If this is a resettable sensor and we found a name, add the reset name translation
@@ -77,8 +105,9 @@ class TranslationExtractor(ast.NodeVisitor):
                     if keyword.arg == "options" and isinstance(keyword.value, ast.List):
                         options = {}
                         for i, elt in enumerate(keyword.value.elts):
-                            if isinstance(elt, ast.Constant) and isinstance(elt.value, str) and elt.value.strip():
-                                options[str(i)] = elt.value
+                            opt_values = self._get_string_values(elt)
+                            if opt_values and opt_values[0].strip():
+                                options[str(i)] = opt_values[0]
                         if options:
                             self._add_translation(self.current_class, "options", options)
 
@@ -97,8 +126,9 @@ class TranslationExtractor(ast.NodeVisitor):
                         if isinstance(node.value, ast.List):
                             options = {}
                             for i, elt in enumerate(node.value.elts):
-                                if isinstance(elt, ast.Constant) and isinstance(elt.value, str) and elt.value.strip():
-                                    options[str(i)] = elt.value
+                                opt_values = self._get_string_values(elt)
+                                if opt_values and opt_values[0].strip():
+                                    options[str(i)] = opt_values[0]
                             if options:
                                 self._add_translation(self.current_class, "options", options)
 
@@ -127,8 +157,10 @@ class TranslationExtractor(ast.NodeVisitor):
                 bit = str(node.pattern.value.value)
                 # Look for return "..." in the body
                 for body_node in node.body:
-                    if isinstance(body_node, ast.Return) and isinstance(body_node.value, ast.Constant):
-                        self._add_alarm(self.current_class, bit, body_node.value.value)
+                    if isinstance(body_node, ast.Return):
+                        names = self._get_string_values(body_node.value)
+                        if names and names[0].strip():
+                            self._add_alarm(self.current_class, bit, names[0])
 
         self.generic_visit(node)
 

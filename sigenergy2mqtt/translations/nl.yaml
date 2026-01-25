@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is
+  name: Instelwaarde vaste aanpassing actief vermogen fase {phase}
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is
+  name: Instelwaarde vaste aanpassing reactief vermogen fase {phase}
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-100,00, 100,00]"
+  name: Instelwaarde percentage aanpassing actief vermogen fase {phase}
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-60,00, 60,00]"
+  name: Instelwaarde vaste aanpassing Q/S fase {phase}
 Reserved40026:
   name: Gereserveerd
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt; >0 kopen van net; <0 verkopen aan net"
+  name: Actief vermogen fase {phase}
 GridPhaseReactivePower:
   attributes:
     comment: Gegevens verzameld door netsensor bij net-naar-systeem controlepunt
+  name: Reactief vermogen fase {phase}
 AvailableMaxChargingCapacity:
   name: Beschikbare Max Laadcapaciteit
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: Inschakelen
   name_off: Uitschakelen
+LineVoltage:
+  name: '{phase} Lijnspanning'
+PhaseVoltage:
+  name: Fasespanning
+PhaseCurrent:
+  name: Fasestroom
+PlantPhaseActivePower:
+  name: Actief vermogen fase {phase}
+PlantPhaseReactivePower:
+  name: Reactief vermogen fase {phase}
+SmartLoadTotalConsumption:
+  name: Totaal verbruik slimme verbruiker {smart_load_index}
+SmartLoadPower:
+  name: Vermogen slimme verbruiker {smart_load_index}
+ReservedGridPhaseVoltage:
+  name: Spanning fase {phase}
+ReservedGridPhaseCurrent:
+  name: Stroom fase {phase}

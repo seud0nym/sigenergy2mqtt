@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N
+  name: Valeur cible de réglage fixe de la puissance active de la phase {phase}
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N
+  name: Valeur cible de réglage fixe de la puissance réactive de la phase {phase}
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N. Plage : [-100,00, 100,00]"
+  name: Valeur cible de réglage du pourcentage de puissance active de la phase {phase}
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N. Plage : [-60,00, 60,00]"
+  name: Valeur cible de réglage fixe Q/S de la phase {phase}
 Reserved40026:
   name: Réservé
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "Données collectées par le capteur réseau au point de contrôle réseau/système ; >0 achat au réseau ; <0 vente au réseau"
+  name: Puissance active de la phase {phase}
 GridPhaseReactivePower:
   attributes:
     comment: Données collectées par le capteur réseau au point de contrôle réseau/système
+  name: Puissance réactive de la phase {phase}
 AvailableMaxChargingCapacity:
   name: Capacité de Charge Max Disponible
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: Allumer
   name_off: Éteindre
+LineVoltage:
+  name: '{phase} Tension de ligne'
+PhaseVoltage:
+  name: Tension de phase
+PhaseCurrent:
+  name: Courant de phase
+PlantPhaseActivePower:
+  name: Puissance active de la phase {phase}
+PlantPhaseReactivePower:
+  name: Puissance réactive de la phase {phase}
+SmartLoadTotalConsumption:
+  name: Consommation totale de la charge intelligente {smart_load_index}
+SmartLoadPower:
+  name: Puissance de la charge intelligente {smart_load_index}
+ReservedGridPhaseVoltage:
+  name: Tension de la phase {phase}
+ReservedGridPhaseCurrent:
+  name: Courant de la phase {phase}

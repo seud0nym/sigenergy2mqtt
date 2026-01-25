@@ -3,6 +3,7 @@
         ".git/{index,*refs,*HEAD}",
         ".git/{info,lfs,logs,refs,objects}/**",
         ".vscode",
+        "scripts/update_en_translation.py",
         "sigenergy2mqtt/translations",
         "tests",
     ],

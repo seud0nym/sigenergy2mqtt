@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
   attributes:
     comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
 PhaseActivePowerFixedAdjustmentTargetValue:
+  name: Phase {phase} Active Power Fixed Adjustment Target Value
   attributes:
     comment: Valid only when Output Type is L1/L2/L3/N
 PhaseReactivePowerFixedAdjustmentTargetValue:
+  name: Phase {phase} Reactive Power Fixed Adjustment Target Value
   attributes:
     comment: Valid only when Output Type is L1/L2/L3/N
 PhaseActivePowerPercentageAdjustmentTargetValue:
+  name: Phase {phase} Active Power Percentage Adjustment Target Value
   attributes:
     comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]'
 PhaseQSAdjustmentTargetValue:
+  name: Phase {phase} Q/S Fixed Adjustment Target Value
   attributes:
     comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
 Reserved40026:
@@ -334,6 +338,12 @@ OutputType:
     '1': L1/L2/L3
     '2': L1/L2/L3/N
     '3': L1/L2/N
+LineVoltage:
+  name: '{phase} Line Voltage'
+PhaseVoltage:
+  name: Phase Voltage
+PhaseCurrent:
+  name: Phase Current
 PowerFactor:
   name: Power Factor
 PACKBCUCount:
@@ -428,6 +438,10 @@ MaxApparentPower:
     comment: This should be the base value of all reactive power adjustment actions
 PlantBatterySoC:
   name: Battery SoC
+PlantPhaseActivePower:
+  name: Phase {phase} Active Power
+PlantPhaseReactivePower:
+  name: Phase {phase} Reactive Power
 GeneralAlarm1:
   name: PCS Alarms 1
   attributes:
@@ -486,9 +500,11 @@ AvailableMaxDischargingPower:
 PlantRunningState:
   name: Running State
 GridPhaseActivePower:
+  name: Phase {phase} Active Power
   attributes:
     comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
 GridPhaseReactivePower:
+  name: Phase {phase} Reactive Power
   attributes:
     comment: Data collected from grid sensor at grid to system checkpoint
 AvailableMaxChargingCapacity:
@@ -525,6 +541,10 @@ TotalLoadDailyConsumption:
   name: Daily Consumption
 TotalLoadConsumption:
   name: Lifetime Consumption
+SmartLoadTotalConsumption:
+  name: Smart Load {smart_load_index} Total Consumption
+SmartLoadPower:
+  name: Smart Load {smart_load_index} Power
 ThirdPartyPVPower:
   name: Third-Party PV Power
 ThirdPartyLifetimePVEnergy:
@@ -592,6 +612,10 @@ GeneralLoadPower:
   name: General Load Power
 TotalLoadPower:
   name: Total Load Power
+ReservedGridPhaseVoltage:
+  name: Phase {phase} Voltage
+ReservedGridPhaseCurrent:
+  name: Phase {phase} Current
 BatteryChargingPower:
   name: Battery Charging Power
   attributes:

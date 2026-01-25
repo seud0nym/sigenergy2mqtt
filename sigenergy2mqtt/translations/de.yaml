@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Nur gültig bei Ausgangstyp L1/L2/L3/N
+  name: Phase {phase} Wirkleistung Festwertanpassung Sollwert
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Nur gültig bei Ausgangstyp L1/L2/L3/N
+  name: Phase {phase} Blindleistung Festwertanpassung Sollwert
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Nur gültig bei Ausgangstyp L1/L2/L3/N. Bereich: [-100,00, 100,00]"
+  name: Phase {phase} Wirkleistung Prozentanpassung Sollwert
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Nur gültig bei Ausgangstyp L1/L2/L3/N. Bereich: [-60,00, 60,00]"
+  name: Phase {phase} Q/S-Festwertanpassung Sollwert
 Reserved40026:
   name: Reserviert
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten; >0 Netzbezug; <0 Netzeinspeisung"
+  name: Phase {phase} Wirkleistung
 GridPhaseReactivePower:
   attributes:
     comment: Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten
+  name: Phase {phase} Blindleistung
 AvailableMaxChargingCapacity:
   name: Verfügbare Max. Ladekapazität
   attributes:
@@ -920,3 +926,21 @@ cli:
 WriteOnlySensor:
   name_on: Einschalten
   name_off: Ausschalten
+LineVoltage:
+  name: '{phase} Außenleiterspannung'
+PhaseVoltage:
+  name: Phasenspannung
+PhaseCurrent:
+  name: Phasenstrom
+PlantPhaseActivePower:
+  name: Phase {phase} Wirkleistung
+PlantPhaseReactivePower:
+  name: Phase {phase} Blindleistung
+SmartLoadTotalConsumption:
+  name: Smart Load {smart_load_index} Gesamtverbrauch
+SmartLoadPower:
+  name: Smart Load {smart_load_index} Leistung
+ReservedGridPhaseVoltage:
+  name: Phase {phase} Spannung
+ReservedGridPhaseCurrent:
+  name: Phase {phase} Strom

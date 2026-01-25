@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
+  name: Valor-alvo de ajuste fixo de potência ativa da fase {phase}
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
+  name: Valor-alvo de ajuste fixo de potência reativa da fase {phase}
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-100,00, 100,00]"
+  name: Valor-alvo de ajuste de percentagem de potência ativa da fase {phase}
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-60,00, 60,00]"
+  name: Valor-alvo de ajuste fixo de Q/S da fase {phase}
 Reserved40026:
   name: Reservado
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
+  name: Potência ativa da fase {phase}
 GridPhaseReactivePower:
   attributes:
     comment: Dados recolhidos do sensor de rede no ponto de controlo rede/sistema
+  name: Potência reativa da fase {phase}
 AvailableMaxChargingCapacity:
   name: Capacidade de Carga Máx Disponível
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: Ligar
   name_off: Desligar
+LineVoltage:
+  name: '{phase} Tensão de linha'
+PhaseVoltage:
+  name: Tensão de fase
+PhaseCurrent:
+  name: Corrente de fase
+PlantPhaseActivePower:
+  name: Potência ativa da fase {phase}
+PlantPhaseReactivePower:
+  name: Potência reativa da fase {phase}
+SmartLoadTotalConsumption:
+  name: Consumo total de carga inteligente {smart_load_index}
+SmartLoadPower:
+  name: Potência de carga inteligente {smart_load_index}
+ReservedGridPhaseVoltage:
+  name: Tensão da fase {phase}
+ReservedGridPhaseCurrent:
+  name: Corrente da fase {phase}

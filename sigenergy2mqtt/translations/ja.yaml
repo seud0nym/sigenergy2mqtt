@@ -82,15 +82,19 @@ IndependentPhasePowerControl:
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: 出力タイプがL1/L2/L3/Nの場合のみ有効
+  name: フェーズ{phase} 有効電力固定調整目標値
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: 出力タイプがL1/L2/L3/Nの場合のみ有効
+  name: フェーズ{phase} 無効電力固定調整目標値
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "出力タイプがL1/L2/L3/Nの場合のみ有効。範囲：[-100.00, 100.00]"
+  name: フェーズ{phase} 有効電力パーセンテージ調整目標値
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "出力タイプがL1/L2/L3/Nの場合のみ有効。範囲：[-60.00, 60.00]"
+  name: フェーズ{phase} Q/S固定調整目標値
 Reserved40026:
   name: 予約
 RemoteEMS:
@@ -486,9 +490,11 @@ PlantRunningState:
 GridPhaseActivePower:
   attributes:
     comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
+  name: フェーズ{phase} 有効電力
 GridPhaseReactivePower:
   attributes:
     comment: 系統センサーで系統からシステムへのチェックポイントで収集されたデータ
+  name: フェーズ{phase} 無効電力
 AvailableMaxChargingCapacity:
   name: 利用可能最大充電容量
   attributes:
@@ -919,3 +925,21 @@ cli:
 WriteOnlySensor:
   name_on: 電源オン
   name_off: 電源オフ
+LineVoltage:
+  name: '{phase} 線間電圧'
+PhaseVoltage:
+  name: 相電圧
+PhaseCurrent:
+  name: 相電流
+PlantPhaseActivePower:
+  name: フェーズ{phase} 有効電力
+PlantPhaseReactivePower:
+  name: フェーズ{phase} 無効電力
+SmartLoadTotalConsumption:
+  name: スマートロード {smart_load_index} 合計消費量
+SmartLoadPower:
+  name: スマートロード {smart_load_index} 電力
+ReservedGridPhaseVoltage:
+  name: フェーズ{phase} 電圧
+ReservedGridPhaseCurrent:
+  name: フェーズ{phase} 電流
