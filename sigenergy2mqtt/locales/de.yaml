@@ -47,6 +47,8 @@ ACChargerStatus:
   name: AC-Ladegerät Start/Stopp
   attributes:
     comment: 0:Start 1:Stopp
+  name_off: Stoppen
+  name_on: Starten
 ACChargerOutputCurrent:
   name: Ausgangsstrom
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: DC-Ladegerät Start/Stopp
   attributes:
     comment: 0:Start 1:Stopp
+  name_off: Stoppen
+  name_on: Starten
 ReservedInverterRemoteEMSDispatch:
   name: Fern-EMS-Dispatch
 InverterActivePowerFixedValueAdjustment:
@@ -904,3 +908,6 @@ cli:
   show_version:
     help: Versionsnummer anzeigen, dann sofort beenden.
 
+WriteOnlySensor:
+  name_on: Einschalten
+  name_off: Ausschalten

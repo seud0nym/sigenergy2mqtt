@@ -32,6 +32,8 @@ class TranslationExtractor(ast.NodeVisitor):
                 for keyword in node.keywords:
                     if keyword.arg == "name" and isinstance(keyword.value, ast.Constant):
                         self._add_translation(self.current_class, "name", keyword.value.value)
+                    elif keyword.arg in ["name_off", "name_on"] and isinstance(keyword.value, ast.Constant):
+                        self._add_translation(self.current_class, keyword.arg, keyword.value.value)
                 # Handle positional name if it's the first argument
                 if node.args and isinstance(node.args[0], ast.Constant):
                     # But only if it's likely a name (string)
@@ -210,6 +212,7 @@ if __name__ == "__main__":
     all_translations = {
         "AlarmSensor": {"no_alarm": "No Alarm", "unknown_alarm": "Unknown (bit{bit}∈{value})"},
         "ReadOnlySensor": {"attributes": {"source": "Modbus Register {address}", "source_range": "Modbus Registers {start}-{end}"}},
+        "WriteOnlySensor": {"name_on": "Power On", "name_off": "Power Off"},
         "MqttOverriddenSensor": {"attributes": {"source": "MQTT Override"}},
     }
 

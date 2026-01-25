@@ -47,6 +47,8 @@ ACChargerStatus:
   name: 交流充电器 启动/停止
   attributes:
     comment: 0:启动 1:停止
+  name_off: 停止
+  name_on: 启动
 ACChargerOutputCurrent:
   name: 输出电流
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: 直流充电器 启动/停止
   attributes:
     comment: 0:启动 1:停止
+  name_off: 停止
+  name_on: 启动
 ReservedInverterRemoteEMSDispatch:
   name: 远程EMS调度
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: 验证配置后退出。
   show_version:
     help: 显示版本号后退出。
+WriteOnlySensor:
+  name_on: 开机
+  name_off: 关机

@@ -47,6 +47,8 @@ ACChargerStatus:
   name: AC Lader Start/Stop
   attributes:
     comment: 0:Start 1:Stop
+  name_off: Stoppen
+  name_on: Starten
 ACChargerOutputCurrent:
   name: Uitgangsstroom
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: DC Lader Start/Stop
   attributes:
     comment: 0:Start 1:Stop
+  name_off: Stoppen
+  name_on: Starten
 ReservedInverterRemoteEMSDispatch:
   name: Extern EMS Dispatch
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: Valideer de configuratie en sluit dan af.
   show_version:
     help: Toon het versienummer en sluit dan af.
+WriteOnlySensor:
+  name_on: Inschakelen
+  name_off: Uitschakelen

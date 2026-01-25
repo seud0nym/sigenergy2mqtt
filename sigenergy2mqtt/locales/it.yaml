@@ -47,6 +47,8 @@ ACChargerStatus:
   name: Caricatore CA Avvia/Ferma
   attributes:
     comment: 0:Avvia 1:Ferma
+  name_off: Arrestare
+  name_on: Avviare
 ACChargerOutputCurrent:
   name: Corrente di Uscita
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: Caricatore CC Avvia/Ferma
   attributes:
     comment: 0:Avvia 1:Ferma
+  name_off: Arrestare
+  name_on: Avviare
 ReservedInverterRemoteEMSDispatch:
   name: Dispatch EMS Remoto
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: Valida la configurazione, poi esce immediatamente.
   show_version:
     help: Mostra il numero di versione, poi esce immediatamente.
+WriteOnlySensor:
+  name_on: Accendere
+  name_off: Spegnere

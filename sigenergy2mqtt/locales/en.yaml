@@ -5,6 +5,9 @@ ReadOnlySensor:
   attributes:
     source: Modbus Register {address}
     source_range: Modbus Registers {start}-{end}
+WriteOnlySensor:
+  name_on: Power On
+  name_off: Power Off
 MqttOverriddenSensor:
   attributes:
     source: MQTT Override
@@ -44,6 +47,8 @@ ProtocolPublished:
   name: Protocol Published
 ACChargerStatus:
   name: AC Charger Stop/Start
+  name_off: Stop
+  name_on: Start
   attributes:
     comment: 0:Start 1:Stop
 ACChargerOutputCurrent:
@@ -707,6 +712,8 @@ ReservedGridCode:
   name: Grid Code
 DCChargerStatus:
   name: DC Charger Stop/Start
+  name_off: Stop
+  name_on: Start
   attributes:
     comment: 0:Start 1:Stop
 ReservedInverterRemoteEMSDispatch:

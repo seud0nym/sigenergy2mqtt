@@ -47,6 +47,8 @@ ACChargerStatus:
   name: Carregador CA Iniciar/Parar
   attributes:
     comment: 0:Iniciar 1:Parar
+  name_off: Parar
+  name_on: Iniciar
 ACChargerOutputCurrent:
   name: Corrente de Saída
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: Carregador CC Iniciar/Parar
   attributes:
     comment: 0:Iniciar 1:Parar
+  name_off: Parar
+  name_on: Iniciar
 ReservedInverterRemoteEMSDispatch:
   name: Despacho EMS Remoto
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: Validar configuração e sair.
   show_version:
     help: Mostrar número da versão e sair.
+WriteOnlySensor:
+  name_on: Ligar
+  name_off: Desligar

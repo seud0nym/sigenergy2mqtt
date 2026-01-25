@@ -47,6 +47,8 @@ ACChargerStatus:
   name: Démarrer/Arrêter Chargeur CA
   attributes:
     comment: 0:Démarrer 1:Arrêter
+  name_off: Arrêter
+  name_on: Démarrer
 ACChargerOutputCurrent:
   name: Courant de Sortie
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: Démarrer/Arrêter Chargeur CC
   attributes:
     comment: 0:Démarrer 1:Arrêter
+  name_off: Arrêter
+  name_on: Démarrer
 ReservedInverterRemoteEMSDispatch:
   name: Dispatch EMS à Distance
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: Valide la configuration, puis quitte immédiatement.
   show_version:
     help: Affiche le numéro de version, puis quitte immédiatement.
+WriteOnlySensor:
+  name_on: Allumer
+  name_off: Éteindre

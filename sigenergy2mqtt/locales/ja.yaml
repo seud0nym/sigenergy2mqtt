@@ -47,6 +47,8 @@ ACChargerStatus:
   name: AC充電器 開始/停止
   attributes:
     comment: 0:開始 1:停止
+  name_off: 停止
+  name_on: 開始
 ACChargerOutputCurrent:
   name: 出力電流
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: DC充電器 開始/停止
   attributes:
     comment: 0:開始 1:停止
+  name_off: 停止
+  name_on: 開始
 ReservedInverterRemoteEMSDispatch:
   name: リモートEMSディスパッチ
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: 設定を検証して終了。
   show_version:
     help: バージョン番号を表示して終了。
+WriteOnlySensor:
+  name_on: 電源オン
+  name_off: 電源オフ

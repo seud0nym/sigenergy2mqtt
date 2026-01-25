@@ -47,6 +47,8 @@ ACChargerStatus:
   name: AC 충전기 시작/정지
   attributes:
     comment: 0:시작 1:정지
+  name_off: 정지
+  name_on: 시작
 ACChargerOutputCurrent:
   name: 출력 전류
   attributes:
@@ -710,6 +712,8 @@ DCChargerStatus:
   name: DC 충전기 시작/정지
   attributes:
     comment: 0:시작 1:정지
+  name_off: 정지
+  name_on: 시작
 ReservedInverterRemoteEMSDispatch:
   name: 원격 EMS 디스패치
 InverterActivePowerFixedValueAdjustment:
@@ -903,3 +907,6 @@ cli:
     help: 설정 검증 후 종료.
   show_version:
     help: 버전 번호 표시 후 종료.
+WriteOnlySensor:
+  name_on: 전원 켜기
+  name_off: 전원 끄기

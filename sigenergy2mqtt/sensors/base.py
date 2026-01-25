@@ -1002,7 +1002,12 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
         self["platform"] = "button"
         self["enabled_by_default"] = True
         self._payloads = {"off": payload_off, "on": payload_on}
-        self._names = {"off": name_off, "on": name_on}
+
+        # Use shared translation for defaults, specific for overrides
+        t_off = _t("WriteOnlySensor.name_off", name_off) if name_off == "Power Off" else _t(f"{self.__class__.__name__}.name_off", name_off)
+        t_on = _t("WriteOnlySensor.name_on", name_on) if name_on == "Power On" else _t(f"{self.__class__.__name__}.name_on", name_on)
+
+        self._names = {"off": t_off, "on": t_on}
         self._icons = {"off": icon_off, "on": icon_on}
         self._values = {"off": value_off, "on": value_on}
 
