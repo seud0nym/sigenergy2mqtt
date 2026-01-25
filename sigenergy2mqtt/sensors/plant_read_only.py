@@ -129,8 +129,12 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown Mode: {value}"
         else:
             return f"Unknown Mode: {value}"
 
@@ -169,8 +173,8 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)):
+            return self._get_option(int(value)) or f"Unknown Status: {value}"
         else:
             return f"Unknown Status: {value}"
 
@@ -272,8 +276,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)):
+            return self._get_option(int(value)) or f"Unknown Status: {value}"
         else:
             return f"Unknown Status: {value}"
 

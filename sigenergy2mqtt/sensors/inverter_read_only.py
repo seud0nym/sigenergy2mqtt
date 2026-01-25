@@ -1815,7 +1815,11 @@ class DCChargerRunningState(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown State code: {value}"
         else:
             return f"Unknown State code: {value}"

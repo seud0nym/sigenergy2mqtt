@@ -113,7 +113,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         self._protocol_version = protocol_version
 
         self["platform"] = "sensor"
-        self["name"] = _t(f"{self.__class__.__name__}.name", name)
+        self["name"] = _t(f"{self.__class__.__name__}.name", name, self.debug_logging)
         self["object_id"] = object_id
         self["unique_id"] = unique_id
         self["device_class"] = device_class
@@ -425,7 +425,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = dict((k, v) for k, v in self.items() if v is not None)
         if "options" in self:
-            components["options"] = [_t(f"{self.__class__.__name__}.options.{i}", x) for i, x in enumerate(cast(list[str], self["options"])) if x is not None and x != ""]
+            components["options"] = [_t(f"{self.__class__.__name__}.options.{i}", x, self.debug_logging) for i, x in enumerate(cast(list[str], self["options"])) if x is not None and x != ""]
         return {self.unique_id: dict(components)}
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
@@ -522,6 +522,37 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
             self._states.append((time.time(), state))
             if len(self._states) > self._max_states:
                 self._states = self._states[-self._max_states :]
+
+    def _get_option(self, index: int) -> str | None:
+        if "options" in self:
+            options = cast(list[str], self["options"])
+            if 0 <= index < len(options):
+                option = options[index]
+                if option is not None and option != "":
+                    return _t(f"{self.__class__.__name__}.options.{index}", option, self.debug_logging)
+        return None
+
+    def _get_option_index(self, value: str | int | float) -> int:
+        index = -1
+        try:
+            index = int(float(value))
+        except (ValueError, TypeError):
+            pass
+
+        if "options" in self:
+            options = cast(list[str], self["options"])
+            if 0 <= index < len(options):
+                return index
+
+            for i, option in enumerate(options):
+                if option != "" and option is not None:
+                    if _t(f"{self.__class__.__name__}.options.{i}", option, self.debug_logging) == str(value):
+                        return i
+            # Try finding as raw English string
+            for i, option in enumerate(options):
+                if option == str(value):
+                    return i
+        raise ValueError(f"'{value}' is not a valid option")
 
     def state2raw(self, state: float | int | str) -> float | int | str | None:
         if state is None:
@@ -738,9 +769,9 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         attributes = super().get_attributes()
         source_key = "ReadOnlySensor.attributes.source" if self.count == 1 else "ReadOnlySensor.attributes.source_range"
         source_default = f"Modbus Register {self.address}" if self.count == 1 else f"Modbus Registers {self.address}-{self.address + self.count - 1}"
-        attributes["source"] = _t(source_key, source_default).format(address=self.address, start=self.address, end=self.address + self.count - 1)
+        attributes["source"] = _t(source_key, source_default, self.debug_logging).format(address=self.address, start=self.address, end=self.address + self.count - 1)
         if "comment" in self:
-            attributes["comment"] = _t(f"{self.__class__.__name__}.comment", cast(str, self["comment"]))
+            attributes["comment"] = _t(f"{self.__class__.__name__}.comment", cast(str, self["comment"]), self.debug_logging)
         return attributes
 
 
@@ -884,8 +915,10 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
     def _raw2state(self, raw_value: float | int | str) -> float | int | str:
         if isinstance(raw_value, str):
             return raw_value
-        if "options" in self and isinstance(raw_value, int):
-            return cast(list[str], self["options"])[raw_value]
+        if "options" in self and isinstance(raw_value, (int, float)):
+            option = self._get_option(int(raw_value))
+            if option:
+                return option
         if isinstance(self, WriteOnlySensor) and isinstance(raw_value, str):
             return self._names["off"] if self._values["off"] == raw_value else self._names["on"] if self._values["on"] == raw_value else raw_value
         if isinstance(self, SwitchSensor) and isinstance(raw_value, str):
@@ -1004,8 +1037,8 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
         self._payloads = {"off": payload_off, "on": payload_on}
 
         # Use shared translation for defaults, specific for overrides
-        t_off = _t("WriteOnlySensor.name_off", name_off) if name_off == "Power Off" else _t(f"{self.__class__.__name__}.name_off", name_off)
-        t_on = _t("WriteOnlySensor.name_on", name_on) if name_on == "Power On" else _t(f"{self.__class__.__name__}.name_on", name_on)
+        t_off = _t("WriteOnlySensor.name_off", name_off, self.debug_logging) if name_off == "Power Off" else _t(f"{self.__class__.__name__}.name_off", name_off, self.debug_logging)
+        t_on = _t("WriteOnlySensor.name_on", name_on, self.debug_logging) if name_on == "Power On" else _t(f"{self.__class__.__name__}.name_on", name_on, self.debug_logging)
 
         self._names = {"off": t_off, "on": t_on}
         self._icons = {"off": icon_off, "on": icon_on}
@@ -1289,41 +1322,30 @@ class SelectSensor(ReadWriteSensor):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown Mode: {value}"
         else:
             return f"Unknown Mode: {value}"
 
     async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         try:
-            index = int(value)
+            index = self._get_option_index(value)
         except ValueError:
-            index = cast(list[str], self["options"]).index(str(value))
+            logging.error(f"{self.name} invalid value '{value}': Not a valid option or index")
+            return False
         return await super().set_value(modbus_client, mqtt_client, index, source, handler)
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         try:
-            index = cast(list[str], self["options"]).index(str(raw_value))
-            option = cast(list[str], self["options"])[index]
-            if len(option.strip()) == 0 or option is None:
-                logging.error(f"{self.name} invalid value '{raw_value}': Empty option?")
-                return False
-            else:
-                return True
+            self._get_option_index(raw_value)
+            return True
         except ValueError:
-            try:
-                index = int(raw_value)
-                if 0 <= index < len(cast(list[str], self["options"])):
-                    option = cast(list[str], self["options"])[index]
-                    if len(option.strip()) == 0 or option is None:
-                        logging.error(f"{self.name} invalid value '{raw_value}': Empty option?")
-                        return False
-                    else:
-                        return True
-            except ValueError:
-                pass
-        logging.error(f"{self.name} invalid value '{raw_value}': Not a valid option or index")
-        return False
+            logging.error(f"{self.name} invalid value '{raw_value}': Not a valid option or index")
+            return False
 
 
 class SwitchSensor(ReadWriteSensor):
@@ -1429,7 +1451,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         if raw:
             return value
         elif value is None or value == 0 or (isinstance(value, list) and sum(cast(list[int], value)) == 0) or value == 65535:
-            return _t("AlarmSensor.no_alarm", self.NO_ALARM)
+            return _t("AlarmSensor.no_alarm", self.NO_ALARM, self.debug_logging)
         else:
             if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
                 logging.warning(f"{self.__class__.__name__} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
@@ -1442,9 +1464,9 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                     if alarm & (1 << bit_position):
                         description = self.decode_alarm_bit(bit_position)
                         if description:
-                            active_alarms.append(_t(f"{self.__class__.__name__}.alarm.{bit_position}", description))
+                            active_alarms.append(_t(f"{self.__class__.__name__}.alarm.{bit_position}", description, self.debug_logging))
                         else:
-                            active_alarms.append(_t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value})").format(bit=bit_position, value=value))
+                            active_alarms.append(_t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value}, self.debug_logging)").format(bit=bit_position, value=value))
                             logging.warning(f"{self.__class__.__name__} Unknown {self.alarm_type} alarm bit {bit_position} set in value {value}")
             except TypeError as e:
                 logging.warning(f"{self.__class__.__name__} Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")
@@ -1673,7 +1695,7 @@ class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverte
         if republish and len(self._states) > 0:
             return self._apply_gain_and_precision(self._states[-1][1], raw) if isinstance(self._states[-1][1], (float, int)) else self._states[-1][1]
         else:
-            no_alarm = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM)
+            no_alarm = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM, self.debug_logging)
             result: str = no_alarm
             for alarm in [a for a in self.alarms if a.publishable]:
                 state = cast(str, await alarm.get_state(raw=False, republish=False, max_length=sys.maxsize, **kwargs))
@@ -1743,8 +1765,12 @@ class RunningStateSensor(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown State code: {value}"
         else:
             return f"Unknown State code: {value}"
 
@@ -1798,7 +1824,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         updater: dict[str, Any] = {
             "platform": "number",
-            "name": _t(f"{self.__class__.__name__}.name_reset", f"Set {self.name}"),
+            "name": _t(f"{self.__class__.__name__}.name_reset", f"Set {self.name}", self.debug_logging),
             "object_id": f"{self['object_id']}_reset",
             "unique_id": f"{self.unique_id}_reset",
             "icon": "mdi:numeric",
