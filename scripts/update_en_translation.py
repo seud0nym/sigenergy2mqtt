@@ -29,6 +29,8 @@ class TranslationExtractor(ast.NodeVisitor):
         self.current_class = None
         self.is_resettable = False
         self.resettable_bases = {"ResettableAccumulationSensor", "EnergyDailyAccumulationSensor", "EnergyLifetimeAccumulationSensor"}
+        self.class_bases = {}
+        self.local_vars = {}
 
     def _get_string_values(self, node):
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -48,10 +50,41 @@ class TranslationExtractor(ast.NodeVisitor):
                         if isinstance(val.value.func.value, ast.Name):
                             parts.append(f"{{{val.value.func.value.id}}}")
                     else:
-                        parts.append("{}")
+                        # Be more aggressive: try to find any Name in the expression
+                        found_names = [n.id for n in ast.walk(val.value) if isinstance(n, ast.Name)]
+                        if found_names:
+                            clean_names = [n for n in found_names if n != "self"]
+                            parts.append(f"{{{clean_names[0] if clean_names else found_names[0]}}}")
+                        else:
+                            parts.append("{}")
             return ["".join(parts)]
         if isinstance(node, ast.IfExp):
             return self._get_string_values(node.body) + self._get_string_values(node.orelse)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            left = self._get_string_values(node.left)
+            right = self._get_string_values(node.right)
+            if left and right:
+                return [l + r for l in left for r in right]  # noqa: E741
+            return left or right
+        if isinstance(node, ast.List):
+            res = []
+            for elt in node.elts:
+                res.extend(self._get_string_values(elt))
+            return res
+        if isinstance(node, ast.Call):
+            # Handle " ".join(words)
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "join":
+                if isinstance(node.func.value, ast.Constant) and isinstance(node.func.value.value, str):
+                    sep = node.func.value.value
+                    if node.args:
+                        vals = self._get_string_values(node.args[0])
+                        if vals:
+                            return [sep.join(vals)]
+                        else:
+                            # If we can't resolve the items, try to find names in the argument
+                            found_names = [n.id for n in ast.walk(node.args[0]) if isinstance(n, ast.Name)]
+                            if found_names:
+                                return [f"{{{found_names[0]}}}"]
         return []
 
     def visit_ClassDef(self, node):
@@ -61,14 +94,33 @@ class TranslationExtractor(ast.NodeVisitor):
 
         # Check if class inherits from a resettable base
         self.is_resettable = False
+        bases = []
         for base in node.bases:
-            if isinstance(base, ast.Name) and base.id in self.resettable_bases:
-                self.is_resettable = True
-                break
+            if isinstance(base, ast.Name):
+                bases.append(base.id)
+                if base.id in self.resettable_bases:
+                    self.is_resettable = True
+            elif isinstance(base, ast.Attribute) and isinstance(base.attr, str):
+                bases.append(base.attr)
+
+        if bases:
+            self.class_bases[node.name] = bases
 
         self.generic_visit(node)
         self.current_class = prev_class
         self.is_resettable = prev_resettable
+
+    def visit_FunctionDef(self, node):
+        prev_vars = self.local_vars
+        self.local_vars = {}
+        self.generic_visit(node)
+        self.local_vars = prev_vars
+
+    def visit_AsyncFunctionDef(self, node):
+        prev_vars = self.local_vars
+        self.local_vars = {}
+        self.generic_visit(node)
+        self.local_vars = prev_vars
 
     def visit_Call(self, node):
         if not self.current_class:
@@ -89,12 +141,47 @@ class TranslationExtractor(ast.NodeVisitor):
                         names = self._get_string_values(keyword.value)
                         if names:
                             self._add_translation(self.current_class, keyword.arg, names[0])
-                # Handle positional name if it's the first argument
-                if node.args:
-                    names = self._get_string_values(node.args[0])
-                    if names:
-                        name_value = names[0]
-                        self._add_translation(self.current_class, "name", name_value)
+
+                # If name not found in keywords, try positional args
+                if not name_value and node.args:
+                    # ModbusDevice and its subclasses have type as first argument, name as second
+                    arg_index = 0
+                    bases = self.class_bases.get(self.current_class, [])
+                    if "ModbusDevice" in bases or any(b in bases for b in ["Inverter", "ACCharger", "DCCharger", "ESS", "PVString", "PowerPlant", "GridSensor", "GridCode"]):
+                        arg_index = 1
+
+                    if len(node.args) > arg_index:
+                        # Try to resolve from local variables FIRST
+                        if isinstance(node.args[arg_index], ast.Name):
+                            var_name = node.args[arg_index].id  # type: ignore
+                            if var_name in self.local_vars:
+                                name_value = self.local_vars[var_name]
+
+                        # Fallback to direct string extraction
+                        if not name_value:
+                            names = self._get_string_values(node.args[arg_index])
+                            if names:
+                                name_value = names[0]
+
+                        # Handle specific dynamic cases for Inverter/ESS
+                        if not name_value or name_value in ["{words}", "{name}", "{}"]:
+                            if self.current_class == "Inverter":
+                                name_value = "{model_id} {serial}"
+                            elif self.current_class == "ESS":
+                                name_value = "{model_id} {serial_number} ESS"
+                            elif self.current_class == "PVString":
+                                name_value = "{model_id} {serial_number} PV String {string_number}"
+
+                        # Still no name? Try the model argument (index 4 for ModbusDevice/Device)
+                        if not name_value or name_value in ["{words}", "{name}", "{}"]:
+                            model_index = 4
+                            if len(node.args) > model_index:
+                                model_names = self._get_string_values(node.args[model_index])
+                                if model_names:
+                                    name_value = model_names[0]
+
+                        if name_value:
+                            self._add_translation(self.current_class, "name", name_value)
 
                 # If this is a resettable sensor and we found a name, add the reset name translation
                 if self.is_resettable and name_value:
@@ -144,6 +231,24 @@ class TranslationExtractor(ast.NodeVisitor):
                         if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
                             self._add_attr(self.current_class, target.slice.value, node.value.value)
 
+            # Handle name = "..." (local variable tracking)
+            if isinstance(target, ast.Name):
+                names = self._get_string_values(node.value)
+                if names:
+                    self.local_vars[target.id] = names[0]
+
+            # Handle self.name = "..." or self["name"] = "..."
+            if isinstance(target, ast.Attribute) and target.attr == "name" and isinstance(target.value, ast.Name) and target.value.id == "self":
+                names = self._get_string_values(node.value)
+                if names:
+                    self._add_translation(self.current_class, "name", names[0])
+
+            if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id == "self":
+                if isinstance(target.slice, ast.Constant) and target.slice.value == "name":
+                    names = self._get_string_values(node.value)
+                    if names:
+                        self._add_translation(self.current_class, "name", names[0])
+
         self.generic_visit(node)
 
     def visit_MatchCase(self, node):
@@ -182,6 +287,34 @@ class TranslationExtractor(ast.NodeVisitor):
         if "alarm" not in self.translations[cls]:
             self.translations[cls]["alarm"] = {}
         self.translations[cls]["alarm"][bit] = value
+
+    def propagate_translations(self, data=None):
+        """Propagate options, attributes, and alarm bits from base classes to child classes."""
+        if data is None:
+            data = self.translations
+
+        # Simple BFS-like propagation (one level at a time to handle deep inheritance)
+        changed = True
+        while changed:
+            changed = False
+            for cls, bases in self.class_bases.items():
+                if cls not in data:
+                    data[cls] = {}
+
+                for base in bases:
+                    if base in data:
+                        base_trans = data[base]
+                        for key in ["options", "attributes", "alarm", "name"]:
+                            if key in base_trans:
+                                if key not in data[cls]:
+                                    data[cls][key] = base_trans[key].copy() if isinstance(base_trans[key], dict) else base_trans[key]
+                                    changed = True
+                                elif isinstance(base_trans[key], dict) and isinstance(data[cls][key], dict):
+                                    # Merge dictionaries if child doesn't have some keys
+                                    for subkey, subval in base_trans[key].items():
+                                        if subkey not in data[cls][key]:
+                                            data[cls][key][subkey] = subval
+                                            changed = True
 
 
 class CLIHelpExtractor(ast.NodeVisitor):
@@ -229,7 +362,7 @@ def merge_translations(base, new):
             base[key] = value
 
 
-def propagate_to_other_translations(en_translations: dict, translations_dir: Path):
+def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict):
     """Add new keys to other locale files, preserving existing translations."""
     for locale_file in translations_dir.glob("*.yaml"):
         if locale_file.name == "en.yaml":
@@ -242,8 +375,56 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
         with open(locale_file, "r", encoding="utf-8") as f:
             existing = yaml_parser.load(f) or {}
 
-        # Add new keys from English, preserving existing translations
+        # First, propagate existing translations within the locale based on inheritance
         updated = False
+        changed = True
+        while changed:
+            changed = False
+            for cls, bases in class_bases.items():
+                if cls not in existing:
+                    continue
+
+                for base in bases:
+                    if base in existing:
+                        base_trans = existing[base]
+                        for key in ["options", "attributes", "alarm", "name"]:
+                            if key in base_trans:
+                                if key not in existing[cls]:
+                                    existing[cls][key] = base_trans[key].copy() if isinstance(base_trans[key], dict) else base_trans[key]
+                                    changed = True
+                                    updated = True
+                                elif not isinstance(base_trans[key], dict) and not isinstance(existing[cls][key], dict):
+                                    # Handle simple string values (e.g., 'name')
+                                    # Only update if existing is generic placeholder or matches English
+                                    is_placeholder = any(p in existing[cls][key] for p in ["{name}", "{}", "{words}"])
+                                    is_english = False
+                                    if cls in en_translations and key in en_translations[cls]:
+                                        is_english = existing[cls][key] == en_translations[cls][key]
+
+                                    if is_placeholder or is_english:
+                                        if existing[cls][key] != base_trans[key]:
+                                            existing[cls][key] = base_trans[key]
+                                            changed = True
+                                            updated = True
+                                elif isinstance(base_trans[key], dict) and isinstance(existing[cls][key], dict):
+                                    for subkey, subval in base_trans[key].items():
+                                        # Only update if missing OR if child is still in English
+                                        is_missing = subkey not in existing[cls][key]
+                                        is_english = False
+                                        if not is_missing and cls in en_translations and key in en_translations[cls] and isinstance(en_translations[cls][key], dict) and subkey in en_translations[cls][key]:
+                                            is_english = existing[cls][key][subkey] == en_translations[cls][key][subkey]
+                                        elif not is_missing:
+                                            # If not matched against EN, it might still be a generic placeholder we want to update
+                                            is_placeholder = any(p in str(existing[cls][key][subkey]) for p in ["{name}", "{}", "{words}"])
+                                            is_english = is_placeholder
+
+                                        if is_missing or is_english:
+                                            if existing[cls][key].get(subkey) != subval:
+                                                existing[cls][key][subkey] = subval
+                                                changed = True
+                                                updated = True
+
+        # Add new keys from English, preserving existing translations
         for key, value in en_translations.items():
             if key not in existing:
                 # Add the entire new section
@@ -296,6 +477,18 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                                 existing[key][subkey][subsubkey] = subsubvalue
                                 updated = True
                                 print(f"  Added new subsubkey: {key}.{subkey}.{subsubkey}")
+                    elif existing[key][subkey] != subvalue:
+                        # If existing value exists but template changed in English, update it if it's still in English/Placeholder
+                        is_placeholder = any(p in str(existing[key][subkey]) for p in ["{name}", "{}", "{words}"])
+                        is_english = False
+                        if key in en_translations and isinstance(en_translations[key], dict) and subkey in en_translations[key]:
+                            # We can't easily check 'before' English here, but we can check if it
+                            # was generic or became generic.
+                            pass
+
+                        if is_placeholder:
+                            existing[key][subkey] = subvalue
+                            updated = True
 
         if updated:
             with open(locale_file, "w", encoding="utf-8") as f:
@@ -327,6 +520,10 @@ if __name__ == "__main__":
 
     merge_translations(all_translations, extractor.translations)
 
+    # Propagate inherited translations
+    extractor.propagate_translations()
+    merge_translations(all_translations, extractor.translations)
+
     # Extract CLI help text
     config_init_path = package_dir / "config" / "__init__.py"
     cli_translations = extract_cli_help(config_init_path)
@@ -342,5 +539,5 @@ if __name__ == "__main__":
 
     # Propagate new keys to other locale files
     translations_dir = package_dir / "translations"
-    propagate_to_other_translations(all_translations, translations_dir)
+    propagate_to_other_translations(all_translations, translations_dir, extractor.class_bases)
     print("Done!")
