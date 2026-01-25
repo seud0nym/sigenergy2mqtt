@@ -155,3 +155,58 @@ def test_en_yaml_no_extra_keys():
     """Optional: Check if en.yaml has keys that no longer exist in code?
     Maybe not strictly required, but keeps it clean."""
     pass
+
+
+class CLIHelpExtractor(ast.NodeVisitor):
+    """Extracts help text from argparse add_argument() calls."""
+
+    def __init__(self):
+        self.cli_translations = {}
+
+    def visit_Call(self, node):
+        # Look for _parser.add_argument(...) or parser.add_argument(...)
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "add_argument":
+            dest = None
+            help_text = None
+
+            # Extract keyword arguments
+            for keyword in node.keywords:
+                if keyword.arg == "dest" and isinstance(keyword.value, ast.Constant):
+                    dest = keyword.value.value
+                elif keyword.arg == "dest" and isinstance(keyword.value, ast.Attribute):
+                    # Handle const.SIGENERGY2MQTT_* references
+                    dest = keyword.value.attr
+                elif keyword.arg == "help" and isinstance(keyword.value, ast.Constant):
+                    help_text = keyword.value.value
+
+            # Only add if we have both dest and help
+            if dest and help_text:
+                self.cli_translations[dest] = {"help": help_text}
+
+        self.generic_visit(node)
+
+
+def test_cli_translations_completeness():
+    """Verify that en.yaml contains all CLI help texts from config/__init__.py."""
+    package_dir = Path(__file__).parent.parent.parent / "sigenergy2mqtt"
+    en_yaml_path = package_dir / "locales" / "en.yaml"
+    config_init_path = package_dir / "config" / "__init__.py"
+
+    assert en_yaml_path.exists(), "en.yaml does not exist"
+    assert config_init_path.exists(), "config/__init__.py does not exist"
+
+    with open(en_yaml_path, "r", encoding="utf-8") as f:
+        current_translations = yaml_parser.load(f)
+
+    # Extract CLI help from config/__init__.py
+    extractor = CLIHelpExtractor()
+    tree = ast.parse(config_init_path.read_text(encoding="utf-8"))
+    extractor.visit(tree)
+
+    # Verify cli section exists
+    assert "cli" in current_translations, "cli section is missing from en.yaml"
+
+    # Verify all CLI help texts are present
+    for dest, content in extractor.cli_translations.items():
+        assert dest in current_translations["cli"], f"CLI key '{dest}' is missing from en.yaml"
+        assert "help" in current_translations["cli"][dest], f"CLI key '{dest}' is missing 'help' in en.yaml"

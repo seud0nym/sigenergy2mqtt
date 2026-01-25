@@ -738,3 +738,149 @@ EnphaseVoltage:
   name: Spannung
   attributes:
     source: Enphase Envoy API bei EnphasePVPower-Ableitung
+cli:
+  SIGENERGY2MQTT_CONFIG:
+    help: 'Der Pfad zur JSON-Konfigurationsdatei (Standard: /etc/sigenergy2mqtt.yaml)'
+  SIGENERGY2MQTT_LOG_LEVEL:
+    help: 'Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_DEBUG_SENSOR:
+    help: Einen Sensor zum Debuggen angeben, entweder über die vollständige oder teilweise Entity-ID oder den Sensorklassennamen (z.B. die Angabe von 'daily' würde alle Sensoren mit 'daily' im Namen erfassen), oder einen regulären Ausdruck zum Abgleich mit der Entity-ID oder dem Klassennamen (z.B. '^PowerFactor$' erfasst nur diesen einen Klassennamen). Bei Angabe wird --log-level auf DEBUG gesetzt.
+  SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
+    help: Der Standardwert in kW für Plausibilitätsprüfungen zur Validierung der Maximal- und Minimalwerte für Leistungssensoren und den Deltawert von Energiesensoren. Der Standardwert ist 500 kW pro Sekunde, Messwerte außerhalb des Bereichs werden ignoriert.
+  SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
+    help: Validierung deaktivieren, die ESS Max Lade-/Entladeleistung und PV Max Leistungsgrenzen deaktiviert, wenn der Fern-EMS-Steuerungsmodus nicht auf Befehlsladung/-entladung eingestellt ist.
+  SIGENERGY2MQTT_NO_METRICS:
+    help: Keine sigenergy2mqtt-Metriken veröffentlichen.
+  SIGENERGY2MQTT_CONSUMPTION:
+    help: "Methode zur Berechnung des Anlagenverbrauchsleistungssensors festlegen. Gültige Werte sind: 'calculated', 'total' (Gesamtlastleistungsregister) oder 'general' (V2.8 Allgemeine Lastleistungsregister). Standard ist 'calculated'. Diese Option wird bei Firmware vor Modbus-Protokoll V2.8 ignoriert."
+  SIGENERGY2MQTT_HASS_ENABLED:
+    help: Auto-Discovery in Home Assistant aktivieren.
+  SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
+    help: 'Das Home Assistant MQTT Discovery Topic-Präfix (Standard: homeassistant)'
+  SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
+    help: "Das Präfix für Home Assistant Entity-IDs. Beispiel: Ein Präfix 'prefix' stellt 'prefix_' den Entity-IDs voran (Standard: sigen)"
+  SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
+    help: "Das Präfix für Home Assistant Unique-IDs. Beispiel: Ein Präfix 'prefix' stellt 'prefix_' den Unique-IDs voran (Standard: sigen). Einmal festgelegt, sollte dies NIE geändert werden, da es bestehende Entitäten in Home Assistant beschädigt."
+  SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
+    help: Vereinfachte Topic-Struktur aktivieren (sigenergy2mqtt/object_id/state) anstelle der vollständigen Home Assistant Topic-Struktur (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
+    help: "Das Präfix für Home Assistant Entity-Namen. Beispiel: Ein Präfix 'prefix' stellt 'prefix ' den Namen voran (Standard: '')"
+  SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
+    help: Bei Bearbeitung von Prozentsensoren ein numerisches Eingabefeld verwenden (true) oder einen Schieberegler verwenden (false).
+  discovery_only:
+    help: Sofort nach Veröffentlichung der Discovery beenden. Liest keine Werte von der Modbus-Schnittstelle, außer zur Gerätekonfigurationsprüfung.
+  SIGENERGY2MQTT_MQTT_BROKER:
+    help: 'Der Hostname oder die IP-Adresse eines MQTT-Brokers (Standard: 127.0.0.1)'
+  SIGENERGY2MQTT_MQTT_PORT:
+    help: Der Port des MQTT-Brokers (Standard ist 1883, außer --mqtt-tls ist angegeben, dann ist der Standard 8883)
+  SIGENERGY2MQTT_MQTT_KEEPALIVE:
+    help: Die maximale Zeit in Sekunden zwischen Kommunikationen mit dem Broker. Wenn keine anderen Nachrichten ausgetauscht werden, steuert dies die Rate, mit der der Client Ping-Nachrichten an den Broker sendet. Standard ist 60, Minimum ist 1.
+  SIGENERGY2MQTT_MQTT_TLS:
+    help: Sichere Kommunikation zum MQTT-Broker über TLS/SSL aktivieren. Bei Angabe ist der Standard-MQTT-Port 8883.
+  SIGENERGY2MQTT_MQTT_TLS_INSECURE:
+    help: Unsichere Kommunikation über TLS aktivieren. Bei selbstsignierten Zertifikaten des Brokers muss diese Option angegeben werden. Wird ignoriert, wenn --mqtt-tls nicht angegeben ist.
+  SIGENERGY2MQTT_MQTT_TRANSPORT:
+    help: MQTT-Transportmechanismus festlegen. Muss websockets oder tcp sein. Standard ist tcp.
+  SIGENERGY2MQTT_MQTT_ANONYMOUS:
+    help: Anonyme Verbindung zum MQTT-Broker erlauben (ohne Benutzername/Passwort). Bei Angabe werden --mqtt-username und --mqtt-password ignoriert.
+  SIGENERGY2MQTT_MQTT_USERNAME:
+    help: Ein gültiger Benutzername für den MQTT-Broker
+  SIGENERGY2MQTT_MQTT_PASSWORD:
+    help: Ein gültiges Passwort für den MQTT-Broker-Benutzernamen
+  SIGENERGY2MQTT_MQTT_LOG_LEVEL:
+    help: 'paho.mqtt-Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
+    help: Automatische Erkennung von Sigenergy Modbus-Hosts und Geräte-IDs versuchen. Bei 'once' erfolgt die Auto-Erkennung nur, wenn keine vorhandenen Ergebnisse gefunden werden. Bei 'force' werden zuvor erkannte Modbus-Hosts und Geräte-IDs überschrieben. Ohne Angabe ist die Auto-Erkennung deaktiviert.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
+    help: Der Ping-Timeout in Sekunden für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0,5 Sekunden.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
+    help: Der Modbus-Timeout in Sekunden für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0,25 Sekunden.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
+    help: Die maximale Anzahl von Modbus-Wiederholungsversuchen für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0.
+  SIGENERGY2MQTT_MODBUS_HOST:
+    help: Der Hostname oder die IP-Adresse des Sigenergy-Geräts
+  SIGENERGY2MQTT_MODBUS_PORT:
+    help: 'Die Modbus-Portnummer des Sigenergy-Geräts (Standard: 502)'
+  SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
+    help: Die Sigenergy-Wechselrichter-Modbus-Geräte-ID. Mehrere Geräte-IDs können durch Kommas getrennt angegeben werden.
+  SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
+    help: Die Sigenergy-AC-Ladegerät-Modbus-Geräte-ID. Mehrere Geräte-IDs können durch Kommas getrennt angegeben werden.
+  SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
+    help: Die Sigenergy-DC-Ladegerät-Modbus-Geräte-ID. Mehrere Geräte-IDs können durch Kommas getrennt angegeben werden.
+  SIGENERGY2MQTT_MODBUS_READ_ONLY:
+    help: Nur Nur-Lesen-Sensoren an MQTT veröffentlichen. Weder Lese-/Schreibsensoren noch Nur-Schreiben-Sensoren werden bei Angabe veröffentlicht.
+  SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
+    help: Keine Lese-/Schreib-Sensoren für die Fern-Energiemanagementsystem (EMS)-Integration an MQTT veröffentlichen. Wird ignoriert, wenn --modbus-read-only angegeben ist.
+  SIGENERGY2MQTT_MODBUS_TIMEOUT:
+    help: Der Timeout für Verbindung und Empfang von Modbus-Daten in Sekunden (Dezimalzahlen für Millisekunden verwenden). Standard ist 1,0.
+  SIGENERGY2MQTT_MODBUS_RETRIES:
+    help: Die maximale Anzahl von Wiederholungsversuchen für eine Modbus-Operation bei Fehlschlag. Standard ist 3.
+  SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
+    help: Modbus-Chunking beim Lesen von Registern deaktivieren und jedes Register einzeln lesen.
+  SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
+    help: 'pymodbus-Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
+    help: Das Abtastintervall in Sekunden für Modbus-Register mit niedriger Abtastfrequenz. Standard ist 600 (Sekunden), Minimalwert ist 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
+    help: Das Abtastintervall in Sekunden für Modbus-Register mit mittlerer Abtastfrequenz. Standard ist 60 (Sekunden), Minimalwert ist 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
+    help: Das Abtastintervall in Sekunden für Modbus-Register mit hoher Abtastfrequenz. Standard ist 10 (Sekunden), Minimalwert ist 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
+    help: Das Abtastintervall in Sekunden für Modbus-Register mit Echtzeit-Abtastung. Standard ist 5 (Sekunden), Minimalwert ist 1.
+  SIGENERGY2MQTT_SMARTPORT_ENABLED:
+    help: Abfrage eines Drittanbietergeräts für Produktionsdaten aktivieren.
+  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
+    help: Der Name des Moduls, das zur Erfassung von Drittanbieter-Produktionsdaten verwendet wird.
+  SIGENERGY2MQTT_SMARTPORT_HOST:
+    help: Die IP-Adresse oder der Hostname des Drittanbietergeräts.
+  SIGENERGY2MQTT_SMARTPORT_USERNAME:
+    help: Der Benutzername zur Authentifizierung am Drittanbietergerät.
+  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
+    help: Das Passwort zur Authentifizierung am Drittanbietergerät.
+  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
+    help: Die Sensorklasse zur Speicherung der Produktionsdaten vom Drittanbietergerät.
+  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
+    help: Das MQTT-Topic, das abonniert werden soll, um die Produktionsdaten des Drittanbietergeräts zu erhalten.
+  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
+    help: Der Verstärkungsfaktor für die Produktionsdaten des Drittanbietergeräts aus dem MQTT-Topic (z.B. 1000 bei Daten in kW). Standard ist 1 (Watt).
+  SIGENERGY2MQTT_PVOUTPUT_ENABLED:
+    help: Statusaktualisierungen an PVOutput aktivieren.
+  SIGENERGY2MQTT_PVOUTPUT_API_KEY:
+    help: Der API-Schlüssel für PVOutput
+  SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
+    help: Die PVOutput-System-ID
+  SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
+    help: Verbrauchsdaten an PVOutput senden aktivieren. Kann ohne Wert angegeben werden (Standard ist dann 'consumption') oder als 'net-of-battery', 'consumption' oder 'imported'. Ohne Angabe werden keine Verbrauchsdaten gesendet.
+  SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
+    help: Exportdaten an PVOutput senden aktivieren.
+  SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
+    help: Importdaten an PVOutput senden aktivieren.
+  SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
+    help: Die Stunde des Tages (20-23), zu der die Tagessummen an PVOutput gesendet werden. Standard ist 23 (23 Uhr). Gültige Werte sind 20 bis 23. Die Minute wird zufällig zwischen 56 und 59 gewählt. Bei -1 werden tägliche Uploads mit derselben Frequenz wie Statusaktualisierungen gesendet.
+  SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
+    help: Ein MQTT-Topic, von dem die aktuelle Temperatur gelesen werden kann. Dies wird verwendet, um die Temperatur an PVOutput zu senden. Ohne Angabe wird keine Temperatur an PVOutput gesendet.
+  SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
+    help: "Die Quelle des Spannungswerts für PVOutput. Gültige Werte sind: phase-a, phase-b, phase-c, l/n-avg (Leiter-Neutralleiter-Durchschnitt), l/l-avg (Leiter-Leiter-Durchschnitt) oder pv (Durchschnitt über PV-Strings). Standard ist 'l/n-avg'."
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
+    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v7-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
+    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v8-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
+    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v9-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
+    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v10-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
+    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v11-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
+    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v12-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+  SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
+    help: 'PVOutput-Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_LOCALE:
+    help: "Die zu verwendende Sprache für Übersetzungen festlegen. Standard wird vom System ermittelt (z.B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird."
+  clean:
+    help: Leere Discovery veröffentlichen, um bestehende Geräte zu löschen, dann sofort beenden.
+  validate_only:
+    help: Konfiguration validieren, dann sofort beenden.
+  show_version:
+    help: Versionsnummer anzeigen, dann sofort beenden.
+

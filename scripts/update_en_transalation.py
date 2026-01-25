@@ -108,12 +108,91 @@ class TranslationExtractor(ast.NodeVisitor):
         self.translations[cls]["alarm"][bit] = value
 
 
+class CLIHelpExtractor(ast.NodeVisitor):
+    """Extracts help text from argparse add_argument() calls."""
+
+    def __init__(self):
+        self.cli_translations = {}
+
+    def visit_Call(self, node):
+        # Look for _parser.add_argument(...) or parser.add_argument(...)
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "add_argument":
+            dest = None
+            help_text = None
+
+            # Extract keyword arguments
+            for keyword in node.keywords:
+                if keyword.arg == "dest" and isinstance(keyword.value, ast.Constant):
+                    dest = keyword.value.value
+                elif keyword.arg == "dest" and isinstance(keyword.value, ast.Attribute):
+                    # Handle const.SIGENERGY2MQTT_* references
+                    dest = keyword.value.attr
+                elif keyword.arg == "help" and isinstance(keyword.value, ast.Constant):
+                    help_text = keyword.value.value
+
+            # Only add if we have both dest and help
+            if dest and help_text:
+                self.cli_translations[dest] = {"help": help_text}
+
+        self.generic_visit(node)
+
+
+def extract_cli_help(config_init_path: Path) -> dict:
+    """Extract CLI help text from config/__init__.py."""
+    extractor = CLIHelpExtractor()
+    tree = ast.parse(config_init_path.read_text(encoding="utf-8"))
+    extractor.visit(tree)
+    return extractor.cli_translations
+
+
 def merge_translations(base, new):
     for key, value in new.items():
         if key in base and isinstance(base[key], dict) and isinstance(value, dict):
             merge_translations(base[key], value)
         else:
             base[key] = value
+
+
+def propagate_to_other_locales(en_translations: dict, locales_dir: Path):
+    """Add new keys to other locale files, preserving existing translations."""
+    for locale_file in locales_dir.glob("*.yaml"):
+        if locale_file.name == "en.yaml":
+            continue
+
+        print(f"Updating {locale_file.name}...")
+
+        # Load existing translations
+        with open(locale_file, "r", encoding="utf-8") as f:
+            existing = yaml_parser.load(f) or {}
+
+        # Add new keys from English, preserving existing translations
+        updated = False
+        for key, value in en_translations.items():
+            if key not in existing:
+                # Add the entire new section
+                existing[key] = value
+                updated = True
+                print(f"  Added new key: {key}")
+            elif isinstance(value, dict):
+                # Recursively add missing sub-keys
+                for subkey, subvalue in value.items():
+                    if subkey not in existing[key]:
+                        existing[key][subkey] = subvalue
+                        updated = True
+                        print(f"  Added new subkey: {key}.{subkey}")
+                    elif isinstance(subvalue, dict):
+                        for subsubkey, subsubvalue in subvalue.items():
+                            if subsubkey not in existing[key][subkey]:
+                                existing[key][subkey][subsubkey] = subsubvalue
+                                updated = True
+                                print(f"  Added new subsubkey: {key}.{subkey}.{subsubkey}")
+
+        if updated:
+            with open(locale_file, "w", encoding="utf-8") as f:
+                yaml_parser.dump(existing, f)
+            print(f"  Saved {locale_file.name}")
+        else:
+            print(f"  No changes needed for {locale_file.name}")
 
 
 if __name__ == "__main__":
@@ -124,6 +203,7 @@ if __name__ == "__main__":
         "MqttOverriddenSensor": {"attributes": {"source": "MQTT Override"}},
     }
 
+    # Extract sensor translations
     extractor = TranslationExtractor()
     for py_file in package_dir.glob("**/*.py"):
         if py_file.name == "i18n.py" or "test" in py_file.name:
@@ -136,7 +216,20 @@ if __name__ == "__main__":
 
     merge_translations(all_translations, extractor.translations)
 
+    # Extract CLI help text
+    config_init_path = package_dir / "config" / "__init__.py"
+    cli_translations = extract_cli_help(config_init_path)
+    if cli_translations:
+        all_translations["cli"] = cli_translations
+        print(f"Extracted {len(cli_translations)} CLI help texts")
+
+    # Write en.yaml
     en_yaml_path = package_dir / "locales" / "en.yaml"
     with open(en_yaml_path, "w", encoding="utf-8") as f:
         yaml_parser.dump(all_translations, f)
     print(f"Successfully updated {en_yaml_path}")
+
+    # Propagate new keys to other locale files
+    locales_dir = package_dir / "locales"
+    propagate_to_other_locales(all_translations, locales_dir)
+    print("Done!")
