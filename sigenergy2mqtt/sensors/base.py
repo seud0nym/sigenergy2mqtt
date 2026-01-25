@@ -1668,11 +1668,12 @@ class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverte
         if republish and len(self._states) > 0:
             return self._apply_gain_and_precision(self._states[-1][1], raw) if isinstance(self._states[-1][1], (float, int)) else self._states[-1][1]
         else:
-            result: str = AlarmSensor.NO_ALARM
+            no_alarm = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM)
+            result: str = no_alarm
             for alarm in [a for a in self.alarms if a.publishable]:
                 state = cast(str, await alarm.get_state(raw=False, republish=False, max_length=sys.maxsize, **kwargs))
-                if state != AlarmSensor.NO_ALARM:
-                    if result == AlarmSensor.NO_ALARM:
+                if state != no_alarm:
+                    if result == no_alarm:
                         result = state
                     else:
                         result = ", ".join([result, state])
