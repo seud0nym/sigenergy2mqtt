@@ -173,11 +173,11 @@ def test_attributes_translation():
     assert attrs["source"] == "Registre Modbus 30000"
 
 
-def test_get_available_locales():
-    locales = i18n.get_available_locales()
-    assert "en" in locales
+def test_get_available_translations():
+    translations = i18n.get_available_translations()
+    assert "en" in translations
     # Since we only have en.yaml in the repo, it should be at least ['en']
-    assert len(locales) >= 1
+    assert len(translations) >= 1
 
 
 @pytest.mark.no_locale_mock

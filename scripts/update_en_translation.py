@@ -197,9 +197,9 @@ def merge_translations(base, new):
             base[key] = value
 
 
-def propagate_to_other_locales(en_translations: dict, locales_dir: Path):
+def propagate_to_other_translations(en_translations: dict, translations_dir: Path):
     """Add new keys to other locale files, preserving existing translations."""
-    for locale_file in locales_dir.glob("*.yaml"):
+    for locale_file in translations_dir.glob("*.yaml"):
         if locale_file.name == "en.yaml":
             continue
 
@@ -303,12 +303,12 @@ if __name__ == "__main__":
         print(f"Extracted {len(cli_translations)} CLI help texts")
 
     # Write en.yaml
-    en_yaml_path = package_dir / "locales" / "en.yaml"
+    en_yaml_path = package_dir / "translations" / "en.yaml"
     with open(en_yaml_path, "w", encoding="utf-8") as f:
         yaml_parser.dump(all_translations, f)
     print(f"Successfully updated {en_yaml_path}")
 
     # Propagate new keys to other locale files
-    locales_dir = package_dir / "locales"
-    propagate_to_other_locales(all_translations, locales_dir)
+    translations_dir = package_dir / "translations"
+    propagate_to_other_translations(all_translations, translations_dir)
     print("Done!")

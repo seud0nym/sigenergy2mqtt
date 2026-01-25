@@ -146,7 +146,7 @@ class TestConfigConfiguration:
         Config.reset()
         from sigenergy2mqtt import i18n
 
-        with patch("sigenergy2mqtt.i18n.get_available_locales", return_value=["en", "fr"]):
+        with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
             with patch("sigenergy2mqtt.i18n.get_default_locale", return_value="en"):
                 with caplog.at_level(logging.WARNING):
                     Config._configure({"locale": "de"})
@@ -184,7 +184,7 @@ class TestConfigReload:
         from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LOCALE
 
         with patch.dict("os.environ", {SIGENERGY2MQTT_LOCALE: "de"}):
-            with patch("sigenergy2mqtt.i18n.get_available_locales", return_value=["en", "fr"]):
+            with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
                 with patch("sigenergy2mqtt.i18n.get_default_locale", return_value="en"):
                     with caplog.at_level(logging.WARNING):
                         Config.reload()

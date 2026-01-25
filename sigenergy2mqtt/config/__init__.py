@@ -87,9 +87,9 @@ _parser.add_argument(
     "--locale",
     action="store",
     dest=const.SIGENERGY2MQTT_LOCALE,
-    choices=i18n.get_available_locales(),
+    choices=i18n.get_available_translations(),
     default=os.getenv(const.SIGENERGY2MQTT_LOCALE, None),
-    help=f"Set the locale to use for translations. Valid values are: {', '.join(i18n.get_available_locales())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
+    help=f"Set the locale to use for translations. Valid values are: {', '.join(i18n.get_available_translations())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
 )
 _parser.add_argument(
     "-d",

@@ -8,9 +8,9 @@ from ruamel.yaml import YAML, YAMLError
 
 def test_translations_are_valid_yaml():
     # Resolve path relative to this file: tests/unit/test_translations_validity.py
-    # Access ../../sigenergy2mqtt/locales
+    # Access ../../sigenergy2mqtt/translations
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    translations_dir = os.path.join(base_dir, "../../sigenergy2mqtt/locales")
+    translations_dir = os.path.join(base_dir, "../../sigenergy2mqtt/translations")
 
     # Normalize path
     translations_dir = os.path.normpath(translations_dir)

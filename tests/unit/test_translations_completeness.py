@@ -122,7 +122,7 @@ def merge_translations(base, new):
 def test_en_yaml_completeness():
     """Verify that en.yaml contains all translatable strings found in the codebase."""
     package_dir = Path(__file__).parent.parent.parent / "sigenergy2mqtt"
-    en_yaml_path = package_dir / "locales" / "en.yaml"
+    en_yaml_path = package_dir / "translations" / "en.yaml"
 
     assert en_yaml_path.exists(), "en.yaml does not exist"
 
@@ -199,7 +199,7 @@ class CLIHelpExtractor(ast.NodeVisitor):
 def test_cli_translations_completeness():
     """Verify that en.yaml contains all CLI help texts from config/__init__.py."""
     package_dir = Path(__file__).parent.parent.parent / "sigenergy2mqtt"
-    en_yaml_path = package_dir / "locales" / "en.yaml"
+    en_yaml_path = package_dir / "translations" / "en.yaml"
     config_init_path = package_dir / "config" / "__init__.py"
 
     assert en_yaml_path.exists(), "en.yaml does not exist"

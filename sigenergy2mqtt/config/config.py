@@ -178,7 +178,7 @@ class Config:
                             overrides["sanity-check-failures-increment"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_LOCALE:
                             try:
-                                overrides["locale"] = check_string(os.environ[key], key, *i18n.get_available_locales(), allow_empty=False, allow_none=False)
+                                overrides["locale"] = check_string(os.environ[key], key, *i18n.get_available_translations(), allow_empty=False, allow_none=False)
                             except ValueError:
                                 default = i18n.get_default_locale()
                                 logging.warning(f"Invalid locale '{os.environ[key]}' for {key}, falling back to '{default}'")
@@ -416,7 +416,7 @@ class Config:
                 case "locale":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: locale = {data[name]}")
                     try:
-                        Config.locale = cast(str, check_string(data[name], name, *i18n.get_available_locales(), allow_empty=False, allow_none=False))
+                        Config.locale = cast(str, check_string(data[name], name, *i18n.get_available_translations(), allow_empty=False, allow_none=False))
                     except ValueError:
                         default = i18n.get_default_locale()
                         logging.warning(f"Invalid locale '{data[name]}' for {name}, falling back to '{default}'")
