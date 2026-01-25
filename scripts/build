@@ -96,4 +96,4 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
 fi
 
-echo -e "${GREEN}>>> Build successful${NC} $(date):  New version: ${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"
+echo -e "${GREEN}>>> Build successful${NC} $(date): Old version=${ORANGE}$old_version${NC} New version=${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"
