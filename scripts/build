@@ -8,7 +8,7 @@ NC='\033[0m' # No Color
 cd "$(cd $(dirname $0)/..; pwd)"
 
 changed_files=y
-if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f -name '*.py' | wc -l) = 0 ]]; then
+if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f -name '*.py' -o -name '*.yaml' | wc -l) = 0 ]]; then
     changed_files=n
 fi
 if echo "$*" | grep -vqe "-f" && [[ $changed_files = n ]]; then
