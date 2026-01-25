@@ -10,16 +10,41 @@ yaml_parser.preserve_quotes = True
 yaml_parser.width = 1000  # Avoid wrapping
 
 
+RESET_TRANSLATIONS = {
+    "de": "Setze {name}",
+    "es": "Establecer {name}",
+    "fr": "Régler {name}",
+    "it": "Imposta {name}",
+    "ja": "{name}を設定",
+    "ko": "{name} 설정",
+    "nl": "Stel {name} in",
+    "pt": "Definir {name}",
+    "zh": "设置 {name}",
+}
+
+
 class TranslationExtractor(ast.NodeVisitor):
     def __init__(self):
         self.translations = {}
         self.current_class = None
+        self.is_resettable = False
+        self.resettable_bases = {"ResettableAccumulationSensor", "EnergyDailyAccumulationSensor", "EnergyLifetimeAccumulationSensor"}
 
     def visit_ClassDef(self, node):
         prev_class = self.current_class
+        prev_resettable = self.is_resettable
         self.current_class = node.name
+
+        # Check if class inherits from a resettable base
+        self.is_resettable = False
+        for base in node.bases:
+            if isinstance(base, ast.Name) and base.id in self.resettable_bases:
+                self.is_resettable = True
+                break
+
         self.generic_visit(node)
         self.current_class = prev_class
+        self.is_resettable = prev_resettable
 
     def visit_Call(self, node):
         if not self.current_class:
@@ -29,16 +54,23 @@ class TranslationExtractor(ast.NodeVisitor):
         # Handle super().__init__(name="...")
         if isinstance(node.func, ast.Attribute) and node.func.attr == "__init__":
             if isinstance(node.func.value, ast.Call) and isinstance(node.func.value.func, ast.Name) and node.func.value.func.id == "super":
+                name_value = None
                 for keyword in node.keywords:
                     if keyword.arg == "name" and isinstance(keyword.value, ast.Constant):
-                        self._add_translation(self.current_class, "name", keyword.value.value)
+                        name_value = keyword.value.value
+                        self._add_translation(self.current_class, "name", name_value)
                     elif keyword.arg in ["name_off", "name_on"] and isinstance(keyword.value, ast.Constant):
                         self._add_translation(self.current_class, keyword.arg, keyword.value.value)
                 # Handle positional name if it's the first argument
                 if node.args and isinstance(node.args[0], ast.Constant):
                     # But only if it's likely a name (string)
                     if isinstance(node.args[0].value, str):
-                        self._add_translation(self.current_class, "name", node.args[0].value)
+                        name_value = node.args[0].value
+                        self._add_translation(self.current_class, "name", name_value)
+
+                # If this is a resettable sensor and we found a name, add the reset name translation
+                if self.is_resettable and name_value:
+                    self._add_translation(self.current_class, "name_reset", f"Set {name_value}")
 
                 # Handle options=[...]
                 for keyword in node.keywords:
@@ -171,6 +203,7 @@ def propagate_to_other_locales(en_translations: dict, locales_dir: Path):
         if locale_file.name == "en.yaml":
             continue
 
+        locale_code = locale_file.stem
         print(f"Updating {locale_file.name}...")
 
         # Load existing translations
@@ -182,14 +215,47 @@ def propagate_to_other_locales(en_translations: dict, locales_dir: Path):
         for key, value in en_translations.items():
             if key not in existing:
                 # Add the entire new section
-                existing[key] = value
+                if isinstance(value, dict):
+                    # Check if any nested key needs translation
+                    new_section = value.copy()
+                    if "name_reset" in new_section and locale_code in RESET_TRANSLATIONS:
+                        # Translate "Set {name}"
+                        # Try to find the base name from 'name' key if available, otherwise parse from English string
+                        base_name = new_section.get("name", "")
+                        if not base_name and new_section["name_reset"].startswith("Set "):
+                            base_name = new_section["name_reset"][4:]
+
+                        if base_name:
+                            new_section["name_reset"] = RESET_TRANSLATIONS[locale_code].format(name=base_name)
+
+                    existing[key] = new_section
+                else:
+                    existing[key] = value
+
                 updated = True
                 print(f"  Added new key: {key}")
             elif isinstance(value, dict):
                 # Recursively add missing sub-keys
                 for subkey, subvalue in value.items():
                     if subkey not in existing[key]:
-                        existing[key][subkey] = subvalue
+                        # Handle name_reset specifically
+                        if subkey == "name_reset" and locale_code in RESET_TRANSLATIONS:
+                            base_name = ""
+                            # Try to get existing translated name first
+                            if "name" in existing[key]:
+                                base_name = existing[key]["name"]
+                            elif "name" in value:
+                                base_name = value["name"]  # Fallback to English name
+
+                            if not base_name and isinstance(subvalue, str) and subvalue.startswith("Set "):
+                                base_name = subvalue[4:]
+
+                            if base_name:
+                                existing[key][subkey] = RESET_TRANSLATIONS[locale_code].format(name=base_name)
+                            else:
+                                existing[key][subkey] = subvalue
+                        else:
+                            existing[key][subkey] = subvalue
                         updated = True
                         print(f"  Added new subkey: {key}.{subkey}")
                     elif isinstance(subvalue, dict):

@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: Énergie Exportée Quotidienne
   attributes:
     source: PlantTotalExportedEnergy − PlantTotalExportedEnergy à minuit
+  name_reset: Régler Énergie Exportée Quotidienne
 GridSensorDailyImportEnergy:
   name: Énergie Importée Quotidienne
   attributes:
     source: PlantTotalImportedEnergy − PlantTotalImportedEnergy à minuit
+  name_reset: Régler Énergie Importée Quotidienne
 TotalLifetimePVEnergy:
   name: Production PV Totale
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: Production PV Quotidienne Totale
   attributes:
     source: TotalLifetimePVEnergy − TotalLifetimePVEnergy à minuit
+  name_reset: Régler Production PV Quotidienne Totale
 PlantDailyPVEnergy:
   name: Production PV Quotidienne
   attributes:
     source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à minuit
+  name_reset: Régler Production PV Quotidienne
 PlantDailyChargeEnergy:
   name: Énergie de Charge Quotidienne
   attributes:
     source: "Σ de DailyChargeEnergy sur tous les Onduleurs associés à l'Installation"
+  name_reset: Régler Énergie de Charge Quotidienne
 PlantDailyDischargeEnergy:
   name: Énergie de Décharge Quotidienne
   attributes:
     source: "Σ de DailyDischargeEnergy sur tous les Onduleurs associés à l'Installation"
+  name_reset: Régler Énergie de Décharge Quotidienne
 InverterBatteryChargingPower:
   name: Puissance de Charge Batterie
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: Production Totale
   attributes:
     source: Σ Riemann de PVStringPower
+  name_reset: Régler Production Totale
 PVStringDailyEnergy:
   name: Production Quotidienne
   attributes:
     source: PVStringLifetimeEnergy − PVStringLifetimeEnergy à minuit
+  name_reset: Régler Production Quotidienne
 RunningStateSensor:
   options:
     "0": Veille
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: Production Quotidienne
   attributes:
     source: API Enphase Envoy lors du calcul EnphasePVPower
+  name_reset: Régler Production Quotidienne
 EnphaseCurrent:
   name: Courant
   attributes:

@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: Dagelijks Geëxporteerde Energie
   attributes:
     source: PlantTotalExportedEnergy − PlantTotalExportedEnergy om middernacht
+  name_reset: Stel Dagelijks Geëxporteerde Energie in
 GridSensorDailyImportEnergy:
   name: Dagelijks Geïmporteerde Energie
   attributes:
     source: PlantTotalImportedEnergy − PlantTotalImportedEnergy om middernacht
+  name_reset: Stel Dagelijks Geïmporteerde Energie in
 TotalLifetimePVEnergy:
   name: Totale PV Productie
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: Dagelijkse Totale PV Productie
   attributes:
     source: TotalLifetimePVEnergy − TotalLifetimePVEnergy om middernacht
+  name_reset: Stel Dagelijkse Totale PV Productie in
 PlantDailyPVEnergy:
   name: Dagelijkse PV Productie
   attributes:
     source: PlantLifetimePVEnergy − PlantLifetimePVEnergy om middernacht
+  name_reset: Stel Dagelijkse PV Productie in
 PlantDailyChargeEnergy:
   name: Dagelijkse Laadenergie
   attributes:
     source: "Σ van DailyChargeEnergy over alle Omvormers geassocieerd met de Installatie"
+  name_reset: Stel Dagelijkse Laadenergie in
 PlantDailyDischargeEnergy:
   name: Dagelijkse Ontlaadenergie
   attributes:
     source: "Σ van DailyDischargeEnergy over alle Omvormers geassocieerd met de Installatie"
+  name_reset: Stel Dagelijkse Ontlaadenergie in
 InverterBatteryChargingPower:
   name: Batterij Laadvermogen
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: Totale Productie
   attributes:
     source: Riemann Σ van PVStringPower
+  name_reset: Stel Totale Productie in
 PVStringDailyEnergy:
   name: Dagelijkse Productie
   attributes:
     source: PVStringLifetimeEnergy − PVStringLifetimeEnergy om middernacht
+  name_reset: Stel Dagelijkse Productie in
 RunningStateSensor:
   options:
     "0": Standby
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: Dagelijkse Productie
   attributes:
     source: Enphase Envoy API bij afleiding EnphasePVPower
+  name_reset: Stel Dagelijkse Productie in
 EnphaseCurrent:
   name: Stroom
   attributes:

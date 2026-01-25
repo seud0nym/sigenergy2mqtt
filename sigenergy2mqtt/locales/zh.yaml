@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: 日上网电量
   attributes:
     source: PlantTotalExportedEnergy − 午夜时的PlantTotalExportedEnergy
+  name_reset: 设置 日上网电量
 GridSensorDailyImportEnergy:
   name: 日购电量
   attributes:
     source: PlantTotalImportedEnergy − 午夜时的PlantTotalImportedEnergy
+  name_reset: 设置 日购电量
 TotalLifetimePVEnergy:
   name: PV累计总发电量
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: PV日总发电量
   attributes:
     source: TotalLifetimePVEnergy − 午夜时的TotalLifetimePVEnergy
+  name_reset: 设置 PV日总发电量
 PlantDailyPVEnergy:
   name: PV日发电量
   attributes:
     source: PlantLifetimePVEnergy − 午夜时的PlantLifetimePVEnergy
+  name_reset: 设置 PV日发电量
 PlantDailyChargeEnergy:
   name: 日充电电量
   attributes:
     source: "与电站关联的所有逆变器的DailyChargeEnergy之和"
+  name_reset: 设置 日充电电量
 PlantDailyDischargeEnergy:
   name: 日放电电量
   attributes:
     source: "与电站关联的所有逆变器的DailyDischargeEnergy之和"
+  name_reset: 设置 日放电电量
 InverterBatteryChargingPower:
   name: 电池充电功率
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: 累计发电量
   attributes:
     source: PVStringPower的黎曼和
+  name_reset: 设置 累计发电量
 PVStringDailyEnergy:
   name: 日发电量
   attributes:
     source: PVStringLifetimeEnergy − 午夜时的PVStringLifetimeEnergy
+  name_reset: 设置 日发电量
 RunningStateSensor:
   options:
     "0": 待机
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: 日发电量
   attributes:
     source: 派生EnphasePVPower时的Enphase Envoy API
+  name_reset: 设置 日发电量
 EnphaseCurrent:
   name: 电流
   attributes:

@@ -1798,7 +1798,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         updater: dict[str, Any] = {
             "platform": "number",
-            "name": f"Set {self.name}",
+            "name": _t(f"{self.__class__.__name__}.name_reset", f"Set {self.name}"),
             "object_id": f"{self['object_id']}_reset",
             "unique_id": f"{self.unique_id}_reset",
             "icon": "mdi:numeric",

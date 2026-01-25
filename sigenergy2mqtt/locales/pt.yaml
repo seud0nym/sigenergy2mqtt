@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: Energia Exportada Diária
   attributes:
     source: PlantTotalExportedEnergy − PlantTotalExportedEnergy à meia-noite
+  name_reset: Definir Energia Exportada Diária
 GridSensorDailyImportEnergy:
   name: Energia Importada Diária
   attributes:
     source: PlantTotalImportedEnergy − PlantTotalImportedEnergy à meia-noite
+  name_reset: Definir Energia Importada Diária
 TotalLifetimePVEnergy:
   name: Produção PV Total
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: Produção PV Diária Total
   attributes:
     source: TotalLifetimePVEnergy − TotalLifetimePVEnergy à meia-noite
+  name_reset: Definir Produção PV Diária Total
 PlantDailyPVEnergy:
   name: Produção PV Diária
   attributes:
     source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à meia-noite
+  name_reset: Definir Produção PV Diária
 PlantDailyChargeEnergy:
   name: Energia de Carga Diária
   attributes:
     source: "Σ de DailyChargeEnergy em todos os Inversores associados à Central"
+  name_reset: Definir Energia de Carga Diária
 PlantDailyDischargeEnergy:
   name: Energia de Descarga Diária
   attributes:
     source: "Σ de DailyDischargeEnergy em todos os Inversores associados à Central"
+  name_reset: Definir Energia de Descarga Diária
 InverterBatteryChargingPower:
   name: Potência de Carga da Bateria
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: Produção Total
   attributes:
     source: Σ Riemann de PVStringPower
+  name_reset: Definir Produção Total
 PVStringDailyEnergy:
   name: Produção Diária
   attributes:
     source: PVStringLifetimeEnergy − PVStringLifetimeEnergy à meia-noite
+  name_reset: Definir Produção Diária
 RunningStateSensor:
   options:
     "0": Em Espera
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: Produção Diária
   attributes:
     source: API Enphase Envoy ao derivar EnphasePVPower
+  name_reset: Definir Produção Diária
 EnphaseCurrent:
   name: Corrente
   attributes:

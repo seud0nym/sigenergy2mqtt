@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: Energia Esportata Giornaliera
   attributes:
     source: PlantTotalExportedEnergy − PlantTotalExportedEnergy a mezzanotte
+  name_reset: Imposta Energia Esportata Giornaliera
 GridSensorDailyImportEnergy:
   name: Energia Importata Giornaliera
   attributes:
     source: PlantTotalImportedEnergy − PlantTotalImportedEnergy a mezzanotte
+  name_reset: Imposta Energia Importata Giornaliera
 TotalLifetimePVEnergy:
   name: Produzione PV Totale
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: Produzione PV Giornaliera Totale
   attributes:
     source: TotalLifetimePVEnergy − TotalLifetimePVEnergy a mezzanotte
+  name_reset: Imposta Produzione PV Giornaliera Totale
 PlantDailyPVEnergy:
   name: Produzione PV Giornaliera
   attributes:
     source: PlantLifetimePVEnergy − PlantLifetimePVEnergy a mezzanotte
+  name_reset: Imposta Produzione PV Giornaliera
 PlantDailyChargeEnergy:
   name: Energia di Carica Giornaliera
   attributes:
     source: "Σ di DailyChargeEnergy su tutti gli Inverter associati all'Impianto"
+  name_reset: Imposta Energia di Carica Giornaliera
 PlantDailyDischargeEnergy:
   name: Energia di Scarica Giornaliera
   attributes:
     source: "Σ di DailyDischargeEnergy su tutti gli Inverter associati all'Impianto"
+  name_reset: Imposta Energia di Scarica Giornaliera
 InverterBatteryChargingPower:
   name: Potenza di Carica Batteria
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: Produzione Totale
   attributes:
     source: Σ Riemann di PVStringPower
+  name_reset: Imposta Produzione Totale
 PVStringDailyEnergy:
   name: Produzione Giornaliera
   attributes:
     source: PVStringLifetimeEnergy − PVStringLifetimeEnergy a mezzanotte
+  name_reset: Imposta Produzione Giornaliera
 RunningStateSensor:
   options:
     "0": Standby
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: Produzione Giornaliera
   attributes:
     source: API Enphase Envoy quando EnphasePVPower derivato
+  name_reset: Imposta Produzione Giornaliera
 EnphaseCurrent:
   name: Corrente
   attributes:

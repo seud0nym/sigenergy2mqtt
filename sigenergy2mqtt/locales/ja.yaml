@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: 日次売電電力量
   attributes:
     source: PlantTotalExportedEnergy − 深夜0時のPlantTotalExportedEnergy
+  name_reset: 日次売電電力量を設定
 GridSensorDailyImportEnergy:
   name: 日次購入電力量
   attributes:
     source: PlantTotalImportedEnergy − 深夜0時のPlantTotalImportedEnergy
+  name_reset: 日次購入電力量を設定
 TotalLifetimePVEnergy:
   name: 累計合計PV発電量
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: 日次合計PV発電量
   attributes:
     source: TotalLifetimePVEnergy − 深夜0時のTotalLifetimePVEnergy
+  name_reset: 日次合計PV発電量を設定
 PlantDailyPVEnergy:
   name: 日次PV発電量
   attributes:
     source: PlantLifetimePVEnergy − 深夜0時のPlantLifetimePVEnergy
+  name_reset: 日次PV発電量を設定
 PlantDailyChargeEnergy:
   name: 日次充電電力量
   attributes:
     source: "発電所に関連付けられたすべてのインバーターのDailyChargeEnergyの合計"
+  name_reset: 日次充電電力量を設定
 PlantDailyDischargeEnergy:
   name: 日次放電電力量
   attributes:
     source: "発電所に関連付けられたすべてのインバーターのDailyDischargeEnergyの合計"
+  name_reset: 日次放電電力量を設定
 InverterBatteryChargingPower:
   name: バッテリー充電電力
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: 累計発電量
   attributes:
     source: PVStringPowerのリーマン和
+  name_reset: 累計発電量を設定
 PVStringDailyEnergy:
   name: 日次発電量
   attributes:
     source: PVStringLifetimeEnergy − 深夜0時のPVStringLifetimeEnergy
+  name_reset: 日次発電量を設定
 RunningStateSensor:
   options:
     "0": スタンバイ
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: 日次発電量
   attributes:
     source: EnphasePVPower導出時のEnphase Envoy API
+  name_reset: 日次発電量を設定
 EnphaseCurrent:
   name: 電流
   attributes:

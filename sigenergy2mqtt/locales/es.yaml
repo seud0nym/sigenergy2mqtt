@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: Energía Exportada Diaria
   attributes:
     source: PlantTotalExportedEnergy − PlantTotalExportedEnergy a medianoche
+  name_reset: Establecer Energía Exportada Diaria
 GridSensorDailyImportEnergy:
   name: Energía Importada Diaria
   attributes:
     source: PlantTotalImportedEnergy − PlantTotalImportedEnergy a medianoche
+  name_reset: Establecer Energía Importada Diaria
 TotalLifetimePVEnergy:
   name: Producción PV Total
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: Producción PV Diaria Total
   attributes:
     source: TotalLifetimePVEnergy − TotalLifetimePVEnergy a medianoche
+  name_reset: Establecer Producción PV Diaria Total
 PlantDailyPVEnergy:
   name: Producción PV Diaria
   attributes:
     source: PlantLifetimePVEnergy − PlantLifetimePVEnergy a medianoche
+  name_reset: Establecer Producción PV Diaria
 PlantDailyChargeEnergy:
   name: Energía de Carga Diaria
   attributes:
     source: "Σ de DailyChargeEnergy en todos los Inversores asociados a la Planta"
+  name_reset: Establecer Energía de Carga Diaria
 PlantDailyDischargeEnergy:
   name: Energía de Descarga Diaria
   attributes:
     source: "Σ de DailyDischargeEnergy en todos los Inversores asociados a la Planta"
+  name_reset: Establecer Energía de Descarga Diaria
 InverterBatteryChargingPower:
   name: Potencia de Carga de Batería
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: Producción Total
   attributes:
     source: Σ Riemann de PVStringPower
+  name_reset: Establecer Producción Total
 PVStringDailyEnergy:
   name: Producción Diaria
   attributes:
     source: PVStringLifetimeEnergy − PVStringLifetimeEnergy a medianoche
+  name_reset: Establecer Producción Diaria
 RunningStateSensor:
   options:
     "0": En Espera
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: Producción Diaria
   attributes:
     source: API Enphase Envoy al derivar EnphasePVPower
+  name_reset: Establecer Producción Diaria
 EnphaseCurrent:
   name: Corriente
   attributes:

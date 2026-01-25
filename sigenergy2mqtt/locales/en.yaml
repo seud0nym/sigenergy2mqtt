@@ -618,10 +618,12 @@ TotalPVPower:
     source: PV Power + Third-Party PV Power
 GridSensorDailyExportEnergy:
   name: Daily Exported Energy
+  name_reset: Set Daily Exported Energy
   attributes:
     source: PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight
 GridSensorDailyImportEnergy:
   name: Daily Imported Energy
+  name_reset: Set Daily Imported Energy
   attributes:
     source: PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight
 TotalLifetimePVEnergy:
@@ -630,18 +632,22 @@ TotalLifetimePVEnergy:
     source: '&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
 TotalDailyPVEnergy:
   name: Daily Total PV Production
+  name_reset: Set Daily Total PV Production
   attributes:
     source: TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight
 PlantDailyPVEnergy:
   name: Daily PV Production
+  name_reset: Set Daily PV Production
   attributes:
     source: PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight
 PlantDailyChargeEnergy:
   name: Daily Charge Energy
+  name_reset: Set Daily Charge Energy
   attributes:
     source: '&sum; of DailyChargeEnergy across all Inverters associated with the Plant'
 PlantDailyDischargeEnergy:
   name: Daily Discharge Energy
+  name_reset: Set Daily Discharge Energy
   attributes:
     source: '&sum; of DailyDischargeEnergy across all Inverters associated with the Plant'
 InverterBatteryChargingPower:
@@ -658,10 +664,12 @@ PVStringPower:
     source: PVVoltageSensor &times; PVCurrentSensor
 PVStringLifetimeEnergy:
   name: Lifetime Production
+  name_reset: Set Lifetime Production
   attributes:
     source: Riemann &sum; of PVStringPower
 PVStringDailyEnergy:
   name: Daily Production
+  name_reset: Set Daily Production
   attributes:
     source: PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight
 RunningStateSensor:
@@ -742,6 +750,7 @@ EnphaseLifetimePVEnergy:
     source: Enphase Envoy API when EnphasePVPower derived
 EnphaseDailyPVEnergy:
   name: Daily Production
+  name_reset: Set Daily Production
   attributes:
     source: Enphase Envoy API when EnphasePVPower derived
 EnphaseCurrent:

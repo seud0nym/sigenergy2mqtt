@@ -618,10 +618,12 @@ GridSensorDailyExportEnergy:
   name: Tägliche Exportenergie
   attributes:
     source: PlantTotalExportedEnergy − PlantTotalExportedEnergy um Mitternacht
+  name_reset: Setze Tägliche Exportenergie
 GridSensorDailyImportEnergy:
   name: Tägliche Importenergie
   attributes:
     source: PlantTotalImportedEnergy − PlantTotalImportedEnergy um Mitternacht
+  name_reset: Setze Tägliche Importenergie
 TotalLifetimePVEnergy:
   name: Gesamte PV-Produktion
   attributes:
@@ -630,18 +632,22 @@ TotalDailyPVEnergy:
   name: Tägliche Gesamt-PV-Produktion
   attributes:
     source: TotalLifetimePVEnergy − TotalLifetimePVEnergy um Mitternacht
+  name_reset: Setze Tägliche Gesamt-PV-Produktion
 PlantDailyPVEnergy:
   name: Tägliche PV-Produktion
   attributes:
     source: PlantLifetimePVEnergy − PlantLifetimePVEnergy um Mitternacht
+  name_reset: Setze Tägliche PV-Produktion
 PlantDailyChargeEnergy:
   name: Tägliche Ladeenergie
   attributes:
     source: "Σ von DailyChargeEnergy über alle mit der Anlage verbundenen Wechselrichter"
+  name_reset: Setze Tägliche Ladeenergie
 PlantDailyDischargeEnergy:
   name: Tägliche Entladeenergie
   attributes:
     source: "Σ von DailyDischargeEnergy über alle mit der Anlage verbundenen Wechselrichter"
+  name_reset: Setze Tägliche Entladeenergie
 InverterBatteryChargingPower:
   name: Batterieladeleistung
   attributes:
@@ -658,10 +664,12 @@ PVStringLifetimeEnergy:
   name: Gesamtproduktion
   attributes:
     source: Riemann Σ von PVStringPower
+  name_reset: Setze Gesamtproduktion
 PVStringDailyEnergy:
   name: Tägliche Produktion
   attributes:
     source: PVStringLifetimeEnergy − PVStringLifetimeEnergy um Mitternacht
+  name_reset: Setze Tägliche Produktion
 RunningStateSensor:
   options:
     "0": Standby
@@ -742,6 +750,7 @@ EnphaseDailyPVEnergy:
   name: Tägliche Produktion
   attributes:
     source: Enphase Envoy API bei EnphasePVPower-Ableitung
+  name_reset: Setze Tägliche Produktion
 EnphaseCurrent:
   name: Strom
   attributes:
