@@ -425,7 +425,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         components = dict((k, v) for k, v in self.items() if v is not None)
         if "options" in self:
-            components["options"] = [_t(f"{self.__class__.__name__}.options.{i}", x) for i, x in enumerate(cast(list[str], self["options"])) if x is not None]
+            components["options"] = [_t(f"{self.__class__.__name__}.options.{i}", x) for i, x in enumerate(cast(list[str], self["options"])) if x is not None and x != ""]
         return {self.unique_id: dict(components)}
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:

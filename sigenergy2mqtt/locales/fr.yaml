@@ -97,6 +97,14 @@ RemoteEMS:
     comment: Lorsqu'il est nécessaire de contrôler l'EMS à distance, ce registre doit être activé. Une fois activé, le Mode de Travail EMS de l'installation (30003) passera à RemoteEMS
 RemoteEMSControlMode:
   name: Mode de Contrôle EMS à Distance
+  options:
+    '0': Contrôle PCS à distance
+    '1': Veille
+    '2': Autoconsommation maximale (par défaut)
+    '3': Charge commandée (consommer d'abord l'énergie du réseau)
+    '4': Charge commandée (consommer d'abord l'énergie PV)
+    '5': Décharge commandée (sortie d'énergie PV d'abord)
+    '6': Décharge commandée (sortie d'énergie de la batterie d'abord)
 MaxChargingLimit:
   name: Limite de Charge Maximum
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Plage : [0, 10,0]"
 GridCodeLVRTMode:
   name: Mode LVRT
+  options:
+    '0': Courant de compensation de puissance réactive, mode courant nul actif
+    '2': Mode courant nul
+    '3': Mode courant constant
+    '4': Courant dynamique réactif, mode courant nul actif
+    '5': Courant de compensation de puissance réactive, mode courant constant actif
 GridCodeLVRTVoltageProtectionBlocking:
   name: Blocage de Protection de Tension Réseau LVRT
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Plage : [0, 10,0]"
 GridCodeHVRTMode:
   name: Mode HVRT
+  options:
+    '0': Courant de compensation de puissance réactive, mode courant nul actif
+    '2': Mode courant nul
+    '3': Mode courant constant
+    '4': Courant dynamique réactif, mode maintien actif
+    '5': Courant de compensation de puissance réactive, mode courant constant actif
 GridCodeHVRTVoltageProtectionBlocking:
   name: Blocage de Protection de Tension Réseau HVRT
 GridCodeOverFrequencyDerating:

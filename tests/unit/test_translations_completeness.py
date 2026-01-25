@@ -36,6 +36,16 @@ class TranslationExtractor(ast.NodeVisitor):
                     if isinstance(node.args[0].value, str):
                         self._add_translation(self.current_class, "name", node.args[0].value)
 
+                # Handle options=[...]
+                for keyword in node.keywords:
+                    if keyword.arg == "options" and isinstance(keyword.value, ast.List):
+                        options = {}
+                        for i, elt in enumerate(keyword.value.elts):
+                            if isinstance(elt, ast.Constant) and isinstance(elt.value, str) and elt.value.strip():
+                                options[str(i)] = elt.value
+                        if options:
+                            self._add_translation(self.current_class, "options", options)
+
         self.generic_visit(node)
 
     def visit_Assign(self, node):

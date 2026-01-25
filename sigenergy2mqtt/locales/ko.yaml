@@ -97,6 +97,14 @@ RemoteEMS:
     comment: EMS를 원격으로 제어해야 할 때 이 레지스터를 활성화해야 함. 활성화되면 발전소의 EMS 작업 모드(30003)가 RemoteEMS로 전환됨
 RemoteEMSControlMode:
   name: 원격 EMS 제어 모드
+  options:
+    '0': PCS 원격 제어
+    '1': 대기
+    '2': 최대 자가소비 (기본값)
+    '3': 명령 충전 (계통 전력 우선 소비)
+    '4': 명령 충전 (PV 전력 우선 소비)
+    '5': 명령 방전 (PV 전력 우선 출력)
+    '6': 명령 방전 (배터리 전력 우선 출력)
 MaxChargingLimit:
   name: 최대 충전 제한
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "범위: [0, 10.0]"
 GridCodeLVRTMode:
   name: LVRT 모드
+  options:
+    '0': 무효 전력 보상 전류, 능동 영전류 모드
+    '2': 영전류 모드
+    '3': 정전류 모드
+    '4': 무효 동적 전류, 능동 영전류 모드
+    '5': 무효 전력 보상 전류, 능동 정전류 모드
 GridCodeLVRTVoltageProtectionBlocking:
   name: LVRT 계통 전압 보호 차단
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "범위: [0, 10.0]"
 GridCodeHVRTMode:
   name: HVRT 모드
+  options:
+    '0': 무효 전력 보상 전류, 능동 영전류 모드
+    '2': 영전류 모드
+    '3': 정전류 모드
+    '4': 무효 동적 전류, 능동 유지 모드
+    '5': 무효 전력 보상 전류, 능동 정전류 모드
 GridCodeHVRTVoltageProtectionBlocking:
   name: HVRT 계통 전압 보호 차단
 GridCodeOverFrequencyDerating:

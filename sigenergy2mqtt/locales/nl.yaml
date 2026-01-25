@@ -97,6 +97,14 @@ RemoteEMS:
     comment: Wanneer EMS op afstand moet worden aangestuurd, moet dit register worden ingeschakeld. Wanneer ingeschakeld, schakelt de EMS-werkmodus (30003) van de installatie over naar RemoteEMS
 RemoteEMSControlMode:
   name: Externe EMS Regelmodus
+  options:
+    '0': PCS afstandsbediening
+    '1': Stand-by
+    '2': Maximaal eigenverbruik (standaard)
+    '3': Commando laden (eerst stroom van net verbruiken)
+    '4': Commando laden (eerst stroom van PV verbruiken)
+    '5': Commando ontladen (eerst PV-vermogen uitvoeren)
+    '6': Commando ontladen (eerst batterijvermogen uitvoeren)
 MaxChargingLimit:
   name: Max Laadlimiet
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Bereik: [0, 10,0]"
 GridCodeLVRTMode:
   name: LVRT Modus
+  options:
+    '0': Reactief vermogen compensatiestroom, actieve nulstroom modus
+    '2': Nulstroom modus
+    '3': Constante stroom modus
+    '4': Reactieve dynamische stroom, actieve nulstroom modus
+    '5': Reactief vermogen compensatiestroom, actieve constante stroom modus
 GridCodeLVRTVoltageProtectionBlocking:
   name: LVRT Netspanningsbeveiliging Blokkering
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Bereik: [0, 10,0]"
 GridCodeHVRTMode:
   name: HVRT Modus
+  options:
+    '0': Reactief vermogen compensatiestroom, actieve nulstroom modus
+    '2': Nulstroom modus
+    '3': Constante stroom modus
+    '4': Reactieve dynamische stroom, actieve vasthoudmodus
+    '5': Reactief vermogen compensatiestroom, actieve constante stroom modus
 GridCodeHVRTVoltageProtectionBlocking:
   name: HVRT Netspanningsbeveiliging Blokkering
 GridCodeOverFrequencyDerating:

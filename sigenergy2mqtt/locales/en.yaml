@@ -96,6 +96,14 @@ RemoteEMS:
     comment: When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS
 RemoteEMSControlMode:
   name: Remote EMS Control Mode
+  options:
+    '0': PCS remote control
+    '1': Standby
+    '2': Maximum Self-consumption (Default)
+    '3': Command Charging (Consume power from the grid first)
+    '4': Command Charging (Consume power from the PV first)
+    '5': Command Discharging (Output power from PV first)
+    '6': Command Discharging (Output power from the battery first)
 MaxChargingLimit:
   name: Max Charging Limit
 MaxDischargingLimit:
@@ -148,6 +156,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: 'Range: [0,10.0]'
 GridCodeLVRTMode:
   name: LVRT Mode
+  options:
+    '0': Reactive power compensation current, active zero-current mode
+    '2': Zero-current mode
+    '3': Constant current mode
+    '4': Reactive dynamic current, active zero-current mode
+    '5': Reactive power compensation current, active constant-current mode
 GridCodeLVRTVoltageProtectionBlocking:
   name: LVRT Grid Voltage Protection Blocking
 GridCodeHVRT:
@@ -162,6 +176,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: 'Range: [0,10.0]'
 GridCodeHVRTMode:
   name: HVRT Mode
+  options:
+    '0': Reactive power compensation current, active zero-current mode
+    '2': Zero-current mode
+    '3': Constant current mode
+    '4': Reactive dynamic current, active hold mode
+    '5': Reactive power compensation current, active constant-current mode
 GridCodeHVRTVoltageProtectionBlocking:
   name: HVRT Grid Voltage Protection Blocking
 GridCodeOverFrequencyDerating:

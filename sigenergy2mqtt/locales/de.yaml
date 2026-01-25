@@ -97,6 +97,14 @@ RemoteEMS:
     comment: Wenn EMS ferngesteuert werden soll, muss dieses Register aktiviert werden. Bei Aktivierung wechselt der EMS-Arbeitsmodus (30003) der Anlage zu RemoteEMS
 RemoteEMSControlMode:
   name: Fern-EMS-Steuerungsmodus
+  options:
+    '0': PCS-Fernsteuerung
+    '1': Standby
+    '2': Maximaler Eigenverbrauch (Standard)
+    '3': Befehlsladung (Zuerst Strom aus dem Netz verbrauchen)
+    '4': Befehlsladung (Zuerst Strom aus PV verbrauchen)
+    '5': Befehlsentladung (Strom aus PV zuerst ausgeben)
+    '6': Befehlsentladung (Strom aus Batterie zuerst ausgeben)
 MaxChargingLimit:
   name: Max. Ladegrenze
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Bereich: [0, 10,0]"
 GridCodeLVRTMode:
   name: LVRT-Modus
+  options:
+    '0': Blindleistungskompensationsstrom, aktiver Nullstrommodus
+    '2': Nullstrommodus
+    '3': Konstantstrommodus
+    '4': Reaktiver dynamischer Strom, aktiver Nullstrommodus
+    '5': Blindleistungskompensationsstrom, aktiver Konstantstrommodus
 GridCodeLVRTVoltageProtectionBlocking:
   name: LVRT Netzspannungsschutzblockierung
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Bereich: [0, 10,0]"
 GridCodeHVRTMode:
   name: HVRT-Modus
+  options:
+    '0': Blindleistungskompensationsstrom, aktiver Nullstrommodus
+    '2': Nullstrommodus
+    '3': Konstantstrommodus
+    '4': Reaktiver dynamischer Strom, aktiver Haltemodus
+    '5': Blindleistungskompensationsstrom, aktiver Konstantstrommodus
 GridCodeHVRTVoltageProtectionBlocking:
   name: HVRT Netzspannungsschutzblockierung
 GridCodeOverFrequencyDerating:

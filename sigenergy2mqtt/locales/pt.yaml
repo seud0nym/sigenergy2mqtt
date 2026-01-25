@@ -97,6 +97,14 @@ RemoteEMS:
     comment: Quando necessário controlar o EMS remotamente, este registo precisa estar ativado. Quando ativado, o Modo de Trabalho EMS da central (30003) mudará para RemoteEMS
 RemoteEMSControlMode:
   name: Modo de Controlo EMS Remoto
+  options:
+    '0': Controlo remoto PCS
+    '1': Em espera
+    '2': Autoconsumo máximo (predefinido)
+    '3': Carga por comando (consumir energia da rede primeiro)
+    '4': Carga por comando (consumir energia do PV primeiro)
+    '5': Descarga por comando (saída de energia do PV primeiro)
+    '6': Descarga por comando (saída de energia da bateria primeiro)
 MaxChargingLimit:
   name: Limite Máximo de Carga
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Intervalo: [0, 10,0]"
 GridCodeLVRTMode:
   name: Modo LVRT
+  options:
+    '0': Corrente de compensação de potência reativa, modo corrente zero ativo
+    '2': Modo corrente zero
+    '3': Modo corrente constante
+    '4': Corrente dinâmica reativa, modo corrente zero ativo
+    '5': Corrente de compensação de potência reativa, modo corrente constante ativo
 GridCodeLVRTVoltageProtectionBlocking:
   name: Bloqueio de Proteção de Tensão de Rede LVRT
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "Intervalo: [0, 10,0]"
 GridCodeHVRTMode:
   name: Modo HVRT
+  options:
+    '0': Corrente de compensação de potência reativa, modo corrente zero ativo
+    '2': Modo corrente zero
+    '3': Modo corrente constante
+    '4': Corrente dinâmica reativa, modo manutenção ativo
+    '5': Corrente de compensação de potência reativa, modo corrente constante ativo
 GridCodeHVRTVoltageProtectionBlocking:
   name: Bloqueio de Proteção de Tensão de Rede HVRT
 GridCodeOverFrequencyDerating:

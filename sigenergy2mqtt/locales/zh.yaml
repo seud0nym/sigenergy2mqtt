@@ -97,6 +97,14 @@ RemoteEMS:
     comment: 当需要远程控制EMS时，需要启用此寄存器。启用后，电站的EMS工作模式（30003）将切换到RemoteEMS
 RemoteEMSControlMode:
   name: 远程EMS控制模式
+  options:
+    '0': PCS远程控制
+    '1': 待机
+    '2': 最大自发自用（默认）
+    '3': 命令充电（优先消耗电网电力）
+    '4': 命令充电（优先消耗PV电力）
+    '5': 命令放电（优先输出PV电力）
+    '6': 命令放电（优先输出电池电力）
 MaxChargingLimit:
   name: 最大充电限制
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "范围：[0, 10.0]"
 GridCodeLVRTMode:
   name: LVRT模式
+  options:
+    '0': 无功功率补偿电流，有功零电流模式
+    '2': 零电流模式
+    '3': 恒定电流模式
+    '4': 无功动态电流，有功零电流模式
+    '5': 无功功率补偿电流，有功恒定电流模式
 GridCodeLVRTVoltageProtectionBlocking:
   name: LVRT电网电压保护闭锁
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "范围：[0, 10.0]"
 GridCodeHVRTMode:
   name: HVRT模式
+  options:
+    '0': 无功功率补偿电流，有功零电流模式
+    '2': 零电流模式
+    '3': 恒定电流模式
+    '4': 无功动态电流，有功保持模式
+    '5': 无功功率补偿电流，有功恒定电流模式
 GridCodeHVRTVoltageProtectionBlocking:
   name: HVRT电网电压保护闭锁
 GridCodeOverFrequencyDerating:

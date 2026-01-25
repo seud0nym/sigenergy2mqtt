@@ -97,6 +97,14 @@ RemoteEMS:
     comment: EMSをリモートで制御する必要がある場合、このレジスタを有効にする必要があります。有効にすると、発電所のEMS作業モード（30003）がRemoteEMSに切り替わります
 RemoteEMSControlMode:
   name: リモートEMS制御モード
+  options:
+    '0': PCSリモート制御
+    '1': スタンバイ
+    '2': 最大自家消費（デフォルト）
+    '3': コマンド充電（系統からの電力を優先消費）
+    '4': コマンド充電（PVからの電力を優先消費）
+    '5': コマンド放電（PVからの電力を優先出力）
+    '6': コマンド放電（バッテリーからの電力を優先出力）
 MaxChargingLimit:
   name: 最大充電制限
 MaxDischargingLimit:
@@ -149,6 +157,12 @@ GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "範囲：[0, 10.0]"
 GridCodeLVRTMode:
   name: LVRTモード
+  options:
+    '0': 無効電力補償電流、アクティブゼロ電流モード
+    '2': ゼロ電流モード
+    '3': 定電流モード
+    '4': 無効動的電流、アクティブゼロ電流モード
+    '5': 無効電力補償電流、アクティブ定電流モード
 GridCodeLVRTVoltageProtectionBlocking:
   name: LVRT系統電圧保護ブロッキング
 GridCodeHVRT:
@@ -163,6 +177,12 @@ GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
     comment: "範囲：[0, 10.0]"
 GridCodeHVRTMode:
   name: HVRTモード
+  options:
+    '0': 無効電力補償電流、アクティブゼロ電流モード
+    '2': ゼロ電流モード
+    '3': 定電流モード
+    '4': 無効動的電流、アクティブホールドモード
+    '5': 無効電力補償電流、アクティブ定電流モード
 GridCodeHVRTVoltageProtectionBlocking:
   name: HVRT系統電圧保護ブロッキング
 GridCodeOverFrequencyDerating:
