@@ -2,10 +2,15 @@
 AlarmSensor:
   no_alarm: Sem Alarme
   unknown_alarm: Desconhecido (bit{bit}∈{value})
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
 ReadOnlySensor:
   attributes:
     source: Registo Modbus {address}
     source_range: Registos Modbus {start}-{end}
+  name: '{name}'
 MqttOverriddenSensor:
   attributes:
     source: Substituição MQTT
@@ -53,54 +58,82 @@ ACChargerOutputCurrent:
   name: Corrente de Saída
   attributes:
     comment: "Intervalo: [6, menor entre 'Corrente Nominal do Carregador CA' e 'Corrente Nominal do Disjuntor de Entrada do Carregador CA']"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantStatus:
   name: Central Ligar/Desligar
   attributes:
     comment: 0:Parar 1:Iniciar
 ActivePowerFixedAdjustmentTargetValue:
   name: Valor Alvo de Ajuste Fixo de Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReactivePowerFixedAdjustmentTargetValue:
   name: Valor Alvo de Ajuste Fixo de Potência Reativa
   attributes:
     comment: "Intervalo: [-60,00 * valor base, 60,00 * valor base]. Aplica-se globalmente independentemente do modo de operação EMS"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ActivePowerPercentageAdjustmentTargetValue:
   name: Valor Alvo de Ajuste Percentual de Potência Ativa
   attributes:
     comment: "Intervalo: [-100,00, 100,00]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 QSAdjustmentTargetValue:
   name: Valor Alvo de Ajuste Q/S
   attributes:
     comment: "Intervalo: [-60,0, 60,00]. Aplica-se globalmente independentemente do modo de operação EMS"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PowerFactorAdjustmentTargetValue:
   name: Valor Alvo de Ajuste do Fator de Potência
   attributes:
     comment: "Intervalo: [(-1,0, -0,8) U (0,8, 1,0)]. Sensor de rede necessário. Aplica-se globalmente independentemente do modo de operação EMS"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 IndependentPhasePowerControl:
   name: Controlo de Potência de Fase Independente
   attributes:
     comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Para ativar o controlo de fase independente, este parâmetro deve ser ativado
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PhaseActivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
   name: Valor-alvo de ajuste fixo de potência ativa da fase {phase}
 PhaseReactivePowerFixedAdjustmentTargetValue:
   attributes:
     comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
   name: Valor-alvo de ajuste fixo de potência reativa da fase {phase}
 PhaseActivePowerPercentageAdjustmentTargetValue:
   attributes:
     comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-100,00, 100,00]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
   name: Valor-alvo de ajuste de percentagem de potência ativa da fase {phase}
 PhaseQSAdjustmentTargetValue:
   attributes:
     comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-60,00, 60,00]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
   name: Valor-alvo de ajuste fixo de Q/S da fase {phase}
 Reserved40026:
   name: Reservado
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RemoteEMS:
   name: EMS Remoto
   attributes:
     comment: Quando necessário controlar o EMS remotamente, este registo precisa estar ativado. Quando ativado, o Modo de Trabalho EMS da central (30003) mudará para RemoteEMS
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RemoteEMSControlMode:
   name: Modo de Controlo EMS Remoto
   options:
@@ -111,56 +144,90 @@ RemoteEMSControlMode:
     '4': Carga por comando (consumir energia do PV primeiro)
     '5': Descarga por comando (saída de energia do PV primeiro)
     '6': Descarga por comando (saída de energia da bateria primeiro)
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxChargingLimit:
   name: Limite Máximo de Carga
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxDischargingLimit:
   name: Limite Máximo de Descarga
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PVMaxPowerLimit:
   name: Limite de Potência Máx PV
   attributes:
     comment: Efetivo quando o modo de controlo EMS remoto (40031) está definido para Carga/Descarga por Comando
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridMaxExportLimit:
   name: Limite Máx de Exportação para Rede
   attributes:
     comment: Sensor de rede necessário. Aplica-se globalmente independentemente do modo de operação EMS
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridMaxImportLimit:
   name: Limite Máx de Importação da Rede
   attributes:
     comment: Sensor de rede necessário. Aplica-se globalmente independentemente do modo de operação EMS
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PCSMaxExportLimit:
   name: Limite Máx de Exportação PCS
   attributes:
     comment: "Intervalo: [0, 0xFFFFFFFE]. Com valor 0xFFFFFFFF, o registo não é válido. Em todos os outros casos, aplica-se globalmente."
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PCSMaxImportLimit:
   name: Limite Máx de Importação PCS
   attributes:
     comment: "Intervalo: [0, 0xFFFFFFFE]. Com valor 0xFFFFFFFF, o registo não é válido. Em todos os outros casos, aplica-se globalmente."
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ESSBackupSOC:
   name: Estado de carga de backup
   attributes:
     comment: "Intervalo: [0,00, 100,00]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ESSChargeCutOffSOC:
   name: Estado de carga de corte de carga
   attributes:
     comment: "Intervalo: [0,00, 100,00]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ESSDischargeCutOffSOC:
   name: Estado de carga de corte de descarga
   attributes:
     comment: "Intervalo: [0,00, 100,00]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ActivePowerRegulationGradient:
   name: Gradiente de Regulação de Potência Ativa
   attributes:
     comment: "Intervalo: [0, 5000]. Percentagem de potência nominal ajustada por segundo"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeLVRT:
   name: Tolerância a Baixa Tensão
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeLVRTReactivePowerCompensationFactor:
   name: Fator de Compensação de Potência Reativa LVRT
   attributes:
     comment: "Intervalo: [0, 10,0]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
   name: Fator de Compensação de Potência Reativa de Sequência Negativa LVRT
   attributes:
     comment: "Intervalo: [0, 10,0]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeLVRTMode:
   name: Modo LVRT
   options:
@@ -169,18 +236,31 @@ GridCodeLVRTMode:
     '3': Modo corrente constante
     '4': Corrente dinâmica reativa, modo corrente zero ativo
     '5': Corrente de compensação de potência reativa, modo corrente constante ativo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeLVRTVoltageProtectionBlocking:
   name: Bloqueio de Proteção de Tensão de Rede LVRT
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeHVRT:
   name: Tolerância a Alta Tensão
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeHVRTReactivePowerCompensationFactor:
   name: Fator de Compensação de Potência Reativa HVRT
   attributes:
     comment: "Intervalo: [0, 10,0]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
   name: Fator de Compensação de Potência Reativa de Sequência Negativa HVRT
   attributes:
     comment: "Intervalo: [0, 10,0]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeHVRTMode:
   name: Modo HVRT
   options:
@@ -189,146 +269,335 @@ GridCodeHVRTMode:
     '3': Modo corrente constante
     '4': Corrente dinâmica reativa, modo manutenção ativo
     '5': Corrente de compensação de potência reativa, modo corrente constante ativo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeHVRTVoltageProtectionBlocking:
   name: Bloqueio de Proteção de Tensão de Rede HVRT
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeOverFrequencyDerating:
   name: Redução por Sobrefrequência
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeOverFrequencyDeratingPowerRampRate:
   name: Taxa de Rampa de Potência por Sobrefrequência
   attributes:
     comment: "Intervalo: [0, 100,0]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeOverFrequencyDeratingTriggerFrequency:
   name: Frequência de Ativação por Sobrefrequência
   attributes:
     comment: "Intervalo: [1,0*Fn, 1,2*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeOverFrequencyDeratingCutOffFrequency:
   name: Frequência de Corte por Sobrefrequência
   attributes:
     comment: "Intervalo: [1,0*Fn, 1,2*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeUnderFrequencyPowerBoost:
   name: Aumento de Potência por Subfrequência
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeUnderFrequencyPowerBoostPowerRampRate:
   name: Taxa de Rampa de Potência por Subfrequência
   attributes:
     comment: "Intervalo: [0, 100,0]"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeUnderFrequencyPowerBoostTriggerFrequency:
   name: Frequência de Ativação por Subfrequência
   attributes:
     comment: "Intervalo: [0,8*Fn, 1,0*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeUnderFrequencyPowerBoostCutOffFrequency:
   name: Frequência de Corte por Subfrequência
   attributes:
     comment: "Intervalo: [0,8*Fn, 1,0*Fn] Referência: [Código de rede] Frequência Nominal (Registo 30276)"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterModel:
   name: Modelo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterSerialNumber:
   name: Número de Série
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterFirmwareVersion:
   name: Versão de Firmware
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RatedActivePower:
   name: Potência Ativa Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxRatedApparentPower:
   name: Potência Aparente Nominal Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterMaxActivePower:
   name: Potência Ativa Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxAbsorptionPower:
   name: Potência de Absorção Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RatedBatteryCapacity:
   name: Capacidade de Bateria Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RatedChargingPower:
   name: Potência de Carga Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RatedDischargingPower:
   name: Potência de Descarga Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedDailyExportEnergy:
   name: Energia Exportada Diária
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedAccumulatedExportEnergy:
   name: Energia Exportada Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedDailyImportEnergy:
   name: Energia Importada Diária
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedAccumulatedImportEnergy:
   name: Energia Importada Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DailyChargeEnergy:
   name: Energia de Carga Diária
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AccumulatedChargeEnergy:
   name: Energia de Carga Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DailyDischargeEnergy:
   name: Energia de Descarga Diária
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AccumulatedDischargeEnergy:
   name: Energia de Descarga Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterRunningState:
   name: Estado de Funcionamento
+  options:
+    '0': Em Espera
+    '1': Normal
+    '2': Falha
+    '3': Desligado
+    '7': Anomalia Ambiental
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxActivePowerAdjustment:
   name: Ajuste de Potência Ativa Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MinActivePowerAdjustment:
   name: Ajuste de Potência Ativa Mín
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxReactivePowerAdjustment:
   name: Ajuste de Potência Reativa Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MinReactivePowerAdjustment:
   name: Ajuste de Potência Reativa Mín
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ActivePower:
   name: Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReactivePower:
   name: Potência Reativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxBatteryChargePower:
   name: Potência de Carga Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxBatteryDischargePower:
   name: Potência de Descarga Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableBatteryChargeEnergy:
   name: Energia de Carga Disponível
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableBatteryDischargeEnergy:
   name: Energia de Descarga Disponível
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ChargeDischargePower:
   name: Potência da Bateria
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterBatterySoC:
   name: Estado de carga da bateria
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterBatterySoH:
   name: Estado de saúde da bateria
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AverageCellTemperature:
   name: Temperatura Média das Células
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AverageCellVoltage:
   name: Tensão Média das Células
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterAlarm1:
   name: Alarmes PCS 1
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterAlarm2:
   name: Alarmes PCS 2
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterPCSAlarm:
   name: Alarmes PCS
   attributes:
     source: Registos Modbus 30605-30606
 InverterAlarm3:
   name: Alarmes
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterAlarm4:
   name: Alarmes de Gateway
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterAlarm5:
   name: Alarmes
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 Reserved30610:
   name: Reservado
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterActivePowerFixedValueAdjustmentFeedback:
   name: Feedback de Ajuste de Valor Fixo de Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterReactivePowerFixedValueAdjustmentFeedback:
   name: Feedback de Ajuste de Valor Fixo de Potência Reativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterActivePowerPercentageAdjustmentFeedback:
   name: Feedback de Ajuste Percentual de Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterReactivePowerPercentageAdjustmentFeedback:
   name: Feedback de Ajuste Percentual de Potência Reativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterPowerFactorAdjustmentFeedback:
   name: Feedback de Ajuste do Fator de Potência
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterMaxBatteryTemperature:
   name: Temperatura da Bateria Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterMinBatteryTemperature:
   name: Temperatura da Bateria Mín
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterMaxCellVoltage:
   name: Tensão da Célula Máx
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterMinCellVoltage:
   name: Tensão da Célula Mín
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RatedGridVoltage:
   name: Tensão de Rede Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 RatedGridFrequency:
   name: Frequência de Rede Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridFrequency:
   name: Frequência de Rede
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterTemperature:
   name: Temperatura
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 OutputType:
   name: Tipo de Saída
   options:
@@ -336,46 +605,101 @@ OutputType:
     "1": L1/L2/L3
     "2": L1/L2/L3/N
     "3": L1/L2/N
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PowerFactor:
   name: Fator de Potência
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PACKBCUCount:
   name: Contagem PACK/BCU
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PVStringCount:
   name: Contagem de Strings PV
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MPTTCount:
   name: Contagem MPPT
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PVCurrentSensor:
   name: Corrente
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PVVoltageSensor:
   name: Tensão
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterPVPower:
   name: Potência PV
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InsulationResistance:
   name: Resistência de Isolamento
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 StartupTime:
   name: Hora de Início
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ShutdownTime:
   name: Hora de Desligamento
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerVehicleBatteryVoltage:
   name: Tensão da Bateria do Veículo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerVehicleChargingCurrent:
   name: Corrente de Carga do Veículo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerOutputPower:
   name: Potência de Saída
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerVehicleSoC:
   name: Estado de carga do veículo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerCurrentChargingCapacity:
   name: Capacidade de Carga Atual
   attributes:
     comment: Sessão única
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerCurrentChargingDuration:
   name: Duração de Carga Atual
   attributes:
     comment: Sessão única
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterPVDailyGeneration:
   name: Produção Diária
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterPVLifetimeGeneration:
   name: Produção Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerRunningState:
   name: Estado de Funcionamento
   options:
@@ -385,10 +709,19 @@ DCChargerRunningState:
     "3": A carregar
     "4": Falha
     "5": Programado
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SystemTime:
   name: Hora do Sistema
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SystemTimeZone:
   name: Fuso Horário do Sistema
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 EMSWorkMode:
   name: Modo de Trabalho EMS
   options:
@@ -399,6 +732,9 @@ EMSWorkMode:
     "6": Programação VPP
     "7": EMS Remoto
     "9": Controlo Baseado no Tempo
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridSensorStatus:
   name: Estado do Sensor de Rede
   options:
@@ -406,38 +742,58 @@ GridSensorStatus:
     "1": Ligado
   attributes:
     comment: Estado de ligação do gateway ou contador
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridSensorActivePower:
   name: Potência Ativa
   attributes:
     comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridSensorReactivePower:
   name: Potência Reativa
   attributes:
     comment: Dados recolhidos do sensor de rede no ponto de controlo rede/sistema
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridStatus:
   name: Estado da Rede
   options:
     "0": Ligado à Rede
     "1": Ilha (auto)
     "2": Ilha (manual)
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxActivePower:
   name: Potência Ativa Máx
   attributes:
     comment: Este deve ser o valor base de todas as ações de ajuste de potência ativa
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 MaxApparentPower:
   name: Potência Aparente Máx
   attributes:
     comment: Este deve ser o valor base de todas as ações de ajuste de potência reativa
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantBatterySoC:
   name: Estado de carga da bateria
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GeneralAlarm1:
   name: Alarmes PCS 1
   attributes:
     comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GeneralAlarm2:
   name: Alarmes PCS 2
   attributes:
     comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GeneralPCSAlarm:
   name: Alarmes PCS
   attributes:
@@ -447,155 +803,330 @@ GeneralAlarm3:
   name: Alarmes ESS
   attributes:
     comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GeneralAlarm4:
   name: Alarmes de Gateway
   attributes:
     comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantActivePower:
   name: Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantReactivePower:
   name: Potência Reativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantPVPower:
   name: Potência PV
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 BatteryPower:
   name: Potência da Bateria
   attributes:
     comment: "Potência ESS: <0 = descarga, >0 = carga"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMaxActivePower:
   name: Potência Ativa Máx Disponível
   attributes:
     comment: Injeção no terminal CA. Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMinActivePower:
   name: Potência Ativa Mín Disponível
   attributes:
     comment: Absorção do terminal CA. Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMaxReactivePower:
   name: Potência Reativa Máx Disponível
   attributes:
     comment: Injeção no terminal CA. Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMinReactivePower:
   name: Potência Reativa Mín Disponível
   attributes:
     comment: Absorção do terminal CA. Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMaxChargingPower:
   name: Potência de Carga Máx Disponível
   attributes:
     comment: Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMaxDischargingPower:
   name: Potência de Descarga Máx Disponível
   attributes:
     comment: Absorção do terminal CA. Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantRunningState:
   name: Estado de Funcionamento
+  options:
+    '0': Em Espera
+    '1': Normal
+    '2': Falha
+    '3': Desligado
+    '7': Anomalia Ambiental
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridPhaseActivePower:
   attributes:
     comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
   name: Potência ativa da fase {phase}
 GridPhaseReactivePower:
   attributes:
     comment: Dados recolhidos do sensor de rede no ponto de controlo rede/sistema
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
   name: Potência reativa da fase {phase}
 AvailableMaxChargingCapacity:
   name: Capacidade de Carga Máx Disponível
   attributes:
     comment: Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 AvailableMaxDischargingCapacity:
   name: Capacidade de Descarga Máx Disponível
   attributes:
     comment: Conta apenas inversores em funcionamento
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantRatedChargingPower:
   name: Potência de Carga Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantRatedDischargingPower:
   name: Potência de Descarga Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GeneralAlarm5:
   name: Alarmes de Carregador CC
   attributes:
     comment: Se algum inversor híbrido tiver um alarme, este alarme será definido em conformidade
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 Reserved30073:
   name: Reservado
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantRatedEnergyCapacity:
   name: Capacidade Energética Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ChargeCutOffSoC:
   name: Estado de carga de corte de carga
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DischargeCutOffSoC:
   name: Estado de carga de corte de descarga
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantBatterySoH:
   name: Estado de saúde da bateria
   attributes:
     comment: Este valor é a média ponderada do estado de saúde de todos os dispositivos ESS na central, com cada capacidade nominal como peso
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantPVTotalGeneration:
   name: Produção PV Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 TotalLoadDailyConsumption:
   name: Consumo Diário
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 TotalLoadConsumption:
   name: Consumo Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ThirdPartyPVPower:
   name: Potência PV de Terceiros
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ThirdPartyLifetimePVEnergy:
   name: Produção PV de Terceiros Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ESSTotalChargedEnergy:
   name: Energia Carregada Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ESSTotalDischargedEnergy:
   name: Energia Descarregada Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 EVDCTotalChargedEnergy:
   name: Energia de Carga CC VE Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 EVDCTotalDischargedEnergy:
   name: Energia de Descarga CC VE Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantTotalImportedEnergy:
   name: Energia Importada Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantTotalExportedEnergy:
   name: Energia Exportada Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantTotalGeneratorOutputEnergy:
   name: Energia de Saída do Gerador Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 StatisticsInterfaceSensor:
   attributes:
     comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
 SITotalCommonLoadConsumption:
   name: Consumo de Carga Comum Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalEVACChargedEnergy:
   name: Energia de Carga CA VE Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalSelfPVGeneration:
   name: Produção PV Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalThirdPartyPVGeneration:
   name: Produção PV de Terceiros Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalChargedEnergy:
   name: Energia Carregada Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalDischargedEnergy:
   name: Energia Descarregada Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalEVDCChargedEnergy:
   name: Energia de Carga CC VE Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalEVDCDischargedEnergy:
   name: Energia de Descarga CC VE Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalImportedEnergy:
   name: Energia Importada Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalExportedEnergy:
   name: Energia Exportada Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SITotalGeneratorOutputEnergy:
   name: Energia de Saída do Gerador Total
+  attributes:
+    comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedPVTotalGenerationToday:
   name: Produção PV Total Hoje
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedPVTotalGenerationYesterday:
   name: Produção PV Total Ontem
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeRatedFrequency:
   name: Frequência Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 GridCodeRatedVoltage:
   name: Tensão Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 CurrentControlCommandValue:
   name: Valor do Comando de Controlo Atual
   attributes:
     comment: Uso do Controlo de Saída Remota no Japão
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 Alarm6:
   name: Alarme 6
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 Alarm7:
   name: Alarme 7
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantAlarms:
   name: Alarmes da Central
   attributes:
     source: Registos Modbus 30280-30281
 GeneralLoadPower:
   name: Potência de Carga Geral
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 TotalLoadPower:
   name: Potência de Carga Total
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 BatteryChargingPower:
   name: Potência de Carga da Bateria
   attributes:
@@ -683,6 +1214,10 @@ RunningStateSensor:
     "2": Falha
     "3": Desligado
     "7": Anomalia Ambiental
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
 ACChargerRunningState:
   name: Estado de Funcionamento
   options:
@@ -694,24 +1229,54 @@ ACChargerRunningState:
     "5": A carregar
     "6": Falha
     "7": Erro
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerTotalEnergyConsumed:
   name: Energia Total Consumida
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerChargingPower:
   name: Potência de Carga
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerRatedPower:
   name: Potência Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerRatedCurrent:
   name: Corrente Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerRatedVoltage:
   name: Tensão Nominal
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerInputBreaker:
   name: Disjuntor de Entrada
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerAlarm1:
   name: Alarme 1
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerAlarm2:
   name: Alarme 2
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerAlarm3:
   name: Alarme 3
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ACChargerAlarms:
   name: Alarmes
   attributes:
@@ -722,6 +1287,9 @@ InverterStatus:
     comment: 0:Parar 1:Iniciar
 ReservedGridCode:
   name: Código de Rede
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 DCChargerStatus:
   name: Carregador CC Iniciar/Parar
   attributes:
@@ -730,16 +1298,34 @@ DCChargerStatus:
   name_on: Iniciar
 ReservedInverterRemoteEMSDispatch:
   name: Despacho EMS Remoto
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterActivePowerFixedValueAdjustment:
   name: Ajuste de Valor Fixo de Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterReactivePowerFixedValueAdjustment:
   name: Ajuste de Valor Fixo de Potência Reativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterActivePowerPercentageAdjustment:
   name: Ajuste Percentual de Potência Ativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterReactivePowerQSAdjustment:
   name: Ajuste Q/S de Potência Reativa
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 InverterPowerFactorAdjustment:
   name: Ajuste do Fator de Potência
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PVOutputOutputService:
   name: Adicionar Serviço de Saída PVOutput
 PVOutputStatusService:
@@ -783,31 +1369,31 @@ cli:
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Definir o nível de log. Valores válidos: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Padrão: WARNING'
   SIGENERGY2MQTT_DEBUG_SENSOR:
-    help: Especificar um sensor para depurar usando ID de entidade ou nome de classe. Se especificado, --log-level é forçado para DEBUG.
+    help: 'Especificar um sensor para ser depurado usando o ID da entidade completo ou parcial ou o nome da classe do sensor (por exemplo, especificar ''daily'' corresponderia a todos os sensores com ''daily'' no nome da sua entidade), ou uma expressão regular para corresponder ao ID da entidade ou nome da classe do sensor (por exemplo, ''^PowerFactor$'' corresponde apenas ao nome de classe única). Se especificado, --log-level também é forçado para DEBUG.'
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
-    help: 'Valor padrão em kW para verificações de validação. Padrão: 500 kW por segundo.'
+    help: 'O valor padrão em kW usado para verificações de integridade para validar os valores máximo e mínimo para o valor real dos sensores de potência e o valor delta dos sensores de energia. O valor padrão é 500 kW por segundo, e as leituras fora do intervalo são ignoradas.'
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: Desativar validação de limites ESS Max Carga/Descarga e PV Max Potência.
+    help: 'Desative a validação que desativa os limites de Carga/Descarga Máxima do ESS e de Potência Máxima do PV quando o Modo de Controle EMS Remoto não for Carga/Descarga por Comando.'
   SIGENERGY2MQTT_NO_METRICS:
-    help: Não publicar métricas sigenergy2mqtt.
+    help: 'Não publicar métricas sigenergy2mqtt.'
   SIGENERGY2MQTT_CONSUMPTION:
-    help: "Definir método de cálculo do sensor de Potência Consumida. Padrão: 'calculated'."
+    help: "Defina o método de cálculo do sensor de Potência Consumida pela Planta. Os valores válidos são: 'calculated', 'total' (registo de Potência de Carga Total) ou 'general' (registo de Potência de Carga Geral V2.8). O padrão é 'calculated'. Esta opção é ignorada em firmwares anteriores ao que suporta o Protocolo Modbus V2.8."
   SIGENERGY2MQTT_HASS_ENABLED:
-    help: Ativar auto-descoberta no Home Assistant.
+    help: 'Ativar auto-descoberta no Home Assistant.'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
     help: 'Prefixo do tópico MQTT Discovery do Home Assistant (padrão: homeassistant)'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Prefixo para IDs de entidade do Home Assistant (padrão: sigen)'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: Prefixo para IDs únicos do Home Assistant. Uma vez definido, NUNCA altere.
+    help: 'O prefixo a ser usado para IDs exclusivos do Home Assistant. Exemplo: Um prefixo ''prefix'' anexará ''prefix_'' aos IDs exclusivos (padrão: sigen). Depois de definir isso, você NUNCA deve alterá-lo, pois isso quebrará as entidades existentes no Home Assistant.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
-    help: Usar estrutura de tópicos simplificada
+    help: 'Usar estrutura de tópicos simplificada'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
-    help: Prefixo para nomes de entidade do Home Assistant
+    help: 'Prefixo para nomes de entidade do Home Assistant'
   SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
-    help: Usar caixa numérica (true) ou controle deslizante (false) para sensores de porcentagem.
+    help: 'Usar caixa numérica (true) ou controle deslizante (false) para sensores de porcentagem.'
   discovery_only:
-    help: Sair imediatamente após publicar discovery.
+    help: 'Sair imediatamente após publicar discovery.'
   SIGENERGY2MQTT_MQTT_BROKER:
     help: 'Nome do host ou endereço IP do broker MQTT (padrão: 127.0.0.1)'
   SIGENERGY2MQTT_MQTT_PORT:
@@ -829,35 +1415,35 @@ cli:
   SIGENERGY2MQTT_MQTT_LOG_LEVEL:
     help: Definir nível de log paho.mqtt.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-    help: Tentar auto-descoberta de hosts Modbus Sigenergy e IDs de dispositivo.
+    help: 'Tentar a auto-descoberta de hosts Modbus Sigenergy e IDs de dispositivo. Se ''once'' for especificado, a auto-descoberta só ocorrerá se nenhum resultado de auto-descoberta existente for encontrado. Se ''force'', a auto-descoberta substituirá quaisquer hosts Modbus e IDs de dispositivo descobertos anteriormente. Se não for especificado, a auto-descoberta é desativada.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
-    help: 'Timeout de ping em segundos para auto-descoberta. Padrão: 0,5 segundos.'
+    help: 'O tempo de limite de ping, em segundos, a ser usado ao realizar a auto-descoberta de dispositivos Sigenergy na rede. O padrão é 0,5 segundos.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: 'Timeout Modbus em segundos para auto-descoberta. Padrão: 0,25 segundos.'
+    help: 'O tempo de limite de Modbus, em segundos, a ser usado ao realizar a auto-descoberta de dispositivos Sigenergy na rede. O padrão é 0,25 segundos.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
-    help: 'Número máximo de tentativas Modbus para auto-descoberta. Padrão: 0.'
+    help: 'A contagem máxima de novas tentativas do Modbus a ser usada ao realizar a auto-descoberta de dispositivos Sigenergy na rede. O padrão é 0.'
   SIGENERGY2MQTT_MODBUS_HOST:
-    help: Nome do host ou endereço IP do dispositivo Sigenergy
+    help: 'Nome do host ou endereço IP do dispositivo Sigenergy'
   SIGENERGY2MQTT_MODBUS_PORT:
     help: 'Número da porta Modbus do dispositivo Sigenergy (padrão: 502)'
   SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
-    help: ID do dispositivo Modbus do Inversor Sigenergy. Múltiplos IDs separados por vírgulas.
+    help: 'O ID de dispositivo Modbus do Inversor Sigenergy. Vários IDs de dispositivo podem ser especificados, separados por vírgulas.'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
-    help: ID do dispositivo Modbus do Carregador CA Sigenergy.
+    help: 'O ID do dispositivo Modbus do Carregador CA Sigenergy. Vários IDs de dispositivo podem ser especificados, separados por vírgulas.'
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
-    help: ID do dispositivo Modbus do Carregador CC Sigenergy.
+    help: 'O ID do dispositivo Modbus do Carregador CC Sigenergy. Vários IDs de dispositivo podem ser especificados, separados por vírgulas.'
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
-    help: Publicar apenas sensores somente leitura no MQTT.
+    help: 'Publicar apenas sensores somente leitura no MQTT.'
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
-    help: Não publicar sensores leitura-escrita para integração EMS remoto.
+    help: 'Não publicar sensores leitura-escrita para integração EMS remoto.'
   SIGENERGY2MQTT_MODBUS_TIMEOUT:
     help: 'Timeout para conexão Modbus em segundos. Padrão: 1,0.'
   SIGENERGY2MQTT_MODBUS_RETRIES:
     help: 'Número máximo de tentativas para operações Modbus. Padrão: 3.'
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
-    help: Desativar chunking Modbus ao ler registros.
+    help: 'Desativar chunking Modbus ao ler registros.'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
-    help: Definir nível de log pymodbus.
+    help: 'Definir nível de log pymodbus.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
     help: 'Intervalo de varredura para registros de baixa frequência. Padrão: 600.'
   SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
@@ -925,21 +1511,185 @@ cli:
 WriteOnlySensor:
   name_on: Ligar
   name_off: Desligar
+  name: '{name}'
 LineVoltage:
   name: '{phase} Tensão de linha'
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PhaseVoltage:
   name: Tensão de fase
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PhaseCurrent:
   name: Corrente de fase
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantPhaseActivePower:
   name: Potência ativa da fase {phase}
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 PlantPhaseReactivePower:
   name: Potência reativa da fase {phase}
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SmartLoadTotalConsumption:
   name: Consumo total de carga inteligente {smart_load_index}
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 SmartLoadPower:
   name: Potência de carga inteligente {smart_load_index}
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedGridPhaseVoltage:
   name: Tensão da fase {phase}
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
 ReservedGridPhaseCurrent:
   name: Corrente da fase {phase}
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+ConsumptionSource: {}
+OutputField: {}
+StatusField: {}
+TariffType: {}
+VoltageSource: {}
+ConsumptionMethod: {}
+Protocol: {}
+HybridInverter: {}
+PVInverter: {}
+ModbusClient: {}
+GridCode:
+  name: Código de Rede Central Sigenergy
+PVString:
+  name: '{model_id} {serial_number} PV String {string_number}'
+ModbusDevice:
+  name: '{Config} {name}'
+ESS:
+  name: '{model_id} {serial_number} ESS'
+GridSensor:
+  name: Sensor de Rede Central Sigenergy
+PowerPlant:
+  name: 'Planta Sigenergy'
+ACCharger:
+  name: Carregador CA Sigenergy
+PlantStatistics:
+  name: Estatísticas Central Sigenergy
+Inverter:
+  name: '{model_id} {serial}'
+DCCharger:
+  name: Carregador CC Sigenergy
+MqttClient: {}
+MetricsSensor:
+  name: '{name}'
+RemoteEMSLimit:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{availability_control_sensor}'
+SanityCheckException: {}
+SourceType: {}
+Sensor: {}
+DerivedSensor: {}
+ReadableSensorMixin: {}
+ModbusSensorMixin: {}
+AvailabilityMixin: {}
+ReservedSensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+TimestampSensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+ObservableMixin: {}
+SubstituteMixin: {}
+WritableSensorMixin: {}
+ReadWriteSensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+NumericSensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{availability_control_sensor}'
+SelectSensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+SwitchSensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+Alarm1Sensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+Alarm2Sensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+Alarm3Sensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+Alarm4Sensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+Alarm5Sensor:
+  attributes:
+    source: Registo Modbus {address}
+    source_range: Registos Modbus {start}-{end}
+  name: '{name}'
+AlarmCombinedSensor:
+  name: '{name}'
+ResettableAccumulationSensor:
+  name: '{name}'
+EnergyLifetimeAccumulationSensor:
+  name: '{name}'
+  name_reset: Definir {name}
+EnergyDailyAccumulationSensor:
+  name: '{name}'
+  name_reset: Definir {name}
+DeviceClass: {}
+InputType: {}
+StateClass: {}
+UnitOfApparentPower: {}
+UnitOfElectricCurrent: {}
+UnitOfElectricPotential: {}
+UnitOfEnergy: {}
+UnitOfFrequency: {}
+UnitOfPower: {}
+UnitOfReactivePower: {}
+UnitOfTemperature: {}
+UnitOfTime: {}
+Service:
+  name: '{Config} {name}'
+Calculation: {}
+TimePeriodServiceTopics:
+  name: '{service}'
+SmartPort:
+  name: Smart-Port Central Sigenergy
+Device:
+  name: '{Config} {name}'
+SensorGroup:
+  name: '{sensors}'

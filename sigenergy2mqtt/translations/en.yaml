@@ -11,6 +11,26 @@ WriteOnlySensor:
 MqttOverriddenSensor:
   attributes:
     source: MQTT Override
+GridCode:
+  name: Sigenergy Plant Grid Code
+PVString:
+  name: '{model_id} {serial_number} PV String {string_number}'
+Device:
+  name: '{Config} {name}'
+ESS:
+  name: '{model_id} {serial_number} ESS'
+GridSensor:
+  name: Sigenergy Plant Grid Sensor
+PowerPlant:
+  name: Sigenergy Plant
+ACCharger:
+  name: Sigenergy AC Charger
+PlantStatistics:
+  name: Sigenergy Plant Statistics
+Inverter:
+  name: '{model_id} {serial}'
+DCCharger:
+  name: Sigenergy DC Charger
 MonitorService:
   name: Sigenergy Monitor
 MetricsService:
@@ -259,6 +279,12 @@ AccumulatedDischargeEnergy:
   name: Lifetime Discharge Energy
 InverterRunningState:
   name: Running State
+  options:
+    '0': Standby
+    '1': Normal
+    '2': Fault
+    '3': Power-Off
+    '7': Environmental Abnormality
 MaxActivePowerAdjustment:
   name: Max Active Power Adjustment
 MinActivePowerAdjustment:
@@ -499,6 +525,12 @@ AvailableMaxDischargingPower:
     comment: Absorb from the AC terminal. Count only the running inverters
 PlantRunningState:
   name: Running State
+  options:
+    '0': Standby
+    '1': Normal
+    '2': Fault
+    '3': Power-Off
+    '7': Environmental Abnormality
 GridPhaseActivePower:
   name: Phase {phase} Active Power
   attributes:
@@ -568,26 +600,48 @@ StatisticsInterfaceSensor:
     comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalCommonLoadConsumption:
   name: Total Common Load Consumption
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalEVACChargedEnergy:
   name: Total AC EV Charge Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalSelfPVGeneration:
   name: Total PV Production
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalThirdPartyPVGeneration:
   name: Total Third-Party PV Production
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalChargedEnergy:
   name: Total Charge Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalDischargedEnergy:
   name: Total Discharge Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalEVDCChargedEnergy:
   name: Total DC EV Charge Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalEVDCDischargedEnergy:
   name: Total DC EV Discharge Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalImportedEnergy:
   name: Total Imported Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalExportedEnergy:
   name: Total Exported Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 SITotalGeneratorOutputEnergy:
   name: Total Generator Output Energy
+  attributes:
+    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
 ReservedPVTotalGenerationToday:
   name: PV Total Generation Today
 ReservedPVTotalGenerationYesterday:
@@ -797,6 +851,64 @@ EnphaseVoltage:
   name: Voltage
   attributes:
     source: Enphase Envoy API when EnphasePVPower derived
+SmartPort:
+  name: Sigenergy Plant Smart-Port
+ConsumptionSource: {}
+OutputField: {}
+StatusField: {}
+TariffType: {}
+VoltageSource: {}
+ConsumptionMethod: {}
+Protocol: {}
+HybridInverter: {}
+PVInverter: {}
+ModbusClient: {}
+ModbusDevice:
+  name: '{Config} {name}'
+MqttClient: {}
+MetricsSensor: {}
+RemoteEMSLimit: {}
+SanityCheckException: {}
+SourceType: {}
+Sensor: {}
+DerivedSensor: {}
+ReadableSensorMixin: {}
+ModbusSensorMixin: {}
+AvailabilityMixin: {}
+ReservedSensor: {}
+TimestampSensor: {}
+ObservableMixin: {}
+SubstituteMixin: {}
+WritableSensorMixin: {}
+ReadWriteSensor: {}
+NumericSensor: {}
+SelectSensor: {}
+SwitchSensor: {}
+Alarm1Sensor: {}
+Alarm2Sensor: {}
+Alarm3Sensor: {}
+Alarm4Sensor: {}
+Alarm5Sensor: {}
+AlarmCombinedSensor: {}
+ResettableAccumulationSensor: {}
+EnergyLifetimeAccumulationSensor: {}
+EnergyDailyAccumulationSensor: {}
+DeviceClass: {}
+InputType: {}
+StateClass: {}
+UnitOfApparentPower: {}
+UnitOfElectricCurrent: {}
+UnitOfElectricPotential: {}
+UnitOfEnergy: {}
+UnitOfFrequency: {}
+UnitOfPower: {}
+UnitOfReactivePower: {}
+UnitOfTemperature: {}
+UnitOfTime: {}
+Service:
+  name: '{Config} {name}'
+Calculation: {}
+TimePeriodServiceTopics: {}
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)'
