@@ -10,6 +10,14 @@
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
+# locale
+#   added: 2026.1.25
+#   default:      Determined from system (e.g. LANG environment variable) or 
+#                 English if no alternative is found
+#   description:  The locale to use for translations. Valid values are 
+#                 determined from the translation files available in the 
+#                 'translations' directory.
+locale: en
 # consumption
 #   added: 2025.12.20
 #   default: calculated

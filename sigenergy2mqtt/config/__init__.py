@@ -8,6 +8,8 @@ import sys
 import time
 from pathlib import Path
 
+from sigenergy2mqtt import i18n
+
 from . import const
 from .config import Config
 from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
@@ -80,6 +82,14 @@ _parser.add_argument(
     choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     default=os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL, None),
     help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+)
+_parser.add_argument(
+    "--locale",
+    action="store",
+    dest=const.SIGENERGY2MQTT_LOCALE,
+    choices=i18n.get_available_locales(),
+    default=os.getenv(const.SIGENERGY2MQTT_LOCALE, None),
+    help=f"Set the locale to use for translations. Valid values are: {', '.join(i18n.get_available_locales())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
 )
 _parser.add_argument(
     "-d",
