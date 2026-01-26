@@ -367,9 +367,9 @@ OutputType:
 LineVoltage:
   name: '{phase} Line Voltage'
 PhaseVoltage:
-  name: Phase Voltage
+  name: 'Phase {phase} Voltage'
 PhaseCurrent:
-  name: Phase Current
+  name: 'Phase {phase} Current'
 PowerFactor:
   name: Power Factor
 PACKBCUCount:

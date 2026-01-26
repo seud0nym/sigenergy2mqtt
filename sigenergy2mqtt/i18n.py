@@ -104,13 +104,21 @@ def load(locale: str):
     _translator.load(locale)
 
 
-def _t(key: str, default: str | None = None, debugging: bool = False) -> str:
+def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) -> str:
     translation, locale, translated = _translator.translate(key, default)
     if not translated:
         if debugging:
             logging.debug(f"{key} : {default=} {translation=} [{locale}]")
         logging.warning(f"{key} Failed to translate! Using {default=}")
-    return translation
+
+    try:
+        return translation.format(**kwargs)
+    except KeyError as e:
+        logging.warning(f"{key} Translation formatting failed: missing key {e}")
+        return translation
+    except Exception as e:
+        logging.warning(f"{key} Translation formatting failed: {e}")
+        return translation
 
 
 def reset():

@@ -25,6 +25,8 @@ class ESS(ModbusDevice):
             "Energy Storage System",
             protocol_version,
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}",
+            model_id=model_id,
+            serial_number=serial_number,
         )
 
         self._add_read_sensor(ro.RatedChargingPower(plant_index, device_address))

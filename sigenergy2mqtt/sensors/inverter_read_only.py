@@ -1229,7 +1229,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/N",  # 3
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1272,6 +1272,7 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -1303,6 +1304,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
         self.phase = phase
 
@@ -1335,6 +1337,7 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -1807,7 +1810,7 @@ class DCChargerRunningState(ReadOnlySensor):
             "Scheduled",  # 5
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

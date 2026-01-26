@@ -113,7 +113,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         self._protocol_version = protocol_version
 
         self["platform"] = "sensor"
-        self["name"] = _t(f"{self.__class__.__name__}.name", name, self.debug_logging)
+        self["name"] = _t(f"{self.__class__.__name__}.name", name, self.debug_logging, **kwargs)
         self["object_id"] = object_id
         self["unique_id"] = unique_id
         self["device_class"] = device_class
@@ -700,6 +700,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         precision: int | None,
         protocol_version: Protocol,
         unique_id_override: str | None = None,
+        **kwargs,
     ):
         super().__init__(
             name=name,
@@ -719,6 +720,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             precision=precision,
             protocol_version=protocol_version,
             unique_id_override=unique_id_override,
+            **kwargs,
         )
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
@@ -769,7 +771,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         attributes = super().get_attributes()
         source_key = "ReadOnlySensor.attributes.source" if self.count == 1 else "ReadOnlySensor.attributes.source_range"
         source_default = f"Modbus Register {self.address}" if self.count == 1 else f"Modbus Registers {self.address}-{self.address + self.count - 1}"
-        attributes["source"] = _t(source_key, source_default, self.debug_logging).format(address=self.address, start=self.address, end=self.address + self.count - 1)
+        attributes["source"] = _t(source_key, source_default, self.debug_logging, address=self.address, start=self.address, end=self.address + self.count - 1)
         if "comment" in self:
             attributes["comment"] = _t(f"{self.__class__.__name__}.comment", cast(str, self["comment"]), self.debug_logging)
         return attributes
@@ -801,6 +803,7 @@ class ReservedSensor(ReadOnlySensor):
         protocol_version: Protocol,
         unique_id_override: str | None = None,
         availability_control_sensor: AvailabilityMixin | None = None,
+        **kwargs,
     ):
         super().__init__(
             name,
@@ -820,6 +823,7 @@ class ReservedSensor(ReadOnlySensor):
             precision,
             protocol_version,
             unique_id_override=unique_id_override,
+            **kwargs,
         )
         assert self.__class__.__name__.startswith("Reserved"), f"{self.__class__.__name__} class name does not start with 'Reserved'"
         self._publishable = False  # Reserved sensors are not published
@@ -848,6 +852,7 @@ class TimestampSensor(ReadOnlySensor):
         address: int,
         scan_interval: int,
         protocol_version: Protocol,
+        **kwargs,
     ):
         super().__init__(
             name,
@@ -866,6 +871,7 @@ class TimestampSensor(ReadOnlySensor):
             gain=None,
             precision=None,
             protocol_version=protocol_version,
+            **kwargs,
         )
         self["entity_category"] = "diagnostic"
 
@@ -1098,6 +1104,7 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
         gain: float | None,
         precision: int | None,
         protocol_version: Protocol,
+        **kwargs,
     ):
         super().__init__(
             name,
@@ -1116,6 +1123,7 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
             gain,
             precision,
             protocol_version,
+            **kwargs,
         )
         assert availability_control_sensor is None or isinstance(availability_control_sensor, AvailabilityMixin), f"{self.__class__.__name__} availability_control_sensor is not an instance of AvailabilityMixin"
         self._availability_control_sensor = availability_control_sensor
@@ -1151,6 +1159,7 @@ class NumericSensor(ReadWriteSensor):
         protocol_version: Protocol,
         minimum: float | tuple[float, float] | None = None,
         maximum: float | tuple[float, float] | None = None,
+        **kwargs,
     ):
         super().__init__(
             availability_control_sensor,
@@ -1170,6 +1179,7 @@ class NumericSensor(ReadWriteSensor):
             gain,
             precision,
             protocol_version,
+            **kwargs,
         )
         assert (
             minimum is None
@@ -1289,6 +1299,7 @@ class SelectSensor(ReadWriteSensor):
         scan_interval: int,
         options: list[str],
         protocol_version: Protocol,
+        **kwargs,
     ):
         assert options is not None and isinstance(options, list) and len(options) > 0 and not any(o for o in options if not isinstance(o, str)), "options must be a non-empty list of strings"
         super().__init__(
@@ -1309,6 +1320,7 @@ class SelectSensor(ReadWriteSensor):
             gain=None,
             precision=None,
             protocol_version=protocol_version,
+            **kwargs,
         )
         assert all([isinstance(o, str) for o in options]), "options must be a non-empty list of strings"
         self["platform"] = "select"
@@ -1359,6 +1371,7 @@ class SwitchSensor(ReadWriteSensor):
         address: int,
         scan_interval: int,
         protocol_version: Protocol,
+        **kwargs,
     ):
         super().__init__(
             availability_control_sensor=availability_control_sensor,
@@ -1378,6 +1391,7 @@ class SwitchSensor(ReadWriteSensor):
             gain=None,
             precision=0,
             protocol_version=protocol_version,
+            **kwargs,
         )
         self["platform"] = "switch"
         self["payload_off"] = 0
@@ -1413,6 +1427,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         address: int,
         protocol_version: Protocol,
         alarm_type: str,
+        **kwargs,
     ):
         super().__init__(
             name,
@@ -1431,6 +1446,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             gain=None,
             precision=None,
             protocol_version=protocol_version,
+            **kwargs,
         )
         self.alarm_type = alarm_type
 
@@ -1642,7 +1658,7 @@ class Alarm5Sensor(AlarmSensor):
 
 
 class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverter):
-    def __init__(self, name: str, unique_id: str, object_id: str, *alarms: AlarmSensor):
+    def __init__(self, name: str, unique_id: str, object_id: str, *alarms: AlarmSensor, **kwargs):
         super().__init__(
             name=name,
             unique_id=unique_id,
@@ -1655,6 +1671,7 @@ class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverte
             gain=None,
             precision=None,
             protocol_version=Protocol.N_A,
+            **kwargs,
         )
         device_addresses = set([a.device_address for a in alarms])
         first_address = min([a.address for a in alarms])
@@ -1726,6 +1743,7 @@ class RunningStateSensor(ReadOnlySensor):
         device_address: int,
         address: int,
         protocol_version: Protocol,
+        **kwargs,
     ):
         super().__init__(
             name,
@@ -1744,6 +1762,7 @@ class RunningStateSensor(ReadOnlySensor):
             gain=None,
             precision=None,
             protocol_version=protocol_version,
+            **kwargs,
         )
         self["enabled_by_default"] = True
         self["options"] = [
@@ -1789,6 +1808,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         icon: str | None,
         gain: float | None,
         precision: int | None,
+        **kwargs,
     ):
         super().__init__(
             name=name,
@@ -1801,6 +1821,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             icon=icon,
             gain=gain,
             precision=precision,
+            **kwargs,
         )
         self._source = source
         self._reset_topic = f"sigenergy2mqtt/{self['object_id']}/reset"
@@ -1921,6 +1942,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
         icon="mdi:home-lightning-bolt",
         gain=1000,
         precision=2,
+        **kwargs,
     ):
         if data_type is None:
             data_type = ModbusDataType.UINT32
@@ -1936,6 +1958,7 @@ class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
             icon=icon,
             gain=gain,
             precision=precision,
+            **kwargs,
         )
 
 
@@ -1948,6 +1971,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         unique_id: str,
         object_id: str,
         source: ReadOnlySensor | DerivedSensor,
+        **kwargs,
     ):
         super().__init__(
             name=name,
@@ -1961,6 +1985,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             icon=cast(str, source["icon"]),
             gain=source.gain,
             precision=source.precision,
+            **kwargs,
         )
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float | None = None

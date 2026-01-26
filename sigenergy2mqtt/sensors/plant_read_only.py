@@ -121,7 +121,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "Time-Based Control",  # 9
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -165,7 +165,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             "Connected",  # 1
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -268,7 +268,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             "Off Grid (manual)",  # 2
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -389,6 +389,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -420,6 +421,7 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -809,6 +811,7 @@ class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -845,6 +848,7 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -1188,6 +1192,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_6,
+            smart_load_index=f"{smart_load_index:02}",
         )
 
 
@@ -1211,6 +1216,7 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_6,
+            smart_load_index=f"{smart_load_index:02}",
         )
 
 
@@ -1882,6 +1888,7 @@ class ReservedGridPhaseVoltage(ReservedSensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_8,
+            phase=phase,
         )
 
 
@@ -1913,4 +1920,5 @@ class ReservedGridPhaseCurrent(ReservedSensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_8,
+            phase=phase,
         )

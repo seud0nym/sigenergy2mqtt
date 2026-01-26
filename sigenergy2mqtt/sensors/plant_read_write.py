@@ -225,6 +225,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -264,6 +265,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -305,6 +307,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             protocol_version=Protocol.V1_8,
             minimum=-100.00,
             maximum=100.00,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
@@ -346,6 +349,7 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             protocol_version=Protocol.V1_8,
             minimum=-60.00,
             maximum=60.00,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
