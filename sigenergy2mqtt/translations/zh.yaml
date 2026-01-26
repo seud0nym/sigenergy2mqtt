@@ -1500,7 +1500,7 @@ cli:
     help: PVOutput v12扩展字段传感器。
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: 设置PVOutput日志级别。
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: 设置翻译语言。
   clean:
     help: 发布空discovery删除现有设备后退出。

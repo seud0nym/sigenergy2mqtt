@@ -1500,7 +1500,7 @@ cli:
     help: PVOutputのv12拡張フィールド用センサー。
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: PVOutputログレベルを設定。
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: 翻訳用言語を設定。
   clean:
     help: 空のdiscoveryを公開して既存機器を削除し、終了。

@@ -39,7 +39,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-n auto --dist loadscope"
 markers = [
-    "no_locale_mock: disable global mock of i18n.get_default_locale",
+    "no_language_mock: disable global mock of i18n.get_default_language",
     "no_persistent_state_mock: disable global mock of Config.persistent_state_path",
 ]
 

@@ -180,20 +180,20 @@ def test_get_available_translations():
     assert len(translations) >= 1
 
 
-@pytest.mark.no_locale_mock
-def test_get_default_locale_fallback():
-    # Test fallback to 'en' when system locale is not available
+@pytest.mark.no_language_mock
+def test_get_default_language_fallback():
+    # Test fallback to 'en' when system language is not available
     with patch("locale.getlocale", return_value=(None, None)):
         with patch("locale.getdefaultlocale", return_value=("xx_XX", "UTF-8")):
             with patch("os.environ.get", return_value=None):
                 # xx.yaml does NOT exist, so should fall back to 'en'
-                assert i18n.get_default_locale() == "en"
+                assert i18n.get_default_language() == "en"
 
 
-@pytest.mark.no_locale_mock
-def test_get_default_locale_system():
-    # Test picking up system locale if it exists
-    # We'll mock the exists check for a fake locale
+@pytest.mark.no_language_mock
+def test_get_default_language_system():
+    # Test picking up system language if it exists
+    # We'll mock the exists check for a fake language
     with patch("locale.getlocale", return_value=("fr_FR", "UTF-8")):
         with patch("sigenergy2mqtt.i18n.Path.exists", return_value=True):
-            assert i18n.get_default_locale() == "fr"
+            assert i18n.get_default_language() == "fr"

@@ -141,17 +141,17 @@ class TestConfigConfiguration:
         Config._configure({"no-ems-mode-check": False})
         assert Config.ems_mode_check is True
 
-    def test_configure_locale_invalid_fallback(self, caplog):
-        """Test configuring an invalid locale falls back to default."""
+    def test_configure_language_invalid_fallback(self, caplog):
+        """Test configuring an invalid language falls back to default."""
         Config.reset()
         from sigenergy2mqtt import i18n
 
         with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
-            with patch("sigenergy2mqtt.i18n.get_default_locale", return_value="en"):
+            with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
                 with caplog.at_level(logging.WARNING):
-                    Config._configure({"locale": "de"})
-                    assert Config.locale == "en"
-                    assert "Invalid locale 'de' for locale, falling back to 'en'" in caplog.text
+                    Config._configure({"language": "de"})
+                    assert Config.language == "en"
+                    assert "Invalid language 'de' for language, falling back to 'en'" in caplog.text
 
 
 class TestConfigReload:
@@ -179,17 +179,17 @@ class TestConfigReload:
             assert Config.ems_mode_check is False
 
     @patch("sigenergy2mqtt.config.config.os.environ", {})
-    def test_reload_with_locale_env_invalid_fallback(self, caplog):
-        """Test reload with invalid locale environment variable."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LOCALE
+    def test_reload_with_language_env_invalid_fallback(self, caplog):
+        """Test reload with invalid language environment variable."""
+        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LANGUAGE
 
-        with patch.dict("os.environ", {SIGENERGY2MQTT_LOCALE: "de"}):
+        with patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de"}):
             with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
-                with patch("sigenergy2mqtt.i18n.get_default_locale", return_value="en"):
+                with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
                     with caplog.at_level(logging.WARNING):
                         Config.reload()
-                        assert Config.locale == "en"
-                        assert "Invalid locale 'de' for SIGENERGY2MQTT_LOCALE, falling back to 'en'" in caplog.text
+                        assert Config.language == "en"
+                        assert "Invalid language 'de' for SIGENERGY2MQTT_LANGUAGE, falling back to 'en'" in caplog.text
 
     @patch("sigenergy2mqtt.config.config.auto_discovery_scan")
     @patch("sigenergy2mqtt.config.config.os.getenv")

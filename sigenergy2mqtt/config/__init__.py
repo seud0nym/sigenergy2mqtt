@@ -84,12 +84,12 @@ _parser.add_argument(
     help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 _parser.add_argument(
-    "--locale",
+    "--language",
     action="store",
-    dest=const.SIGENERGY2MQTT_LOCALE,
+    dest=const.SIGENERGY2MQTT_LANGUAGE,
     choices=i18n.get_available_translations(),
-    default=os.getenv(const.SIGENERGY2MQTT_LOCALE, None),
-    help=f"Set the locale to use for translations. Valid values are: {', '.join(i18n.get_available_translations())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
+    default=os.getenv(const.SIGENERGY2MQTT_LANGUAGE, None),
+    help=f"Set the language to use for translations. Valid values are: {', '.join(i18n.get_available_translations())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
 )
 _parser.add_argument(
     "-d",

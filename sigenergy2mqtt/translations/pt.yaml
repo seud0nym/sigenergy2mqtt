@@ -1500,7 +1500,7 @@ cli:
     help: Classe de sensor ou ID de entidade para campo estendido v12 no PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: Definir nível de log PVOutput.
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: Definir o idioma para traduções.
   clean:
     help: Publicar discovery vazia para remover dispositivos, depois sair.

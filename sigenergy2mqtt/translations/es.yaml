@@ -1500,7 +1500,7 @@ cli:
     help: Un nombre de clase de sensor, o ID de entidad sin el prefijo 'sensor.', que se usará para el campo extendido v12 en PVOutput. Si no se especifica O el estado de donación no está vigente, este campo no se enviará a PVOutput. Puede usar cualquier sensor con valor numérico.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: 'Establecer el nivel de registro de PVOutput. Valores válidos son: DEBUG, INFO, WARNING, ERROR o CRITICAL. El predeterminado es WARNING (advertencias, errores y fallos críticos)'
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: "Establecer el idioma para traducciones. El predeterminado se determina del sistema (ej. variable de entorno LANG) o inglés si no se encuentra alternativa."
   clean:
     help: Publicar descubrimiento vacío para eliminar dispositivos existentes, luego sale inmediatamente.

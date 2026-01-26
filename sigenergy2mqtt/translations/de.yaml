@@ -1500,7 +1500,7 @@ cli:
     help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v12-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: 'PVOutput-Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: "Die zu verwendende Sprache für Übersetzungen festlegen. Standard wird vom System ermittelt (z.B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird."
   clean:
     help: Leere Discovery veröffentlichen, um bestehende Geräte zu löschen, dann sofort beenden.

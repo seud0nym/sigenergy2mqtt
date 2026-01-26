@@ -39,15 +39,15 @@ def mock_persistent_state_path(request, tmp_path, reset_config):
 
 
 @pytest.fixture(autouse=True)
-def mock_locale_detection(request):
-    """Global fixture to mock locale detection, avoiding slow system calls.
+def mock_language_detection(request):
+    """Global fixture to mock language detection, avoiding slow system calls.
 
-    Use @pytest.mark.no_locale_mock to disable this mock for specific tests.
+    Use @pytest.mark.no_language_mock to disable this mock for specific tests.
     """
-    if "no_locale_mock" in [m.name for m in request.node.iter_markers()]:
+    if "no_language_mock" in [m.name for m in request.node.iter_markers()]:
         yield
     else:
-        with patch("sigenergy2mqtt.i18n.get_default_locale", return_value="en"):
+        with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
             yield
 
 

@@ -1500,7 +1500,7 @@ cli:
     help: Sensorklasse of entiteit-ID voor het v12 uitgebreide veld in PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: Stel het PVOutput-logniveau in.
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: Stel de taal in voor vertalingen.
   clean:
     help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.

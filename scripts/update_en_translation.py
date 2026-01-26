@@ -363,19 +363,19 @@ def merge_translations(base, new):
 
 
 def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict):
-    """Add new keys to other locale files, preserving existing translations."""
-    for locale_file in translations_dir.glob("*.yaml"):
-        if locale_file.name == "en.yaml":
+    """Add new keys to other language files, preserving existing translations."""
+    for language_file in translations_dir.glob("*.yaml"):
+        if language_file.name == "en.yaml":
             continue
 
-        locale_code = locale_file.stem
-        print(f"Updating {locale_file.name}...")
+        language_code = language_file.stem
+        print(f"Updating {language_file.name}...")
 
         # Load existing translations
-        with open(locale_file, "r", encoding="utf-8") as f:
+        with open(language_file, "r", encoding="utf-8") as f:
             existing = yaml_parser.load(f) or {}
 
-        # First, propagate existing translations within the locale based on inheritance
+        # First, propagate existing translations within the language based on inheritance
         updated = False
         changed = True
         while changed:
@@ -431,7 +431,7 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                 if isinstance(value, dict):
                     # Check if any nested key needs translation
                     new_section = value.copy()
-                    if "name_reset" in new_section and locale_code in RESET_TRANSLATIONS:
+                    if "name_reset" in new_section and language_code in RESET_TRANSLATIONS:
                         # Translate "Set {name}"
                         # Try to find the base name from 'name' key if available, otherwise parse from English string
                         base_name = new_section.get("name", "")
@@ -439,7 +439,7 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                             base_name = new_section["name_reset"][4:]
 
                         if base_name:
-                            new_section["name_reset"] = RESET_TRANSLATIONS[locale_code].format(name=base_name)
+                            new_section["name_reset"] = RESET_TRANSLATIONS[language_code].format(name=base_name)
 
                     existing[key] = new_section
                 else:
@@ -452,7 +452,7 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                 for subkey, subvalue in value.items():
                     if subkey not in existing[key]:
                         # Handle name_reset specifically
-                        if subkey == "name_reset" and locale_code in RESET_TRANSLATIONS:
+                        if subkey == "name_reset" and language_code in RESET_TRANSLATIONS:
                             base_name = ""
                             # Try to get existing translated name first
                             if "name" in existing[key]:
@@ -464,7 +464,7 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                                 base_name = subvalue[4:]
 
                             if base_name:
-                                existing[key][subkey] = RESET_TRANSLATIONS[locale_code].format(name=base_name)
+                                existing[key][subkey] = RESET_TRANSLATIONS[language_code].format(name=base_name)
                             else:
                                 existing[key][subkey] = subvalue
                         else:
@@ -491,11 +491,11 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                             updated = True
 
         if updated:
-            with open(locale_file, "w", encoding="utf-8") as f:
+            with open(language_file, "w", encoding="utf-8") as f:
                 yaml_parser.dump(existing, f)
-            print(f"  Saved {locale_file.name}")
+            print(f"  Saved {language_file.name}")
         else:
-            print(f"  No changes needed for {locale_file.name}")
+            print(f"  No changes needed for {language_file.name}")
 
 
 if __name__ == "__main__":
@@ -537,7 +537,7 @@ if __name__ == "__main__":
         yaml_parser.dump(all_translations, f)
     print(f"Successfully updated {en_yaml_path}")
 
-    # Propagate new keys to other locale files
+    # Propagate new keys to other language files
     translations_dir = package_dir / "translations"
     propagate_to_other_translations(all_translations, translations_dir, extractor.class_bases)
     print("Done!")

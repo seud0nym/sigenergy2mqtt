@@ -3,6 +3,7 @@
 ```
 usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
           [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+          [--language {de,en,es,fr,it,ja,ko,nl,pt,zh}]
           [-d SIGENERGY2MQTT_DEBUG_SENSOR]
           [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
           [--no-ems-mode-check] [--no-metrics]
@@ -75,6 +76,12 @@ options:
                         Set the log level. Valid values are: DEBUG, INFO,
                         WARNING, ERROR or CRITICAL. Default is WARNING
                         (warnings, errors and critical failures)
+  --language {de,en,es,fr,it,ja,ko,nl,pt,zh}
+                        Set the language to use for translations. Valid values
+                        are: de, en, es, fr, it, ja, ko, nl, pt, zh. The
+                        default is determined from the system (e.g. LANG
+                        environment variable) or English if no alternative is
+                        found.
   -d, --debug-sensor SIGENERGY2MQTT_DEBUG_SENSOR
                         Specify a sensor to be debugged using either the full
                         or partial entity id or sensor class name (e.g.

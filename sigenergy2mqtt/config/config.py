@@ -28,7 +28,7 @@ class Config:
     log_level: int
     metrics_enabled: bool
 
-    locale: str
+    language: str
 
     sanity_check_default_kw: float
     sanity_check_failures_increment: bool
@@ -55,7 +55,7 @@ class Config:
         cls.log_level = logging.WARNING
         cls.metrics_enabled = True
 
-        cls.locale = i18n.get_default_locale()
+        cls.language = i18n.get_default_language()
 
         cls.sanity_check_default_kw = 500.0
         cls.sanity_check_failures_increment = False
@@ -176,13 +176,13 @@ class Config:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
                         case const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT:
                             overrides["sanity-check-failures-increment"] = check_bool(os.environ[key], key)
-                        case const.SIGENERGY2MQTT_LOCALE:
+                        case const.SIGENERGY2MQTT_LANGUAGE:
                             try:
-                                overrides["locale"] = check_string(os.environ[key], key, *i18n.get_available_translations(), allow_empty=False, allow_none=False)
+                                overrides["language"] = check_string(os.environ[key], key, *i18n.get_available_translations(), allow_empty=False, allow_none=False)
                             except ValueError:
-                                default = i18n.get_default_locale()
-                                logging.warning(f"Invalid locale '{os.environ[key]}' for {key}, falling back to '{default}'")
-                                overrides["locale"] = default
+                                default = i18n.get_default_language()
+                                logging.warning(f"Invalid language '{os.environ[key]}' for {key}, falling back to '{default}'")
+                                overrides["language"] = default
                         case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
                             overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
@@ -364,7 +364,7 @@ class Config:
 
         cls._configure(overrides, True)
 
-        i18n.load(cls.locale)
+        i18n.load(cls.language)
 
         if auto_discovered:
             if isinstance(auto_discovered, list):
@@ -413,14 +413,14 @@ class Config:
                             ),
                         )
                     )
-                case "locale":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: locale = {data[name]}")
+                case "language":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: language = {data[name]}")
                     try:
-                        Config.locale = cast(str, check_string(data[name], name, *i18n.get_available_translations(), allow_empty=False, allow_none=False))
+                        Config.language = cast(str, check_string(data[name], name, *i18n.get_available_translations(), allow_empty=False, allow_none=False))
                     except ValueError:
-                        default = i18n.get_default_locale()
-                        logging.warning(f"Invalid locale '{data[name]}' for {name}, falling back to '{default}'")
-                        Config.locale = default
+                        default = i18n.get_default_language()
+                        logging.warning(f"Invalid language '{data[name]}' for {name}, falling back to '{default}'")
+                        Config.language = default
                 case "home-assistant":
                     Config.home_assistant.configure(data[name], override)
                 case "log-level":

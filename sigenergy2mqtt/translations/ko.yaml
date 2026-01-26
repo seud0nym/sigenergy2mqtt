@@ -1500,7 +1500,7 @@ cli:
     help: PVOutput v12 확장 필드용 센서.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: PVOutput 로그 레벨 설정.
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: 번역 언어 설정.
   clean:
     help: 빈 discovery 게시하여 기존 장치 삭제 후 종료.

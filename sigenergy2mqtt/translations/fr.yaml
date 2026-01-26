@@ -1500,7 +1500,7 @@ cli:
     help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v12 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: 'Définir le niveau de journalisation PVOutput. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
-  SIGENERGY2MQTT_LOCALE:
+  SIGENERGY2MQTT_LANGUAGE:
     help: "Définir la langue pour les traductions. Par défaut déterminé par le système (ex: variable d'environnement LANG) ou anglais si aucune alternative n'est trouvée."
   clean:
     help: Publier une découverte vide pour supprimer les dispositifs existants, puis quitter immédiatement.
