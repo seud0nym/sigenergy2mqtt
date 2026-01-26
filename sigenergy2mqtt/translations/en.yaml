@@ -15,8 +15,7 @@ GridCode:
   name: Sigenergy Plant Grid Code
 PVString:
   name: '{model_id} {serial_number} PV String {string_number}'
-Device:
-  name: '{Config} {name}'
+Device: {}
 ESS:
   name: '{model_id} {serial_number} ESS'
 GridSensor:
@@ -863,8 +862,7 @@ Protocol: {}
 HybridInverter: {}
 PVInverter: {}
 ModbusClient: {}
-ModbusDevice:
-  name: '{Config} {name}'
+ModbusDevice: {}
 MqttClient: {}
 MetricsSensor: {}
 RemoteEMSLimit: {}
@@ -905,8 +903,7 @@ UnitOfPower: {}
 UnitOfReactivePower: {}
 UnitOfTemperature: {}
 UnitOfTime: {}
-Service:
-  name: '{Config} {name}'
+Service: {}
 Calculation: {}
 TimePeriodServiceTopics: {}
 cli:

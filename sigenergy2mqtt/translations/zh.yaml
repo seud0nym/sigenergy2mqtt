@@ -1518,12 +1518,12 @@ LineVoltage:
     source: Modbus 寄存器 {address}
     source_range: Modbus 寄存器 {start}-{end}
 PhaseVoltage:
-  name: 相电压
+  name: 相 {phase} 电压
   attributes:
     source: Modbus 寄存器 {address}
     source_range: Modbus 寄存器 {start}-{end}
 PhaseCurrent:
-  name: 相电流
+  name: 相 {phase} 电流
   attributes:
     source: Modbus 寄存器 {address}
     source_range: Modbus 寄存器 {start}-{end}
@@ -1571,8 +1571,7 @@ GridCode:
   name: Sigenergy电站 电网规范
 PVString:
   name: '{model_id} {serial_number} PV String {string_number}'
-ModbusDevice:
-  name: '{Config} {name}'
+ModbusDevice: {}
 ESS:
   name: '{model_id} {serial_number} ESS'
 GridSensor:
@@ -1682,14 +1681,12 @@ UnitOfPower: {}
 UnitOfReactivePower: {}
 UnitOfTemperature: {}
 UnitOfTime: {}
-Service:
-  name: '{Config} {name}'
+Service: {}
 Calculation: {}
 TimePeriodServiceTopics:
   name: '{service}'
 SmartPort:
   name: Sigenergy电站 智能端口
-Device:
-  name: '{Config} {name}'
+Device: {}
 SensorGroup:
   name: '{sensors}'

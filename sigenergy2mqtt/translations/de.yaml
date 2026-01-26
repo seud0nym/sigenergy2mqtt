@@ -1519,12 +1519,12 @@ LineVoltage:
     source: Modbus-Register {address}
     source_range: Modbus-Register {start}-{end}
 PhaseVoltage:
-  name: Phasenspannung
+  name: Phase {phase} Spannung
   attributes:
     source: Modbus-Register {address}
     source_range: Modbus-Register {start}-{end}
 PhaseCurrent:
-  name: Phasenstrom
+  name: Phase {phase} Strom
   attributes:
     source: Modbus-Register {address}
     source_range: Modbus-Register {start}-{end}
@@ -1572,8 +1572,7 @@ GridCode:
   name: Sigenergy-Anlage Netzcode
 PVString:
   name: '{model_id} {serial_number} PV String {string_number}'
-ModbusDevice:
-  name: '{Config} {name}'
+ModbusDevice: {}
 ESS:
   name: '{model_id} {serial_number} ESS'
 GridSensor:
@@ -1683,14 +1682,12 @@ UnitOfPower: {}
 UnitOfReactivePower: {}
 UnitOfTemperature: {}
 UnitOfTime: {}
-Service:
-  name: '{Config} {name}'
+Service: {}
 Calculation: {}
 TimePeriodServiceTopics:
   name: '{service}'
 SmartPort:
   name: Sigenergy-Anlage Smart-Port
-Device:
-  name: '{Config} {name}'
+Device: {}
 SensorGroup:
   name: '{sensors}'

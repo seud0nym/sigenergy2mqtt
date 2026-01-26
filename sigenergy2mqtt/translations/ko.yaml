@@ -1518,12 +1518,12 @@ LineVoltage:
     source: Modbus 레지스터 {address}
     source_range: Modbus 레지스터 {start}-{end}
 PhaseVoltage:
-  name: 상전압
+  name: 페이즈 {phase} 전압
   attributes:
     source: Modbus 레지스터 {address}
     source_range: Modbus 레지스터 {start}-{end}
 PhaseCurrent:
-  name: 상전류
+  name: 페이즈 {phase} 전류
   attributes:
     source: Modbus 레지스터 {address}
     source_range: Modbus 레지스터 {start}-{end}
@@ -1571,8 +1571,7 @@ GridCode:
   name: Sigenergy 발전소 계통 규정
 PVString:
   name: '{model_id} {serial_number} PV String {string_number}'
-ModbusDevice:
-  name: '{Config} {name}'
+ModbusDevice: {}
 ESS:
   name: '{model_id} {serial_number} ESS'
 GridSensor:
@@ -1682,14 +1681,12 @@ UnitOfPower: {}
 UnitOfReactivePower: {}
 UnitOfTemperature: {}
 UnitOfTime: {}
-Service:
-  name: '{Config} {name}'
+Service: {}
 Calculation: {}
 TimePeriodServiceTopics:
   name: '{service}'
 SmartPort:
   name: Sigenergy 발전소 스마트포트
-Device:
-  name: '{Config} {name}'
+Device: {}
 SensorGroup:
   name: '{sensors}'
