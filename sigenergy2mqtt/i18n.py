@@ -72,8 +72,13 @@ class Translator:
             return {}
 
     def translate(self, key: str, default: str | None = None) -> tuple[str, str, bool]:
-        # Key format: "ClassName.field" or "ClassName.field.index"
-        parts = key.split(".")
+        # Helper to prepend "class." if needed
+        # We assume anything not starting with "cli." belongs in "class."
+        # This maintains backward compatibility with the old key structure (ClassName.field)
+        lookup_key = key
+        if not key.startswith("cli."):
+            lookup_key = f"class.{key}"
+        parts = lookup_key.split(".")
 
         # Try primary language
         value = self._get_nested(self._translations, parts)

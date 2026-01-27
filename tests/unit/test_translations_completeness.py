@@ -145,15 +145,21 @@ def test_en_yaml_completeness():
     merge_translations(expected_translations, extractor.translations)
 
     # Check for missing keys or values
+    # Check for missing keys or values
+    if "class" not in current_translations:
+        pytest.fail("Missing top-level 'class' key in en.yaml")
+
+    classes = current_translations["class"]
+
     for cls, content in expected_translations.items():
-        assert cls in current_translations, f"Class {cls} is missing from en.yaml"
+        assert cls in classes, f"Class {cls} is missing from en.yaml"
 
         for key, value in content.items():
-            assert key in current_translations[cls], f"Key {cls}.{key} is missing from en.yaml"
+            assert key in classes[cls], f"Key {cls}.{key} is missing from en.yaml"
 
             if isinstance(value, dict):
                 for subkey, subvalue in value.items():
-                    assert subkey in current_translations[cls][key], f"Subkey {cls}.{key}.{subkey} is missing from en.yaml"
+                    assert subkey in classes[cls][key], f"Subkey {cls}.{key}.{subkey} is missing from en.yaml"
                     # We don't necessarily check the value matches exactly (strings might be edited),
                     # but we ensure the key exists.
             else:

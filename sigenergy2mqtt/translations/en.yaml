@@ -1,1051 +1,997 @@
-AlarmSensor:
-  no_alarm: No Alarm
-  unknown_alarm: Unknown (bit{bit}∈{value})
-ReadOnlySensor:
-  attributes:
-    source: Modbus Register {address}
-    source_range: Modbus Registers {start}-{end}
-WriteOnlySensor:
-  name_on: Power On
-  name_off: Power Off
-MqttOverriddenSensor:
-  attributes:
-    source: MQTT Override
-GridCode:
-  name: Sigenergy Plant Grid Code
-PVString:
-  name: '{model_id} {serial_number} PV String {string_number}'
-Device: {}
-ESS:
-  name: '{model_id} {serial_number} ESS'
-GridSensor:
-  name: Sigenergy Plant Grid Sensor
-PowerPlant:
-  name: Sigenergy Plant
-ACCharger:
-  name: Sigenergy AC Charger
-PlantStatistics:
-  name: Sigenergy Plant Statistics
-Inverter:
-  name: '{model_id} {serial}'
-DCCharger:
-  name: Sigenergy DC Charger
-MonitorService:
-  name: Sigenergy Monitor
-MetricsService:
-  name: Sigenergy Metrics
-ModbusCacheHits:
-  name: Modbus Cache Hits
-ModbusPhysicalReads:
-  name: Modbus Physical Reads
-ModbusReadsPerSecond:
-  name: Modbus Reads/second
-ModbusReadErrors:
-  name: Modbus Read Errors
-ModbusReadMax:
-  name: Modbus Read Max
-ModbusReadMean:
-  name: Modbus Read Mean
-ModbusReadMin:
-  name: Modbus Read Min
-ModbusWriteErrors:
-  name: Modbus Write Errors
-ModbusWriteMax:
-  name: Modbus Write Max
-ModbusWriteMean:
-  name: Modbus Write Mean
-ModbusWriteMin:
-  name: Modbus Write Min
-ModbusActiveLocks:
-  name: Modbus Active Locks
-Started:
-  name: Started
-ProtocolVersion:
-  name: Protocol Version
-ProtocolPublished:
-  name: Protocol Published
-ACChargerStatus:
-  name: AC Charger Stop/Start
-  name_off: Stop
-  name_on: Start
-  attributes:
-    comment: 0:Start 1:Stop
-ACChargerOutputCurrent:
-  name: Output Current
-  attributes:
-    comment: "Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']"
-PlantStatus:
-  name: Plant Power On/Off
-  attributes:
-    comment: 0:Stop 1:Start
-ActivePowerFixedAdjustmentTargetValue:
-  name: Active Power Fixed Adjustment Target Value
-ReactivePowerFixedAdjustmentTargetValue:
-  name: Reactive Power Fixed Adjustment Target Value
-  attributes:
-    comment: 'Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode'
-ActivePowerPercentageAdjustmentTargetValue:
-  name: Active Power Percentage Adjustment Target Value
-  attributes:
-    comment: 'Range: [-100.00,100.00]'
-QSAdjustmentTargetValue:
-  name: Q/S Adjustment Target Value
-  attributes:
-    comment: 'Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode'
-PowerFactorAdjustmentTargetValue:
-  name: Power Factor Adjustment Target Value
-  attributes:
-    comment: 'Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode'
-IndependentPhasePowerControl:
-  name: Independent Phase Power Control
-  attributes:
-    comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
-PhaseActivePowerFixedAdjustmentTargetValue:
-  name: Phase {phase} Active Power Fixed Adjustment Target Value
-  attributes:
-    comment: Valid only when Output Type is L1/L2/L3/N
-PhaseReactivePowerFixedAdjustmentTargetValue:
-  name: Phase {phase} Reactive Power Fixed Adjustment Target Value
-  attributes:
-    comment: Valid only when Output Type is L1/L2/L3/N
-PhaseActivePowerPercentageAdjustmentTargetValue:
-  name: Phase {phase} Active Power Percentage Adjustment Target Value
-  attributes:
-    comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]'
-PhaseQSAdjustmentTargetValue:
-  name: Phase {phase} Q/S Fixed Adjustment Target Value
-  attributes:
-    comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
-Reserved40026:
-  name: Reserved
-RemoteEMS:
-  name: Remote EMS
-  attributes:
-    comment: When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS
-RemoteEMSControlMode:
-  name: Remote EMS Control Mode
-  options:
-    '0': PCS remote control
-    '1': Standby
-    '2': Maximum Self-consumption (Default)
-    '3': Command Charging (Consume power from the grid first)
-    '4': Command Charging (Consume power from the PV first)
-    '5': Command Discharging (Output power from PV first)
-    '6': Command Discharging (Output power from the battery first)
-MaxChargingLimit:
-  name: Max Charging Limit
-MaxDischargingLimit:
-  name: Max Discharging Limit
-PVMaxPowerLimit:
-  name: PV Max Power Limit
-  attributes:
-    comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
-GridMaxExportLimit:
-  name: Grid Max Export Limit
-  attributes:
-    comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
-GridMaxImportLimit:
-  name: Grid Max Import Limit
-  attributes:
-    comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
-PCSMaxExportLimit:
-  name: PCS Max Export Limit
-  attributes:
-    comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
-PCSMaxImportLimit:
-  name: PCS Max Import Limit
-  attributes:
-    comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
-ESSBackupSOC:
-  name: Backup SoC
-  attributes:
-    comment: 'Range: [0.00,100.00]'
-ESSChargeCutOffSOC:
-  name: Charge Cut-Off SoC
-  attributes:
-    comment: 'Range: [0.00,100.00]'
-ESSDischargeCutOffSOC:
-  name: Discharge Cut-Off SoC
-  attributes:
-    comment: 'Range: [0.00,100.00]'
-ActivePowerRegulationGradient:
-  name: Active Power Regulation Gradient
-  attributes:
-    comment: Range:[0,5000]。Percentage of rated power adjusted per second
-GridCodeLVRT:
-  name: Low Voltage Ride Through
-GridCodeLVRTReactivePowerCompensationFactor:
-  name: LVRT Reactive Power Compensation Factor
-  attributes:
-    comment: 'Range: [0,10.0]'
-GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
-  name: LVRT Negative Sequence Reactive Power Compensation Factor
-  attributes:
-    comment: 'Range: [0,10.0]'
-GridCodeLVRTMode:
-  name: LVRT Mode
-  options:
-    '0': Reactive power compensation current, active zero-current mode
-    '2': Zero-current mode
-    '3': Constant current mode
-    '4': Reactive dynamic current, active zero-current mode
-    '5': Reactive power compensation current, active constant-current mode
-GridCodeLVRTVoltageProtectionBlocking:
-  name: LVRT Grid Voltage Protection Blocking
-GridCodeHVRT:
-  name: High Voltage Ride Through
-GridCodeHVRTReactivePowerCompensationFactor:
-  name: HVRT Reactive Power Compensation Factor
-  attributes:
-    comment: 'Range: [0,10.0]'
-GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
-  name: HVRT Negative Sequence Reactive Power Compensation Factor
-  attributes:
-    comment: 'Range: [0,10.0]'
-GridCodeHVRTMode:
-  name: HVRT Mode
-  options:
-    '0': Reactive power compensation current, active zero-current mode
-    '2': Zero-current mode
-    '3': Constant current mode
-    '4': Reactive dynamic current, active hold mode
-    '5': Reactive power compensation current, active constant-current mode
-GridCodeHVRTVoltageProtectionBlocking:
-  name: HVRT Grid Voltage Protection Blocking
-GridCodeOverFrequencyDerating:
-  name: Over Frequency Derating
-GridCodeOverFrequencyDeratingPowerRampRate:
-  name: Over Frequency Derating Power Ramp Rate
-  attributes:
-    comment: 'Range: [0,100.0]'
-GridCodeOverFrequencyDeratingTriggerFrequency:
-  name: Over Frequency Derating Trigger Frequency
-  attributes:
-    comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
-GridCodeOverFrequencyDeratingCutOffFrequency:
-  name: Over Frequency Derating Cut-Off Frequency
-  attributes:
-    comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
-GridCodeUnderFrequencyPowerBoost:
-  name: Under-Frequency Power Boost
-GridCodeUnderFrequencyPowerBoostPowerRampRate:
-  name: Under-Frequency Power Boost Power Ramp Rate
-  attributes:
-    comment: 'Range: [0,100.0]'
-GridCodeUnderFrequencyPowerBoostTriggerFrequency:
-  name: Under-Frequency Power Boost Trigger Frequency
-  attributes:
-    comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
-GridCodeUnderFrequencyPowerBoostCutOffFrequency:
-  name: Under-Frequency Power Boost Cut-Off Frequency
-  attributes:
-    comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
-InverterModel:
-  name: Model
-InverterSerialNumber:
-  name: Serial Number
-InverterFirmwareVersion:
-  name: Firmware Version
-RatedActivePower:
-  name: Rated Active Power
-MaxRatedApparentPower:
-  name: Max Rated Apparent Power
-InverterMaxActivePower:
-  name: Max Active Power
-MaxAbsorptionPower:
-  name: Max Absorption Power
-RatedBatteryCapacity:
-  name: Rated Battery Capacity
-RatedChargingPower:
-  name: Rated Charging Power
-RatedDischargingPower:
-  name: Rated Discharging Power
-ReservedDailyExportEnergy:
-  name: Daily Energy Exported
-ReservedAccumulatedExportEnergy:
-  name: Lifetime Energy Exported
-ReservedDailyImportEnergy:
-  name: Daily Energy Imported
-ReservedAccumulatedImportEnergy:
-  name: Lifetime Energy Imported
-DailyChargeEnergy:
-  name: Daily Charge Energy
-AccumulatedChargeEnergy:
-  name: Lifetime Charge Energy
-DailyDischargeEnergy:
-  name: Daily Discharge Energy
-AccumulatedDischargeEnergy:
-  name: Lifetime Discharge Energy
-InverterRunningState:
-  name: Running State
-  options:
-    '0': Standby
-    '1': Normal
-    '2': Fault
-    '3': Power-Off
-    '7': Environmental Abnormality
-MaxActivePowerAdjustment:
-  name: Max Active Power Adjustment
-MinActivePowerAdjustment:
-  name: Min Active Power Adjustment
-MaxReactivePowerAdjustment:
-  name: Max Reactive Power Adjustment
-MinReactivePowerAdjustment:
-  name: Min Reactive Power Adjustment
-ActivePower:
-  name: Active Power
-ReactivePower:
-  name: Reactive Power
-MaxBatteryChargePower:
-  name: Max Charge Power
-MaxBatteryDischargePower:
-  name: Max Discharge Power
-AvailableBatteryChargeEnergy:
-  name: Available Charge Energy
-AvailableBatteryDischargeEnergy:
-  name: Available Discharge Energy
-ChargeDischargePower:
-  name: Battery Power
-InverterBatterySoC:
-  name: Battery SoC
-InverterBatterySoH:
-  name: Battery SoH
-AverageCellTemperature:
-  name: Average Cell Temperature
-AverageCellVoltage:
-  name: Average Cell Voltage
-InverterAlarm1:
-  name: PCS Alarms 1
-InverterAlarm2:
-  name: PCS Alarms 2
-InverterPCSAlarm:
-  name: PCS Alarms
-  attributes:
-    source: Modbus Registers 30605-30606
-InverterAlarm3:
-  name: Alarms
-InverterAlarm4:
-  name: Gateway Alarms
-InverterAlarm5:
-  name: Alarms
-Reserved30610:
-  name: Reserved
-InverterActivePowerFixedValueAdjustmentFeedback:
-  name: Active Power Fixed Value Adjustment Feedback
-InverterReactivePowerFixedValueAdjustmentFeedback:
-  name: Reactive Power Fixed Value Adjustment Feedback
-InverterActivePowerPercentageAdjustmentFeedback:
-  name: Active Power Percentage Adjustment Feedback
-InverterReactivePowerPercentageAdjustmentFeedback:
-  name: Reactive Power Percentage Adjustment Feedback
-InverterPowerFactorAdjustmentFeedback:
-  name: Power Factor Adjustment Feedback
-InverterMaxBatteryTemperature:
-  name: Max Battery Temperature
-InverterMinBatteryTemperature:
-  name: Min Battery Temperature
-InverterMaxCellVoltage:
-  name: Max Cell Voltage
-InverterMinCellVoltage:
-  name: Min Cell Voltage
-RatedGridVoltage:
-  name: Rated Grid Voltage
-RatedGridFrequency:
-  name: Rated Grid Frequency
-GridFrequency:
-  name: Grid Frequency
-InverterTemperature:
-  name: Temperature
-OutputType:
-  name: Output Type
-  options:
-    '0': L/N
-    '1': L1/L2/L3
-    '2': L1/L2/L3/N
-    '3': L1/L2/N
-LineVoltage:
-  name: '{phase} Line Voltage'
-PhaseVoltage:
-  name: 'Phase {phase} Voltage'
-PhaseCurrent:
-  name: 'Phase {phase} Current'
-PowerFactor:
-  name: Power Factor
-PACKBCUCount:
-  name: PACK/BCU Count
-PVStringCount:
-  name: PV String Count
-MPTTCount:
-  name: MPTT Count
-PVCurrentSensor:
-  name: Current
-PVVoltageSensor:
-  name: Voltage
-InverterPVPower:
-  name: PV Power
-InsulationResistance:
-  name: Insulation Resistance
-StartupTime:
-  name: Startup Time
-ShutdownTime:
-  name: Shutdown Time
-DCChargerVehicleBatteryVoltage:
-  name: Vehicle Battery Voltage
-DCChargerVehicleChargingCurrent:
-  name: Vehicle Charging Current
-DCChargerOutputPower:
-  name: Output Power
-DCChargerVehicleSoC:
-  name: Vehicle SoC
-DCChargerCurrentChargingCapacity:
-  name: Current Charging Capacity
-  attributes:
-    comment: Single time
-DCChargerCurrentChargingDuration:
-  name: Current Charging Duration
-  attributes:
-    comment: Single time
-InverterPVDailyGeneration:
-  name: Daily Production
-InverterPVLifetimeGeneration:
-  name: Lifetime Production
-DCChargerRunningState:
-  name: Running State
-  options:
-    '0': Idle
-    '1': Occupied (Charging Gun plugged in but not detected)
-    '2': Preparing (Establishing communication)
-    '3': Charging
-    '4': Fault
-    '5': Scheduled
-SystemTime:
-  name: System Time
-SystemTimeZone:
-  name: System Time Zone
-EMSWorkMode:
-  name: EMS Work Mode
-  options:
-    '0': Max Self Consumption
-    '1': Sigen AI
-    '2': Time of Use
-    '5': Full Feed-in to Grid
-    '6': VPP Scheduling
-    '7': Remote EMS
-    '9': Time-Based Control
-GridSensorStatus:
-  name: Grid Sensor Status
-  options:
-    '0': Not Connected
-    '1': Connected
-  attributes:
-    comment: Gateway or meter connection status
-GridSensorActivePower:
-  name: Active Power
-  attributes:
-    comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
-GridSensorReactivePower:
-  name: Reactive Power
-  attributes:
-    comment: Data collected from grid sensor at grid to system checkpoint
-GridStatus:
-  name: Grid Status
-  options:
-    '0': On Grid
-    '1': Off Grid (auto)
-    '2': Off Grid (manual)
-MaxActivePower:
-  name: Max Active Power
-  attributes:
-    comment: This should be the base value of all active power adjustment actions
-MaxApparentPower:
-  name: Max Apparent Power
-  attributes:
-    comment: This should be the base value of all reactive power adjustment actions
-PlantBatterySoC:
-  name: Battery SoC
-PlantPhaseActivePower:
-  name: Phase {phase} Active Power
-PlantPhaseReactivePower:
-  name: Phase {phase} Reactive Power
-GeneralAlarm1:
-  name: PCS Alarms 1
-  attributes:
-    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-GeneralAlarm2:
-  name: PCS Alarms 2
-  attributes:
-    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-GeneralPCSAlarm:
-  name: PCS Alarms
-  attributes:
-    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-    source: Modbus Registers 30027-30028
-GeneralAlarm3:
-  name: ESS Alarms
-  attributes:
-    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-GeneralAlarm4:
-  name: Gateway Alarms
-  attributes:
-    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-PlantActivePower:
-  name: Active Power
-PlantReactivePower:
-  name: Reactive Power
-PlantPVPower:
-  name: PV Power
-BatteryPower:
-  name: Battery Power
-  attributes:
-    comment: 'ESS Power: <0 = discharging >0 = charging'
-AvailableMaxActivePower:
-  name: Available Max Active Power
-  attributes:
-    comment: Feed to the AC terminal. Count only the running inverters
-AvailableMinActivePower:
-  name: Available Min Active Power
-  attributes:
-    comment: Absorb from the AC terminal. Count only the running inverters
-AvailableMaxReactivePower:
-  name: Available Max Reactive Power
-  attributes:
-    comment: Feed to the AC terminal. Count only the running inverters
-AvailableMinReactivePower:
-  name: Available Min Reactive Power
-  attributes:
-    comment: Absorb from the AC terminal. Count only the running inverters
-AvailableMaxChargingPower:
-  name: Available Max Charging Power
-  attributes:
-    comment: Count only the running inverters
-AvailableMaxDischargingPower:
-  name: Available Max Discharging Power
-  attributes:
-    comment: Absorb from the AC terminal. Count only the running inverters
-PlantRunningState:
-  name: Running State
-  options:
-    '0': Standby
-    '1': Normal
-    '2': Fault
-    '3': Power-Off
-    '7': Environmental Abnormality
-GridPhaseActivePower:
-  name: Phase {phase} Active Power
-  attributes:
-    comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
-GridPhaseReactivePower:
-  name: Phase {phase} Reactive Power
-  attributes:
-    comment: Data collected from grid sensor at grid to system checkpoint
-AvailableMaxChargingCapacity:
-  name: Available Max Charging Capacity
-  attributes:
-    comment: Count only the running inverters
-AvailableMaxDischargingCapacity:
-  name: Available Max Discharging Capacity
-  attributes:
-    comment: Count only the running inverters
-PlantRatedChargingPower:
-  name: Rated Charging Power
-PlantRatedDischargingPower:
-  name: Rated Discharging Power
-GeneralAlarm5:
-  name: DC Charger Alarms
-  attributes:
-    comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-Reserved30073:
-  name: Reserved
-PlantRatedEnergyCapacity:
-  name: Rated Energy Capacity
-ChargeCutOffSoC:
-  name: Charge Cut-Off SoC
-DischargeCutOffSoC:
-  name: Discharge Cut-Off SoC
-PlantBatterySoH:
-  name: Battery SoH
-  attributes:
-    comment: This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight
-PlantPVTotalGeneration:
-  name: Lifetime PV Production
-TotalLoadDailyConsumption:
-  name: Daily Consumption
-TotalLoadConsumption:
-  name: Lifetime Consumption
-SmartLoadTotalConsumption:
-  name: Smart Load {smart_load_index} Total Consumption
-SmartLoadPower:
-  name: Smart Load {smart_load_index} Power
-ThirdPartyPVPower:
-  name: Third-Party PV Power
-ThirdPartyLifetimePVEnergy:
-  name: Lifetime Third-Party PV Production
-ESSTotalChargedEnergy:
-  name: Lifetime Charge Energy
-ESSTotalDischargedEnergy:
-  name: Lifetime Discharge Energy
-EVDCTotalChargedEnergy:
-  name: Lifetime DC EV Charge Energy
-EVDCTotalDischargedEnergy:
-  name: Lifetime DC EV Discharge Energy
-PlantTotalImportedEnergy:
-  name: Lifetime Imported Energy
-PlantTotalExportedEnergy:
-  name: Lifetime Exported Energy
-PlantTotalGeneratorOutputEnergy:
-  name: Lifetime Generator Output Energy
-StatisticsInterfaceSensor:
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalCommonLoadConsumption:
-  name: Total Common Load Consumption
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalEVACChargedEnergy:
-  name: Total AC EV Charge Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalSelfPVGeneration:
-  name: Total PV Production
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalThirdPartyPVGeneration:
-  name: Total Third-Party PV Production
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalChargedEnergy:
-  name: Total Charge Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalDischargedEnergy:
-  name: Total Discharge Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalEVDCChargedEnergy:
-  name: Total DC EV Charge Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalEVDCDischargedEnergy:
-  name: Total DC EV Discharge Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalImportedEnergy:
-  name: Total Imported Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalExportedEnergy:
-  name: Total Exported Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-SITotalGeneratorOutputEnergy:
-  name: Total Generator Output Energy
-  attributes:
-    comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
-ReservedPVTotalGenerationToday:
-  name: PV Total Generation Today
-ReservedPVTotalGenerationYesterday:
-  name: PV Total Generation Yesterday
-GridCodeRatedFrequency:
-  name: Rated Frequency
-GridCodeRatedVoltage:
-  name: Rated Voltage
-CurrentControlCommandValue:
-  name: Current Control Command Value
-  attributes:
-    comment: Use of Remote Output Control in Japan
-Alarm6:
-  name: Alarm 6
-Alarm7:
-  name: Alarm 7
-PlantAlarms:
-  name: Plant Alarms
-  attributes:
-    source: Modbus Registers 30280-30281
-GeneralLoadPower:
-  name: General Load Power
-TotalLoadPower:
-  name: Total Load Power
-ReservedGridPhaseVoltage:
-  name: Phase {phase} Voltage
-ReservedGridPhaseCurrent:
-  name: Phase {phase} Current
-BatteryChargingPower:
-  name: Battery Charging Power
-  attributes:
-    source: BatteryPower &gt; 0
-BatteryDischargingPower:
-  name: Battery Discharging Power
-  attributes:
-    source: BatteryPower &lt; 0 &times; -1
-GridSensorExportPower:
-  name: Export Power
-  attributes:
-    source: GridSensorActivePower &lt; 0 &times; -1
-GridSensorImportPower:
-  name: Import Power
-  attributes:
-    source: GridSensorActivePower &gt; 0
-PlantConsumedPower:
-  name: Consumed Power
-  attributes:
-    source: TotalLoadPower
-TotalPVPower:
-  name: Total PV Power
-  attributes:
-    source: PV Power + Third-Party PV Power
-GridSensorDailyExportEnergy:
-  name: Daily Exported Energy
-  name_reset: Set Daily Exported Energy
-  attributes:
-    source: PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight
-GridSensorDailyImportEnergy:
-  name: Daily Imported Energy
-  name_reset: Set Daily Imported Energy
-  attributes:
-    source: PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight
-TotalLifetimePVEnergy:
-  name: Lifetime Total PV Production
-  attributes:
-    source: '&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
-TotalDailyPVEnergy:
-  name: Daily Total PV Production
-  name_reset: Set Daily Total PV Production
-  attributes:
-    source: TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight
-PlantDailyPVEnergy:
-  name: Daily PV Production
-  name_reset: Set Daily PV Production
-  attributes:
-    source: PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight
-PlantDailyChargeEnergy:
-  name: Daily Charge Energy
-  name_reset: Set Daily Charge Energy
-  attributes:
-    source: '&sum; of DailyChargeEnergy across all Inverters associated with the Plant'
-PlantDailyDischargeEnergy:
-  name: Daily Discharge Energy
-  name_reset: Set Daily Discharge Energy
-  attributes:
-    source: '&sum; of DailyDischargeEnergy across all Inverters associated with the Plant'
-InverterBatteryChargingPower:
-  name: Battery Charging Power
-  attributes:
-    source: ChargeDischargePower &gt; 0
-InverterBatteryDischargingPower:
-  name: Battery Discharging Power
-  attributes:
-    source: ChargeDischargePower &lt; 0 &times; -1
-PVStringPower:
-  name: Power
-  attributes:
-    source: PVVoltageSensor &times; PVCurrentSensor
-PVStringLifetimeEnergy:
-  name: Lifetime Production
-  name_reset: Set Lifetime Production
-  attributes:
-    source: Riemann &sum; of PVStringPower
-PVStringDailyEnergy:
-  name: Daily Production
-  name_reset: Set Daily Production
-  attributes:
-    source: PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight
-RunningStateSensor:
-  options:
-    '0': Standby
-    '1': Normal
-    '2': Fault
-    '3': Power-Off
-    '7': Environmental Abnormality
-ACChargerRunningState:
-  name: Running State
-  options:
-    '0': Initialising
-    '1': EV not connected
-    '2': Charger and EV not ready
-    '3': Charger ready; EV not ready
-    '4': Charger not ready; EV ready
-    '5': Charging
-    '6': Fault
-    '7': Error
-ACChargerTotalEnergyConsumed:
-  name: Total Energy Consumed
-ACChargerChargingPower:
-  name: Charging Power
-ACChargerRatedPower:
-  name: Rated Power
-ACChargerRatedCurrent:
-  name: Rated Current
-ACChargerRatedVoltage:
-  name: Rated Voltage
-ACChargerInputBreaker:
-  name: Input Breaker
-ACChargerAlarm1:
-  name: Alarm 1
-ACChargerAlarm2:
-  name: Alarm 2
-ACChargerAlarm3:
-  name: Alarm 3
-ACChargerAlarms:
-  name: Alarms
-  attributes:
-    source: Modbus Registers 32012-32014
-InverterStatus:
-  name: Inverter Power On/Off
-  attributes:
-    comment: 0:Stop 1:Start
-ReservedGridCode:
-  name: Grid Code
-DCChargerStatus:
-  name: DC Charger Stop/Start
-  name_off: Stop
-  name_on: Start
-  attributes:
-    comment: 0:Start 1:Stop
-ReservedInverterRemoteEMSDispatch:
-  name: Remote EMS Dispatch
-InverterActivePowerFixedValueAdjustment:
-  name: Active Power Fixed Value Adjustment
-InverterReactivePowerFixedValueAdjustment:
-  name: Reactive Power Fixed Value Adjustment
-InverterActivePowerPercentageAdjustment:
-  name: Active Power Percentage Adjustment
-InverterReactivePowerQSAdjustment:
-  name: Reactive Power Q/S Adjustment
-InverterPowerFactorAdjustment:
-  name: Power Factor Adjustment
-PVOutputOutputService:
-  name: PVOutput Add Output Service
-PVOutputStatusService:
-  name: PVOutput Add Status Service
-EnphasePVPower:
-  name: PV Power
-  attributes:
-    source: Enphase Envoy API
-EnphaseLifetimePVEnergy:
-  name: Lifetime Production
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-EnphaseDailyPVEnergy:
-  name: Daily Production
-  name_reset: Set Daily Production
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-EnphaseCurrent:
-  name: Current
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-EnphaseFrequency:
-  name: Frequency
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-EnphasePowerFactor:
-  name: Power Factor
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-EnphaseReactivePower:
-  name: Reactive Power
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-EnphaseVoltage:
-  name: Voltage
-  attributes:
-    source: Enphase Envoy API when EnphasePVPower derived
-SmartPort:
-  name: Sigenergy Plant Smart-Port
-ConsumptionSource: {}
-OutputField: {}
-StatusField: {}
-TariffType: {}
-VoltageSource: {}
-ConsumptionMethod: {}
-Protocol: {}
-HybridInverter: {}
-PVInverter: {}
-ModbusClient: {}
-ModbusDevice: {}
-MqttClient: {}
-MetricsSensor: {}
-RemoteEMSLimit: {}
-SanityCheckException: {}
-SourceType: {}
-Sensor: {}
-DerivedSensor: {}
-ReadableSensorMixin: {}
-ModbusSensorMixin: {}
-AvailabilityMixin: {}
-ReservedSensor: {}
-TimestampSensor: {}
-ObservableMixin: {}
-SubstituteMixin: {}
-WritableSensorMixin: {}
-ReadWriteSensor: {}
-NumericSensor: {}
-SelectSensor: {}
-SwitchSensor: {}
-Alarm1Sensor: {}
-Alarm2Sensor: {}
-Alarm3Sensor: {}
-Alarm4Sensor: {}
-Alarm5Sensor: {}
-AlarmCombinedSensor: {}
-ResettableAccumulationSensor: {}
-EnergyLifetimeAccumulationSensor: {}
-EnergyDailyAccumulationSensor: {}
-DeviceClass: {}
-InputType: {}
-StateClass: {}
-UnitOfApparentPower: {}
-UnitOfElectricCurrent: {}
-UnitOfElectricPotential: {}
-UnitOfEnergy: {}
-UnitOfFrequency: {}
-UnitOfPower: {}
-UnitOfReactivePower: {}
-UnitOfTemperature: {}
-UnitOfTime: {}
-Service: {}
-Calculation: {}
-TimePeriodServiceTopics: {}
+class:
+  ACCharger:
+    name: Sigenergy AC Charger
+  ACChargerAlarm1:
+    name: Alarm 1
+  ACChargerAlarm2:
+    name: Alarm 2
+  ACChargerAlarm3:
+    name: Alarm 3
+  ACChargerAlarms:
+    name: Alarms
+    attributes:
+      source: Modbus Registers 32012-32014
+  ACChargerChargingPower:
+    name: Charging Power
+  ACChargerInputBreaker:
+    name: Input Breaker
+  ACChargerOutputCurrent:
+    name: Output Current
+    attributes:
+      comment: "Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']"
+  ACChargerRatedCurrent:
+    name: Rated Current
+  ACChargerRatedPower:
+    name: Rated Power
+  ACChargerRatedVoltage:
+    name: Rated Voltage
+  ACChargerRunningState:
+    name: Running State
+    options:
+      '0': Initialising
+      '1': EV not connected
+      '2': Charger and EV not ready
+      '3': Charger ready; EV not ready
+      '4': Charger not ready; EV ready
+      '5': Charging
+      '6': Fault
+      '7': Error
+  ACChargerStatus:
+    name: AC Charger Stop/Start
+    name_off: Stop
+    name_on: Start
+    attributes:
+      comment: 0:Start 1:Stop
+  ACChargerTotalEnergyConsumed:
+    name: Total Energy Consumed
+  AccumulatedChargeEnergy:
+    name: Lifetime Charge Energy
+  AccumulatedDischargeEnergy:
+    name: Lifetime Discharge Energy
+  ActivePower:
+    name: Active Power
+  ActivePowerFixedAdjustmentTargetValue:
+    name: Active Power Fixed Adjustment Target Value
+  ActivePowerPercentageAdjustmentTargetValue:
+    name: Active Power Percentage Adjustment Target Value
+    attributes:
+      comment: 'Range: [-100.00,100.00]'
+  ActivePowerRegulationGradient:
+    name: Active Power Regulation Gradient
+    attributes:
+      comment: Range:[0,5000]。Percentage of rated power adjusted per second
+  Alarm6:
+    name: Alarm 6
+  Alarm7:
+    name: Alarm 7
+  AlarmSensor:
+    no_alarm: No Alarm
+    unknown_alarm: Unknown (bit{bit}∈{value})
+  AvailableBatteryChargeEnergy:
+    name: Available Charge Energy
+  AvailableBatteryDischargeEnergy:
+    name: Available Discharge Energy
+  AvailableMaxActivePower:
+    name: Available Max Active Power
+    attributes:
+      comment: Feed to the AC terminal. Count only the running inverters
+  AvailableMaxChargingCapacity:
+    name: Available Max Charging Capacity
+    attributes:
+      comment: Count only the running inverters
+  AvailableMaxChargingPower:
+    name: Available Max Charging Power
+    attributes:
+      comment: Count only the running inverters
+  AvailableMaxDischargingCapacity:
+    name: Available Max Discharging Capacity
+    attributes:
+      comment: Count only the running inverters
+  AvailableMaxDischargingPower:
+    name: Available Max Discharging Power
+    attributes:
+      comment: Absorb from the AC terminal. Count only the running inverters
+  AvailableMaxReactivePower:
+    name: Available Max Reactive Power
+    attributes:
+      comment: Feed to the AC terminal. Count only the running inverters
+  AvailableMinActivePower:
+    name: Available Min Active Power
+    attributes:
+      comment: Absorb from the AC terminal. Count only the running inverters
+  AvailableMinReactivePower:
+    name: Available Min Reactive Power
+    attributes:
+      comment: Absorb from the AC terminal. Count only the running inverters
+  AverageCellTemperature:
+    name: Average Cell Temperature
+  AverageCellVoltage:
+    name: Average Cell Voltage
+  BatteryChargingPower:
+    name: Battery Charging Power
+    attributes:
+      source: BatteryPower &gt; 0
+  BatteryDischargingPower:
+    name: Battery Discharging Power
+    attributes:
+      source: BatteryPower &lt; 0 &times; -1
+  BatteryPower:
+    name: Battery Power
+    attributes:
+      comment: 'ESS Power: <0 = discharging >0 = charging'
+  ChargeCutOffSoC:
+    name: Charge Cut-Off SoC
+  ChargeDischargePower:
+    name: Battery Power
+  CurrentControlCommandValue:
+    name: Current Control Command Value
+    attributes:
+      comment: Use of Remote Output Control in Japan
+  DCCharger:
+    name: Sigenergy DC Charger
+  DCChargerCurrentChargingCapacity:
+    name: Current Charging Capacity
+    attributes:
+      comment: Single time
+  DCChargerCurrentChargingDuration:
+    name: Current Charging Duration
+    attributes:
+      comment: Single time
+  DCChargerOutputPower:
+    name: Output Power
+  DCChargerRunningState:
+    name: Running State
+    options:
+      '0': Idle
+      '1': Occupied (Charging Gun plugged in but not detected)
+      '2': Preparing (Establishing communication)
+      '3': Charging
+      '4': Fault
+      '5': Scheduled
+  DCChargerStatus:
+    name: DC Charger Stop/Start
+    name_off: Stop
+    name_on: Start
+    attributes:
+      comment: 0:Start 1:Stop
+  DCChargerVehicleBatteryVoltage:
+    name: Vehicle Battery Voltage
+  DCChargerVehicleChargingCurrent:
+    name: Vehicle Charging Current
+  DCChargerVehicleSoC:
+    name: Vehicle SoC
+  DailyChargeEnergy:
+    name: Daily Charge Energy
+  DailyDischargeEnergy:
+    name: Daily Discharge Energy
+  DischargeCutOffSoC:
+    name: Discharge Cut-Off SoC
+  EMSWorkMode:
+    name: EMS Work Mode
+    options:
+      '0': Max Self Consumption
+      '1': Sigen AI
+      '2': Time of Use
+      '5': Full Feed-in to Grid
+      '6': VPP Scheduling
+      '7': Remote EMS
+      '9': Time-Based Control
+  ESS:
+    name: '{model_id} {serial_number} ESS'
+  ESSBackupSOC:
+    name: Backup SoC
+    attributes:
+      comment: 'Range: [0.00,100.00]'
+  ESSChargeCutOffSOC:
+    name: Charge Cut-Off SoC
+    attributes:
+      comment: 'Range: [0.00,100.00]'
+  ESSDischargeCutOffSOC:
+    name: Discharge Cut-Off SoC
+    attributes:
+      comment: 'Range: [0.00,100.00]'
+  ESSTotalChargedEnergy:
+    name: Lifetime Charge Energy
+  ESSTotalDischargedEnergy:
+    name: Lifetime Discharge Energy
+  EVDCTotalChargedEnergy:
+    name: Lifetime DC EV Charge Energy
+  EVDCTotalDischargedEnergy:
+    name: Lifetime DC EV Discharge Energy
+  EnphaseCurrent:
+    name: Current
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  EnphaseDailyPVEnergy:
+    name: Daily Production
+    name_reset: Set Daily Production
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  EnphaseFrequency:
+    name: Frequency
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  EnphaseLifetimePVEnergy:
+    name: Lifetime Production
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  EnphasePVPower:
+    name: PV Power
+    attributes:
+      source: Enphase Envoy API
+  EnphasePowerFactor:
+    name: Power Factor
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  EnphaseReactivePower:
+    name: Reactive Power
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  EnphaseVoltage:
+    name: Voltage
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+  GeneralAlarm1:
+    name: PCS Alarms 1
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+  GeneralAlarm2:
+    name: PCS Alarms 2
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+  GeneralAlarm3:
+    name: ESS Alarms
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+  GeneralAlarm4:
+    name: Gateway Alarms
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+  GeneralAlarm5:
+    name: DC Charger Alarms
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+  GeneralLoadPower:
+    name: General Load Power
+  GeneralPCSAlarm:
+    name: PCS Alarms
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+      source: Modbus Registers 30027-30028
+  GridCode:
+    name: Sigenergy Plant Grid Code
+  GridCodeHVRT:
+    name: High Voltage Ride Through
+  GridCodeHVRTMode:
+    name: HVRT Mode
+    options:
+      '0': Reactive power compensation current, active zero-current mode
+      '2': Zero-current mode
+      '3': Constant current mode
+      '4': Reactive dynamic current, active hold mode
+      '5': Reactive power compensation current, active constant-current mode
+  GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    name: HVRT Negative Sequence Reactive Power Compensation Factor
+    attributes:
+      comment: 'Range: [0,10.0]'
+  GridCodeHVRTReactivePowerCompensationFactor:
+    name: HVRT Reactive Power Compensation Factor
+    attributes:
+      comment: 'Range: [0,10.0]'
+  GridCodeHVRTVoltageProtectionBlocking:
+    name: HVRT Grid Voltage Protection Blocking
+  GridCodeLVRT:
+    name: Low Voltage Ride Through
+  GridCodeLVRTMode:
+    name: LVRT Mode
+    options:
+      '0': Reactive power compensation current, active zero-current mode
+      '2': Zero-current mode
+      '3': Constant current mode
+      '4': Reactive dynamic current, active zero-current mode
+      '5': Reactive power compensation current, active constant-current mode
+  GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    name: LVRT Negative Sequence Reactive Power Compensation Factor
+    attributes:
+      comment: 'Range: [0,10.0]'
+  GridCodeLVRTReactivePowerCompensationFactor:
+    name: LVRT Reactive Power Compensation Factor
+    attributes:
+      comment: 'Range: [0,10.0]'
+  GridCodeLVRTVoltageProtectionBlocking:
+    name: LVRT Grid Voltage Protection Blocking
+  GridCodeOverFrequencyDerating:
+    name: Over Frequency Derating
+  GridCodeOverFrequencyDeratingCutOffFrequency:
+    name: Over Frequency Derating Cut-Off Frequency
+    attributes:
+      comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+  GridCodeOverFrequencyDeratingPowerRampRate:
+    name: Over Frequency Derating Power Ramp Rate
+    attributes:
+      comment: 'Range: [0,100.0]'
+  GridCodeOverFrequencyDeratingTriggerFrequency:
+    name: Over Frequency Derating Trigger Frequency
+    attributes:
+      comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+  GridCodeRatedFrequency:
+    name: Rated Frequency
+  GridCodeRatedVoltage:
+    name: Rated Voltage
+  GridCodeUnderFrequencyPowerBoost:
+    name: Under-Frequency Power Boost
+  GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+    name: Under-Frequency Power Boost Cut-Off Frequency
+    attributes:
+      comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+  GridCodeUnderFrequencyPowerBoostPowerRampRate:
+    name: Under-Frequency Power Boost Power Ramp Rate
+    attributes:
+      comment: 'Range: [0,100.0]'
+  GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+    name: Under-Frequency Power Boost Trigger Frequency
+    attributes:
+      comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+  GridFrequency:
+    name: Grid Frequency
+  GridMaxExportLimit:
+    name: Grid Max Export Limit
+    attributes:
+      comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+  GridMaxImportLimit:
+    name: Grid Max Import Limit
+    attributes:
+      comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+  GridPhaseActivePower:
+    name: Phase {phase} Active Power
+    attributes:
+      comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
+  GridPhaseReactivePower:
+    name: Phase {phase} Reactive Power
+    attributes:
+      comment: Data collected from grid sensor at grid to system checkpoint
+  GridSensor:
+    name: Sigenergy Plant Grid Sensor
+  GridSensorActivePower:
+    name: Active Power
+    attributes:
+      comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
+  GridSensorDailyExportEnergy:
+    name: Daily Exported Energy
+    name_reset: Set Daily Exported Energy
+    attributes:
+      source: PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight
+  GridSensorDailyImportEnergy:
+    name: Daily Imported Energy
+    name_reset: Set Daily Imported Energy
+    attributes:
+      source: PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight
+  GridSensorExportPower:
+    name: Export Power
+    attributes:
+      source: GridSensorActivePower &lt; 0 &times; -1
+  GridSensorImportPower:
+    name: Import Power
+    attributes:
+      source: GridSensorActivePower &gt; 0
+  GridSensorReactivePower:
+    name: Reactive Power
+    attributes:
+      comment: Data collected from grid sensor at grid to system checkpoint
+  GridSensorStatus:
+    name: Grid Sensor Status
+    options:
+      '0': Not Connected
+      '1': Connected
+    attributes:
+      comment: Gateway or meter connection status
+  GridStatus:
+    name: Grid Status
+    options:
+      '0': On Grid
+      '1': Off Grid (auto)
+      '2': Off Grid (manual)
+  IndependentPhasePowerControl:
+    name: Independent Phase Power Control
+    attributes:
+      comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
+  InsulationResistance:
+    name: Insulation Resistance
+  Inverter:
+    name: '{model_id} {serial}'
+  InverterActivePowerFixedValueAdjustment:
+    name: Active Power Fixed Value Adjustment
+  InverterActivePowerFixedValueAdjustmentFeedback:
+    name: Active Power Fixed Value Adjustment Feedback
+  InverterActivePowerPercentageAdjustment:
+    name: Active Power Percentage Adjustment
+  InverterActivePowerPercentageAdjustmentFeedback:
+    name: Active Power Percentage Adjustment Feedback
+  InverterAlarm1:
+    name: PCS Alarms 1
+  InverterAlarm2:
+    name: PCS Alarms 2
+  InverterAlarm3:
+    name: Alarms
+  InverterAlarm4:
+    name: Gateway Alarms
+  InverterAlarm5:
+    name: Alarms
+  InverterBatteryChargingPower:
+    name: Battery Charging Power
+    attributes:
+      source: ChargeDischargePower &gt; 0
+  InverterBatteryDischargingPower:
+    name: Battery Discharging Power
+    attributes:
+      source: ChargeDischargePower &lt; 0 &times; -1
+  InverterBatterySoC:
+    name: Battery SoC
+  InverterBatterySoH:
+    name: Battery SoH
+  InverterFirmwareVersion:
+    name: Firmware Version
+  InverterMaxActivePower:
+    name: Max Active Power
+  InverterMaxBatteryTemperature:
+    name: Max Battery Temperature
+  InverterMaxCellVoltage:
+    name: Max Cell Voltage
+  InverterMinBatteryTemperature:
+    name: Min Battery Temperature
+  InverterMinCellVoltage:
+    name: Min Cell Voltage
+  InverterModel:
+    name: Model
+  InverterPCSAlarm:
+    name: PCS Alarms
+    attributes:
+      source: Modbus Registers 30605-30606
+  InverterPVDailyGeneration:
+    name: Daily Production
+  InverterPVLifetimeGeneration:
+    name: Lifetime Production
+  InverterPVPower:
+    name: PV Power
+  InverterPowerFactorAdjustment:
+    name: Power Factor Adjustment
+  InverterPowerFactorAdjustmentFeedback:
+    name: Power Factor Adjustment Feedback
+  InverterReactivePowerFixedValueAdjustment:
+    name: Reactive Power Fixed Value Adjustment
+  InverterReactivePowerFixedValueAdjustmentFeedback:
+    name: Reactive Power Fixed Value Adjustment Feedback
+  InverterReactivePowerPercentageAdjustmentFeedback:
+    name: Reactive Power Percentage Adjustment Feedback
+  InverterReactivePowerQSAdjustment:
+    name: Reactive Power Q/S Adjustment
+  InverterRunningState:
+    name: Running State
+    options:
+      '0': Standby
+      '1': Normal
+      '2': Fault
+      '3': Power-Off
+      '7': Environmental Abnormality
+  InverterSerialNumber:
+    name: Serial Number
+  InverterStatus:
+    name: Inverter Power On/Off
+    attributes:
+      comment: 0:Stop 1:Start
+  InverterTemperature:
+    name: Temperature
+  LineVoltage:
+    name: '{phase} Line Voltage'
+  MPTTCount:
+    name: MPTT Count
+  MaxAbsorptionPower:
+    name: Max Absorption Power
+  MaxActivePower:
+    name: Max Active Power
+    attributes:
+      comment: This should be the base value of all active power adjustment actions
+  MaxActivePowerAdjustment:
+    name: Max Active Power Adjustment
+  MaxApparentPower:
+    name: Max Apparent Power
+    attributes:
+      comment: This should be the base value of all reactive power adjustment actions
+  MaxBatteryChargePower:
+    name: Max Charge Power
+  MaxBatteryDischargePower:
+    name: Max Discharge Power
+  MaxChargingLimit:
+    name: Max Charging Limit
+  MaxDischargingLimit:
+    name: Max Discharging Limit
+  MaxRatedApparentPower:
+    name: Max Rated Apparent Power
+  MaxReactivePowerAdjustment:
+    name: Max Reactive Power Adjustment
+  MetricsService:
+    name: Sigenergy Metrics
+  MinActivePowerAdjustment:
+    name: Min Active Power Adjustment
+  MinReactivePowerAdjustment:
+    name: Min Reactive Power Adjustment
+  ModbusActiveLocks:
+    name: Modbus Active Locks
+  ModbusCacheHits:
+    name: Modbus Cache Hits
+  ModbusPhysicalReads:
+    name: Modbus Physical Reads
+  ModbusReadErrors:
+    name: Modbus Read Errors
+  ModbusReadMax:
+    name: Modbus Read Max
+  ModbusReadMean:
+    name: Modbus Read Mean
+  ModbusReadMin:
+    name: Modbus Read Min
+  ModbusReadsPerSecond:
+    name: Modbus Reads/second
+  ModbusWriteErrors:
+    name: Modbus Write Errors
+  ModbusWriteMax:
+    name: Modbus Write Max
+  ModbusWriteMean:
+    name: Modbus Write Mean
+  ModbusWriteMin:
+    name: Modbus Write Min
+  MonitorService:
+    name: Sigenergy Monitor
+  MqttOverriddenSensor:
+    attributes:
+      source: MQTT Override
+  OutputType:
+    name: Output Type
+    options:
+      '0': L/N
+      '1': L1/L2/L3
+      '2': L1/L2/L3/N
+      '3': L1/L2/N
+  PACKBCUCount:
+    name: PACK/BCU Count
+  PCSMaxExportLimit:
+    name: PCS Max Export Limit
+    attributes:
+      comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+  PCSMaxImportLimit:
+    name: PCS Max Import Limit
+    attributes:
+      comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+  PVCurrentSensor:
+    name: Current
+  PVMaxPowerLimit:
+    name: PV Max Power Limit
+    attributes:
+      comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
+  PVOutputOutputService:
+    name: PVOutput Add Output Service
+  PVOutputStatusService:
+    name: PVOutput Add Status Service
+  PVString:
+    name: '{model_id} {serial_number} PV String {string_number}'
+  PVStringCount:
+    name: PV String Count
+  PVStringDailyEnergy:
+    name: Daily Production
+    name_reset: Set Daily Production
+    attributes:
+      source: PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight
+  PVStringLifetimeEnergy:
+    name: Lifetime Production
+    name_reset: Set Lifetime Production
+    attributes:
+      source: Riemann &sum; of PVStringPower
+  PVStringPower:
+    name: Power
+    attributes:
+      source: PVVoltageSensor &times; PVCurrentSensor
+  PVVoltageSensor:
+    name: Voltage
+  PhaseActivePowerFixedAdjustmentTargetValue:
+    name: Phase {phase} Active Power Fixed Adjustment Target Value
+    attributes:
+      comment: Valid only when Output Type is L1/L2/L3/N
+  PhaseActivePowerPercentageAdjustmentTargetValue:
+    name: Phase {phase} Active Power Percentage Adjustment Target Value
+    attributes:
+      comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]'
+  PhaseCurrent:
+    name: 'Phase {phase} Current'
+  PhaseQSAdjustmentTargetValue:
+    name: Phase {phase} Q/S Fixed Adjustment Target Value
+    attributes:
+      comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
+  PhaseReactivePowerFixedAdjustmentTargetValue:
+    name: Phase {phase} Reactive Power Fixed Adjustment Target Value
+    attributes:
+      comment: Valid only when Output Type is L1/L2/L3/N
+  PhaseVoltage:
+    name: 'Phase {phase} Voltage'
+  PlantActivePower:
+    name: Active Power
+  PlantAlarms:
+    name: Plant Alarms
+    attributes:
+      source: Modbus Registers 30280-30281
+  PlantBatterySoC:
+    name: Battery SoC
+  PlantBatterySoH:
+    name: Battery SoH
+    attributes:
+      comment: This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight
+  PlantConsumedPower:
+    name: Consumed Power
+    attributes:
+      source: TotalLoadPower
+  PlantDailyChargeEnergy:
+    name: Daily Charge Energy
+    name_reset: Set Daily Charge Energy
+    attributes:
+      source: '&sum; of DailyChargeEnergy across all Inverters associated with the Plant'
+  PlantDailyDischargeEnergy:
+    name: Daily Discharge Energy
+    name_reset: Set Daily Discharge Energy
+    attributes:
+      source: '&sum; of DailyDischargeEnergy across all Inverters associated with the Plant'
+  PlantDailyPVEnergy:
+    name: Daily PV Production
+    name_reset: Set Daily PV Production
+    attributes:
+      source: PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight
+  PlantPVPower:
+    name: PV Power
+  PlantPVTotalGeneration:
+    name: Lifetime PV Production
+  PlantPhaseActivePower:
+    name: Phase {phase} Active Power
+  PlantPhaseReactivePower:
+    name: Phase {phase} Reactive Power
+  PlantRatedChargingPower:
+    name: Rated Charging Power
+  PlantRatedDischargingPower:
+    name: Rated Discharging Power
+  PlantRatedEnergyCapacity:
+    name: Rated Energy Capacity
+  PlantReactivePower:
+    name: Reactive Power
+  PlantRunningState:
+    name: Running State
+    options:
+      '0': Standby
+      '1': Normal
+      '2': Fault
+      '3': Power-Off
+      '7': Environmental Abnormality
+  PlantStatistics:
+    name: Sigenergy Plant Statistics
+  PlantStatus:
+    name: Plant Power On/Off
+    attributes:
+      comment: 0:Stop 1:Start
+  PlantTotalExportedEnergy:
+    name: Lifetime Exported Energy
+  PlantTotalGeneratorOutputEnergy:
+    name: Lifetime Generator Output Energy
+  PlantTotalImportedEnergy:
+    name: Lifetime Imported Energy
+  PowerFactor:
+    name: Power Factor
+  PowerFactorAdjustmentTargetValue:
+    name: Power Factor Adjustment Target Value
+    attributes:
+      comment: 'Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode'
+  PowerPlant:
+    name: Sigenergy Plant
+  ProtocolPublished:
+    name: Protocol Published
+  ProtocolVersion:
+    name: Protocol Version
+  QSAdjustmentTargetValue:
+    name: Q/S Adjustment Target Value
+    attributes:
+      comment: 'Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode'
+  RatedActivePower:
+    name: Rated Active Power
+  RatedBatteryCapacity:
+    name: Rated Battery Capacity
+  RatedChargingPower:
+    name: Rated Charging Power
+  RatedDischargingPower:
+    name: Rated Discharging Power
+  RatedGridFrequency:
+    name: Rated Grid Frequency
+  RatedGridVoltage:
+    name: Rated Grid Voltage
+  ReactivePower:
+    name: Reactive Power
+  ReactivePowerFixedAdjustmentTargetValue:
+    name: Reactive Power Fixed Adjustment Target Value
+    attributes:
+      comment: 'Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode'
+  ReadOnlySensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  RemoteEMS:
+    name: Remote EMS
+    attributes:
+      comment: When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS
+  RemoteEMSControlMode:
+    name: Remote EMS Control Mode
+    options:
+      '0': PCS remote control
+      '1': Standby
+      '2': Maximum Self-consumption (Default)
+      '3': Command Charging (Consume power from the grid first)
+      '4': Command Charging (Consume power from the PV first)
+      '5': Command Discharging (Output power from PV first)
+      '6': Command Discharging (Output power from the battery first)
+  Reserved30073:
+    name: Reserved
+  Reserved30610:
+    name: Reserved
+  Reserved40026:
+    name: Reserved
+  ReservedAccumulatedExportEnergy:
+    name: Lifetime Energy Exported
+  ReservedAccumulatedImportEnergy:
+    name: Lifetime Energy Imported
+  ReservedDailyExportEnergy:
+    name: Daily Energy Exported
+  ReservedDailyImportEnergy:
+    name: Daily Energy Imported
+  ReservedGridCode:
+    name: Grid Code
+  ReservedGridPhaseCurrent:
+    name: Phase {phase} Current
+  ReservedGridPhaseVoltage:
+    name: Phase {phase} Voltage
+  ReservedInverterRemoteEMSDispatch:
+    name: Remote EMS Dispatch
+  ReservedPVTotalGenerationToday:
+    name: PV Total Generation Today
+  ReservedPVTotalGenerationYesterday:
+    name: PV Total Generation Yesterday
+  RunningStateSensor:
+    options:
+      '0': Standby
+      '1': Normal
+      '2': Fault
+      '3': Power-Off
+      '7': Environmental Abnormality
+  SITotalChargedEnergy:
+    name: Total Charge Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalCommonLoadConsumption:
+    name: Total Common Load Consumption
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalDischargedEnergy:
+    name: Total Discharge Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalEVACChargedEnergy:
+    name: Total AC EV Charge Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalEVDCChargedEnergy:
+    name: Total DC EV Charge Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalEVDCDischargedEnergy:
+    name: Total DC EV Discharge Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalExportedEnergy:
+    name: Total Exported Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalGeneratorOutputEnergy:
+    name: Total Generator Output Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalImportedEnergy:
+    name: Total Imported Energy
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalSelfPVGeneration:
+    name: Total PV Production
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SITotalThirdPartyPVGeneration:
+    name: Total Third-Party PV Production
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  ShutdownTime:
+    name: Shutdown Time
+  SmartLoadPower:
+    name: Smart Load {smart_load_index} Power
+  SmartLoadTotalConsumption:
+    name: Smart Load {smart_load_index} Total Consumption
+  SmartPort:
+    name: Sigenergy Plant Smart-Port
+  Started:
+    name: Started
+  StartupTime:
+    name: Startup Time
+  StatisticsInterfaceSensor:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+  SystemTime:
+    name: System Time
+  SystemTimeZone:
+    name: System Time Zone
+  ThirdPartyLifetimePVEnergy:
+    name: Lifetime Third-Party PV Production
+  ThirdPartyPVPower:
+    name: Third-Party PV Power
+  TotalDailyPVEnergy:
+    name: Daily Total PV Production
+    name_reset: Set Daily Total PV Production
+    attributes:
+      source: TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight
+  TotalLifetimePVEnergy:
+    name: Lifetime Total PV Production
+    attributes:
+      source: '&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
+  TotalLoadConsumption:
+    name: Lifetime Consumption
+  TotalLoadDailyConsumption:
+    name: Daily Consumption
+  TotalLoadPower:
+    name: Total Load Power
+  TotalPVPower:
+    name: Total PV Power
+    attributes:
+      source: PV Power + Third-Party PV Power
+  WriteOnlySensor:
+    name_on: Power On
+    name_off: Power Off
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)'
-  SIGENERGY2MQTT_LOG_LEVEL:
-    help: 'Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
-  SIGENERGY2MQTT_DEBUG_SENSOR:
-    help: Specify a sensor to be debugged using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name). If specified, --log-level is also forced to DEBUG.
-  SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
-    help: The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.
-  SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.
-  SIGENERGY2MQTT_NO_METRICS:
-    help: Do not publish any sigenergy2mqtt metrics.
   SIGENERGY2MQTT_CONSUMPTION:
     help: "Set the method of calculating the Plant Consumed Power sensor. Valid values are: 'calculated', 'total' (Total Load Power register), or 'general' (V2.8 General Load Power register). The default is 'calculated'. This option is ignored on firmware earlier than that supporting Modbus Protocol V2.8."
-  SIGENERGY2MQTT_HASS_ENABLED:
-    help: Enable auto-discovery in Home Assistant.
+  SIGENERGY2MQTT_DEBUG_SENSOR:
+    help: Specify a sensor to be debugged using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name). If specified, --log-level is also forced to DEBUG.
+  SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
+    help: "The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')"
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
     help: 'The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)'
+  SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
+    help: When editing percentage sensors, use a numeric entry box to change the value (true) or use a slider to change the value (false).
+  SIGENERGY2MQTT_HASS_ENABLED:
+    help: Enable auto-discovery in Home Assistant.
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: "The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)"
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: "The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)
-  SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
-    help: "The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')"
-  SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
-    help: When editing percentage sensors, use a numeric entry box to change the value (true) or use a slider to change the value (false).
-  discovery_only:
-    help: Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.
+  SIGENERGY2MQTT_LOG_LEVEL:
+    help: 'Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
+    help: The Sigenergy AC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
+    help: Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
+    help: The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
+    help: The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
+    help: The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds.
+  SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
+    help: The Sigenergy DC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.
+  SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
+    help: Disable Modbus chunking when reading registers and read each register individually.
+  SIGENERGY2MQTT_MODBUS_HOST:
+    help: The hostname or IP address of the Sigenergy device
+  SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
+    help: '**The Sigenergy Inverter Modbus Device ID. Multiple device IDS may be specified, separated by commas.'
+  SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
+    help: 'Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
+    help: Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.
+  SIGENERGY2MQTT_MODBUS_PORT:
+    help: 'The Sigenergy device Modbus port number (default: 502)'
+  SIGENERGY2MQTT_MODBUS_READ_ONLY:
+    help: Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be published if specified.
+  SIGENERGY2MQTT_MODBUS_RETRIES:
+    help: The maximum number of times to retry a Modbus operation if it fails. The default is 3.
+  SIGENERGY2MQTT_MODBUS_TIMEOUT:
+    help: The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0.
+  SIGENERGY2MQTT_MQTT_ANONYMOUS:
+    help: Allow anonymous connection to MQTT broker (i.e. without username/password). If specified, the --mqtt-username and --mqtt-password options are ignored.
   SIGENERGY2MQTT_MQTT_BROKER:
     help: 'The hostname or IP address of an MQTT broker (default: 127.0.0.1)'
-  SIGENERGY2MQTT_MQTT_PORT:
-    help: The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)
   SIGENERGY2MQTT_MQTT_KEEPALIVE:
     help: The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker. Default is 60 and minimum is 1.
+  SIGENERGY2MQTT_MQTT_LOG_LEVEL:
+    help: 'Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_MQTT_PASSWORD:
+    help: A valid password for the MQTT broker username
+  SIGENERGY2MQTT_MQTT_PORT:
+    help: The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)
   SIGENERGY2MQTT_MQTT_TLS:
     help: Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.
   SIGENERGY2MQTT_MQTT_TLS_INSECURE:
     help: Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. Ignored unless --mqtt-tls is also specified.
   SIGENERGY2MQTT_MQTT_TRANSPORT:
     help: Sets the MQTT transport mechanism. Must be one of websockets or tcp. The default is tcp.
-  SIGENERGY2MQTT_MQTT_ANONYMOUS:
-    help: Allow anonymous connection to MQTT broker (i.e. without username/password). If specified, the --mqtt-username and --mqtt-password options are ignored.
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: A valid username for the MQTT broker
-  SIGENERGY2MQTT_MQTT_PASSWORD:
-    help: A valid password for the MQTT broker username
-  SIGENERGY2MQTT_MQTT_LOG_LEVEL:
-    help: 'Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
-  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-    help: Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.
-  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
-    help: The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds.
-  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds.
-  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
-    help: The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.
-  SIGENERGY2MQTT_MODBUS_HOST:
-    help: The hostname or IP address of the Sigenergy device
-  SIGENERGY2MQTT_MODBUS_PORT:
-    help: 'The Sigenergy device Modbus port number (default: 502)'
-  SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
-    help: '**The Sigenergy Inverter Modbus Device ID. Multiple device IDS may be specified, separated by commas.'
-  SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
-    help: The Sigenergy AC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.
-  SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
-    help: The Sigenergy DC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.
-  SIGENERGY2MQTT_MODBUS_READ_ONLY:
-    help: Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be published if specified.
-  SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
-    help: Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.
-  SIGENERGY2MQTT_MODBUS_TIMEOUT:
-    help: The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0.
-  SIGENERGY2MQTT_MODBUS_RETRIES:
-    help: The maximum number of times to retry a Modbus operation if it fails. The default is 3.
-  SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
-    help: Disable Modbus chunking when reading registers and read each register individually.
-  SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
-    help: 'Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
-  SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
-    help: The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 1.
-  SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
-    help: The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.
-  SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
-    help: The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.
-  SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
-    help: The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: Enable interrogation of a third-party device for production data.
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: The name of the module which will be used to obtain third-party device production data.
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: The IP address or hostname of the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: The username to authenticate to the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: The password to authenticate to the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: The sensor class to hold the production data obtained from the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: The MQTT topic to which to subscribe to obtain the production data for the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
-  SIGENERGY2MQTT_PVOUTPUT_ENABLED:
-    help: Enable status updates to PVOutput.
+  SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
+    help: Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.
+  SIGENERGY2MQTT_NO_METRICS:
+    help: Do not publish any sigenergy2mqtt metrics.
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: The API Key for PVOutput
-  SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
-    help: The PVOutput System ID
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
     help: Enable to send consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.
+  SIGENERGY2MQTT_PVOUTPUT_ENABLED:
+    help: Enable status updates to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Enable to send export data to PVOutput.
-  SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
-    help: Enable to send import data to PVOutput.
-  SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
-    help: The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 56 and 59. If you specify -1, daily uploads will be sent at the same frequency as status updates.
-  SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.
-  SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
-    help: "The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'."
-  SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
-  SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
-  SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
     help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
     help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v11 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
     help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v12 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
+    help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
+    help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
+    help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
+  SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
+    help: Enable to send import data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: 'Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
+    help: The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 56 and 59. If you specify -1, daily uploads will be sent at the same frequency as status updates.
+  SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
+    help: The PVOutput System ID
+  SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
+    help: An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
+    help: "The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'."
+  SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
+    help: The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.
+  SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
+    help: The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
+    help: The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
+    help: The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
+    help: The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
+  SIGENERGY2MQTT_SMARTPORT_ENABLED:
+    help: Enable interrogation of a third-party device for production data.
+  SIGENERGY2MQTT_SMARTPORT_HOST:
+    help: The IP address or hostname of the third-party device.
+  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
+    help: The name of the module which will be used to obtain third-party device production data.
+  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
+    help: The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
+  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
+    help: The MQTT topic to which to subscribe to obtain the production data for the third-party device.
+  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
+    help: The password to authenticate to the third-party device.
+  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
+    help: The sensor class to hold the production data obtained from the third-party device.
+  SIGENERGY2MQTT_SMARTPORT_USERNAME:
+    help: The username to authenticate to the third-party device.
   clean:
     help: Publish empty discovery to delete existing devices, then exits immediately.
-  validate_only:
-    help: Validates the configuration, then exits immediately.
+  discovery_only:
+    help: Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.
   show_version:
     help: Shows the version number, then exits immediately.
+  validate_only:
+    help: Validates the configuration, then exits immediately.

@@ -95,14 +95,14 @@ def clear_ids():
 
 
 def test_translator_basic():
-    i18n.set_translations("en", {"AlarmSensor": {"no_alarm": "No Alarm"}})
+    i18n.set_translations("en", {"class": {"AlarmSensor": {"no_alarm": "No Alarm"}}})
     assert i18n._t("NonExistent.key", "Default") == "Default"
     assert i18n._t("AlarmSensor.no_alarm") == "No Alarm"
 
 
 def test_translator_fallback():
-    i18n.set_translations("fr", {"Inverter": {"name": "Onduleur"}, "AlarmSensor": {"no_alarm": "Pas d'alarme"}})
-    i18n.set_translations("en", {"Alarm1Sensor": {"alarm": {"1": "1002: Low insulation resistance"}}})
+    i18n.set_translations("fr", {"class": {"Inverter": {"name": "Onduleur"}, "AlarmSensor": {"no_alarm": "Pas d'alarme"}}})
+    i18n.set_translations("en", {"class": {"Alarm1Sensor": {"alarm": {"1": "1002: Low insulation resistance"}}}})
     i18n.load("fr")
     # Exists in fr mock
     assert i18n._t("Inverter.name") == "Onduleur"
@@ -111,7 +111,7 @@ def test_translator_fallback():
 
 
 def test_sensor_name_translation():
-    i18n.set_translations("fr", {"InverterModel": {"name": "Modèle"}})
+    i18n.set_translations("fr", {"class": {"InverterModel": {"name": "Modèle"}}})
     i18n.load("fr")
     # InverterModel.name is translated in fr mock
     with patch("sigenergy2mqtt.config.Config.home_assistant.unique_id_prefix", "sigenergy"), patch("sigenergy2mqtt.config.Config.home_assistant.entity_id_prefix", "sigenergy"):
@@ -124,7 +124,7 @@ def test_sensor_name_translation():
 
 
 def test_device_name_translation():
-    i18n.set_translations("fr", {"Inverter": {"name": "Onduleur"}})
+    i18n.set_translations("fr", {"class": {"Inverter": {"name": "Onduleur"}}})
     i18n.load("fr")
     with patch("sigenergy2mqtt.config.Config.home_assistant.device_name_prefix", ""), patch("sigenergy2mqtt.config.Config.modbus", []):
 
@@ -137,7 +137,7 @@ def test_device_name_translation():
 
 @pytest.mark.asyncio
 async def test_alarm_bit_translation():
-    i18n.set_translations("fr", {"Alarm1Sensor": {"alarm": {"0": "1001: Incompatibilité de version logicielle"}}})
+    i18n.set_translations("fr", {"class": {"Alarm1Sensor": {"alarm": {"0": "1001: Incompatibilité de version logicielle"}}}})
     i18n.load("fr")
 
     # Alarm1Sensor.alarm.0 is translated in fr mock
@@ -152,7 +152,7 @@ async def test_alarm_bit_translation():
 
 
 def test_options_translation():
-    i18n.set_translations("fr", {"RunningStateSensor": {"options": {"0": "Veille"}}})
+    i18n.set_translations("fr", {"class": {"RunningStateSensor": {"options": {"0": "Veille"}}}})
     i18n.load("fr")
 
     class RunningStateSensor(MockSensor):
@@ -166,7 +166,7 @@ def test_options_translation():
 
 
 def test_attributes_translation():
-    i18n.set_translations("fr", {"ReadOnlySensor": {"attributes": {"source": "Registre Modbus {address}"}}})
+    i18n.set_translations("fr", {"class": {"ReadOnlySensor": {"attributes": {"source": "Registre Modbus {address}"}}}})
     i18n.load("fr")
     sensor = MockReadOnlySensor()
     attrs = sensor.get_attributes()
