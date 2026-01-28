@@ -652,6 +652,8 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  HybridInverter:
+    name: 하이브리드 인버터
   IndependentPhasePowerControl:
     name: 독립 상 전력 제어
     attributes:
@@ -979,6 +981,8 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  PVInverter:
+    name: PV 인버터
   PVMaxPowerLimit:
     name: PV 최대 전력 제한
     attributes:

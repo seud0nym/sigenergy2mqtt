@@ -652,6 +652,8 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+  HybridInverter:
+    name: Inverter ibrido
   IndependentPhasePowerControl:
     name: Controllo Potenza Fase Indipendente
     attributes:
@@ -979,6 +981,8 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+  PVInverter:
+    name: Inverter fotovoltaico
   PVMaxPowerLimit:
     name: Limite Potenza Max PV
     attributes:

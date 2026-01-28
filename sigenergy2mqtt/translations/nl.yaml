@@ -652,6 +652,8 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  HybridInverter:
+    name: Hybride omvormer
   IndependentPhasePowerControl:
     name: Onafhankelijke Fasevermogensregeling
     attributes:
@@ -979,6 +981,8 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  PVInverter:
+    name: PV-omvormer
   PVMaxPowerLimit:
     name: PV Max Vermogenslimiet
     attributes:

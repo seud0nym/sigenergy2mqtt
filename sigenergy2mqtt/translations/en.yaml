@@ -391,6 +391,8 @@ class:
       '0': On Grid
       '1': Off Grid (auto)
       '2': Off Grid (manual)
+  HybridInverter:
+    name: Hybrid Inverter
   IndependentPhasePowerControl:
     name: Independent Phase Power Control
     attributes:
@@ -563,6 +565,8 @@ class:
       comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
   PVCurrentSensor:
     name: Current
+  PVInverter:
+    name: PV Inverter
   PVMaxPowerLimit:
     name: PV Max Power Limit
     attributes:

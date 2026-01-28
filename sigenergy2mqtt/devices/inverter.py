@@ -30,7 +30,7 @@ class Inverter(ModbusDevice):
         serial_number: ro.InverterSerialNumber,
         pack_bcu_count: ro.PACKBCUCount,
     ):
-        assert 2 <= strings <= 36, f"Invalid PV String Count ({strings} - must be between 2 and 16)"
+        assert 2 <= strings <= 36, f"Invalid PV String Count ({strings} - must be between 2 and 36)"
         match = re.match(r"^[^\d]*", model_id)
         words = (match.group(0).rstrip() if match else model_id).replace("EC", "Energy Controller", 1).split()
         words.insert(1, serial)

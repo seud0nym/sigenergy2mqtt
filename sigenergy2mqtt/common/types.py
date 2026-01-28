@@ -1,5 +1,7 @@
 import re
 
+from sigenergy2mqtt.i18n import _t
+
 
 class DeviceType:
     @classmethod
@@ -36,6 +38,9 @@ class HybridInverter(DeviceType):
     Sigen PV (50, 60, 80, 99.9, 100, 110) M1-HYB series
     """
 
+    def __str__(self) -> str:
+        return _t(f"{self.__class__.__name__}.name", "Hybrid Inverter")
+
 
 class PVInverter(DeviceType):
     """Applicable Models:
@@ -44,3 +49,6 @@ class PVInverter(DeviceType):
     Sigen PV (50, 60, 80, 99.9, 100, 110, 125)M1 series
     Sigen PV (500)H1 series
     """
+
+    def __str__(self) -> str:
+        return _t(f"{self.__class__.__name__}.name", "PV Inverter")

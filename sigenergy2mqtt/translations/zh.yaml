@@ -652,6 +652,8 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  HybridInverter:
+    name: 混合逆变器
   IndependentPhasePowerControl:
     name: 独立相功率控制
     attributes:
@@ -979,6 +981,8 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  PVInverter:
+    name: 光伏逆变器
   PVMaxPowerLimit:
     name: PV最大功率限制
     attributes:
