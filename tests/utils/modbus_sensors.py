@@ -4,15 +4,16 @@ import os
 import sys
 from typing import cast
 
+from sigenergy2mqtt.common import HybridInverter, PVInverter
 from sigenergy2mqtt.devices import Device
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from sigenergy2mqtt.common import DeviceType, Protocol, ProtocolApplies
+from sigenergy2mqtt.common import Protocol, ProtocolApplies
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, Sensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 
@@ -43,7 +44,7 @@ async def get_sensor_instances(
 
     plant = PowerPlant(
         plant_index=plant_index,
-        device_type=DeviceType.create("SigenStor EC 12.0 TP"),
+        device_type=(dt := HybridInverter(), setattr(dt, "_independent_phase_power_control", True), setattr(dt, "_grid_code_interface", True), dt)[3],
         protocol_version=protocol_version,
         output_type=2,
         power_phases=3,
@@ -72,7 +73,7 @@ async def get_sensor_instances(
         plant_index=plant_index,
         device_address=hybrid_inverter_device_address,
         protocol_version=protocol_version,
-        device_type=DeviceType.create(cast(str, hybrid_model.latest_raw_state)),
+        device_type=(dt := HybridInverter(), setattr(dt, "_independent_phase_power_control", True), setattr(dt, "_grid_code_interface", True), dt)[3],
         model_id=cast(str, hybrid_model.latest_raw_state),
         serial=cast(str, hybrid_serial.latest_raw_state),
         firmware=cast(str, hybrid_firmware.latest_raw_state),
@@ -102,7 +103,7 @@ async def get_sensor_instances(
         plant_index=plant_index,
         device_address=pv_inverter_device_address,
         protocol_version=protocol_version,
-        device_type=DeviceType.create(cast(str, pv_model.latest_raw_state)),
+        device_type=(dt := PVInverter(), setattr(dt, "_independent_phase_power_control", True), setattr(dt, "_grid_code_interface", True), dt)[3],
         model_id=cast(str, pv_model.latest_raw_state),
         serial=cast(str, pv_serial.latest_raw_state),
         firmware=cast(str, pv_firmware.latest_raw_state),
@@ -123,8 +124,8 @@ async def get_sensor_instances(
     rated_current = ACChargerRatedCurrent(plant_index, ac_charger_device_address)
     ac_charger = ACCharger(plant_index, ac_charger_device_address, protocol_version, 16.0, 32.0, input_breaker, rated_current)
 
-    classes = {}
-    registers = {}
+    classes: dict[str, int] = {}
+    registers: dict[int, Sensor] = {}
     sensors: dict[str, Sensor] = {}
 
     def find_concrete_classes(superclass):
@@ -139,7 +140,7 @@ async def get_sensor_instances(
         if hasattr(s, "address"):
             if (
                 s.address in registers
-                and s.device_address == registers[s.address].device_address
+                and s.device_address == getattr(registers[s.address], "device_address", None)
                 and s.__class__.__name__ != registers[s.address].__class__.__name__
                 and not (isinstance(s, AlarmSensor) and isinstance(registers[s.address], AlarmCombinedSensor))
                 and not (isinstance(s, AlarmCombinedSensor) and isinstance(registers[s.address], AlarmSensor))
@@ -173,9 +174,9 @@ async def get_sensor_instances(
                     add_sensor_instance(sensor)
 
     if concrete_sensor_check:
-        previous = None
+        previous: tuple[int, int] | None = None
         for address in sorted(registers.keys()):
-            sensor = registers[address]
+            sensor = cast(ModbusSensorMixin, registers[address])
             count = sensor.count
             if previous:
                 last_address, last_count = previous

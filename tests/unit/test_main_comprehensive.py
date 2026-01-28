@@ -1,16 +1,13 @@
-import asyncio
 import logging
 import signal
-import types
 from pathlib import Path
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.sensors.const import InputType
 
 
 @pytest.fixture
@@ -402,7 +399,7 @@ async def test_make_plant_and_inverter_edge_cases(clean_config, monkeypatch):
         if name == "InverterSerialNumber":
             return sensor, "SN_NEW"
         if name == "InverterModel":
-            return sensor, "MOD_HYBRID"
+            return sensor, "HybridInverter"  # Return something that matches HybridInverter
         if name == "InverterFirmwareVersion":
             return sensor, "FW_1"
         if name == "PVStringCount":
@@ -421,20 +418,14 @@ async def test_make_plant_and_inverter_edge_cases(clean_config, monkeypatch):
 
     monkeypatch.setattr(main_mod, "get_state", fake_get_state)
 
-    # Mock DeviceType to return Hybrid with Grid Code
-    mock_dt_hybrid = MagicMock(spec=HybridInverter)
-    mock_dt_hybrid.has_grid_code_interface = True
-    monkeypatch.setattr(DeviceType, "create", lambda x: mock_dt_hybrid)
-
-    # Mock Protocol Probing to fail (trigger default V1.8)
-    # read_input_registers returns a result object (rr)
-    rr_error = MagicMock()
-    rr_error.isError.return_value = True
-    mock_client.read_input_registers.return_value = rr_error
-
     # Run
     monkeypatch.setattr(main_mod, "PowerPlant", MagicMock())
     monkeypatch.setattr(main_mod, "Inverter", MagicMock())
+
+    # Mock read_holding_registers to return success for feature probing
+    rr_success = MagicMock()
+    rr_success.isError.return_value = False
+    mock_client.read_holding_registers.return_value = rr_success
 
     # Ensure Config.consumption has a name attribute via Enum
     # Use real Enum member instead of Mock to avoid issues

@@ -1,30 +1,13 @@
-import re
-
 from sigenergy2mqtt.i18n import _t
 
 
 class DeviceType:
-    @classmethod
-    def create(cls, model_id: str | None):
-        if model_id is None:
-            raise ValueError("Model ID cannot be None")
-        device_type = HybridInverter() if re.search(r"EC|Hybrid|PG|PV.*M1-HY", model_id) else PVInverter()
-        device_type._model_id = model_id
-        return device_type
-
     def __init__(self, **kwargs):
-        self._model_id: str
         super().__init__(**kwargs)
-
-    @property
-    def has_independent_phase_power_control_interface(self) -> bool:
         """Independent phase power control interface (registers 40008~40025, 40030), only SigenStor, Sigen Hybrid, Sigen PV M1-HYB series support"""
-        return True if re.search(r"SigenStor|Hybrid|PV.*M1-HYB", self._model_id) else False
-
-    @property
-    def has_grid_code_interface(self) -> bool:
+        self.has_independent_phase_power_control_interface: bool = False
         """Grid code interface (registers 40051~40068), only SigenStor, Sigen Hybrid support"""
-        return True if re.search(r"SigenStor|Hybrid", self._model_id) else False
+        self.has_grid_code_interface: bool = False
 
 
 class HybridInverter(DeviceType):

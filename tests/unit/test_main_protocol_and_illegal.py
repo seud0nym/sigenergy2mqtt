@@ -176,7 +176,6 @@ async def test_make_plant_and_inverter_protocol_probe_sets_default(monkeypatch):
 
     monkeypatch.setattr(main_mod, "PowerPlant", DummyPlant)
     monkeypatch.setattr(main_mod, "Inverter", DummyInverter)
-    monkeypatch.setattr(main_mod.DeviceType, "create", lambda mdl: types.SimpleNamespace(has_grid_code_interface=False))
 
     inv, plant = await main_mod.make_plant_and_inverter(0, fake_modbus, 1, None)
 

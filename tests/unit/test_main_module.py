@@ -1,6 +1,6 @@
-import asyncio
 import logging
 import types
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -125,8 +125,6 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
             self.unique_id = "inv-uid"
 
     monkeypatch.setattr(main_mod, "Inverter", DummyInverter)
-    # Ensure DeviceType.create returns a HybridInverter instance
-    monkeypatch.setattr(main_mod.DeviceType, "create", lambda mdl: main_mod.HybridInverter())
 
     # Avoid constructing real sensor classes which access Config.modbus; provide dummy sensor classes
     class DummySensorFactory:
@@ -143,10 +141,12 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
         seq = [
             (sensor, "SN123"),
             (sensor, "ModelX"),
+            (sensor, 5000.0),  # PlantRatedChargingPower
+            (sensor, 5000.0),  # PlantRatedDischargingPower
             (sensor, "FW1"),
             (sensor, 2.0),
             (sensor, 0),
-            (sensor, (None, 0)),
+            (sensor, 0),  # PACKBCUCount
         ]
         i = call_index["i"]
         call_index["i"] += 1
@@ -154,7 +154,13 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
 
     monkeypatch.setattr(main_mod, "get_state", fake_get_state_sequence)
 
+    # Mock read_holding_registers to return success for feature probing
+    mock_client = MagicMock()
+    rr_success = MagicMock()
+    rr_success.isError.return_value = False
+    mock_client.read_holding_registers.return_value = rr_success
+
     plant = types.SimpleNamespace(protocol_version=main_mod.Protocol.V2_8, unique_id="plant-uid")
-    inv, returned_plant = await main_mod.make_plant_and_inverter(0, None, 1, plant)
+    inv, returned_plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, plant)
     assert isinstance(inv, DummyInverter)
     assert returned_plant is plant
