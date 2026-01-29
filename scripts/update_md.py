@@ -433,7 +433,7 @@ async def compare_sensor_instances():
             f.write("| ")
             for sensor_name in sensor_names:
                 sensor_instance = sensor_instances[sensor_name]
-                if isinstance(sensor_instance, TypedSensorMixin):
+                if isinstance(sensor_instance, TypedSensorMixin) and not isinstance(sensor_instance, AlarmCombinedSensor):
                     # Compare data type
                     typqxq_type = getattr(typqxq_def, "data_type")
                     sensor_type = sensor_instance.data_type
