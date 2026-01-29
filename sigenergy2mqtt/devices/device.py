@@ -202,26 +202,32 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             self._add_to_all_sensors(sensor)
 
     def _create_sensor_scan_groups(self) -> dict[str, list[ReadableSensorMixin]]:
-        combined_sensors: dict[str, ReadableSensorMixin] = self.read_sensors.copy()
-        combined_groups: dict[str, list[ReadableSensorMixin]] = self.group_sensors.copy()
-        named_group_sensors: dict[int, ModbusSensorMixin] = {s.address: s for sublist in self.group_sensors.values() for s in sublist if isinstance(s, ModbusSensorMixin)}
+        all_child_sensors = self.get_all_sensors(search_children=True)
+        combined_sensors: dict[str, ReadableSensorMixin] = {uid: s for uid, s in all_child_sensors.items() if isinstance(s, ReadableSensorMixin)}
+
+        # Recursively collect group sensors
+        combined_groups: dict[str, list[ReadableSensorMixin]] = {}
+
+        def collect_groups(device: Device):
+            for group, sensor_list in device.group_sensors.items():
+                if group not in combined_groups:
+                    combined_groups[group] = []
+                combined_groups[group].extend(sensor_list)
+            for child in device.children:
+                collect_groups(child)
+
+        collect_groups(self)
+
+        named_group_sensors: dict[int, ModbusSensorMixin] = {s.address: s for sublist in combined_groups.values() for s in sublist if isinstance(s, ModbusSensorMixin)}
         first_address: int = -1
         next_address: int = -1
         device_address: int = -1
         group_name: str | None = None
 
-        for device in self.children:
-            combined_sensors.update(device.read_sensors)
-            for group, sensor_list in device.group_sensors.items():
-                if group not in combined_groups:
-                    combined_groups[group] = []
-                combined_groups[group].extend(sensor_list)
-                named_group_sensors.update({s.address: s for s in sensor_list if isinstance(s, ModbusSensorMixin)})
-
         # Create Modbus sensor scan groups for sensors that are not already in a named group
         # Grouped by device_address and contiguous addresses only (scan_interval handled per-sensor in publish_updates)
         for sensor in sorted(
-            [s for s in combined_sensors.values() if isinstance(s, (AlarmCombinedSensor, ModbusSensorMixin)) and s not in [gs for lst in combined_groups.values() for gs in lst]],
+            [s for s in combined_sensors.values() if isinstance(s, ModbusSensorMixin) and s not in [gs for lst in combined_groups.values() for gs in lst]],
             key=lambda s: (s.device_address, s.address),
         ):
             if (  # Conditions for creating a new sensor scan group
@@ -252,12 +258,12 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             device_address = sensor.device_address
 
         # Post-process groups to remove trailing ReservedSensors and empty groups
-        for group_name in combined_groups.keys():
-            group = combined_groups[group_name]
+        for g_name in list(combined_groups.keys()):
+            group = combined_groups[g_name]
             while group and isinstance(group[-1], ReservedSensor):
                 group.pop()
             if not group:
-                del combined_groups[group_name]
+                del combined_groups[g_name]
 
         # Create a single scan group for remaining non-Modbus readable sensors
         non_modbus_sensors = [

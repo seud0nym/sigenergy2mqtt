@@ -879,8 +879,10 @@ class TimestampSensor(ReadOnlySensor):
         value = cast(float, await super().get_state(raw=raw, republish=republish, **kwargs))
         if raw:
             return value
-        elif value is None or value == 0:
+        elif value is None:
             return None
+        elif value == 0:
+            return "--"
         else:
             dt_object = datetime.datetime.fromtimestamp(value, datetime.timezone.utc)
             return dt_object.isoformat()
@@ -888,6 +890,8 @@ class TimestampSensor(ReadOnlySensor):
     def state2raw(self, state) -> float | int | str:
         if isinstance(state, (float, int)):
             return int(state)
+        elif state == "--":
+            return 0
         else:
             return int(datetime.datetime.fromisoformat(state).timestamp())
 
@@ -1657,8 +1661,23 @@ class Alarm5Sensor(AlarmSensor):
                 return None
 
 
-class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverter):
+class AlarmCombinedSensor(ReadableSensorMixin, ModbusSensorMixin, Sensor, HybridInverter, PVInverter):
     def __init__(self, name: str, unique_id: str, object_id: str, *alarms: AlarmSensor, **kwargs):
+        device_addresses = set([a.device_address for a in alarms])
+        first_address = min([a.address for a in alarms])
+        last_address = max([a.address + a.count - 1 for a in alarms])
+        count = sum([a.count for a in alarms])
+        assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
+        assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a.address for a in alarms]})"
+
+        self.alarms = list(alarms)
+        plant_index: int = kwargs.pop("plant_index", self.alarms[0].plant_index)
+        kwargs.pop("input_type", None)
+        kwargs.pop("device_address", None)
+        kwargs.pop("address", None)
+        kwargs.pop("count", None)
+        kwargs.pop("unique_id_override", None)
+
         super().__init__(
             name=name,
             unique_id=unique_id,
@@ -1671,21 +1690,16 @@ class AlarmCombinedSensor(ReadableSensorMixin, Sensor, HybridInverter, PVInverte
             gain=None,
             precision=None,
             protocol_version=Protocol.N_A,
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=list(device_addresses)[0],
+            data_type=ModbusDataType.UINT16,
+            address=first_address,
+            count=count,
+            unique_id_override=unique_id,
             **kwargs,
         )
-        device_addresses = set([a.device_address for a in alarms])
-        first_address = min([a.address for a in alarms])
-        last_address = max([a.address + a.count - 1 for a in alarms])
-        count = sum([a.count for a in alarms])
-        assert len(device_addresses) == 1, f"{self.__class__.__name__} Combined alarms must have the same device address ({device_addresses})"
-        assert (last_address - first_address + 1) == count, f"{self.__class__.__name__} Combined alarms must have contiguous address ranges ({[a.address for a in alarms]})"
         self["enabled_by_default"] = True
-        self.alarms = list(alarms)
-        self.address = min([a.address for a in alarms])
-        self.device_address = device_addresses.pop()
-        self.count = count
-        self.input_type = InputType.INPUT
-        self.data_type = ModbusDataType.UINT16
 
     @property
     def protocol_version(self) -> Protocol:

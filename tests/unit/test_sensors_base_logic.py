@@ -45,7 +45,9 @@ class TestResettableAccumulation:
             source.latest_interval = 100.0
 
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigenergy_acc", "sigenergy_acc", source, ModbusClient.DATATYPE.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
+                sensor = EnergyLifetimeAccumulationSensor(
+                    "Accumulated", "sigenergy_acc", "sigenergy_acc", source, ModbusClient.DATATYPE.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2
+                )
                 sensor._current_total = 100.0
 
                 # Negative power values
@@ -82,6 +84,7 @@ class TestAlarmSensors:
                     self.address = addr
                     self.count = 1
                     self.scan_interval = 10
+                    self.plant_index = 0
                     self._publishable = True
                     self._states = []
 

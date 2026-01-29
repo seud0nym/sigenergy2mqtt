@@ -723,9 +723,10 @@ class TestRemainingSensorsWave4:
             assert "T" in state  # ISO format
 
             s.set_latest_state(0)
-            assert await s.get_state(modbus_client=modbus_client) is None
+            assert await s.get_state(modbus_client=modbus_client) == "--"
 
             assert s.state2raw(now) == int(now)
+            assert s.state2raw("--") == 0
             with pytest.raises(ValueError):
                 s.state2raw("invalid")
 
@@ -1015,6 +1016,7 @@ class TestWave7Booster:
             a_mock.count = 1
             a_mock.device_address = 1
             a_mock.protocol_version = Protocol.V2_4
+            a_mock.plant_index = 0
 
             ac = AlarmCombinedSensor("AC", "sigenergy_ac_u", "sigenergy_ac", a_mock)
             # Create a very long alarm string
