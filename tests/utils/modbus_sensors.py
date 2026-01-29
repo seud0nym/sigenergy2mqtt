@@ -42,9 +42,16 @@ async def get_sensor_instances(
 
     Config.home_assistant.enabled = hass
 
+    hi = HybridInverter()
+    hi.has_grid_code_interface = True
+    hi.has_independent_phase_power_control_interface = True
+    pv = PVInverter()
+    pv.has_grid_code_interface = True
+    pv.has_independent_phase_power_control_interface = True
+
     plant = PowerPlant(
         plant_index=plant_index,
-        device_type=(dt := HybridInverter(), setattr(dt, "_independent_phase_power_control", True), setattr(dt, "_grid_code_interface", True), dt)[3],
+        device_type=hi,
         protocol_version=protocol_version,
         output_type=2,
         power_phases=3,
@@ -73,7 +80,7 @@ async def get_sensor_instances(
         plant_index=plant_index,
         device_address=hybrid_inverter_device_address,
         protocol_version=protocol_version,
-        device_type=(dt := HybridInverter(), setattr(dt, "_independent_phase_power_control", True), setattr(dt, "_grid_code_interface", True), dt)[3],
+        device_type=hi,
         model_id=cast(str, hybrid_model.latest_raw_state),
         serial=cast(str, hybrid_serial.latest_raw_state),
         firmware=cast(str, hybrid_firmware.latest_raw_state),
@@ -103,7 +110,7 @@ async def get_sensor_instances(
         plant_index=plant_index,
         device_address=pv_inverter_device_address,
         protocol_version=protocol_version,
-        device_type=(dt := PVInverter(), setattr(dt, "_independent_phase_power_control", True), setattr(dt, "_grid_code_interface", True), dt)[3],
+        device_type=pv,
         model_id=cast(str, pv_model.latest_raw_state),
         serial=cast(str, pv_serial.latest_raw_state),
         firmware=cast(str, pv_firmware.latest_raw_state),
