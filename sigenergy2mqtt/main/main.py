@@ -9,14 +9,14 @@ from pymodbus.pdu import ModbusPDU
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
-from sigenergy2mqtt.influxdb import get_influx_services
+from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
-from sigenergy2mqtt.sensors.base import ModbusSensor, ModbusSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.const import InputType
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
@@ -93,6 +93,9 @@ async def async_main() -> None:
         svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
     if Config.pvoutput.enabled and not Config.clean:
         for service in get_pvoutput_services(configs):
+            svc_thread_cfg.add_device(-1, service)
+    if Config.influxdb.enabled and not Config.clean:
+        for service in get_influxdb_services(configs):
             svc_thread_cfg.add_device(-1, service)
     if svc_thread_cfg.has_devices:
         configs.insert(0, svc_thread_cfg)

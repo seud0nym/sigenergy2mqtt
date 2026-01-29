@@ -1533,8 +1533,32 @@ cli:
     help: 'O prefixo a ser usado para IDs exclusivos do Home Assistant. Exemplo: Um prefixo ''prefix'' anexará ''prefix_'' aos IDs exclusivos (padrão: sigen). Depois de definir isso, você NUNCA deve alterá-lo, pois isso quebrará as entidades existentes no Home Assistant.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Usar estrutura de tópicos simplificada'
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: Nome do bucket do InfluxDB v2 (o padrão é --influx-database se não for definido)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'Banco de dados InfluxDB para gravar métricas (padrão: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Habilitar a gravação de métricas no InfluxDB.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: Lista de identificadores de sensores a serem excluídos (separados por espaços)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'Nome do host ou endereço IP do InfluxDB (padrão: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: Lista de identificadores de sensores a serem incluídos (separados por espaços)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'Nível de log do subsistema InfluxDB. Os valores válidos são: DEBUG, INFO, WARNING, ERROR ou CRITICAL. O padrão é WARNING (avisos, erros e falhas críticas)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: Nome ou ID da organização InfluxDB
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: Senha do InfluxDB
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'Porta do InfluxDB (padrão: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: Token de autenticação do InfluxDB v2 (prefere as APIs v2 se fornecido)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: Nome de usuário do InfluxDB
   SIGENERGY2MQTT_LANGUAGE:
-    help: Definir o idioma para traduções.
+    help: 'Define o idioma a ser usado para as traduções. O padrão é determinado pelo sistema (por exemplo, a variável de ambiente LANG) ou Inglês se nenhuma alternativa for encontrada.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Definir o nível de log. Valores válidos: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Padrão: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

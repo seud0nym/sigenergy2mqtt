@@ -1533,8 +1533,32 @@ cli:
     help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: InfluxDB v2 バケット名（設定されていない場合は --influx-database がデフォルトとなります）
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'メトリクスを書き込む InfluxDB データベース（デフォルト: sigenergy）'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: InfluxDB へのメトリクスの書き込みを有効にします。
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: 除外するセンサー識別子のリスト（スペース区切り）
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'InfluxDB ホスト名または IP アドレス（デフォルト: 127.0.0.1）'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: 含めるセンサー識別子のリスト（スペース区切り）
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは WARNING（警告、エラー、致命的な障害）です。'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: InfluxDB 組織名または ID
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: InfluxDB パスワード
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'InfluxDB ポート（デフォルト: 8086）'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2 認証トークン（提供されている場合は v2 API を優先します）
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: InfluxDB ユーザー名
   SIGENERGY2MQTT_LANGUAGE:
-    help: 翻訳用言語を設定。
+    help: '翻訳に使用する言語を設定します。デフォルトはシステム（例：LANG 環境変数）から決定されますが、代替が見つからない場合は英語になります。'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'ログレベルを設定。有効な値: DEBUG, INFO, WARNING, ERROR, CRITICAL。デフォルト: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

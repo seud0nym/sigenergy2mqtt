@@ -1533,8 +1533,32 @@ cli:
     help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지 마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: InfluxDB v2 버킷 이름 (설정하지 않으면 --influx-database가 기본값입니다)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: '메트릭을 기록할 InfluxDB 데이터베이스 (기본값: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: InfluxDB로 메트릭 기록 활성화.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: 제외할 센서 식별자 목록 (공백으로 구분)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'InfluxDB 호스트 이름 또는 IP 주소 (기본값: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: 포함할 센서 식별자 목록 (공백으로 구분)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'InfluxDB 하위 시스템 로그 레벨. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 WARNING(경고, 오류 및 치명적 오류)입니다.'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: InfluxDB 조직 이름 또는 ID
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: InfluxDB 비밀번호
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'InfluxDB 포트 (기본값: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2 인증 토큰 (제공된 경우 v2 API를 선호함)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: InfluxDB 사용자 이름
   SIGENERGY2MQTT_LANGUAGE:
-    help: 번역 언어 설정.
+    help: '번역에 사용할 언어를 설정합니다. 기본값은 시스템(예: LANG 환경 변수)에서 결정되며, 대안이 없는 경우 영어가 사용됩니다.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: '로그 레벨 설정. 유효한 값: DEBUG, INFO, WARNING, ERROR, CRITICAL. 기본값: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

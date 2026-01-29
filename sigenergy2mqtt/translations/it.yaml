@@ -1533,8 +1533,32 @@ cli:
     help: "Il prefisso per gli ID unici di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID unici (predefinito: sigen). Una volta impostato, NON cambiarlo MAI, romperebbe le entità esistenti in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Abilita la struttura dei topic semplificata (sigenergy2mqtt/object_id/state) invece della struttura completa di Home Assistant (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: Nome del bucket InfluxDB v2 (predefinito --influx-database se non impostato)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'Database InfluxDB in cui scrivere le metriche (predefinito: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Abilita l'invio delle metriche a InfluxDB.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: Elenco degli identificatori dei sensori da escludere (separati da spazi)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'Hostname o indirizzo IP di InfluxDB (predefinito: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: Elenco degli identificatori dei sensori da includere (separati da spazi)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'Livello di log del sottosistema InfluxDB. I valori validi sono: DEBUG, INFO, WARNING, ERROR o CRITICAL. Il valore predefinito è WARNING (avvisi, errori e guasti critici)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: Nome o ID dell'organizzazione InfluxDB
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: Password di InfluxDB
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'Porta InfluxDB (predefinita: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: Token di autenticazione InfluxDB v2 (preferisce le API v2 se fornito)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: Nome utente InfluxDB
   SIGENERGY2MQTT_LANGUAGE:
-    help: Imposta la lingua per le traduzioni. Predefinito determinato dal sistema (es. variabile d'ambiente LANG) o inglese se non viene trovata alternativa.
+    help: 'Imposta la lingua da utilizzare per le traduzioni. Il valore predefinito viene determinato dal sistema (ad es. variabile d''ambiente LANG) o l''inglese se non viene trovata alcuna alternativa.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Imposta il livello di log. Valori validi: DEBUG, INFO, WARNING, ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

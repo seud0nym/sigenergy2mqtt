@@ -1533,8 +1533,32 @@ cli:
     help: "Le préfixe pour les IDs uniques Home Assistant. Exemple: Un préfixe 'prefix' ajoutera 'prefix_' aux IDs uniques (par défaut: sigen). Une fois défini, ne JAMAIS le changer, cela casserait les entités existantes dans Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Activer la structure de topic simplifiée (sigenergy2mqtt/object_id/state) au lieu de la structure complète Home Assistant (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: Nom du bucket InfluxDB v2 (par défaut --influx-database si non défini)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'Base de données InfluxDB pour l''écriture des métriques (par défaut : sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Activer l'écriture des métriques dans InfluxDB.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: Liste des identifiants de capteurs à exclure (séparés par un espace)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'Nom d''hôte ou adresse IP d''InfluxDB (par défaut : 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: Liste des identifiants de capteurs à inclure (séparés par un espace)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'Niveau de log du sous-système InfluxDB. Les valeurs valides sont : DEBUG, INFO, WARNING, ERROR ou CRITICAL. La valeur par défaut est WARNING (avertissements, erreurs et échecs critiques)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: Nom ou ID de l'organisation InfluxDB
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: Mot de passe InfluxDB
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'Port InfluxDB (par défaut : 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: Jeton d'authentification InfluxDB v2 (privilégie les API v2 s'il est fourni)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: Nom d'utilisateur InfluxDB
   SIGENERGY2MQTT_LANGUAGE:
-    help: "Définir la langue pour les traductions. Par défaut déterminé par le système (ex: variable d'environnement LANG) ou anglais si aucune alternative n'est trouvée."
+    help: 'Définir la langue à utiliser pour les traductions. Par défaut, elle est déterminée par le système (par exemple, la variable d''environnement LANG) ou l''anglais si aucune alternative n''est trouvée.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Définir le niveau de journalisation. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

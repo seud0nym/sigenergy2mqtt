@@ -1533,8 +1533,32 @@ cli:
     help: "Das Präfix für Home Assistant Unique-IDs. Beispiel: Ein Präfix 'prefix' stellt 'prefix_' den Unique-IDs voran (Standard: sigen). Einmal festgelegt, sollte dies NIE geändert werden, da es bestehende Entitäten in Home Assistant beschädigt."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Vereinfachte Topic-Struktur aktivieren (sigenergy2mqtt/object_id/state) anstelle der vollständigen Home Assistant Topic-Struktur (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: InfluxDB v2-Bucket-Name (Standardwert ist --influx-database, falls nicht festgelegt)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'InfluxDB-Datenbank zum Schreiben von Metriken (Standard: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Schreiben von Metriken in InfluxDB aktivieren.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: Liste der auszuschließenden Sensor-IDs (durch Leerzeichen getrennt)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'InfluxDB-Hostname oder IP-Adresse (Standard: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: Liste der einzuschließenden Sensor-IDs (durch Leerzeichen getrennt)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'InfluxDB-Subsystem-Protokollebene. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: InfluxDB-Organisationsname oder -ID
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: InfluxDB-Passwort
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'InfluxDB-Port (Standard: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2-Authentifizierungstoken (bevorzugt v2-APIs, falls angegeben)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: InfluxDB-Benutzername
   SIGENERGY2MQTT_LANGUAGE:
-    help: "Die zu verwendende Sprache für Übersetzungen festlegen. Standard wird vom System ermittelt (z.B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird."
+    help: 'Legen Sie die Sprache für Übersetzungen fest. Der Standardwert wird vom System ermittelt (z. B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

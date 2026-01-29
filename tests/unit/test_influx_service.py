@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import ANY, MagicMock, patch
 
-from influxdb.influx_service import InfluxService
+import pytest
+
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
 class DummyMqtt:
@@ -79,7 +80,7 @@ async def test_influx_org_propagation():
     Config.influxdb.org = "myorg"
     Config.influxdb.password = "token"
 
-    with patch("sigenergy2mqtt.influxdb.service.InfluxDBClient") as mock_client:
+    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient") as mock_client:
         mock_write_api = MagicMock()
         mock_client.return_value.write_api.return_value = mock_write_api
 
@@ -95,7 +96,7 @@ async def test_influx_org_propagation():
 
     # Test v2 HTTP path
     Config.influxdb.org = "http-org"
-    with patch("sigenergy2mqtt.influxdb.service.InfluxDBClient", side_effect=Exception("no client")):
+    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")):
         with patch("requests.Session.post") as mock_post:
             mock_post.return_value.status_code = 204
             svc = InfluxService(logger, plant_index=0)

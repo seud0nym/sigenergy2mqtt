@@ -1,8 +1,8 @@
-import pytest
-from unittest.mock import MagicMock
-
 import sys
 import types
+from unittest.mock import MagicMock
+
+import pytest
 
 # Ensure a placeholder influxdb_client module exists for environments
 try:
@@ -15,9 +15,9 @@ except Exception:
     mod.WriteOptions = None
     sys.modules["influxdb_client"] = mod
 
-import influxdb.influx_service as service_module
-from influxdb.influx_service import InfluxService
+import sigenergy2mqtt.influxdb.influx_service as service_module
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
 @pytest.mark.integration

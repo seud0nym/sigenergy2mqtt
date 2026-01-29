@@ -877,6 +877,32 @@ cli:
     help: "The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: InfluxDB v2 bucket name (defaults to --influx-database if not set)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'InfluxDB database to write metrics to (default: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Enable writing metrics to InfluxDB.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: List of sensor identifiers to exclude (space separated)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'InfluxDB hostname or IP address (default: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: List of sensor identifiers to include (space separated)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: InfluxDB organization name or ID
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: InfluxDB password
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'InfluxDB port (default: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2 authentication token (prefer v2 APIs when supplied)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: InfluxDB username
+  SIGENERGY2MQTT_LANGUAGE:
+    help: 'Set the language to use for translations. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

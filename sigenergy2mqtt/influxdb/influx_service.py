@@ -1,14 +1,19 @@
-from influxdb_client.client.influxdb_client import InfluxDBClient
-from influxdb_client.client.write_api import WriteOptions
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry
-from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from typing import Any, Awaitable, List
 import asyncio
 import json
 import logging
-import requests
 import time
+from typing import Any, Awaitable
+
+import paho.mqtt.client as mqtt
+import requests
+from influxdb_client.client.influxdb_client import InfluxDBClient
+from influxdb_client.client.write_api import WriteOptions
+
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.mqtt import MqttHandler
 
 
 class InfluxService(Device):
@@ -23,7 +28,7 @@ class InfluxService(Device):
         self._version = None
         self._base_url = None
         # Cache mapping state_topic -> {uom, object_id, unique_id}
-        self._topic_cache: dict[str, dict] = {}
+        self._topic_cache: dict[str, dict[str, Any]] = {}
         # Only attempt to initialize connection when InfluxDB is enabled in config
         # Otherwise set defaults so unit tests can instantiate without network
         self._writer_type = None
@@ -212,22 +217,22 @@ class InfluxService(Device):
 
         self.logger.error("Failed to write to InfluxDB using configured writer")
 
-    def publish_availability(self, mqtt: MqttClient, ha_state, qos=2) -> None:
+    def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
         pass
 
-    def publish_discovery(self, mqtt: MqttClient, clean=False) -> Any:
+    def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         pass
 
-    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Awaitable[None]]:
-        async def keep_running(modbus, mqtt, *sensors):
+    def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+        async def keep_running(modbus_client, mqtt_client, *sensors):
             self.logger.info(f"{self.__class__.__name__} Commenced")
             while self.online:
                 await asyncio.sleep(1)
             self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
 
-        return [keep_running(modbus, mqtt, [])]
+        return [keep_running(modbus_client, mqtt_client, [])]
 
-    def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
+    def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         # Subscribe only to sensors' state_topic when a unit_of_measurement is defined
         devices = DeviceRegistry.get(self.plant_index)
         if not devices:
@@ -246,20 +251,18 @@ class InfluxService(Device):
                         obj = None
                     self._topic_cache[s.state_topic] = {"uom": uom, "object_id": obj, "unique_id": s.unique_id}
                     if uom:
-                        mqtt_handler.register(mqtt, s.state_topic, self.handle_mqtt)
+                        mqtt_handler.register(mqtt_client, s.state_topic, self.handle_mqtt)
                     else:
                         self.logger.debug(f"{self.__class__.__name__} Ignored {obj} ({s.__class__.__name__}): {uom=}")
             except Exception:
                 # Ignore devices we can't iterate
                 continue
 
-    async def handle_mqtt(self, modbus, client, payload: str, topic: str, mqtt_handler) -> None:
+    async def handle_mqtt(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, payload: str, topic: str, mqtt_handler: MqttHandler) -> bool:
         try:
-            # Fast path: check cache keyed by state_topic. If missing, skip early.
             cache_entry = self._topic_cache.get(topic)
             if not cache_entry:
-                self.logger.warning(f"InfluxDB: Received update for unknown topic '{topic}' (no cache entry) - skipping")
-                return
+                self.logger.warning(f"InfluxDB: Received update for unknown topic '{topic}' (no cache entry)")
 
             # Check include/exclude using same substring logic as sensor_overrides
             if cache_entry:
@@ -268,17 +271,17 @@ class InfluxService(Device):
                 uid = cache_entry.get("unique_id") or ""
                 if Config.influxdb.include and not any(ident in obj or ident in uid for ident in Config.influxdb.include):
                     self.logger.debug(f"InfluxDB: Skipping {uid} not in include list")
-                    return
+                    return False
                 if Config.influxdb.exclude and any(ident in obj or ident in uid for ident in Config.influxdb.exclude):
                     self.logger.debug(f"InfluxDB: Skipping {uid} because excluded")
-                    return
+                    return False
 
             value = payload
             timestamp = int(time.time())
 
             measurement = None
-            tags = {}
-            fields = {}
+            tags: dict[str, Any] = {}
+            fields: dict[str, float | str] = {}
 
             if cache_entry:
                 measurement = cache_entry.get("uom") or cache_entry.get("object_id")
@@ -302,3 +305,5 @@ class InfluxService(Device):
             await asyncio.get_event_loop().run_in_executor(None, self._write_line, line)
         except Exception as e:
             self.logger.error(f"{self.__class__.__name__} Failed to handle mqtt message: {e}")
+            return False
+        return True

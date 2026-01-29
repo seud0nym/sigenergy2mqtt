@@ -1533,8 +1533,32 @@ cli:
     help: 'Het voorvoegsel voor Home Assistant unieke IDs. Voorbeeld: Een voorvoegsel van ''prefix'' zal ''prefix_'' voorafgaan aan unieke IDs (standaard: sigen). Zodra u dit heeft ingesteld, mag u dit NOOIT meer wijzigen, omdat dit bestaande entiteiten in Home Assistant zal verbreken.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Gebruik vereenvoudigde topic-structuur (sigenergy2mqtt/object_id/state)'
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: Naam van de InfluxDB v2 bucket (standaard --influx-database indien niet ingesteld)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'InfluxDB database om metingen naar te schrijven (standaard: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Schakel het verzenden van metingen naar InfluxDB in.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: Lijst van sensor-ID's om uit te sluiten (gescheiden door spaties)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'Hostnaam of IP-adres van InfluxDB (standaard: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: Lijst van sensor-ID's om op te nemen (gescheiden door spaties)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'Logniveau van het InfluxDB-subsysteem. Geldige waarden zijn: DEBUG, INFO, WARNING, ERROR of CRITICAL. Standaard is WARNING (waarschuwingen, fouten en kritieke storingen)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: Naam of ID van de InfluxDB-organisatie
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: Wachtwoord van InfluxDB
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'Poort van InfluxDB (standaard: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2 authenticatietoken (geeft de voorkeur aan v2 API's indien verstrekt)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: Gebruikersnaam van InfluxDB
   SIGENERGY2MQTT_LANGUAGE:
-    help: Stel de taal in voor vertalingen.
+    help: 'Stelt de taal in die gebruikt moet worden voor vertalingen. De standaardwaarde wordt bepaald door het systeem (bijv. de LANG-omgevingsvariabele) of Engels als er geen alternatief wordt gevonden.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Stel het logniveau in. Geldige waarden: DEBUG, INFO, WARNING, ERROR of CRITICAL. Standaard: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
