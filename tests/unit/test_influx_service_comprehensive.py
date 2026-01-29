@@ -110,7 +110,7 @@ def test_init_v1_http_database_creation(logger, influx_config):
 
 def test_init_all_fail_raises_runtime_error(logger, influx_config):
     with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")), patch("requests.Session.post", side_effect=Exception("all fail")):
-        with pytest.raises(RuntimeError, match="InfluxDB initialization failed"):
+        with pytest.raises(RuntimeError, match="Initialization failed"):
             InfluxService(logger, plant_index=0)
 
 
@@ -173,7 +173,7 @@ async def test_handle_mqtt_exception_handling(logger):
         with patch.object(logger, "error") as mock_error:
             res = await svc.handle_mqtt(None, None, "100", "topic1", None)
             assert res is False
-            assert "Failed to handle mqtt message" in mock_error.call_args[0][0]
+            assert "Failed to handle MQTT message" in mock_error.call_args[0][0]
 
 
 def test_subscribe_comprehensive(logger):
