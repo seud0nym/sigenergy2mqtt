@@ -1661,7 +1661,7 @@ class Alarm5Sensor(AlarmSensor):
                 return None
 
 
-class AlarmCombinedSensor(ReadableSensorMixin, ModbusSensorMixin, Sensor, HybridInverter, PVInverter):
+class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, name: str, unique_id: str, object_id: str, *alarms: AlarmSensor, **kwargs):
         device_addresses = set([a.device_address for a in alarms])
         first_address = min([a.address for a in alarms])
@@ -1693,7 +1693,7 @@ class AlarmCombinedSensor(ReadableSensorMixin, ModbusSensorMixin, Sensor, Hybrid
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=list(device_addresses)[0],
-            data_type=ModbusDataType.UINT16,
+            data_type=ModbusDataType.STRING,
             address=first_address,
             count=count,
             unique_id_override=unique_id,
