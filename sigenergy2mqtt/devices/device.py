@@ -329,6 +329,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 device.publish_attributes(mqtt_client, clean=clean, propagate=propagate)
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
+        logging.info(f"{self.name} publishing {ha_state} availability")
         mqtt_client.publish(f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
         for device in self.children:
             device.publish_availability(mqtt_client, ha_state)

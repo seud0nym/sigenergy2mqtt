@@ -42,7 +42,6 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
             device.subscribe(mqtt_client, mqtt_handler)
 
             if Config.home_assistant.enabled:
-                logging.debug(f"{device.name} publishing online availability")
                 device.publish_availability(mqtt_client, "online")
 
             logging.debug(f"{device.name} scheduling tasks")
@@ -60,7 +59,6 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
 
         if Config.home_assistant.enabled:
             for device in config.devices:
-                logging.info(f"{device.name} publishing offline availability")
                 device.publish_availability(mqtt_client, "offline")
 
     if modbus_client is not None:
