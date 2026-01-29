@@ -5,32 +5,33 @@ if __name__ == "__main__":
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../src"))
     sys.path.insert(0, parent_dir)
 
-from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
-from sigenergy2mqtt.config.smart_port_config import ModuleConfig
-from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
-from time import sleep
-from typing import Any
 import asyncio
 import json
 import logging
 import os
-import requests
 import xml.etree.ElementTree as xml
+from time import sleep
+from typing import cast
 
+import requests
 
 # disable warnings of self signed certificate https
 import urllib3
 
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.smart_port_config import ModuleConfig
+from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor, SubstituteMixin
+from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+
 urllib3.disable_warnings()
 
 
-class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
+class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
     def __init__(self, plant_index: int, serial_number: str, host: str, username: str, password: str):
-        Sensor.__init__(
-            self,
+        super().__init__(
             name="PV Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_active_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_active_power",
@@ -40,9 +41,9 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             icon="mdi:solar-power",
             gain=None,
             precision=2,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[0].scan_interval.realtime,
         )
-        self.data_type = ModbusClient.DATATYPE.INT32
-        ReadableSensorMixin.__init__(self, Config.devices[0].scan_interval.realtime)
         self["enabled_by_default"] = True
 
         if Config.log_level == logging.DEBUG and not self.debug_logging:
@@ -59,22 +60,40 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
         self._max_failures = 5
         self._max_failures_retry_interval = 30
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        """Retrieves the current state of this sensor and updates the internal state history.
+    def _process_meter_reading(self, reading: list[dict]) -> bool:
+        """Process the meter reading JSON response and update sensor state.
 
         Args:
-            **kwargs    Implementation specific arguments.
+            reading: The parsed JSON response from /ivp/meters/readings endpoint
 
         Returns:
-            True if the internal state was updated, False if it was not.
+            True if processing was successful
+
+        Raises:
+            Exception: If the reading format is invalid or required fields are missing
         """
+        solar = reading[0]
+        state_is = float(solar["activePower"])
+        if state_is < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
+            state_is = 0.0
+        self.set_state(state_is)
+        latest = self._states.pop()
+        self._states.append((latest[0], latest[1], solar))  # type: ignore
+        for sensor in self._derived_sensors.values():
+            sensor.set_source_values(self, self._states)
+        self._failover_initiated = False
+        return True
+
+    async def _update_internal_state(self, **kwargs) -> bool:
         reauthenticate = False if "reauthenticate" not in kwargs else kwargs["reauthenticate"]
         token = self.get_token(reauthenticate)
+        url = f"https://{self._host}/ivp/meters/readings"
+        headers = {"Authorization": f"Bearer {token}"}
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Fetching data for Envoy device {self._serial_number} from {url}")
         try:
-            url = f"https://{self._host}/ivp/meters/readings"
-            headers = {"Authorization": f"Bearer {token}"}
-            if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Fetching data for Envoy device {self._serial_number} from {url}")
             with requests.get(url, timeout=self.scan_interval, verify=False, headers=headers) as response:
                 if response.status_code == 401:
                     logging.warning(f"{self.__class__.__name__} Authentication failed: Generating new token")
@@ -90,21 +109,10 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                         reading = response.json()
                         if self.debug_logging:
                             logging.debug(f"{self.__class__.__name__} Response from {url}: JSON={json.dumps(reading)}")
-                        solar = reading[0]
-                        state_is = float(solar["activePower"])
-                        if state_is < 0:
-                            state_is = 0.0
-                        self.set_state(state_is)
-                        self._states[-1] = (self._states[-1][0], self._states[-1][1], solar)
-                        for sensor in self._derived_sensors.values():
-                            sensor.set_source_values(self, self._states)
-                        self._failover_initiated = False
-                        return True
-                    except ValueError as e:
-                        logging.error(f"{self.__class__.__name__} Invalid JSON response from {url}: {e}")
-                        raise
+                        return self._process_meter_reading(reading)
                     except Exception as e:
-                        logging.error(f"{self.__class__.__name__} Unhandled error from {url}: {repr(e)}")
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} Unhandled error when processing JSON from {url}: {e}")
                         raise
         except requests.exceptions.RequestException as e:
             logging.error(f"{self.__class__.__name__} Unhandled exception fetching data from {url} : {e}")
@@ -113,37 +121,21 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
             else:
                 if "TotalPVPower" in self._derived_sensors:
                     logging.info(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
-                    self._failover_initiated = self._derived_sensors["TotalPVPower"].failover(self)
+                    self._failover_initiated = cast(SubstituteMixin, self._derived_sensors["TotalPVPower"]).failover(self)
                 else:
                     logging.warning(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
                     return True
         return False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API"
         return attributes
 
     def get_token(self, reauthenticate: bool = False) -> str:
-        """Return an Enphase authentication token for the specified device.
-
-        Args:
-            new:        True if a new token is to be generated, or False to use
-                        a previously generated token. Ignored and defaults to
-                        True if the token does not exist or is no longer valid.
-
-        Returns:
-            The authentication token.
-        """
-
         token_file = os.path.join(Config.persistent_state_path, f"{self.unique_id}.token")
 
         def load_token() -> str:
-            """Loads an Enphase authentication token from persistent storage.
-
-            Returns:
-                The authentication token if found, or an empty string.
-            """
             if os.path.exists(token_file):
                 with open(token_file, "r") as f:
                     try:
@@ -163,11 +155,6 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                 return ""
 
         def save_token(token) -> None:
-            """Saves an Enphase authentication token to persistent storage.
-
-            Args:
-                token:  The authentication token
-            """
             with open(token_file, "w") as f:
                 if self.debug_logging:
                     logging.debug(f"Saving authentication token to {token_file}: {token}")
@@ -176,7 +163,9 @@ class EnphasePVPower(Sensor, PVPowerSensor, ReadableSensorMixin):
                 except Exception as e:
                     logging.error(f"Failed to save authentication token to {token_file}: {repr(e)}")
 
-        if not reauthenticate:
+        if reauthenticate:
+            token = None
+        else:
             if self._token and not self._token.isspace():
                 token = self._token
                 if self.debug_logging:
@@ -214,7 +203,7 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
             name="Lifetime Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
-            data_type=ModbusClient.DATATYPE.UINT64,
+            data_type=ModbusDataType.UINT64,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -223,16 +212,21 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
             precision=2,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["actEnergyDlvd"])
+        value = values[-1][2]["actEnergyDlvd"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} actEnergyDlvd negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -245,7 +239,7 @@ class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
             source=source,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
@@ -257,7 +251,7 @@ class EnphaseCurrent(DerivedSensor):
             name="Current",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_current",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -267,16 +261,21 @@ class EnphaseCurrent(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["current"])
+        value = values[-1][2]["current"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} current negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -286,7 +285,7 @@ class EnphaseFrequency(DerivedSensor):
             name="Frequency",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -296,16 +295,21 @@ class EnphaseFrequency(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["freq"])
+        value = values[-1][2]["freq"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} freq negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -315,7 +319,7 @@ class EnphasePowerFactor(DerivedSensor):
             name="Power Factor",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=None,
             device_class=DeviceClass.POWER_FACTOR,
             state_class=None,
@@ -325,16 +329,21 @@ class EnphasePowerFactor(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["pwrFactor"])
+        value = values[-1][2]["pwrFactor"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} pwrFactor negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -344,7 +353,7 @@ class EnphaseReactivePower(DerivedSensor):
             name="Reactive Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
-            data_type=ModbusClient.DATATYPE.UINT32,
+            data_type=ModbusDataType.UINT32,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -354,16 +363,21 @@ class EnphaseReactivePower(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["reactivePower"])
+        value = values[-1][2]["reactivePower"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} reactivePower negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
@@ -373,7 +387,7 @@ class EnphaseVoltage(DerivedSensor):
             name="Voltage",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
-            data_type=ModbusClient.DATATYPE.UINT16,
+            data_type=ModbusDataType.UINT16,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -383,24 +397,34 @@ class EnphaseVoltage(DerivedSensor):
         )
         self["enabled_by_default"] = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: EnphasePVPower, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(values[-1][2]["voltage"])
+        value = values[-1][2]["voltage"]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} voltage negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
         return True
 
 
 class SmartPort(Device):
+    @classmethod
+    def _get_text(cls, root: xml.Element, path: str) -> str:
+        element = root.find(path)
+        return element.text if element is not None and element.text else ""
+
     def __init__(self, plant_index: int, config: ModuleConfig):
-        fw: str = None
-        sn: str = None
-        pn: str = None
+        fw: str = ""
+        sn: str = ""
+        pn: str = ""
         if config.testing:
             logging.debug(f"SmartPort {plant_index} testing mode enabled")
             fw = "D7.0.0"
@@ -414,9 +438,9 @@ class SmartPort(Device):
                         with session.get(url, timeout=20, verify=False) as response:
                             if response.status_code == 200:
                                 root = xml.fromstring(response.content)
-                                sn = root.find("./device/sn").text
-                                pn = root.find("./device/pn").text
-                                fw = root.find("./device/software").text
+                                sn = self._get_text(root, "./device/sn")
+                                pn = self._get_text(root, "./device/pn")
+                                fw = self._get_text(root, "./device/software")
                                 assert fw.startswith("D7") or fw.startswith("D8"), f"Unsupported Enphase Envoy firmware {fw}"
                                 break
                             else:
@@ -425,7 +449,7 @@ class SmartPort(Device):
                         logging.error(f"SmartPort Failed to initialise from {url} (Attempt #{i}): {e}")
                 sleep(10)
             else:
-                raise Exception(f"Unable to initialise from {url} after {i} attempts")
+                raise Exception(f"Unable to initialise from {url} after 3 attempts")
         unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Smart-Port"
         super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", Protocol.N_A, mdl_id=pn, sn=sn, hw=fw)
@@ -450,13 +474,16 @@ if __name__ == "__main__":
     Config.sensor_debug_logging = True
 
     async def test():
-        smartport = SmartPort(0, Config.devices[0].smartport)
+        smartport = SmartPort(0, Config.modbus[0].smartport.module)
         print(smartport)
         pv_power_unique_id = f"{Config.home_assistant.unique_id_prefix}_0_enphase_{smartport['serial_number']}_active_power"
         sensor = smartport.get_sensor(pv_power_unique_id)
-        sensor.debug_logging = True
-        print(f"{sensor.name} =  {await sensor.get_state()}")
-        for derived in sensor._derived_sensors.values():
-            print(f"{derived.name} =  {await derived.get_state()}")
+        if sensor:
+            sensor.debug_logging = True
+            print(f"{sensor.name} =  {await sensor.get_state()}")
+            for derived in sensor._derived_sensors.values():
+                print(f"{derived.name} =  {await derived.get_state()}")
+        else:
+            print(f"Sensor '{pv_power_unique_id}' not found!!!")
 
     asyncio.run(test(), debug=True)

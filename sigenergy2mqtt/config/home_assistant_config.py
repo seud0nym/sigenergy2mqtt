@@ -1,6 +1,8 @@
-from .validation import check_bool, check_int, check_string
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Any, cast
+
+from .validation import check_bool, check_int, check_string
 
 
 @dataclass
@@ -19,7 +21,16 @@ class HomeAssistantConfiguration:
 
     enabled_by_default: bool = False
 
-    def configure(self, config: dict, override: bool = False) -> None:
+    def validate(self) -> None:
+        if self.enabled:
+            if not self.discovery_prefix:
+                raise ValueError("home-assistant.discovery-prefix must be provided")
+            if not self.entity_id_prefix:
+                raise ValueError("home-assistant.entity-id-prefix must be provided")
+            if not self.unique_id_prefix:
+                raise ValueError("home-assistant.unique-id-prefix must be provided")
+
+    def configure(self, config: Any, override: bool = False) -> None:
         if isinstance(config, dict):
             if "enabled" in config:
                 logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: home-assistant.enabled = {config['enabled']}")
@@ -30,21 +41,19 @@ class HomeAssistantConfiguration:
                         logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: home-assistant.{field} = {value}")
                     match field:
                         case "device-name-prefix":
-                            self.device_name_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=True)
-                        case "discovery-only":
-                            self.discovery_only = check_bool(value, f"home-assistant.{field}")
+                            self.device_name_prefix = cast(str, check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=True))
                         case "discovery-prefix":
-                            self.discovery_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False)
+                            self.discovery_prefix = cast(str, check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False))
                         case "edit-pct-box":
                             self.edit_percentage_with_box = check_bool(value, f"home-assistant.{field}")
                         case "entity-id-prefix":
-                            self.entity_id_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False)
+                            self.entity_id_prefix = cast(str, check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False))
                         case "republish-discovery-interval":
-                            self.republish_discovery_interval = check_int(value, f"home-assistant.{field}", min=0)
+                            self.republish_discovery_interval = cast(int, check_int(value, f"home-assistant.{field}", min=0))
                         case "sensors-enabled-by-default":
                             self.enabled_by_default = check_bool(value, f"home-assistant.{field}")
                         case "unique-id-prefix":
-                            self.unique_id_prefix = check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False)
+                            self.unique_id_prefix = cast(str, check_string(value, f"home-assistant.{field}", allow_none=False, allow_empty=False))
                         case "use-simplified-topics":
                             self.use_simplified_topics = check_bool(value, f"home-assistant.{field}")
                         case _:

@@ -1,0 +1,1659 @@
+class:
+  ACCharger:
+    name: Chargeur CA Sigenergy
+  ACChargerAlarm1:
+    name: Alarme 1
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerAlarm2:
+    name: Alarme 2
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerAlarm3:
+    name: Alarme 3
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerAlarms:
+    name: Alarmes
+    attributes:
+      source: Registres Modbus 32012-32014
+  ACChargerChargingPower:
+    name: Puissance de Charge
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerInputBreaker:
+    name: Disjoncteur d'Entrée
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerOutputCurrent:
+    name: Courant de Sortie
+    attributes:
+      comment: "Plage : [6, le plus petit entre 'Courant Nominal du Chargeur CA' et 'Courant Nominal du Disjoncteur d'Entrée du Chargeur CA']"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerRatedCurrent:
+    name: Courant Nominal
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerRatedPower:
+    name: Puissance Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerRatedVoltage:
+    name: Tension Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerRunningState:
+    name: État de Fonctionnement
+    options:
+      "0": Initialisation
+      "1": VE non connecté
+      "2": Chargeur et VE non prêts
+      "3": Chargeur prêt ; VE non prêt
+      "4": Chargeur non prêt ; VE prêt
+      "5": Charge en cours
+      "6": Défaut
+      "7": Erreur
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ACChargerStatus:
+    name: Démarrer/Arrêter Chargeur CA
+    attributes:
+      comment: 0:Démarrer 1:Arrêter
+    name_off: Arrêter
+    name_on: Démarrer
+  ACChargerTotalEnergyConsumed:
+    name: Énergie Totale Consommée
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AccumulatedChargeEnergy:
+    name: Énergie de Charge Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AccumulatedDischargeEnergy:
+    name: Énergie de Décharge Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ActivePower:
+    name: Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ActivePowerFixedAdjustmentTargetValue:
+    name: Valeur Cible d'Ajustement Fixe de Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ActivePowerPercentageAdjustmentTargetValue:
+    name: Valeur Cible d'Ajustement en Pourcentage de Puissance Active
+    attributes:
+      comment: "Plage : [-100,00, 100,00]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ActivePowerRegulationGradient:
+    name: Gradient de Régulation de Puissance Active
+    attributes:
+      comment: "Plage : [0, 5000]. Pourcentage de puissance nominale ajusté par seconde"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  Alarm1Sensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  Alarm2Sensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  Alarm3Sensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  Alarm4Sensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  Alarm5Sensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  Alarm6:
+    name: Alarme 6
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  Alarm7:
+    name: Alarme 7
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AlarmCombinedSensor:
+    name: '{name}'
+  AlarmSensor:
+    no_alarm: Aucune Alarme
+    unknown_alarm: Inconnu (bit{bit}∈{value})
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  AvailableBatteryChargeEnergy:
+    name: Énergie de Charge Disponible
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableBatteryDischargeEnergy:
+    name: Énergie de Décharge Disponible
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMaxActivePower:
+    name: Puissance Active Max Disponible
+    attributes:
+      comment: Injection à la borne CA. Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMaxChargingCapacity:
+    name: Capacité de Charge Max Disponible
+    attributes:
+      comment: Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMaxChargingPower:
+    name: Puissance de Charge Max Disponible
+    attributes:
+      comment: Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMaxDischargingCapacity:
+    name: Capacité de Décharge Max Disponible
+    attributes:
+      comment: Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMaxDischargingPower:
+    name: Puissance de Décharge Max Disponible
+    attributes:
+      comment: Absorption à la borne CA. Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMaxReactivePower:
+    name: Puissance Réactive Max Disponible
+    attributes:
+      comment: Injection à la borne CA. Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMinActivePower:
+    name: Puissance Active Min Disponible
+    attributes:
+      comment: Absorption à la borne CA. Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AvailableMinReactivePower:
+    name: Puissance Réactive Min Disponible
+    attributes:
+      comment: Absorption à la borne CA. Ne compte que les onduleurs en fonctionnement
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AverageCellTemperature:
+    name: Température Moyenne des Cellules
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  AverageCellVoltage:
+    name: Tension Moyenne des Cellules
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  BatteryChargingPower:
+    name: Puissance de Charge Batterie
+    attributes:
+      source: BatteryPower > 0
+  BatteryDischargingPower:
+    name: Puissance de Décharge Batterie
+    attributes:
+      source: BatteryPower < 0 × -1
+  BatteryPower:
+    name: Puissance Batterie
+    attributes:
+      comment: "Puissance ESS : <0 = décharge, >0 = charge"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ChargeCutOffSoC:
+    name: État de charge de coupure de charge
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ChargeDischargePower:
+    name: Puissance de la Batterie
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  CurrentControlCommandValue:
+    name: Valeur de Commande de Contrôle Actuelle
+    attributes:
+      comment: Utilisation du Contrôle de Sortie à Distance au Japon
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCCharger:
+    name: Chargeur CC Sigenergy
+  DCChargerCurrentChargingCapacity:
+    name: Capacité de Charge Actuelle
+    attributes:
+      comment: Session unique
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCChargerCurrentChargingDuration:
+    name: Durée de Charge Actuelle
+    attributes:
+      comment: Session unique
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCChargerOutputPower:
+    name: Puissance de Sortie
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCChargerRunningState:
+    name: État de Fonctionnement
+    options:
+      "0": Inactif
+      "1": Occupé (Pistolet de charge branché mais non détecté)
+      "2": Préparation (Établissement de la communication)
+      "3": Charge en cours
+      "4": Défaut
+      "5": Programmé
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCChargerStatus:
+    name: Démarrer/Arrêter Chargeur CC
+    attributes:
+      comment: 0:Démarrer 1:Arrêter
+    name_off: Arrêter
+    name_on: Démarrer
+  DCChargerVehicleBatteryVoltage:
+    name: Tension Batterie Véhicule
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCChargerVehicleChargingCurrent:
+    name: Courant de Charge Véhicule
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DCChargerVehicleSoC:
+    name: État de charge véhicule
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DailyChargeEnergy:
+    name: Énergie de Charge Quotidienne
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DailyDischargeEnergy:
+    name: Énergie de Décharge Quotidienne
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  DischargeCutOffSoC:
+    name: État de charge de coupure de décharge
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  EMSWorkMode:
+    name: Mode de Travail EMS
+    options:
+      "0": Autoconsommation Max
+      "1": Sigen IA
+      "2": Heures Creuses/Pleines
+      "5": Injection Totale au Réseau
+      "6": Planification VPP
+      "7": EMS à Distance
+      "9": Contrôle Basé sur le Temps
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ESS:
+    name: '{model_id} {serial_number} ESS'
+  ESSBackupSOC:
+    name: État de charge de secours
+    attributes:
+      comment: "Plage : [0,00, 100,00]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ESSChargeCutOffSOC:
+    name: État de charge de coupure de charge
+    attributes:
+      comment: "Plage : [0,00, 100,00]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ESSDischargeCutOffSOC:
+    name: État de charge de coupure de décharge
+    attributes:
+      comment: "Plage : [0,00, 100,00]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ESSTotalChargedEnergy:
+    name: Énergie Chargée Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ESSTotalDischargedEnergy:
+    name: Énergie Déchargée Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  EVDCTotalChargedEnergy:
+    name: Énergie de Charge CC VE Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  EVDCTotalDischargedEnergy:
+    name: Énergie de Décharge CC VE Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  EnergyDailyAccumulationSensor:
+    name: '{name}'
+    name_reset: Régler {name}
+  EnergyLifetimeAccumulationSensor:
+    name: '{name}'
+    name_reset: Régler {name}
+  EnphaseCurrent:
+    name: Courant
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+  EnphaseDailyPVEnergy:
+    name: Production Quotidienne
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+    name_reset: Régler Production Quotidienne
+  EnphaseFrequency:
+    name: Fréquence
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+  EnphaseLifetimePVEnergy:
+    name: Production Totale
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+  EnphasePVPower:
+    name: Puissance PV
+    attributes:
+      source: API Enphase Envoy
+  EnphasePowerFactor:
+    name: Facteur de Puissance
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+  EnphaseReactivePower:
+    name: Puissance Réactive
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+  EnphaseVoltage:
+    name: Tension
+    attributes:
+      source: API Enphase Envoy lors du calcul EnphasePVPower
+  GeneralAlarm1:
+    name: Alarmes PCS 1
+    attributes:
+      comment: Si un onduleur hybride a une alarme, cette alarme sera définie en conséquence
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GeneralAlarm2:
+    name: Alarmes PCS 2
+    attributes:
+      comment: Si un onduleur hybride a une alarme, cette alarme sera définie en conséquence
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GeneralAlarm3:
+    name: Alarmes ESS
+    attributes:
+      comment: Si un onduleur hybride a une alarme, cette alarme sera définie en conséquence
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GeneralAlarm4:
+    name: Alarmes Passerelle
+    attributes:
+      comment: Si un onduleur hybride a une alarme, cette alarme sera définie en conséquence
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GeneralAlarm5:
+    name: Alarmes Chargeur CC
+    attributes:
+      comment: Si un onduleur hybride a une alarme, cette alarme sera définie en conséquence
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GeneralLoadPower:
+    name: Puissance Charge Générale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GeneralPCSAlarm:
+    name: Alarmes PCS
+    attributes:
+      comment: Si un onduleur hybride a une alarme, cette alarme sera définie en conséquence
+      source: Registres Modbus 30027-30028
+  GridCode:
+    name: Code Réseau Installation Sigenergy
+  GridCodeHVRT:
+    name: Tenue aux Surtensions
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeHVRTMode:
+    name: Mode HVRT
+    options:
+      '0': Courant de compensation de puissance réactive, mode courant nul actif
+      '2': Mode courant nul
+      '3': Mode courant constant
+      '4': Courant dynamique réactif, mode maintien actif
+      '5': Courant de compensation de puissance réactive, mode courant constant actif
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    name: Facteur de Compensation de Puissance Réactive de Séquence Négative HVRT
+    attributes:
+      comment: "Plage : [0, 10,0]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeHVRTReactivePowerCompensationFactor:
+    name: Facteur de Compensation de Puissance Réactive HVRT
+    attributes:
+      comment: "Plage : [0, 10,0]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeHVRTVoltageProtectionBlocking:
+    name: Blocage de Protection de Tension Réseau HVRT
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeLVRT:
+    name: Tenue aux Creux de Tension
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeLVRTMode:
+    name: Mode LVRT
+    options:
+      '0': Courant de compensation de puissance réactive, mode courant nul actif
+      '2': Mode courant nul
+      '3': Mode courant constant
+      '4': Courant dynamique réactif, mode courant nul actif
+      '5': Courant de compensation de puissance réactive, mode courant constant actif
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    name: Facteur de Compensation de Puissance Réactive de Séquence Négative LVRT
+    attributes:
+      comment: "Plage : [0, 10,0]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeLVRTReactivePowerCompensationFactor:
+    name: Facteur de Compensation de Puissance Réactive LVRT
+    attributes:
+      comment: "Plage : [0, 10,0]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeLVRTVoltageProtectionBlocking:
+    name: Blocage de Protection de Tension Réseau LVRT
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeOverFrequencyDerating:
+    name: Réduction de Puissance pour Surfréquence
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeOverFrequencyDeratingCutOffFrequency:
+    name: Fréquence de Coupure pour Surfréquence
+    attributes:
+      comment: "Plage : [1,0*Fn, 1,2*Fn] Référence : [Code réseau] Fréquence Nominale (Registre 30276)"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeOverFrequencyDeratingPowerRampRate:
+    name: Taux de Rampe de Puissance pour Surfréquence
+    attributes:
+      comment: "Plage : [0, 100,0]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeOverFrequencyDeratingTriggerFrequency:
+    name: Fréquence de Déclenchement pour Surfréquence
+    attributes:
+      comment: "Plage : [1,0*Fn, 1,2*Fn] Référence : [Code réseau] Fréquence Nominale (Registre 30276)"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeRatedFrequency:
+    name: Fréquence Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeRatedVoltage:
+    name: Tension Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeUnderFrequencyPowerBoost:
+    name: Augmentation de Puissance pour Sous-fréquence
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeUnderFrequencyPowerBoostCutOffFrequency:
+    name: Fréquence de Coupure pour Sous-fréquence
+    attributes:
+      comment: "Plage : [0,8*Fn, 1,0*Fn] Référence : [Code réseau] Fréquence Nominale (Registre 30276)"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeUnderFrequencyPowerBoostPowerRampRate:
+    name: Taux de Rampe de Puissance pour Sous-fréquence
+    attributes:
+      comment: "Plage : [0, 100,0]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+    name: Fréquence de Déclenchement pour Sous-fréquence
+    attributes:
+      comment: "Plage : [0,8*Fn, 1,0*Fn] Référence : [Code réseau] Fréquence Nominale (Registre 30276)"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridFrequency:
+    name: Fréquence Réseau
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridMaxExportLimit:
+    name: Limite d'Export Max Réseau
+    attributes:
+      comment: Capteur réseau nécessaire. S'applique globalement quel que soit le mode de fonctionnement EMS
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridMaxImportLimit:
+    name: Limite d'Import Max Réseau
+    attributes:
+      comment: Capteur réseau nécessaire. S'applique globalement quel que soit le mode de fonctionnement EMS
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridPhaseActivePower:
+    attributes:
+      comment: "Données collectées par le capteur réseau au point de contrôle réseau/système ; >0 achat au réseau ; <0 vente au réseau"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: Puissance active de la phase {phase}
+  GridPhaseReactivePower:
+    attributes:
+      comment: Données collectées par le capteur réseau au point de contrôle réseau/système
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: Puissance réactive de la phase {phase}
+  GridSensor:
+    name: Capteur Réseau Installation Sigenergy
+  GridSensorActivePower:
+    name: Puissance Active
+    attributes:
+      comment: "Données collectées par le capteur réseau au point de contrôle réseau/système ; >0 achat au réseau ; <0 vente au réseau"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridSensorDailyExportEnergy:
+    name: Énergie Exportée Quotidienne
+    attributes:
+      source: PlantTotalExportedEnergy − PlantTotalExportedEnergy à minuit
+    name_reset: Régler Énergie Exportée Quotidienne
+  GridSensorDailyImportEnergy:
+    name: Énergie Importée Quotidienne
+    attributes:
+      source: PlantTotalImportedEnergy − PlantTotalImportedEnergy à minuit
+    name_reset: Régler Énergie Importée Quotidienne
+  GridSensorExportPower:
+    name: Puissance d'Export
+    attributes:
+      source: GridSensorActivePower < 0 × -1
+  GridSensorImportPower:
+    name: Puissance d'Import
+    attributes:
+      source: GridSensorActivePower > 0
+  GridSensorReactivePower:
+    name: Puissance Réactive
+    attributes:
+      comment: Données collectées par le capteur réseau au point de contrôle réseau/système
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridSensorStatus:
+    name: État du Capteur Réseau
+    options:
+      "0": Non Connecté
+      "1": Connecté
+    attributes:
+      comment: État de connexion de la passerelle ou du compteur
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  GridStatus:
+    name: État du Réseau
+    options:
+      "0": Connecté au Réseau
+      "1": Hors Réseau (auto)
+      "2": Hors Réseau (manuel)
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  HybridInverter:
+    name: Onduleur hybride
+  IndependentPhasePowerControl:
+    name: Contrôle de Puissance par Phase Indépendante
+    attributes:
+      comment: Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N. Pour activer le contrôle de phase indépendant, ce paramètre doit être activé
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InsulationResistance:
+    name: Résistance d'Isolement
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  Inverter:
+    name: '{model_id} {serial}'
+  InverterActivePowerFixedValueAdjustment:
+    name: Ajustement Fixe de Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterActivePowerFixedValueAdjustmentFeedback:
+    name: Retour d'Ajustement Fixe de Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterActivePowerPercentageAdjustment:
+    name: Ajustement en Pourcentage de Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterActivePowerPercentageAdjustmentFeedback:
+    name: Retour d'Ajustement en Pourcentage de Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterAlarm1:
+    name: Alarmes PCS 1
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterAlarm2:
+    name: Alarmes PCS 2
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterAlarm3:
+    name: Alarmes
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterAlarm4:
+    name: Alarmes Passerelle
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterAlarm5:
+    name: Alarmes
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterBatteryChargingPower:
+    name: Puissance de Charge Batterie
+    attributes:
+      source: ChargeDischargePower > 0
+  InverterBatteryDischargingPower:
+    name: Puissance de Décharge Batterie
+    attributes:
+      source: ChargeDischargePower < 0 × -1
+  InverterBatterySoC:
+    name: État de charge batterie
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterBatterySoH:
+    name: État de santé batterie
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterFirmwareVersion:
+    name: Version du Firmware
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterMaxActivePower:
+    name: Puissance Active Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterMaxBatteryTemperature:
+    name: Température Batterie Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterMaxCellVoltage:
+    name: Tension Cellule Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterMinBatteryTemperature:
+    name: Température Batterie Min
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterMinCellVoltage:
+    name: Tension Cellule Min
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterModel:
+    name: Modèle
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterPCSAlarm:
+    name: Alarmes PCS
+    attributes:
+      source: Registres Modbus 30605-30606
+  InverterPVDailyGeneration:
+    name: Production Quotidienne
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterPVLifetimeGeneration:
+    name: Production Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterPVPower:
+    name: Puissance PV
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterPowerFactorAdjustment:
+    name: Ajustement du Facteur de Puissance
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterPowerFactorAdjustmentFeedback:
+    name: Retour d'Ajustement du Facteur de Puissance
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterReactivePowerFixedValueAdjustment:
+    name: Ajustement Fixe de Puissance Réactive
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterReactivePowerFixedValueAdjustmentFeedback:
+    name: Retour d'Ajustement Fixe de Puissance Réactive
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterReactivePowerPercentageAdjustmentFeedback:
+    name: Retour d'Ajustement en Pourcentage de Puissance Réactive
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterReactivePowerQSAdjustment:
+    name: Ajustement Q/S de Puissance Réactive
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterRunningState:
+    name: État de Fonctionnement
+    options:
+      '0': Veille
+      '1': Normal
+      '2': Défaut
+      '3': Hors Tension
+      '7': Anomalie Environnementale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterSerialNumber:
+    name: Numéro de Série
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  InverterStatus:
+    name: Marche/Arrêt Onduleur
+    attributes:
+      comment: 0:Arrêter 1:Démarrer
+  InverterTemperature:
+    name: Température
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  LineVoltage:
+    name: '{phase} Tension de ligne'
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MPTTCount:
+    name: Nombre MPPT
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxAbsorptionPower:
+    name: Puissance d'Absorption Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxActivePower:
+    name: Puissance Active Max
+    attributes:
+      comment: Ceci devrait être la valeur de base de toutes les actions d'ajustement de puissance active
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxActivePowerAdjustment:
+    name: Ajustement Puissance Active Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxApparentPower:
+    name: Puissance Apparente Max
+    attributes:
+      comment: Ceci devrait être la valeur de base de toutes les actions d'ajustement de puissance réactive
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxBatteryChargePower:
+    name: Puissance de Charge Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxBatteryDischargePower:
+    name: Puissance de Décharge Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxChargingLimit:
+    name: Limite de Charge Maximum
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxDischargingLimit:
+    name: Limite de Décharge Maximum
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxRatedApparentPower:
+    name: Puissance Apparente Nominale Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MaxReactivePowerAdjustment:
+    name: Ajustement Puissance Réactive Max
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MetricsSensor:
+    name: '{name}'
+  MetricsService:
+    name: Métriques Sigenergy
+  MinActivePowerAdjustment:
+    name: Ajustement Puissance Active Min
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  MinReactivePowerAdjustment:
+    name: Ajustement Puissance Réactive Min
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ModbusActiveLocks:
+    name: Verrous Modbus Actifs
+  ModbusCacheHits:
+    name: Succès Cache Modbus
+  ModbusPhysicalReads:
+    name: Lectures Physiques Modbus
+  ModbusReadErrors:
+    name: Erreurs de Lecture Modbus
+  ModbusReadMax:
+    name: Lecture Modbus Max
+  ModbusReadMean:
+    name: Lecture Modbus Moyenne
+  ModbusReadMin:
+    name: Lecture Modbus Min
+  ModbusReadsPerSecond:
+    name: Lectures Modbus/seconde
+  ModbusWriteErrors:
+    name: Erreurs d'Écriture Modbus
+  ModbusWriteMax:
+    name: Écriture Modbus Max
+  ModbusWriteMean:
+    name: Écriture Modbus Moyenne
+  ModbusWriteMin:
+    name: Écriture Modbus Min
+  MonitorService:
+    name: Moniteur Sigenergy
+  MqttOverriddenSensor:
+    attributes:
+      source: Substitution MQTT
+  NumericSensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{availability_control_sensor}'
+  OutputType:
+    name: Type de Sortie
+    options:
+      "0": L/N
+      "1": L1/L2/L3
+      "2": L1/L2/L3/N
+      "3": L1/L2/N
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PACKBCUCount:
+    name: Nombre PACK/BCU
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PCSMaxExportLimit:
+    name: Limite d'Export Max PCS
+    attributes:
+      comment: "Plage : [0, 0xFFFFFFFE]. Avec la valeur 0xFFFFFFFF, le registre n'est pas valide. Dans tous les autres cas, s'applique globalement."
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PCSMaxImportLimit:
+    name: Limite d'Import Max PCS
+    attributes:
+      comment: "Plage : [0, 0xFFFFFFFE]. Avec la valeur 0xFFFFFFFF, le registre n'est pas valide. Dans tous les autres cas, s'applique globalement."
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PVCurrentSensor:
+    name: Courant
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PVInverter:
+    name: Onduleur PV
+  PVMaxPowerLimit:
+    name: Limite de Puissance Max PV
+    attributes:
+      comment: Prend effet lorsque le mode de contrôle EMS à distance (40031) est réglé sur Charge/Décharge par Commande
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PVOutputOutputService:
+    name: Ajouter Service de Sortie PVOutput
+  PVOutputStatusService:
+    name: Ajouter Service de Statut PVOutput
+  PVString:
+    name: '{model_id} {serial_number} PV String {string_number}'
+  PVStringCount:
+    name: Nombre de Chaînes PV
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PVStringDailyEnergy:
+    name: Production Quotidienne
+    attributes:
+      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy à minuit
+    name_reset: Régler Production Quotidienne
+  PVStringLifetimeEnergy:
+    name: Production Totale
+    attributes:
+      source: Σ Riemann de PVStringPower
+    name_reset: Régler Production Totale
+  PVStringPower:
+    name: Puissance
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor
+  PVVoltageSensor:
+    name: Tension
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PhaseActivePowerFixedAdjustmentTargetValue:
+    attributes:
+      comment: Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: Valeur cible de réglage fixe de la puissance active de la phase {phase}
+  PhaseActivePowerPercentageAdjustmentTargetValue:
+    attributes:
+      comment: "Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N. Plage : [-100,00, 100,00]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: Valeur cible de réglage du pourcentage de puissance active de la phase {phase}
+  PhaseCurrent:
+    name: Courant de la phase {phase}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PhaseQSAdjustmentTargetValue:
+    attributes:
+      comment: "Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N. Plage : [-60,00, 60,00]"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: Valeur cible de réglage fixe Q/S de la phase {phase}
+  PhaseReactivePowerFixedAdjustmentTargetValue:
+    attributes:
+      comment: Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: Valeur cible de réglage fixe de la puissance réactive de la phase {phase}
+  PhaseVoltage:
+    name: Tension de la phase {phase}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantActivePower:
+    name: Puissance Active
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantAlarms:
+    name: Alarmes Installation
+    attributes:
+      source: Registres Modbus 30280-30281
+  PlantBatterySoC:
+    name: État de charge batterie
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantBatterySoH:
+    name: État de santé batterie
+    attributes:
+      comment: Cette valeur est la moyenne pondérée de l'état de santé de tous les appareils ESS de l'installation, avec chaque capacité nominale comme poids
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantConsumedPower:
+    name: Puissance Consommée
+    attributes:
+      source: TotalLoadPower
+  PlantDailyChargeEnergy:
+    name: Énergie de Charge Quotidienne
+    attributes:
+      source: "Σ de DailyChargeEnergy sur tous les Onduleurs associés à l'Installation"
+    name_reset: Régler Énergie de Charge Quotidienne
+  PlantDailyDischargeEnergy:
+    name: Énergie de Décharge Quotidienne
+    attributes:
+      source: "Σ de DailyDischargeEnergy sur tous les Onduleurs associés à l'Installation"
+    name_reset: Régler Énergie de Décharge Quotidienne
+  PlantDailyPVEnergy:
+    name: Production PV Quotidienne
+    attributes:
+      source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à minuit
+    name_reset: Régler Production PV Quotidienne
+  PlantPVPower:
+    name: Puissance PV
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantPVTotalGeneration:
+    name: Production PV Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantPhaseActivePower:
+    name: Puissance active de la phase {phase}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantPhaseReactivePower:
+    name: Puissance réactive de la phase {phase}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantRatedChargingPower:
+    name: Puissance de Charge Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantRatedDischargingPower:
+    name: Puissance de Décharge Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantRatedEnergyCapacity:
+    name: Capacité Énergétique Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantReactivePower:
+    name: Puissance Réactive
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantRunningState:
+    name: État de Fonctionnement
+    options:
+      '0': Veille
+      '1': Normal
+      '2': Défaut
+      '3': Hors Tension
+      '7': Anomalie Environnementale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantStatistics:
+    name: Statistiques Installation Sigenergy
+  PlantStatus:
+    name: Marche/Arrêt Installation
+    attributes:
+      comment: 0:Arrêter 1:Démarrer
+  PlantTotalExportedEnergy:
+    name: Énergie Exportée Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantTotalGeneratorOutputEnergy:
+    name: Énergie de Sortie Générateur Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PlantTotalImportedEnergy:
+    name: Énergie Importée Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PowerFactor:
+    name: Facteur de Puissance
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PowerFactorAdjustmentTargetValue:
+    name: Valeur Cible d'Ajustement du Facteur de Puissance
+    attributes:
+      comment: "Plage : [(-1,0, -0,8) U (0,8, 1,0)]. Capteur réseau nécessaire. S'applique globalement quel que soit le mode de fonctionnement EMS"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  PowerPlant:
+    name: 'Centrale Sigenergy'
+  ProtocolPublished:
+    name: Protocole Publié
+  ProtocolVersion:
+    name: Version du Protocole
+  QSAdjustmentTargetValue:
+    name: Valeur Cible d'Ajustement Q/S
+    attributes:
+      comment: "Plage : [-60,0, 60,00]. S'applique globalement quel que soit le mode de fonctionnement EMS"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RatedActivePower:
+    name: Puissance Active Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RatedBatteryCapacity:
+    name: Capacité de Batterie Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RatedChargingPower:
+    name: Puissance de Charge Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RatedDischargingPower:
+    name: Puissance de Décharge Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RatedGridFrequency:
+    name: Fréquence Réseau Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RatedGridVoltage:
+    name: Tension Réseau Nominale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReactivePower:
+    name: Puissance Réactive
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReactivePowerFixedAdjustmentTargetValue:
+    name: Valeur Cible d'Ajustement Fixe de Puissance Réactive
+    attributes:
+      comment: "Plage : [-60,00 * valeur de base, 60,00 * valeur de base]. S'applique globalement quel que soit le mode de fonctionnement EMS"
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReadOnlySensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  ReadWriteSensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  RemoteEMS:
+    name: EMS à Distance
+    attributes:
+      comment: Lorsqu'il est nécessaire de contrôler l'EMS à distance, ce registre doit être activé. Une fois activé, le Mode de Travail EMS de l'installation (30003) passera à RemoteEMS
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RemoteEMSControlMode:
+    name: Mode de Contrôle EMS à Distance
+    options:
+      '0': Contrôle PCS à distance
+      '1': Veille
+      '2': Autoconsommation maximale (par défaut)
+      '3': Charge commandée (consommer d'abord l'énergie du réseau)
+      '4': Charge commandée (consommer d'abord l'énergie PV)
+      '5': Décharge commandée (sortie d'énergie PV d'abord)
+      '6': Décharge commandée (sortie d'énergie de la batterie d'abord)
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  RemoteEMSLimit:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{availability_control_sensor}'
+  Reserved30073:
+    name: Réservé
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  Reserved30610:
+    name: Réservé
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  Reserved40026:
+    name: Réservé
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedAccumulatedExportEnergy:
+    name: Énergie Exportée Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedAccumulatedImportEnergy:
+    name: Énergie Importée Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedDailyExportEnergy:
+    name: Énergie Exportée Quotidienne
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedDailyImportEnergy:
+    name: Énergie Importée Quotidienne
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedGridCode:
+    name: Code Réseau
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedGridPhaseCurrent:
+    name: Courant de la phase {phase}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedGridPhaseVoltage:
+    name: Tension de la phase {phase}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedInverterRemoteEMSDispatch:
+    name: Dispatch EMS à Distance
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedPVTotalGenerationToday:
+    name: Production PV Totale Aujourd'hui
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedPVTotalGenerationYesterday:
+    name: Production PV Totale Hier
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ReservedSensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  ResettableAccumulationSensor:
+    name: '{name}'
+  RunningStateSensor:
+    options:
+      "0": Veille
+      "1": Normal
+      "2": Défaut
+      "3": Hors Tension
+      "7": Anomalie Environnementale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  SITotalChargedEnergy:
+    name: Énergie Chargée Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalCommonLoadConsumption:
+    name: Consommation Charge Commune Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalDischargedEnergy:
+    name: Énergie Déchargée Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalEVACChargedEnergy:
+    name: Énergie de Charge CA VE Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalEVDCChargedEnergy:
+    name: Énergie de Charge CC VE Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalEVDCDischargedEnergy:
+    name: Énergie de Décharge CC VE Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalExportedEnergy:
+    name: Énergie Exportée Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalGeneratorOutputEnergy:
+    name: Énergie de Sortie Générateur Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalImportedEnergy:
+    name: Énergie Importée Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalSelfPVGeneration:
+    name: Production PV Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SITotalThirdPartyPVGeneration:
+    name: Production PV Tierce Totale
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SelectSensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  SensorGroup:
+    name: '{sensors}'
+  ShutdownTime:
+    name: Heure d'Arrêt
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SmartLoadPower:
+    name: Puissance de la charge intelligente {smart_load_index}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SmartLoadTotalConsumption:
+    name: Consommation totale de la charge intelligente {smart_load_index}
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SmartPort:
+    name: Smart-Port Installation Sigenergy
+  Started:
+    name: Démarré
+  StartupTime:
+    name: Heure de Démarrage
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  StatisticsInterfaceSensor:
+    attributes:
+      comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  SwitchSensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  SystemTime:
+    name: Heure Système
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  SystemTimeZone:
+    name: Fuseau Horaire Système
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ThirdPartyLifetimePVEnergy:
+    name: Production PV Tierce Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  ThirdPartyPVPower:
+    name: Puissance PV Tierce
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  TimePeriodServiceTopics:
+    name: '{service}'
+  TimestampSensor:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+    name: '{name}'
+  TotalDailyPVEnergy:
+    name: Production PV Quotidienne Totale
+    attributes:
+      source: TotalLifetimePVEnergy − TotalLifetimePVEnergy à minuit
+    name_reset: Régler Production PV Quotidienne Totale
+  TotalLifetimePVEnergy:
+    name: Production PV Totale
+    attributes:
+      source: "Σ de PlantPVTotalGeneration et ThirdPartyLifetimePVEnergy"
+  TotalLoadConsumption:
+    name: Consommation Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  TotalLoadDailyConsumption:
+    name: Consommation Quotidienne
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  TotalLoadPower:
+    name: Puissance Charge Totale
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
+  TotalPVPower:
+    name: Puissance PV Totale
+    attributes:
+      source: Puissance PV + Puissance PV Tierce
+  WriteOnlySensor:
+    name_on: Allumer
+    name_off: Éteindre
+    name: '{name}'
+cli:
+  SIGENERGY2MQTT_CONFIG:
+    help: 'Le chemin vers le fichier de configuration JSON (par défaut: /etc/sigenergy2mqtt.yaml)'
+  SIGENERGY2MQTT_CONSUMPTION:
+    help: "Définir la méthode de calcul du capteur de Puissance Consommée de l'Installation. Valeurs valides: 'calculated', 'total' (registre Puissance de Charge Totale), ou 'general' (registre Puissance de Charge Générale V2.8). Par défaut: 'calculated'. Cette option est ignorée sur les firmwares antérieurs au Protocole Modbus V2.8."
+  SIGENERGY2MQTT_DEBUG_SENSOR:
+    help: "Spécifier un capteur à déboguer en utilisant l'ID d'entité complet ou partiel ou le nom de classe du capteur (ex: 'daily' correspondrait à tous les capteurs contenant 'daily' dans leur nom), ou une expression régulière (ex: '^PowerFactor$' ne correspond qu'à ce seul nom de classe). Si spécifié, --log-level est également forcé à DEBUG."
+  SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
+    help: "Le préfixe pour les noms d'entité Home Assistant. Exemple: Un préfixe 'prefix' ajoutera 'prefix ' aux noms (par défaut: '')"
+  SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
+    help: 'Le préfixe du topic MQTT Discovery de Home Assistant (par défaut: homeassistant)'
+  SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
+    help: Lors de l'édition de capteurs de pourcentage, utiliser une zone de saisie numérique (true) ou un curseur (false).
+  SIGENERGY2MQTT_HASS_ENABLED:
+    help: Activer l'auto-découverte dans Home Assistant.
+  SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
+    help: "Le préfixe pour les IDs d'entité Home Assistant. Exemple: Un préfixe 'prefix' ajoutera 'prefix_' aux IDs d'entité (par défaut: sigen)"
+  SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
+    help: "Le préfixe pour les IDs uniques Home Assistant. Exemple: Un préfixe 'prefix' ajoutera 'prefix_' aux IDs uniques (par défaut: sigen). Une fois défini, ne JAMAIS le changer, cela casserait les entités existantes dans Home Assistant."
+  SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
+    help: Activer la structure de topic simplifiée (sigenergy2mqtt/object_id/state) au lieu de la structure complète Home Assistant (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_LANGUAGE:
+    help: "Définir la langue pour les traductions. Par défaut déterminé par le système (ex: variable d'environnement LANG) ou anglais si aucune alternative n'est trouvée."
+  SIGENERGY2MQTT_LOG_LEVEL:
+    help: 'Définir le niveau de journalisation. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
+  SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
+    help: L'ID de dispositif Modbus du Chargeur CA Sigenergy. Plusieurs IDs peuvent être spécifiés, séparés par des virgules.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
+    help: Tenter l'auto-découverte des hôtes Modbus Sigenergy et des IDs de dispositif. Si 'once' est spécifié, l'auto-découverte ne se produira que si aucun résultat précédent n'est trouvé. Si 'force', écrasera les hôtes Modbus et IDs précédemment découverts. Si non spécifié, l'auto-découverte est désactivée.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
+    help: "Le délai de ping en secondes pour l'auto-découverte des dispositifs Sigenergy sur le réseau. Par défaut: 0,5 secondes."
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
+    help: "Le nombre maximum de réessais Modbus pour l'auto-découverte des dispositifs Sigenergy sur le réseau. Par défaut: 0."
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
+    help: "Le délai Modbus en secondes pour l'auto-découverte des dispositifs Sigenergy sur le réseau. Par défaut: 0,25 secondes."
+  SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
+    help: L'ID de dispositif Modbus du Chargeur CC Sigenergy. Plusieurs IDs peuvent être spécifiés, séparés par des virgules.
+  SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
+    help: Désactiver le découpage Modbus lors de la lecture des registres et lire chaque registre individuellement.
+  SIGENERGY2MQTT_MODBUS_HOST:
+    help: Le nom d'hôte ou l'adresse IP du dispositif Sigenergy
+  SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
+    help: L'ID de dispositif Modbus de l'Onduleur Sigenergy. Plusieurs IDs peuvent être spécifiés, séparés par des virgules.
+  SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
+    help: 'Définir le niveau de journalisation pymodbus. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
+  SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
+    help: Ne pas publier les capteurs lecture-écriture pour l'intégration du Système de Gestion d'Énergie (EMS) distant vers MQTT. Ignoré si --modbus-read-only est spécifié.
+  SIGENERGY2MQTT_MODBUS_PORT:
+    help: 'Le numéro de port Modbus du dispositif Sigenergy (par défaut: 502)'
+  SIGENERGY2MQTT_MODBUS_READ_ONLY:
+    help: Publier uniquement les capteurs en lecture seule vers MQTT. Ni les capteurs lecture-écriture ni écriture seule ne seront publiés si spécifié.
+  SIGENERGY2MQTT_MODBUS_RETRIES:
+    help: "Le nombre maximum de réessais pour une opération Modbus en cas d'échec. Par défaut: 3."
+  SIGENERGY2MQTT_MODBUS_TIMEOUT:
+    help: 'Le délai pour la connexion et la réception des données Modbus, en secondes (utiliser les décimales pour les millisecondes). Par défaut: 1,0.'
+  SIGENERGY2MQTT_MQTT_ANONYMOUS:
+    help: Autoriser la connexion anonyme au broker MQTT (sans nom d'utilisateur/mot de passe). Si spécifié, les options --mqtt-username et --mqtt-password sont ignorées.
+  SIGENERGY2MQTT_MQTT_BROKER:
+    help: "Le nom d'hôte ou l'adresse IP du broker MQTT (par défaut: 127.0.0.1)"
+  SIGENERGY2MQTT_MQTT_KEEPALIVE:
+    help: La période maximale en secondes entre les communications avec le broker. Si aucun autre message n'est échangé, cela contrôle la fréquence des messages ping envoyés au broker. Par défaut 60, minimum 1.
+  SIGENERGY2MQTT_MQTT_LOG_LEVEL:
+    help: 'Définir le niveau de journalisation paho.mqtt. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
+  SIGENERGY2MQTT_MQTT_PASSWORD:
+    help: Un mot de passe valide pour l'utilisateur du broker MQTT
+  SIGENERGY2MQTT_MQTT_PORT:
+    help: Le port d'écoute du broker MQTT (par défaut 1883, sauf si --mqtt-tls est spécifié, auquel cas le défaut est 8883)
+  SIGENERGY2MQTT_MQTT_TLS:
+    help: Activer la communication sécurisée vers le broker MQTT via TLS/SSL. Si spécifié, le port MQTT par défaut est 8883.
+  SIGENERGY2MQTT_MQTT_TLS_INSECURE:
+    help: Activer la communication non sécurisée via TLS. Si votre broker utilise un certificat auto-signé, vous devez spécifier cette option. Ignoré sauf si --mqtt-tls est aussi spécifié.
+  SIGENERGY2MQTT_MQTT_TRANSPORT:
+    help: 'Définir le mécanisme de transport MQTT. Doit être websockets ou tcp. Par défaut: tcp.'
+  SIGENERGY2MQTT_MQTT_USERNAME:
+    help: Un nom d'utilisateur valide pour le broker MQTT
+  SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
+    help: Désactiver la validation qui désactive les limites ESS Max Charge/Décharge et PV Max Puissance lorsque le Mode de Contrôle EMS Distant n'est pas Charge/Décharge par Commande.
+  SIGENERGY2MQTT_NO_METRICS:
+    help: Ne pas publier les métriques sigenergy2mqtt.
+  SIGENERGY2MQTT_PVOUTPUT_API_KEY:
+    help: La clé API pour PVOutput
+  SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
+    help: Activer l'envoi des données de consommation à PVOutput. Peut être spécifié sans valeur (par défaut 'consumption') ou comme 'net-of-battery', 'consumption', ou 'imported'. Si non spécifié, aucune donnée de consommation n'est envoyée.
+  SIGENERGY2MQTT_PVOUTPUT_ENABLED:
+    help: Activer les mises à jour de statut vers PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
+    help: Activer l'envoi des données d'exportation à PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
+    help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v10 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
+    help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v11 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
+    help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v12 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
+    help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v7 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
+    help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v8 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
+  SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
+    help: Un nom de classe de capteur, ou ID d'entité sans le préfixe 'sensor.', qui sera utilisé pour le champ étendu v9 dans PVOutput. Si non spécifié OU si votre statut de don n'est pas à jour, ce champ ne sera pas envoyé à PVOutput. Vous pouvez utiliser tout capteur avec une valeur numérique.
+  SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
+    help: Activer l'envoi des données d'importation à PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
+    help: 'Définir le niveau de journalisation PVOutput. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
+  SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
+    help: "L'heure du jour (20-23) à laquelle les totaux journaliers sont envoyés à PVOutput. Par défaut 23 (23h). Valeurs valides: 20 à 23. La minute est choisie aléatoirement entre 56 et 59. Si vous spécifiez -1, les téléchargements quotidiens seront envoyés à la même fréquence que les mises à jour de statut."
+  SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
+    help: L'ID Système PVOutput
+  SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
+    help: Un topic MQTT à partir duquel la température actuelle peut être lue. Utilisé pour envoyer la température à PVOutput. Si non spécifié, la température ne sera pas envoyée à PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
+    help: "La source de la valeur de tension à envoyer à PVOutput. Valeurs valides: phase-a, phase-b, phase-c, l/n-avg (moyenne ligne-neutre), l/l-avg (moyenne ligne-ligne) ou pv (moyenne sur les chaînes PV). Par défaut: 'l/n-avg'."
+  SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
+    help: La valeur par défaut en kW utilisée pour les vérifications de cohérence pour valider les valeurs maximales et minimales des capteurs de puissance et la valeur delta des capteurs d'énergie. La valeur par défaut est 500 kW par seconde, les lectures hors plage sont ignorées.
+  SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
+    help: L'intervalle de scan en secondes pour les registres Modbus à scanner à haute fréquence. Par défaut 10 (secondes), valeur minimale 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
+    help: L'intervalle de scan en secondes pour les registres Modbus à scanner à basse fréquence. Par défaut 600 (secondes), valeur minimale 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
+    help: L'intervalle de scan en secondes pour les registres Modbus à scanner à fréquence moyenne. Par défaut 60 (secondes), valeur minimale 1.
+  SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
+    help: L'intervalle de scan en secondes pour les registres Modbus à scanner en temps quasi réel. Par défaut 5 (secondes), valeur minimale 1.
+  SIGENERGY2MQTT_SMARTPORT_ENABLED:
+    help: Activer l'interrogation d'un dispositif tiers pour les données de production.
+  SIGENERGY2MQTT_SMARTPORT_HOST:
+    help: L'adresse IP ou le nom d'hôte du dispositif tiers.
+  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
+    help: Le nom du module qui sera utilisé pour obtenir les données de production du dispositif tiers.
+  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
+    help: 'Le gain à appliquer aux données de production du dispositif tiers obtenues du topic MQTT (ex: 1000 si les données sont en kW). Par défaut: 1 (Watts).'
+  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
+    help: Le topic MQTT auquel s'abonner pour obtenir les données de production du dispositif tiers.
+  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
+    help: Le mot de passe pour s'authentifier auprès du dispositif tiers.
+  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
+    help: La classe de capteur pour stocker les données de production du dispositif tiers.
+  SIGENERGY2MQTT_SMARTPORT_USERNAME:
+    help: Le nom d'utilisateur pour s'authentifier auprès du dispositif tiers.
+  clean:
+    help: Publier une découverte vide pour supprimer les dispositifs existants, puis quitter immédiatement.
+  discovery_only:
+    help: Quitter immédiatement après la publication de la découverte. Ne lit pas les valeurs de l'interface Modbus, sauf pour sonder la configuration du dispositif.
+  show_version:
+    help: Affiche le numéro de version, puis quitte immédiatement.
+  validate_only:
+    help: Valide la configuration, puis quitte immédiatement.

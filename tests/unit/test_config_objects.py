@@ -1,11 +1,13 @@
-import pytest
-from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration, ConsumptionSource, VoltageSource, TariffType, OutputField
-from datetime import time
 import logging
-from sigenergy2mqtt.config.smart_port_config import SmartPortConfig, ModuleConfig, TopicConfig  # noqa: F401
-from sigenergy2mqtt.config.modbus_config import DeviceConfig
+from datetime import time
+
+import pytest
+
+from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
+from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
+from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
+from sigenergy2mqtt.config.pvoutput_config import ConsumptionSource, OutputField, PVOutputConfiguration, TariffType, VoltageSource
+from sigenergy2mqtt.config.smart_port_config import ModuleConfig, SmartPortConfiguration, TopicConfig  # noqa: F401
 
 
 class TestHomeAssistantConfiguration:
@@ -27,7 +29,6 @@ class TestHomeAssistantConfiguration:
             {
                 "enabled": True,
                 "device-name-prefix": "MyHome",
-                "discovery-only": True,
                 "discovery-prefix": "ha",
                 "edit-pct-box": True,
                 "entity-id-prefix": "test_sigen",
@@ -38,7 +39,7 @@ class TestHomeAssistantConfiguration:
             }
         )
         assert config.device_name_prefix == "MyHome"
-        assert config.discovery_only is True
+        assert config.discovery_only is False
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
         assert config.entity_id_prefix == "test_sigen"
@@ -56,6 +57,19 @@ class TestHomeAssistantConfiguration:
         config = HomeAssistantConfiguration()
         with pytest.raises(ValueError, match="must contain options and their values"):
             config.configure("not a dict")
+
+    def test_configure_false_values(self):
+        config = HomeAssistantConfiguration()
+        # Set to True first
+        config.configure({"enabled": True, "edit-pct-box": True, "sensors-enabled-by-default": True, "use-simplified-topics": True})
+        assert config.enabled is True
+        # Now set to False (keep enabled=True so other fields are processed)
+        config.configure({"enabled": True, "edit-pct-box": False, "sensors-enabled-by-default": False, "use-simplified-topics": False})
+        assert config.enabled is True
+        assert config.discovery_only is False
+        assert config.edit_percentage_with_box is False
+        assert config.enabled_by_default is False
+        assert config.use_simplified_topics is False
 
 
 class TestMqttConfiguration:
@@ -92,6 +106,17 @@ class TestMqttConfiguration:
         assert config.password == "pass"
         assert config.log_level == logging.DEBUG
         assert config.tls_insecure is True
+
+    def test_configure_false_values(self):
+        config = MqttConfiguration()
+        # Set to True first
+        config.configure({"tls": True, "anonymous": True, "tls-insecure": True})
+        assert config.tls is True
+        # Now set to False
+        config.configure({"tls": False, "anonymous": False, "tls-insecure": False})
+        assert config.tls is False
+        assert config.anonymous is False
+        assert config.tls_insecure is False
 
 
 class TestPVOutputConfiguration:
@@ -146,6 +171,19 @@ class TestPVOutputConfiguration:
         config.configure({"enabled": True, "system-id": "testing"})
         assert config.testing is True
 
+    def test_configure_false_values(self):
+        config = PVOutputConfiguration()
+        # Set to True first
+        config.configure({"enabled": True, "api-key": "ABCDEF1234567890ABCDEF1234567890", "system-id": "12345", "exports": True, "imports": True, "calc-debug-logging": True, "update-debug-logging": True})
+        assert config.enabled is True
+        # Now set to False (keep enabled=True so other fields are processed)
+        config.configure({"enabled": True, "exports": False, "imports": False, "calc-debug-logging": False, "update-debug-logging": False})
+        assert config.enabled is True
+        assert config.exports is False
+        assert config.imports is False
+        assert config.calc_debug_logging is False
+        assert config.update_debug_logging is False
+
     def test_type_to_output_fields(self):
         config = PVOutputConfiguration()
 
@@ -181,13 +219,13 @@ class TestPVOutputConfiguration:
 
 class TestSmartPortConfiguration:
     def test_default_values(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         assert config.enabled is False
         assert isinstance(config.module, ModuleConfig)
         assert config.mqtt == []
 
     def test_configure_module(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         config.configure({"enabled": True, "module": {"name": "enphase", "host": "1.2.3.4", "port": 80, "username": "admin", "password": "password", "pv-power": "envoy/production/inverters"}})
         assert config.enabled is True
         assert config.module.name == "enphase"
@@ -198,7 +236,7 @@ class TestSmartPortConfiguration:
         assert config.module.pv_power == "envoy/production/inverters"
 
     def test_configure_mqtt_topics(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         # This test will likely expose the bug where it only returns the first topic
         config.configure({"enabled": True, "module": {"name": "enphase"}, "mqtt": [{"topic": "topic/1", "gain": 1}, {"topic": "topic/2", "gain": 10}]})
         assert len(config.mqtt) == 2
@@ -206,21 +244,21 @@ class TestSmartPortConfiguration:
         assert config.mqtt[1].topic == "topic/2"
 
     def test_configure_invalid_enabled_combination(self):
-        config = SmartPortConfig()
+        config = SmartPortConfiguration()
         with pytest.raises(ValueError, match="no module name or MQTT topics configured"):
             config.configure({"enabled": True})
 
 
 class TestDeviceConfig:
     def test_default_values(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         assert config.host == ""
         assert config.port == 502
         assert config.retries == 3
         assert config.timeout == 1.0
 
     def test_configure_basic_fields(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure({"host": "192.168.1.50", "port": 503, "retries": 5, "timeout": 2.0, "disable-chunking": True, "log-level": "INFO"})
         assert config.host == "192.168.1.50"
         assert config.port == 503
@@ -230,7 +268,7 @@ class TestDeviceConfig:
         assert config.log_level == logging.INFO
 
     def test_configure_registers_and_intervals(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure(
             {"no-remote-ems": True, "read-only": False, "read-write": False, "write-only": False, "scan-interval-low": 1200, "scan-interval-medium": 120, "scan-interval-high": 20, "scan-interval-realtime": 2}
         )
@@ -244,14 +282,31 @@ class TestDeviceConfig:
         assert config.scan_interval.realtime == 2
 
     def test_configure_device_lists(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure({"inverters": [1, 2, 3], "ac-chargers": [10], "dc-chargers": [20, 21]})
         assert config.inverters == [1, 2, 3]
         assert config.ac_chargers == [10]
         assert config.dc_chargers == [20, 21]
 
     def test_configure_default_inverter(self):
-        config = DeviceConfig()
+        config = ModbusConfiguration()
         config.configure({"host": "localhost"})
         # Should default to [1] if empty
         assert config.inverters == [1]
+
+    def test_configure_boolean_toggles(self):
+        config = ModbusConfiguration()
+        # Test toggling all booleans
+        config.configure({"disable-chunking": True, "no-remote-ems": True, "read-only": True, "read-write": True, "write-only": True})
+        assert config.disable_chunking is True
+        assert config.registers.no_remote_ems is True
+        assert config.registers.read_only is True
+        assert config.registers.read_write is True
+        assert config.registers.write_only is True
+
+        config.configure({"disable-chunking": False, "no-remote-ems": False, "read-only": False, "read-write": False, "write-only": False})
+        assert config.disable_chunking is False
+        assert config.registers.no_remote_ems is False
+        assert config.registers.read_only is False
+        assert config.registers.read_write is False
+        assert config.registers.write_only is False

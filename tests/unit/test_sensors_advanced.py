@@ -1,6 +1,7 @@
-import pytest
 import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Mock circular dependencies before importing sensors.base
 mock_types = MagicMock()
@@ -16,11 +17,31 @@ class MockPVInverter:
 
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.devices.types"] = mock_types
+sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
+from sigenergy2mqtt.common import Protocol  # noqa: E402
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
-from sigenergy2mqtt.config import Protocol  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def mock_config():
+    """Mock Config for all tests in this module."""
+    with patch("sigenergy2mqtt.sensors.base.Config") as mock_conf:
+        import types
+
+        mock_conf.home_assistant = types.SimpleNamespace(
+            enabled=True,
+            use_simplified_topics=False,
+            edit_percentage_with_box=False,
+            discovery_prefix="homeassistant",
+            unique_id_prefix="sigen",
+            entity_id_prefix="sigenergy",
+            enabled_by_default=True,
+        )
+        mock_conf.sensor_debug_logging = False
+        mock_conf.sensor_overrides = {}
+        yield mock_conf
 
 
 # Concrete implementation of Sensor for testing
@@ -39,7 +60,7 @@ class ConcreteSensor(Sensor):
                 precision=2,
                 protocol_version=Protocol.V2_4,
             )
-            self._test_value = None
+            self._test_value: float | None = None
 
     async def _update_internal_state(self, **kwargs):
         if self._test_value is not None:
@@ -106,7 +127,7 @@ class TestSensorStateManagement:
         """Test state2raw applies precision during conversion."""
         sensor = ConcreteSensor()
         sensor._gain = 1.0
-        sensor._precision = 2
+        sensor.precision = 2
 
         raw = sensor.state2raw(42.123456)
 

@@ -1,6 +1,8 @@
-import pytest
 import logging
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from sigenergy2mqtt.main.main import configure_logging, get_state
 
 
@@ -65,7 +67,7 @@ class TestGetState:
 
         assert sensor == mock_sensor
         assert state == 42.5
-        mock_sensor.get_state.assert_called_once_with(raw=False, modbus=mock_modbus)
+        mock_sensor.get_state.assert_called_once_with(raw=False, modbus_client=mock_modbus)
 
     @pytest.mark.asyncio
     async def test_get_state_with_raw(self):
@@ -81,7 +83,7 @@ class TestGetState:
         sensor, state = await get_state(mock_sensor, mock_modbus, "test_device", raw=True)
 
         assert state == 100
-        mock_sensor.get_state.assert_called_once_with(raw=True, modbus=mock_modbus)
+        mock_sensor.get_state.assert_called_once_with(raw=True, modbus_client=mock_modbus)
 
     @pytest.mark.asyncio
     async def test_get_state_exception_returns_default(self):

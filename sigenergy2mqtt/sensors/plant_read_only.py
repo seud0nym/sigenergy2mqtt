@@ -1,4 +1,9 @@
-from typing import Any, Dict
+from datetime import timedelta, timezone
+from typing import Any, cast
+
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .base import (
     Alarm1Sensor,
@@ -17,12 +22,7 @@ from .base import (
     StateClass,
     TimestampSensor,
 )
-from datetime import timedelta, timezone
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
-
+from .const import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 # 5.1 Plant running information address definition(read-only register)
 
@@ -36,7 +36,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=30000,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V1_8,
         )
 
@@ -51,8 +51,8 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30002,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -69,11 +69,13 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             return None
         elif raw:
             return value
-        else:
+        elif isinstance(value, (float, int)):
             offset = timedelta(minutes=value)
             tz = timezone(offset)
             formatted_offset = tz.tzname(None)
             return formatted_offset
+        else:
+            return None
 
     def state2raw(self, state) -> float | int | str:
         if isinstance(state, str):
@@ -96,8 +98,8 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30003,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -110,14 +112,16 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "Max Self Consumption",  # 0
             "Sigen AI",  # 1
             "Time of Use",  # 2
-            None,  # 3
-            None,  # 4
+            "",  # 3
+            "",  # 4
             "Full Feed-in to Grid",  # 5
-            None,  # 6
+            "VPP Scheduling",  # 6 (https://github.com/TypQxQ/Sigenergy-Local-Modbus/pull/289)
             "Remote EMS",  # 7
-            None,  # 8
+            "",  # 8
             "Time-Based Control",  # 9
         ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -125,8 +129,12 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1) and self["options"][value] is not None:
-            return self["options"][value]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown Mode: {value}"
         else:
             return f"Unknown Mode: {value}"
 
@@ -141,8 +149,8 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30004,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -156,6 +164,8 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             "Not Connected",  # 0
             "Connected",  # 1
         ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -163,12 +173,12 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)):
+            return self._get_option(int(value)) or f"Unknown Status: {value}"
         else:
             return f"Unknown Status: {value}"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Gateway or meter connection status"
         return attributes
@@ -184,8 +194,8 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30005,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -195,10 +205,10 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.max_raw = 100000  # 100kW
-        self._sanity.min_raw = -100000  # -100kW
+        self.sanity_check.max_raw = 100000  # 100kW
+        self.sanity_check.min_raw = -100000  # -100kW
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
         return attributes
@@ -214,8 +224,8 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30007,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,  # UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -225,7 +235,7 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
         return attributes
@@ -241,8 +251,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30009,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -257,6 +267,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             "Off Grid (auto)",  # 1
             "Off Grid (manual)",  # 2
         ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -264,8 +276,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)):
+            return self._get_option(int(value)) or f"Unknown Status: {value}"
         else:
             return f"Unknown Status: {value}"
 
@@ -280,8 +292,8 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30010,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -292,7 +304,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "This should be the base value of all active power adjustment actions"
         return attributes
@@ -308,9 +320,9 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30012,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
-            unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
+            unit=UnitOfApparentPower.KILOVOLT_AMPERE,
             device_class=None,
             state_class=None,
             icon="mdi:lightning-bolt",
@@ -320,7 +332,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "This should be the base value of all reactive power adjustment actions"
         return attributes
@@ -336,8 +348,8 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30014,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=StateClass.MEASUREMENT,
@@ -368,8 +380,8 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -377,6 +389,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -399,8 +412,8 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -408,6 +421,7 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -422,7 +436,7 @@ class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -439,7 +453,7 @@ class GeneralAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -454,10 +468,10 @@ class GeneralPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
-        attributes["source"] = "Modbus Registers 30027 and 30028"
+        attributes["source"] = "Modbus Registers 30027-30028"
         return attributes
 
 
@@ -472,7 +486,7 @@ class GeneralAlarm3(Alarm3Sensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -489,7 +503,7 @@ class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -505,8 +519,8 @@ class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30031,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -527,8 +541,8 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30033,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -549,8 +563,8 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             device_address=247,
             address=30035,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -572,8 +586,8 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30037,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -584,7 +598,7 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "ESS Power: <0 = discharging >0 = charging"
         return attributes
@@ -600,8 +614,8 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30039,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -612,7 +626,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Feed to the AC terminal. Count only the running inverters"
         return attributes
@@ -628,8 +642,8 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30041,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -640,7 +654,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
         return attributes
@@ -656,8 +670,8 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30043,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -668,7 +682,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Feed to the AC terminal. Count only the running inverters"
         return attributes
@@ -685,8 +699,8 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30045,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -697,7 +711,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["entity_category"] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
         return attributes
@@ -713,8 +727,8 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30047,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -724,7 +738,7 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Count only the running inverters"
         return attributes
@@ -740,8 +754,8 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30049,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -751,7 +765,7 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Absorb from the AC terminal. Count only the running inverters"
         return attributes
@@ -788,8 +802,8 @@ class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -797,9 +811,10 @@ class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid"
         return attributes
@@ -824,8 +839,8 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -833,9 +848,10 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
         return attributes
@@ -851,8 +867,8 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30064,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -862,7 +878,7 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Count only the running inverters"
         return attributes
@@ -878,8 +894,8 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30066,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -889,7 +905,7 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Count only the running inverters"
         return attributes
@@ -905,8 +921,8 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30068,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -928,8 +944,8 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30070,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -952,7 +968,7 @@ class GeneralAlarm5(Alarm5Sensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
         return attributes
@@ -968,8 +984,8 @@ class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
             device_address=247,
             address=30073,
             count=10,
-            data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.STRING,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -990,8 +1006,8 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30083,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -1013,8 +1029,8 @@ class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30085,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=None,
@@ -1035,8 +1051,8 @@ class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30086,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=None,
@@ -1057,8 +1073,8 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
             device_address=247,
             address=30087,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=StateClass.MEASUREMENT,
@@ -1069,7 +1085,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight"
         return attributes
@@ -1085,8 +1101,8 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30088,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1107,8 +1123,8 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30092,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1119,10 +1135,10 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1137,8 +1153,8 @@ class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30094,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1150,8 +1166,8 @@ class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1167,8 +1183,8 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1176,6 +1192,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_6,
+            smart_load_index=f"{smart_load_index:02}",
         )
 
 
@@ -1190,8 +1207,8 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -1199,6 +1216,7 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_6,
+            smart_load_index=f"{smart_load_index:02}",
         )
 
 
@@ -1212,8 +1230,8 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
             device_address=247,
             address=30194,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -1234,8 +1252,8 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
             device_address=247,
             address=30196,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1256,8 +1274,8 @@ class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30200,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1269,8 +1287,8 @@ class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1285,8 +1303,8 @@ class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30204,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1298,8 +1316,8 @@ class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1314,8 +1332,8 @@ class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30208,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1336,8 +1354,8 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30212,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1358,8 +1376,8 @@ class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30216,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1371,8 +1389,8 @@ class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1387,8 +1405,8 @@ class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30220,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1400,8 +1418,8 @@ class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
         return components
 
@@ -1416,8 +1434,8 @@ class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter
             device_address=247,
             address=30224,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1443,14 +1461,14 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
         input_type: InputType = InputType.INPUT,
         device_address: int = 247,
         count: int = 4,
-        data_type: ModbusClient.DATATYPE = ModbusClient.DATATYPE.UINT64,
+        data_type: ModbusDataType = ModbusDataType.UINT64,
         unit: str = UnitOfEnergy.KILO_WATT_HOUR,
         device_class: DeviceClass = DeviceClass.ENERGY,
         state_class: StateClass = StateClass.TOTAL_INCREASING,
         gain: float = 100,
         precision: int = 2,
         protocol_version: Protocol = Protocol.V2_7,
-        unique_id_override: str = None,
+        unique_id_override: str | None = None,
     ):
         super().__init__(
             name=name,
@@ -1472,7 +1490,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=unique_id_override,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data"
         return attributes
@@ -1485,7 +1503,7 @@ class SITotalCommonLoadConsumption(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_common_load_consumption",
             plant_index=plant_index,
             address=30228,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:home-lightning-bolt-outline",
         )
 
@@ -1497,7 +1515,7 @@ class SITotalEVACChargedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_ev_ac_charged_energy",
             plant_index=plant_index,
             address=30232,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             icon="mdi:ev-station",
         )
 
@@ -1509,7 +1527,7 @@ class SITotalSelfPVGeneration(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_self_pv_generation",
             plant_index=plant_index,
             address=30236,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             icon="mdi:solar-power-variant",
         )
 
@@ -1521,7 +1539,7 @@ class SITotalThirdPartyPVGeneration(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_si_total_third_party_pv_generation",
             plant_index=plant_index,
             address=30240,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             icon="mdi:solar-power-variant",
         )
 
@@ -1533,7 +1551,7 @@ class SITotalChargedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_charged_energy",
             plant_index=plant_index,
             address=30244,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:battery-arrow-up",
         )
 
@@ -1545,7 +1563,7 @@ class SITotalDischargedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_discharged_energy",
             plant_index=plant_index,
             address=30248,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:battery-arrow-down",
         )
 
@@ -1557,7 +1575,7 @@ class SITotalEVDCChargedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_evdc_total_charge_energy",
             plant_index=plant_index,
             address=30252,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:ev-station",
         )
 
@@ -1569,7 +1587,7 @@ class SITotalEVDCDischargedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_evdc_total_discharge_energy",
             plant_index=plant_index,
             address=30256,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:ev-station",
         )
 
@@ -1581,7 +1599,7 @@ class SITotalImportedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_imported_energy",
             plant_index=plant_index,
             address=30260,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:transmission-tower-import",
         )
 
@@ -1593,7 +1611,7 @@ class SITotalExportedEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_exported_energy",
             plant_index=plant_index,
             address=30264,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:transmission-tower-export",
         )
 
@@ -1605,7 +1623,7 @@ class SITotalGeneratorOutputEnergy(StatisticsInterfaceSensor):
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_si_total_generator_output_energy",
             plant_index=plant_index,
             address=30268,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             icon="mdi:generator-stationary",
         )
 
@@ -1623,8 +1641,8 @@ class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter)
             device_address=247,
             address=30272,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1645,8 +1663,8 @@ class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInver
             device_address=247,
             address=30274,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1667,8 +1685,8 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30276,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1690,8 +1708,8 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30277,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1713,8 +1731,8 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30279,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -1724,7 +1742,7 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Use of Remote Output Control in Japan"
         return attributes
@@ -1743,14 +1761,6 @@ class Alarm6(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "Gateway communication abnormal"
@@ -1781,14 +1791,6 @@ class Alarm7(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "OVGR fault"
@@ -1808,9 +1810,9 @@ class PlantAlarms(AlarmCombinedSensor):
             Alarm7(plant_index),
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 30280 and 30281"
+        attributes["source"] = "Modbus Registers 30280-30281"
         return attributes
 
 
@@ -1824,8 +1826,8 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30282,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -1846,8 +1848,8 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=247,
             address=30284,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -1877,8 +1879,8 @@ class ReservedGridPhaseVoltage(ReservedSensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1886,6 +1888,7 @@ class ReservedGridPhaseVoltage(ReservedSensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_8,
+            phase=phase,
         )
 
 
@@ -1908,8 +1911,8 @@ class ReservedGridPhaseCurrent(ReservedSensor, HybridInverter, PVInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -1917,4 +1920,5 @@ class ReservedGridPhaseCurrent(ReservedSensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V2_8,
+            phase=phase,
         )

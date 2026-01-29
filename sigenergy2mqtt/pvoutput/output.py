@@ -1,16 +1,20 @@
-from .service import Service
-from .service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
-from .topic import Topic
-from datetime import datetime, timedelta
-from random import randint
-from sigenergy2mqtt.config import Config, OutputField
-from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from typing import Any, Awaitable, List
 import asyncio
 import logging
 import re
-import requests
 import time
+from datetime import datetime, timedelta
+from random import randint
+from typing import Any, Awaitable
+
+import paho.mqtt.client as mqtt
+import requests
+
+from sigenergy2mqtt.config import Config, OutputField
+from sigenergy2mqtt.mqtt import MqttHandler
+
+from .service import Service
+from .service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
+from .topic import Topic
 
 
 class PVOutputOutputService(Service):
@@ -22,17 +26,17 @@ class PVOutputOutputService(Service):
         _eo = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_OFF_PEAK)
         _ep = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_PEAK)
         _es = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_SHOULDER)
-        _e = ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, periods=(_eh, _eo, _ep, _es))
+        _e = ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, periods=[_eh, _eo, _ep, _es])
         _g = ServiceTopics(self, False, logger, value_key=OutputField.GENERATION)  # Disable EoD generation update because it is updated via the status service
         _ih = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_HIGH_SHOULDER)
         _io = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_OFF_PEAK)
         _ip = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_PEAK)
         _is = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_SHOULDER)
-        _i = ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, periods=(_ih, _io, _ip, _is))  # Dummy parent for import periods
+        _i = ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, periods=[_ih, _io, _ip, _is])  # Dummy parent for import periods
         _pp = ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calc=Calculation.SUM | Calculation.PEAK)
 
-        self._latest_peak_at: str = None
-        self._previous_payload: dict = None
+        self._latest_peak_at: str | None = None
+        self._previous_payload: dict | None = None
         self._service_topics: dict[str, ServiceTopics] = {
             OutputField.GENERATION: _g,
             OutputField.IMPORTS: _i,
@@ -54,15 +58,15 @@ class PVOutputOutputService(Service):
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
             else:
-                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
+                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field}")
 
-    def _create_payload(self, now_struct: time.struct_time, interval: int) -> dict[str, int | str]:
-        payload = {"d": time.strftime("%Y%m%d", now_struct)}
+    def _create_payload(self, now_struct: time.struct_time, interval: int) -> dict[str, float | int | str]:
+        payload: dict[str, float | int | str] = {"d": time.strftime("%Y%m%d", now_struct)}
         for topic in [t for t in self._service_topics.values() if t.enabled]:
             topic.add_to_payload(payload, interval, now_struct)
         return payload
 
-    def _is_payload_changed(self, payload: dict[str, str | int]) -> bool:
+    def _is_payload_changed(self, payload: dict[str, float | int | str]) -> bool:
         if payload and self._previous_payload and len(payload) == len(self._previous_payload):
             for key, value in self._previous_payload.items():
                 if key not in payload or payload[key] != value:
@@ -88,17 +92,20 @@ class PVOutputOutputService(Service):
                     next = tomorrow.timestamp()
         return next
 
-    async def _upload(self, payload: dict[str, int | str], last_upload_of_day: bool = False) -> None:
+    async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
         upload_retries: int = 5 if last_upload_of_day else 2
+        uploaded: bool = False
         changed: bool = self._is_payload_changed(payload)
-        matches: bool = None
-        for attempt in range(1, upload_retries + 1, 1):
+        matches: bool = False
+        attempt: int = 0
+        for i in range(1, upload_retries + 1, 1):
+            attempt = i
             if changed:
                 uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             else:
-                uploaded = None
+                uploaded = False
                 self.logger.info(f"{self.__class__.__name__} Skipped uploading unchanged {payload=}")
-            if last_upload_of_day or not changed:
+            if last_upload_of_day:
                 matches = await self._verify(payload, force=last_upload_of_day)
                 if matches:
                     break
@@ -106,23 +113,24 @@ class PVOutputOutputService(Service):
                     changed = True  # Force re-upload if verification failed
                     if last_upload_of_day and attempt > 1:
                         break
-            elif uploaded or not changed:
+            elif uploaded:
                 break
         self.logger.debug(f"{self.__class__.__name__} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
         if changed and Config.pvoutput.output_hour == -1:
             self._previous_payload = payload
 
-    async def _verify(self, payload: dict[str, int | str], force: bool = False) -> bool:
+    async def _verify(self, payload: dict[str, float | int | str], force: bool = False) -> bool:
         self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
         url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if Config.pvoutput.exports else ''}"
         verify_retries: int = 3 if force else 1
         initial_wait: float = 0.1 if not force or Config.pvoutput.testing else 120.0
         subsequent_wait: float = 0.1 if Config.pvoutput.testing else 60.0
+        matches: bool = False
         for validate in range(1, verify_retries + 1, 1):
-            matches: bool = True
             wait: float = initial_wait if validate == 1 else subsequent_wait
             self.logger.debug(f"{self.__class__.__name__} Waiting for {wait}s before checking that the upload has been processed successfully...")
             await asyncio.sleep(wait)
+            result = {}
             try:
                 if Config.pvoutput.testing:
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
@@ -131,6 +139,7 @@ class PVOutputOutputService(Service):
                             r"[,]",
                             f"{payload['d']},{payload.get('g', 'NaN')},{payload.get('c', 'NaN')},{payload.get('e', 'NaN')},0,{payload.get('pp', 'NaN')},{payload.get('pt', '')},Showers,12,16,{payload.get('ip', 'NaN')},{payload.get('io', 'NaN')},{payload.get('is', 'NaN')},{payload.get('ih', 'NaN')},{payload.get('ep', 'NaN')},{payload.get('eo', 'NaN')},{payload.get('es', 'NaN')},{payload.get('eh', 'NaN')}",
                         )
+                        matches = True
                     else:
                         self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation FAILED")
                         matches = False
@@ -143,22 +152,22 @@ class PVOutputOutputService(Service):
                                 f"{self.__class__.__name__} Verification attempt #{validate} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s) response={response.text}"
                             )
                             v = re.split(r"[,]", response.text)
+                            result["d"] = v[0]
+                            result["e"] = int(v[3]) if Config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
+                            result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
+                            result["ip"] = int(v[10]) if Config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
+                            result["io"] = int(v[11]) if Config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
+                            result["is"] = int(v[12]) if Config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
+                            result["ih"] = int(v[13]) if Config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
+                            result["ep"] = int(v[14]) if Config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
+                            result["eo"] = int(v[15]) if Config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
+                            result["es"] = int(v[16]) if Config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
+                            result["eh"] = int(v[17]) if Config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
+                            matches = True
                         else:
                             self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
                             matches = False
                 if matches:
-                    result = {}
-                    result["d"] = v[0]
-                    result["e"] = int(v[3]) if Config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
-                    result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
-                    result["ip"] = int(v[10]) if Config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
-                    result["io"] = int(v[11]) if Config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
-                    result["is"] = int(v[12]) if Config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
-                    result["ih"] = int(v[13]) if Config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
-                    result["ep"] = int(v[14]) if Config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
-                    result["eo"] = int(v[15]) if Config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
-                    result["es"] = int(v[16]) if Config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
-                    result["eh"] = int(v[17]) if Config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                         if topic._value_key in payload and topic._value_key in result:
                             if payload[topic._value_key] != result[topic._value_key]:
@@ -167,12 +176,18 @@ class PVOutputOutputService(Service):
                                 )
                                 matches = False
                 if matches:
-                    self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")
+                    try:
+                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore
+                    except NameError:
+                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result}")
                     break
                 elif validate < verify_retries:
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
                 else:
-                    self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")
+                    try:
+                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # type: ignore # pyrefly: ignore
+                    except NameError:
+                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=}")
             except requests.exceptions.HTTPError as exc:
                 self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
             except requests.exceptions.ConnectionError as exc:
@@ -183,20 +198,19 @@ class PVOutputOutputService(Service):
                 self.logger.error(f"{self.__class__.__name__} {exc}")
         return matches
 
-    def schedule(self, modbus: Any, mqtt: MqttClient) -> List[Awaitable[None]]:
-        async def publish_updates(modbus: Any, mqtt: MqttClient, *sensors: Any) -> None:
+    def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+        async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
-            last: float = None
+            last: float | None = None
             self.logger.info(f"{self.__class__.__name__} Commenced (Updating at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))})")
             while self.online:
                 try:
                     now_struct: time.struct_time = time.localtime()
                     now: float = time.mktime(now_struct)
                     if now >= next:
-                        interval: int = self._interval if self._interval is not None else 1440
                         async with self.lock(timeout=5):
-                            payload = self._create_payload(now_struct, interval)
+                            payload = self._create_payload(now_struct, Service._interval)
                         tomorrow = await self._next_output_upload(minute)
                         last_update_of_day: bool = time.localtime(tomorrow).tm_yday != now_struct.tm_yday  # Bypass verification except on last upload of the day
                         await self._upload(payload, last_update_of_day)
@@ -231,9 +245,9 @@ class PVOutputOutputService(Service):
             self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
             return
 
-        tasks = [publish_updates(modbus, mqtt)]
+        tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         return tasks
 
-    def subscribe(self, mqtt: MqttClient, mqtt_handler: MqttHandler) -> None:
+    def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         for topic in [t for t in self._service_topics.values() if t.enabled]:
-            topic.subscribe(mqtt, mqtt_handler)
+            topic.subscribe(mqtt_client, mqtt_handler)

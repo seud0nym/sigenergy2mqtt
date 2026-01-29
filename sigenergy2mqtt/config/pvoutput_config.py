@@ -1,9 +1,10 @@
-from typing import Final
-from .validation import check_bool, check_date, check_int, check_log_level, check_string, check_time
+import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from enum import StrEnum
-import logging
+from typing import Any, Final, cast
+
+from .validation import check_bool, check_date, check_int, check_log_level, check_string, check_time
 
 
 class ConsumptionSource(StrEnum):
@@ -96,7 +97,7 @@ class PVOutputConfiguration:
 
     tariffs: list[Tariff] = field(default_factory=list)
 
-    extended: dict[str, str] = field(
+    extended: dict[StatusField, str] = field(
         default_factory=lambda: {
             StatusField.V7: "",
             StatusField.V8: "",
@@ -127,7 +128,7 @@ class PVOutputConfiguration:
         return self.consumption in (ConsumptionSource.CONSUMPTION, ConsumptionSource.IMPORTED, ConsumptionSource.NET_OF_BATTERY)
 
     @property
-    def current_time_period(self) -> tuple[OutputField, OutputField]:
+    def current_time_period(self) -> tuple[OutputField | None, OutputField]:
         export_type = None  # No export default if completely unmatched, because total exports is always reported, but time periods may not be defined
         import_type = OutputField.IMPORT_PEAK  # Import default prior to introduction of time periods was peak
         if self.tariffs:
@@ -164,9 +165,22 @@ class PVOutputConfiguration:
             case TariffType.HIGH_SHOULDER:
                 export_type = OutputField.EXPORT_HIGH_SHOULDER
                 import_type = OutputField.IMPORT_HIGH_SHOULDER
+            case _:
+                raise ValueError(f"Invalid tariff type: {type}")
         return (export_type, import_type)
 
-    def configure(self, config: dict, override: bool = False) -> None:
+    def validate(self) -> None:
+        if self.enabled:
+            if not self.api_key:
+                raise ValueError("pvoutput.api-key must be provided when enabled")
+            if not self.system_id:
+                raise ValueError("pvoutput.system-id must be provided when enabled")
+            for tariff in self.tariffs:
+                for period in tariff.periods:
+                    if period.end <= period.start:
+                        raise ValueError(f"pvoutput time period end time ({period.end}) must be after start time ({period.start})")
+
+    def configure(self, config: Any, override: bool = False) -> None:
         if isinstance(config, dict):
             if "enabled" in config:
                 logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.enabled = {config['enabled']}")
@@ -177,7 +191,8 @@ class PVOutputConfiguration:
                         logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: pvoutput.{field} = {'******' if field == 'api-key' else value}")
                     match field:
                         case "api-key":
-                            self.api_key = check_string(value, "pvoutput.api-key", allow_none=(not self.enabled), allow_empty=(not self.enabled), hex_chars_only=True)
+                            validated = check_string(value, "pvoutput.api-key", allow_none=(not self.enabled), allow_empty=(not self.enabled), hex_chars_only=True)
+                            self.api_key = validated if validated and isinstance(validated, str) else ""
                         case "consumption":
                             match value:
                                 case False | "false":
@@ -199,20 +214,28 @@ class PVOutputConfiguration:
                         case "log-level":
                             self.log_level = check_log_level(value, f"pvoutput.{field}")
                         case "output-hour":
-                            self.output_hour = check_int(value, f"pvoutput.{field}", min=20, max=23, allowed=-1)
+                            validated = check_int(value, f"pvoutput.{field}", min=20, max=23, allowed=-1)
+                            if validated and isinstance(validated, int):
+                                self.output_hour = validated
                         case "system-id":
-                            self.system_id = check_string(str(value), f"pvoutput.{field}", allow_none=(not self.enabled), allow_empty=(not self.enabled))
-                            if self.system_id == "testing":
-                                self.testing = True
-                                logging.warning(
-                                    "PVOutput system-id is set to 'testing'. This is for testing purposes only and should not be used in production. PVOutput data will not be sent to the actual PVOutput service. Please set a valid system-id for production use."
-                                )
+                            validated = check_string(str(value), f"pvoutput.{field}", allow_none=(not self.enabled), allow_empty=(not self.enabled))
+                            if validated and isinstance(validated, str):
+                                self.system_id = validated
+                                if self.system_id == "testing":
+                                    self.testing = True
+                                    logging.warning(
+                                        "PVOutput system-id is set to 'testing'. This is for testing purposes only and should not be used in production. PVOutput data will not be sent to the actual PVOutput service. Please set a valid system-id for production use."
+                                    )
                         case "temperature-topic":
-                            self.temperature_topic = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                            validated = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                            if validated and isinstance(validated, str):
+                                self.temperature_topic = validated
                         case "voltage":
-                            self.voltage = VoltageSource(check_string(value, f"pvoutput.{field}", *[v.value for v in VoltageSource]))
+                            self.voltage = VoltageSource(cast(str, check_string(value, f"pvoutput.{field}", *[v.value for v in VoltageSource], allow_empty=False, allow_none=False)))
                         case StatusField.V7.value | StatusField.V8.value | StatusField.V9.value | StatusField.V10.value | StatusField.V11.value | StatusField.V12.value:
-                            self.extended[field] = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                            validated = check_string(value, f"pvoutput.{field}", allow_none=True, allow_empty=True)
+                            if validated and isinstance(validated, str):
+                                self.extended[field] = validated
                         case "calc-debug-logging":
                             self.calc_debug_logging = check_bool(value, f"pvoutput.{field}")
                         case "update-debug-logging":
@@ -226,7 +249,7 @@ class PVOutputConfiguration:
                                         plan: str | None = None
                                         from_date: date = datetime.min.date()
                                         to_date: date = datetime.max.date()
-                                        default: str = "shoulder"
+                                        default: TariffType = TariffType.SHOULDER
                                         periods: list[TimePeriod] | None = None
                                         for key in tariff.keys():
                                             if key not in ("plan", "from-date", "to-date", "default", "periods"):
@@ -239,7 +262,14 @@ class PVOutputConfiguration:
                                                 case "to-date":
                                                     to_date = check_date(tariff[key], f"pvoutput.time-periods[{index}].{key}")
                                                 case "default":
-                                                    default = check_string(tariff[key], f"pvoutput.time-periods[{index}].{key}", "off-peak", "peak", "shoulder", "high-shoulder")
+                                                    default = TariffType(
+                                                        cast(
+                                                            str,
+                                                            check_string(
+                                                                tariff[key], f"pvoutput.time-periods[{index}].{key}", "off-peak", "peak", "shoulder", "high-shoulder", allow_empty=False, allow_none=False
+                                                            ),
+                                                        )
+                                                    )
                                                 case "periods":
                                                     periods = self._parse_time_periods(tariff[key])
                                         if periods is None:
@@ -254,36 +284,38 @@ class PVOutputConfiguration:
         else:
             raise ValueError("pvoutput configuration element must contain options and their values")
 
-    def _parse_time_periods(self, value: dict[str, any]) -> list[TimePeriod]:
+    def _parse_time_periods(self, value: list[dict[str, str]]) -> list[TimePeriod]:
         periods: list[TimePeriod] = []
         if isinstance(value, list):
             index = 0
             for period in value:
                 if isinstance(period, dict):
                     if "type" in period and "start" in period and "end" in period:
-                        type = check_string(period["type"], f"pvoutput.time-periods[{index}].type", "off-peak", "peak", "shoulder", "high-shoulder")
-                        start = check_time(period["start"], f"pvoutput.time-periods[{index}].start")
-                        end = check_time(period["end"], f"pvoutput.time-periods[{index}].end")
+                        type: TariffType = TariffType(
+                            cast(str, check_string(period["type"], f"pvoutput.time-periods[{index}].type", "off-peak", "peak", "shoulder", "high-shoulder", allow_empty=False, allow_none=False))
+                        )
+                        start: time = check_time(period["start"], f"pvoutput.time-periods[{index}].start")
+                        end: time = check_time(period["end"], f"pvoutput.time-periods[{index}].end")
                         days: list[str] = []
                         if "days" in period:
                             if isinstance(period["days"], list):
                                 for day in period["days"]:
-                                    days.append(
-                                        check_string(
-                                            day.capitalize(),
-                                            f"pvoutput.time-periods[{period['type']}:{period['start']}-{period['end']}].days",
-                                            "Mon",
-                                            "Tue",
-                                            "Wed",
-                                            "Thu",
-                                            "Fri",
-                                            "Sat",
-                                            "Sun",
-                                            "Weekdays",
-                                            "Weekends",
-                                            "All",
-                                        ),
+                                    validated = check_string(
+                                        day.capitalize(),
+                                        f"pvoutput.time-periods[{period['type']}:{period['start']}-{period['end']}].days",
+                                        "Mon",
+                                        "Tue",
+                                        "Wed",
+                                        "Thu",
+                                        "Fri",
+                                        "Sat",
+                                        "Sun",
+                                        "Weekdays",
+                                        "Weekends",
+                                        "All",
                                     )
+                                    if validated and isinstance(validated, str):
+                                        days.append(validated)
                             else:
                                 raise ValueError(f"pvoutput.time-periods.periods[{index}].days must be a list of days, or Weekdays, Weekends, or All")
                         else:

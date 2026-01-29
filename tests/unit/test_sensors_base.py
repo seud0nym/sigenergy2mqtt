@@ -1,6 +1,7 @@
-import pytest
 import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Mock circular dependencies before importing sensors.base
 mock_types = MagicMock()
@@ -16,11 +17,11 @@ class MockPVInverter:
 
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.devices.types"] = mock_types
+sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
+from sigenergy2mqtt.common import Protocol  # noqa: E402
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
-from sigenergy2mqtt.config import Protocol  # noqa: E402
 
 
 # Concrete implementation of Sensor for testing since Sensor is abstract
@@ -79,14 +80,14 @@ class TestSensorBase:
 
         # Change precision
         sensor._gain = 1.0
-        sensor._precision = 0
+        sensor.precision = 0
         assert sensor._apply_gain_and_precision(10.6) == 11.0
 
         # Raw value (no gain/precision applied)
         assert sensor._apply_gain_and_precision(10.1234, raw=True) == 10.1234
 
     def test_configure_mqtt_topics(self, sensor):
-        # Mock Config to ensure consistent behavior
+        # Mock Config to ensure consistent behaviour
         with patch("sigenergy2mqtt.sensors.base.Config") as MockConfig:
             MockConfig.home_assistant.enabled = True
             MockConfig.home_assistant.use_simplified_topics = False

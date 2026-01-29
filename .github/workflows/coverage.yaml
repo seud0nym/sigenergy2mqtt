@@ -1,0 +1,96 @@
+name: Test & Badges
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Hatch
+        run: pip install hatch
+
+      - name: Create Hatch environment
+        run: hatch env create
+
+      - name: Run tests with coverage
+        id: pytest
+        shell: bash
+        run: |
+          set -o pipefail
+          hatch run cov | tee pytest_output.txt
+
+      - name: Extract coverage metrics
+        id: coverage
+        shell: python
+        run: |
+          import os
+          import xml.etree.ElementTree as ET
+
+          try:
+              tree = ET.parse('coverage.xml')
+              root = tree.getroot()
+              line_rate = float(root.attrib.get('line-rate', 0))
+              
+              total = int(round(line_rate * 100))
+              
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"total={total}\n")
+          except Exception as e:
+              print(f"Error extracting coverage: {e}")
+              exit(1)
+
+      - name: Extract test count
+        id: tests
+        run: |
+          count=$(grep -oP "(\d+) passed" pytest_output.txt | grep -oP "\d+")
+          echo "count=$count" >> $GITHUB_OUTPUT
+
+      - name: Determine Shields.io colors
+        id: colors
+        run: |
+          pick_color () {
+            v=$1
+            if   [ "$v" -ge 90 ]; then echo "brightgreen";
+            elif [ "$v" -ge 80 ]; then echo "green";
+            elif [ "$v" -ge 70 ]; then echo "yellowgreen";
+            elif [ "$v" -ge 60 ]; then echo "yellow";
+            elif [ "$v" -ge 50 ]; then echo "orange";
+            else echo "red"; fi
+          }
+          echo "total_color=$(pick_color ${{ steps.coverage.outputs.total }})" >> $GITHUB_OUTPUT
+
+      - name: Download Shields.io badges
+        run: |
+          mkdir -p resources/badges
+
+          curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
+            -o resources/badges/coverage-total.svg
+
+          curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
+            -o resources/badges/tests.svg
+
+      - name: Commit badges
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add resources/badges/*.svg
+          git commit -m "Update badges" || echo "No changes to commit"
+          git push

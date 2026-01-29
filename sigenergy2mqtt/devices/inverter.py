@@ -1,12 +1,13 @@
-from .device import ModbusDevice
-from sigenergy2mqtt.config import Protocol
-from sigenergy2mqtt.devices.inverter_ess import ESS
-from sigenergy2mqtt.devices.inverter_pv_string import PVString
-from sigenergy2mqtt.devices.types import DeviceType, HybridInverter, PVInverter
 import logging
 import re
+
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
+from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.devices.inverter_ess import ESS
+from sigenergy2mqtt.devices.inverter_pv_string import PVString
+
+from .device import ModbusDevice
 
 
 class Inverter(ModbusDevice):
@@ -29,7 +30,7 @@ class Inverter(ModbusDevice):
         serial_number: ro.InverterSerialNumber,
         pack_bcu_count: ro.PACKBCUCount,
     ):
-        assert 2 <= strings <= 16, f"Invalid PV String Count ({strings} - must be between 2 and 16)"
+        assert 2 <= strings <= 36, f"Invalid PV String Count ({strings} - must be between 2 and 36)"
         match = re.match(r"^[^\d]*", model_id)
         words = (match.group(0).rstrip() if match else model_id).replace("EC", "Energy Controller", 1).split()
         words.insert(1, serial)
@@ -45,9 +46,14 @@ class Inverter(ModbusDevice):
             mdl_id=model_id,
             sn=serial,
             hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion
+            model_id=model_id,
+            serial=serial,
+            Config="Sigenergy",  # For '{Config} {name}' placeholder
         )
 
         pv_power = ro.InverterPVPower(plant_index, device_address)
+        active_power = ro.ActivePower(plant_index, device_address)
+        reactive_power = ro.ReactivePower(plant_index, device_address)
 
         # region read sensors
         self._add_read_sensor(model)
@@ -62,8 +68,8 @@ class Inverter(ModbusDevice):
         self._add_read_sensor(ro.MinActivePowerAdjustment(plant_index, device_address))
         self._add_read_sensor(ro.MaxReactivePowerAdjustment(plant_index, device_address))
         self._add_read_sensor(ro.MinReactivePowerAdjustment(plant_index, device_address))
-        self._add_read_sensor(ro.ActivePower(plant_index, device_address))
-        self._add_read_sensor(ro.ReactivePower(plant_index, device_address))
+        self._add_read_sensor(active_power)
+        self._add_read_sensor(reactive_power)
         self._add_read_sensor(ro.InverterPCSAlarm(plant_index, device_address, ro.InverterAlarm1(plant_index, device_address), ro.InverterAlarm2(plant_index, device_address)))
         self._add_read_sensor(ro.InverterAlarm4(plant_index, device_address))
         self._add_read_sensor(ro.RatedGridVoltage(plant_index, device_address))
@@ -82,7 +88,7 @@ class Inverter(ModbusDevice):
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "A-B"))
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "B-C"))
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "C-A"))
-        self._add_read_sensor(ro.PowerFactor(plant_index, device_address))
+        self._add_read_sensor(ro.PowerFactor(plant_index, device_address, active_power, reactive_power))
         self._add_read_sensor(ro.MPTTCount(plant_index, device_address))
         self._add_read_sensor(pv_string_count)
         self._add_read_sensor(pv_power)

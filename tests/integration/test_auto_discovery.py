@@ -1,12 +1,14 @@
-import logging
-import pytest
 import asyncio
+import logging
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from sigenergy2mqtt.config import auto_discovery
-from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
+from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
 
 
-# Mock MqttClient for the server
+# Mock mqtt.Client for the server
 class MockMqttClient:
     def __init__(self):
         self._user_data = CustomMqttHandler(asyncio.get_running_loop())
@@ -40,7 +42,10 @@ async def mock_modbus_server():
     mqtt_client = MockMqttClient()
     server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=port, log_level=logging.DEBUG))
     # modbus_test_server might take a second to bind
-    await asyncio.sleep(2)
+    from tests.utils.modbus_test_server import wait_for_server_start
+
+    if not await wait_for_server_start("127.0.0.1", port):
+        raise RuntimeError("Mock Modbus server failed to start")
 
     yield port
 
@@ -78,6 +83,59 @@ async def test_auto_discovery_scan_host(mock_modbus_server):
     assert device["host"] == "127.0.0.1"
     assert device["port"] == port
     assert len(device["inverters"]) > 0
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_auto_discovery_comprehensive(mock_modbus_server):
+    """Test full discovery of multiple devices on the test server."""
+    port = mock_modbus_server
+
+    # We need to ensure the test server has the right sensors for different device types
+    # The current modbus_test_server.py pre-populates based on all sensor instances.
+
+    results = []
+    print(f"DEBUG SERIALS BEFORE: {auto_discovery.serial_numbers}")
+    await auto_discovery.scan_host("127.0.0.1", port, results, timeout=2.0)
+    print(f"DEBUG RESULTS: {results}")
+    print(f"DEBUG SERIALS AFTER: {auto_discovery.serial_numbers}")
+
+    assert len(results) == 1
+    device = results[0]
+    assert device["host"] == "127.0.0.1"
+
+    # Verify inverters are found
+    assert len(device["inverters"]) > 0
+    # Verify AC chargers are found
+    assert len(device["ac-chargers"]) > 0
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_auto_discovery_scan_multiple_mocked_ips(mock_modbus_server):
+    """Test the scan function with multiple mocked active IPs."""
+    port = mock_modbus_server
+
+    active_ips = {
+        "127.0.0.1": 0.01,
+        "192.168.1.1": 0.5,  # Should be scanned but fail
+    }
+
+    with patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value=active_ips):
+        # Mock interface
+        snicaddr = MagicMock()
+        snicaddr.family.name = "AF_INET"
+        snicaddr.address = "127.0.0.1"
+        snicaddr.netmask = "255.255.255.0"
+
+        with patch("psutil.net_if_addrs", return_value={"lo": [snicaddr]}):
+            # We mock scan_host to avoid actual network calls for non-existent IPs if necessary,
+            # but for 127.0.0.1 we want it to run.
+            # Actually, scan_host is called in a loop in scan().
+
+            results = await asyncio.to_thread(auto_discovery.scan, port=port, modbus_timeout=1.0)
+
+            assert len(results) >= 1
+            hosts = [r["host"] for r in results]
+            assert "127.0.0.1" in hosts
 
 
 @pytest.mark.asyncio(loop_scope="module")

@@ -1,7 +1,8 @@
-from .device import ModbusDevice
-from sigenergy2mqtt.config import Protocol
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
+from sigenergy2mqtt.common import Protocol
+
+from .device import ModbusDevice
 
 
 class DCCharger(ModbusDevice):

@@ -1,7 +1,10 @@
 import json
 
-from sigenergy2mqtt.pvoutput.topic import Topic
+from pymodbus.pdu import ExceptionResponse
+
 from sigenergy2mqtt.pvoutput import get_gain
+from sigenergy2mqtt.pvoutput.topic import Topic
+from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 
 
@@ -22,10 +25,13 @@ def test_topic_json_decoder_leaves_non_topic():
     assert Topic.json_decoder(obj) == obj
 
 
-class FakeSensor:
+class FakeSensor(Sensor):
     def __init__(self, gain, unit=None):
         self.gain = gain
         self.unit = unit
+
+    async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
+        return True
 
 
 def test_get_gain_defaults_and_special_cases():

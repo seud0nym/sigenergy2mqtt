@@ -1,12 +1,14 @@
-from .base import DeviceClass, InputType, NumericSensor, AvailabilityMixin, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
-from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.mqtt import MqttClient
-from typing import Any
 import logging
+from typing import cast
 
+import paho.mqtt.client as mqtt
+
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+
+from .base import AvailabilityMixin, DeviceClass, InputType, NumericSensor, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
+from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 # 5.2 Plant parameter setting address definition (holding register)
 
@@ -22,7 +24,7 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "0:Stop 1:Start"
         return attributes
@@ -39,8 +41,8 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             device_address=247,
             address=40001,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -62,8 +64,8 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             device_address=247,
             address=40003,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -75,7 +77,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             maximum=60.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -92,8 +94,8 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             device_address=247,
             address=40005,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -105,7 +107,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             maximum=100.00,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [-100.00,100.00]"
         return attributes
@@ -122,8 +124,8 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40006,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -135,7 +137,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             maximum=60.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -153,8 +155,8 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             device_address=247,
             address=40007,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -166,7 +168,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             maximum=(0.8, 1.0),
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -182,13 +184,13 @@ class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInvert
             plant_index=plant_index,
             device_address=247,
             address=40030,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             protocol_version=Protocol.V1_8,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
         return attributes
@@ -214,8 +216,8 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -223,11 +225,12 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
         return attributes
@@ -253,8 +256,8 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -262,11 +265,12 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
         return attributes
@@ -292,8 +296,8 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             device_address=247,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -303,11 +307,12 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             protocol_version=Protocol.V1_8,
             minimum=-100.00,
             maximum=100.00,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
         return attributes
@@ -333,8 +338,8 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             device_address=247,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -344,11 +349,12 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             protocol_version=Protocol.V1_8,
             minimum=-60.00,
             maximum=60.00,
+            phase=phase,
         )
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
         return attributes
@@ -364,8 +370,8 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40026,
             count=3,
-            data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.STRING,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -385,11 +391,11 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
             plant_index=plant_index,
             device_address=247,
             address=40029,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS"
         return attributes
@@ -404,7 +410,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40031,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             options=[
                 "PCS remote control",  # 0
                 "Standby",  # 1
@@ -419,36 +425,38 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if Config.home_assistant.enabled:
+        if Config.home_assistant.enabled and Config.ems_mode_check:
             self.is_charging_mode_topic = f"{base}/is_charging_mode"
             self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
         return base
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> bool:
-        result = await super().publish(mqtt, modbus, republish=republish)
-        if result and Config.home_assistant.enabled:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, modbus_client, republish=republish)
+        if result and Config.home_assistant.enabled and Config.ems_mode_check:
             match self.latest_raw_state:
                 case 3 | 4:
-                    mqtt.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
-                    mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
                 case 5 | 6:
-                    mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_discharging_mode_topic, "1", self._qos, self._retain)
-                    mqtt.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_discharging_mode_topic, "1", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
                 case _:
-                    mqtt.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
-                    mqtt.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
+                    mqtt_client.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
             return True
         return result
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
-        if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus=modbus) in (0, "0"):
-            logging.error(f"{self.__class__.__name__} Failed to write '{self['options'][raw_value]}' ({raw_value}): {self._availability_control_sensor.name} is not enabled")
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+        if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus_client=modbus_client) in (0, "0"):
+            logging.error(
+                f"{self.__class__.__name__} Failed to write '{cast(list[str], self['options'])[raw_value] if isinstance(raw_value, int) else raw_value}' ({raw_value}): {self._availability_control_sensor.name} is not enabled"
+            )
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class RemoteEMSLimit(NumericSensor):
@@ -475,8 +483,8 @@ class RemoteEMSLimit(NumericSensor):
             device_address=247,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -492,20 +500,20 @@ class RemoteEMSLimit(NumericSensor):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if Config.home_assistant.enabled:
+        if Config.home_assistant.enabled and Config.ems_mode_check:
             if self._charging and self._discharging:
-                self["availability"].append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._charging:
-                self["availability"].append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._discharging:
-                self["availability"].append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': {self._availability_control_sensor.name} is not enabled")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
@@ -523,17 +531,18 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_charging_power,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging"
+        attributes["comment"] = f"Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging' if Config.ems_mode_check else ''}"
         return attributes
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4):
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4) and Config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
@@ -551,17 +560,18 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_discharging_power,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging"
+        attributes["comment"] = f"Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Discharging' if Config.ems_mode_check else ''}"
         return attributes
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6):
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6) and Config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Discharging")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
@@ -580,16 +590,17 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
+        if Config.ems_mode_check:
+            attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
         return attributes
 
-    async def value_is_valid(self, modbus: ModbusClient, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6):
+    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6) and Config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging/Discharging")
             return False
-        return await super().value_is_valid(modbus, raw_value)
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
@@ -603,8 +614,8 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40038,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -615,7 +626,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -632,8 +643,8 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40040,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -644,7 +655,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
@@ -661,8 +672,8 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40042,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -673,7 +684,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
         return attributes
@@ -681,7 +692,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value == 0xFFFFFFFF:
-            logging.warning(f"{self.name} - Register is not valid, setting publishable to False ({value=})")
+            logging.warning(f"{self.name} register is not valid, setting publishable to False ({value=})")
             self.publishable = False
             return None
         else:
@@ -699,8 +710,8 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40044,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -711,7 +722,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             maximum=4294967.295,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
         return attributes
@@ -728,8 +739,8 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             device_address=247,
             address=40046,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -740,7 +751,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
         return attributes
@@ -757,8 +768,8 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             device_address=247,
             address=40047,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -769,7 +780,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
         return attributes
@@ -786,8 +797,8 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             device_address=247,
             address=40048,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -798,7 +809,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0.00,100.00]"
         return attributes
@@ -815,8 +826,8 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             device_address=247,
             address=40049,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit="%/s",
             device_class=None,
             state_class=None,
@@ -827,7 +838,7 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             maximum=5000,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0,5000]。Percentage of rated power adjusted per second"
         return attributes
@@ -842,7 +853,7 @@ class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40051,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -859,8 +870,8 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             device_address=247,
             address=40052,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -871,7 +882,7 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             maximum=10.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -888,8 +899,8 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             device_address=247,
             address=40053,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -900,7 +911,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             maximum=20.0,  # Protocol says 0.0-10.0 but live systems are returning 20.0???? (https://github.com/seud0nym/sigenergy2mqtt/issues/80#issuecomment-3689277867)
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -915,10 +926,10 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40054,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
-                None,  # 1
+                "",  # 1
                 "Zero-current mode",  # 2
                 "Constant current mode",  # 3
                 "Reactive dynamic current, active zero-current mode",  # 4
@@ -938,7 +949,7 @@ class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
             plant_index=plant_index,
             device_address=247,
             address=40055,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V2_8,
         )
 
@@ -952,7 +963,7 @@ class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40056,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -969,8 +980,8 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             device_address=247,
             address=40057,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -981,7 +992,7 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             maximum=10.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -998,8 +1009,8 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             device_address=247,
             address=40058,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1010,7 +1021,7 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             maximum=10.0,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,10.0]"
         return attributes
@@ -1025,10 +1036,10 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40059,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
-                None,  # 1
+                "",  # 1
                 "Zero-current mode",  # 2
                 "Constant current mode",  # 3
                 "Reactive dynamic current, active hold mode",  # 4
@@ -1048,7 +1059,7 @@ class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
             plant_index=plant_index,
             device_address=247,
             address=40060,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V2_8,
         )
 
@@ -1062,7 +1073,7 @@ class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=247,
             address=40061,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -1079,8 +1090,8 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             device_address=247,
             address=40062,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -1090,7 +1101,7 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             protocol_version=Protocol.V2_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,100.0]"
         return attributes
@@ -1107,8 +1118,8 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             device_address=247,
             address=40063,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1120,7 +1131,7 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             maximum=1.2 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes
@@ -1137,8 +1148,8 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             device_address=247,
             address=40064,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1150,7 +1161,7 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             maximum=1.2 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes
@@ -1165,7 +1176,7 @@ class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter)
             plant_index=plant_index,
             device_address=247,
             address=40065,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -1182,8 +1193,8 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             device_address=247,
             address=40066,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -1193,7 +1204,7 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             protocol_version=Protocol.V2_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range: [0,100.0]"
         return attributes
@@ -1210,8 +1221,8 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             device_address=247,
             address=40067,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1223,7 +1234,7 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             maximum=1.0 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes
@@ -1240,8 +1251,8 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             device_address=247,
             address=40068,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1253,7 +1264,7 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             maximum=1.0 * rated_frequency,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
         return attributes

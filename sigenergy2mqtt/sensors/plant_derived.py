@@ -1,11 +1,27 @@
-from .base import DeviceClass, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, StateClass, DerivedSensor, ModbusSensor
+import logging
+import time
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any, Dict, cast
+
+import paho.mqtt.client as mqtt
+
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.devices import DeviceRegistry
+from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.mqtt import MqttHandler
+from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
+from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
+
+from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, StateClass, SubstituteMixin
 from .const import UnitOfEnergy, UnitOfPower
 from .plant_read_only import (
     BatteryPower,
-    GeneralLoadPower,
-    GridSensorActivePower,
     ESSTotalChargedEnergy,
     ESSTotalDischargedEnergy,
+    GeneralLoadPower,
+    GridSensorActivePower,
     GridStatus,
     PlantPVPower,
     PlantPVTotalGeneration,
@@ -14,17 +30,6 @@ from .plant_read_only import (
     ThirdPartyLifetimePVEnergy,
     TotalLoadPower,
 )
-from dataclasses import dataclass
-from enum import StrEnum
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, ConsumptionMethod
-from sigenergy2mqtt.devices import DeviceRegistry
-from sigenergy2mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
-from typing import Any, Dict
-import logging
-import time
 
 
 class BatteryChargingPower(DerivedSensor):
@@ -33,7 +38,7 @@ class BatteryChargingPower(DerivedSensor):
             name="Battery Charging Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_battery_charging_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_battery_charging_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
             state_class=battery_power.state_class,
@@ -42,18 +47,19 @@ class BatteryChargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
+        self.sanity_check.min_raw = 0.0
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "BatteryPower &gt; 0"
         return attributes
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] <= 0 else round(values[-1][1], self._precision),
+            0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
         )
         return True
 
@@ -64,7 +70,7 @@ class BatteryDischargingPower(DerivedSensor):
             name="Battery Discharging Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_battery_discharging_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_battery_discharging_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
             state_class=battery_power.state_class,
@@ -73,18 +79,19 @@ class BatteryDischargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
+        self.sanity_check.min_raw = 0.0
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "BatteryPower &lt; 0"
+        attributes["source"] = "BatteryPower &lt; 0 &times; -1"
         return attributes
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
+            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
         )
         return True
 
@@ -95,7 +102,7 @@ class GridSensorExportPower(DerivedSensor):
             name="Export Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_export_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_export_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=active_power.device_class,
             state_class=active_power.state_class,
@@ -105,17 +112,17 @@ class GridSensorExportPower(DerivedSensor):
         )
         self.protocol_version = active_power.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "GridSensorActivePower &lt; 0 &times; -1"
         return attributes
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self._precision),
+            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
         )
         return True
 
@@ -126,7 +133,7 @@ class GridSensorImportPower(DerivedSensor):
             name="Import Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_import_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_import_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=active_power.device_class,
             state_class=active_power.state_class,
@@ -136,17 +143,17 @@ class GridSensorImportPower(DerivedSensor):
         )
         self.protocol_version = active_power.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "GridSensorActivePower &gt; 0"
         return attributes
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] <= 0 else round(values[-1][1], self._precision),
+            0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
         )
         return True
 
@@ -156,9 +163,9 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
     class Value:
         gain: float = 1.0
         negate: bool = False
-        interval: int = None
-        state: float = None
-        last_update: float = None
+        interval: int | None = None
+        state: float | None = None
+        last_update: float | None = None
         requires_grid: bool = False
 
         def __repr__(self):
@@ -175,7 +182,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             name="Consumed Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_consumed_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -185,18 +192,21 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         )
         self.plant_index = plant_index
         self.method = method
-        self._grid_status: int = None
-        self._sanity.min_raw = 0.0
+        self._grid_status: int | None = None
+        self.sanity_check.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
         match self.method:
             case ConsumptionMethod.CALCULATED:
                 self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
+                self.protocol_version = Protocol.N_A
             case ConsumptionMethod.GENERAL:
                 self._sources.update({ConsumptionMethod.GENERAL.value: PlantConsumedPower.Value()})
+                self.protocol_version = Protocol.V2_8
             case ConsumptionMethod.TOTAL:
                 self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
+                self.protocol_version = Protocol.V2_8
 
-    def _set_latest_consumption(self):
+    def _set_latest_consumption(self) -> bool:
         if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
             return False
         consumed_power = sum([value.state for value in self._sources.values() if value.state and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
@@ -212,7 +222,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         self._sources[source].state = (-value if self._sources[source].negate else value) * self._sources[source].gain
         self._sources[source].last_update = time.time()
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         match self.method:
             case ConsumptionMethod.CALCULATED:
@@ -223,34 +233,30 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                 attributes["source"] = "TotalLoadPower"
         return attributes
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
-        """Publishes this sensor.
-
-        Args:
-            mqtt:       The MQTT client for publishing the current state.
-            modbus:     The Modbus client for determining the current state.
-            republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
-        """
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if not republish:
             if not self._set_latest_consumption():
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources}")
-                return  # until all values populated, can't do calculation
+                return False  # until all values populated, can't do calculation
             republish = True  # if we got here, we have a valid value to publish
-        await super().publish(mqtt, modbus, republish=republish)
+        await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         for value in self._sources.values():
             value.state = None
+        return True
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
-        if topic in self._sources:
-            self._update_source(topic, value if isinstance(value, float) else float(value))
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        if source in self._sources:
+            self._update_source(source, value if isinstance(value, float) else float(value))
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from topic '{topic}' - {self._sources}")
+                logging.debug(f"{self.__class__.__name__} Updated from topic {source} - {self._sources}")
             if self._set_latest_consumption():
-                await self.publish(mqtt, modbus, republish=True)
+                await self.publish(mqtt_client, modbus_client, republish=True)
+            return True
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{topic}', but topic is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {source}, but topic is not registered")
+        return False
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
@@ -264,7 +270,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                         logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
         return topics
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if isinstance(sensor, TotalLoadPower):
             self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
         elif isinstance(sensor, GeneralLoadPower):
@@ -291,7 +297,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         return self._set_latest_consumption()
 
 
-class TotalPVPower(DerivedSensor, ObservableMixin):
+class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     class SourceType(StrEnum):
         SMARTPORT = "s"
         FAILOVER = "f"
@@ -302,17 +308,18 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         gain: float
         type: str
         enabled: bool = True
-        state: float = None
+        state: float | None = None
+        last_update: float | None = None
 
         def __repr__(self):
-            return f"{self.state} ({self.type.name}/{'enabled' if self.enabled else 'disabled'})"
+            return f"{self.state} ({self.type}/{'enabled' if self.enabled else 'disabled'})"
 
     def __init__(self, plant_index: int, *sensors: Sensor):
         super().__init__(
             name="Total PV Power",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_total_pv_power",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_pv_power",
-            data_type=ModbusClient.DATATYPE.INT32,
+            data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -324,7 +331,17 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
         self._sources: dict[str, TotalPVPower.Value] = dict()
         self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)
 
-    def failback(self, source: str):
+    async def _check_timeouts(self) -> None:
+        # Check for timeouts
+        now = time.time()
+        timeout = Config.modbus[self.plant_index].scan_interval.realtime * 5  # 5x poll interval grace period
+        for source_id, value in self._sources.items():
+            if value.enabled and value.type == TotalPVPower.SourceType.SMARTPORT:
+                if value.last_update and (now - value.last_update > timeout):
+                    logging.warning(f"{self.__class__.__name__} Failover triggered: Source '{source_id}' timed out (last_update={now - value.last_update:.1f}s ago, timeout={timeout}s)")
+                    self.failover(source_id)
+
+    def fallback(self, source: str):
         logging.info(f"{self.__class__.__name__} Re-enabling '{source}' as source because state updated (state={self._sources[source].state})")
         self._sources[source].enabled = True
         for id, value in self._sources.items():
@@ -332,45 +349,53 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
                 logging.info(f"{self.__class__.__name__} Disabling '{id}' as failover source because state updated from SmartPort sensor '{source}'")
                 value.enabled = False
 
-    def failover(self, smartport_sensor: Sensor) -> bool:
+    def failover(self, smartport_sensor: Sensor | str) -> bool:
         failed_over = False
+        source_id = smartport_sensor if isinstance(smartport_sensor, str) else smartport_sensor.unique_id
         for id, value in self._sources.items():
             if value.type == TotalPVPower.SourceType.FAILOVER:
                 if value.enabled:
                     return True
-                logging.info(f"{self.__class__.__name__} Enabling '{id}' as failover source because SmartPort sensor '{smartport_sensor.unique_id}' failed")
+                logging.info(f"{self.__class__.__name__} Enabling '{id}' as failover source because SmartPort sensor '{source_id}' failed")
                 value.enabled = True
                 failed_over = True
-        if failed_over and smartport_sensor.unique_id in self._sources:
-            logging.info(f"{self.__class__.__name__} Disabling '{smartport_sensor.unique_id}' as SmartPort source because failover sources enabled")
-            self._sources[smartport_sensor.unique_id].enabled = False
+        if failed_over and source_id in self._sources:
+            logging.info(f"{self.__class__.__name__} Disabling '{source_id}' as SmartPort source because failover sources enabled")
+            self._sources[source_id].enabled = False
+        if failed_over:
+            logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0 because failover source enabled")
+            self._failures = 0
+            self._next_retry = None
         return failed_over
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        if Config.devices[self.plant_index].smartport.enabled:
+        if Config.modbus[self.plant_index].smartport.enabled:
             attributes["source"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
         else:
             attributes["source"] = "PV Power + Third-Party PV Power"
         return attributes
 
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
-        if topic in self._sources:
-            if not self._sources[topic].enabled and self._sources[topic].type == TotalPVPower.SourceType.SMARTPORT:
-                self.failback(topic)
-            self._sources[topic].state = (value if isinstance(value, float) else float(value)) * self._sources[topic].gain
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        if source in self._sources:
+            if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
+                self.fallback(source)
+            self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
+            self._sources[source].last_update = time.time()
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[topic].enabled else 'disabled'}) topic '{topic}' - {self._sources=}")
-            if self._sources[topic].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
-                self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
-                await self.publish(mqtt, modbus, republish=True)
+                logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[source].enabled else 'disabled'}) topic {source} - {self._sources=}")
+            if self._sources[source].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
+                self.set_latest_state(sum([cast(float, value.state) for value in self._sources.values() if value.enabled]))
+                await self.publish(mqtt_client, modbus_client, republish=True)
+            return True
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic '{topic}', but topic is not registered")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {source}, but topic is not registered")
+            return False
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
-        if Config.devices[self.plant_index].smartport.enabled:
-            for topic in Config.devices[self.plant_index].smartport.mqtt:
+        if Config.modbus[self.plant_index].smartport.enabled:
+            for topic in Config.modbus[self.plant_index].smartport.mqtt:
                 if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
                     self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     topics.add(topic.topic)
@@ -380,25 +405,20 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
                     logging.warning(f"{self.__class__.__name__} Empty Smart-Port MQTT topic ignored")
         return topics
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
-        """Publishes this sensor.
-
-        Args:
-            mqtt:       The MQTT client for publishing the current state.
-            modbus:     The Modbus client for determining the current state.
-            republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
-        """
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if not republish:
+            await self._check_timeouts()
             if any(value.state is None for value in self._sources.values() if value.enabled):
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
-                return  # until all values populated, can't do calculation
+                return False  # until all values populated, can't do calculation
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources=}")
-        await super().publish(mqtt, modbus, republish=republish)
+        await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         for value in self._sources.values():
             value.state = None
+        return True
 
     def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
         for sensor in sensors:
@@ -407,7 +427,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
             logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from {sensor.__class__.__name__} - not PVPower instance")
@@ -416,13 +436,14 @@ class TotalPVPower(DerivedSensor, ObservableMixin):
             logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
             return False
         if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
-            self.failback(source)
+            self.fallback(source)
         self._sources[source].state = values[-1][1]
+        self._sources[source].last_update = time.time()
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
         if not self._sources[source].enabled or any(value.state is None for value in self._sources.values() if value.enabled):
             return False  # until all enabled values populated, can't do calculation
-        self.set_latest_state(sum([value.state for value in self._sources.values() if value.enabled]))
+        self.set_latest_state(sum([cast(float, value.state) for value in self._sources.values() if value is not None and value.enabled]))
         return True
 
 
@@ -436,7 +457,7 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
         )
         self.protocol_version = source.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight"
         return attributes
@@ -452,7 +473,7 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
         )
         self.protocol_version = source.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight"
         return attributes
@@ -464,7 +485,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
             name="Lifetime Total PV Production",
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
             object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
-            data_type=ModbusClient.DATATYPE.UINT32,
+            data_type=ModbusDataType.UINT32,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -473,11 +494,11 @@ class TotalLifetimePVEnergy(DerivedSensor):
             precision=2,
         )
         self["enabled_by_default"] = True
-        self.protocol_version = 2.7
-        self.plant_lifetime_pv_energy: float = None
-        self.plant_3rd_party_lifetime_pv_energy: float = None
+        self.protocol_version = Protocol.V2_7
+        self.plant_lifetime_pv_energy: float | None = None
+        self.plant_3rd_party_lifetime_pv_energy: float | None = None
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
         return attributes
@@ -487,28 +508,22 @@ class TotalLifetimePVEnergy(DerivedSensor):
         components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor as was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         return components
 
-    async def publish(self, mqtt: MqttClient, modbus: ModbusClient, republish: bool = False) -> None:
-        """Publishes this sensor.
-
-        Args:
-            mqtt:       The MQTT client for publishing the current state.
-            modbus:     The Modbus client for determining the current state.
-            republish:  If True, do NOT acquire the current state, but instead re-publish the previous state.
-        """
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             if self.debug_logging:
                 logging.debug(
                     f"{self.__class__.__name__} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
                 )
-            return  # until all values populated, can't do calculation
+            return False  # until all values populated, can't do calculation
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
-        await super().publish(mqtt, modbus, republish=republish)
+        await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         self.plant_lifetime_pv_energy = None
         self.plant_3rd_party_lifetime_pv_energy = None
+        return True
 
-    def set_source_values(self, sensor: ModbusSensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
         if isinstance(sensor, PlantPVTotalGeneration):
             self.plant_lifetime_pv_energy = values[-1][1]
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
@@ -533,7 +548,7 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
         )
         self.protocol_version = source.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight"
         return attributes
@@ -549,7 +564,7 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
         )
         self.protocol_version = source.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight"
         return attributes
@@ -565,7 +580,7 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
         )
         self.protocol_version = source.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "&sum; of DailyChargeEnergy across all Inverters associated with the Plant"
         return attributes
@@ -581,7 +596,7 @@ class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
         )
         self.protocol_version = source.protocol_version
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["source"] = "&sum; of DailyDischargeEnergy across all Inverters associated with the Plant"
         return attributes

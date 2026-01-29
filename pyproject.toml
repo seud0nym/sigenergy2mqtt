@@ -11,7 +11,7 @@ dependencies = [
     "psutil==7.2.1",
     "pymodbus==3.11.4",
     "requests==2.32.5",
-    "ruamel.yaml==0.18.17",
+    "ruamel.yaml==0.19.1",
     "scapy==2.7.0",
 ]
 description = "Publish Modbus data from Sigenergy to MQTT, with optional Home Assistant Auto-Discovery and PVOutput updating"
@@ -27,11 +27,22 @@ requires-python = ">=3.12"
 test = [
   "pytest",
   "pytest-asyncio",
+  "pytest-cov",
+  "pytest-xdist",
 ]
+
+[tool.hatch.envs.default]
+features = ["test"]
+scripts.cov = "pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "-n auto --dist loadscope"
+markers = [
+    "no_language_mock: disable global mock of i18n.get_default_language",
+    "no_persistent_state_mock: disable global mock of Config.persistent_state_path",
+]
 
 [project.scripts]
 sigenergy2mqtt = "sigenergy2mqtt.__main__:main"
@@ -48,3 +59,9 @@ include = ["sigenergy2mqtt/**"]
 
 [tool.hatch.build.targets.wheel]
 include = ["sigenergy2mqtt/**"]
+
+[tool.pyright]
+extraPaths = ["./sigenergy2mqtt"]
+exclude = ["tests"]
+ignore = ["tests"]
+typeCheckingMode = "standard"

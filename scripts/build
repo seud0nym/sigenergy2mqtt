@@ -1,34 +1,23 @@
 #!/bin/bash
 
+GREEN='\033[1;32m'
+ORANGE='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 cd "$(cd $(dirname $0)/..; pwd)"
 
 changed_files=y
-if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f -name '*.py' | wc -l) = 0 ]]; then
+if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f  | grep -cE '\.(py|yaml)^') = 0 ]]; then
     changed_files=n
 fi
 if echo "$*" | grep -vqe "-f" && [[ $changed_files = n ]]; then
-  echo "Build CANCELLED - no changed files found"
-  exit
+    echo -e "${RED}>>> Build CANCELLED: ${ORANGE}No changed files found${NC}"
+    exit
 fi
 
-python3 -c '
-import asyncio
-import logging
-from test import instances
-logging.getLogger("root").setLevel(logging.WARNING)
-async def check():
-    print("Checking sensors")
-    await instances.get_sensor_instances(hass=True)
-    await instances.get_sensor_instances(hass=False)
-if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(check())
-    instances.cancel_sensor_futures()
-    loop.close()
-' || exit
-
+echo -e "${GREEN}>>> Calculating version...${NC}"
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
-
 if [[ $changed_files = n ]]; then
     new_version=$old_version
     post=$(echo $old_version | cut -d'-' -f2)
@@ -37,6 +26,7 @@ if [[ $changed_files = n ]]; then
     else
         pypi_version=$old_version
     fi
+    date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0029 Version unchanged ($new_version PyPi=$pypi_version)"
 else
     new_version=$(date +"%Y.%-m.%-d")
     pypi_version=$new_version
@@ -50,46 +40,82 @@ else
             new_version="${new_version}-1"
         fi
     fi
-    echo -e "Updating version from \033[1;32m$old_version\033[0m to \033[1;32m$new_version (PyPi=$pypi_version)\033[0m"
     sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
+    date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0044 Updated version from $old_version to $new_version (PyPi=$pypi_version)"
+fi
+
+if [[ $new_version != $old_version ]]; then
+    echo -e "${GREEN}>>> Running test suite...${NC}"
+    pytest -q --disable-warnings || exit
+
+    echo -e "${GREEN}>>> Checking sensors...${NC}"
+    python3 - <<EOF || exit
+import asyncio, logging
+from tests.utils import get_sensor_instances, cancel_sensor_futures
+logging.basicConfig(level=logging.WARNING)
+async def check():
+    await get_sensor_instances(hass=True)
+    await get_sensor_instances(hass=False)
+try:
+    asyncio.run(check())
+finally:
+    cancel_sensor_futures()
+EOF
+
+    echo -e "${GREEN}>>> Updating documentation...${NC}"
+    for var in $(grep -Eo '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py); do
+        grep -Eq "| \`${var}\`" resources/configuration/ENV.md || { echo -e "${RED}>>> Environment variable ${ORANGE}$var${RED} not found in ENV.md!"; exit; }
+    done
+    date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0071 All environment variables found in resources/configuration/ENV.md"
+
+    OUTPUT_FILE="resources/configuration/CLI.md"
+    NEW_HELP_TMP=$(mktemp)
+    OLD_HELP_TMP=$(mktemp)
+    # 1. Capture the fresh help output to a temp file
+    python3 -m sigenergy2mqtt --help > "$NEW_HELP_TMP" 2>/dev/null
+    # 2. Extract the existing help output from the current file (if it exists)
+    if [ -f "$OUTPUT_FILE" ]; then
+        # This sed command finds the text between the ```text and ``` markers
+        sed -n '/^```text/,/^```/ { /```/!p }' "$OUTPUT_FILE" > "$OLD_HELP_TMP"
+    else
+        # Create an empty file so the comparison fails and forces a write
+        touch "$OLD_HELP_TMP"
+    fi
+    # 3. Compare the "pure" help text
+    if cmp -s "$NEW_HELP_TMP" "$OLD_HELP_TMP"; then
+        date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0088 CLI options haven't changed. Keeping existing documentation (Version remains $(grep "Since Release" "$OUTPUT_FILE" | cut -d' ' -f3-))."
+    else
+        date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0090 CLI changes detected. Updating $OUTPUT_FILE to version $new_version..."
+        {
+        echo "# Command Line Options"
+        echo "(Since Release $new_version)"
+        echo '```text'
+        cat "$NEW_HELP_TMP"
+        echo '```'
+        } > "$OUTPUT_FILE"
+    fi
+    # Cleanup
+    rm "$NEW_HELP_TMP" "$OLD_HELP_TMP"
+    date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0101 resources/configuration/CLI.md updated"
+
+    cd scripts
+    python3 update_md.py
+    cd - >> /dev/null
 fi
 
 rm -f dist/*
 
+echo -e "${GREEN}>>> Building distribution...${NC}"
 python3 -m build || exit
 python3 -m twine check dist/* || exit
-if echo "$*" | grep -qe "docker"; then
-    docker buildx build --output type=cacheonly --platform linux/amd64,linux/arm64 -t sigenergy2mqtt:latest . || exit
-fi
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
-    echo -e "\033[1;32mUpdating add-on...\033[0m"
+    echo -e "${GREEN}>>> Updating add-on...${NC}"
     mkdir -p ../home-assistant-addons/sigenergy2mqtt/rootfs/dist
     rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
-    if echo "$*" | grep -qe "docker"; then
-        docker rmi $(docker images --filter=reference='local/home-assistant-addon-sigenergy2mqtt-amd64:*' -q)
-        docker run --rm -it --privileged -v ../home-assistant-addons/sigenergy2mqtt:/data -v /var/run/docker.sock:/var/run/docker.sock:ro ghcr.io/home-assistant/amd64-builder:latest --target /data --test --no-latest -d local --amd64 || exit
-    fi
 fi
 
-echo -e "\033[1;32mUpdating documentation...\033[0m"
-python3 -c '
-import os
-import sys
-print("# Command Line Options\n")
-print("```")
-from sigenergy2mqtt.__main__ import main
-sys.exit(main())
-print("```")
-' --help > resources/configuration/CLI.md
-date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0086 resources/configuration/CLI.md updated"
-cd resources
-python3 update_md.py
-cd -
-
-echo -e "\033[1;32mBuild successful\033[0m $(date)"
-echo -e "New version: \033[1;32m$new_version\033[0m"
-echo -e "PyPi version: \033[1;32m$pypi_version\033[0m"
+echo -e "${GREEN}>>> Build successful${NC} $(date): Old version=${ORANGE}$old_version${NC} New version=${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"

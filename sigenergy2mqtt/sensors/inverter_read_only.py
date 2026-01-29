@@ -1,4 +1,11 @@
-from dataclasses import dataclass
+import logging
+import math
+import time
+from typing import Any, Dict, cast
+
+from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .base import (
     Alarm1Sensor,
@@ -10,33 +17,13 @@ from .base import (
     AlarmSensor,
     DeviceClass,
     InputType,
-    ObservableMixin,
     ReadOnlySensor,
     ReservedSensor,
     RunningStateSensor,
     StateClass,
     TimestampSensor,
 )
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.devices.types import HybridInverter, PVInverter
-from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler
-from sigenergy2mqtt.sensors.const import (
-    PERCENTAGE,
-    UnitOfApparentPower,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfFrequency,
-    UnitOfPower,
-    UnitOfReactivePower,
-    UnitOfTemperature,
-    UnitOfTime,
-)
-from typing import Any, Dict
-import logging
-import math
-
+from .const import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower, UnitOfTemperature, UnitOfTime
 
 # 5.3 Hybrid inverter running information address definition (read-only register)
 
@@ -51,8 +38,8 @@ class InverterModel(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30500,
             count=15,
-            data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.STRING,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -74,8 +61,8 @@ class InverterSerialNumber(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30515,
             count=10,
-            data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.STRING,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -97,8 +84,8 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30525,
             count=15,
-            data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.STRING,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -111,10 +98,12 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if "device" in self and value is not None and self.device["hw"] != value:
-            # Firmware has been updated, so need to update the device and to republish discovery
-            self.device["hw"] = value
-            self.device.rediscover = True
+        if value is not None:
+            device = getattr(self, "parent_device")
+            if device and device["hw"] != value:
+                logging.info(f"{device.name} firmware change detected: {device['hw']} -> {value} (device_address={device.device_address})")
+                device["hw"] = value
+                device.rediscover = True
         return value
 
 
@@ -128,8 +117,8 @@ class RatedActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30540,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -151,8 +140,8 @@ class MaxRatedApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30542,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfApparentPower.KILOVOLT_AMPERE,
             device_class=None,
             state_class=None,
@@ -174,8 +163,8 @@ class InverterMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30544,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -197,8 +186,8 @@ class MaxAbsorptionPower(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30546,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -220,8 +209,8 @@ class RatedBatteryCapacity(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30548,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -243,8 +232,8 @@ class RatedChargingPower(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30550,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -267,8 +256,8 @@ class RatedDischargingPower(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30552,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -289,8 +278,8 @@ class ReservedDailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 
             device_address=device_address,
             address=30554,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -311,8 +300,8 @@ class ReservedAccumulatedExportEnergy(ReservedSensor, HybridInverter):  # 30554-
             device_address=device_address,
             address=30556,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -333,8 +322,8 @@ class ReservedDailyImportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 
             device_address=device_address,
             address=30560,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -355,8 +344,8 @@ class ReservedAccumulatedImportEnergy(ReservedSensor, HybridInverter):  # 30554-
             device_address=device_address,
             address=30562,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -377,8 +366,8 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30566,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -388,7 +377,7 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
 
 class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
@@ -401,8 +390,8 @@ class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30568,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -424,8 +413,8 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30572,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -435,10 +424,7 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
-
-    def set_state(self, state: float | int | str) -> None:
-        super().set_state(state)
+        self.sanity_check.min_raw = None
 
 
 class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
@@ -451,8 +437,8 @@ class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30574,
             count=4,
-            data_type=ModbusClient.DATATYPE.UINT64,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT64,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -486,8 +472,8 @@ class MaxActivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30579,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -509,8 +495,8 @@ class MinActivePowerAdjustment(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30581,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -532,8 +518,8 @@ class MaxReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30583,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -555,8 +541,8 @@ class MinReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30585,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -578,8 +564,8 @@ class ActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30587,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -600,8 +586,8 @@ class ReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30589,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -622,8 +608,8 @@ class MaxBatteryChargePower(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30591,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -644,8 +630,8 @@ class MaxBatteryDischargePower(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30593,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -666,8 +652,8 @@ class AvailableBatteryChargeEnergy(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30595,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -689,8 +675,8 @@ class AvailableBatteryDischargeEnergy(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30597,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -712,8 +698,8 @@ class ChargeDischargePower(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30599,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -735,8 +721,8 @@ class InverterBatterySoC(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30601,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=StateClass.MEASUREMENT,
@@ -758,8 +744,8 @@ class InverterBatterySoH(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30602,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=StateClass.MEASUREMENT,
@@ -781,8 +767,8 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30603,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfTemperature.CELSIUS,
             device_class=DeviceClass.TEMPERATURE,
             state_class=StateClass.MEASUREMENT,
@@ -792,8 +778,8 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class AverageCellVoltage(ReadOnlySensor, HybridInverter):
@@ -806,8 +792,8 @@ class AverageCellVoltage(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30604,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=StateClass.MEASUREMENT,
@@ -852,9 +838,9 @@ class InverterPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 30605 and 30606"
+        attributes["source"] = "Modbus Registers 30605-30606"
         return attributes
 
 
@@ -904,8 +890,8 @@ class Reserved30610(ReservedSensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=30610,
             count=3,
-            data_type=ModbusClient.DATATYPE.STRING,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.STRING,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -926,8 +912,8 @@ class InverterActivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridInve
             device_address=device_address,
             address=30613,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -948,8 +934,8 @@ class InverterReactivePowerFixedValueAdjustmentFeedback(ReadOnlySensor, HybridIn
             device_address=device_address,
             address=30615,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -970,8 +956,8 @@ class InverterActivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridInve
             device_address=device_address,
             address=30617,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -992,8 +978,8 @@ class InverterReactivePowerPercentageAdjustmentFeedback(ReadOnlySensor, HybridIn
             device_address=device_address,
             address=30618,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -1014,8 +1000,8 @@ class InverterPowerFactorAdjustmentFeedback(ReadOnlySensor, HybridInverter, PVIn
             device_address=device_address,
             address=30619,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1036,8 +1022,8 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30620,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfTemperature.CELSIUS,
             device_class=DeviceClass.TEMPERATURE,
             state_class=StateClass.MEASUREMENT,
@@ -1047,8 +1033,8 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
@@ -1061,8 +1047,8 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30621,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfTemperature.CELSIUS,
             device_class=DeviceClass.TEMPERATURE,
             state_class=StateClass.MEASUREMENT,
@@ -1072,8 +1058,8 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1086,8 +1072,8 @@ class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30622,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=StateClass.MEASUREMENT,
@@ -1109,8 +1095,8 @@ class InverterMinCellVoltage(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=30623,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=StateClass.MEASUREMENT,
@@ -1132,8 +1118,8 @@ class RatedGridVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31000,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1155,8 +1141,8 @@ class RatedGridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31001,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1178,8 +1164,8 @@ class GridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31002,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1200,8 +1186,8 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31003,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfTemperature.CELSIUS,
             device_class=DeviceClass.TEMPERATURE,
             state_class=StateClass.MEASUREMENT,
@@ -1211,8 +1197,8 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = -400  # -40.0 °C
-        self._sanity.max_raw = 2000  # 200.0 °C
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C
 
 
 class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1225,8 +1211,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31004,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -1242,6 +1228,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/L3/N",  # 2
             "L1/L2/N",  # 3
         ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1249,8 +1237,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
+            return cast(list[str], self["options"])[int(value)]
         else:
             return f"Unknown Output Type: {value}"
 
@@ -1275,8 +1263,8 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1284,6 +1272,7 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
@@ -1306,8 +1295,8 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1315,6 +1304,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
         self.phase = phase
 
@@ -1338,8 +1328,8 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=address,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -1347,18 +1337,12 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
+            phase=phase,
         )
 
 
-class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
-    @dataclass
-    class Power:
-        topic: str
-        gain: float
-        active: bool
-        value: float | int | None = None
-
-    def __init__(self, plant_index: int, device_address: int):
+class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, active_power: ActivePower, reactive_power: ReactivePower):
         super().__init__(
             name="Power Factor",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor",
@@ -1367,8 +1351,8 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
             device_address=device_address,
             address=31023,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=None,
             device_class=DeviceClass.POWER_FACTOR,
             state_class=None,
@@ -1377,52 +1361,30 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter, ObservableMixin):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
-        self._sanity.min_raw = 0  # 0.0
-        self._sanity.max_raw = 1000  # 1.0
+        self.sanity_check.min_raw = 0  # 0.0
+        self.sanity_check.max_raw = 1000  # 1.0
         self._max_failures_retry_interval = 300
-        self._active_power: PowerFactor.Power = None
-        self._reactive_power: PowerFactor.Power = None
+        self._active_power = active_power
+        self._reactive_power = reactive_power
 
-    @property
-    def calculated(self) -> tuple[int, float] | None:
-        if self._active_power.value is not None and self._reactive_power.value is not None:
-            apparent_power = math.sqrt(self._active_power.value**2 + self._reactive_power.value**2)
-            return round((abs(self._active_power.value) / apparent_power) * self.gain) if apparent_power != 0 else 0, apparent_power
-        return None, None
-
-    async def notify(self, modbus: ModbusClient, mqtt: MqttClient, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source == self._active_power.topic:
-            self._active_power.value = float(value) * self._active_power.gain
-        elif source == self._reactive_power.topic:
-            self._reactive_power.value = float(value) * self._reactive_power.gain
-        else:
-            return False
-        return True
-
-    def observable_topics(self) -> set[str]:
-        topics: set[str] = set()
-        for sensor in self.parent_device.get_all_sensors().values():
-            if isinstance(sensor, ActivePower) and sensor.state_topic is not None:
-                self._active_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
-                topics.add(sensor.state_topic)
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
-            elif isinstance(sensor, ReactivePower) and sensor.state_topic is not None:
-                self._reactive_power = PowerFactor.Power(topic=sensor.state_topic, gain=sensor.gain, active=True)
-                topics.add(sensor.state_topic)
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
-            if self._active_power is not None and self._reactive_power is not None:
-                break
-        return topics
-
-    def set_state(self, state: float | int | str) -> None:
+    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
         try:
             super().set_state(state)
         except ValueError as e:
-            power_factor, apparent_power = self.calculated
-            if power_factor is not None:
-                logging.info(f"{self.__class__.__name__} Applying Value {power_factor} (Active={self._active_power.value} Reactive={self._reactive_power.value} Apparent={apparent_power}) because {e}")
+            active_power = cast(float, self._active_power.latest_raw_state)
+            reactive_power = cast(float, self._reactive_power.latest_raw_state)
+            if active_power is not None and reactive_power is not None:
+                apparent_power = math.sqrt(active_power**2 + reactive_power**2)
+                power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
+                if self.debug_logging:
+                    active_power_time = cast(float, self._active_power.latest_time)  # pyrefly: ignore
+                    reactive_power_time = cast(float, self._reactive_power.latest_time)  # pyrefly: ignore
+                    logging.debug(
+                        f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
+                    )
+                    logging.info(
+                        f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
+                    )
                 super().set_state(power_factor)
             else:
                 raise e
@@ -1438,8 +1400,8 @@ class PACKBCUCount(ReadOnlySensor, HybridInverter):
             device_address=device_address,
             address=31024,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1460,8 +1422,8 @@ class PVStringCount(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31025,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1483,8 +1445,8 @@ class MPTTCount(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31026,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=None,
             device_class=None,
             state_class=None,
@@ -1498,7 +1460,7 @@ class MPTTCount(ReadOnlySensor, HybridInverter, PVInverter):
 
 class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
-        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+        assert 1 <= string_number <= 36, "string_number must be between 1 and 36"
         super().__init__(
             name="Current",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_current",
@@ -1507,8 +1469,8 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -1522,7 +1484,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
-        assert 1 <= string_number <= 16, "string_number must be between 1 and 16"
+        assert 1 <= string_number <= 36, "string_number must be between 1 and 36"
         super().__init__(
             name="Voltage",
             object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_voltage",
@@ -1531,8 +1493,8 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=address,
             count=1,
-            data_type=ModbusClient.DATATYPE.INT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1554,8 +1516,8 @@ class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31035,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -1577,8 +1539,8 @@ class InsulationResistance(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31037,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit="MΩ",
             device_class=None,
             state_class=None,
@@ -1598,7 +1560,7 @@ class StartupTime(TimestampSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=31038,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             protocol_version=Protocol.V1_8,
         )
 
@@ -1612,7 +1574,7 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=31040,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             protocol_version=Protocol.V1_8,
         )
 
@@ -1627,8 +1589,8 @@ class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter)
             device_address=device_address,
             address=31500,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -1649,8 +1611,8 @@ class DCChargerVehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter
             device_address=device_address,
             address=31501,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -1671,8 +1633,8 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31502,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -1693,8 +1655,8 @@ class DCChargerVehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31504,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=DeviceClass.BATTERY,
             state_class=None,
@@ -1715,8 +1677,8 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             device_address=device_address,
             address=31505,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=None,
@@ -1726,7 +1688,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Single time"
         return attributes
@@ -1742,8 +1704,8 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             device_address=device_address,
             address=31507,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfTime.SECONDS,
             device_class=None,
             state_class=None,
@@ -1753,7 +1715,7 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverte
             protocol_version=Protocol.V1_8,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Single time"
         return attributes
@@ -1769,8 +1731,8 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31509,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1781,7 +1743,7 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-        self._sanity.min_raw = None
+        self.sanity_check.min_raw = None
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
         components: Dict[str, dict[str, Any]] = super().get_discovery_components()
@@ -1799,8 +1761,8 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=31511,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.medium if plant_index < len(Config.devices) else 60,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -1828,8 +1790,8 @@ class DCChargerRunningState(ReadOnlySensor):
             device_address=device_address,
             address=31513,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -1847,6 +1809,8 @@ class DCChargerRunningState(ReadOnlySensor):
             "Fault",  # 4
             "Scheduled",  # 5
         ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1854,7 +1818,11 @@ class DCChargerRunningState(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown State code: {value}"
         else:
             return f"Unknown State code: {value}"

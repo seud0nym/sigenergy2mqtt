@@ -1,11 +1,13 @@
-import pytest
-import time
 import logging
 import math
+import time
 from unittest.mock import MagicMock, patch
-from sigenergy2mqtt.pvoutput.service_topics import ServiceTopics, Calculation
-from sigenergy2mqtt.pvoutput.topic import Topic
+
+import pytest
+
 from sigenergy2mqtt.config import OutputField, StatusField
+from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics
+from sigenergy2mqtt.pvoutput.topic import Topic
 
 
 @pytest.fixture

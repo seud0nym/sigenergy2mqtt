@@ -1,7 +1,9 @@
-from .device import ModbusDevice, DeviceType
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.sensors.inverter_derived import PVStringPower, PVStringDailyEnergy, PVStringLifetimeEnergy
+from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.sensors.inverter_derived import PVStringDailyEnergy, PVStringLifetimeEnergy, PVStringPower
 from sigenergy2mqtt.sensors.inverter_read_only import PVCurrentSensor, PVVoltageSensor
+
+from .device import ModbusDevice
 
 
 class PVString(ModbusDevice):
@@ -26,6 +28,9 @@ class PVString(ModbusDevice):
             "PV String",
             protocol_version,
             unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}{string_number}",
+            model_id=model_id,
+            serial_number=serial_number,
+            string_number=string_number,
         )
 
         voltage = PVVoltageSensor(plant_index, device_address, voltage_address, string_number, protocol_version)

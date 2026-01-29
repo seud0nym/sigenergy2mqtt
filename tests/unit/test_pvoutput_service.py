@@ -1,10 +1,12 @@
-import pytest
-import time
 import logging
+import time
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+from sigenergy2mqtt.config import OutputField, StatusField
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.status import PVOutputStatusService
-from sigenergy2mqtt.config import OutputField, StatusField
 from sigenergy2mqtt.pvoutput.topic import Topic
 
 

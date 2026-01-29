@@ -1,12 +1,14 @@
-import logging
-import pytest
 import asyncio
+import logging
+
+import pytest
+
 from sigenergy2mqtt.modbus.client import ModbusClient
-from tests.utils.modbus_test_server import run_async_server, CustomMqttHandler
 from sigenergy2mqtt.sensors.const import InputType
+from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
 
 
-# Mock MqttClient for the server
+# Mock mqtt.Client for the server
 class MockMqttClient:
     def __init__(self):
         self._user_data = CustomMqttHandler(asyncio.get_running_loop())
@@ -36,7 +38,10 @@ async def mock_modbus_server():
     server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=port, log_level=logging.INFO))
 
     # Allow server to bind
-    await asyncio.sleep(2)
+    from tests.utils.modbus_test_server import wait_for_server_start
+
+    if not await wait_for_server_start("127.0.0.1", port):
+        raise RuntimeError("Mock Modbus server failed to start")
 
     yield port
 
@@ -59,11 +64,11 @@ async def test_read_ahead_caching(mock_modbus_server):
     assert client._cache_hits == 0
 
     # Perform Read Ahead
-    # Range 31000-31010. 31004 is known to be populated (value 2).
-    # We use InputType.INPUT for 31004.
+    # Range 31000-31004 (5 contiguous registers). 31004 is OutputType (value 2).
+    # We use InputType.INPUT for these registers.
 
     start_addr = 31000
-    count = 10
+    count = 5  # Contiguous block: 31000-31004
 
     # Pre-read registers
     await client.read_ahead_registers(start_addr, count, device_id=1, input_type=InputType.INPUT)
@@ -79,20 +84,23 @@ async def test_read_ahead_caching(mock_modbus_server):
 
     # Test Cache HIT
     # Read register 31004. read_input_registers calls _read_registers with use_pre_read=True.
-    rr = await client.read_input_registers(31004, 1, device_id=1)
+    rr = await client.read_input_registers(31004, count=1, device_id=1)
+    assert rr is not None
     assert not rr.isError()
     assert rr.registers[0] == 2  # Known value
     assert client._cache_hits == 1  # Should increment
 
     # Test Cache HIT 2
     # Read register 31000
-    rr2 = await client.read_input_registers(31000, 1, device_id=1)
+    rr2 = await client.read_input_registers(31000, count=1, device_id=1)
+    assert rr2 is not None
     assert not rr2.isError()
     assert client._cache_hits == 2
 
     # Test Cache MISS (Out of range)
-    # Read register 31020
-    rr3 = await client.read_input_registers(31020, 1, device_id=1)
+    # Read register 31023 (outside cached range 31000-31004)
+    rr3 = await client.read_input_registers(31023, count=1, device_id=1)
+    assert rr3 is not None
     assert not rr3.isError()
     assert client._cache_hits == 2  # Should NOT increment
 

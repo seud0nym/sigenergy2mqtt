@@ -1,14 +1,16 @@
+import importlib
+import logging
+
+import sigenergy2mqtt.sensors.plant_derived as derived
+import sigenergy2mqtt.sensors.plant_read_only as ro
+import sigenergy2mqtt.sensors.plant_read_write as rw
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol
+from sigenergy2mqtt.config import Config
+
 from .device import ModbusDevice
 from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .plant_statistics import PlantStatistics
-from .types import DeviceType, HybridInverter
-from sigenergy2mqtt.config import Config, Protocol, ConsumptionMethod
-import importlib
-import logging
-import sigenergy2mqtt.sensors.plant_derived as derived
-import sigenergy2mqtt.sensors.plant_read_only as ro
-import sigenergy2mqtt.sensors.plant_read_write as rw
 
 
 class PowerPlant(ModbusDevice):
@@ -61,7 +63,7 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.GeneralPCSAlarm(plant_index, ro.GeneralAlarm1(plant_index), ro.GeneralAlarm2(plant_index)))
         self._add_read_sensor(ro.GeneralAlarm3(plant_index))
         self._add_read_sensor(ro.GeneralAlarm4(plant_index))
-        if len(Config.devices[plant_index].dc_chargers) > 0:
+        if len(Config.modbus[plant_index].dc_chargers) > 0:
             self._add_read_sensor(ro.GeneralAlarm5(plant_index))
         self._add_read_sensor(ro.PlantActivePower(plant_index), "Plant Power")
         self._add_read_sensor(ro.PlantReactivePower(plant_index), "Plant Power")
@@ -152,12 +154,12 @@ class PowerPlant(ModbusDevice):
         if device_type.has_grid_code_interface and protocol_version >= Protocol.V2_8:
             self._add_child_device(GridCode(plant_index, device_type, protocol_version, rf_value, rated_frequency))
 
-        plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index)
+        plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index) if protocol_version >= Protocol.V2_7 else None
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
         self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
         smartport = None
-        if Config.devices[plant_index].smartport.enabled:
-            smartport_config = Config.devices[plant_index].smartport
+        if Config.modbus[plant_index].smartport.enabled:
+            smartport_config = Config.modbus[plant_index].smartport
             if smartport_config.module.name:
                 module_config = smartport_config.module
                 module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{module_config.name}")
@@ -172,14 +174,20 @@ class PowerPlant(ModbusDevice):
                                 total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
                                 self._add_derived_sensor(total_pv_power, sensor, search_children=True)
                                 break
-                    self._add_read_sensor(plant_3rd_party_pv_power)
-                    total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
+                    if plant_3rd_party_pv_power:
+                        self._add_read_sensor(plant_3rd_party_pv_power)
+                        total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
+                    else:
+                        logging.warning(f"{self.__class__.__name__} Unable to register ThirdPartyPVPower sensor for SmartPort failover - protocol version {protocol_version} does not support it")
                 except Exception as e:
                     logging.error(f"{self.__class__.__name__} Failed to create SmartPort instance - {e}")
                     smartport = None
         if smartport is None:
-            self._add_read_sensor(plant_3rd_party_pv_power, consumption_group)
-            total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
+            if plant_3rd_party_pv_power:
+                self._add_read_sensor(plant_3rd_party_pv_power, consumption_group)
+                total_pv_power.register_source_sensors(plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
+            else:
+                logging.warning(f"{self.__class__.__name__} Unable to register ThirdPartyPVPower sensor as TotalPVPower source - protocol version {protocol_version} does not support it")
 
         self._add_derived_sensor(total_pv_power, plant_3rd_party_pv_power)
 
@@ -195,7 +203,7 @@ class PowerPlant(ModbusDevice):
         plant_consumed_power = derived.PlantConsumedPower(plant_index, method=consumption_source)
         match plant_consumed_power.method:
             case ConsumptionMethod.CALCULATED:
-                grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)
+                grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)  # pyrefly: ignore
                 assert grid_status is not None, "Grid Status sensor not found for Plant Consumed Power calculation"
                 self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, grid_status, search_children=True)
             case ConsumptionMethod.GENERAL:

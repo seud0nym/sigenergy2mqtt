@@ -1,9 +1,11 @@
-from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config, Protocol
-from sigenergy2mqtt.sensors.const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
-from typing import Any
+from typing import cast
 
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus.types import ModbusDataType
+
+from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
+from .const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 
 # 5.5 AC-Charger running information address definition (read-only register)
 
@@ -18,8 +20,8 @@ class ACChargerRunningState(ReadOnlySensor):
             device_address=device_address,
             address=32000,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -39,6 +41,8 @@ class ACChargerRunningState(ReadOnlySensor):
             "Fault",  # 6
             "Error",  # 7
         ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -56,8 +60,12 @@ class ACChargerRunningState(ReadOnlySensor):
             return value
         elif value is None:
             return None
-        elif 0 <= value <= (len(self["options"]) - 1):
-            return self["options"][value]
+        elif isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            if option:
+                return option
+            else:
+                return f"Unknown State code: {value}"
         else:
             return f"Unknown State code: {value}"
 
@@ -72,8 +80,8 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             device_address=device_address,
             address=32001,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.high if plant_index < len(Config.devices) else 10,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -95,8 +103,8 @@ class ACChargerChargingPower(ReadOnlySensor):
             device_address=device_address,
             address=32003,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.realtime if plant_index < len(Config.devices) else 5,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -118,8 +126,8 @@ class ACChargerRatedPower(ReadOnlySensor):
             device_address=device_address,
             address=32005,
             count=2,
-            data_type=ModbusClient.DATATYPE.UINT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -140,8 +148,8 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             device_address=device_address,
             address=32007,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -162,8 +170,8 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             device_address=device_address,
             address=32009,
             count=1,
-            data_type=ModbusClient.DATATYPE.UINT16,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -184,8 +192,8 @@ class ACChargerInputBreaker(ReadOnlySensor):
             device_address=device_address,
             address=32010,
             count=2,
-            data_type=ModbusClient.DATATYPE.INT32,
-            scan_interval=Config.devices[plant_index].scan_interval.low if plant_index < len(Config.devices) else 600,
+            data_type=ModbusDataType.INT32,
+            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -209,14 +217,6 @@ class ACChargerAlarm1(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "5001_1: Grid over-voltage"
@@ -253,14 +253,6 @@ class ACChargerAlarm2(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "5002_1: Leak current detection circuit fault"
@@ -291,14 +283,6 @@ class ACChargerAlarm3(AlarmSensor):
         )
 
     def decode_alarm_bit(self, bit_position: int):
-        """Decodes the alarm bit.
-
-        Args:
-            bit_position:     The set bit in the alarm register value.
-
-        Returns:
-            The alarm description or None if not found.
-        """
         match bit_position:
             case 0:
                 return "5003: Too high internal temperature"
@@ -319,7 +303,7 @@ class ACChargerAlarms(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, Any]:
+    def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 32012, 32013, and 32014"
+        attributes["source"] = "Modbus Registers 32012-32014"
         return attributes

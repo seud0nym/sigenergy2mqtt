@@ -1,61 +1,120 @@
-from . import const
-from . import version
-from .auto_discovery import scan as auto_discovery_scan
-from .home_assistant_config import HomeAssistantConfiguration
-from .modbus_config import DeviceConfig
-from .mqtt_config import MqttConfiguration
-from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSource
-from .influxdb_config import InfluxDBConfiguration
-from .validation import check_bool, check_host, check_float, check_int, check_int_list, check_log_level, check_port, check_string
-from pathlib import Path
-from ruamel.yaml import YAML
-from typing import List
 import json
 import logging
 import os
+from pathlib import Path
+from types import ModuleType
+from typing import Any, cast
+
+from ruamel.yaml import YAML
+
+from sigenergy2mqtt import i18n
+from sigenergy2mqtt.common import ConsumptionMethod
+
+from . import const, version
+from .auto_discovery import scan as auto_discovery_scan
+from .home_assistant_config import HomeAssistantConfiguration
+from .influxdb_config import InfluxDBConfiguration
+from .modbus_config import ModbusConfiguration
+from .mqtt_config import MqttConfiguration
+from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSource
+from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port, check_string
 
 
 class Config:
-    origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
+    origin: dict[str, str]
 
-    clean: bool = False
-    log_level: int = logging.WARNING
+    clean: bool
+    consumption: ConsumptionMethod
+    ems_mode_check: bool
+    log_level: int
+    metrics_enabled: bool
 
-    consumption: ConsumptionSource = const.ConsumptionMethod.CALCULATED
+    language: str
 
-    devices: List[DeviceConfig] = []
-    home_assistant: HomeAssistantConfiguration = HomeAssistantConfiguration()
-    mqtt: MqttConfiguration = MqttConfiguration()
-    pvoutput: PVOutputConfiguration = PVOutputConfiguration()
-    influxdb: InfluxDBConfiguration = InfluxDBConfiguration()
-    sensor_debug_logging: bool = False
-    sensor_overrides: dict = {}
+    sanity_check_default_kw: float
+    sanity_check_failures_increment: bool
 
-    sanity_check_default_kw: float = 500.0
-    metrics_enabled: bool = True
+    modbus: list[ModbusConfiguration]
+    home_assistant: HomeAssistantConfiguration
+    influxdb: InfluxDBConfiguration
+    mqtt: MqttConfiguration
+    pvoutput: PVOutputConfiguration
 
-    persistent_state_path: str = "."
+    sensor_debug_logging: bool
+    sensor_overrides: dict[str, dict[str, bool | int | float | str | list[int] | ModuleType | None]]
 
-    _source: str = None
+    persistent_state_path: Path
 
-    @staticmethod
-    def get_modbus_log_level() -> int:
-        return min([device.log_level for device in Config.devices])
+    _source: str | None
 
-    @staticmethod
-    def set_modbus_log_level(level: int) -> None:
-        for device in Config.devices:
+    @classmethod
+    def _apply_defaults(cls):
+        cls.origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
+
+        cls.clean = False
+        cls.consumption = ConsumptionMethod.TOTAL
+        cls.ems_mode_check = True
+        cls.log_level = logging.WARNING
+        cls.metrics_enabled = True
+
+        cls.language = i18n.get_default_language()
+
+        cls.sanity_check_default_kw = 500.0
+        cls.sanity_check_failures_increment = False
+
+        cls.modbus = []
+        cls.home_assistant = HomeAssistantConfiguration()
+        cls.influxdb = InfluxDBConfiguration()
+        cls.mqtt = MqttConfiguration()
+        cls.pvoutput = PVOutputConfiguration()
+
+        cls.sensor_debug_logging = False
+        cls.sensor_overrides = {}
+
+        cls.persistent_state_path = Path(".")
+
+        cls._source = None
+
+    @classmethod
+    def reset(cls):
+        cls._apply_defaults()
+
+    @classmethod
+    def validate(cls) -> None:
+        if len(cls.modbus) == 0:
+            raise ValueError("At least one Modbus device must be configured")
+
+        for device in cls.modbus:
+            device.validate()
+
+            if not cls.ems_mode_check:
+                if device.registers.no_remote_ems:
+                    raise ValueError("When ems_mode_check is disabled, no_remote_ems must be False")
+                if not device.registers.read_write:
+                    raise ValueError("When ems_mode_check is disabled, read_write must be True")
+
+        cls.mqtt.validate()
+        cls.home_assistant.validate()
+        cls.pvoutput.validate()
+
+    @classmethod
+    def get_modbus_log_level(cls) -> int:
+        return min([device.log_level for device in cls.modbus])
+
+    @classmethod
+    def set_modbus_log_level(cls, level: int) -> None:
+        for device in cls.modbus:
             device.log_level = level
 
-    @staticmethod
-    def load(filename: str) -> None:
+    @classmethod
+    def load(cls, filename: str) -> None:
         logging.info(f"Loading configuration from {filename}...")
-        Config._source = filename
-        Config.reload()
+        cls._source = filename
+        cls.reload()
 
-    @staticmethod
-    def reload() -> None:
-        overrides = {
+    @classmethod
+    def reload(cls) -> None:
+        overrides: dict[str, Any] = {
             "home-assistant": {},
             "mqtt": {},
             "modbus": [{"smart-port": {"mqtt": [{}], "module": {}}}],
@@ -64,14 +123,17 @@ class Config:
             "sensor-overrides": {},
         }
 
-        if Config._source:
+        if cls._source:
             _yaml = YAML(typ="safe", pure=True)
-            with open(Config._source, "r") as f:
+            with open(cls._source, "r") as f:
                 data = _yaml.load(f)
-            Config._configure(data)
+            if data:
+                cls._configure(data)
+            else:
+                logging.warning(f"Ignored configuration file {cls._source} because it contains no keys?")
 
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
-        auto_discovery_cache = Path(Config.persistent_state_path, "auto-discovery.yaml")
+        auto_discovery_cache = Path(cls.persistent_state_path, "auto-discovery.yaml")
         auto_discovered = None
         if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
@@ -95,16 +157,19 @@ class Config:
                 try:
                     match key:
                         case const.SIGENERGY2MQTT_CONSUMPTION:
-                            overrides["consumption"] = const.ConsumptionMethod(
-                                check_string(
-                                    os.environ[key],
-                                    key,
-                                    const.ConsumptionMethod.CALCULATED.value,
-                                    const.ConsumptionMethod.TOTAL.value,
-                                    const.ConsumptionMethod.GENERAL.value,
-                                    allow_empty=False,
-                                    allow_none=False,
-                                )
+                            overrides["consumption"] = ConsumptionMethod(
+                                cast(
+                                    str,
+                                    check_string(
+                                        os.environ[key],
+                                        key,
+                                        ConsumptionMethod.CALCULATED.value,
+                                        ConsumptionMethod.TOTAL.value,
+                                        ConsumptionMethod.GENERAL.value,
+                                        allow_empty=False,
+                                        allow_none=False,
+                                    ),
+                                ),
                             )
                         case const.SIGENERGY2MQTT_LOG_LEVEL:
                             overrides["log-level"] = check_log_level(os.environ[key], key)
@@ -113,6 +178,17 @@ class Config:
                             overrides["log-level"] = logging.DEBUG
                         case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
                             overrides["sanity-check-default-kw"] = check_float(os.environ[key], key, allow_none=False, min=0)
+                        case const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT:
+                            overrides["sanity-check-failures-increment"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_LANGUAGE:
+                            try:
+                                overrides["language"] = check_string(os.environ[key], key, *i18n.get_available_translations(), allow_empty=False, allow_none=False)
+                            except ValueError:
+                                default = i18n.get_default_language()
+                                logging.warning(f"Invalid language '{os.environ[key]}' for {key}, falling back to '{default}'")
+                                overrides["language"] = default
+                        case const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
+                            overrides["no-ems-mode-check"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_NO_METRICS:
                             overrides["no-metrics"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_ENABLED:
@@ -123,8 +199,6 @@ class Config:
                             overrides["home-assistant"]["entity-id-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
                             overrides["home-assistant"]["device-name-prefix"] = check_string(os.environ[key], key)
-                        case const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY:
-                            overrides["home-assistant"]["discovery-only"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
                             overrides["home-assistant"]["discovery-prefix"] = check_string(os.environ[key], key)
                         case const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
@@ -141,11 +215,11 @@ class Config:
                                 for device in auto_discovered:
                                     device["log-level"] = overrides["modbus"][0]["log-level"]
                         case const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
-                            overrides["modbus"][0]["inverters"] = check_int_list([int(device_id) for device_id in os.environ[key].split(",")], key)
+                            overrides["modbus"][0]["inverters"] = check_int_list(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
-                            overrides["modbus"][0]["ac-chargers"] = check_int_list([int(device_id) for device_id in os.environ[key].split(",")], key)
+                            overrides["modbus"][0]["ac-chargers"] = check_int_list(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
-                            overrides["modbus"][0]["dc-chargers"] = check_int_list([int(device_id) for device_id in os.environ[key].split(",")], key)
+                            overrides["modbus"][0]["dc-chargers"] = check_int_list(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
                             overrides["modbus"][0]["no-remote-ems"] = check_bool(os.environ[key], key)
                             if auto_discovered:
@@ -176,22 +250,26 @@ class Config:
                             overrides["modbus"][0]["scan-interval-low"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
-                                    device["scan-interval-low"] = overrides["modbus"][0]["scan-interval-low"]
+                                    if overrides["modbus"][0]["scan-interval-low"]:
+                                        device["scan-interval-low"] = overrides["modbus"][0]["scan-interval-low"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
                             overrides["modbus"][0]["scan-interval-medium"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
-                                    device["scan-interval-medium"] = overrides["modbus"][0]["scan-interval-medium"]
+                                    if overrides["modbus"][0]["scan-interval-medium"]:
+                                        device["scan-interval-medium"] = overrides["modbus"][0]["scan-interval-medium"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
                             overrides["modbus"][0]["scan-interval-high"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
-                                    device["scan-interval-high"] = overrides["modbus"][0]["scan-interval-high"]
+                                    if overrides["modbus"][0]["scan-interval-high"]:
+                                        device["scan-interval-high"] = overrides["modbus"][0]["scan-interval-high"]
                         case const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
                             overrides["modbus"][0]["scan-interval-realtime"] = check_int(os.environ[key], key, min=1)
                             if auto_discovered:
                                 for device in auto_discovered:
-                                    device["scan-interval-realtime"] = overrides["modbus"][0]["scan-interval-realtime"]
+                                    if overrides["modbus"][0]["scan-interval-realtime"]:
+                                        device["scan-interval-realtime"] = overrides["modbus"][0]["scan-interval-realtime"]
                         case const.SIGENERGY2MQTT_SMARTPORT_ENABLED:
                             overrides["modbus"][0]["smart-port"]["enabled"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
@@ -218,6 +296,8 @@ class Config:
                             overrides["mqtt"]["tls"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_TLS_INSECURE:
                             overrides["mqtt"]["tls-insecure"] = check_bool(os.environ[key], key)
+                        case const.SIGENERGY2MQTT_MQTT_TRANSPORT:
+                            overrides["mqtt"]["transport"] = check_string(os.environ[key], key, "tcp", "websockets", allow_none=False, allow_empty=False)
                         case const.SIGENERGY2MQTT_MQTT_ANONYMOUS:
                             overrides["mqtt"]["anonymous"] = check_bool(os.environ[key], key)
                         case const.SIGENERGY2MQTT_MQTT_LOG_LEVEL:
@@ -310,17 +390,19 @@ class Config:
                 except Exception as e:
                     raise Exception(f"{repr(e)} when processing override '{key}'")
 
-        Config._configure(overrides, True)
+        cls._configure(overrides, True)
+
+        i18n.load(cls.language)
 
         if auto_discovered:
             if isinstance(auto_discovered, list):
                 for device in auto_discovered:
                     updated = False
-                    for defined in Config.devices:
+                    for defined in cls.modbus:
                         if (defined.host == device.get("host") or defined.host == "") and defined.port == device.get("port"):
                             if defined.host == "":
-                                defined.host = device.get("host")
-                                defined.port = device.get("port")
+                                defined.host = cast(str, device.get("host"))
+                                defined.port = cast(int, device.get("port"))
                                 logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
                             else:
                                 logging.info(f"Auto-discovered found configured Modbus device: {device.get('host')}:{device.get('port')}, updating with discovered device IDs")
@@ -329,17 +411,11 @@ class Config:
                             break
                     if not updated:
                         logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
-                        new_device = DeviceConfig()
+                        new_device = ModbusConfiguration()
                         new_device.configure(device, override=True, auto_discovered=True)
-                        Config.devices.append(new_device)
+                        cls.modbus.append(new_device)
             else:
                 raise ValueError("Auto-discovery results must be a list of modbus device configurations")
-
-        if len(Config.devices) == 0 or (len(Config.devices) == 1 and not getattr(Config.devices[0], "host", None)):
-            if auto_discovery in ("once", "force"):
-                raise ValueError("No Modbus devices configured and auto-discovery did not find any Sigenergy devices; please check that the devices are powered on and reachable over the network")
-            else:
-                raise ValueError("No Modbus devices configured")
 
     @staticmethod
     def version() -> str:
@@ -347,32 +423,37 @@ class Config:
 
     @staticmethod
     def _configure(data: dict, override: bool = False) -> None:
-        for name in data.keys():
+        for name in data.keys() if data else {}:
             match name:
-                case "home-assistant":
-                    Config.home_assistant.configure(data[name], override)
                 case "consumption":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: consumption = {data[name]}")
-                    Config.consumption = const.ConsumptionMethod(
-                        check_string(
-                            data[name],
-                            name,
-                            const.ConsumptionMethod.CALCULATED.value,
-                            const.ConsumptionMethod.TOTAL.value,
-                            const.ConsumptionMethod.GENERAL.value,
-                            allow_empty=False,
-                            allow_none=False,
+                    Config.consumption = ConsumptionMethod(
+                        cast(
+                            str,
+                            check_string(
+                                data[name],
+                                name,
+                                ConsumptionMethod.CALCULATED.value,
+                                ConsumptionMethod.TOTAL.value,
+                                ConsumptionMethod.GENERAL.value,
+                                allow_empty=False,
+                                allow_none=False,
+                            ),
                         )
                     )
+                case "language":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: language = {data[name]}")
+                    try:
+                        Config.language = cast(str, check_string(data[name], name, *i18n.get_available_translations(), allow_empty=False, allow_none=False))
+                    except ValueError:
+                        default = i18n.get_default_language()
+                        logging.warning(f"Invalid language '{data[name]}' for {name}, falling back to '{default}'")
+                        Config.language = default
+                case "home-assistant":
+                    Config.home_assistant.configure(data[name], override)
                 case "log-level":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: log-level = {data[name]}")
                     Config.log_level = check_log_level(data[name], name)
-                case "sanity-check-default-kw":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
-                    Config.sanity_check_default_kw = check_float(data[name], name, allow_none=False, min=0)
-                case "no-metrics":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
-                    Config.metrics_enabled = not check_bool(data[name], name)
                 case "mqtt":
                     Config.mqtt.configure(data[name], override)
                 case "modbus":
@@ -380,19 +461,31 @@ class Config:
                         index = 0
                         for config in data[name]:
                             if isinstance(config, dict):
-                                if len(Config.devices) <= index:
-                                    device = DeviceConfig()
-                                    Config.devices.append(device)
+                                if len(Config.modbus) <= index:
+                                    device = ModbusConfiguration()
+                                    Config.modbus.append(device)
                                 else:
-                                    device = Config.devices[index]
+                                    device = Config.modbus[index]
                                 device.configure(config, override)
                             index += 1
                     else:
                         raise ValueError("modbus configuration element must contain a list of Sigenergy hosts")
+                case "no-ems-mode-check":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-ems-mode-check = {data[name]}")
+                    Config.ems_mode_check = not check_bool(data[name], name)
+                case "no-metrics":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
+                    Config.metrics_enabled = not check_bool(data[name], name)
                 case "pvoutput":
                     Config.pvoutput.configure(data[name], override)
                 case "influxdb":
                     Config.influxdb.configure(data[name], override)
+                case "sanity-check-default-kw":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
+                    Config.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))
+                case "sanity-check-failures-increment":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-failures-increment = {data[name]}")
+                    Config.sanity_check_failures_increment = check_bool(data[name], name)
                 case "sensor-debug-logging":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sensor-debug-logging = {data[name]}")
                     Config.sensor_debug_logging = check_bool(data[name], name)
@@ -417,6 +510,8 @@ class Config:
                                         Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0, max=6)
                                     case "publishable":
                                         Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                    case "publish-raw":
+                                        Config.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
                                     case "scan-interval":
                                         Config.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=1)
                                     case "sanity-check-max-value":
@@ -433,3 +528,6 @@ class Config:
                         raise ValueError("sensor-overrides configuration elements must contain a list of class names, each followed by options and their values")
                 case _:
                     raise ValueError(f"Configuration contains unknown element '{name}'")
+
+
+Config._apply_defaults()

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 __all__ = ["get_pvoutput_services"]
 
-from .output import PVOutputOutputService
-from .status import PVOutputStatusService
-from .topic import Topic
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+import logging
+from typing import TYPE_CHECKING
+
 from sigenergy2mqtt.config import Config, ConsumptionSource, OutputField, StatusField, VoltageSource
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
-from sigenergy2mqtt.sensors.base import Sensor
+from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.sensors.base import Sensor, TypedSensorMixin
 from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
 from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
@@ -22,23 +22,27 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     TotalLoadConsumption,
     TotalLoadDailyConsumption,
 )
-from typing import TYPE_CHECKING
-import logging
+
+from .output import PVOutputOutputService
+from .status import PVOutputStatusService
+from .topic import Topic
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.main.thread_config import ThreadConfig
 
 
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
+    if not Config.pvoutput.enabled:
+        return []
     logger = logging.getLogger("pvoutput")
     logger.setLevel(Config.pvoutput.log_level)
 
-    plant_pv_power: PlantPVPower = None
-    total_pv_power: TotalPVPower = None
+    plant_pv_power: PlantPVPower | None = None
+    total_pv_power: TotalPVPower | None = None
 
     donation = {k: v for k, v in Config.pvoutput.extended.items() if v != ""}
 
-    extended_data: dict[StatusField, str] = {field: None for field in StatusField}
+    extended_data: dict[StatusField, str | None] = {field: None for field in StatusField}
     status_topics: dict[StatusField, list[Topic]] = {field: [] for field in StatusField}
     output_topics: dict[OutputField, list[Topic]] = {field: [] for field in OutputField}
 
@@ -74,7 +78,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     sensor.publish_raw = True
                     gain = get_gain(sensor)
                     if Config.pvoutput.consumption == ConsumptionSource.IMPORTED:
-                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, sensor.scan_interval, gain))
+                        output_topics[OutputField.CONSUMPTION].append(Topic(sensor.raw_state_topic, None, gain))
                     output_topics[OutputField.IMPORTS].append(Topic(sensor.raw_state_topic, None, gain))
                 case PhaseVoltage():
                     if (
@@ -119,12 +123,13 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                 case TotalPVPower():
                     total_pv_power = sensor
             for k, v in donation.items():
-                if sensor.__class__.__name__.lower() == v.lower() or sensor["object_id"] == v or f"sensor.{sensor['object_id']}" == v:
-                    if sensor.data_type == ModbusClient.DATATYPE.STRING:
+                if (sensor.__class__.__name__.lower() == v.lower() or sensor["object_id"] == v or f"sensor.{sensor['object_id']}" == v) and isinstance(sensor, TypedSensorMixin):
+                    if sensor.data_type == ModbusDataType.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
-                        status_topics[k].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None), precision=sensor.precision))  # Used displayed value, not raw
-                        extended_data[k] = sensor.device_class
+                        key = StatusField(k)
+                        status_topics[key].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None), precision=sensor.precision))  # Used displayed value, not raw
+                        extended_data[key] = sensor.device_class
 
     if total_pv_power is not None:
         total_pv_power.publish_raw = True

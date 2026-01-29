@@ -38,6 +38,7 @@ For each host defined in the `modbus` section of the configuration file, an MQTT
 Example:
 ```
 Sigenergy Plant
+   ├─ Sigenergy Plant Grid Code
    ├─ Sigenergy Plant Grid Sensor
    ├─ Sigenergy Plant Smart-Port
    ├─ Sigenergy Plant Statistics
@@ -63,7 +64,7 @@ For Sigenergy systems, with no requirement to integrate with PVOutput, the [Sige
 
 | Feature | Sigenergy Local Modbus | sigenergy2mqtt  (Linux) | sigenergy2mqtt  (HA Add-on) | Comments |
 |:--------|:----------------------:|:-----------------------:|:---------------------------:|:---------|
-| Pre-requisites | None | Python, MQTT broker | None | |
+| Pre-requisites | None | Python, MQTT broker | MQTT broker | |
 | Installation | GUI | Manual | GUI | |
 | Configuration| GUI | Edit configuration file | GUI and/or config file | |
 | Home Assistant | HACS Integration | Optional MQTT Auto-discovery | MQTT Auto-discovery |

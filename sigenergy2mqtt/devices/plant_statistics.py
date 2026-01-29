@@ -1,6 +1,7 @@
-from .device import ModbusDevice, DeviceType
-from sigenergy2mqtt.config import Protocol
 import sigenergy2mqtt.sensors.plant_read_only as ro
+from sigenergy2mqtt.common import Protocol
+
+from .device import DeviceType, ModbusDevice
 
 
 class PlantStatistics(ModbusDevice):

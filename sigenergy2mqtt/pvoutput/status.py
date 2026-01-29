@@ -1,15 +1,17 @@
-from .service_topics import Calculation, ServiceTopics
-from .service import Service
-from .topic import Topic
-from sigenergy2mqtt.config import Config, StatusField, VoltageSource
-from typing import Any, Awaitable, List
 import asyncio
 import logging
 import time
+from typing import Any, Awaitable
+
+from sigenergy2mqtt.config import Config, StatusField, VoltageSource
+
+from .service import Service
+from .service_topics import Calculation, ServiceTopics
+from .topic import Topic
 
 
 class PVOutputStatusService(Service):
-    def __init__(self, logger: logging.Logger, topics: dict[StatusField, list[Topic]], extended_data: dict[StatusField, str]):
+    def __init__(self, logger: logging.Logger, topics: dict[StatusField, list[Topic]], extended_data: dict[StatusField, str | None]):
         super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
 
         _v1 = ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY)
@@ -31,7 +33,7 @@ class PVOutputStatusService(Service):
         _b5 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_DISCHARGED, donation=True)
         _b6 = ServiceTopics(self, False, logger, value_key=StatusField.BATTERY_STATE, donation=True)
 
-        self._previous_payload: dict = None
+        self._previous_payload: dict | None = None
         self._service_topics: dict[str, ServiceTopics] = {
             StatusField.GENERATION_ENERGY: _v1,
             StatusField.GENERATION_POWER: _v2,
@@ -62,13 +64,13 @@ class PVOutputStatusService(Service):
                     if topic.precision is not None:
                         self._service_topics[field].decimals = topic.precision
             else:
-                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field} with topic {topic.topic}")
+                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field}")
 
-    def _create_payload(self, now: time.struct_time) -> tuple[dict[str, any], dict[str, dict[str, tuple[float | int, time.struct_time]]]]:
-        payload: dict[str, any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
+    def _create_payload(self, now: time.struct_time) -> tuple[dict[str, Any], dict[str, dict[str, tuple[float | None, time.struct_time | None]]]]:
+        payload: dict[str, Any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
         topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or Service._donator)]
-        snapshot: dict[str, dict[str, tuple[float | int, time.struct_time]]] = {
-            st.value: {t.topic: (t.previous_state, t.previous_timestamp) for t in st_topics.values()}
+        snapshot: dict[str, dict[str, tuple[float | None, time.struct_time | None]]] = {
+            st: {t.topic: (t.previous_state, t.previous_timestamp) for t in st_topics.values()}
             for st, st_topics in self._service_topics.items()
             if st_topics.enabled and (not st_topics.requires_donation or Service._donator)
         }
@@ -81,8 +83,8 @@ class PVOutputStatusService(Service):
         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, next_time
 
-    def schedule(self, modbus: Any, mqtt: Any) -> List[Awaitable[None]]:
-        async def publish_updates(modbus: Any, mqtt: Any, *sensors: Any) -> None:
+    def schedule(self, modbus_client: Any, mqtt_client: Any) -> list[Awaitable[None]]:
+        async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
             self.logger.info(f"{self.__class__.__name__} Commenced")
             wait, _ = await self.seconds_until_status_upload()
             while self.online:
@@ -114,8 +116,8 @@ class PVOutputStatusService(Service):
                                 async with self.lock(timeout=5):
                                     for st, topics_dict in self._service_topics.items():
                                         for topic in topics_dict.values():
-                                            if st.value in snapshot and topic.topic in snapshot[st.value]:
-                                                topic.previous_state, topic.previous_timestamp = snapshot[st.value][topic.topic]
+                                            if st in snapshot and topic.topic in snapshot[st]:
+                                                topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic]
                         else:
                             self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
@@ -134,9 +136,9 @@ class PVOutputStatusService(Service):
             self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
             return
 
-        tasks = [publish_updates(modbus, mqtt)]
+        tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         return tasks
 
-    def subscribe(self, mqtt, mqtt_handler) -> None:
+    def subscribe(self, mqtt_client, mqtt_handler) -> None:
         for topic in [t for t in self._service_topics.values() if t.enabled]:
-            topic.subscribe(mqtt, mqtt_handler)
+            topic.subscribe(mqtt_client, mqtt_handler)

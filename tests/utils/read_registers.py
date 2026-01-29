@@ -5,7 +5,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from pymodbus import ExceptionResponse
+
 from sigenergy2mqtt.modbus.client import ModbusClient
+
 
 async def read_single_register(client: ModbusClient, device_address: int, register: int, count: int, type: str):
     logging.debug(f"read: registers = {register}:{register + count - 1} ({count=}) device address = {device_address}")
@@ -15,7 +17,7 @@ async def read_single_register(client: ModbusClient, device_address: int, regist
         rr = await client.read_holding_registers(register, count=count, device_id=device_address, trace=True)
     else:
         raise Exception(f"invalid {type=}")
-    if rr.isError() or isinstance(rr, ExceptionResponse):
+    if rr is not None and (rr.isError() or isinstance(rr, ExceptionResponse)):
         match rr.exception_code:
             case 1:
                 logging.error("then: 0x01 ILLEGAL FUNCTION")

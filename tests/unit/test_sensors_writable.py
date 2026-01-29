@@ -1,8 +1,10 @@
 import asyncio
 import sys
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from contextlib import asynccontextmanager
+from typing import cast
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Mock circular dependencies before importing sensors.base
 mock_types = MagicMock()
@@ -18,12 +20,12 @@ class MockPVInverter:
 
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.devices.types"] = mock_types
+sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
-# Imported here (no hacks needed for mqtt anymore)
+# Imported here (no hacks needed for mqtt any more)
+from sigenergy2mqtt.common import Protocol  # noqa: E402
 from sigenergy2mqtt.modbus import ModbusClient  # noqa: E402
-from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor, NumericSensor, SelectSensor, InputType, SwitchSensor  # noqa: E402
-from sigenergy2mqtt.config import Protocol  # noqa: E402
+from sigenergy2mqtt.sensors.base import InputType, NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -57,7 +59,7 @@ def mock_modbus():
     modbus.read_holding_registers = AsyncMock()
     modbus.read_input_registers = AsyncMock()
 
-    # Default behavior for convert_to_registers: try to return a list with the value if it's int-like
+    # Default behaviour for convert_to_registers: try to return a list with the value if it's int-like
     def side_effect(val, _data_type):
         try:
             return [int(val)]
@@ -149,6 +151,7 @@ class TestWritableSensorMixin:
 
             with pytest.raises(Exception, match="0x01 ILLEGAL FUNCTION"):
                 await sensor._write_registers(mock_modbus, 1, MagicMock())
+            assert sensor.force_publish is True
 
     @pytest.mark.asyncio
     async def test_write_registers_timeout(self, mock_modbus):
@@ -168,6 +171,7 @@ class TestWritableSensorMixin:
 
                 result = await sensor._write_registers(mock_modbus, 1, MagicMock())
                 assert result is False
+                assert sensor.force_publish is True
 
     @pytest.mark.asyncio
     async def test_write_registers_cancelled(self, mock_lock_factory, mock_modbus):
@@ -177,6 +181,7 @@ class TestWritableSensorMixin:
 
             result = await sensor._write_registers(mock_modbus, 1, MagicMock())
             assert result is False
+            assert sensor.force_publish is True
 
 
 class TestWriteOnlySensorLogic:
@@ -191,7 +196,7 @@ class TestWriteOnlySensorLogic:
             mock_rr.isError.return_value = False
             mock_modbus.write_register.return_value = mock_rr
 
-            result = await sensor.set_value(mock_modbus, mock_mqtt, "on", sensor["command_topic"], MagicMock())
+            result = await sensor.set_value(mock_modbus, mock_mqtt, "on", cast(str, sensor["command_topic"]), MagicMock())
             assert result is True
             mock_modbus.write_register.assert_called_with(30001, 1, device_id=1, no_response_expected=False)
 
@@ -209,7 +214,7 @@ class TestNumericSensorWritable:
             mock_rr.isError.return_value = False
             mock_modbus.write_register.return_value = mock_rr
 
-            result = await sensor.set_value(mock_modbus, MagicMock(), 50.0, sensor["command_topic"], MagicMock())
+            result = await sensor.set_value(mock_modbus, MagicMock(), 50.0, cast(str, sensor["command_topic"]), MagicMock())
             assert result is True
             mock_modbus.write_register.assert_called_with(30100, 500, device_id=1, no_response_expected=False)
 
@@ -226,7 +231,7 @@ class TestSelectSensorWritable:
             mock_rr.isError.return_value = False
             mock_modbus.write_register.return_value = mock_rr
 
-            result = await sensor.set_value(mock_modbus, MagicMock(), "Auto", sensor["command_topic"], MagicMock())
+            result = await sensor.set_value(mock_modbus, MagicMock(), "Auto", cast(str, sensor["command_topic"]), MagicMock())
             assert result is True
             mock_modbus.write_register.assert_called_with(30200, 2, device_id=1, no_response_expected=False)
 
@@ -242,6 +247,6 @@ class TestSwitchSensorWritable:
             mock_rr.isError.return_value = False
             mock_modbus.write_register.return_value = mock_rr
 
-            result = await sensor.set_value(mock_modbus, MagicMock(), 1, sensor["command_topic"], MagicMock())
+            result = await sensor.set_value(mock_modbus, MagicMock(), 1, cast(str, sensor["command_topic"]), MagicMock())
             assert result is True
             mock_modbus.write_register.assert_called_with(30300, 1, device_id=1, no_response_expected=False)

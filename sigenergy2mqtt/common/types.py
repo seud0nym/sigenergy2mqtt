@@ -1,24 +1,13 @@
-import re
+from sigenergy2mqtt.i18n import _t
 
 
 class DeviceType:
-    """Base class for Inverter types"""
-
-    @classmethod
-    def create(cls, model_id: str):
-        device_type = HybridInverter() if re.search(r"EC|Hybrid|PG|PV.*M1-HY", model_id) else PVInverter()
-        device_type._model_id = model_id
-        return device_type
-
-    @property
-    def has_independent_phase_power_control_interface(self) -> bool:
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         """Independent phase power control interface (registers 40008~40025, 40030), only SigenStor, Sigen Hybrid, Sigen PV M1-HYB series support"""
-        return True if re.search(r"SigenStor|Hybrid|PV.*M1-HYB", self._model_id) else False
-
-    @property
-    def has_grid_code_interface(self) -> bool:
+        self.has_independent_phase_power_control_interface: bool = False
         """Grid code interface (registers 40051~40068), only SigenStor, Sigen Hybrid support"""
-        return True if re.search(r"SigenStor|Hybrid", self._model_id) else False
+        self.has_grid_code_interface: bool = False
 
 
 class HybridInverter(DeviceType):
@@ -32,8 +21,8 @@ class HybridInverter(DeviceType):
     Sigen PV (50, 60, 80, 99.9, 100, 110) M1-HYB series
     """
 
-    def __str__(self):
-        return "Hybrid Inverter"
+    def __str__(self) -> str:
+        return _t(f"{self.__class__.__name__}.name", "Hybrid Inverter")
 
 
 class PVInverter(DeviceType):
@@ -44,5 +33,5 @@ class PVInverter(DeviceType):
     Sigen PV (500)H1 series
     """
 
-    def __str__(self):
-        return "PV Inverter"
+    def __str__(self) -> str:
+        return _t(f"{self.__class__.__name__}.name", "PV Inverter")

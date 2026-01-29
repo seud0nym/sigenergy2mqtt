@@ -1,6 +1,8 @@
 import asyncio
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 
@@ -57,7 +59,8 @@ class TestMqttInit:
     @patch("sigenergy2mqtt.mqtt.MqttClient")
     @patch("sigenergy2mqtt.mqtt.MqttHandler")
     @patch("sigenergy2mqtt.mqtt.sleep")
-    def test_mqtt_setup_retry_logic(self, mock_sleep, mock_handler_class, mock_client_class):
+    @patch("time.sleep")
+    def test_mqtt_setup_retry_logic(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
         """Test mqtt_setup retry logic on connection failure."""
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
@@ -69,21 +72,23 @@ class TestMqttInit:
         with patch("sigenergy2mqtt.mqtt.Config") as mock_config:
             mock_config.mqtt.broker = "test_broker"
             mock_config.mqtt.port = 1883
-            mock_config.mqtt.keepalive = 60
+            mock_config.mqtt.keepalive = 10
+            mock_config.mqtt.retry_delay = 1
 
             client, handler = mqtt_setup("test_client", modbus, loop)
 
             assert client == mock_client
             assert mock_client.connect.call_count == 3
             assert mock_sleep.call_count == 2
-            mock_sleep.assert_called_with(30)
+            mock_sleep.assert_called_with(1)
 
         loop.close()
 
     @patch("sigenergy2mqtt.mqtt.MqttClient")
     @patch("sigenergy2mqtt.mqtt.MqttHandler")
     @patch("sigenergy2mqtt.mqtt.sleep")
-    def test_mqtt_setup_critical_failure(self, mock_sleep, mock_handler_class, mock_client_class):
+    @patch("time.sleep")
+    def test_mqtt_setup_critical_failure(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
         """Test mqtt_setup raises exception after 3 failed attempts."""
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()

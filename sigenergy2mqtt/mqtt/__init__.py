@@ -1,21 +1,23 @@
-__all__ = ["MqttClient", "MqttHandler", "mqtt_setup"]
+__all__ = ["MqttHandler", "mqtt_setup"]
 
-from .mqtt import MqttClient, MqttHandler
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from sigenergy2mqtt.config import Config
-from time import sleep
-from typing import Tuple
 import asyncio
 import logging
+from time import sleep
+from typing import Tuple
+
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.modbus.types import ModbusClientType
+
+from .mqtt import MqttClient, MqttHandler
 
 
-def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
+def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClientType | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
     assert mqtt_client_id and not mqtt_client_id.isspace(), "mqtt_client_id must not be None or an empty string"
 
-    logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
+    logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for mqtt://{Config.mqtt.broker}:{Config.mqtt.port} over {Config.mqtt.transport}")
 
-    mqtt_handler = MqttHandler(mqtt_client_id, modbus, loop)
-    mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler)
+    mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop)
+    mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler, transport=Config.mqtt.transport)
 
     if Config.mqtt.anonymous:
         logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} anonymously")
@@ -34,8 +36,8 @@ def mqtt_setup(mqtt_client_id: str, modbus: ModbusClient, loop: asyncio.Abstract
             return mqtt_client, mqtt_handler
         except Exception as e:
             if connect_attempts < 3:
-                logging.error(f"Error connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)} - Retrying in 30s")
-                sleep(30)
+                logging.error(f"Error connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)} - Retrying in {Config.mqtt.retry_delay}s")
+                sleep(Config.mqtt.retry_delay)
             else:
                 logging.critical(f"Failed to connect to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}: {repr(e)}")
                 raise

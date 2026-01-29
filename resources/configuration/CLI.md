@@ -1,67 +1,69 @@
 # Command Line Options
-
-```
-usage: -c [-h] [-c [SIGENERGY2MQTT_CONFIG]]
-          [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-          [-d SIGENERGY2MQTT_DEBUG_SENSOR]
-          [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
-          [--no-metrics] [--consumption {calculated,total,general}]
-          [--hass-enabled]
-          [--hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]]
-          [--hass-entity-id-prefix [SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX]]
-          [--hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]]
-          [--hass-use-simplified-topics]
-          [--hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]]
-          [--hass-edit-pct-box] [--hass-discovery-only]
-          [-b [SIGENERGY2MQTT_MQTT_BROKER]]
-          [--mqtt-port [SIGENERGY2MQTT_MQTT_PORT]]
-          [--mqtt-keepalive [SIGENERGY2MQTT_MQTT_KEEPALIVE]] [--mqtt-tls]
-          [--mqtt-tls-insecure] [--mqtt-anonymous]
-          [-u [SIGENERGY2MQTT_MQTT_USERNAME]]
-          [-p [SIGENERGY2MQTT_MQTT_PASSWORD]]
-          [--mqtt-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-          [--modbus-auto-discovery {once,force}]
-          [--modbus-auto-discovery-ping-timeout [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT]]
-          [--modbus-auto-discovery-timeout [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT]]
-          [--modbus-auto-discovery-retries [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES]]
-          [-m [SIGENERGY2MQTT_MODBUS_HOST]]
-          [--modbus-port [SIGENERGY2MQTT_MODBUS_PORT]]
-          [--modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID ...]]
-          [--modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID ...]]
-          [--modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID ...]]
-          [--modbus-readonly] [--modbus-no-remote-ems]
-          [--modbus-timeout [SIGENERGY2MQTT_MODBUS_TIMEOUT]]
-          [--modbus-retries [SIGENERGY2MQTT_MODBUS_RETRIES]]
-          [--modbus-disable-chunking]
-          [--modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-          [--scan-interval-low [SIGENERGY2MQTT_SCAN_INTERVAL_LOW]]
-          [--scan-interval-medium [SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM]]
-          [--scan-interval-high [SIGENERGY2MQTT_SCAN_INTERVAL_HIGH]]
-          [--scan-interval-realtime [SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME]]
-          [--smartport-enabled]
-          [--smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]]
-          [--smartport-host [SIGENERGY2MQTT_SMARTPORT_HOST]]
-          [--smartport-username [SIGENERGY2MQTT_SMARTPORT_USERNAME]]
-          [--smartport-password [SIGENERGY2MQTT_SMARTPORT_PASSWORD]]
-          [--smartport-pv-power [SIGENERGY2MQTT_SMARTPORT_PV_POWER]]
-          [--smartport-mqtt-topic [SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC]]
-          [--smartport-mqtt-gain [SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN]]
-          [--pvoutput-enabled]
-          [--pvoutput-api-key [SIGENERGY2MQTT_PVOUTPUT_API_KEY]]
-          [--pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]]
-          [--pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]]
-          [--pvoutput-exports] [--pvoutput-imports]
-          [--pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]]
-          [--pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]]
-          [--pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]]
-          [--pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]]
-          [--pvoutput-ext-v8 [SIGENERGY2MQTT_PVOUTPUT_EXT_V8]]
-          [--pvoutput-ext-v9 [SIGENERGY2MQTT_PVOUTPUT_EXT_V9]]
-          [--pvoutput-ext-v10 [SIGENERGY2MQTT_PVOUTPUT_EXT_V10]]
-          [--pvoutput-ext-v11 [SIGENERGY2MQTT_PVOUTPUT_EXT_V11]]
-          [--pvoutput-ext-v12 [SIGENERGY2MQTT_PVOUTPUT_EXT_V12]]
-          [--pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [--clean]
-          [-v]
+(Since Release 2026.1.28)
+```text
+usage: __main__.py [-h] [-c [SIGENERGY2MQTT_CONFIG]]
+                   [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                   [--language {de,en,es,fr,it,ja,ko,nl,pt,zh}]
+                   [-d SIGENERGY2MQTT_DEBUG_SENSOR]
+                   [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
+                   [--no-ems-mode-check] [--no-metrics]
+                   [--consumption {calculated,total,general}] [--hass-enabled]
+                   [--hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]]
+                   [--hass-entity-id-prefix [SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX]]
+                   [--hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]]
+                   [--hass-use-simplified-topics]
+                   [--hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]]
+                   [--hass-edit-pct-box] [--hass-discovery-only]
+                   [-b [SIGENERGY2MQTT_MQTT_BROKER]]
+                   [--mqtt-port [SIGENERGY2MQTT_MQTT_PORT]]
+                   [--mqtt-keepalive [SIGENERGY2MQTT_MQTT_KEEPALIVE]]
+                   [--mqtt-tls] [--mqtt-tls-insecure]
+                   [--mqtt-transport {tcp,websockets}] [--mqtt-anonymous]
+                   [-u [SIGENERGY2MQTT_MQTT_USERNAME]]
+                   [-p [SIGENERGY2MQTT_MQTT_PASSWORD]]
+                   [--mqtt-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                   [--modbus-auto-discovery {once,force}]
+                   [--modbus-auto-discovery-ping-timeout [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT]]
+                   [--modbus-auto-discovery-timeout [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT]]
+                   [--modbus-auto-discovery-retries [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES]]
+                   [-m [SIGENERGY2MQTT_MODBUS_HOST]]
+                   [--modbus-port [SIGENERGY2MQTT_MODBUS_PORT]]
+                   [--modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID ...]]
+                   [--modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID ...]]
+                   [--modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID ...]]
+                   [--modbus-readonly] [--modbus-no-remote-ems]
+                   [--modbus-timeout [SIGENERGY2MQTT_MODBUS_TIMEOUT]]
+                   [--modbus-retries [SIGENERGY2MQTT_MODBUS_RETRIES]]
+                   [--modbus-disable-chunking]
+                   [--modbus-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                   [--scan-interval-low [SIGENERGY2MQTT_SCAN_INTERVAL_LOW]]
+                   [--scan-interval-medium [SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM]]
+                   [--scan-interval-high [SIGENERGY2MQTT_SCAN_INTERVAL_HIGH]]
+                   [--scan-interval-realtime [SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME]]
+                   [--smartport-enabled]
+                   [--smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]]
+                   [--smartport-host [SIGENERGY2MQTT_SMARTPORT_HOST]]
+                   [--smartport-username [SIGENERGY2MQTT_SMARTPORT_USERNAME]]
+                   [--smartport-password [SIGENERGY2MQTT_SMARTPORT_PASSWORD]]
+                   [--smartport-pv-power [SIGENERGY2MQTT_SMARTPORT_PV_POWER]]
+                   [--smartport-mqtt-topic [SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC]]
+                   [--smartport-mqtt-gain [SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN]]
+                   [--pvoutput-enabled]
+                   [--pvoutput-api-key [SIGENERGY2MQTT_PVOUTPUT_API_KEY]]
+                   [--pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]]
+                   [--pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]]
+                   [--pvoutput-exports] [--pvoutput-imports]
+                   [--pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]]
+                   [--pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]]
+                   [--pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]]
+                   [--pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]]
+                   [--pvoutput-ext-v8 [SIGENERGY2MQTT_PVOUTPUT_EXT_V8]]
+                   [--pvoutput-ext-v9 [SIGENERGY2MQTT_PVOUTPUT_EXT_V9]]
+                   [--pvoutput-ext-v10 [SIGENERGY2MQTT_PVOUTPUT_EXT_V10]]
+                   [--pvoutput-ext-v11 [SIGENERGY2MQTT_PVOUTPUT_EXT_V11]]
+                   [--pvoutput-ext-v12 [SIGENERGY2MQTT_PVOUTPUT_EXT_V12]]
+                   [--pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                   [--clean] [--validate] [-v]
 
 Reads the Sigenergy modbus interface and publishes the data to MQTT. The data
 will be published to MQTT in the Home Assistant MQTT Discovery format.
@@ -75,19 +77,31 @@ options:
                         Set the log level. Valid values are: DEBUG, INFO,
                         WARNING, ERROR or CRITICAL. Default is WARNING
                         (warnings, errors and critical failures)
+  --language {de,en,es,fr,it,ja,ko,nl,pt,zh}
+                        Set the language to use for translations. Valid values
+                        are: de, en, es, fr, it, ja, ko, nl, pt, zh. The
+                        default is determined from the system (e.g. LANG
+                        environment variable) or English if no alternative is
+                        found.
   -d, --debug-sensor SIGENERGY2MQTT_DEBUG_SENSOR
                         Specify a sensor to be debugged using either the full
-                        entity id, a partial entity id, the full sensor class
-                        name, or a partial sensor class name. For example,
+                        or partial entity id or sensor class name (e.g.
                         specifying 'daily' would match all sensors with daily
-                        in their entity name. If specified, --debug-level is
-                        also forced to DEBUG
+                        in their entity name), or a regular expression to be
+                        matched against the entity id or sensor class name
+                        (e.g. '^PowerFactor$' only matches the single class
+                        name). If specified, --log-level is also forced to
+                        DEBUG.
   --sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW
                         The default value in kW used for sanity checks to
                         validate the maximum and minimum values for actual
                         value of power sensors and the delta value of energy
                         sensors. The default value is 500 kW per second, and
                         readings outside the range are ignored.
+  --no-ems-mode-check   Turn off validation that disables ESS Max
+                        Charging/Discharging and PV Max Power limits when
+                        Remote EMS Control Mode is not Command
+                        Charging/Discharging.
   --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --consumption {calculated,total,general}
                         Set the method of calculating the Plant Consumed Power
@@ -145,6 +159,9 @@ options:
                         broker is using a self-signed certificate, you must
                         specify this option. Ignored unless --mqtt-tls is also
                         specified.
+  --mqtt-transport {tcp,websockets}
+                        Sets the MQTT transport mechanism. Must be one of
+                        websockets or tcp. The default is tcp.
   --mqtt-anonymous      Allow anonymous connection to MQTT broker (i.e.
                         without username/password). If specified, the --mqtt-
                         username and --mqtt-password options are ignored.
@@ -326,7 +343,9 @@ options:
                         (warnings, errors and critical failures)
   --clean               Publish empty discovery to delete existing devices,
                         then exits immediately.
+  --validate            Validates the configuration, then exits immediately.
   -v, --version         Shows the version number, then exits immediately.
 
 Command line options over-ride values in the configuration file and
 environment variables.
+```

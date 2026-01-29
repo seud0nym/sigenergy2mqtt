@@ -6,9 +6,9 @@
 
 # Configuration
 
-* [Configuration File](resources/configuration/FILE.md)
-* [Environment Variables](resources/configuration/ENV.md)
-* [Command Line Options](resources/configuration/CLI.md)
+* [Configuration File](configuration/FILE.md)
+* [Environment Variables](configuration/ENV.md)
+* [Command Line Options](configuration/CLI.md)
 
 # MQTT Publish and Subscribe Topics
 

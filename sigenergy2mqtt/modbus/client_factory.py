@@ -1,21 +1,22 @@
-from .client import ModbusClient
-import asyncio
 import logging
+
+from .client import ModbusClient
+from .types import ModbusClientType
 
 
 class ModbusClientFactory:
-    _clients: dict[tuple[str, int], ModbusClient] = {}
-    _hosts: dict[ModbusClient, asyncio.Lock] = {}
+    _clients: dict[tuple[str, int], ModbusClientType] = {}
+    _hosts: dict[ModbusClientType, str] = {}
 
     @classmethod
-    async def get_client(self, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClient:
+    async def get_client(cls, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClientType:
         key = (host, port)
-        if key not in self._clients:
+        if key not in cls._clients:
             logging.debug(f"Creating Modbus client for {host}:{port} ({timeout=}s {retries=})")
             modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
-            self._clients[key] = modbus
-            self._hosts[modbus] = f"{host}:{port}"
-        client = self._clients[key]
+            cls._clients[key] = modbus
+            cls._hosts[modbus] = f"{host}:{port}"
+        client = cls._clients[key]
         if not client.connected:
             await client.connect()
             assert client.connected
@@ -23,5 +24,5 @@ class ModbusClientFactory:
         return client
 
     @classmethod
-    def get_host(self, modbus: ModbusClient):
-        return None if modbus not in self._hosts else self._hosts[modbus]
+    def get_host(cls, modbus: ModbusClientType | None) -> str | None:
+        return None if modbus not in cls._hosts else cls._hosts[modbus]

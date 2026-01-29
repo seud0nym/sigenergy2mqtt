@@ -1,18 +1,19 @@
-__all__ = ["Config", "SmartPortConfig", "RegisterAccess", "Protocol", "ProtocolApplies", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource", "ConsumptionMethod"]
+__all__ = ["Config", "SmartPortConfiguration", "ConsumptionSource", "OutputField", "StatusField", "VoltageSource"]
 
 
-from . import const
-from .config import Config
-from .const import ConsumptionMethod
-from .modbus_config import RegisterAccess, SmartPortConfig
-from .protocol import Protocol, ProtocolApplies
-from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
-from pathlib import Path
 import argparse
 import logging
 import os
 import sys
 import time
+from pathlib import Path
+
+from sigenergy2mqtt import i18n
+
+from . import const
+from .config import Config
+from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
+from .smart_port_config import SmartPortConfiguration
 
 if os.isatty(sys.stdout.fileno()):
     logging.basicConfig(format="{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}", level=logging.INFO, style="{")
@@ -47,7 +48,14 @@ if Config.persistent_state_path == ".":
 persistent_state_path = Path(Config.persistent_state_path)
 threshold_time = time.time() - (7 * 86400)
 for file in persistent_state_path.iterdir():
-    if file.is_file() and not file.name.endswith(".yaml") and not file.name.endswith(".publishable") and not file.name.endswith(".token") and file.stat().st_mtime < threshold_time:
+    if (
+        file.is_file()
+        and file.stat().st_mtime < threshold_time
+        and not file.name == ".current-version"
+        and not file.name.endswith(".yaml")
+        and not file.name.endswith(".publishable")
+        and not file.name.endswith(".token")
+    ):
         _logger.info(f"Removing stale state file: {file} (last modified: {time.ctime(file.stat().st_mtime)})")
         file.unlink()
 
@@ -76,12 +84,20 @@ _parser.add_argument(
     help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
 )
 _parser.add_argument(
+    "--language",
+    action="store",
+    dest=const.SIGENERGY2MQTT_LANGUAGE,
+    choices=i18n.get_available_translations(),
+    default=os.getenv(const.SIGENERGY2MQTT_LANGUAGE, None),
+    help=f"Set the language to use for translations. Valid values are: {', '.join(i18n.get_available_translations())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
+)
+_parser.add_argument(
     "-d",
     "--debug-sensor",
     action="store",
     dest=const.SIGENERGY2MQTT_DEBUG_SENSOR,
     default=os.getenv(const.SIGENERGY2MQTT_DEBUG_SENSOR, None),
-    help="Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity name. If specified, --debug-level is also forced to DEBUG",
+    help="Specify a sensor to be debugged using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name). If specified, --log-level is also forced to DEBUG.",
 )
 _parser.add_argument(
     "--sanity-check-default-kw",
@@ -90,6 +106,12 @@ _parser.add_argument(
     type=float,
     default=os.getenv(const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW, None),
     help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.",
+)
+_parser.add_argument(
+    "--no-ems-mode-check",
+    action="store_true",
+    dest=const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK,
+    help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.",
 )
 _parser.add_argument(
     "--no-metrics",
@@ -160,7 +182,7 @@ _parser.add_argument(
 _parser.add_argument(
     "--hass-discovery-only",
     action="store_true",
-    dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY,
+    dest="discovery_only",
     help="Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.",
 )
 # endregion
@@ -203,6 +225,14 @@ _parser.add_argument(
     action="store_true",
     dest=const.SIGENERGY2MQTT_MQTT_TLS_INSECURE,
     help="Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. Ignored unless --mqtt-tls is also specified.",
+)
+_parser.add_argument(
+    "--mqtt-transport",
+    action="store",
+    dest=const.SIGENERGY2MQTT_MQTT_TRANSPORT,
+    choices=["tcp", "websockets"],
+    default=os.getenv(const.SIGENERGY2MQTT_MQTT_TRANSPORT, None),
+    help="Sets the MQTT transport mechanism. Must be one of websockets or tcp. The default is tcp.",
 )
 _parser.add_argument(
     "--mqtt-anonymous",
@@ -693,13 +723,19 @@ _parser.add_argument(
     help="Publish empty discovery to delete existing devices, then exits immediately.",
 )
 _parser.add_argument(
+    "--validate",
+    action="store_true",
+    dest="validate_only",
+    help="Validates the configuration, then exits immediately.",
+)
+_parser.add_argument(
     "-v",
     "--version",
     action="store_true",
     dest="show_version",
     help="Shows the version number, then exits immediately.",
 )
-_args = _parser.parse_args()
+_args, _unknown = _parser.parse_known_args()
 # endregion
 
 if _args.show_version:
@@ -730,22 +766,25 @@ for arg in vars(_args):
     if arg == "clean":
         Config.clean = _args.clean
         continue
+    elif arg == "discovery_only":
+        Config.home_assistant.discovery_only = _args.discovery_only
+        continue
     elif (
         arg == const.SIGENERGY2MQTT_HASS_ENABLED
-        or arg == const.SIGENERGY2MQTT_HASS_DISCOVERY_ONLY
         or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
         or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
         or arg == const.SIGENERGY2MQTT_INFLUX_ENABLED
+        or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
         or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
         or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS
         or arg == const.SIGENERGY2MQTT_MQTT_TLS_INSECURE
+        or arg == const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK
+        or arg == const.SIGENERGY2MQTT_NO_METRICS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS
         or arg == const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS
         or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
-        or arg == const.SIGENERGY2MQTT_NO_METRICS
-        or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
     ) and getattr(_args, arg) not in ["true", "True", True, 1]:  # argparse will store false by default, so ignore unless actually specified (and therefore true)
         continue
     elif arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and getattr(_args, arg) in ["true", "True", True, 1]:
@@ -773,6 +812,11 @@ try:
         Config.load("/data/sigenergy2mqtt.yaml")
     else:
         Config.reload()
+
+    if _args.validate_only:
+        Config.validate()
+        _logger.info("Configuration is valid - exiting")
+        sys.exit(0)
 except Exception as e:
     _logger.critical(f"Error processing configuration: {e}")
     sys.exit(1)

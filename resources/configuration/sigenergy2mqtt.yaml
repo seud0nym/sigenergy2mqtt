@@ -1,4 +1,7 @@
 #################################################################################
+#    WARNING!! THIS IS A SAMPLE FILE ONLY TO SHOW ALL POSSIBLE OPTIONS! IT IS   #
+#       *NOT* SUITABLE FOR USE WITHOUT EXTENSIVE REVIEW AND MODIFICATION!!      #
+#                                                                               #
 # Any elements (or parent elements) with an added date later than the current   #
 # release number are only applicable to future releases and should be ignored.  #
 #################################################################################
@@ -7,6 +10,14 @@
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
+# language
+#   added: 2026.1.25
+#   default:      Determined from system (e.g. LANG environment variable) or 
+#                 English if no alternative is found
+#   description:  The language to use for translations. Valid values are 
+#                 determined from the translation files available in the 
+#                 'translations' directory.
+language: en
 # consumption
 #   added: 2025.12.20
 #   default: calculated
@@ -30,6 +41,23 @@ consumption: calculated
 #                 to the delta value. Readings outside of the range are
 #                 ignored.    
 sanity-check-default-kw: 500.0
+# sanity-check-failures-increment
+#   added: 2026.1.21
+#   default: false
+#   description:  If true, the number of sensor read failures will be
+#                 incremented when a sanity check fails. If false, the
+#                 number of sensor read failures will not be incremented.
+sanity-check-failures-increment: false
+# no-ems-mode-check
+#   added: 2026.1.13
+#   default: false
+#   description:  Turn off the validation that disables ESS Max Charging
+#                 Discharging Limits and PV Max Power Limits when Remote 
+#                 EMS Control Mode is not Command Charging/Discharging.
+#                 This setting does not comply with the Sigenergy Modbus
+#                 Protocol documentation, but may be useful for some
+#                 installations.
+no-ems-mode-check: false
 # no-metrics
 #   default: false
 #   description:  If true, sigenergy2mqtt will not publish any metrics to
@@ -46,11 +74,6 @@ home-assistant:
   #   default: ""
   #   description:  An optional prefix to be prepended to MQTT device names.
   device-name-prefix: homeassistant
-  # discovery-only
-  #   default: false
-  #   description:  Causes sigenergy2mqtt to exit after publishing auto-discovery
-  #                 to Home Assistant. Valid values are true or false.
-  discovery-only: false
   # discovery-prefix
   #   default: homeassistant
   #   description:  The Home Assistant discovery prefix. Only specify if you
@@ -129,6 +152,12 @@ mqtt:
   #                this to true. If you are using a valid certificate, set 
   #                this to false. Ignored unless tls is also true. 
   tls-insecure: false
+  # transport
+  #   add: 2026.1.4
+  #   default: tcp
+  #   description: Sets the MQTT transport mechanism. Must be one of 
+  #                websockets or tcp.
+  transport: tcp
   # anonymous
   #   default: false
   #   description:  If true, the MQTT broker does not require authentication.
@@ -274,7 +303,7 @@ modbus:
       #   default: false
       #   description:  If true, sigenergy2mqtt will interrogate a third-party
       #                 device for production data.
-      enabled: false
+      enabled: true
       module:
         # name
         #   default: ""
@@ -326,12 +355,15 @@ modbus:
 #                 individual sensors debugging messages are displayed.
 #                 If false, individual sensor debugging may be enabled
 #                 through sensor-overrides.
-sensor-debug-logging: false
+sensor-debug-logging: true
 sensor-overrides:
   # Specify the sensor to be overridden by either by the full entity id,
   # a partial entity id, the full sensor class name, or a partial 
   # sensor class name. For example, specifying Reactive: would match all
   # sensors with Reactive in their class name.
+  # From 2026.1.5, the sensor may be specified as a regular expression.
+  # e.g. ^PowerFactor$ will match *only* the PowerFactor class name,
+  # but not InverterPowerFactorAdjustmentFeedback.
   partial_or_full_entity_id_or_sensor_class_name:
     # debug-logging
     #   default: There is no default
@@ -433,17 +465,17 @@ pvoutput:
   #   default: false
   #   description:  If true, sigenergy2mqtt will update the system status
   #                 in PVOutput.
-  enabled: false
+  enabled: true
   # api-key
   #   default: ""
   #   description:  The PVOutput API key (create/find your key under 
   #                 https://pvoutput.org/account.jsp)
-  api-key: ""
+  api-key: "9f3a7b1c4d8e2f6a1b0c9d4e7f8a6b3c5d1e2f4a"
   # system-id
   #   default: ""
   #   description:  The PVOutput System ID (create/find your System id 
   #                 under https://pvoutput.org/account.jsp)
-  system-id: ""
+  system-id: "testing"
   # consumption
   #   default: false
   #   description:  If specified with a value of 'true' or 'consumption', 
@@ -488,7 +520,7 @@ pvoutput:
   #                 read. This is used to send the temperature to PVOutput.
   #                 If not specified, the temperature will not be sent to
   #                 PVOutput.
-  temperature_topic: ""
+  temperature-topic: "homeassistant/weather/temperature"
   # v7
   #   added: 2025.9.16
   #   default: ""
@@ -499,7 +531,7 @@ pvoutput:
   #                 a numeric value. Classes that can be used for multiple
   #                 sensors (e.g. PVVoltageSensor) will be averaged to
   #                 determine a single value.
-  v7: ""
+  v7: "InverterTemperature"
   # v8
   #   added: 2025.9.16
   #   default: ""
