@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
@@ -32,6 +31,7 @@ async def test_read_and_publish_device_sensors_ha_enabled_and_cancel():
     mqtt_client = MagicMock()
     mqtt_handler = MagicMock()
     mqtt_handler.wait_for = AsyncMock()
+    mqtt_handler.close = AsyncMock()
 
     with (
         patch("sigenergy2mqtt.main.threading.ModbusClientFactory.get_client", return_value=modbus_client),
@@ -73,6 +73,7 @@ async def test_read_and_publish_device_sensors_clean_and_discovery_only():
 
     mqtt_handler = MagicMock()
     mqtt_handler.wait_for = AsyncMock()
+    mqtt_handler.close = AsyncMock()
 
     with (
         patch("sigenergy2mqtt.main.threading.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),

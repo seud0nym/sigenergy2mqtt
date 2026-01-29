@@ -32,6 +32,9 @@ class DummyMQTTHandler:
             # fallback: call without kwargs
             method(mqtt_client)
 
+    async def close(self):
+        pass
+
 
 class DummyDevice:
     def __init__(self, name="dev"):
