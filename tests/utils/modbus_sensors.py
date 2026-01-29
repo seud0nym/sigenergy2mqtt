@@ -73,7 +73,7 @@ async def get_sensor_instances(
     hybrid_pack_bcu_count = PACKBCUCount(plant_index, hybrid_inverter_device_address)
     hybrid_model.set_state("SigenStor EC 12.0 TP")
     hybrid_serial.set_state("CMU123A45BP678")
-    hybrid_firmware.set_state("V100R001C00SPC108B088F")
+    hybrid_firmware.set_state("V100R001C00SPC112B107G")
     hybrid_pv_strings.set_state(16)
     hybrid_output_type.set_state(3)
     hybrid_inverter = Inverter(
@@ -103,7 +103,7 @@ async def get_sensor_instances(
     pv_pack_bcu_count = PACKBCUCount(plant_index, hybrid_inverter_device_address)
     pv_model.set_state("Sigen PV Max 5.0 TP")
     pv_serial.set_state("CMU876A65BP321")
-    pv_firmware.set_state("V100R001C00SPC108B088F")
+    pv_firmware.set_state("V100R001C00SPC112B107G")
     pv_pv_strings.set_state(36)
     pv_output_type.set_state(3)
     pv_inverter = Inverter(
