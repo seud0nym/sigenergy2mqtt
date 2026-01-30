@@ -313,3 +313,143 @@ class ProtocolPublished(MetricsSensor):
         value = ProtocolApplies(self.protocol_version)
         self.set_latest_state(str(value))
         return True
+
+
+# InfluxDB Metrics Sensors
+
+
+class InfluxDBWrites(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Writes",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_writes",
+            object_id="sigenergy2mqtt_influxdb_writes",
+            icon="mdi:database-arrow-up",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_influxdb_writes
+        self.set_latest_state(new_state)
+        return True
+
+
+class InfluxDBWriteErrors(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Write Errors",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_write_errors",
+            object_id="sigenergy2mqtt_influxdb_write_errors",
+            icon="mdi:database-alert",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_influxdb_write_errors
+        self.set_latest_state(new_state)
+        return True
+
+
+class InfluxDBWriteMax(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Write Max",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_write_max",
+            object_id="sigenergy2mqtt_influxdb_write_max",
+            unit="ms",
+            icon="mdi:timer-plus-outline",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_influxdb_write_max
+        self.set_latest_state(value)
+        return True
+
+
+class InfluxDBWriteMean(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Write Mean",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_write_mean",
+            object_id="sigenergy2mqtt_influxdb_write_mean",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_influxdb_write_mean
+        self.set_latest_state(value)
+        return True
+
+
+class InfluxDBQueries(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Queries",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_queries",
+            object_id="sigenergy2mqtt_influxdb_queries",
+            icon="mdi:database-search",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_influxdb_queries
+        self.set_latest_state(new_state)
+        return True
+
+
+class InfluxDBQueryErrors(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Query Errors",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_query_errors",
+            object_id="sigenergy2mqtt_influxdb_query_errors",
+            icon="mdi:database-alert-outline",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_influxdb_query_errors
+        self.set_latest_state(new_state)
+        return True
+
+
+class InfluxDBRetries(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Retries",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_retries",
+            object_id="sigenergy2mqtt_influxdb_retries",
+            icon="mdi:reload",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_influxdb_retries
+        self.set_latest_state(new_state)
+        return True
+
+
+class InfluxDBThroughput(MetricsSensor):
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Throughput",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_throughput",
+            object_id="sigenergy2mqtt_influxdb_throughput",
+            icon="mdi:speedometer",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        # Calculate writes per second based on elapsed time
+        import time
+
+        elapsed = time.monotonic() - Metrics._started
+        if elapsed > 0:
+            value = Metrics.sigenergy2mqtt_influxdb_batch_total / elapsed
+        else:
+            value = 0.0
+        self.set_latest_state(value)
+        return True

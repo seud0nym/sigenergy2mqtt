@@ -32,6 +32,17 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ProtocolVersion(protocol_version))
         self._add_read_sensor(sensors.ProtocolPublished())
 
+        # Conditionally add InfluxDB sensors when InfluxDB is enabled
+        if getattr(Config, "influxdb", None) and getattr(Config.influxdb, "enabled", False):
+            self._add_read_sensor(sensors.InfluxDBWrites())
+            self._add_read_sensor(sensors.InfluxDBWriteErrors())
+            self._add_read_sensor(sensors.InfluxDBWriteMax())
+            self._add_read_sensor(sensors.InfluxDBWriteMean())
+            self._add_read_sensor(sensors.InfluxDBQueries())
+            self._add_read_sensor(sensors.InfluxDBQueryErrors())
+            self._add_read_sensor(sensors.InfluxDBRetries())
+            self._add_read_sensor(sensors.InfluxDBThroughput())
+
     async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         logging.info(f"{self.name} Service Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
