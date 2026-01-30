@@ -397,6 +397,22 @@ class:
     name: Independent Phase Power Control
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
+  InfluxDBQueries:
+    name: InfluxDB Queries
+  InfluxDBQueryErrors:
+    name: InfluxDB Query Errors
+  InfluxDBRetries:
+    name: InfluxDB Retries
+  InfluxDBThroughput:
+    name: InfluxDB Throughput
+  InfluxDBWriteErrors:
+    name: InfluxDB Write Errors
+  InfluxDBWriteMax:
+    name: InfluxDB Write Max Latency
+  InfluxDBWriteMean:
+    name: InfluxDB Write Mean Latency
+  InfluxDBWrites:
+    name: InfluxDB Writes
   InsulationResistance:
     name: Insulation Resistance
   Inverter:

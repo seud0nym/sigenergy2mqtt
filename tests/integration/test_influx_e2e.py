@@ -447,6 +447,7 @@ async def test_copy_records_from_homeassistant_falls_back_to_v1(service, monkeyp
     monkeypatch.setattr(service._session, "post", fake_post)
 
     count = await service.copy_records_from_homeassistant("power", {"entity_id": "sensor.power"})
+    await service.flush_buffer()
     assert count == 1
     assert get_count[0] == 1
     assert post_count[0] == 1

@@ -109,6 +109,7 @@ async def test_write_line_uses_configured_writer(monkeypatch):
     svc._write_headers = {"Authorization": "Token tok"}
 
     await svc._write_line("measurement,tag=1 value=42 1000000000")
+    await svc.flush_buffer()
     assert "url" in calls and "data" in calls
 
 
@@ -460,10 +461,11 @@ async def test_copy_records_v1_success(monkeypatch):
 
     config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
     count = await svc._copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
+    await svc.flush_buffer()
 
     assert count == 2
     assert get_call_count[0] == 1
-    assert post_call_count[0] == 2
+    assert post_call_count[0] == 1
 
 
 @pytest.mark.integration

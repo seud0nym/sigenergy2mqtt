@@ -131,6 +131,7 @@ async def test_write_line_http_fail(logger, influx_config):
     with patch.object(svc._session, "post", side_effect=Exception("write error")):
         with patch.object(logger, "error") as mock_logger_error:
             await svc._write_line("test line")
+            await svc.flush_buffer()  # Force flush to trigger write
             # Log message contains exception detail and context
             found = any("InfluxDB write failed: write error" in c.args[0] for c in mock_logger_error.call_args_list)
             assert found
@@ -270,6 +271,7 @@ async def test_write_line_v2_http_and_v1_http(logger, influx_config):
     with patch.object(svc._session, "post") as mock_post:
         mock_post.return_value = MockResponse(204)
         await svc._write_line("line2")
+        await svc.flush_buffer()  # Force flush to trigger write
         mock_post.assert_called()
 
     # v1_http
@@ -278,6 +280,7 @@ async def test_write_line_v2_http_and_v1_http(logger, influx_config):
     with patch.object(svc._session, "post") as mock_post:
         mock_post.return_value = MockResponse(204)
         await svc._write_line("line1")
+        await svc.flush_buffer()  # Force flush to trigger write
         mock_post.assert_called()
 
 

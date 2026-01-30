@@ -8,10 +8,12 @@ from typing import Any, Awaitable, cast
 import paho.mqtt.client as mqtt
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler
 
@@ -29,13 +31,33 @@ class InfluxService(Device):
         urllib3.propagate = True
 
         self.plant_index = plant_index
+
+        # Enhanced connection pooling with retry strategy
         self._session = requests.Session()
-        adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100)
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100, max_retries=retry_strategy)
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
         # Cache mapping state_topic -> {uom, object_id, unique_id}
         self._topic_cache: dict[str, dict[str, Any]] = {}
+
+        # Batch write buffer
+        self._write_buffer: list[str] = []
+        self._batch_size: int = 100  # Batch threshold
+        self._batch_lock = asyncio.Lock()
+        self._last_flush: float = time.time()
+        self._flush_interval: float = 1.0  # Flush every 1 second even if batch not full
+
+        # Rate limiting for queries
+        self._rate_limit_semaphore = asyncio.Semaphore(10)  # Max 10 concurrent queries
+        self._query_interval: float = 0.1  # Minimum 100ms between queries
+        self._last_query_time: float = 0.0
+        self._query_lock = asyncio.Lock()
 
         # Only attempt to initialize connection when InfluxDB is enabled in config
         # Otherwise set defaults so unit tests can instantiate without network
@@ -213,48 +235,131 @@ class InfluxService(Device):
         return f"{esc(measurement)}{',' + tags_part if tags_part else ''} {fields_part} {ts_ns}"
 
     async def _write_line(self, line: str) -> None:
-        """Write using the pre-configured writer (determined at init)."""
+        """Add line to write buffer. Flushes buffer when threshold reached or interval exceeded."""
+        async with self._batch_lock:
+            self._write_buffer.append(line)
+            should_flush = len(self._write_buffer) >= self._batch_size or (time.time() - self._last_flush) >= self._flush_interval
+            if should_flush:
+                await self._flush_buffer_internal()
+
+    async def flush_buffer(self) -> None:
+        """Public method to flush any pending writes."""
+        async with self._batch_lock:
+            await self._flush_buffer_internal()
+
+    async def _flush_buffer_internal(self) -> None:
+        """Flush buffered writes to InfluxDB. Must be called within _batch_lock."""
+        if not self._write_buffer:
+            return
+
+        batch = self._write_buffer
+        self._write_buffer = []
+        self._last_flush = time.time()
+
+        batch_data = "\n".join(batch).encode("utf-8")
+        batch_size = len(batch)
+        start = time.time()
+
+        try:
+            success = await self._execute_write(batch_data)
+            elapsed = time.time() - start
+            if success:
+                await Metrics.influxdb_write(batch_size, elapsed)
+            else:
+                await Metrics.influxdb_write_error()
+        except Exception as e:
+            self.logger.error(f"InfluxDB batch write failed: {e} (type={self._writer_type} url={self._write_url} batch_size={batch_size})")
+            await Metrics.influxdb_write_error()
+
+    async def _execute_write(self, data: bytes) -> bool:
+        """Execute the HTTP write to InfluxDB. Returns True on success."""
         try:
             if self._writer_type == "v2_http" and self._write_url:
-                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=line.encode("utf-8"), timeout=5)
+                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=data, timeout=5)
                 if r.status_code in (204, 200):
-                    return
+                    return True
                 else:
-                    self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url} line={line})")
+                    self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
+                    return False
             elif self._writer_type == "v1_http" and self._write_url:
-                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": Config.influxdb.database}, data=line.encode("utf-8"), auth=self._write_auth, timeout=5)
+                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": Config.influxdb.database}, data=data, auth=self._write_auth, timeout=5)
                 if r.status_code in (204, 200):
-                    return
+                    return True
                 else:
-                    self.logger.error(f"InfluxDB v1 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url} line={line})")
+                    self.logger.error(f"InfluxDB v1 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
+                    return False
         except Exception as e:
-            self.logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url} line={line})")
+            self.logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url})")
+        return False
 
-    async def _query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: int = 10) -> tuple[bool, Any]:
-        """Execute a Flux query on v2 API. Returns (success, response_text)."""
-        try:
-            headers = {"Authorization": f"Token {token}", "Content-Type": "application/vnd.flux"}
-            url = f"{base}/api/v2/query"
-            params = {"org": org} if org else {}
-            r = await asyncio.to_thread(self._session.post, url, headers=headers, params=params, data=flux_query, timeout=timeout)
-            if r.status_code == 200:
-                return True, r.text
-        except Exception as e:
-            self.logger.debug(f"{self.name} v2 query failed: {e}")
-        return False, None
+    async def _query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: int = 10, max_retries: int = 3) -> tuple[bool, Any]:
+        """Execute a Flux query on v2 API with retry and rate limiting. Returns (success, response_text)."""
+        return await self._rate_limited_query(
+            lambda: self._query_v2_internal(base, org, token, flux_query, timeout),
+            "v2 query",
+            max_retries,
+        )
 
-    async def _query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: int = 10) -> tuple[bool, Any]:
-        """Execute an InfluxQL query on v1 API. Returns (success, json_result)."""
-        try:
-            url = f"{base}/query"
-            params = {"db": db, "q": query}
-            if epoch:
-                params["epoch"] = epoch
-            r = await asyncio.to_thread(self._session.get, url, params=params, auth=auth, timeout=timeout)
-            if r.status_code == 200:
-                return True, r.json()
-        except Exception as e:
-            self.logger.debug(f"{self.name} v1 query failed: {e}")
+    async def _query_v2_internal(self, base: str, org: str | None, token: str, flux_query: str, timeout: int) -> tuple[bool, Any]:
+        """Internal v2 query execution."""
+        headers = {"Authorization": f"Token {token}", "Content-Type": "application/vnd.flux"}
+        url = f"{base}/api/v2/query"
+        params = {"org": org} if org else {}
+        start = time.time()
+        r = await asyncio.to_thread(self._session.post, url, headers=headers, params=params, data=flux_query, timeout=timeout)
+        elapsed = time.time() - start
+        if r.status_code == 200:
+            await Metrics.influxdb_query(elapsed)
+            return True, r.text
+        raise Exception(f"HTTP {r.status_code}: {r.text}")
+
+    async def _query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: int = 10, max_retries: int = 3) -> tuple[bool, Any]:
+        """Execute an InfluxQL query on v1 API with retry and rate limiting. Returns (success, json_result)."""
+        return await self._rate_limited_query(
+            lambda: self._query_v1_internal(base, db, auth, query, epoch, timeout),
+            "v1 query",
+            max_retries,
+        )
+
+    async def _query_v1_internal(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None, timeout: int) -> tuple[bool, Any]:
+        """Internal v1 query execution."""
+        url = f"{base}/query"
+        params = {"db": db, "q": query}
+        if epoch:
+            params["epoch"] = epoch
+        start = time.time()
+        r = await asyncio.to_thread(self._session.get, url, params=params, auth=auth, timeout=timeout)
+        elapsed = time.time() - start
+        if r.status_code == 200:
+            await Metrics.influxdb_query(elapsed)
+            return True, r.json()
+        raise Exception(f"HTTP {r.status_code}: {r.text}")
+
+    async def _rate_limited_query(self, query_func, operation_name: str, max_retries: int = 3, base_delay: float = 0.5) -> tuple[bool, Any]:
+        """Execute query with rate limiting and exponential backoff retry."""
+        async with self._rate_limit_semaphore:
+            # Apply rate limiting delay
+            async with self._query_lock:
+                now = time.time()
+                wait_time = max(0.0, self._query_interval - (now - self._last_query_time))
+                if wait_time > 0:
+                    await Metrics.influxdb_rate_limit_wait()
+                    await asyncio.sleep(wait_time)
+                self._last_query_time = time.time()
+
+            # Execute with retry logic
+            for attempt in range(max_retries + 1):
+                try:
+                    return await query_func()
+                except Exception as e:
+                    if attempt == max_retries:
+                        self.logger.debug(f"{self.name} {operation_name} failed after {max_retries + 1} attempts: {e}")
+                        await Metrics.influxdb_query_error()
+                        return False, None
+                    delay = base_delay * (2**attempt)
+                    self.logger.debug(f"{self.name} {operation_name} attempt {attempt + 1} failed, retrying in {delay}s: {e}")
+                    await Metrics.influxdb_retry()
+                    await asyncio.sleep(delay)
         return False, None
 
     def _parse_timestamp(self, time_str: str) -> int:

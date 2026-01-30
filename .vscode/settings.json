@@ -34,6 +34,7 @@
         "enphase",
         "EVAC",
         "EVDC",
+        "forcelist",
         "Gcal",
         "GIGA",
         "gridsensor",
