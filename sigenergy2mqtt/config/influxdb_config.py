@@ -1,7 +1,10 @@
-from sigenergy2mqtt.config.validation import check_log_level
-from dataclasses import dataclass, field
-from .validation import check_bool, check_host, check_int, check_string
 import logging
+from dataclasses import dataclass, field
+from typing import cast
+
+from sigenergy2mqtt.config.validation import check_log_level
+
+from .validation import check_bool, check_host, check_int, check_string
 
 
 @dataclass
@@ -14,7 +17,6 @@ class InfluxDBConfiguration:
     token: str = ""
     org: str = ""
     bucket: str = ""
-    org: str = ""
     username: str = ""
     password: str = ""
     include: list[str] = field(default_factory=list)
@@ -35,21 +37,19 @@ class InfluxDBConfiguration:
                         case "host":
                             self.host = check_host(v, "influxdb.host")
                         case "port":
-                            self.port = check_int(v, "influxdb.port", min=1, max=65535)
+                            self.port = cast(int, check_int(v, "influxdb.port", min=1, max=65535))
                         case "database":
-                            self.database = check_string(str(v), "influxdb.database", allow_none=False, allow_empty=False)
+                            self.database = cast(str, check_string(str(v), "influxdb.database", allow_none=False, allow_empty=False))
                         case "token":
-                            self.token = check_string(v, "influxdb.token", allow_none=True, allow_empty=True)
+                            self.token = "" if v is None else cast(str, check_string(v, "influxdb.token", allow_none=True, allow_empty=True))
                         case "org":
-                            self.org = check_string(v, "influxdb.org", allow_none=True, allow_empty=True)
+                            self.org = "" if v is None else cast(str, check_string(v, "influxdb.org", allow_none=True, allow_empty=True))
                         case "bucket":
-                            self.bucket = check_string(v, "influxdb.bucket", allow_none=True, allow_empty=True)
-                        case "org":
-                            self.org = check_string(str(v), "influxdb.org", allow_none=True, allow_empty=True)
+                            self.bucket = "" if v is None else cast(str, check_string(v, "influxdb.bucket", allow_none=True, allow_empty=True))
                         case "username":
-                            self.username = check_string(v, "influxdb.username", allow_none=True, allow_empty=True)
+                            self.username = "" if v is None else cast(str, check_string(v, "influxdb.username", allow_none=True, allow_empty=True))
                         case "password":
-                            self.password = check_string(v, "influxdb.password", allow_none=True, allow_empty=True)
+                            self.password = "" if v is None else cast(str, check_string(v, "influxdb.password", allow_none=True, allow_empty=True))
                         case "include":
                             if isinstance(v, list):
                                 self.include = [str(x) for x in v]
