@@ -32,8 +32,9 @@ def test_cli_parsing_clean(clean_argv, monkeypatch):
                 patch("pathlib.Path.iterdir", return_value=[]),
                 patch("os.access", return_value=True),
                 patch("os.path.isdir", return_value=True),
+                patch.object(config_mod.active_config, "reload"),
             ):
-                importlib.reload(config_mod)
+                config_mod.initialize()
 
                 assert Config.clean is True
 
@@ -53,7 +54,8 @@ def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
                 patch("pathlib.Path.iterdir", return_value=[]),
                 patch("os.access", return_value=True),
                 patch("os.path.isdir", return_value=True),
+                patch.object(config_mod.active_config, "reload"),
             ):
-                importlib.reload(config_mod)
+                config_mod.initialize()
 
                 assert Config.home_assistant.discovery_only is True

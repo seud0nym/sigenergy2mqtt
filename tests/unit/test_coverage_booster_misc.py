@@ -32,6 +32,6 @@ def test_get_influxdb_services_coverage():
 
 
 def test_main_wrapper_coverage():
-    with patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run, patch("sigenergy2mqtt.__main__.async_main") as mock_async_main:
+    with patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run, patch("sigenergy2mqtt.__main__.async_main") as mock_async_main, patch("sigenergy2mqtt.__main__.initialize"):
         main_module.main()
         mock_run.assert_called_once()

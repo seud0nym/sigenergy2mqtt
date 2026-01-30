@@ -13,29 +13,6 @@ from sigenergy2mqtt.modbus.types import ModbusDataType
 
 
 class TestConfigEnvironmentOverrides:
-    @pytest.fixture(autouse=True)
-    def reset_config(self):
-        # Reset Config state before each test
-        Config.modbus = []
-        Config.sensor_overrides = {}
-        # Re-initialize default modbus config as reload() expects existing structure or creates new?
-        # reload() resets 'overrides' dict but applies to Config.modbus (list).
-        # We need to ensure Config.modbus has at least one item if we want to test overrides on it,
-        # or rely on reload() creating it if empty?
-        # reload() logic: "modbus": [{"smart-port": ...}] in default overrides.
-        # But _configure appends if index >= len.
-        Config.home_assistant = MagicMock()  # Mock to avoid validation errors if needed, or rely on real object?
-        # Real object is safer for coverage.
-        from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-        from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-        from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
-
-        Config.home_assistant = HomeAssistantConfiguration()
-        Config.mqtt = MqttConfiguration()
-        Config.pvoutput = PVOutputConfiguration()
-        yield
-        Config.modbus = []
-
     def test_all_env_overrides(self):
         env_vars = {
             const.SIGENERGY2MQTT_CONSUMPTION: "total",
@@ -218,21 +195,6 @@ class TestConfigEnvironmentOverrides:
 
 
 class TestConfigSensorOverrides:
-    @pytest.fixture(autouse=True)
-    def reset_config(self):
-        Config.modbus = []
-        Config.sensor_overrides = {}
-        from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-        from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-        from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
-
-        Config.home_assistant = HomeAssistantConfiguration()
-        Config.mqtt = MqttConfiguration()
-        Config.pvoutput = PVOutputConfiguration()
-        yield
-        Config.modbus = []
-        Config.sensor_overrides = {}
-
     def test_sensor_overrides_yaml(self):
         data = {
             "sensor-overrides": {
@@ -294,22 +256,6 @@ class TestConfigSensorOverrides:
 
 
 class TestConfigAutoDiscovery:
-    @pytest.fixture(autouse=True)
-    def reset_config(self):
-        Config.modbus = []
-        Config.sensor_overrides = {}
-        Config._source = None
-        from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-        from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-        from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
-
-        Config.home_assistant = HomeAssistantConfiguration()
-        Config.mqtt = MqttConfiguration()
-        Config.pvoutput = PVOutputConfiguration()
-        yield
-        Config.modbus = []
-        Config._source = None
-
     def test_auto_discovery_force(self):
         env_vars = {
             const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force",
@@ -345,22 +291,6 @@ class TestConfigAutoDiscovery:
 
 
 class TestConfigFileLoading:
-    @pytest.fixture(autouse=True)
-    def reset_config(self):
-        Config.modbus = []
-        Config.sensor_overrides = {}
-        Config._source = None
-        from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-        from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-        from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
-
-        Config.home_assistant = HomeAssistantConfiguration()
-        Config.mqtt = MqttConfiguration()
-        Config.pvoutput = PVOutputConfiguration()
-        yield
-        Config.modbus = []
-        Config._source = None
-
     def test_load_from_file(self, tmp_path):
         config_file = tmp_path / "config.yaml"
         config_file.write_text("modbus:\n  - host: 192.168.1.50\n    port: 502\n")
@@ -373,12 +303,10 @@ class TestConfigFileLoading:
         assert len(Config.modbus) >= 1
         assert Config.modbus[0].host == "192.168.1.50"
 
-    def test_load_empty_file(self, tmp_path):
+    def test_load_empty_file(self, tmp_path, caplog):
         config_file = tmp_path / "empty.yaml"
         config_file.write_text("")
 
-        with patch("logging.warning") as mock_warn:
+        with caplog.at_level(logging.WARNING):
             Config.load(str(config_file))
-            mock_warn.assert_called()
-            args = mock_warn.call_args[0][0]
-            assert "contains no keys" in args
+            assert "contains no keys" in caplog.text

@@ -4,18 +4,17 @@ import os
 import sys
 from typing import cast
 
-from sigenergy2mqtt.common import HybridInverter, PVInverter
-from sigenergy2mqtt.devices import Device
-
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from sigenergy2mqtt.common import Protocol, ProtocolApplies
-from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
+from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.config import Config, initialize
+from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
+
+initialize()
 
 
 async def get_sensor_instances(
