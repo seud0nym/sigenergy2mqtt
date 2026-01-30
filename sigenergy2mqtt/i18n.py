@@ -153,16 +153,6 @@ def get_default_language() -> str:
     except Exception:
         pass
 
-    try:
-        # Fallback to getdefaultlocale() if getlocale() didn't work
-        sys_lang, _ = locale.getdefaultlocale()
-        if sys_lang:
-            lang = sys_lang.split("_")[0].lower()
-            if lang in available:
-                return lang
-    except Exception:
-        pass
-
     # Try LANG environment variable as fallback
     lang_env = os.environ.get("LANG")
     if lang_env:
