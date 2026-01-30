@@ -143,11 +143,11 @@ def check_log_level(value: str | int, source: str) -> int:
 def check_module(value: str, source: str) -> str:
     try:
         module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{value}")
-        if getattr(module, "SmartPort"):
+        if hasattr(module, "SmartPort"):
             return value
         else:
             raise ValueError(f"{source} must be a valid module that contains a SmartPort class")
-    except ValueError:
+    except (AttributeError, ImportError):
         raise ValueError(f"{source} must be a valid module")
 
 
