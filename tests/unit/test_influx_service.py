@@ -1,4 +1,4 @@
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -49,36 +49,25 @@ async def test_influx_handle_mqtt_writes_line():
 
 @pytest.mark.asyncio
 async def test_influx_org_propagation():
+    """Test that org parameter is correctly propagated to v2 HTTP endpoint."""
     logger = MagicMock()
     Config.influxdb.enabled = True
     Config.influxdb.host = "localhost"
     Config.influxdb.port = 8086
     Config.influxdb.database = "mydb"
     Config.influxdb.org = "myorg"
-    Config.influxdb.password = "token"
+    Config.influxdb.token = "mytoken"
+    Config.influxdb.bucket = "mybucket"
+    Config.influxdb.username = None
+    Config.influxdb.password = None
 
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient") as mock_client:
-        mock_write_api = MagicMock()
-        mock_client.return_value.write_api.return_value = mock_write_api
-
-        # Test propagation in _init_connection (official client path)
+    # Test v2 HTTP path with org parameter
+    with patch("requests.Session.post") as mock_post:
+        mock_post.return_value.status_code = 204
         svc = InfluxService(logger, plant_index=0)
 
-        # Verify InfluxDBClient was initialized with correct URL
-        mock_client.assert_called_with(url="http://localhost:8086", token="token")
-
-        # Verify write was called with correct org
-        mock_write_api.write.assert_called_with(bucket="mydb", org="myorg", record=ANY)
-        assert svc._writer_obj_org == "myorg"
-
-    # Test v2 HTTP path
-    Config.influxdb.org = "http-org"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")):
-        with patch("requests.Session.post") as mock_post:
-            mock_post.return_value.status_code = 204
-            svc = InfluxService(logger, plant_index=0)
-
-            # Verify URL contains org parameter
-            args, kwargs = mock_post.call_args
-            assert "org=http-org" in args[0]
-            assert svc._writer_type == "v2_http"
+        # Verify URL contains org parameter
+        args, kwargs = mock_post.call_args
+        assert "org=myorg" in args[0]
+        assert svc._writer_type == "v2_http"
+        assert "mybucket" in svc._write_url

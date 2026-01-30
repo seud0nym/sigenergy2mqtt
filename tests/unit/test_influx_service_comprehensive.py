@@ -4,7 +4,6 @@ import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from influxdb_client.client.influxdb_client import InfluxDBClient
 
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
@@ -53,27 +52,20 @@ def test_init_influx_disabled(logger):
     assert svc._writer_type is None
 
 
-def test_init_official_client_success(logger, influx_config):
+def test_init_token_prefers_v2_http(logger, influx_config):
     influx_config.token = "mytoken"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient") as mock_client:
+    with patch("requests.Session.post") as mock_post:
+        mock_post.side_effect = [
+            MockResponse(204),  # v2 HTTP success
+        ]
         svc = InfluxService(logger, plant_index=0)
-        assert svc._writer_type == "client"
-        mock_client.assert_called_once()
+        assert svc._writer_type == "v2_http"
 
 
-def test_init_official_client_failure_fallback_v1(logger, influx_config):
-    influx_config.token = "mytoken"
-    influx_config.username = "user"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("fail")), patch("requests.Session.post") as mock_post:
-        mock_post.return_value = MockResponse(204)
-        svc = InfluxService(logger, plant_index=0)
-        assert svc._writer_type == "v1_http"
-
-
-def test_init_v2_http_success(logger, influx_config):
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")), patch("requests.Session.post") as mock_post:
-        # First call to /write (v1 fallback tries this or v2)
-        # Actually it tries v2 first if user is not set
+def test_init_v2_http_success_no_token(logger, influx_config):
+    # Even without token, if we can write to v2 api (e.g. no auth), we use it
+    with patch("requests.Session.post") as mock_post:
+        # First call might typically be v2 check in fallback
         mock_post.side_effect = [
             MockResponse(204),  # v2 HTTP success
         ]
@@ -83,7 +75,7 @@ def test_init_v2_http_success(logger, influx_config):
 
 def test_init_v2_http_bucket_creation(logger, influx_config):
     influx_config.token = "mytoken"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")), patch("requests.Session.post") as mock_post, patch("requests.Session.get") as mock_get:
+    with patch("requests.Session.post") as mock_post, patch("requests.Session.get") as mock_get:
         mock_post.side_effect = [
             MockResponse(404),  # v2 write fail
             MockResponse(201),  # v2 bucket create success
@@ -97,7 +89,7 @@ def test_init_v2_http_bucket_creation(logger, influx_config):
 
 def test_init_v1_http_database_creation(logger, influx_config):
     influx_config.username = "user"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")), patch("requests.Session.post") as mock_post:
+    with patch("requests.Session.post") as mock_post:
         mock_post.side_effect = [
             MockResponse(404, content=b"database not found"),  # v1 write fail
             MockResponse(200),  # database create success
@@ -109,7 +101,9 @@ def test_init_v1_http_database_creation(logger, influx_config):
 
 
 def test_init_all_fail_raises_runtime_error(logger, influx_config):
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=Exception("no client")), patch("requests.Session.post", side_effect=Exception("all fail")):
+    # Ensure even with token we fail if network fails
+    influx_config.token = "tok"
+    with patch("requests.Session.post", side_effect=Exception("all fail")):
         with pytest.raises(RuntimeError, match="Initialization failed"):
             InfluxService(logger, plant_index=0)
 
@@ -124,15 +118,17 @@ def test_to_line_protocol(logger):
 
 
 @pytest.mark.asyncio
-async def test_write_line_client_fail(logger, influx_config):
-    influx_config.token = "mytoken"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient") as mock_client:
-        svc = InfluxService(logger, plant_index=0)
-        # The service calls _writer_obj.write_api(...)
-        mock_write_api = MagicMock()
-        svc._writer_obj.write_api.return_value = mock_write_api
-        mock_write_api.write.side_effect = Exception("write error")
+async def test_write_line_http_fail(logger, influx_config):
+    # Disable init so we can manually configure the writer for the test
+    influx_config.enabled = False
+    svc = InfluxService(logger, plant_index=0)
 
+    # Manually configure writer
+    svc._writer_type = "v2_http"
+    svc._write_url = "http://localhost:8086/api/v2/write"
+
+    # Mock clean session post failure
+    with patch.object(svc._session, "post", side_effect=Exception("write error")):
         with patch.object(logger, "error") as mock_logger_error:
             await svc._write_line("test line")
             # Log message contains exception detail and context
@@ -286,10 +282,18 @@ async def test_write_line_v2_http_and_v1_http(logger, influx_config):
 
 
 def test_init_v1_fallback_and_errors(logger, influx_config):
-    # official client fail, v1 success
+    # official client check not needed now, so we simulate v2 fail and v1 success
     influx_config.token = "tok"
     influx_config.username = "user"
-    with patch("sigenergy2mqtt.influxdb.influx_service.InfluxDBClient", side_effect=[Exception("no client"), Exception("no client")]), patch("requests.Session.post") as mock_post:
-        mock_post.return_value = MockResponse(204)
+
+    # We expect:
+    # 1. v2 check fails (e.g. 404 or connection error)
+    # 2. v1 check succeeds
+    with patch("requests.Session.post") as mock_post:
+        # Side effects for calls:
+        # Call 1: v2 check -> fail
+        # Call 2: v1 check -> success
+        mock_post.side_effect = [Exception("v2 conn fail"), MockResponse(204)]
+
         svc = InfluxService(logger, plant_index=0)
         assert svc._writer_type == "v1_http"
