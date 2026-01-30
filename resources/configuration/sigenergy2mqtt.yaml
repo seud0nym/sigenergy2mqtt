@@ -665,7 +665,7 @@ pvoutput:
         days: 
           - All
 # influxdb
-#   added: 2026.01.02
+#   added: 2026.1.30
 #   default: false
 #   description:  Configuration for sending metrics to InfluxDB. Both
 #                 InfluxDB v2 (token/org/bucket) and v1 (username/password,
