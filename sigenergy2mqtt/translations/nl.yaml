@@ -660,6 +660,22 @@ class:
       comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Om onafhankelijke faseregeling in te schakelen, moet deze parameter zijn ingeschakeld
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  InfluxDBQueries:
+    name: InfluxDB-queries
+  InfluxDBQueryErrors:
+    name: InfluxDB-queryfouten
+  InfluxDBRetries:
+    name: InfluxDB-pogingen
+  InfluxDBThroughput:
+    name: InfluxDB-doorvoer
+  InfluxDBWriteErrors:
+    name: InfluxDB-schrijffouten
+  InfluxDBWriteMax:
+    name: InfluxDB maximale schrijflatentie
+  InfluxDBWriteMean:
+    name: InfluxDB gemiddelde schrijflatentie
+  InfluxDBWrites:
+    name: InfluxDB-schrijfacties
   InsulationResistance:
     name: Isolatieweerstand
     attributes:

@@ -660,6 +660,22 @@ class:
       comment: 仅当输出类型为L1/L2/L3/N时有效。要启用独立相控制，必须启用此参数
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  InfluxDBQueries:
+    name: InfluxDB 查询
+  InfluxDBQueryErrors:
+    name: InfluxDB 查询错误
+  InfluxDBRetries:
+    name: InfluxDB 重试
+  InfluxDBThroughput:
+    name: InfluxDB 吞吐量
+  InfluxDBWriteErrors:
+    name: InfluxDB 写入错误
+  InfluxDBWriteMax:
+    name: InfluxDB 最大写入延迟
+  InfluxDBWriteMean:
+    name: InfluxDB 平均写入延迟
+  InfluxDBWrites:
+    name: InfluxDB 写入
   InsulationResistance:
     name: 绝缘电阻
     attributes:

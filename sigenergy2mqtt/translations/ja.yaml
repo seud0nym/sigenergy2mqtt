@@ -660,6 +660,22 @@ class:
       comment: 出力タイプがL1/L2/L3/Nの場合のみ有効。独立相制御を有効にするには、このパラメータを有効にする必要があります
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+  InfluxDBQueries:
+    name: InfluxDB クエリ
+  InfluxDBQueryErrors:
+    name: InfluxDB クエリ エラー
+  InfluxDBRetries:
+    name: InfluxDB リトライ
+  InfluxDBThroughput:
+    name: InfluxDB スループット
+  InfluxDBWriteErrors:
+    name: InfluxDB 書き込みエラー
+  InfluxDBWriteMax:
+    name: InfluxDB 書き込み最大レイテンシ
+  InfluxDBWriteMean:
+    name: InfluxDB 書き込み平均レイテンシ
+  InfluxDBWrites:
+    name: InfluxDB 書き込み
   InsulationResistance:
     name: 絶縁抵抗
     attributes:

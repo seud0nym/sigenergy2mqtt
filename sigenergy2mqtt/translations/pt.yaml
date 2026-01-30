@@ -660,6 +660,22 @@ class:
       comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Para ativar o controlo de fase independente, este parâmetro deve ser ativado
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
+  InfluxDBQueries:
+    name: Consultas InfluxDB
+  InfluxDBQueryErrors:
+    name: Erros de consulta InfluxDB
+  InfluxDBRetries:
+    name: Tentativas InfluxDB
+  InfluxDBThroughput:
+    name: Vazão InfluxDB
+  InfluxDBWriteErrors:
+    name: Erros de escrita InfluxDB
+  InfluxDBWriteMax:
+    name: Latência máxima de escrita InfluxDB
+  InfluxDBWriteMean:
+    name: Latência média de escrita InfluxDB
+  InfluxDBWrites:
+    name: Escritas InfluxDB
   InsulationResistance:
     name: Resistência de Isolamento
     attributes:

@@ -660,6 +660,22 @@ class:
       comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함. 독립 상 제어를 활성화하려면 이 매개변수를 활성화해야 함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  InfluxDBQueries:
+    name: InfluxDB 쿼리
+  InfluxDBQueryErrors:
+    name: InfluxDB 쿼리 오류
+  InfluxDBRetries:
+    name: InfluxDB 재시도
+  InfluxDBThroughput:
+    name: InfluxDB 처리량
+  InfluxDBWriteErrors:
+    name: InfluxDB 쓰기 오류
+  InfluxDBWriteMax:
+    name: InfluxDB 최대 쓰기 지연 시간
+  InfluxDBWriteMean:
+    name: InfluxDB 평균 쓰기 지연 시간
+  InfluxDBWrites:
+    name: InfluxDB 쓰기
   InsulationResistance:
     name: 절연 저항
     attributes:
