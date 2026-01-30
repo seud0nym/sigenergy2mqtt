@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 import requests
 from influxdb_client.client.influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import WriteOptions
+from requests.adapters import HTTPAdapter
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
@@ -30,6 +31,9 @@ class InfluxService(Device):
 
         self.plant_index = plant_index
         self._session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100)
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
         self._version = None
         self._base_url = None
 
