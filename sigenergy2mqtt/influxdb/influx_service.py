@@ -211,16 +211,16 @@ class InfluxService(Device):
         try:
             if self._writer_type == "client" and self._writer_obj is not None:
                 write_api = self._writer_obj.write_api(write_options=WriteOptions(batch_size=1))
-                write_api.write(bucket=self._writer_obj_bucket, org=self._writer_obj_org, record=line)
+                await asyncio.to_thread(write_api.write, bucket=self._writer_obj_bucket, org=self._writer_obj_org, record=line)
                 return
             if self._writer_type == "v2_http" and self._write_url:
-                r = self._session.post(self._write_url, headers=self._write_headers or {}, data=line.encode("utf-8"), timeout=5)
+                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=line.encode("utf-8"), timeout=5)
                 if r.status_code in (204, 200):
                     return
                 else:
                     self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url} line={line})")
             if self._writer_type == "v1_http" and self._write_url:
-                r = self._session.post(self._write_url, params={"db": Config.influxdb.database}, data=line.encode("utf-8"), auth=self._write_auth, timeout=5)
+                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": Config.influxdb.database}, data=line.encode("utf-8"), auth=self._write_auth, timeout=5)
                 if r.status_code in (204, 200):
                     return
                 else:
@@ -239,10 +239,14 @@ class InfluxService(Device):
             self.logger.info(f"{self.name} Commenced")
             while self.online:
                 try:
-                    await asyncio.sleep(1)
+                    task = asyncio.create_task(asyncio.sleep(1))
+                    self.sleeper_task = task
+                    await task
                 except asyncio.CancelledError:
                     self.logger.debug(f"{self.name} sleep interrupted")
                     break
+                finally:
+                    self.sleeper_task = None
 
             for topic in self._topic_cache.keys():
                 mqtt_client.unsubscribe(topic)

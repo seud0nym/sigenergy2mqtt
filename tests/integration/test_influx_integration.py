@@ -106,7 +106,8 @@ def test_init_falls_back_to_v2_http(monkeypatch):
 
 
 @pytest.mark.integration
-def test_write_line_uses_configured_writer(monkeypatch):
+@pytest.mark.asyncio
+async def test_write_line_uses_configured_writer(monkeypatch):
     # No client monkeypatch required; service init is skipped when disabled
 
     calls = {}
@@ -128,5 +129,5 @@ def test_write_line_uses_configured_writer(monkeypatch):
     svc._write_url = "http://localhost:8086/api/v2/write?bucket=test_db&precision=s"
     svc._write_headers = {"Authorization": "Token tok"}
 
-    svc._write_line("measurement,tag=1 value=42 1000000000")
+    await svc._write_line("measurement,tag=1 value=42 1000000000")
     assert "url" in calls and "data" in calls

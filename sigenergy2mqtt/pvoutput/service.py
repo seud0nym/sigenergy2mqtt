@@ -83,24 +83,24 @@ class Service(Device):
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Acquiring System Information from PVOutput ({url=})")
                     try:
-                        with requests.get(url, headers=self.request_headers, timeout=10) as response:
-                            limit, remaining, at, reset = self.get_response_headers(response)
-                            if response.status_code == 200:
-                                section = re.split(r"[;]", response.text)
-                                interval = int(re.split(r"[,]", section[0])[15])
-                                donations = int(section[2])
-                                self.logger.debug(
-                                    f"{self.__class__.__name__} Acquired {interval=} {donations=} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
-                                )
-                                Service._interval_updated = current_time
-                                if Service._interval != interval:
-                                    self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
-                                    Service._interval = interval
-                                if Service._donator != (donations != 0):
-                                    self.logger.info(f"{self.__class__.__name__} Donation Status changed from {Service._donator} to {donations != 0}")
-                                    Service._donator = donations != 0
-                            else:
-                                self.logger.warning(f"{self.__class__.__name__} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
+                        response = await asyncio.to_thread(requests.get, url, headers=self.request_headers, timeout=10)
+                        limit, remaining, at, reset = self.get_response_headers(response)
+                        if response.status_code == 200:
+                            section = re.split(r"[;]", response.text)
+                            interval = int(re.split(r"[,]", section[0])[15])
+                            donations = int(section[2])
+                            self.logger.debug(
+                                f"{self.__class__.__name__} Acquired {interval=} {donations=} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                            )
+                            Service._interval_updated = current_time
+                            if Service._interval != interval:
+                                self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
+                                Service._interval = interval
+                            if Service._donator != (donations != 0):
+                                self.logger.info(f"{self.__class__.__name__} Donation Status changed from {Service._donator} to {donations != 0}")
+                                Service._donator = donations != 0
+                        else:
+                            self.logger.warning(f"{self.__class__.__name__} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
                     except Exception as exc:
                         Service._interval = 5  # Default interval in minutes if not set
                         Service._donator = False  # Default donator status if not set
@@ -131,17 +131,17 @@ class Service(Device):
                     break
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")
-                    with requests.post(url, headers=self.request_headers, data=payload, timeout=10) as response:
-                        limit, remaining, at, reset = self.get_response_headers(response)
-                        if response.status_code == 200:
-                            uploaded = True
-                            self.logger.debug(
-                                f"{self.__class__.__name__} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
-                            )
-                            break
-                        else:
-                            response.raise_for_status()
-                            break
+                    response = await asyncio.to_thread(requests.post, url, headers=self.request_headers, data=payload, timeout=10)
+                    limit, remaining, at, reset = self.get_response_headers(response)
+                    if response.status_code == 200:
+                        uploaded = True
+                        self.logger.debug(
+                            f"{self.__class__.__name__} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                        )
+                        break
+                    else:
+                        response.raise_for_status()
+                        break
             except requests.exceptions.HTTPError as exc:
                 response = exc.response
                 limit, remaining, at, reset = self.get_response_headers(response)

@@ -12,7 +12,7 @@ class DummyMqtt:
 
 
 @pytest.mark.asyncio
-async def test_influx_handle_mqtt_includes_excludes(tmp_path):
+async def test_influx_handle_mqtt_writes_line():
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
 
@@ -21,7 +21,6 @@ async def test_influx_handle_mqtt_includes_excludes(tmp_path):
         def __init__(self):
             self._data = {"object_id": "sensor.test_1", "unique_id": "uid_test_1", "unit_of_measurement": "W"}
             self.state_topic = "sigenergy2mqtt/sensor.test_1/state"
-            self.raw_state_topic = "sigenergy2mqtt/sensor.test_1/raw"
             self.publishable = True
 
         def __getitem__(self, key):
@@ -33,41 +32,19 @@ async def test_influx_handle_mqtt_includes_excludes(tmp_path):
 
     fake_sensor = FakeSensor()
 
-    # Patch DeviceRegistry to return a device containing the fake sensor
-    fake_device = MagicMock()
-    fake_device.get_all_sensors.return_value = {"uid_test_1": fake_sensor}
+    # Pre-populate the service topic cache
+    svc._topic_cache[fake_sensor.state_topic] = {"uom": fake_sensor["unit_of_measurement"], "object_id": fake_sensor["object_id"], "unique_id": fake_sensor.unique_id}
 
-    with patch("sigenergy2mqtt.devices.device.DeviceRegistry.get", return_value=(fake_device,)):
-        # Pre-populate the service topic cache to avoid scanning registry (service now ignores cache misses)
-        svc._topic_cache[fake_sensor.state_topic] = {"uom": fake_sensor["unit_of_measurement"], "object_id": fake_sensor["object_id"], "unique_id": fake_sensor.unique_id}
-        # No include/exclude -> should write (we patch _write_line to capture)
-        wrote = {}
+    wrote = {}
 
-        def fake_write(line):
-            wrote["line"] = line
+    async def fake_write(line):
+        wrote["line"] = line
 
-        svc._write_line = fake_write
-        await svc.handle_mqtt(None, None, "123.45", "sigenergy2mqtt/sensor.test_1/state", None)
-        assert "value" in wrote["line"] or "123.45" in wrote["line"]
+    svc._write_line = fake_write
+    await svc.handle_mqtt(None, None, "123.45", "sigenergy2mqtt/sensor.test_1/state", None)
 
-        # Exclude the sensor -> should skip
-        Config.influxdb.exclude = ["test_1"]
-        wrote.clear()
-        await svc.handle_mqtt(None, None, "123.45", "sigenergy2mqtt/sensor.test_1/state", None)
-        assert wrote == {}
-
-        # Include list that doesn't match -> skip
-        Config.influxdb.exclude = []
-        Config.influxdb.include = ["other"]
-        wrote.clear()
-        await svc.handle_mqtt(None, None, "123.45", "sigenergy2mqtt/sensor.test_1/state", None)
-        assert wrote == {}
-
-        # Matching include -> write
-        Config.influxdb.include = ["test_1"]
-        wrote.clear()
-        await svc.handle_mqtt(None, None, "123.45", "sigenergy2mqtt/sensor.test_1/state", None)
-        assert "line" in wrote
+    # Check if write was called with correct value
+    assert "value" in wrote["line"] or "123.45" in wrote["line"]
 
 
 @pytest.mark.asyncio

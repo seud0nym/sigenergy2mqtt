@@ -121,10 +121,15 @@ class PVOutputStatusService(Service):
                         else:
                             self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
-                    sleep = min(wait, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+                    sleep = min(wait, 1)
                     wait -= sleep
                     if wait > 0:
-                        await asyncio.sleep(sleep)
+                        task = asyncio.create_task(asyncio.sleep(sleep))
+                        self.sleeper_task = task
+                        try:
+                            await task
+                        finally:
+                            self.sleeper_task = None
                 except asyncio.CancelledError:
                     self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
                 except asyncio.TimeoutError:

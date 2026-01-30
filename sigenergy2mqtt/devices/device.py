@@ -60,6 +60,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
         self._rediscover = False
         self._online: asyncio.Future | bool | None = None
+        self._sleeper_task: asyncio.Task | None = None
 
         name = _t(f"{self.__class__.__name__}.name", name, **kwargs)
         self["name"] = self.name = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
@@ -76,7 +77,11 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
     # region Properties
     @property
     def online(self) -> bool:
-        return self._online if isinstance(self._online, bool) else (self._online is not None)
+        if isinstance(self._online, bool):
+            return self._online
+        if isinstance(self._online, asyncio.Future):
+            return not self._online.cancelled()
+        return False
 
     @online.setter
     def online(self, value: bool | asyncio.Future) -> None:
@@ -88,14 +93,26 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 if isinstance(self._online, asyncio.Future):
                     self._online.cancel()
                 self._online = False
-                for sensor in self.sensors.values():
+                for sensor in self.get_all_sensors(search_children=True).values():
                     if sensor.sleeper_task is not None:
                         sensor.sleeper_task.cancel()
+                for device in self.children:
+                    device.online = False
+                if self._sleeper_task is not None:
+                    self._sleeper_task.cancel()
         elif isinstance(value, asyncio.Future):
             logging.debug(f"{self.name} set to online")
             self._online = value
         else:
             raise ValueError("online must be a Future or False")
+
+    @property
+    def sleeper_task(self) -> asyncio.Task | None:
+        return self._sleeper_task
+
+    @sleeper_task.setter
+    def sleeper_task(self, value: asyncio.Task | None) -> None:
+        self._sleeper_task = value
 
     @property
     def rediscover(self) -> bool:
@@ -483,12 +500,13 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                         async with lock.lock(timeout=None):
                             if not modbus_client.connected and self.online:
                                 logging.info(f"{self.name} attempting to reconnect to Modbus...")
-                                while not modbus_client.connected:
+                                while not modbus_client.connected and self.online:
                                     modbus_client.close()
                                     await asyncio.sleep(0.5)
                                     await modbus_client.connect()
                                     await asyncio.sleep(1)
-                                logging.info(f"{self.name} reconnected to Modbus")
+                                if self.online:
+                                    logging.info(f"{self.name} reconnected to Modbus")
                 except Exception as e:
                     logging.error(f"{self.name} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
 
