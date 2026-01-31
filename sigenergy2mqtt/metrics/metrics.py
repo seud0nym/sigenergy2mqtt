@@ -1,12 +1,12 @@
-import asyncio
 import logging
+import threading
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 
 
 class Metrics:
-    _lock = asyncio.Lock()
+    _lock = threading.Lock()
 
     _started: float = time.monotonic()
 
@@ -46,18 +46,18 @@ class Metrics:
 
     @classmethod
     @asynccontextmanager
-    async def lock(cls, timeout=None):
+    async def lock(cls, timeout=1.0):
         acquired: bool = False
         try:
             if timeout is None:
-                acquired = await Metrics._lock.acquire()
+                acquired = Metrics._lock.acquire()
             else:
-                acquired = await asyncio.wait_for(Metrics._lock.acquire(), timeout)
+                acquired = Metrics._lock.acquire(timeout=timeout)
                 if not acquired:
                     raise TimeoutError("Failed to acquire lock within the timeout period.")
             yield
         finally:
-            if acquired and Metrics._lock.locked():
+            if acquired:
                 Metrics._lock.release()
 
     @classmethod
