@@ -189,6 +189,10 @@ class TestMqttHandler:
         with patch("sigenergy2mqtt.mqtt.mqtt.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_message(mock_client, "test/topic", "test_payload")
             mock_run.assert_called_once()
+            # Close the coroutine to avoid warning
+            coro = mock_run.call_args[0][0]
+            if hasattr(coro, "close"):
+                coro.close()
 
         loop.close()
 
@@ -205,6 +209,10 @@ class TestMqttHandler:
         with patch("sigenergy2mqtt.mqtt.mqtt.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_response(123, "publish", mock_client)
             mock_run.assert_called_once()
+            # Close the coroutine to avoid warning
+            coro = mock_run.call_args[0][0]
+            if hasattr(coro, "close"):
+                coro.close()
 
         loop.close()
 
@@ -436,6 +444,7 @@ class TestMqttClient:
             handler = MqttHandler("test_client", modbus_client, loop)
             _client = MqttClient(client_id="test_client", userdata=handler)
             assert _client._userdata == handler
+            loop.close()
 
     def test_mqtt_client_init_tls_secure(self):
         """Test mqtt.Client initialization with secure TLS."""

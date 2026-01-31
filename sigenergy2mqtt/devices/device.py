@@ -647,6 +647,10 @@ class DeviceRegistry:
         cls._devices[plant_index].append(device)
 
     @classmethod
+    def clear(cls) -> None:
+        cls._devices.clear()
+
+    @classmethod
     def get(cls, plant_index: int) -> list[Device]:
         if plant_index in cls._devices:
             return list(cls._devices[plant_index])

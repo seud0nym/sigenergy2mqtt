@@ -17,12 +17,16 @@ os.environ["SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID"] = "1"
 # Prevent argparse from parsing pytest arguments by mocking sys.argv during import
 with patch.object(sys, "argv", ["sigenergy2mqtt"]):
     try:
-        import sigenergy2mqtt.config  # noqa: F401
+        from sigenergy2mqtt import i18n
+        from sigenergy2mqtt.config import Config
+        from sigenergy2mqtt.devices.device import DeviceRegistry
+        from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
+        from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
     except SystemExit:
         # If it still correctly exits (validation failure?), capture it.
         pass
     except Exception as e:
-        print(f"Failed to load sigenergy2mqtt.config during conftest setup: {e}")
+        print(f"Failed to load sigenergy2mqtt components during conftest setup: {e}")
 
 
 @pytest.fixture(autouse=True)
@@ -54,20 +58,22 @@ def mock_language_detection(request):
 @pytest.fixture(autouse=True)
 def reset_config():
     """Global fixture to ensure Config is reset for every test."""
-    from sigenergy2mqtt.config import Config
-
     Config.reset()
     Config.reload()
+    DeviceRegistry.clear()
+    ModbusClientFactory.clear()
+    ModbusLockFactory.clear()
     yield
     Config.reset()
     Config.reload()
+    DeviceRegistry.clear()
+    ModbusClientFactory.clear()
+    ModbusLockFactory.clear()
 
 
 @pytest.fixture(autouse=True)
 def reset_i18n():
     """Global fixture to ensure i18n is reset for every test."""
-    from sigenergy2mqtt import i18n
-
     i18n.reset()
     i18n.load("en")
     yield

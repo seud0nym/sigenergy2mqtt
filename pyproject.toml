@@ -41,6 +41,7 @@ addopts = "-n auto --dist loadscope"
 markers = [
     "no_language_mock: disable global mock of i18n.get_default_language",
     "no_persistent_state_mock: disable global mock of Config.persistent_state_path",
+    "integration: mark a test as an integration test",
 ]
 
 [project.scripts]
