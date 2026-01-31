@@ -93,7 +93,7 @@ class MqttHandler:
                     if self._closing:
                         logger.debug(f"MqttHandler is closing - discarding response handler {method_name} coroutine")
                         if hasattr(method_result, "close"):
-                            method_result.close()
+                            method_result.close() # type: ignore
                     else:
                         if not asyncio.iscoroutine(method_result):
                             method_result = _wrap(method_result)

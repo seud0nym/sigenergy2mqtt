@@ -667,56 +667,65 @@ pvoutput:
 # influxdb
 #   added: 2026.1.30
 #   default: false
-#   description:  Configuration for sending metrics to InfluxDB. Both
+#   description:  Configuration for sending the sensor data to InfluxDB. Both
 #                 InfluxDB v2 (token/org/bucket) and v1 (username/password,
 #                 retention-policy) authentication modes are supported; if a
 #                 `token` is supplied the v2 API will be used.
 influxdb:
   # enabled
   #   default: false
-  #   description: If true, sigenergy2mqtt will write metrics to InfluxDB.
+  #   description: If true, sigenergy2mqtt will publish the sensor data to InfluxDB.
   enabled: false
   # host
   #   default: 127.0.0.1
-  #   description: Hostname or IP address of the InfluxDB server.
+  #   description: The hostname or IP address of your InfluxDB database.
   host: 127.0.0.1
   # port
   #   default: 8086
-  #   description: Port on which InfluxDB is listening.
+  #   description: The listening port of the InfluxDB database. The default is 8086.
   port: 8086
+  # username
+  #   default: ""
+  #   description: The username for your InfluxDB database.
+  username: ""
+  # password
+  #   default: ""
+  #   description: The password for your InfluxDB database.
+  password: ""
   # database
   #   default: sigenergy
-  #   description: The InfluxDB database to write metrics to.
+  #   description: The name of the database to use. The default is sigenergy.
   database: sigenergy
   # org
   #   default: ""
-  #   description: InfluxDB organization name or ID (InfluxDB 2.x only).
+  #   description: The InfluxDB v2 organization name or ID. If not specified,
+  #                the v1 API will be used.
   org: ""
   # token
   #   default: ""
-  #   description: InfluxDB v2 authentication token. If supplied, v2 APIs
+  #   description: The InfluxDB v2 authentication token. If supplied, v2 APIs
   #                (client or HTTP) will be used in preference to v1.
   token: ""
   # bucket
   #   default: ""
-  #   description: InfluxDB v2 bucket name. If not specified, the value of
+  #   description: The InfluxDB v2 bucket name. If not specified, the value of
   #                'database' will be used as the v2 bucket name.
   bucket: ""
-  # username
-  #   default: ""
-  #   description: InfluxDB username.
-  username: ""
-  # password
-  #   default: ""
-  #   description: InfluxDB password.
-  password: ""
   # include
   #   default: [ ]
-  #   description: List of sensor identifiers to include when publishing to InfluxDB.
+  #   description: A list of sensors to include when publishing to InfluxDB, 
+  #                using either the full or partial entity id or sensor class 
+  #                name, or a regular expression to be matched against the 
+  #                entity id or sensor class name.
+  #                If not specified, all sensors will be included.
   include: []
   # exclude
   #   default: [ ]
-  #   description: List of sensor identifiers to exclude when publishing to InfluxDB.
+  #   description: A list of sensors to include when publishing to InfluxDB, 
+  #                using either the full or partial entity id or sensor class 
+  #                name, or a regular expression to be matched against the 
+  #                entity id or sensor class name.
+  #                If not specified, no sensors will be excluded.
   exclude: []
   # log-level
   #   default: WARNING  
