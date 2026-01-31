@@ -17,7 +17,17 @@ def logger():
 @pytest.fixture
 def service(logger):
     """Create InfluxService with disabled init for isolated testing."""
-    with patch.object(Config, "influxdb", None):
+    mock_config = MagicMock()
+    # Set defaults required by __init__
+    mock_config.enabled = False
+    mock_config.max_retries = 3
+    mock_config.pool_connections = 100
+    mock_config.pool_maxsize = 100
+    mock_config.batch_size = 100
+    mock_config.flush_interval = 1.0
+    mock_config.query_interval = 0.1
+
+    with patch.object(Config, "influxdb", mock_config):
         svc = InfluxService(logger, plant_index=0)
     return svc
 
@@ -306,7 +316,16 @@ class TestMiscEdgeCases:
 
     def test_service_name_includes_plant_index(self, logger):
         """Service name includes plant index for identification."""
-        with patch.object(Config, "influxdb", None):
+        mock_config = MagicMock()
+        mock_config.enabled = False
+        mock_config.max_retries = 3
+        mock_config.pool_connections = 100
+        mock_config.pool_maxsize = 100
+        mock_config.batch_size = 100
+        mock_config.flush_interval = 1.0
+        mock_config.query_interval = 0.1
+
+        with patch.object(Config, "influxdb", mock_config):
             svc = InfluxService(logger, plant_index=5)
         assert "5" in svc.name
         assert "InfluxDB" in svc.name
