@@ -114,7 +114,7 @@ def check_int_list(value: str | list[int] | None, source: str) -> list[int]:
     if len(int_list) == 0 or all(isinstance(item, int) for item in int_list):
         return int_list
     else:
-        raise ValueError(f"{source} must be null, an empty list, or a list integers")
+        raise ValueError(f"{source} must be null, an empty list, or a list of integers separated by commas")
 
 
 def check_log_level(value: str | int, source: str) -> int:
@@ -180,6 +180,20 @@ def check_string(value: Any, source: str, *valid_values: str, allow_none: bool =
         return value
     else:
         raise ValueError(f"{source} must be a valid string")
+
+
+def check_string_list(value: str | list[str] | None, source: str) -> list[str]:
+    string_list: list[str]
+    if value is None:
+        string_list = []
+    elif isinstance(value, str):
+        string_list = [i.strip() for i in value.split(",")]
+    else:
+        string_list = value
+    if len(string_list) == 0 or all(isinstance(item, str) for item in string_list):
+        return string_list
+    else:
+        raise ValueError(f"{source} must be null, an empty list, or a list of strings separated by commas")
 
 
 def check_time(value: str | time, source: str) -> time:

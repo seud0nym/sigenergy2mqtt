@@ -26,7 +26,7 @@ def test_check_float_extra():
         validation.check_float(9.5, "src", min=10.0)
     # Invalid type
     with pytest.raises(ValueError, match="must be a float"):
-        validation.check_float([], "src")
+        validation.check_float([], "src")  # pyrefly: ignore
 
 
 def test_check_host_extra():
@@ -54,8 +54,8 @@ def test_check_int_extra():
 
 def test_check_int_list_extra():
     assert validation.check_int_list(None, "src") == []
-    with pytest.raises(ValueError, match="list integers"):
-        validation.check_int_list(["a"], "src")
+    with pytest.raises(ValueError, match="list of integers"):
+        validation.check_int_list(["a"], "src")  # pyrefly: ignore
 
 
 def test_check_log_level_extra():
@@ -113,3 +113,21 @@ def test_check_string_extra():
     # Invalid type
     with pytest.raises(ValueError, match="must be a valid string"):
         validation.check_string([], "src")
+
+
+def test_check_string_list_extra():
+    # Test None
+    assert validation.check_string_list(None, "src") == []
+
+    # Test string input with comma separation and whitespace
+    assert validation.check_string_list("item1, item2,  item3 ", "src") == ["item1", "item2", "item3"]
+
+    # Test list input
+    assert validation.check_string_list(["val1", "val2"], "src") == ["val1", "val2"]
+
+    # Test empty list
+    assert validation.check_string_list([], "src") == []
+
+    # Test invalid list content
+    with pytest.raises(ValueError, match="list of strings separated by commas"):
+        validation.check_string_list(["valid", 123], "src")  # pyrefly: ignore
