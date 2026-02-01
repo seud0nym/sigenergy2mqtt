@@ -1550,7 +1550,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: InfluxDB v2 버킷 이름 (설정하지 않으면 --influx-database가 기본값입니다)
+    help: InfluxDB v2 버킷 이름 (설정하지 않으면 --influxdb-database가 기본값입니다)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: '메트릭을 기록할 InfluxDB 데이터베이스 (기본값: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:

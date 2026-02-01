@@ -1550,7 +1550,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '使用简化的主题结构'
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: InfluxDB v2 存储桶名称（如果未设置，则默认为 --influx-database）
+    help: InfluxDB v2 存储桶名称（如果未设置，则默认为 --influxdb-database）
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: '用于写入指标的 InfluxDB 数据库（默认：sigenergy）'
   SIGENERGY2MQTT_INFLUX_ENABLED:

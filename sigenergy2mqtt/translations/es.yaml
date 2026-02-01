@@ -1550,7 +1550,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Habilitar la estructura de temas simplificada (sigenergy2mqtt/object_id/state) en lugar de la estructura completa de Home Assistant (homeassistant/platform/device_id/object_id/state)
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: Nombre del bucket de InfluxDB v2 (por defecto es --influx-database si no se establece)
+    help: Nombre del bucket de InfluxDB v2 (por defecto es --influxdb-database si no se establece)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'Base de datos InfluxDB para escribir métricas (por defecto: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:

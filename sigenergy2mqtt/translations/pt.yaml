@@ -1550,7 +1550,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Usar estrutura de tópicos simplificada'
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: Nome do bucket do InfluxDB v2 (o padrão é --influx-database se não for definido)
+    help: Nome do bucket do InfluxDB v2 (o padrão é --influxdb-database se não for definido)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'Banco de dados InfluxDB para gravar métricas (padrão: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:

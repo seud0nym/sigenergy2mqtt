@@ -1550,7 +1550,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Gebruik vereenvoudigde topic-structuur (sigenergy2mqtt/object_id/state)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: Naam van de InfluxDB v2 bucket (standaard --influx-database indien niet ingesteld)
+    help: Naam van de InfluxDB v2 bucket (standaard --influxdb-database indien niet ingesteld)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'InfluxDB database om metingen naar te schrijven (standaard: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:

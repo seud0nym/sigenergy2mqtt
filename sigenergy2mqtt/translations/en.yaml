@@ -894,7 +894,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: InfluxDB v2 bucket name (defaults to --influx-database if not set)
+    help: InfluxDB v2 bucket name (defaults to --influxdb-database if not set)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'InfluxDB database to write metrics to (default: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:

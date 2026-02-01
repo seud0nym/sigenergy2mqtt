@@ -1550,7 +1550,7 @@ cli:
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: InfluxDB v2 バケット名（設定されていない場合は --influx-database がデフォルトとなります）
+    help: InfluxDB v2 バケット名（設定されていない場合は --influxdb-database がデフォルトとなります）
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'メトリクスを書き込む InfluxDB データベース（デフォルト: sigenergy）'
   SIGENERGY2MQTT_INFLUX_ENABLED:
