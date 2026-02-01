@@ -72,7 +72,7 @@ EOF
     NEW_HELP_TMP=$(mktemp)
     OLD_HELP_TMP=$(mktemp)
     # 1. Capture the fresh help output to a temp file
-    python3 -m sigenergy2mqtt --help > "$NEW_HELP_TMP" 2>/dev/null
+    python3 -m sigenergy2mqtt --help | sed -e 's/__main__.py/sigenergy2mqtt/g' > "$NEW_HELP_TMP" 2>/dev/null
     # 2. Extract the existing help output from the current file (if it exists)
     if [ -f "$OUTPUT_FILE" ]; then
         # This sed command finds the text between the ```text and ``` markers
@@ -116,6 +116,7 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
+    grep -Eoe '"--[^"]+' sigenergy2mqtt/config/cli.py | cut -c4- | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.cli.options
 fi
 
 echo -e "${GREEN}>>> Build successful${NC} $(date): Old version=${ORANGE}$old_version${NC} New version=${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"
