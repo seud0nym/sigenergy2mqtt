@@ -95,7 +95,7 @@ def test_run_modbus_event_loop():
     config = MagicMock()
     loop = MagicMock(spec=asyncio.AbstractEventLoop)
 
-    with patch("sigenergy2mqtt.main.threading.read_and_publish_device_sensors", return_value=AsyncMock()) as mock_read, patch("asyncio.set_event_loop") as mock_set_loop:
+    with patch("sigenergy2mqtt.main.threading.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None) as mock_read, patch("asyncio.set_event_loop") as mock_set_loop:
         run_modbus_event_loop(config, loop)
         mock_read.assert_called_once()
         loop.run_until_complete.assert_called_once()
@@ -111,7 +111,7 @@ def test_run_modbus_event_loop_exception(caplog):
     loop = MagicMock(spec=asyncio.AbstractEventLoop)
     loop.run_until_complete.side_effect = Exception("loop crash")
 
-    with patch("asyncio.set_event_loop") as mock_set_loop:
+    with patch("sigenergy2mqtt.main.threading.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None), patch("asyncio.set_event_loop") as mock_set_loop:
         run_modbus_event_loop(config, loop)
     assert "CrashedThread thread crashed !!!" in caplog.text
     loop.close.assert_called_once()
@@ -125,7 +125,13 @@ async def test_start_logic():
     config = MagicMock()
 
     # We need to mock ThreadPoolExecutor to avoid real threads
-    with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor, patch("asyncio.new_event_loop", return_value=MagicMock()):
+    # Also mock run_modbus_event_loop to avoid creating unawaited coroutines
+    mock_loop = MagicMock()
+    with (
+        patch("sigenergy2mqtt.main.threading.run_modbus_event_loop", MagicMock()),
+        patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
+        patch("asyncio.new_event_loop", return_value=mock_loop),
+    ):
         # Setup mock executor to return a finished future
         mock_fut = MagicMock()
         mock_fut.result.return_value = None
@@ -144,7 +150,13 @@ async def test_start_logic_with_exception(caplog):
 
     config = MagicMock()
 
-    with patch("concurrent.futures.ThreadPoolExecutor") as mock_executor, patch("asyncio.new_event_loop", return_value=MagicMock()):
+    # Also mock run_modbus_event_loop to avoid creating unawaited coroutines
+    mock_loop = MagicMock()
+    with (
+        patch("sigenergy2mqtt.main.threading.run_modbus_event_loop", MagicMock()),
+        patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
+        patch("asyncio.new_event_loop", return_value=mock_loop),
+    ):
         mock_fut = MagicMock()
         mock_fut.result.side_effect = Exception("future error")
         mock_executor.return_value.__enter__.return_value.submit.return_value = mock_fut

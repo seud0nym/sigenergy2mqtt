@@ -1,6 +1,8 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 import sigenergy2mqtt.__main__ as main_module
 from sigenergy2mqtt.common.protocol import Protocol, ProtocolApplies
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -18,7 +20,8 @@ def test_protocol_applies_coverage():
     assert ProtocolApplies(Protocol.N_A) is not None
 
 
-def test_get_influxdb_services_coverage():
+@pytest.mark.asyncio
+async def test_get_influxdb_services_coverage():
     with patch("sigenergy2mqtt.influxdb.Config") as MockConfig:
         MockConfig.modbus = [MagicMock(), MagicMock()]  # 2 plants
         MockConfig.influxdb.log_level = logging.INFO
@@ -32,6 +35,10 @@ def test_get_influxdb_services_coverage():
 
 
 def test_main_wrapper_coverage():
-    with patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run, patch("sigenergy2mqtt.__main__.async_main") as mock_async_main, patch("sigenergy2mqtt.__main__.initialize"):
+    with (
+        patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+        patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None) as mock_async_main,
+        patch("sigenergy2mqtt.__main__.initialize"),
+    ):
         main_module.main()
         mock_run.assert_called_once()

@@ -7,7 +7,8 @@ from sigenergy2mqtt.config.config import Config
 
 def write_yaml(tmp_path, data: dict) -> str:
     p = tmp_path / "cfg.yaml"
-    YAML(typ="safe").dump(data, p.open("w"))
+    with p.open("w") as f:
+        YAML(typ="safe").dump(data, f)
     return str(p)
 
 

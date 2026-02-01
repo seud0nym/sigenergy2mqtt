@@ -22,24 +22,34 @@ class MonitorService(Device):
         self._topics: dict[str, MonitoredSensor] = {}
 
     async def _monitor(self, modbus_client: Any, mqtt_client: Any, *sensors: Any):
-        logging.info(f"{self.__class__.__name__} Commenced")
+        logging.info(f"{self.name} Sleeping for 30s before commencing...")
+        try:
+            task = asyncio.create_task(asyncio.sleep(30))
+            self.sleeper_task = task
+            await task
+        except asyncio.CancelledError:
+            logging.debug(f"{self.name} sleep interrupted")
+            return
+        finally:
+            self.sleeper_task = None
+        logging.info(f"{self.name} Commenced")
         while self.online:
             async with self._lock:
                 overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if s.is_overdue}
             if any(overdue):
                 for topic, sensor in overdue.items():
                     sensor.notified = True
-                    logging.warning(f"{self.__class__.__name__} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
+                    logging.warning(f"{self.name} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
             try:
                 task = asyncio.create_task(asyncio.sleep(1))
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
-                logging.debug(f"{self.__class__.__name__} sleep interrupted")
+                logging.debug(f"{self.name} sleep interrupted")
                 break
             finally:
                 self.sleeper_task = None
-        logging.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
+        logging.info(f"{self.name} Completed: Flagged as offline ({self.online=})")
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         return True
@@ -48,13 +58,13 @@ class MonitorService(Device):
         if source in self._topics:
             sensor = self._topics[source]
             if sensor.notified:
-                logging.info(f"{self.__class__.__name__} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
+                logging.info(f"{self.name} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
             async with self._lock:
                 sensor.last_seen = time.time()
                 sensor.notified = False
             return True
         else:
-            logging.warning(f"{self.__class__.__name__} updated from  topic {source}, but topic is not registered !!!")
+            logging.warning(f"{self.name} updated from  topic {source}, but topic is not registered !!!")
         return False
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
@@ -75,11 +85,11 @@ class MonitorService(Device):
                 scan_interval = s.scan_interval
                 topic = s.state_topic
                 if topic in self._topics:
-                    logging.error(f"{self.__class__.__name__} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
+                    logging.error(f"{self.name} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
                 else:
                     self._topics[topic] = MonitoredSensor(device, sensor, scan_interval)
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:
-                logging.info(f"{self.__class__.__name__} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for '{d.name}'")
-        logging.info(f"{self.__class__.__name__} Monitoring {len(self._topics)} topics")
+                logging.info(f"{self.name} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for '{d.name}'")
+        logging.info(f"{self.name} Monitoring {len(self._topics)} topics")

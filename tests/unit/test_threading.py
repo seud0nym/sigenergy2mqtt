@@ -135,7 +135,7 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
     caplog.set_level(logging.ERROR)
 
     # Patch read_and_publish_device_sensors to raise an exception when awaited
-    async def raise_corr(config, upgrade, loop):
+    async def raise_corr(config, loop):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(threading_mod, "read_and_publish_device_sensors", raise_corr)
@@ -148,18 +148,18 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
     try:
         threading_mod.run_modbus_event_loop(cfg, loop)
     finally:
+        loop.close()
         threading.current_thread().name = orig_name
 
     # Now test start() handling when run_modbus_event_loop raises in worker
-    def bad_runner(cfg, upgrade, loop):
+    def bad_runner(cfg, loop):
+        loop.close()
         raise ValueError("bad")
 
     monkeypatch.setattr(threading_mod, "run_modbus_event_loop", bad_runner)
 
     # start should not raise
     asyncio.run(threading_mod.start([cfg]))
-    # asyncio.run() closes the running loop; restore a default loop for remaining tests
-    asyncio.set_event_loop(asyncio.new_event_loop())
 
 
 @pytest.mark.asyncio

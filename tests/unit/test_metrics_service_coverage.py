@@ -7,7 +7,8 @@ from sigenergy2mqtt.metrics.metrics_service import MetricsService
 
 
 class TestMetricsServiceCoverage:
-    def test_init_without_influxdb(self):
+    @pytest.mark.asyncio
+    async def test_init_without_influxdb(self):
         protocol = Protocol.V2_0
         # Mock Config to ensure influxdb is seemingly disabled or missing
         with patch("sigenergy2mqtt.metrics.metrics_service.Config") as MockConfig:
@@ -23,7 +24,8 @@ class TestMetricsServiceCoverage:
             assert not any("influxdb_writes" in k for k in sensor_keys)
             assert any("modbus_write_errors" in k for k in sensor_keys)
 
-    def test_init_with_influxdb_enabled(self):
+    @pytest.mark.asyncio
+    async def test_init_with_influxdb_enabled(self):
         protocol = Protocol.V2_0
         with patch("sigenergy2mqtt.metrics.metrics_service.Config") as MockConfig:
             MockConfig.home_assistant.unique_id_prefix = "test_prefix"

@@ -156,7 +156,8 @@ def device(mock_config):
 # --- Tests ---
 
 
-def test_device_schedule(device):
+@pytest.mark.asyncio
+async def test_device_schedule(device):
     s1 = DummyReadable("s1", publishable=True, address=100)
     s2 = DummyReadable("s2", publishable=False, address=101)
 
@@ -175,6 +176,8 @@ def test_device_schedule(device):
     # 2. Group (s3) -> No Task
     # 3. Republish Discovery -> Task
     assert len(tasks) == 2
+    for t in tasks:
+        t.close()
 
 
 def test_device_subscribe(device):
