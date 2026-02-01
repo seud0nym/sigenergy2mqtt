@@ -1,6 +1,7 @@
 """End-to-end tests for InfluxService sync_from_homeassistant workflow."""
 
 import logging
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -17,8 +18,19 @@ def logger():
 @pytest.fixture
 def service(logger):
     """Create InfluxService with disabled init for isolated testing."""
-    with patch.object(Config, "influxdb", None):
+    mock_config = MagicMock()
+    # Set defaults required by __init__
+    mock_config.enabled = False
+    mock_config.max_retries = 3
+    mock_config.pool_connections = 100
+    mock_config.pool_maxsize = 100
+    mock_config.batch_size = 100
+    mock_config.flush_interval = 1.0
+    mock_config.query_interval = 0.1
+
+    with patch.object(Config, "influxdb", mock_config):
         svc = InfluxService(logger, plant_index=0)
+    svc._online = True  # Mark as online for tests
     return svc
 
 
@@ -68,7 +80,7 @@ async def test_sync_from_homeassistant_full_workflow(service, logger):
     async def mock_get_earliest_timestamp(measurement, tags):
         if tags.get("entity_id") == "sensor.inverter_power":
             return 1704067200  # Has existing data
-        return None  # No existing data
+        return 1704110400  # No existing data (returns "now")
 
     service.get_earliest_timestamp = AsyncMock(side_effect=mock_get_earliest_timestamp)
 
@@ -76,7 +88,7 @@ async def test_sync_from_homeassistant_full_workflow(service, logger):
     async def mock_copy_records(measurement, tags, before_timestamp=None):
         if tags.get("entity_id") == "sensor.inverter_power":
             return 50  # Copied 50 older records
-        return 100  # Copied 100 records (all)
+        return 100  # Copied 100 records (older than "now")
 
     service.copy_records_from_homeassistant = AsyncMock(side_effect=mock_copy_records)
 
@@ -106,7 +118,7 @@ async def test_sync_from_homeassistant_deduplicates_combinations(service, logger
         "topic2": {"uom": "W", "object_id": "sensor.power", "unique_id": "uid2"},  # Same entity/uom
     }
 
-    service.get_earliest_timestamp = AsyncMock(return_value=None)
+    service.get_earliest_timestamp = AsyncMock(return_value=1704110400)
     service.copy_records_from_homeassistant = AsyncMock(return_value=10)
 
     results = await service.sync_from_homeassistant()
@@ -133,7 +145,7 @@ async def test_sync_from_homeassistant_handles_uom_with_slash(service, logger):
         captured_measurement.append(measurement)
         return 5
 
-    service.get_earliest_timestamp = AsyncMock(return_value=None)
+    service.get_earliest_timestamp = AsyncMock(return_value=1704110400)
     service.copy_records_from_homeassistant = AsyncMock(side_effect=mock_copy_records)
 
     await service.sync_from_homeassistant()
@@ -171,16 +183,17 @@ async def test_sync_from_homeassistant_with_existing_data_copies_older(service, 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_sync_from_homeassistant_no_existing_copies_all(service, logger):
-    """Test sync_from_homeassistant copies all records when no existing data."""
+async def test_sync_from_homeassistant_no_existing_copies_older_than_now(service, logger):
+    """Test sync_from_homeassistant copies records older than now when no existing data."""
     service.detect_homeassistant_db = AsyncMock(return_value=True)
 
     service._topic_cache = {
         "topic1": {"uom": "W", "object_id": "sensor.power", "unique_id": "uid1"},
     }
 
-    # No existing data
-    service.get_earliest_timestamp = AsyncMock(return_value=None)
+    # No existing data (returns current time)
+    now_ts = 1704110400
+    service.get_earliest_timestamp = AsyncMock(return_value=now_ts)
 
     captured_before = []
 
@@ -192,8 +205,8 @@ async def test_sync_from_homeassistant_no_existing_copies_all(service, logger):
 
     await service.sync_from_homeassistant()
 
-    # Should pass None as before_timestamp (copy all)
-    assert captured_before[0] is None
+    # Should pass now_ts as before_timestamp
+    assert captured_before[0] == now_ts
 
 
 @pytest.mark.integration
@@ -206,7 +219,7 @@ async def test_sync_from_homeassistant_returns_result_key_format(service, logger
         "topic1": {"uom": "kW", "object_id": "sensor.power_output", "unique_id": "uid1"},
     }
 
-    service.get_earliest_timestamp = AsyncMock(return_value=None)
+    service.get_earliest_timestamp = AsyncMock(return_value=1704110400)
     service.copy_records_from_homeassistant = AsyncMock(return_value=42)
 
     results = await service.sync_from_homeassistant()
@@ -337,7 +350,7 @@ async def test_get_earliest_timestamp_v1_success(service, monkeypatch):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_get_earliest_timestamp_no_records(service, monkeypatch):
-    """Test get_earliest_timestamp returns None when no records exist."""
+    """Test get_earliest_timestamp returns current time when no records exist."""
     Config.influxdb.host = "localhost"
     Config.influxdb.port = 8086
     Config.influxdb.database = "testdb"
@@ -355,7 +368,9 @@ async def test_get_earliest_timestamp_no_records(service, monkeypatch):
     monkeypatch.setattr(service._session, "get", fake_get)
 
     result = await service.get_earliest_timestamp("power", {"entity_id": "sensor.power"})
-    assert result is None
+    # Should be close to current time
+    assert isinstance(result, int)
+    assert abs(result - time.time()) < 5
 
 
 # =============================================================================

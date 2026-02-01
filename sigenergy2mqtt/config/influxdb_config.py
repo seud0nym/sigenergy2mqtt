@@ -33,6 +33,8 @@ class InfluxDBConfiguration:
     max_retries: int = 3
     pool_connections: int = 100
     pool_maxsize: int = 100
+    sync_chunk_size: int = 5000
+    max_sync_workers: int = 4
 
     log_level: int = logging.WARNING
 
@@ -91,6 +93,10 @@ class InfluxDBConfiguration:
                             self.pool_connections = cast(int, check_int(v, "influxdb.pool-connections", min=1))
                         case "pool-maxsize":
                             self.pool_maxsize = cast(int, check_int(v, "influxdb.pool-maxsize", min=1))
+                        case "sync-chunk-size":
+                            self.sync_chunk_size = cast(int, check_int(v, "influxdb.sync-chunk-size", min=1))
+                        case "max-sync-workers":
+                            self.max_sync_workers = cast(int, check_int(v, "influxdb.max-sync-workers", min=1))
                         case _:
                             if k != "enabled":
                                 raise ValueError(f"influxdb configuration element contains unknown option '{k}'")

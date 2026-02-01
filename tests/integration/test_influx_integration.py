@@ -8,7 +8,8 @@ from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
 @pytest.mark.integration
-def test_init_prefers_v2_http_with_token(monkeypatch):
+@pytest.mark.asyncio
+async def test_init_prefers_v2_http_with_token(monkeypatch):
     # Tests that when a token is provided, we try v2 HTTP first
 
     # Mock requests.Session.post to capture calls
@@ -37,6 +38,7 @@ def test_init_prefers_v2_http_with_token(monkeypatch):
         Config.influxdb.token = "mytoken"
 
         svc = InfluxService(MagicMock(), plant_index=0)
+        await svc._async_init()
 
         # It should have chosen v2_http
         assert svc._writer_type == "v2_http"
@@ -55,7 +57,8 @@ def test_init_prefers_v2_http_with_token(monkeypatch):
 
 
 @pytest.mark.integration
-def test_init_falls_back_to_v2_http_implicit(monkeypatch):
+@pytest.mark.asyncio
+async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
     # If no token but password is used (legacy), or no token at all but v2 endpoint works
 
     class FakeResponse:
@@ -78,6 +81,7 @@ def test_init_falls_back_to_v2_http_implicit(monkeypatch):
         Config.influxdb.password = None
 
         svc = InfluxService(MagicMock(), plant_index=0)
+        await svc._async_init()
         assert svc._writer_type == "v2_http"
         assert svc._write_url is not None
     finally:
@@ -107,6 +111,7 @@ async def test_write_line_uses_configured_writer(monkeypatch):
     svc._writer_type = "v2_http"
     svc._write_url = "http://localhost:8086/api/v2/write?bucket=test_db&precision=s"
     svc._write_headers = {"Authorization": "Token tok"}
+    svc._online = True
 
     await svc._write_line("measurement,tag=1 value=42 1000000000")
     await svc.flush_buffer()
@@ -281,6 +286,7 @@ async def test_query_v1_success(monkeypatch):
     """Test _query_v1 returns successful query result."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     expected_result = {"results": [{"series": [{"name": "meas", "columns": ["time", "value"], "values": [["2024-01-01T00:00:00Z", 42]]}]}]}
 
@@ -300,6 +306,7 @@ async def test_query_v1_with_epoch(monkeypatch):
     """Test _query_v1 passes epoch parameter correctly."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     captured_params = [None]
 
@@ -319,6 +326,7 @@ async def test_query_v1_failure(monkeypatch):
     """Test _query_v1 handles HTTP errors gracefully."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     def fake_get(*args, **kwargs):
         return FakeResponse(500)
@@ -336,6 +344,7 @@ async def test_query_v1_exception(monkeypatch):
     """Test _query_v1 handles exceptions gracefully."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     def fake_get(*args, **kwargs):
         raise Exception("Network error")
@@ -358,6 +367,7 @@ async def test_query_v2_success(monkeypatch):
     """Test _query_v2 returns successful Flux query result."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     csv_response = """#group,false,false,true,true,false,false,true,true
 #datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,double,string,string
@@ -381,6 +391,7 @@ async def test_query_v2_with_org(monkeypatch):
     """Test _query_v2 passes org parameter correctly."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     captured_params = [None]
 
@@ -400,6 +411,7 @@ async def test_query_v2_failure(monkeypatch):
     """Test _query_v2 handles HTTP errors gracefully."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     def fake_post(*args, **kwargs):
         return FakeResponse(500)
@@ -422,6 +434,7 @@ async def test_copy_records_v1_success(monkeypatch):
     """Test _copy_records_v1 copies records correctly."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     # Configure writer
     svc._writer_type = "v1_http"
@@ -474,6 +487,7 @@ async def test_copy_records_v1_empty_result(monkeypatch):
     """Test _copy_records_v1 handles empty result set."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     query_result = {"results": [{}]}
 
@@ -494,6 +508,7 @@ async def test_copy_records_v1_with_before_timestamp(monkeypatch):
     """Test _copy_records_v1 passes before_timestamp in query."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     captured_params = [None]
 
@@ -516,6 +531,7 @@ async def test_copy_records_v1_multiple_series(monkeypatch):
     """Test _copy_records_v1 handles multiple series."""
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
+    svc._online = True
 
     svc._writer_type = "v1_http"
     svc._write_url = "http://localhost:8086/write"
@@ -556,3 +572,107 @@ async def test_copy_records_v1_multiple_series(monkeypatch):
     count = await svc._copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
 
     assert count == 2
+
+
+@pytest.mark.asyncio
+async def test_copy_records_v1_field_standardization():
+    logger = MagicMock()
+    svc = InfluxService(logger, plant_index=0)
+    svc._online = True
+    svc._writer_type = "v1_http"
+    svc._write_url = "http://localhost:8086/write"
+    svc._session = MagicMock()
+
+    # Mock query result with mixed types and non-standard field names
+    # columns: time, old_field_int, old_field_str
+    query_result = {
+        "results": [
+            {
+                "series": [
+                    {
+                        "name": "test_measurement",
+                        "columns": ["time", "old_field_int", "old_field_str"],
+                        "values": [
+                            [1704067200, 42, "string_val"],  # int and string. 1704067200 is timestamp
+                            [1704067260, 42.5, None],  # float and None
+                        ],
+                    }
+                ]
+            }
+        ]
+    }
+
+    svc._session.get.return_value = FakeResponse(200, json_data=query_result)
+    svc._session.post.return_value = FakeResponse(204)
+
+    # Capture written lines
+    written_lines = []
+
+    async def fake_write(line):
+        written_lines.append(line)
+
+    svc._write_line = fake_write
+
+    config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
+    await svc._copy_records_v1(config, "test_measurement", {}, None)
+
+    assert len(written_lines) == 2
+
+    line1 = written_lines[0]
+    # Expected: 42 -> 42.0 (float), field name "value"
+    # "string_val" -> "value_str"
+    print(f"Line 1: {line1}")
+    assert "value=42.0" in line1
+    assert 'value_str="string_val"' in line1
+
+    line2 = written_lines[1]
+    # Expected: 42.5 -> 42.5 (float), field name "value"
+    print(f"Line 2: {line2}")
+    assert "value=42.5" in line2
+    assert "value_str" not in line2
+
+
+@pytest.mark.asyncio
+async def test_copy_records_v2_field_standardization():
+    logger = MagicMock()
+    svc = InfluxService(logger, plant_index=0)
+    svc._online = True
+    svc._writer_type = "v2_http"
+    svc._write_url = "http://localhost:8086/api/v2/write"
+    svc._session = MagicMock()
+
+    # Mock CSV response for v2
+    # Headers default indices: _time=5, _value=7, _field=6 (based on influx_service.py defaults if not in header)
+    # But usually headers are parsed.
+    # The Service parses headers from lines starting with underscore.
+
+    csv_response = """
+#group,false,false,true,true,false,false,true,true
+#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,double,string,string
+#default,_result,,,,,,,
+,result,table,_start,_stop,_time,_value,_field,_measurement
+,,0,2024-01-01,2024-01-02,2024-01-01T00:00:00Z,42,state,test_meas
+,,0,2024-01-01,2024-01-02,2024-01-01T00:01:00Z,stringval,state,test_meas
+""".strip()
+
+    svc._session.post.return_value = FakeResponse(200, text=csv_response)
+
+    written_lines = []
+
+    async def fake_write(line):
+        written_lines.append(line)
+
+    svc._write_line = fake_write
+
+    config = {"base": "http://localhost:8086", "org": "org", "token": "tok", "bucket": "bkt"}
+    await svc._copy_records_v2(config, "test_meas", {}, None)
+
+    assert len(written_lines) == 2
+
+    # Line 1: 42 -> float -> value=42.0
+    print(f"V2 Line 1: {written_lines[0]}")
+    assert "value=42.0" in written_lines[0]
+
+    # Line 2: "stringval" -> str -> value_str="stringval"
+    print(f"V2 Line 2: {written_lines[1]}")
+    assert 'value_str="stringval"' in written_lines[1]

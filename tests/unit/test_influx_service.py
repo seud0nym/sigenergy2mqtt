@@ -65,6 +65,7 @@ async def test_influx_org_propagation():
     with patch("requests.Session.post") as mock_post:
         mock_post.return_value.status_code = 204
         svc = InfluxService(logger, plant_index=0)
+        await svc._async_init()
 
         # Verify URL contains org parameter
         args, kwargs = mock_post.call_args

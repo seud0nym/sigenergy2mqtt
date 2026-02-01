@@ -772,6 +772,10 @@ influxdb:
   #   default: 100
   #   description: The maximum number of connections to allow in the pool.
   pool-maxsize: 100
-
+  # max-sync-workers
+  #   added: 2026.1.31
+  #   default: 4
+  #   description: The maximum number of parallel sync operations.
+  max-sync-workers: 4
 
 

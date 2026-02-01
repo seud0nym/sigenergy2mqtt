@@ -33,13 +33,18 @@ class InfluxService(Device):
         self.plant_index = plant_index
 
         # Enhanced connection pooling with retry strategy
+        # Enhanced connection pooling with retry strategy
         self._session = requests.Session()
         retry_strategy = Retry(
-            total=3,
+            total=Config.influxdb.max_retries,
             backoff_factor=0.5,
             status_forcelist=[429, 500, 502, 503, 504],
         )
-        adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100, max_retries=retry_strategy)
+        adapter = HTTPAdapter(
+            pool_connections=Config.influxdb.pool_connections,
+            pool_maxsize=Config.influxdb.pool_maxsize,
+            max_retries=retry_strategy,
+        )
         self._session.mount("http://", adapter)
         self._session.mount("https://", adapter)
 
@@ -48,14 +53,14 @@ class InfluxService(Device):
 
         # Batch write buffer
         self._write_buffer: list[str] = []
-        self._batch_size: int = 100  # Batch threshold
+        self._batch_size: int = Config.influxdb.batch_size
         self._batch_lock = asyncio.Lock()
         self._last_flush: float = time.time()
-        self._flush_interval: float = 1.0  # Flush every 1 second even if batch not full
+        self._flush_interval: float = Config.influxdb.flush_interval
 
         # Rate limiting for queries
         self._rate_limit_semaphore = asyncio.Semaphore(10)  # Max 10 concurrent queries
-        self._query_interval: float = 0.1  # Minimum 100ms between queries
+        self._query_interval: float = Config.influxdb.query_interval
         self._last_query_time: float = 0.0
         self._query_lock = asyncio.Lock()
 
@@ -68,12 +73,16 @@ class InfluxService(Device):
         self._writer_obj_bucket = None
         self._writer_obj_org = None
 
+    async def _async_init(self) -> bool:
+        """Perform asynchronous initialization of InfluxDB connection."""
         if getattr(Config, "influxdb", None) and getattr(Config.influxdb, "enabled", False):
             try:
-                self._init_connection()
+                await asyncio.to_thread(self._init_connection)
+                return True
             except Exception as e:
-                self.logger.error(f"{self.name} Initialization failed during service init: {e}")
-                raise
+                self.logger.error(f"{self.name} Initialization failed: {e}")
+                return False
+        return True
 
     def _get_config_values(self):
         """Extract InfluxDB configuration values with backwards compatibility."""
@@ -273,16 +282,19 @@ class InfluxService(Device):
 
     async def _execute_write(self, data: bytes) -> bool:
         """Execute the HTTP write to InfluxDB. Returns True on success."""
+        if not self.online:
+            return False
+
         try:
             if self._writer_type == "v2_http" and self._write_url:
-                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=data, timeout=5)
+                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=data, timeout=Config.influxdb.write_timeout)
                 if r.status_code in (204, 200):
                     return True
                 else:
                     self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
                     return False
             elif self._writer_type == "v1_http" and self._write_url:
-                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": Config.influxdb.database}, data=data, auth=self._write_auth, timeout=5)
+                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": Config.influxdb.database}, data=data, auth=self._write_auth, timeout=Config.influxdb.write_timeout)
                 if r.status_code in (204, 200):
                     return True
                 else:
@@ -292,15 +304,19 @@ class InfluxService(Device):
             self.logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url})")
         return False
 
-    async def _query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: int = 10, max_retries: int = 3) -> tuple[bool, Any]:
+    async def _query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: int | float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute a Flux query on v2 API with retry and rate limiting. Returns (success, response_text)."""
+        if timeout is None:
+            timeout = Config.influxdb.read_timeout
+        if max_retries is None:
+            max_retries = Config.influxdb.max_retries
         return await self._rate_limited_query(
             lambda: self._query_v2_internal(base, org, token, flux_query, timeout),
             "v2 query",
             max_retries,
         )
 
-    async def _query_v2_internal(self, base: str, org: str | None, token: str, flux_query: str, timeout: int) -> tuple[bool, Any]:
+    async def _query_v2_internal(self, base: str, org: str | None, token: str, flux_query: str, timeout: int | float) -> tuple[bool, Any]:
         """Internal v2 query execution."""
         headers = {"Authorization": f"Token {token}", "Content-Type": "application/vnd.flux"}
         url = f"{base}/api/v2/query"
@@ -313,15 +329,19 @@ class InfluxService(Device):
             return True, r.text
         raise Exception(f"HTTP {r.status_code}: {r.text}")
 
-    async def _query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: int = 10, max_retries: int = 3) -> tuple[bool, Any]:
+    async def _query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: int | float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute an InfluxQL query on v1 API with retry and rate limiting. Returns (success, json_result)."""
+        if timeout is None:
+            timeout = Config.influxdb.read_timeout
+        if max_retries is None:
+            max_retries = Config.influxdb.max_retries
         return await self._rate_limited_query(
             lambda: self._query_v1_internal(base, db, auth, query, epoch, timeout),
             "v1 query",
             max_retries,
         )
 
-    async def _query_v1_internal(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None, timeout: int) -> tuple[bool, Any]:
+    async def _query_v1_internal(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None, timeout: int | float) -> tuple[bool, Any]:
         """Internal v1 query execution."""
         url = f"{base}/query"
         params = {"db": db, "q": query}
@@ -349,6 +369,8 @@ class InfluxService(Device):
 
             # Execute with retry logic
             for attempt in range(max_retries + 1):
+                if not self.online:
+                    return False, None
                 try:
                     return await query_func()
                 except Exception as e:
@@ -414,10 +436,10 @@ class InfluxService(Device):
             self.logger.error(f"{self.name} Error detecting homeassistant database: {e}")
             return False
 
-    async def get_earliest_timestamp(self, measurement: str, tags: dict[str, str]) -> int | None:
+    async def get_earliest_timestamp(self, measurement: str, tags: dict[str, str]) -> int:
         """
         Get the earliest timestamp for a given measurement and tag combination in the target database.
-        Returns timestamp in seconds, or None if no records exist.
+        Returns timestamp in seconds, or current time if no records exist.
         """
         try:
             config = self._get_config_values()
@@ -443,7 +465,7 @@ class InfluxService(Device):
                                 timestamp = self._parse_timestamp(time_str)
                                 self.logger.debug(f"{self.name} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
                                 return timestamp
-                    return None
+                    return int(time.time())
 
             # Try v1 API (InfluxQL)
             where_clause = f"WHERE {tag_filters['v1']}" if tag_filters["v1"] else ""
@@ -458,124 +480,160 @@ class InfluxService(Device):
                         self.logger.debug(f"{self.name} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
                         return timestamp
 
-            return None
+            return int(time.time())
 
         except Exception as e:
             self.logger.error(f"{self.name} Error getting earliest timestamp: {e}")
-            return None
+            return int(time.time())
 
     async def _copy_records_v2(self, config: dict, measurement: str, tags: dict[str, str], before_timestamp: int | None) -> int:
-        """Copy records using v2 API."""
+        """Copy records using v2 API with chunking (latest to earliest)."""
         records_copied = 0
-        time_filter = f"stop: time(v: {before_timestamp})" if before_timestamp else "start: 0"
+        chunk_size = Config.influxdb.sync_chunk_size
+        current_before = before_timestamp
 
-        flux_query = f'from(bucket: "homeassistant")\n  |> range({time_filter})\n  |> filter(fn: (r) => r._measurement == "{measurement}")\n'
-        for k, v in tags.items():
-            flux_query += f'  |> filter(fn: (r) => r.{k} == "{v}")\n'
-        flux_query += '  |> yield(name: "records")\n'
+        while self.online:
+            time_filter = f"stop: time(v: {current_before})" if current_before else "start: 0"
+            flux_query = f'from(bucket: "homeassistant")\n  |> range({time_filter})\n  |> filter(fn: (r) => r._measurement == "{measurement}")\n'
+            for k, v in tags.items():
+                flux_query += f'  |> filter(fn: (r) => r.{k} == "{v}")\n'
+            flux_query += f'  |> sort(columns: ["_time"], desc: true)\n  |> limit(n: {chunk_size})\n  |> yield(name: "records")\n'
 
-        success, response_text = await self._query_v2(config["base"], config["org"], config["token"], flux_query, timeout=30)
-        if not success or not response_text:
-            return 0
+            success, response_text = await self._query_v2(config["base"], config["org"], config["token"], flux_query)
+            if not success or not response_text:
+                break
 
-        # Parse CSV response and convert to line protocol
-        lines = response_text.strip().split("\n")
-        headers_parsed = False
-        header_indices = {}
+            # Parse CSV response and convert to line protocol
+            lines = response_text.strip().split("\n")
+            headers_parsed = False
+            header_indices = {}
+            chunk_records = 0
+            earliest_timestamp = None
 
-        for line in lines:
-            if not line.strip():
-                continue
+            for line in lines:
+                if not line.strip():
+                    continue
 
-            if not headers_parsed:
-                if line.startswith("_"):
-                    parts = line.split(",")
-                    for i, part in enumerate(parts):
-                        header_indices[part.strip()] = i
-                    headers_parsed = True
-                continue
+                if not headers_parsed:
+                    if "_time" in line and "_value" in line:
+                        parts = line.split(",")
+                        for i, part in enumerate(parts):
+                            header_indices[part.strip()] = i
+                        headers_parsed = True
+                    continue
 
-            parts = line.split(",")
-            if len(parts) <= 1:
-                continue
+                parts = line.split(",")
+                if len(parts) <= 1:
+                    continue
 
-            # Extract timestamp
-            time_idx = header_indices.get("_time", 5)
-            time_str = parts[time_idx].strip() if time_idx < len(parts) else None
-            if not time_str:
-                continue
+                # Extract timestamp
+                time_idx = header_indices.get("_time", 5)
+                time_str = parts[time_idx].strip() if time_idx < len(parts) else None
+                if not time_str:
+                    continue
 
-            timestamp = self._parse_timestamp(time_str)
+                timestamp = self._parse_timestamp(time_str)
+                earliest_timestamp = timestamp
 
-            # Extract field and value
-            field_idx = header_indices.get("_field", 6)
-            value_idx = header_indices.get("_value", 7)
+                # Extract field and value
+                value_idx = header_indices.get("_value", 7)
+                field_value = parts[value_idx].strip() if value_idx < len(parts) else None
 
-            field_name = parts[field_idx].strip() if field_idx < len(parts) else "value"
-            field_value = parts[value_idx].strip() if value_idx < len(parts) else None
+                if field_value is None:
+                    continue
 
-            if field_value is None:
-                continue
+                # Build fields dict
+                fields: dict[str, float | str] = {}
+                try:
+                    fields["value"] = float(field_value)
+                except Exception:
+                    fields["value_str"] = str(field_value)
 
-            # Build fields dict
-            fields = {}
-            try:
-                fields[field_name] = float(field_value)
-            except Exception:
-                fields[field_name] = field_value
+                # Write the record
+                line_protocol = self._to_line_protocol(measurement, tags, fields, timestamp)
+                await self._write_line(line_protocol)
+                chunk_records += 1
 
-            # Write the record
-            line_protocol = self._to_line_protocol(measurement, tags, fields, timestamp)
-            await self._write_line(line_protocol)
-            records_copied += 1
+            if chunk_records == 0:
+                break
+
+            records_copied += chunk_records
+            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {measurement}/{tags}")
+
+            if earliest_timestamp is None or chunk_records < chunk_size:
+                break
+
+            current_before = earliest_timestamp
 
         return records_copied
 
     async def _copy_records_v1(self, config: dict, measurement: str, tags: dict[str, str], before_timestamp: int | None) -> int:
-        """Copy records using v1 API."""
+        """Copy records using v1 API with chunking (latest to earliest)."""
         records_copied = 0
         tag_filters = self._build_tag_filters(tags)
+        chunk_size = Config.influxdb.sync_chunk_size
+        current_before = before_timestamp
 
-        where_parts = []
-        if tag_filters["v1"]:
-            where_parts.append(tag_filters["v1"])
-        if before_timestamp:
-            where_parts.append(f"time < {before_timestamp}s")
+        while self.online:
+            where_parts = []
+            if tag_filters["v1"]:
+                where_parts.append(tag_filters["v1"])
+            if current_before:
+                where_parts.append(f"time < {current_before}s")
 
-        where_clause = f"WHERE {' AND '.join(where_parts)}" if where_parts else ""
-        query = f'SELECT * FROM "{measurement}" {where_clause} ORDER BY time ASC'
+            where_clause = f"WHERE {' AND '.join(where_parts)}" if where_parts else ""
+            query = f'SELECT * FROM "{measurement}" {where_clause} ORDER BY time DESC LIMIT {chunk_size}'
 
-        success, result = await self._query_v1(config["base"], "homeassistant", config["auth"], query, epoch="s", timeout=30)
-        if not success or not result:
-            return 0
+            success, result = await self._query_v1(config["base"], "homeassistant", config["auth"], query, epoch="s")
+            if not success or not result:
+                break
 
-        if "results" in result and result["results"]:
-            series = result["results"][0].get("series", [])
-            for s in series:
-                if "values" not in s or "columns" not in s:
-                    continue
+            chunk_records = 0
+            last_timestamp = None
 
-                columns = s["columns"]
-                time_idx = columns.index("time") if "time" in columns else 0
-
-                for row in s["values"]:
-                    timestamp = int(row[time_idx])
-
-                    # Build fields from non-time, non-tag columns
-                    fields = {}
-                    for i, col in enumerate(columns):
-                        if col == "time" or col in tags:
-                            continue
-                        if row[i] is not None:
-                            fields[col] = row[i]
-
-                    if not fields:
+            if "results" in result and result["results"]:
+                series = result["results"][0].get("series", [])
+                for s in series:
+                    if "values" not in s or "columns" not in s:
                         continue
 
-                    # Write the record
-                    line_protocol = self._to_line_protocol(measurement, tags, fields, timestamp)
-                    await self._write_line(line_protocol)
-                    records_copied += 1
+                    columns = s["columns"]
+                    time_idx = columns.index("time") if "time" in columns else 0
+
+                    for row in s["values"]:
+                        timestamp = int(row[time_idx])
+                        last_timestamp = timestamp
+
+                        # Build fields from non-time, non-tag columns
+                        fields: dict[str, float | str] = {}
+                        for i, col in enumerate(columns):
+                            if col == "time" or col in tags:
+                                continue
+                            if row[i] is not None:
+                                val = row[i]
+                                if isinstance(val, (int, float)):
+                                    fields["value"] = float(val)
+                                else:
+                                    fields["value_str"] = str(val)
+
+                        if not fields:
+                            continue
+
+                        # Write the record
+                        line_protocol = self._to_line_protocol(measurement, tags, fields, timestamp)
+                        await self._write_line(line_protocol)
+                        chunk_records += 1
+
+            if chunk_records == 0:
+                break
+
+            records_copied += chunk_records
+            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {measurement}/{tags}")
+
+            if last_timestamp is None or chunk_records < chunk_size:
+                break
+
+            current_before = last_timestamp
 
         return records_copied
 
@@ -620,10 +678,28 @@ class InfluxService(Device):
             self.logger.info(f"{self.name} No homeassistant database found, skipping sync")
             return results
 
-        self.logger.info(f"{self.name} Starting sync from homeassistant database")
+        self.logger.info(f"{self.name} Starting parallel sync from homeassistant database")
 
         # Iterate through cached topics to get unique measurement/tag combinations
         seen_combinations = set()
+        sync_tasks = []
+        semaphore = asyncio.Semaphore(Config.influxdb.max_sync_workers)
+
+        async def sync_sensor(measurement: str, tags: dict[str, str]):
+            async with semaphore:
+                if not self.online:
+                    return measurement, tags, 0
+                try:
+                    # Get earliest timestamp in target database
+                    earliest_ts = await self.get_earliest_timestamp(measurement, tags)
+
+                    # Copy records from homeassistant that are older than our earliest record
+                    self.logger.info(f"{self.name} Starting sync for {measurement}/{tags} (earliest existing: {earliest_ts})")
+                    count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=earliest_ts)
+                    return measurement, tags, count
+                except Exception as e:
+                    self.logger.error(f"{self.name} Error syncing {measurement}/{tags}: {e}")
+                    return measurement, tags, 0
 
         for topic, sensor in self._topic_cache.items():
             measurement = cast(str, sensor.get("uom", "state")).replace("/", "_")
@@ -635,22 +711,20 @@ class InfluxService(Device):
                 continue
             seen_combinations.add(combo_key)
 
-            # Get earliest timestamp in target database
-            earliest_ts = await self.get_earliest_timestamp(measurement, tags)
+            sync_tasks.append(sync_sensor(measurement, tags))
 
-            # Copy records from homeassistant
-            if earliest_ts is None:
-                self.logger.info(f"{self.name} No existing records for {measurement}/{tags}, copying all from homeassistant")
-                count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=None)
-            else:
-                self.logger.info(f"{self.name} Found earliest timestamp {earliest_ts} for {measurement}/{tags}, copying older records")
-                count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=earliest_ts)
+        if not sync_tasks:
+            return results
 
+        # Execute all tasks in parallel with semaphore limit
+        sync_results = await asyncio.gather(*sync_tasks)
+
+        for measurement, tags, count in sync_results:
             result_key = f"{measurement}[{','.join(f'{k}={v}' for k, v in tags.items())}]"
             results[result_key] = count
 
         total_copied = sum(results.values())
-        self.logger.info(f"{self.name} Sync complete: copied {total_copied} total records across {len(results)} measurement/tag combinations")
+        self.logger.info(f"{self.name} Parallel sync complete: copied {total_copied} total records across {len(results)} entities")
 
         return results
 
@@ -661,26 +735,44 @@ class InfluxService(Device):
         pass
 
     def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
-        async def keep_running(modbus_client, mqtt_client, *sensors):
-            self.logger.info(f"{self.name} Commenced")
-            while self.online:
+        return [self._keep_running(modbus_client, mqtt_client)]
+
+    async def _keep_running(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> None:
+        self.logger.info(f"{self.name} Commenced")
+
+        await self._async_init()
+
+        sync_task = None
+        if self._writer_type:
+            sync_task = asyncio.create_task(self.sync_from_homeassistant())
+
+        while self.online:
+            try:
+                task = asyncio.create_task(asyncio.sleep(1))
+                self.sleeper_task = task
+                await task
+            except asyncio.CancelledError:
+                self.logger.debug(f"{self.name} sleep interrupted")
+                break
+            finally:
+                self.sleeper_task = None
+
+        for topic in self._topic_cache.keys():
+            mqtt_client.unsubscribe(topic)
+        self.logger.info(f"{self.name} Unsubscribed from {len(self._topic_cache)} topics")
+
+        if sync_task:
+            if not sync_task.done():
+                self.logger.info(f"{self.name} Cancelling background sync task")
+                sync_task.cancel()
                 try:
-                    task = asyncio.create_task(asyncio.sleep(1))
-                    self.sleeper_task = task
-                    await task
+                    await sync_task
                 except asyncio.CancelledError:
-                    self.logger.debug(f"{self.name} sleep interrupted")
-                    break
-                finally:
-                    self.sleeper_task = None
+                    pass
+            elif sync_task.exception():
+                self.logger.error(f"{self.name} Sync task failed: {sync_task.exception()}")
 
-            for topic in self._topic_cache.keys():
-                mqtt_client.unsubscribe(topic)
-            self.logger.info(f"{self.name} Unsubscribed from {len(self._topic_cache)} topics")
-
-            self.logger.info(f"{self.name} Completed: Flagged as offline ({self.online=})")
-
-        return [keep_running(modbus_client, mqtt_client, [])]
+        self.logger.info(f"{self.name} Completed: Flagged as offline ({self.online=})")
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         devices = DeviceRegistry.get(self.plant_index)
