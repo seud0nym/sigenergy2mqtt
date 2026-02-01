@@ -79,18 +79,18 @@ class TestACChargerReadOnly:
 
     def test_ac_charger_alarms_decoding(self, mock_config):
         alarm1 = ACChargerAlarm1(plant_index=0, device_address=10)
-        assert alarm1.decode_alarm_bit(0) == "5001_1: Grid over-voltage"
-        assert alarm1.decode_alarm_bit(8) == "5001_9: PEN Fault"
+        assert alarm1.decode_alarm_bit(0) == "Grid over-voltage"
+        assert alarm1.decode_alarm_bit(8) == "PEN Fault"
         assert alarm1.decode_alarm_bit(9) is None
 
         alarm2 = ACChargerAlarm2(plant_index=0, device_address=10)
-        assert alarm2.decode_alarm_bit(0) == "5002_1: Leak current detection circuit fault"
-        assert alarm2.decode_alarm_bit(5) == "5002_6: Lamp panel communication fault"
+        assert alarm2.decode_alarm_bit(0) == "Leak current detection circuit fault"
+        assert alarm2.decode_alarm_bit(5) == "Lamp panel communication fault"
         assert alarm2.decode_alarm_bit(6) is None
 
         alarm3 = ACChargerAlarm3(plant_index=0, device_address=10)
-        assert alarm3.decode_alarm_bit(0) == "5003: Too high internal temperature"
-        assert alarm3.decode_alarm_bit(2) == "5005: Meter communication fault"
+        assert alarm3.decode_alarm_bit(0) == "Too high internal temperature"
+        assert alarm3.decode_alarm_bit(2) == "Meter communication fault"
         assert alarm3.decode_alarm_bit(3) is None
 
     def test_ac_charger_alarms_combined(self, mock_config):

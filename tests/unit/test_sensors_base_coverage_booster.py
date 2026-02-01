@@ -675,35 +675,35 @@ class TestAlarmSensorsWave4:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm1Sensor("A1", "sigenergy_a1", 0, 1, 30008, Protocol.V2_4)
             s.set_latest_state(1)  # bit 0
-            assert "1001" in await s.get_state(republish=True)
+            assert "Software version mismatch" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm2_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm2Sensor("A2", "sigenergy_a2", 0, 1, 30009, Protocol.V2_4)
             s.set_latest_state(2)  # bit 1
-            assert "1018" in await s.get_state(republish=True)
+            assert "Communication abnormal" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm3_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm3Sensor("A3", "sigenergy_a3", 0, 1, 30010, Protocol.V2_4)
             s.set_latest_state(4)  # bit 2
-            assert "2003" in await s.get_state(republish=True)
+            assert "Temperature too high" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm4_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm4Sensor("A4", "sigenergy_a4", 0, 1, 30011, Protocol.V2_4)
             s.set_latest_state(8)  # bit 3
-            assert "3004" in await s.get_state(republish=True)
+            assert "Excessive leakage current in off-grid output" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm5_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm5Sensor("A5", "sigenergy_a5", 0, 1, 30012, Protocol.V2_4)
             s.set_latest_state(1)  # bit 0
-            assert "5101" in await s.get_state(republish=True)
+            assert "Software version mismatch" in await s.get_state(republish=True)
 
 
 class TestRemainingSensorsWave4:
