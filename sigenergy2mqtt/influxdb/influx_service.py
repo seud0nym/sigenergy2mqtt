@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import datetime
 from typing import Any, Awaitable, cast
@@ -32,7 +33,6 @@ class InfluxService(Device):
 
         self.plant_index = plant_index
 
-        # Enhanced connection pooling with retry strategy
         # Enhanced connection pooling with retry strategy
         self._session = requests.Session()
         retry_strategy = Retry(
@@ -789,10 +789,10 @@ class InfluxService(Device):
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not publishable")
                         continue
 
-                    if Config.influxdb.include and not any(ident in obj or ident in uid for ident in Config.influxdb.include):
+                    if Config.influxdb.include and not any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in Config.influxdb.include):
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not in include list")
                         continue
-                    if Config.influxdb.exclude and any(ident in obj or ident in uid for ident in Config.influxdb.exclude):
+                    if Config.influxdb.exclude and any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in Config.influxdb.exclude):
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is excluded")
                         continue
 
