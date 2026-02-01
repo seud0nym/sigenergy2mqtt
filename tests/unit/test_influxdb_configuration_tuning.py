@@ -23,6 +23,8 @@ def test_influxdb_config_tuning_parsing():
     cfg = InfluxDBConfiguration()
     config_dict = {
         "enabled": True,
+        "token": "test_token",
+        "org": "test_org",
         "write-timeout": "10.5",
         "read-timeout": "60.0",
         "batch-size": "50",

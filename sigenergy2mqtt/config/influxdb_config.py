@@ -100,5 +100,14 @@ class InfluxDBConfiguration:
                         case _:
                             if k != "enabled":
                                 raise ValueError(f"influxdb configuration element contains unknown option '{k}'")
+                # Validate that a valid combination of credentials is supplied
+                # If password is provided without username or token, treat password as token
+                if self.password and not self.username and not self.token:
+                    self.token = self.password
+                    self.password = ""
+                has_v2_credentials = bool(self.token and self.org)
+                has_v1_credentials = bool(self.username and self.password)
+                if not has_v2_credentials and not has_v1_credentials:
+                    raise ValueError("influxdb configuration requires either v2 credentials (token and org) or v1 credentials (username and password)")
         else:
             raise ValueError("influxdb configuration element must contain options and their values")

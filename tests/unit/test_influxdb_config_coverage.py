@@ -15,7 +15,7 @@ class TestInfluxDBConfigCoverage:
 
     def test_configure_enabled(self):
         config = InfluxDBConfiguration()
-        data = {"enabled": True}
+        data = {"enabled": True, "token": "test_token", "org": "test_org"}
         config.configure(data)
         assert config.enabled is True
 
@@ -83,10 +83,56 @@ class TestInfluxDBConfigCoverage:
         with pytest.raises(ValueError, match="must contain options"):
             config.configure("not_a_dict")
 
+    def test_configure_missing_credentials(self):
+        """Test that configuration fails when no valid credentials are provided."""
+        config = InfluxDBConfiguration()
+        data = {"enabled": True, "host": "localhost"}
+        with pytest.raises(ValueError, match="v2 credentials.*or v1 credentials"):
+            config.configure(data)
+
+    def test_configure_partial_v2_credentials(self):
+        """Test that configuration fails with only token but missing org."""
+        config = InfluxDBConfiguration()
+        data = {"enabled": True, "token": "test_token"}
+        with pytest.raises(ValueError, match="v2 credentials.*or v1 credentials"):
+            config.configure(data)
+
+    def test_configure_partial_v1_credentials(self):
+        """Test that configuration fails with only username but missing password."""
+        config = InfluxDBConfiguration()
+        data = {"enabled": True, "username": "test_user"}
+        with pytest.raises(ValueError, match="v2 credentials.*or v1 credentials"):
+            config.configure(data)
+
+    def test_configure_v1_credentials_valid(self):
+        """Test that v1 credentials (username + password) are accepted."""
+        config = InfluxDBConfiguration()
+        data = {"enabled": True, "username": "test_user", "password": "test_pass"}
+        config.configure(data)
+        assert config.username == "test_user"
+        assert config.password == "test_pass"
+
+    def test_configure_v2_credentials_valid(self):
+        """Test that v2 credentials (token + org) are accepted."""
+        config = InfluxDBConfiguration()
+        data = {"enabled": True, "token": "test_token", "org": "test_org"}
+        config.configure(data)
+        assert config.token == "test_token"
+        assert config.org == "test_org"
+
+    def test_configure_password_as_token(self):
+        """Test that password is treated as token when no username or token specified."""
+        config = InfluxDBConfiguration()
+        data = {"enabled": True, "password": "my_api_token", "org": "test_org"}
+        config.configure(data)
+        assert config.token == "my_api_token"
+        assert config.password == ""
+        assert config.org == "test_org"
+
     def test_configure_logs_password_hidden(self, caplog):
         config = InfluxDBConfiguration()
         config.enabled = True
-        data = {"password": "secret_password"}
+        data = {"password": "secret_password", "username": "test_user"}
         with caplog.at_level(logging.DEBUG):
             config.configure(data)
 
@@ -94,7 +140,7 @@ class TestInfluxDBConfigCoverage:
 
     def test_configure_override_log(self, caplog):
         config = InfluxDBConfiguration()
-        data = {"enabled": True}
+        data = {"enabled": True, "token": "test_token", "org": "test_org"}
         with caplog.at_level(logging.DEBUG):
             config.configure(data, override=True)
 
