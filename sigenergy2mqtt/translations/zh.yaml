@@ -6,16 +6,37 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm:
+      '0': 电网过压
+      '1': 电网欠压
+      '2': 过载
+      '3': 短路
+      '4': 充电输出过流
+      '5': 漏电流超限
+      '6': 接地故障
+      '7': 电网接线相序异常
+      '8': PEN故障
   ACChargerAlarm2:
     name: 告警2
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm:
+      '0': 漏电检测电路故障
+      '1': 继电器卡死
+      '2': 引导电路故障
+      '3': 辅助电源模块故障
+      '4': 电子锁故障
+      '5': 灯板通信故障
   ACChargerAlarm3:
     name: 告警3
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm:
+      '0': 内部温度过高
+      '1': 充电电缆故障
+      '2': 电表通信故障
   ACChargerAlarms:
     name: 告警
     attributes:
@@ -113,36 +134,97 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{name}'
+    alarm: &id001
+      '0': 软件版本不匹配
+      '1': 绝缘电阻低
+      '2': 过温
+      '3': 设备故障
+      '4': 系统接地故障
+      '5': 光伏组串过压
+      '6': 光伏组串反接
+      '7': 光伏组串倒灌
+      '8': AFCI故障
+      '9': 电网断电
+      '10': 电网过压
+      '11': 电网欠压
+      '12': 电网过频
+      '13': 电网欠频
+      '14': 电网电压不平衡
+      '15': 输出电流直流分量超限
   Alarm2Sensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{name}'
+    alarm: &id002
+      '0': 漏电流超限
+      '1': 通信异常
+      '2': 系统内部保护
+      '3': AFCI自检电路故障
+      '4': 离网保护
+      '5': 手动操作保护
+      '7': 相序异常
+      '8': 对PE短路
+      '9': 软启动失败
   Alarm3Sensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{name}'
+    alarm: &id003
+      '0': 软件版本不匹配
+      '1': 对地绝缘电阻低
+      '2': 温度过高
+      '3': 设备故障
+      '4': 温度过低
+      '5': 内部保护
+      '6': 热失控
   Alarm4Sensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{name}'
+    alarm: &id004
+      '0': 软件版本不匹配
+      '1': 温度过高
+      '2': 设备故障
+      '3': 离网输出漏电流过大
+      '4': N线接地故障
+      '5': 电网接线相序异常
+      '6': 逆变器接线相序异常
+      '7': 电网缺相
   Alarm5Sensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{name}'
+    alarm: &id005
+      '0': 软件版本不匹配
+      '1': 对地绝缘电阻低
+      '2': 过温
+      '3': 设备故障
+      '4': 充电故障
+      '5': 设备保护
   Alarm6:
     name: 告警6
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm:
+      '0': 网关通信异常
+      '1': 电表通信异常
+      '2': 交流功率传感器通信异常
+      '6': 馈网功率限制超限硬保护
+      '8': 发电机启动失败
+      '10': CLS故障
   Alarm7:
     name: 告警7
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm:
+      '0': OVGR故障
+      '1': RPR故障
   AlarmCombinedSensor:
     name: '{name}'
   AlarmSensor:
@@ -415,30 +497,35 @@ class:
       comment: 如果任何混合逆变器有告警，则会相应设置此告警
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id001
   GeneralAlarm2:
     name: PCS告警2
     attributes:
       comment: 如果任何混合逆变器有告警，则会相应设置此告警
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id002
   GeneralAlarm3:
     name: ESS告警
     attributes:
       comment: 如果任何混合逆变器有告警，则会相应设置此告警
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id003
   GeneralAlarm4:
     name: 网关告警
     attributes:
       comment: 如果任何混合逆变器有告警，则会相应设置此告警
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id004
   GeneralAlarm5:
     name: 直流充电器告警
     attributes:
       comment: 如果任何混合逆变器有告警，则会相应设置此告警
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id005
   GeneralLoadPower:
     name: 一般负载功率
     attributes:
@@ -708,26 +795,31 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id001
   InverterAlarm2:
     name: PCS告警2
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id002
   InverterAlarm3:
     name: 告警
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id003
   InverterAlarm4:
     name: 网关告警
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id004
   InverterAlarm5:
     name: 告警
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    alarm: *id005
   InverterBatteryChargingPower:
     name: 电池充电功率
     attributes:
@@ -1532,9 +1624,11 @@ cli:
   SIGENERGY2MQTT_CONFIG:
     help: JSON配置文件路径（默认：/etc/sigenergy2mqtt.yaml）
   SIGENERGY2MQTT_CONSUMPTION:
-    help: "设置电站消耗功率传感器的计算方法。有效值为：'calculated'、'total'（总负载功率寄存器）或 'general'（V2.8 通用负载功率寄存器）。默认值为 'calculated'。在低于支持 Modbus 协议 V2.8 的固件上，此选项将被忽略。"
+    help: "设置电站消耗功率传感器的计算方法。有效值为：'calculated'、'total'（总负载功率寄存器）或 'general'（V2.8 通用负载功率寄存器）。默认值为
+      'calculated'。在低于支持 Modbus 协议 V2.8 的固件上，此选项将被忽略。"
   SIGENERGY2MQTT_DEBUG_SENSOR:
-    help: '指定要调试的传感器，使用完整或部分的实体ID或传感器类名（例如：指定 ''daily'' 将匹配所有实体名称中包含 ''daily'' 的传感器），或用于匹配实体ID或传感器类名的正则表达式（例如：''^PowerFactor$'' 仅匹配单个类名）。如果指定，--log-level 也将被强制设为 DEBUG。'
+    help: '指定要调试的传感器，使用完整或部分的实体ID或传感器类名（例如：指定 ''daily'' 将匹配所有实体名称中包含 ''daily'' 的传感器），或用于匹配实体ID或传感器类名的正则表达式（例如：''^PowerFactor$''
+      仅匹配单个类名）。如果指定，--log-level 也将被强制设为 DEBUG。'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistant实体名称前缀'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
@@ -1546,7 +1640,8 @@ cli:
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: Home Assistant实体ID前缀（默认：sigen）
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: '用于 Home Assistant 唯一 ID 的前缀。例如：前缀 ''prefix'' 将在唯一 ID 前加上 ''prefix_''（默认：sigen）。一旦设置，请永远不要更改它，因为它会破坏 Home Assistant 中的现有实体。'
+    help: '用于 Home Assistant 唯一 ID 的前缀。例如：前缀 ''prefix'' 将在唯一 ID 前加上 ''prefix_''（默认：sigen）。一旦设置，请永远不要更改它，因为它会破坏
+      Home Assistant 中的现有实体。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '使用简化的主题结构'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1580,7 +1675,8 @@ cli:
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
     help: 'Sigenergy 交流充电器 Modbus 设备 ID。可以指定多个设备 ID，用逗号分隔。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-    help: '尝试自动发现 Sigenergy Modbus 主机和设备 ID。如果指定了 ''once''，则仅在未找到现有自动发现结果时进行自动发现。如果为 ''force''，则自动发现将覆盖任何先前发现的 Modbus 主机和设备 ID。如果未指定，则禁用自动发现。'
+    help: '尝试自动发现 Sigenergy Modbus 主机和设备 ID。如果指定了 ''once''，则仅在未找到现有自动发现结果时进行自动发现。如果为
+      ''force''，则自动发现将覆盖任何先前发现的 Modbus 主机和设备 ID。如果未指定，则禁用自动发现。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: 执行网络上 Sigenergy 设备的自动发现时使用的 ping 超时（秒）。默认值为 0.5 秒。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:

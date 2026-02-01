@@ -6,16 +6,37 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm:
+      '0': Sovratensione di rete
+      '1': Sottotensione di rete
+      '2': Sovraccarico
+      '3': Cortocircuito
+      '4': Sovracorrente uscita di carica
+      '5': Corrente di dispersione fuori limite
+      '6': Guasto di messa a terra
+      '7': Sequenza di fase del cablaggio di rete anomala
+      '8': Guasto PEN
   ACChargerAlarm2:
     name: Allarme 2
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm:
+      '0': Guasto del circuito di rilevamento corrente di dispersione
+      '1': Relè bloccato
+      '2': Guasto del circuito pilota
+      '3': Guasto del modulo di alimentazione ausiliaria
+      '4': Guasto del blocco elettrico
+      '5': Guasto di comunicazione del pannello lampada
   ACChargerAlarm3:
     name: Allarme 3
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm:
+      '0': Temperatura interna troppo alta
+      '1': Guasto del cavo di ricarica
+      '2': Guasto di comunicazione del contatore
   ACChargerAlarms:
     name: Allarmi
     attributes:
@@ -33,7 +54,8 @@ class:
   ACChargerOutputCurrent:
     name: Corrente di Uscita
     attributes:
-      comment: "Intervallo: [6, il minore tra 'Corrente Nominale Caricatore CA' e 'Corrente Nominale Interruttore Ingresso Caricatore CA']"
+      comment: "Intervallo: [6, il minore tra 'Corrente Nominale Caricatore CA' e
+        'Corrente Nominale Interruttore Ingresso Caricatore CA']"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   ACChargerRatedCurrent:
@@ -105,7 +127,8 @@ class:
   ActivePowerRegulationGradient:
     name: Gradiente di Regolazione Potenza Attiva
     attributes:
-      comment: "Intervallo: [0, 5000]. Percentuale di potenza nominale regolata al secondo"
+      comment: "Intervallo: [0, 5000]. Percentuale di potenza nominale regolata al
+        secondo"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   Alarm1Sensor:
@@ -113,36 +136,97 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{name}'
+    alarm: &id001
+      '0': Mancata corrispondenza versione software
+      '1': Bassa resistenza di isolamento
+      '2': Sovratemperatura
+      '3': Guasto dell'apparecchiatura
+      '4': Guasto di messa a terra del sistema
+      '5': Sovratensione stringa PV
+      '6': Stringa PV collegata inversamente
+      '7': Corrente di ritorno stringa PV
+      '8': Guasto AFCI
+      '9': Interruzione di corrente di rete
+      '10': Sovratensione di rete
+      '11': Sottotensione di rete
+      '12': Sovrafrequenza di rete
+      '13': Sottofrequenza di rete
+      '14': Squilibrio di tensione di rete
+      '15': Componente DC della corrente di uscita fuori limite
   Alarm2Sensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{name}'
+    alarm: &id002
+      '0': Corrente di dispersione fuori limite
+      '1': Comunicazione anomala
+      '2': Protezione interna del sistema
+      '3': Guasto del circuito di autodiagnosi AFCI
+      '4': Protezione fuori rete
+      '5': Protezione operazione manuale
+      '7': Sequenza di fase anomala
+      '8': Cortocircuito verso PE
+      '9': Avvio graduale fallito
   Alarm3Sensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{name}'
+    alarm: &id003
+      '0': Mancata corrispondenza versione software
+      '1': Bassa resistenza di isolamento verso terra
+      '2': Temperatura troppo alta
+      '3': Guasto dell'apparecchiatura
+      '4': Sottotemperatura
+      '5': Protezione interna
+      '6': Fuga termica
   Alarm4Sensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{name}'
+    alarm: &id004
+      '0': Mancata corrispondenza versione software
+      '1': Temperatura troppo alta
+      '2': Guasto dell'apparecchiatura
+      '3': Corrente di dispersione eccessiva in uscita fuori rete
+      '4': Guasto di messa a terra linea N
+      '5': Sequenza di fase del cablaggio di rete anomala
+      '6': Sequenza di fase del cablaggio dell'inverter anomala
+      '7': Perdita di fase di rete
   Alarm5Sensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{name}'
+    alarm: &id005
+      '0': Mancata corrispondenza versione software
+      '1': Bassa resistenza di isolamento verso terra
+      '2': Sovratemperatura
+      '3': Guasto dell'apparecchiatura
+      '4': Guasto di carica
+      '5': Protezione dell'apparecchiatura
   Alarm6:
     name: Allarme 6
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm:
+      '0': Comunicazione del gateway anomala
+      '1': Comunicazione del contatore anomala
+      '2': Comunicazione del sensore di potenza AC anomala
+      '6': Protezione hardware contro superamento limite di immissione in rete
+      '8': Mancato avvio del generatore
+      '10': Guasto CLS
   Alarm7:
     name: Allarme 7
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm:
+      '0': Guasto OVGR
+      '1': Guasto RPR
   AlarmCombinedSensor:
     name: '{name}'
   AlarmSensor:
@@ -189,7 +273,8 @@ class:
   AvailableMaxDischargingPower:
     name: Potenza di Scarica Max Disponibile
     attributes:
-      comment: Assorbimento dal terminale CA. Conta solo gli inverter in funzione
+      comment: Assorbimento dal terminale CA. Conta solo gli inverter in 
+        funzione
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   AvailableMaxReactivePower:
@@ -201,13 +286,15 @@ class:
   AvailableMinActivePower:
     name: Potenza Attiva Min Disponibile
     attributes:
-      comment: Assorbimento dal terminale CA. Conta solo gli inverter in funzione
+      comment: Assorbimento dal terminale CA. Conta solo gli inverter in 
+        funzione
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   AvailableMinReactivePower:
     name: Potenza Reattiva Min Disponibile
     attributes:
-      comment: Assorbimento dal terminale CA. Conta solo gli inverter in funzione
+      comment: Assorbimento dal terminale CA. Conta solo gli inverter in 
+        funzione
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   AverageCellTemperature:
@@ -412,33 +499,43 @@ class:
   GeneralAlarm1:
     name: Allarmi PCS 1
     attributes:
-      comment: Se un inverter ibrido ha un allarme, questo allarme sarà impostato di conseguenza
+      comment: Se un inverter ibrido ha un allarme, questo allarme sarà 
+        impostato di conseguenza
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id001
   GeneralAlarm2:
     name: Allarmi PCS 2
     attributes:
-      comment: Se un inverter ibrido ha un allarme, questo allarme sarà impostato di conseguenza
+      comment: Se un inverter ibrido ha un allarme, questo allarme sarà 
+        impostato di conseguenza
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id002
   GeneralAlarm3:
     name: Allarmi ESS
     attributes:
-      comment: Se un inverter ibrido ha un allarme, questo allarme sarà impostato di conseguenza
+      comment: Se un inverter ibrido ha un allarme, questo allarme sarà 
+        impostato di conseguenza
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id003
   GeneralAlarm4:
     name: Allarmi Gateway
     attributes:
-      comment: Se un inverter ibrido ha un allarme, questo allarme sarà impostato di conseguenza
+      comment: Se un inverter ibrido ha un allarme, questo allarme sarà 
+        impostato di conseguenza
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id004
   GeneralAlarm5:
     name: Allarmi Caricatore CC
     attributes:
-      comment: Se un inverter ibrido ha un allarme, questo allarme sarà impostato di conseguenza
+      comment: Se un inverter ibrido ha un allarme, questo allarme sarà 
+        impostato di conseguenza
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id005
   GeneralLoadPower:
     name: Potenza Carico Generale
     attributes:
@@ -447,7 +544,8 @@ class:
   GeneralPCSAlarm:
     name: Allarmi PCS
     attributes:
-      comment: Se un inverter ibrido ha un allarme, questo allarme sarà impostato di conseguenza
+      comment: Se un inverter ibrido ha un allarme, questo allarme sarà 
+        impostato di conseguenza
       source: Registri Modbus 30027-30028
   GridCode:
     name: Codice Rete Impianto Sigenergy
@@ -459,11 +557,13 @@ class:
   GridCodeHVRTMode:
     name: Modalità HVRT
     options:
-      '0': Corrente di compensazione potenza reattiva, modalità corrente zero attiva
+      '0': Corrente di compensazione potenza reattiva, modalità corrente zero 
+        attiva
       '2': Modalità corrente zero
       '3': Modalità corrente costante
       '4': Corrente dinamica reattiva, modalità mantenimento attivo
-      '5': Corrente di compensazione potenza reattiva, modalità corrente costante attiva
+      '5': Corrente di compensazione potenza reattiva, modalità corrente 
+        costante attiva
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
@@ -492,11 +592,13 @@ class:
   GridCodeLVRTMode:
     name: Modalità LVRT
     options:
-      '0': Corrente di compensazione potenza reattiva, modalità corrente zero attiva
+      '0': Corrente di compensazione potenza reattiva, modalità corrente zero 
+        attiva
       '2': Modalità corrente zero
       '3': Modalità corrente costante
       '4': Corrente dinamica reattiva, modalità corrente zero attiva
-      '5': Corrente di compensazione potenza reattiva, modalità corrente costante attiva
+      '5': Corrente di compensazione potenza reattiva, modalità corrente 
+        costante attiva
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
@@ -525,7 +627,8 @@ class:
   GridCodeOverFrequencyDeratingCutOffFrequency:
     name: Frequenza di Interruzione per Sovrafrequenza
     attributes:
-      comment: "Intervallo: [1,0*Fn, 1,2*Fn] Riferimento: [Codice di rete] Frequenza Nominale (Registro 30276)"
+      comment: "Intervallo: [1,0*Fn, 1,2*Fn] Riferimento: [Codice di rete] Frequenza
+        Nominale (Registro 30276)"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridCodeOverFrequencyDeratingPowerRampRate:
@@ -537,7 +640,8 @@ class:
   GridCodeOverFrequencyDeratingTriggerFrequency:
     name: Frequenza di Attivazione per Sovrafrequenza
     attributes:
-      comment: "Intervallo: [1,0*Fn, 1,2*Fn] Riferimento: [Codice di rete] Frequenza Nominale (Registro 30276)"
+      comment: "Intervallo: [1,0*Fn, 1,2*Fn] Riferimento: [Codice di rete] Frequenza
+        Nominale (Registro 30276)"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridCodeRatedFrequency:
@@ -558,7 +662,8 @@ class:
   GridCodeUnderFrequencyPowerBoostCutOffFrequency:
     name: Frequenza di Interruzione per Sottofrequenza
     attributes:
-      comment: "Intervallo: [0,8*Fn, 1,0*Fn] Riferimento: [Codice di rete] Frequenza Nominale (Registro 30276)"
+      comment: "Intervallo: [0,8*Fn, 1,0*Fn] Riferimento: [Codice di rete] Frequenza
+        Nominale (Registro 30276)"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridCodeUnderFrequencyPowerBoostPowerRampRate:
@@ -570,7 +675,8 @@ class:
   GridCodeUnderFrequencyPowerBoostTriggerFrequency:
     name: Frequenza di Attivazione per Sottofrequenza
     attributes:
-      comment: "Intervallo: [0,8*Fn, 1,0*Fn] Riferimento: [Codice di rete] Frequenza Nominale (Registro 30276)"
+      comment: "Intervallo: [0,8*Fn, 1,0*Fn] Riferimento: [Codice di rete] Frequenza
+        Nominale (Registro 30276)"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridFrequency:
@@ -581,24 +687,28 @@ class:
   GridMaxExportLimit:
     name: Limite Max Esportazione Rete
     attributes:
-      comment: Sensore di rete necessario. Ha effetto globalmente indipendentemente dalla modalità operativa EMS
+      comment: Sensore di rete necessario. Ha effetto globalmente 
+        indipendentemente dalla modalità operativa EMS
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridMaxImportLimit:
     name: Limite Max Importazione Rete
     attributes:
-      comment: Sensore di rete necessario. Ha effetto globalmente indipendentemente dalla modalità operativa EMS
+      comment: Sensore di rete necessario. Ha effetto globalmente 
+        indipendentemente dalla modalità operativa EMS
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridPhaseActivePower:
     attributes:
-      comment: "Dati raccolti dal sensore di rete al punto di controllo rete/sistema; >0 acquisto dalla rete; <0 vendita alla rete"
+      comment: "Dati raccolti dal sensore di rete al punto di controllo rete/sistema;
+        >0 acquisto dalla rete; <0 vendita alla rete"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza attiva fase {phase}
   GridPhaseReactivePower:
     attributes:
-      comment: Dati raccolti dal sensore di rete al punto di controllo rete/sistema
+      comment: Dati raccolti dal sensore di rete al punto di controllo 
+        rete/sistema
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza reattiva fase {phase}
@@ -607,7 +717,8 @@ class:
   GridSensorActivePower:
     name: Potenza Attiva
     attributes:
-      comment: "Dati raccolti dal sensore di rete al punto di controllo rete/sistema; >0 acquisto dalla rete; <0 vendita alla rete"
+      comment: "Dati raccolti dal sensore di rete al punto di controllo rete/sistema;
+        >0 acquisto dalla rete; <0 vendita alla rete"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridSensorDailyExportEnergy:
@@ -631,7 +742,8 @@ class:
   GridSensorReactivePower:
     name: Potenza Reattiva
     attributes:
-      comment: Dati raccolti dal sensore di rete al punto di controllo rete/sistema
+      comment: Dati raccolti dal sensore di rete al punto di controllo 
+        rete/sistema
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   GridSensorStatus:
@@ -657,7 +769,9 @@ class:
   IndependentPhasePowerControl:
     name: Controllo Potenza Fase Indipendente
     attributes:
-      comment: Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Per abilitare il controllo di fase indipendente, questo parametro deve essere abilitato
+      comment: Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Per abilitare 
+        il controllo di fase indipendente, questo parametro deve essere 
+        abilitato
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   InfluxDBQueries:
@@ -708,26 +822,31 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id001
   InverterAlarm2:
     name: Allarmi PCS 2
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id002
   InverterAlarm3:
     name: Allarmi
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id003
   InverterAlarm4:
     name: Allarmi Gateway
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id004
   InverterAlarm5:
     name: Allarmi
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+    alarm: *id005
   InverterBatteryChargingPower:
     name: Potenza di Carica Batteria
     attributes:
@@ -873,7 +992,8 @@ class:
   MaxActivePower:
     name: Potenza Attiva Max
     attributes:
-      comment: Questo dovrebbe essere il valore base di tutte le azioni di regolazione della potenza attiva
+      comment: Questo dovrebbe essere il valore base di tutte le azioni di 
+        regolazione della potenza attiva
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   MaxActivePowerAdjustment:
@@ -884,7 +1004,8 @@ class:
   MaxApparentPower:
     name: Potenza Apparente Max
     attributes:
-      comment: Questo dovrebbe essere il valore base di tutte le azioni di regolazione della potenza reattiva
+      comment: Questo dovrebbe essere il valore base di tutte le azioni di 
+        regolazione della potenza reattiva
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   MaxBatteryChargePower:
@@ -983,13 +1104,15 @@ class:
   PCSMaxExportLimit:
     name: Limite Max Esportazione PCS
     attributes:
-      comment: "Intervallo: [0, 0xFFFFFFFE]. Con valore 0xFFFFFFFF, il registro non è valido. In tutti gli altri casi, ha effetto globalmente."
+      comment: "Intervallo: [0, 0xFFFFFFFE]. Con valore 0xFFFFFFFF, il registro non
+        è valido. In tutti gli altri casi, ha effetto globalmente."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   PCSMaxImportLimit:
     name: Limite Max Importazione PCS
     attributes:
-      comment: "Intervallo: [0, 0xFFFFFFFE]. Con valore 0xFFFFFFFF, il registro non è valido. In tutti gli altri casi, ha effetto globalmente."
+      comment: "Intervallo: [0, 0xFFFFFFFE]. Con valore 0xFFFFFFFF, il registro non
+        è valido. In tutti gli altri casi, ha effetto globalmente."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   PVCurrentSensor:
@@ -1002,7 +1125,8 @@ class:
   PVMaxPowerLimit:
     name: Limite Potenza Max PV
     attributes:
-      comment: Ha effetto quando la modalità di controllo EMS remoto (40031) è impostata su Carica/Scarica a Comando
+      comment: Ha effetto quando la modalità di controllo EMS remoto (40031) è 
+        impostata su Carica/Scarica a Comando
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   PVOutputOutputService:
@@ -1043,7 +1167,8 @@ class:
     name: Valore target regolazione fissa potenza attiva fase {phase}
   PhaseActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: "Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Intervallo: [-100,00, 100,00]"
+      comment: "Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Intervallo: [-100,00,
+        100,00]"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore target regolazione percentuale potenza attiva fase {phase}
@@ -1054,7 +1179,8 @@ class:
       source_range: Registri Modbus {start}-{end}
   PhaseQSAdjustmentTargetValue:
     attributes:
-      comment: "Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Intervallo: [-60,00, 60,00]"
+      comment: "Valido solo quando il Tipo di Uscita è L1/L2/L3/N. Intervallo: [-60,00,
+        60,00]"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore target regolazione fissa Q/S fase {phase}
@@ -1086,7 +1212,9 @@ class:
   PlantBatterySoH:
     name: Stato di salute batteria
     attributes:
-      comment: Questo valore è la media ponderata dello stato di salute di tutti i dispositivi ESS nell'impianto, con ciascuna capacità nominale come peso
+      comment: Questo valore è la media ponderata dello stato di salute di tutti
+        i dispositivi ESS nell'impianto, con ciascuna capacità nominale come 
+        peso
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   PlantConsumedPower:
@@ -1188,7 +1316,8 @@ class:
   PowerFactorAdjustmentTargetValue:
     name: Valore Obiettivo Regolazione Fattore di Potenza
     attributes:
-      comment: "Intervallo: [(-1,0, -0,8) U (0,8, 1,0)]. Sensore di rete necessario. Ha effetto globalmente indipendentemente dalla modalità operativa EMS"
+      comment: "Intervallo: [(-1,0, -0,8) U (0,8, 1,0)]. Sensore di rete necessario.
+        Ha effetto globalmente indipendentemente dalla modalità operativa EMS"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   PowerPlant:
@@ -1200,7 +1329,8 @@ class:
   QSAdjustmentTargetValue:
     name: Valore Obiettivo Regolazione Q/S
     attributes:
-      comment: "Intervallo: [-60,0, 60,00]. Ha effetto globalmente indipendentemente dalla modalità operativa EMS"
+      comment: "Intervallo: [-60,0, 60,00]. Ha effetto globalmente indipendentemente
+        dalla modalità operativa EMS"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   RatedActivePower:
@@ -1241,7 +1371,8 @@ class:
   ReactivePowerFixedAdjustmentTargetValue:
     name: Valore Obiettivo Regolazione Fissa Potenza Reattiva
     attributes:
-      comment: "Intervallo: [-60,00 * valore base, 60,00 * valore base]. Ha effetto globalmente indipendentemente dalla modalità operativa EMS"
+      comment: "Intervallo: [-60,00 * valore base, 60,00 * valore base]. Ha effetto
+        globalmente indipendentemente dalla modalità operativa EMS"
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   ReadOnlySensor:
@@ -1257,7 +1388,9 @@ class:
   RemoteEMS:
     name: EMS Remoto
     attributes:
-      comment: Quando è necessario controllare l'EMS da remoto, questo registro deve essere abilitato. Quando abilitato, la Modalità di Lavoro EMS dell'impianto (30003) passerà a RemoteEMS
+      comment: Quando è necessario controllare l'EMS da remoto, questo registro 
+        deve essere abilitato. Quando abilitato, la Modalità di Lavoro EMS 
+        dell'impianto (30003) passerà a RemoteEMS
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   RemoteEMSControlMode:
@@ -1364,67 +1497,89 @@ class:
   SITotalChargedEnergy:
     name: Energia Caricata Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalCommonLoadConsumption:
     name: Consumo Carico Comune Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalDischargedEnergy:
     name: Energia Scaricata Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalEVACChargedEnergy:
     name: Energia Carica CA VE Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalEVDCChargedEnergy:
     name: Energia Carica CC VE Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalEVDCDischargedEnergy:
     name: Energia Scarica CC VE Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalExportedEnergy:
     name: Energia Esportata Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalGeneratorOutputEnergy:
     name: Energia Uscita Generatore Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalImportedEnergy:
     name: Energia Importata Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalSelfPVGeneration:
     name: Produzione PV Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SITotalThirdPartyPVGeneration:
     name: Produzione PV di Terze Parti Totale
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
   SelectSensor:
@@ -1460,7 +1615,9 @@ class:
       source_range: Registri Modbus {start}-{end}
   StatisticsInterfaceSensor:
     attributes:
-      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
+      comment: Dopo l'aggiornamento del firmware del dispositivo per supportare 
+        la nuova Interfaccia Statistiche, i valori del registro si azzereranno e
+        inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{name}'
@@ -1532,37 +1689,56 @@ cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Il percorso del file di configurazione JSON (predefinito: /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
-    help: "Imposta il metodo di calcolo del sensore di Potenza Consumata dell'Impianto. Valori validi: 'calculated', 'total' (registro Potenza di Carico Totale), o 'general' (registro Potenza di Carico Generale V2.8). Predefinito: 'calculated'. Questa opzione viene ignorata su firmware precedenti al Protocollo Modbus V2.8."
+    help: "Imposta il metodo di calcolo del sensore di Potenza Consumata dell'Impianto.
+      Valori validi: 'calculated', 'total' (registro Potenza di Carico Totale), o
+      'general' (registro Potenza di Carico Generale V2.8). Predefinito: 'calculated'.
+      Questa opzione viene ignorata su firmware precedenti al Protocollo Modbus V2.8."
   SIGENERGY2MQTT_DEBUG_SENSOR:
-    help: Specifica un sensore da debuggare usando l'ID entità completo o parziale o il nome della classe del sensore (es. specificare 'daily' corrisponderà a tutti i sensori con 'daily' nel nome), o un'espressione regolare (es. '^PowerFactor$' corrisponde solo a quel nome di classe). Se specificato, --log-level viene forzato a DEBUG.
+    help: Specifica un sensore da debuggare usando l'ID entità completo o 
+      parziale o il nome della classe del sensore (es. specificare 'daily' 
+      corrisponderà a tutti i sensori con 'daily' nel nome), o un'espressione 
+      regolare (es. '^PowerFactor$' corrisponde solo a quel nome di classe). Se 
+      specificato, --log-level viene forzato a DEBUG.
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
-    help: "Il prefisso per i nomi delle entità di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix ' ai nomi (predefinito: '')"
+    help: "Il prefisso per i nomi delle entità di Home Assistant. Esempio: Un prefisso
+      'prefix' aggiungerà 'prefix ' ai nomi (predefinito: '')"
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
     help: 'Il prefisso del topic MQTT Discovery di Home Assistant (predefinito: homeassistant)'
   SIGENERGY2MQTT_HASS_EDIT_PCT_BOX:
-    help: Quando si modificano sensori percentuali, usare una casella di input numerico (true) o uno slider (false).
+    help: Quando si modificano sensori percentuali, usare una casella di input 
+      numerico (true) o uno slider (false).
   SIGENERGY2MQTT_HASS_ENABLED:
     help: Abilita l'auto-scoperta in Home Assistant.
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
-    help: "Il prefisso per gli ID entità di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID entità (predefinito: sigen)"
+    help: "Il prefisso per gli ID entità di Home Assistant. Esempio: Un prefisso 'prefix'
+      aggiungerà 'prefix_' agli ID entità (predefinito: sigen)"
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: "Il prefisso per gli ID unici di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID unici (predefinito: sigen). Una volta impostato, NON cambiarlo MAI, romperebbe le entità esistenti in Home Assistant."
+    help: "Il prefisso per gli ID unici di Home Assistant. Esempio: Un prefisso 'prefix'
+      aggiungerà 'prefix_' agli ID unici (predefinito: sigen). Una volta impostato,
+      NON cambiarlo MAI, romperebbe le entità esistenti in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
-    help: Abilita la struttura dei topic semplificata (sigenergy2mqtt/object_id/state) invece della struttura completa di Home Assistant (homeassistant/platform/device_id/object_id/state)
+    help: Abilita la struttura dei topic semplificata 
+      (sigenergy2mqtt/object_id/state) invece della struttura completa di Home 
+      Assistant (homeassistant/platform/device_id/object_id/state)
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: Nome del bucket InfluxDB v2 (predefinito --influxdb-database se non impostato)
+    help: Nome del bucket InfluxDB v2 (predefinito --influxdb-database se non 
+      impostato)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'Database InfluxDB in cui scrivere le metriche (predefinito: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: Abilita l'invio delle metriche a InfluxDB.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
-    help: Elenco degli identificatori dei sensori da escludere (separati da spazi)
+    help: Elenco degli identificatori dei sensori da escludere (separati da 
+      spazi)
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Hostname o indirizzo IP di InfluxDB (predefinito: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
-    help: Elenco degli identificatori dei sensori da includere (separati da spazi)
+    help: Elenco degli identificatori dei sensori da includere (separati da 
+      spazi)
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
-    help: 'Livello di log del sottosistema InfluxDB. I valori validi sono: DEBUG, INFO, WARNING, ERROR o CRITICAL. Il valore predefinito è WARNING (avvisi, errori e guasti critici)'
+    help: 'Livello di log del sottosistema InfluxDB. I valori validi sono: DEBUG,
+      INFO, WARNING, ERROR o CRITICAL. Il valore predefinito è WARNING (avvisi, errori
+      e guasti critici)'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: Nome o ID dell'organizzazione InfluxDB
   SIGENERGY2MQTT_INFLUX_PASSWORD:
@@ -1574,125 +1750,203 @@ cli:
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: Nome utente InfluxDB
   SIGENERGY2MQTT_LANGUAGE:
-    help: 'Imposta la lingua da utilizzare per le traduzioni. Il valore predefinito viene determinato dal sistema (ad es. variabile d''ambiente LANG) o l''inglese se non viene trovata alcuna alternativa.'
+    help: 'Imposta la lingua da utilizzare per le traduzioni. Il valore predefinito
+      viene determinato dal sistema (ad es. variabile d''ambiente LANG) o l''inglese
+      se non viene trovata alcuna alternativa.'
   SIGENERGY2MQTT_LOG_LEVEL:
-    help: 'Imposta il livello di log. Valori validi: DEBUG, INFO, WARNING, ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
+    help: 'Imposta il livello di log. Valori validi: DEBUG, INFO, WARNING, ERROR o
+      CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
-    help: L'ID dispositivo Modbus del Caricatore CA Sigenergy. Possono essere specificati più ID separati da virgole.
+    help: L'ID dispositivo Modbus del Caricatore CA Sigenergy. Possono essere 
+      specificati più ID separati da virgole.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-    help: Tenta l'auto-scoperta degli host Modbus Sigenergy e degli ID dispositivo. Se 'once' è specificato, l'auto-scoperta avverrà solo se non vengono trovati risultati precedenti. Se 'force', sovrascriverà gli host Modbus e ID precedentemente scoperti. Se non specificato, l'auto-scoperta è disabilitata.
+    help: Tenta l'auto-scoperta degli host Modbus Sigenergy e degli ID 
+      dispositivo. Se 'once' è specificato, l'auto-scoperta avverrà solo se non 
+      vengono trovati risultati precedenti. Se 'force', sovrascriverà gli host 
+      Modbus e ID precedentemente scoperti. Se non specificato, l'auto-scoperta 
+      è disabilitata.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
-    help: "Il timeout ping in secondi per l'auto-scoperta dei dispositivi Sigenergy sulla rete. Predefinito: 0,5 secondi."
+    help: "Il timeout ping in secondi per l'auto-scoperta dei dispositivi Sigenergy
+      sulla rete. Predefinito: 0,5 secondi."
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
-    help: "Il numero massimo di tentativi Modbus per l'auto-scoperta dei dispositivi Sigenergy sulla rete. Predefinito: 0."
+    help: "Il numero massimo di tentativi Modbus per l'auto-scoperta dei dispositivi
+      Sigenergy sulla rete. Predefinito: 0."
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: "Il timeout Modbus in secondi per l'auto-scoperta dei dispositivi Sigenergy sulla rete. Predefinito: 0,25 secondi."
+    help: "Il timeout Modbus in secondi per l'auto-scoperta dei dispositivi Sigenergy
+      sulla rete. Predefinito: 0,25 secondi."
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
-    help: L'ID dispositivo Modbus del Caricatore CC Sigenergy. Possono essere specificati più ID separati da virgole.
+    help: L'ID dispositivo Modbus del Caricatore CC Sigenergy. Possono essere 
+      specificati più ID separati da virgole.
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
-    help: Disabilita il chunking Modbus durante la lettura dei registri e legge ogni registro individualmente.
+    help: Disabilita il chunking Modbus durante la lettura dei registri e legge 
+      ogni registro individualmente.
   SIGENERGY2MQTT_MODBUS_HOST:
     help: Il nome host o indirizzo IP del dispositivo Sigenergy
   SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
-    help: L'ID dispositivo Modbus dell'Inverter Sigenergy. Possono essere specificati più ID separati da virgole.
+    help: L'ID dispositivo Modbus dell'Inverter Sigenergy. Possono essere 
+      specificati più ID separati da virgole.
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
-    help: 'Imposta il livello di log pymodbus. Valori validi: DEBUG, INFO, WARNING, ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
+    help: 'Imposta il livello di log pymodbus. Valori validi: DEBUG, INFO, WARNING,
+      ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
-    help: Non pubblicare sensori lettura-scrittura per l'integrazione del Sistema di Gestione dell'Energia (EMS) remoto su MQTT. Ignorato se --modbus-read-only è specificato.
+    help: Non pubblicare sensori lettura-scrittura per l'integrazione del 
+      Sistema di Gestione dell'Energia (EMS) remoto su MQTT. Ignorato se 
+      --modbus-read-only è specificato.
   SIGENERGY2MQTT_MODBUS_PORT:
     help: 'Il numero di porta Modbus del dispositivo Sigenergy (predefinito: 502)'
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
-    help: Pubblica solo sensori in sola lettura su MQTT. Né sensori lettura-scrittura né sola scrittura saranno pubblicati se specificato.
+    help: Pubblica solo sensori in sola lettura su MQTT. Né sensori 
+      lettura-scrittura né sola scrittura saranno pubblicati se specificato.
   SIGENERGY2MQTT_MODBUS_RETRIES:
-    help: "Il numero massimo di tentativi per un'operazione Modbus in caso di fallimento. Predefinito: 3."
+    help: "Il numero massimo di tentativi per un'operazione Modbus in caso di fallimento.
+      Predefinito: 3."
   SIGENERGY2MQTT_MODBUS_TIMEOUT:
-    help: 'Il timeout per la connessione e la ricezione di dati Modbus, in secondi (usare decimali per millisecondi). Predefinito: 1,0.'
+    help: 'Il timeout per la connessione e la ricezione di dati Modbus, in secondi
+      (usare decimali per millisecondi). Predefinito: 1,0.'
   SIGENERGY2MQTT_MQTT_ANONYMOUS:
-    help: Consenti connessione anonima al broker MQTT (senza nome utente/password). Se specificato, le opzioni --mqtt-username e --mqtt-password vengono ignorate.
+    help: Consenti connessione anonima al broker MQTT (senza nome 
+      utente/password). Se specificato, le opzioni --mqtt-username e 
+      --mqtt-password vengono ignorate.
   SIGENERGY2MQTT_MQTT_BROKER:
     help: 'Il nome host o indirizzo IP del broker MQTT (predefinito: 127.0.0.1)'
   SIGENERGY2MQTT_MQTT_KEEPALIVE:
-    help: Il periodo massimo in secondi tra le comunicazioni con il broker. Se non vengono scambiati altri messaggi, questo controlla la frequenza dei messaggi ping al broker. Predefinito 60, minimo 1.
+    help: Il periodo massimo in secondi tra le comunicazioni con il broker. Se 
+      non vengono scambiati altri messaggi, questo controlla la frequenza dei 
+      messaggi ping al broker. Predefinito 60, minimo 1.
   SIGENERGY2MQTT_MQTT_LOG_LEVEL:
-    help: 'Imposta il livello di log paho.mqtt. Valori validi: DEBUG, INFO, WARNING, ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
+    help: 'Imposta il livello di log paho.mqtt. Valori validi: DEBUG, INFO, WARNING,
+      ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_MQTT_PASSWORD:
     help: Una password valida per l'utente del broker MQTT
   SIGENERGY2MQTT_MQTT_PORT:
-    help: La porta di ascolto del broker MQTT (predefinito 1883, a meno che non sia specificato --mqtt-tls, nel qual caso il predefinito è 8883)
+    help: La porta di ascolto del broker MQTT (predefinito 1883, a meno che non 
+      sia specificato --mqtt-tls, nel qual caso il predefinito è 8883)
   SIGENERGY2MQTT_MQTT_TLS:
-    help: Abilita la comunicazione sicura al broker MQTT tramite TLS/SSL. Se specificato, la porta MQTT predefinita è 8883.
+    help: Abilita la comunicazione sicura al broker MQTT tramite TLS/SSL. Se 
+      specificato, la porta MQTT predefinita è 8883.
   SIGENERGY2MQTT_MQTT_TLS_INSECURE:
-    help: Abilita la comunicazione non sicura tramite TLS. Se il broker usa un certificato auto-firmato, devi specificare questa opzione. Ignorato se --mqtt-tls non è specificato.
+    help: Abilita la comunicazione non sicura tramite TLS. Se il broker usa un 
+      certificato auto-firmato, devi specificare questa opzione. Ignorato se 
+      --mqtt-tls non è specificato.
   SIGENERGY2MQTT_MQTT_TRANSPORT:
-    help: 'Imposta il meccanismo di trasporto MQTT. Deve essere websockets o tcp. Predefinito: tcp.'
+    help: 'Imposta il meccanismo di trasporto MQTT. Deve essere websockets o tcp.
+      Predefinito: tcp.'
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: Un nome utente valido per il broker MQTT
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: Disattiva la validazione che disabilita i limiti ESS Max Carica/Scarica e PV Max Potenza quando la Modalità di Controllo EMS Remoto non è Carica/Scarica a Comando.
+    help: Disattiva la validazione che disabilita i limiti ESS Max 
+      Carica/Scarica e PV Max Potenza quando la Modalità di Controllo EMS Remoto
+      non è Carica/Scarica a Comando.
   SIGENERGY2MQTT_NO_METRICS:
     help: Non pubblicare metriche sigenergy2mqtt.
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: La chiave API per PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
-    help: Abilita l'invio dei dati di consumo a PVOutput. Può essere specificato senza valore (predefinito 'consumption') o come 'net-of-battery', 'consumption', o 'imported'. Se non specificato, nessun dato di consumo viene inviato.
+    help: Abilita l'invio dei dati di consumo a PVOutput. Può essere specificato
+      senza valore (predefinito 'consumption') o come 'net-of-battery', 
+      'consumption', o 'imported'. Se non specificato, nessun dato di consumo 
+      viene inviato.
   SIGENERGY2MQTT_PVOUTPUT_ENABLED:
     help: Abilita gli aggiornamenti di stato a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Abilita l'invio dei dati di esportazione a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v10 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che 
+      sarà usato per il campo esteso v10 in PVOutput. Se non specificato O lo 
+      stato di donazione non è corrente, questo campo non sarà inviato a 
+      PVOutput. Puoi usare qualsiasi sensore con valore numerico.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v11 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che 
+      sarà usato per il campo esteso v11 in PVOutput. Se non specificato O lo 
+      stato di donazione non è corrente, questo campo non sarà inviato a 
+      PVOutput. Puoi usare qualsiasi sensore con valore numerico.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v12 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che 
+      sarà usato per il campo esteso v12 in PVOutput. Se non specificato O lo 
+      stato di donazione non è corrente, questo campo non sarà inviato a 
+      PVOutput. Puoi usare qualsiasi sensore con valore numerico.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v7 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che 
+      sarà usato per il campo esteso v7 in PVOutput. Se non specificato O lo 
+      stato di donazione non è corrente, questo campo non sarà inviato a 
+      PVOutput. Puoi usare qualsiasi sensore con valore numerico.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v8 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che 
+      sarà usato per il campo esteso v8 in PVOutput. Se non specificato O lo 
+      stato di donazione non è corrente, questo campo non sarà inviato a 
+      PVOutput. Puoi usare qualsiasi sensore con valore numerico.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v9 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che 
+      sarà usato per il campo esteso v9 in PVOutput. Se non specificato O lo 
+      stato di donazione non è corrente, questo campo non sarà inviato a 
+      PVOutput. Puoi usare qualsiasi sensore con valore numerico.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Abilita l'invio dei dati di importazione a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
-    help: 'Imposta il livello di log PVOutput. Valori validi: DEBUG, INFO, WARNING, ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
+    help: 'Imposta il livello di log PVOutput. Valori validi: DEBUG, INFO, WARNING,
+      ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
-    help: "L'ora del giorno (20-23) in cui i totali giornalieri vengono inviati a PVOutput. Predefinito 23 (23:00). Valori validi: 20 a 23. Il minuto è scelto casualmente tra 56 e 59. Se specifichi -1, i caricamenti giornalieri saranno inviati con la stessa frequenza degli aggiornamenti di stato."
+    help: "L'ora del giorno (20-23) in cui i totali giornalieri vengono inviati a
+      PVOutput. Predefinito 23 (23:00). Valori validi: 20 a 23. Il minuto è scelto
+      casualmente tra 56 e 59. Se specifichi -1, i caricamenti giornalieri saranno
+      inviati con la stessa frequenza degli aggiornamenti di stato."
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: L'ID Sistema PVOutput
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: Un topic MQTT da cui leggere la temperatura corrente. Usato per inviare la temperatura a PVOutput. Se non specificato, la temperatura non sarà inviata a PVOutput.
+    help: Un topic MQTT da cui leggere la temperatura corrente. Usato per 
+      inviare la temperatura a PVOutput. Se non specificato, la temperatura non 
+      sarà inviata a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
-    help: "La fonte del valore di tensione da inviare a PVOutput. Valori validi: phase-a, phase-b, phase-c, l/n-avg (media linea-neutro), l/l-avg (media linea-linea) o pv (media sulle stringhe PV). Predefinito: 'l/n-avg'."
+    help: "La fonte del valore di tensione da inviare a PVOutput. Valori validi: phase-a,
+      phase-b, phase-c, l/n-avg (media linea-neutro), l/l-avg (media linea-linea)
+      o pv (media sulle stringhe PV). Predefinito: 'l/n-avg'."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
-    help: Il valore predefinito in kW usato per i controlli di coerenza per validare i valori massimi e minimi dei sensori di potenza e il valore delta dei sensori di energia. Il valore predefinito è 500 kW al secondo, le letture fuori range vengono ignorate.
+    help: Il valore predefinito in kW usato per i controlli di coerenza per 
+      validare i valori massimi e minimi dei sensori di potenza e il valore 
+      delta dei sensori di energia. Il valore predefinito è 500 kW al secondo, 
+      le letture fuori range vengono ignorate.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
-    help: L'intervallo di scansione in secondi per i registri Modbus da scansionare ad alta frequenza. Predefinito 10 (secondi), valore minimo 1.
+    help: L'intervallo di scansione in secondi per i registri Modbus da 
+      scansionare ad alta frequenza. Predefinito 10 (secondi), valore minimo 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
-    help: L'intervallo di scansione in secondi per i registri Modbus da scansionare a bassa frequenza. Predefinito 600 (secondi), valore minimo 1.
+    help: L'intervallo di scansione in secondi per i registri Modbus da 
+      scansionare a bassa frequenza. Predefinito 600 (secondi), valore minimo 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
-    help: L'intervallo di scansione in secondi per i registri Modbus da scansionare a frequenza media. Predefinito 60 (secondi), valore minimo 1.
+    help: L'intervallo di scansione in secondi per i registri Modbus da 
+      scansionare a frequenza media. Predefinito 60 (secondi), valore minimo 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
-    help: L'intervallo di scansione in secondi per i registri Modbus da scansionare in tempo quasi reale. Predefinito 5 (secondi), valore minimo 1.
+    help: L'intervallo di scansione in secondi per i registri Modbus da 
+      scansionare in tempo quasi reale. Predefinito 5 (secondi), valore minimo 
+      1.
   SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: Abilita l'interrogazione di un dispositivo di terze parti per i dati di produzione.
+    help: Abilita l'interrogazione di un dispositivo di terze parti per i dati 
+      di produzione.
   SIGENERGY2MQTT_SMARTPORT_HOST:
     help: L'indirizzo IP o il nome host del dispositivo di terze parti.
   SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: Il nome del modulo che sarà usato per ottenere i dati di produzione del dispositivo di terze parti.
+    help: Il nome del modulo che sarà usato per ottenere i dati di produzione 
+      del dispositivo di terze parti.
   SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: 'Il guadagno da applicare ai dati di produzione del dispositivo di terze parti ottenuti dal topic MQTT (es. 1000 se i dati sono in kW). Predefinito: 1 (Watt).'
+    help: 'Il guadagno da applicare ai dati di produzione del dispositivo di terze
+      parti ottenuti dal topic MQTT (es. 1000 se i dati sono in kW). Predefinito:
+      1 (Watt).'
   SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: Il topic MQTT a cui sottoscriversi per ottenere i dati di produzione del dispositivo di terze parti.
+    help: Il topic MQTT a cui sottoscriversi per ottenere i dati di produzione 
+      del dispositivo di terze parti.
   SIGENERGY2MQTT_SMARTPORT_PASSWORD:
     help: La password per l'autenticazione al dispositivo di terze parti.
   SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: La classe di sensore per memorizzare i dati di produzione del dispositivo di terze parti.
+    help: La classe di sensore per memorizzare i dati di produzione del 
+      dispositivo di terze parti.
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: Il nome utente per l'autenticazione al dispositivo di terze parti.
   clean:
-    help: Pubblica discovery vuota per eliminare i dispositivi esistenti, poi esce immediatamente.
+    help: Pubblica discovery vuota per eliminare i dispositivi esistenti, poi 
+      esce immediatamente.
   discovery_only:
-    help: Esce immediatamente dopo la pubblicazione della discovery. Non legge valori dall'interfaccia Modbus, eccetto per sondare la configurazione del dispositivo.
+    help: Esce immediatamente dopo la pubblicazione della discovery. Non legge 
+      valori dall'interfaccia Modbus, eccetto per sondare la configurazione del 
+      dispositivo.
   show_version:
     help: Mostra il numero di versione, poi esce immediatamente.
   validate_only:

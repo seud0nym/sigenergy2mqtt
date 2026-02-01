@@ -1,6 +1,7 @@
 import ast
 from pathlib import Path
 
+import pytest
 from ruamel.yaml import YAML
 
 # Initialize YAML with specific settings for en.yaml

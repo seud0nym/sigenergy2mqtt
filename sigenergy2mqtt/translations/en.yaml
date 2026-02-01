@@ -3,10 +3,31 @@ class:
     name: Sigenergy AC Charger
   ACChargerAlarm1:
     name: Alarm 1
+    alarm:
+      '0': Grid over-voltage
+      '1': Grid under-voltage
+      '2': Overload
+      '3': Short circuit
+      '4': Charging output over-current
+      '5': Leak current out of limit
+      '6': Grounding fault
+      '7': Abnormal phase sequence of grid wiring
+      '8': PEN Fault
   ACChargerAlarm2:
     name: Alarm 2
+    alarm:
+      '0': Leak current detection circuit fault
+      '1': Relay stuck
+      '2': Pilot circuit fault
+      '3': Auxiliary power supply module fault
+      '4': Electric lock fault
+      '5': Lamp panel communication fault
   ACChargerAlarm3:
     name: Alarm 3
+    alarm:
+      '0': Too high internal temperature
+      '1': Charging cable fault
+      '2': Meter communication fault
   ACChargerAlarms:
     name: Alarms
     attributes:
@@ -62,8 +83,18 @@ class:
       comment: Range:[0,5000]。Percentage of rated power adjusted per second
   Alarm6:
     name: Alarm 6
+    alarm:
+      '0': Gateway communication abnormal
+      '1': Meter communication abnormal
+      '2': AC power sensor communication abnormal
+      '6': Hard protection against grid-feed power limit exceeding
+      '8': Generator failure to start
+      '10': CLS fault
   Alarm7:
     name: Alarm 7
+    alarm:
+      '0': OVGR fault
+      '1': RPR Fault
   AlarmSensor:
     no_alarm: No Alarm
     unknown_alarm: Unknown (bit{bit}∈{value})
@@ -235,22 +266,73 @@ class:
     name: PCS Alarms 1
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': System grounding fault
+      '5': PV string over-voltage
+      '6': PV string reversely connected
+      '7': PV string back-filling
+      '8': AFCI fault
+      '9': Grid power outage
+      '10': Grid over-voltage
+      '11': Grid under-voltage
+      '12': Grid over-frequency
+      '13': Grid under-frequency
+      '14': Grid voltage imbalance
+      '15': DC component of output current out of limit
   GeneralAlarm2:
     name: PCS Alarms 2
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+    alarm:
+      '0': Leak current out of limit
+      '1': Communication abnormal
+      '2': System internal protection
+      '3': AFCI self-checking circuit fault
+      '4': Off-grid protection
+      '5': Manual operation protection
+      '7': Abnormal phase sequence
+      '8': Short circuit to PE
+      '9': Soft start failure
   GeneralAlarm3:
     name: ESS Alarms
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Temperature too high
+      '3': Equipment fault
+      '4': Under-temperature
+      '5': Internal protection
+      '6': Thermal runaway
   GeneralAlarm4:
     name: Gateway Alarms
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+    alarm:
+      '0': Software version mismatch
+      '1': Temperature too high
+      '2': Equipment fault
+      '3': Excessive leakage current in off-grid output
+      '4': N line grounding fault
+      '5': Abnormal phase sequence of grid wiring
+      '6': Abnormal phase sequence of inverter wiring
+      '7': Grid phase loss
   GeneralAlarm5:
     name: DC Charger Alarms
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': Charging fault
+      '5': Equipment protection
   GeneralLoadPower:
     name: General Load Power
   GeneralPCSAlarm:
@@ -427,14 +509,65 @@ class:
     name: Active Power Percentage Adjustment Feedback
   InverterAlarm1:
     name: PCS Alarms 1
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': System grounding fault
+      '5': PV string over-voltage
+      '6': PV string reversely connected
+      '7': PV string back-filling
+      '8': AFCI fault
+      '9': Grid power outage
+      '10': Grid over-voltage
+      '11': Grid under-voltage
+      '12': Grid over-frequency
+      '13': Grid under-frequency
+      '14': Grid voltage imbalance
+      '15': DC component of output current out of limit
   InverterAlarm2:
     name: PCS Alarms 2
+    alarm:
+      '0': Leak current out of limit
+      '1': Communication abnormal
+      '2': System internal protection
+      '3': AFCI self-checking circuit fault
+      '4': Off-grid protection
+      '5': Manual operation protection
+      '7': Abnormal phase sequence
+      '8': Short circuit to PE
+      '9': Soft start failure
   InverterAlarm3:
     name: Alarms
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Temperature too high
+      '3': Equipment fault
+      '4': Under-temperature
+      '5': Internal protection
+      '6': Thermal runaway
   InverterAlarm4:
     name: Gateway Alarms
+    alarm:
+      '0': Software version mismatch
+      '1': Temperature too high
+      '2': Equipment fault
+      '3': Excessive leakage current in off-grid output
+      '4': N line grounding fault
+      '5': Abnormal phase sequence of grid wiring
+      '6': Abnormal phase sequence of inverter wiring
+      '7': Grid phase loss
   InverterAlarm5:
     name: Alarms
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': Charging fault
+      '5': Equipment protection
   InverterBatteryChargingPower:
     name: Battery Charging Power
     attributes:

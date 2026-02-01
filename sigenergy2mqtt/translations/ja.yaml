@@ -6,16 +6,37 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm:
+      '0': 系統過電圧
+      '1': 系統低電圧
+      '2': 過負荷
+      '3': 短絡
+      '4': 充電出力過電流
+      '5': 漏電電流制限超過
+      '6': 接地故障
+      '7': 系統配線の位相順序異常
+      '8': PEN故障
   ACChargerAlarm2:
     name: アラーム2
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm:
+      '0': 漏電検出回路故障
+      '1': リレー固着
+      '2': パイロット回路故障
+      '3': 補助電源モジュール故障
+      '4': 電気錠故障
+      '5': ランプパネル通信故障
   ACChargerAlarm3:
     name: アラーム3
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm:
+      '0': 内部温度過高
+      '1': 充電ケーブル故障
+      '2': メーター通信故障
   ACChargerAlarms:
     name: アラーム
     attributes:
@@ -113,36 +134,97 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
+    alarm: &id001
+      '0': ソフトウェアバージョン不一致
+      '1': 絶縁抵抗低下
+      '2': 過温度
+      '3': 機器故障
+      '4': システム接地故障
+      '5': PVストリング過電圧
+      '6': PVストリング逆接続
+      '7': PVストリング逆流
+      '8': AFCI故障
+      '9': 系統停電
+      '10': 系統過電圧
+      '11': 系統低電圧
+      '12': 系統過周波数
+      '13': 系統低周波数
+      '14': 系統電圧不均衡
+      '15': 出力電流のDC成分制限超過
   Alarm2Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
+    alarm: &id002
+      '0': 漏電電流制限超過
+      '1': 通信異常
+      '2': システム内部保護
+      '3': AFCI自己診断回路故障
+      '4': 系統分離保護
+      '5': 手動操作保護
+      '7': 位相順序異常
+      '8': PEへの短絡
+      '9': ソフトスタート失敗
   Alarm3Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
+    alarm: &id003
+      '0': ソフトウェアバージョン不一致
+      '1': 対地絶縁抵抗低下
+      '2': 温度過高
+      '3': 機器故障
+      '4': 温度過低
+      '5': 内部保護
+      '6': 熱暴走
   Alarm4Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
+    alarm: &id004
+      '0': ソフトウェアバージョン不一致
+      '1': 温度過高
+      '2': 機器故障
+      '3': 系統分離出力での過大漏電電流
+      '4': N線接地故障
+      '5': 系統配線の位相順序異常
+      '6': インバーター配線の位相順序異常
+      '7': 系統相欠け
   Alarm5Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
+    alarm: &id005
+      '0': ソフトウェアバージョン不一致
+      '1': 対地絶縁抵抗低下
+      '2': 過温度
+      '3': 機器故障
+      '4': 充電故障
+      '5': 機器保護
   Alarm6:
     name: アラーム6
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm:
+      '0': ゲートウェイ通信異常
+      '1': メーター通信異常
+      '2': AC電力センサー通信異常
+      '6': 系統給電制限超過ハード保護
+      '8': 発電機起動失敗
+      '10': CLS故障
   Alarm7:
     name: アラーム7
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm:
+      '0': OVGR故障
+      '1': RPR故障
   AlarmCombinedSensor:
     name: '{name}'
   AlarmSensor:
@@ -415,30 +497,35 @@ class:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id001
   GeneralAlarm2:
     name: PCSアラーム2
     attributes:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id002
   GeneralAlarm3:
     name: ESSアラーム
     attributes:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id003
   GeneralAlarm4:
     name: ゲートウェイアラーム
     attributes:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id004
   GeneralAlarm5:
     name: DC充電器アラーム
     attributes:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id005
   GeneralLoadPower:
     name: 一般負荷電力
     attributes:
@@ -708,26 +795,31 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id001
   InverterAlarm2:
     name: PCSアラーム2
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id002
   InverterAlarm3:
     name: アラーム
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id003
   InverterAlarm4:
     name: ゲートウェイアラーム
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id004
   InverterAlarm5:
     name: アラーム
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    alarm: *id005
   InverterBatteryChargingPower:
     name: バッテリー充電電力
     attributes:
@@ -1257,7 +1349,8 @@ class:
   RemoteEMS:
     name: リモートEMS
     attributes:
-      comment: EMSをリモートで制御する必要がある場合、このレジスタを有効にする必要があります。有効にすると、発電所のEMS作業モード（30003）がRemoteEMSに切り替わります
+      comment: 
+        EMSをリモートで制御する必要がある場合、このレジスタを有効にする必要があります。有効にすると、発電所のEMS作業モード（30003）がRemoteEMSに切り替わります
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   RemoteEMSControlMode:
@@ -1364,67 +1457,78 @@ class:
   SITotalChargedEnergy:
     name: 合計充電電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalCommonLoadConsumption:
     name: 共通負荷合計消費電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalDischargedEnergy:
     name: 合計放電電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalEVACChargedEnergy:
     name: AC EV合計充電電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalEVDCChargedEnergy:
     name: DC EV合計充電電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalEVDCDischargedEnergy:
     name: DC EV合計放電電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalExportedEnergy:
     name: 合計売電電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalGeneratorOutputEnergy:
     name: 発電機合計出力電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalImportedEnergy:
     name: 合計購入電力量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalSelfPVGeneration:
     name: PV合計発電量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SITotalThirdPartyPVGeneration:
     name: サードパーティPV合計発電量
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   SelectSensor:
@@ -1460,7 +1564,8 @@ class:
       source_range: Modbusレジスタ {start}-{end}
   StatisticsInterfaceSensor:
     attributes:
-      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 
+        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
@@ -1546,7 +1651,8 @@ cli:
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Home AssistantエンティティIDのプレフィックス（デフォルト: sigen）'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
+    help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home
+      Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1562,7 +1668,8 @@ cli:
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 含めるセンサー識別子のリスト（スペース区切り）
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
-    help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは WARNING（警告、エラー、致命的な障害）です。'
+    help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは
+      WARNING（警告、エラー、致命的な障害）です。'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB 組織名または ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:
