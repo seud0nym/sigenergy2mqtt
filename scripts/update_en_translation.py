@@ -19,7 +19,7 @@ RESET_TRANSLATIONS = {
     "ko": "{name} 설정",
     "nl": "Stel {name} in",
     "pt": "Definir {name}",
-    "zh": "设置 {name}",
+    "zh-Hans": "设置 {name}",
 }
 
 
