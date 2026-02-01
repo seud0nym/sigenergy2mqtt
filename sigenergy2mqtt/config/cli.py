@@ -576,13 +576,13 @@ def get_parser() -> argparse.ArgumentParser:
 
     # region InfluxDB Configuration
     parser.add_argument(
-        "--influx-enabled",
+        "--influxdb-enabled",
         action="store_true",
         dest=const.SIGENERGY2MQTT_INFLUX_ENABLED,
         help="Enable writing metrics to InfluxDB.",
     )
     parser.add_argument(
-        "--influx-host",
+        "--influxdb-host",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_HOST,
@@ -590,7 +590,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB hostname or IP address (default: 127.0.0.1)",
     )
     parser.add_argument(
-        "--influx-port",
+        "--influxdb-port",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_PORT,
@@ -599,7 +599,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB port (default: 8086)",
     )
     parser.add_argument(
-        "--influx-database",
+        "--influxdb-database",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_DATABASE,
@@ -607,7 +607,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB database to write metrics to (default: sigenergy)",
     )
     parser.add_argument(
-        "--influx-org",
+        "--influxdb-org",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_ORG,
@@ -615,7 +615,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB organization name or ID",
     )
     parser.add_argument(
-        "--influx-token",
+        "--influxdb-token",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_TOKEN,
@@ -623,15 +623,15 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB v2 authentication token (prefer v2 APIs when supplied)",
     )
     parser.add_argument(
-        "--influx-bucket",
+        "--influxdb-bucket",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_BUCKET,
         default=os.getenv(const.SIGENERGY2MQTT_INFLUX_BUCKET, None),
-        help="InfluxDB v2 bucket name (defaults to --influx-database if not set)",
+        help="InfluxDB v2 bucket name (defaults to --influxdb-database if not set)",
     )
     parser.add_argument(
-        "--influx-username",
+        "--influxdb-username",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_USERNAME,
@@ -639,7 +639,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB username",
     )
     parser.add_argument(
-        "--influx-password",
+        "--influxdb-password",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_PASSWORD,
@@ -647,7 +647,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB password",
     )
     parser.add_argument(
-        "--influx-include",
+        "--influxdb-include",
         nargs="*",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_INCLUDE,
@@ -655,7 +655,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="List of sensor identifiers to include (space separated)",
     )
     parser.add_argument(
-        "--influx-exclude",
+        "--influxdb-exclude",
         nargs="*",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_EXCLUDE,
@@ -663,7 +663,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="List of sensor identifiers to exclude (space separated)",
     )
     parser.add_argument(
-        "--influx-log-level",
+        "--influxdb-log-level",
         nargs="?",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL,
