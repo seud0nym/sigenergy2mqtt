@@ -1,6 +1,5 @@
-import asyncio
-import logging
-from unittest.mock import MagicMock, patch
+import threading
+from unittest.mock import patch
 
 import pytest
 
@@ -17,7 +16,7 @@ class TestMetricsLock:
         original_lock = Metrics._lock
 
         # Create fresh lock for each test
-        Metrics._lock = asyncio.Lock()
+        Metrics._lock = threading.Lock()
 
         yield
 
@@ -50,11 +49,11 @@ class TestMetricsLock:
     async def test_lock_timeout_error(self):
         """Test timeout when lock cannot be acquired."""
         # Acquire the lock first
-        await Metrics._lock.acquire()
+        Metrics._lock.acquire()
 
         try:
             # This should timeout since lock is already held
-            with pytest.raises(asyncio.TimeoutError):
+            with pytest.raises(TimeoutError):
                 async with Metrics.lock(timeout=0.01):
                     pass
         finally:
@@ -76,10 +75,10 @@ class TestMetricsLock:
     async def test_lock_not_acquired_no_release(self):
         """Verify no release when lock not acquired (timeout case)."""
         # Acquire the lock first
-        await Metrics._lock.acquire()
+        Metrics._lock.acquire()
 
         try:
-            with pytest.raises(asyncio.TimeoutError):
+            with pytest.raises(TimeoutError):
                 async with Metrics.lock(timeout=0.01):
                     pass
 
@@ -230,6 +229,8 @@ class TestMetricsReadError:
                 await Metrics.modbus_read_error()
                 assert mock_warning.called
                 assert "modbus read error metrics collection" in mock_warning.call_args[0][0]
+                # Ensure Mock object was used (since it failed it shouldn't have released usually but here we just check it was called)
+                mock_lock.acquire.assert_called()
 
 
 class TestMetricsWrite:
@@ -335,3 +336,4 @@ class TestMetricsWriteError:
                 await Metrics.modbus_write_error()
                 assert mock_warning.called
                 assert "modbus write error metrics collection" in mock_warning.call_args[0][0]
+                mock_lock.acquire.assert_called()
