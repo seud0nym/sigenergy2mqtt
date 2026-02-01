@@ -4,23 +4,36 @@ from typing import cast
 
 from sigenergy2mqtt.config.validation import check_log_level
 
-from .validation import check_bool, check_host, check_int, check_string
+from .validation import check_bool, check_float, check_host, check_int, check_string
 
 
 @dataclass
 class InfluxDBConfiguration:
     enabled: bool = False
+
     host: str = "127.0.0.1"
     port: int = 8086
     database: str = "sigenergy"
+
     # v2 fields
     token: str = ""
     org: str = ""
     bucket: str = ""
     username: str = ""
     password: str = ""
+
     include: list[str] = field(default_factory=list)
     exclude: list[str] = field(default_factory=list)
+
+    write_timeout: float = 30.0
+    read_timeout: float = 120.0
+    batch_size: int = 100
+    flush_interval: float = 1.0
+    query_interval: float = 0.1
+    max_retries: int = 3
+    pool_connections: int = 100
+    pool_maxsize: int = 100
+
     log_level: int = logging.WARNING
 
     def configure(self, config: dict, override: bool = False) -> None:
@@ -62,6 +75,22 @@ class InfluxDBConfiguration:
                                 raise ValueError("influxdb.exclude must be a list of sensor identifiers")
                         case "log-level":
                             self.log_level = check_log_level(v, "influxdb.log-level")
+                        case "write-timeout":
+                            self.write_timeout = cast(float, check_float(v, "influxdb.write-timeout", min=0.1))
+                        case "read-timeout":
+                            self.read_timeout = cast(float, check_float(v, "influxdb.read-timeout", min=0.1))
+                        case "batch-size":
+                            self.batch_size = cast(int, check_int(v, "influxdb.batch-size", min=1))
+                        case "flush-interval":
+                            self.flush_interval = cast(float, check_float(v, "influxdb.flush-interval", min=0.1))
+                        case "query-interval":
+                            self.query_interval = cast(float, check_float(v, "influxdb.query-interval", min=0.0))
+                        case "max-retries":
+                            self.max_retries = cast(int, check_int(v, "influxdb.max-retries", min=0))
+                        case "pool-connections":
+                            self.pool_connections = cast(int, check_int(v, "influxdb.pool-connections", min=1))
+                        case "pool-maxsize":
+                            self.pool_maxsize = cast(int, check_int(v, "influxdb.pool-maxsize", min=1))
                         case _:
                             if k != "enabled":
                                 raise ValueError(f"influxdb configuration element contains unknown option '{k}'")

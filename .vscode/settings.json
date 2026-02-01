@@ -55,6 +55,7 @@
         "lvrt",
         "MAINPID",
         "maxfail",
+        "maxsize",
         "Mcal",
         "MILLIWATT",
         "mktime",
