@@ -219,23 +219,23 @@ class ACChargerAlarm1(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int):
         match bit_position:
             case 0:
-                return "5001_1: Grid over-voltage"
+                return "Grid over-voltage"
             case 1:
-                return "5001_2: Grid under-voltage"
+                return "Grid under-voltage"
             case 2:
-                return "5001_3: Overload"
+                return "Overload"
             case 3:
-                return "5001_4: Short circuit"
+                return "Short circuit"
             case 4:
-                return "5001_5: Charging output over-current"
+                return "Charging output over-current"
             case 5:
-                return "5001_6: Leak current out of limit"
+                return "Leak current out of limit"
             case 6:
-                return "5001_7: Grounding fault"
+                return "Grounding fault"
             case 7:
-                return "5001_8: Abnormal phase sequence of grid wiring"
+                return "Abnormal phase sequence of grid wiring"
             case 8:
-                return "5001_9: PEN Fault"
+                return "PEN Fault"
             case _:
                 return None
 
@@ -255,17 +255,17 @@ class ACChargerAlarm2(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int):
         match bit_position:
             case 0:
-                return "5002_1: Leak current detection circuit fault"
+                return "Leak current detection circuit fault"
             case 1:
-                return "5002_2: Relay stuck"
+                return "Relay stuck"
             case 2:
-                return "5002_3: Pilot circuit fault"
+                return "Pilot circuit fault"
             case 3:
-                return "5002_4: Auxiliary power supply module fault"
+                return "Auxiliary power supply module fault"
             case 4:
-                return "5002_5: Electric lock fault"
+                return "Electric lock fault"
             case 5:
-                return "5002_6: Lamp panel communication fault"
+                return "Lamp panel communication fault"
             case _:
                 return None
 
@@ -285,11 +285,11 @@ class ACChargerAlarm3(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int):
         match bit_position:
             case 0:
-                return "5003: Too high internal temperature"
+                return "Too high internal temperature"
             case 1:
-                return "5004: Charging cable fault"
+                return "Charging cable fault"
             case 2:
-                return "5005: Meter communication fault"
+                return "Meter communication fault"
             case _:
                 return None
 

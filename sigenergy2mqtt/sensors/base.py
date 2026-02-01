@@ -1515,37 +1515,37 @@ class Alarm1Sensor(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int) -> str | None:
         match bit_position:  # PCS
             case 0:
-                return "1001: Software version mismatch"
+                return "Software version mismatch"
             case 1:
-                return "1002: Low insulation resistance"
+                return "Low insulation resistance"
             case 2:
-                return "1003: Over-temperature"
+                return "Over-temperature"
             case 3:
-                return "1004: Equipment fault"
+                return "Equipment fault"
             case 4:
-                return "1005: System grounding fault"
+                return "System grounding fault"
             case 5:
-                return "1006: PV string over-voltage"
+                return "PV string over-voltage"
             case 6:
-                return "1007: PV string reversely connected"
+                return "PV string reversely connected"
             case 7:
-                return "1008: PV string back-filling"
+                return "PV string back-filling"
             case 8:
-                return "1009: AFCI fault"
+                return "AFCI fault"
             case 9:
-                return "1010: Grid power outage"
+                return "Grid power outage"
             case 10:
-                return "1011: Grid over-voltage"
+                return "Grid over-voltage"
             case 11:
-                return "1012: Grid under-voltage"
+                return "Grid under-voltage"
             case 12:
-                return "1013: Grid over-frequency"
+                return "Grid over-frequency"
             case 13:
-                return "1014: Grid under-frequency"
+                return "Grid under-frequency"
             case 14:
-                return "1015: Grid voltage imbalance"
+                return "Grid voltage imbalance"
             case 15:
-                return "1016: DC component of output current out of limit"
+                return "DC component of output current out of limit"
             case _:
                 return None
 
@@ -1557,23 +1557,23 @@ class Alarm2Sensor(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int) -> str | None:
         match bit_position:  # PCS
             case 0:
-                return "1017: Leak current out of limit"
+                return "Leak current out of limit"
             case 1:
-                return "1018: Communication abnormal"
+                return "Communication abnormal"
             case 2:
-                return "1019: System internal protection"
+                return "System internal protection"
             case 3:
-                return "1020: AFCI self-checking circuit fault"
+                return "AFCI self-checking circuit fault"
             case 4:
-                return "1021: Off-grid protection"
+                return "Off-grid protection"
             case 5:
-                return "1022: Manual operation protection"
+                return "Manual operation protection"
             case 7:
-                return "1024: Abnormal phase sequence"
+                return "Abnormal phase sequence"
             case 8:
-                return "1025: Short circuit to PE"
+                return "Short circuit to PE"
             case 9:
-                return "1026: Soft start failure"
+                return "Soft start failure"
             case _:
                 return None
 
@@ -1586,19 +1586,19 @@ class Alarm3Sensor(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int) -> str | None:
         match bit_position:  # ESS
             case 0:
-                return "2001: Software version mismatch"
+                return "Software version mismatch"
             case 1:
-                return "2002: Low insulation resistance to ground"
+                return "Low insulation resistance to ground"
             case 2:
-                return "2003: Temperature too high"
+                return "Temperature too high"
             case 3:
-                return "2004: Equipment fault"
+                return "Equipment fault"
             case 4:
-                return "2005: Under-temperature"
+                return "Under-temperature"
             case 5:
-                return "2008: Internal protection"
+                return "Internal protection"
             case 6:
-                return "2009: Thermal runaway"
+                return "Thermal runaway"
             case _:
                 return None
 
@@ -1619,21 +1619,21 @@ class Alarm4Sensor(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int) -> str | None:
         match bit_position:  # Gateway
             case 0:
-                return "3001: Software version mismatch"
+                return "Software version mismatch"
             case 1:
-                return "3002: Temperature too high"
+                return "Temperature too high"
             case 2:
-                return "3003: Equipment fault"
+                return "Equipment fault"
             case 3:
-                return "3004: Excessive leakage current in off-grid output"
+                return "Excessive leakage current in off-grid output"
             case 4:
-                return "3005: N line grounding fault"
+                return "N line grounding fault"
             case 5:
-                return "3006: Abnormal phase sequence of grid wiring"
+                return "Abnormal phase sequence of grid wiring"
             case 6:
-                return "3007: Abnormal phase sequence of inverter wiring"
+                return "Abnormal phase sequence of inverter wiring"
             case 7:
-                return "3008: Grid phase loss"
+                return "Grid phase loss"
             case _:
                 return None
 
@@ -1646,17 +1646,17 @@ class Alarm5Sensor(AlarmSensor):
     def decode_alarm_bit(self, bit_position: int) -> str | None:
         match bit_position:  # DC Charger
             case 0:
-                return "5101: Software version mismatch"
+                return "Software version mismatch"
             case 1:
-                return "5102: Low insulation resistance to ground"
+                return "Low insulation resistance to ground"
             case 2:
-                return "5103: Over-temperature"
+                return "Over-temperature"
             case 3:
-                return "5104: Equipment fault"
+                return "Equipment fault"
             case 4:
-                return "5105: Charging fault"
+                return "Charging fault"
             case 5:
-                return "5106: Equipment protection"
+                return "Equipment protection"
             case _:
                 return None
 
