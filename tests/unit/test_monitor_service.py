@@ -71,7 +71,23 @@ async def test_on_topic_update_known_and_unknown():
 
 
 @pytest.mark.asyncio
-async def test_monitor_marks_overdue_and_stops():
+async def test_monitor_marks_overdue_and_stops(monkeypatch):
+    # Track sleep calls to allow first 30s sleep, then mock subsequent 1s sleeps
+    original_sleep = asyncio.sleep
+    sleep_count = 0
+
+    async def mock_sleep(duration):
+        nonlocal sleep_count
+        sleep_count += 1
+        if sleep_count == 1:
+            # First call is the 30s startup delay - skip it
+            await original_sleep(0)
+        else:
+            # Let the 1s loop sleep run briefly
+            await original_sleep(0.05)
+
+    monkeypatch.setattr(asyncio, "sleep", mock_sleep)
+
     svc = MonitorService([])
     topic = "topic/overdue"
     # make last_seen well in the past so it's overdue
@@ -86,7 +102,7 @@ async def test_monitor_marks_overdue_and_stops():
     task = asyncio.create_task(svc._monitor(None, None))
 
     # let the monitor run one iteration
-    await asyncio.sleep(0.2)
+    await original_sleep(0.2)
 
     # stop the service (this cancels the future and stops the loop)
     svc.online = False

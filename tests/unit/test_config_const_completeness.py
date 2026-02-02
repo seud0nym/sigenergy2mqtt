@@ -51,20 +51,20 @@ def test_reload_handles_all_env_constants():
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "const":
                 handled_constants.add(node.attr)
 
-    # Find the Reload method body
-    reload_method_node = None
+    # Find the methods to check
+    methods_to_check = []
     for node in tree.body:  # Module body
         if isinstance(node, ast.ClassDef) and node.name == "Config":
             for method in node.body:
-                if isinstance(method, ast.FunctionDef) and method.name == "reload":
-                    reload_method_node = method
-                    break
+                if isinstance(method, ast.FunctionDef) and method.name in ["reload", "_process_env_key"]:
+                    methods_to_check.append(method)
 
-    assert reload_method_node is not None, "Could not find Config.reload method"
+    assert methods_to_check, "Could not find Config.reload or Config._process_env_key methods"
 
-    # Visit the reload method to find the match statement
+    # Visit the methods to find the match statement
     visitor = CaseVisitor()
-    visitor.visit(reload_method_node)
+    for method in methods_to_check:
+        visitor.visit(method)
 
     # 3. Compare
     missing = expected_constants - handled_constants

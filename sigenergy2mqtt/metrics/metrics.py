@@ -1,12 +1,12 @@
-import asyncio
 import logging
+import threading
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 
 
 class Metrics:
-    _lock = asyncio.Lock()
+    _lock = threading.Lock()
 
     _started: float = time.monotonic()
 
@@ -30,22 +30,34 @@ class Metrics:
     sigenergy2mqtt_modbus_write_min: float = float("inf")
     sigenergy2mqtt_modbus_write_errors: int = 0
 
+    # InfluxDB metrics
+    sigenergy2mqtt_influxdb_writes: int = 0
+    sigenergy2mqtt_influxdb_write_errors: int = 0
+    sigenergy2mqtt_influxdb_write_total: float = 0.0
+    sigenergy2mqtt_influxdb_write_max: float = 0.0
+    sigenergy2mqtt_influxdb_write_mean: float = 0.0
+    sigenergy2mqtt_influxdb_queries: int = 0
+    sigenergy2mqtt_influxdb_query_errors: int = 0
+    sigenergy2mqtt_influxdb_retries: int = 0
+    sigenergy2mqtt_influxdb_rate_limit_waits: int = 0
+    sigenergy2mqtt_influxdb_batch_total: int = 0
+
     sigenergy2mqtt_started: str = datetime.now().astimezone().isoformat()
 
     @classmethod
     @asynccontextmanager
-    async def lock(cls, timeout=None):
+    async def lock(cls, timeout=1.0):
         acquired: bool = False
         try:
             if timeout is None:
-                acquired = await Metrics._lock.acquire()
+                acquired = Metrics._lock.acquire()
             else:
-                acquired = await asyncio.wait_for(Metrics._lock.acquire(), timeout)
+                acquired = Metrics._lock.acquire(timeout=timeout)
                 if not acquired:
                     raise TimeoutError("Failed to acquire lock within the timeout period.")
             yield
         finally:
-            if acquired and Metrics._lock.locked():
+            if acquired:
                 Metrics._lock.release()
 
     @classmethod
@@ -112,3 +124,63 @@ class Metrics:
                 cls.sigenergy2mqtt_modbus_write_errors += 1
         except Exception as exc:
             logging.warning(f"Error during modbus write error metrics collection: {repr(exc)}")
+
+    @classmethod
+    async def influxdb_write(cls, batch_size: int, seconds: float) -> None:
+        """Record InfluxDB write operation metrics."""
+        try:
+            elapsed = seconds * 1000.0
+            write_max = max(cls.sigenergy2mqtt_influxdb_write_max, elapsed)
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_influxdb_writes += 1
+                cls.sigenergy2mqtt_influxdb_batch_total += batch_size
+                cls.sigenergy2mqtt_influxdb_write_total += elapsed
+                cls.sigenergy2mqtt_influxdb_write_max = write_max
+                cls.sigenergy2mqtt_influxdb_write_mean = cls.sigenergy2mqtt_influxdb_write_total / cls.sigenergy2mqtt_influxdb_writes if cls.sigenergy2mqtt_influxdb_writes > 0 else 0.0
+        except Exception as exc:
+            logging.warning(f"Error during influxdb write metrics collection: {repr(exc)}")
+
+    @classmethod
+    async def influxdb_write_error(cls) -> None:
+        """Record InfluxDB write error."""
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_influxdb_write_errors += 1
+        except Exception as exc:
+            logging.warning(f"Error during influxdb write error metrics collection: {repr(exc)}")
+
+    @classmethod
+    async def influxdb_query(cls, seconds: float) -> None:
+        """Record InfluxDB query operation metrics."""
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_influxdb_queries += 1
+        except Exception as exc:
+            logging.warning(f"Error during influxdb query metrics collection: {repr(exc)}")
+
+    @classmethod
+    async def influxdb_query_error(cls) -> None:
+        """Record InfluxDB query error."""
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_influxdb_query_errors += 1
+        except Exception as exc:
+            logging.warning(f"Error during influxdb query error metrics collection: {repr(exc)}")
+
+    @classmethod
+    async def influxdb_retry(cls) -> None:
+        """Record InfluxDB retry attempt."""
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_influxdb_retries += 1
+        except Exception as exc:
+            logging.warning(f"Error during influxdb retry metrics collection: {repr(exc)}")
+
+    @classmethod
+    async def influxdb_rate_limit_wait(cls) -> None:
+        """Record InfluxDB rate limit wait."""
+        try:
+            async with cls.lock(timeout=1):
+                cls.sigenergy2mqtt_influxdb_rate_limit_waits += 1
+        except Exception as exc:
+            logging.warning(f"Error during influxdb rate limit metrics collection: {repr(exc)}")

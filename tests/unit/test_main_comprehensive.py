@@ -372,7 +372,9 @@ async def test_make_plant_and_inverter_edge_cases(clean_config, monkeypatch):
     """Test edge cases for make_plant_and_inverter."""
 
     # Setup dependencies
-    mock_client = AsyncMock()
+    mock_client = MagicMock()
+    mock_client.read_holding_registers = AsyncMock(return_value=MagicMock(isError=lambda: True))
+    mock_client.read_input_registers = AsyncMock(return_value=MagicMock(isError=lambda: True))
 
     # 1. Test Duplicate Serial detection
     monkeypatch.setattr(main_mod, "serial_numbers", ["DUPE123"])
@@ -463,7 +465,9 @@ async def test_make_plant_and_inverter_edge_cases(clean_config, monkeypatch):
 @pytest.mark.asyncio
 async def test_illegal_data_address_unknown_input_type(clean_config, monkeypatch):
     """Test test_for_0x02_ILLEGAL_DATA_ADDRESS with unknown input type."""
-    mock_client = AsyncMock()
+    mock_client = MagicMock()
+    mock_client.read_holding_registers = AsyncMock(return_value=MagicMock(isError=lambda: True))
+    mock_client.read_input_registers = AsyncMock(return_value=MagicMock(isError=lambda: True))
     mock_device = MagicMock()
     # Fix formatting error by using int for device_address
     mock_device.device_address = 247

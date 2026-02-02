@@ -1,0 +1,703 @@
+import argparse
+import os
+
+from sigenergy2mqtt import i18n
+
+from . import const
+
+
+def get_parser() -> argparse.ArgumentParser:
+    """Creates and returns the argument parser."""
+    parser = argparse.ArgumentParser(
+        description="Reads the Sigenergy modbus interface and publishes the data to MQTT. The data will be published to MQTT in the Home Assistant MQTT Discovery format.",
+        epilog="Command line options over-ride values in the configuration file and environment variables.",
+    )
+
+    # region General Configuration
+    parser.add_argument(
+        "-c",
+        "--config",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_CONFIG,
+        default=os.getenv(const.SIGENERGY2MQTT_CONFIG, None),
+        help="The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)",
+    )
+    parser.add_argument(
+        "-l",
+        "--log-level",
+        action="store",
+        dest=const.SIGENERGY2MQTT_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL, None),
+        help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
+    parser.add_argument(
+        "--language",
+        action="store",
+        dest=const.SIGENERGY2MQTT_LANGUAGE,
+        choices=i18n.get_available_translations(),
+        default=os.getenv(const.SIGENERGY2MQTT_LANGUAGE, None),
+        help=f"Set the language to use for translations. Valid values are: {', '.join(i18n.get_available_translations())}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug-sensor",
+        action="store",
+        dest=const.SIGENERGY2MQTT_DEBUG_SENSOR,
+        default=os.getenv(const.SIGENERGY2MQTT_DEBUG_SENSOR, None),
+        help="Specify a sensor to be debugged using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name). If specified, --log-level is also forced to DEBUG.",
+    )
+    parser.add_argument(
+        "--sanity-check-default-kw",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW, None),
+        help="The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.",
+    )
+    parser.add_argument(
+        "--no-ems-mode-check",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK,
+        help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.",
+    )
+    parser.add_argument(
+        "--no-metrics",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_NO_METRICS,
+        help="Do not publish any sigenergy2mqtt metrics.",
+    )
+    parser.add_argument(
+        "--consumption",
+        action="store",
+        dest=const.SIGENERGY2MQTT_CONSUMPTION,
+        choices=["calculated", "total", "general"],
+        default=os.getenv(const.SIGENERGY2MQTT_CONSUMPTION, None),
+        help="Set the method of calculating the Plant Consumed Power sensor. Valid values are: 'calculated', 'total' (Total Load Power register), or 'general' (V2.8 General Load Power register). The default is 'calculated'. This option is ignored on firmware earlier than that supporting Modbus Protocol V2.8.",
+    )
+    # endregion
+
+    # region Home Assistant Configuration
+    parser.add_argument(
+        "--hass-enabled",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_HASS_ENABLED,
+        help="Enable auto-discovery in Home Assistant.",
+    )
+    parser.add_argument(
+        "--hass-discovery-prefix",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX,
+        default=os.getenv(const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX, None),
+        help="The Home Assistant MQTT Discovery topic prefix to use (default: homeassistant)",
+    )
+    parser.add_argument(
+        "--hass-entity-id-prefix",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX,
+        default=os.getenv(const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX, None),
+        help="The prefix to use for Home Assistant entity IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to entity IDs (default: sigen)",
+    )
+    parser.add_argument(
+        "--hass-unique-id-prefix",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX,
+        default=os.getenv(const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX, None),
+        help="The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant.",
+    )
+    parser.add_argument(
+        "--hass-use-simplified-topics",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS,
+        help="Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)",
+    )
+    parser.add_argument(
+        "--hass-device-name-prefix",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX,
+        default=os.getenv(const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX, None),
+        help="The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')",
+    )
+    parser.add_argument(
+        "--hass-edit-pct-box",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX,
+        help="When editing percentage sensors, use a numeric entry box to change the value (true) or use a slider to change the value (false).",
+    )
+    parser.add_argument(
+        "--hass-discovery-only",
+        action="store_true",
+        dest="discovery_only",
+        help="Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.",
+    )
+    # endregion
+
+    # region MQTT Configuration
+    parser.add_argument(
+        "-b",
+        "--mqtt-broker",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_BROKER,
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_BROKER, None),
+        help="The hostname or IP address of an MQTT broker (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--mqtt-port",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_PORT,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_PORT, None),
+        help="The listening port of the MQTT broker (default is 1883, unless --mqtt-tls is specified, in which case the default is 8883)",
+    )
+    parser.add_argument(
+        "--mqtt-keepalive",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_KEEPALIVE,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_KEEPALIVE, None),
+        help="The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker. Default is 60 and minimum is 1.",
+    )
+    parser.add_argument(
+        "--mqtt-tls",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MQTT_TLS,
+        help="Enable secure communication to MQTT broker over TLS/SSL. If specified, the default MQTT port is 8883.",
+    )
+    parser.add_argument(
+        "--mqtt-tls-insecure",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MQTT_TLS_INSECURE,
+        help="Enables insecure communication over TLS. If your broker is using a self-signed certificate, you must specify this option. Ignored unless --mqtt-tls is also specified.",
+    )
+    parser.add_argument(
+        "--mqtt-transport",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_TRANSPORT,
+        choices=["tcp", "websockets"],
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_TRANSPORT, None),
+        help="Sets the MQTT transport mechanism. Must be one of websockets or tcp. The default is tcp.",
+    )
+    parser.add_argument(
+        "--mqtt-anonymous",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MQTT_ANONYMOUS,
+        help="Allow anonymous connection to MQTT broker (i.e. without username/password). If specified, the --mqtt-username and --mqtt-password options are ignored.",
+    )
+    parser.add_argument(
+        "-u",
+        "--mqtt-username",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_USERNAME,
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_USERNAME, None),
+        help="A valid username for the MQTT broker",
+    )
+    parser.add_argument(
+        "-p",
+        "--mqtt-password",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_PASSWORD,
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_PASSWORD, None),
+        help="A valid password for the MQTT broker username",
+    )
+    parser.add_argument(
+        "--mqtt-log-level",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MQTT_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_MQTT_LOG_LEVEL, None),
+        help="Set the paho.mqtt log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
+    # endregion
+
+    # region Modbus Configuration
+    parser.add_argument(
+        "--modbus-auto-discovery",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY,
+        choices=["once", "force"],
+        help="Attempt to auto-discover Sigenergy Modbus hosts and device IDs. If 'once' is specified, auto-discovery will only occur if no existing auto-discovery results are found. If 'force', auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. If not specified, auto-discovery is disabled.",
+    )
+    parser.add_argument(
+        "--modbus-auto-discovery-ping-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT, None),
+        help="The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds.",
+    )
+    parser.add_argument(
+        "--modbus-auto-discovery-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, None),
+        help="The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds.",
+    )
+    parser.add_argument(
+        "--modbus-auto-discovery-retries",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, None),
+        help="The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.",
+    )
+    parser.add_argument(
+        "-m",
+        "--modbus-host",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_HOST,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_HOST, None),
+        help="The hostname or IP address of the Sigenergy device",
+    )
+    parser.add_argument(
+        "--modbus-port",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_PORT,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, None),
+        help="The Sigenergy device Modbus port number (default: 502)",
+    )
+    parser.add_argument(
+        "--modbus-inverter-device-id",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID, None),
+        help="**The Sigenergy Inverter Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
+    )
+    parser.add_argument(
+        "--modbus-accharger-device-id",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID, None),
+        help="The Sigenergy AC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
+    )
+    parser.add_argument(
+        "--modbus-dccharger-device-id",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID, None),
+        help="The Sigenergy DC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
+    )
+    parser.add_argument(
+        "--modbus-readonly",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MODBUS_READ_ONLY,
+        help="Only publish read-only sensors to MQTT. Neither read-write or write-only sensors will be published if specified.",
+    )
+    parser.add_argument(
+        "--modbus-no-remote-ems",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS,
+        help="Do not publish any read-write sensors for remote Energy Management System (EMS) integration to MQTT. Ignored if --modbus-read-only is specified.",
+    )
+    parser.add_argument(
+        "--modbus-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_TIMEOUT, None),
+        help="The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0.",
+    )
+    parser.add_argument(
+        "--modbus-retries",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_RETRIES,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_RETRIES, None),
+        help="The maximum number of times to retry a Modbus operation if it fails. The default is 3.",
+    )
+    parser.add_argument(
+        "--modbus-disable-chunking",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING,
+        help="Disable Modbus chunking when reading registers and read each register individually.",
+    )
+    parser.add_argument(
+        "--modbus-log-level",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL, None),
+        help="Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
+    # endregion
+
+    # region Scan Interval Configuration
+    parser.add_argument(
+        "--scan-interval-low",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW, None),
+        help="The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 1.",
+    )
+    parser.add_argument(
+        "--scan-interval-medium",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM, None),
+        help="The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.",
+    )
+    parser.add_argument(
+        "--scan-interval-high",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH, None),
+        help="The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.",
+    )
+    parser.add_argument(
+        "--scan-interval-realtime",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME, None),
+        help="The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.",
+    )
+    # endregion
+
+    # region SmartPort Configuration
+    parser.add_argument(
+        "--smartport-enabled",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_ENABLED,
+        help="Enable interrogation of a third-party device for production data.",
+    )
+    parser.add_argument(
+        "--smartport-module-name",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME, None),
+        help="The name of the module which will be used to obtain third-party device production data.",
+    )
+    parser.add_argument(
+        "--smartport-host",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_HOST,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_HOST, None),
+        help="The IP address or hostname of the third-party device.",
+    )
+    parser.add_argument(
+        "--smartport-username",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_USERNAME,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_USERNAME, None),
+        help="The username to authenticate to the third-party device.",
+    )
+    parser.add_argument(
+        "--smartport-password",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_PASSWORD,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_PASSWORD, None),
+        help="The password to authenticate to the third-party device.",
+    )
+    parser.add_argument(
+        "--smartport-pv-power",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_PV_POWER,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_PV_POWER, None),
+        help="The sensor class to hold the production data obtained from the third-party device.",
+    )
+    parser.add_argument(
+        "--smartport-mqtt-topic",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC, None),
+        help="The MQTT topic to which to subscribe to obtain the production data for the third-party device.",
+    )
+    parser.add_argument(
+        "--smartport-mqtt-gain",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN, None),
+        help="The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).",
+    )
+    # endregion
+
+    # region PVOutput Configuration
+    parser.add_argument(
+        "--pvoutput-enabled",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_ENABLED,
+        help="Enable status updates to PVOutput.",
+    )
+    parser.add_argument(
+        "--pvoutput-api-key",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_API_KEY,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_API_KEY, None),
+        help="The API Key for PVOutput",
+    )
+    parser.add_argument(
+        "--pvoutput-system-id",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID, None),
+        help="The PVOutput System ID",
+    )
+    parser.add_argument(
+        "--pvoutput-consumption",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION,
+        const="true",
+        help="Enable to send consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.",
+    )
+    parser.add_argument(
+        "--pvoutput-exports",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS,
+        help="Enable to send export data to PVOutput.",
+    )
+    parser.add_argument(
+        "--pvoutput-imports",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS,
+        help="Enable to send import data to PVOutput.",
+    )
+    parser.add_argument(
+        "--pvoutput-output-hour",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR, None),
+        help="The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is 23 (11pm). Valid values are 20 to 23. The minute is randomly chosen between 56 and 59. If you specify -1, daily uploads will be sent at the same frequency as status updates.",
+    )
+    parser.add_argument(
+        "--pvoutput-temp-topic",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC, None),
+        help="An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.",
+    )
+    parser.add_argument(
+        "--pvoutput-voltage",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE,
+        choices=["phase-a", "phase-b", "phase-c", "l/n-avg", "l/l-avg"],
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE, None),
+        help="The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'.",
+    )
+    parser.add_argument(
+        "--pvoutput-ext-v7",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7, None),
+        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    )
+    parser.add_argument(
+        "--pvoutput-ext-v8",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8, None),
+        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    )
+    parser.add_argument(
+        "--pvoutput-ext-v9",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9, None),
+        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    )
+    parser.add_argument(
+        "--pvoutput-ext-v10",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10, None),
+        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    )
+    parser.add_argument(
+        "--pvoutput-ext-v11",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11, None),
+        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v11 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    )
+    parser.add_argument(
+        "--pvoutput-ext-v12",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12,
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12, None),
+        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v12 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+    )
+    parser.add_argument(
+        "--pvoutput-log-level",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL, None),
+        help="Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
+    # endregion
+
+    # region InfluxDB Configuration
+    parser.add_argument(
+        "--influxdb-enabled",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_INFLUX_ENABLED,
+        help="Enable writing metrics to InfluxDB.",
+    )
+    parser.add_argument(
+        "--influxdb-host",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_HOST,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_HOST, None),
+        help="InfluxDB hostname or IP address (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--influxdb-port",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_PORT,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_PORT, None),
+        help="InfluxDB port (default: 8086)",
+    )
+    parser.add_argument(
+        "--influxdb-database",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_DATABASE,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_DATABASE, None),
+        help="InfluxDB database to write metrics to (default: sigenergy)",
+    )
+    parser.add_argument(
+        "--influxdb-org",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_ORG,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_ORG, None),
+        help="InfluxDB organization name or ID",
+    )
+    parser.add_argument(
+        "--influxdb-token",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_TOKEN,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_TOKEN, None),
+        help="InfluxDB v2 authentication token (prefer v2 APIs when supplied)",
+    )
+    parser.add_argument(
+        "--influxdb-bucket",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_BUCKET,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_BUCKET, None),
+        help="InfluxDB v2 bucket name (defaults to --influxdb-database if not set)",
+    )
+    parser.add_argument(
+        "--influxdb-username",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_USERNAME,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_USERNAME, None),
+        help="InfluxDB username",
+    )
+    parser.add_argument(
+        "--influxdb-password",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_PASSWORD,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_PASSWORD, None),
+        help="InfluxDB password",
+    )
+    parser.add_argument(
+        "--influxdb-include",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_INCLUDE,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_INCLUDE, None),
+        help="List of sensor identifiers to include (space separated)",
+    )
+    parser.add_argument(
+        "--influxdb-exclude",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_EXCLUDE,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_EXCLUDE, None),
+        help="List of sensor identifiers to exclude (space separated)",
+    )
+    parser.add_argument(
+        "--influxdb-log-level",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL, None),
+        help="InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
+    # endregion
+
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        dest="clean",
+        help="Publish empty discovery to delete existing devices, then exits immediately.",
+    )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        dest="validate_only",
+        help="Validates the configuration, then exits immediately.",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        dest="show_version",
+        help="Shows the version number, then exits immediately.",
+    )
+
+    return parser
+
+
+def parse_args():
+    """Parses known arguments and returns them."""
+    parser = get_parser()
+    args, unknown = parser.parse_known_args()
+    return args

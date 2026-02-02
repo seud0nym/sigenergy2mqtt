@@ -18,9 +18,10 @@
 
 In addition, `sigenergy2mqtt` has several optional features: 
 
+1. It can auto-discover Sigenergy devices and their device IDs without having to specify the host IP address.
 1. It can publish the appropriate messages to allow Home Assistant to automatically discover the Sigenergy devices, simplifying Home Assistant configuration. 
 1. Production and consumption data can automatically be uploaded to PVOutput. 
-1. It can auto-discover Sigenergy devices and their device IDs without having to specify the host IP address.
+1. It can publish the Modbus data to the InfluxDB (v1/2) time series database for long-term storage and analysis.
 
 ## Installation
 
@@ -57,7 +58,7 @@ The topics that are published and subscribed to by `sigenergy2mqtt` can be found
 
 ## Disclaimer
 
-`sigenergy2mqtt` was developed for my own use, and as such has only been tested in my single-phase environment without AC or DC chargers. In addition, there has been only cursory testing of the write functions. If you find a problem, please raise an issue.
+`sigenergy2mqtt` was developed for my own use, and as such has only been tested in my single-phase environment without AC or DC chargers, although I have developed a testing environment in software that emulates the chargers and three phase implementations. If you find a problem, please raise an issue.
 
 ## Thanks
 

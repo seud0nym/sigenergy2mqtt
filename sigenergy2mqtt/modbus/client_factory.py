@@ -25,4 +25,14 @@ class ModbusClientFactory:
 
     @classmethod
     def get_host(cls, modbus: ModbusClientType | None) -> str | None:
-        return None if modbus not in cls._hosts else cls._hosts[modbus]
+        return None if modbus is None or modbus not in cls._hosts else cls._hosts[modbus]
+
+    @classmethod
+    def clear(cls):
+        for client in cls._clients.values():
+            try:
+                client.close()
+            except Exception:
+                pass
+        cls._clients.clear()
+        cls._hosts.clear()

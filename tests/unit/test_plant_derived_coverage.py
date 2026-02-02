@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,13 +14,10 @@ from sigenergy2mqtt.sensors.plant_derived import (
 )
 from sigenergy2mqtt.sensors.plant_read_only import (
     BatteryPower,
-    GeneralLoadPower,
     GridSensorActivePower,
     GridStatus,
-    PlantPVPower,
     PlantPVTotalGeneration,
     ThirdPartyLifetimePVEnergy,
-    TotalLoadPower,
 )
 
 
@@ -52,7 +48,7 @@ class TestBasicDerivedSensorsCoverage:
             bp.state_class = "measurement"
             bp.protocol_version = Protocol.V2_4
             sensor = BatteryChargingPower(0, bp)
-            assert "BatteryPower &gt; 0" in sensor.get_attributes()["source"]
+            assert "BatteryPower &gt; 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -67,7 +63,7 @@ class TestBasicDerivedSensorsCoverage:
             bp.state_class = "measurement"
             bp.protocol_version = Protocol.V2_4
             sensor = BatteryDischargingPower(0, bp)
-            assert "BatteryPower &lt; 0" in sensor.get_attributes()["source"]
+            assert "BatteryPower &lt; 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -83,7 +79,7 @@ class TestBasicDerivedSensorsCoverage:
             gp.precision = 2
             gp.protocol_version = Protocol.V2_4
             sensor = GridSensorExportPower(0, gp)
-            assert "GridSensorActivePower &lt; 0" in sensor.get_attributes()["source"]
+            assert "GridSensorActivePower &lt; 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -99,7 +95,7 @@ class TestBasicDerivedSensorsCoverage:
             gp.precision = 2
             gp.protocol_version = Protocol.V2_4
             sensor = GridSensorImportPower(0, gp)
-            assert "GridSensorActivePower &gt; 0" in sensor.get_attributes()["source"]
+            assert "GridSensorActivePower &gt; 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -120,7 +116,7 @@ class TestBasicDerivedSensorsCoverage:
             source_exp.state_class = "total_increasing"
             source_exp.precision = 2
             s_exp = GridSensorDailyExportEnergy(0, source_exp)
-            assert "PlantTotalExportedEnergy" in s_exp.get_attributes()["source"]
+            assert "PlantTotalExportedEnergy" in str(s_exp.get_attributes()["source"])
 
             # Import
             source_imp = MagicMock(spec=PlantTotalImportedEnergy)
@@ -132,7 +128,7 @@ class TestBasicDerivedSensorsCoverage:
             source_imp.state_class = "total_increasing"
             source_imp.precision = 2
             s_imp = GridSensorDailyImportEnergy(0, source_imp)
-            assert "PlantTotalImportedEnergy" in s_imp.get_attributes()["source"]
+            assert "PlantTotalImportedEnergy" in str(s_imp.get_attributes()["source"])
 
             # Total PV
             source_tpv = MagicMock(spec=PlantPVTotalGeneration)
@@ -144,11 +140,11 @@ class TestBasicDerivedSensorsCoverage:
             source_tpv.state_class = "total_increasing"
             source_tpv.precision = 2
             s_tpv = TotalDailyPVEnergy(0, source_tpv)
-            assert "TotalLifetimePVEnergy" in s_tpv.get_attributes()["source"]
+            assert "TotalLifetimePVEnergy" in str(s_tpv.get_attributes()["source"])
 
             # Plant Daily PV
             s_pdpv = PlantDailyPVEnergy(0, source_tpv)
-            assert "PlantLifetimePVEnergy" in s_pdpv.get_attributes()["source"]
+            assert "PlantLifetimePVEnergy" in str(s_pdpv.get_attributes()["source"])
 
             # Plant Daily Charge
             from sigenergy2mqtt.sensors.plant_read_only import ESSTotalChargedEnergy, ESSTotalDischargedEnergy
@@ -162,7 +158,7 @@ class TestBasicDerivedSensorsCoverage:
             source_charge.state_class = "total_increasing"
             source_charge.precision = 2
             s_pdc = PlantDailyChargeEnergy(0, source_charge)
-            assert "DailyChargeEnergy" in s_pdc.get_attributes()["source"]
+            assert "DailyChargeEnergy" in str(s_pdc.get_attributes()["source"])
 
             # Plant Daily Discharge
             source_discharge = MagicMock(spec=ESSTotalDischargedEnergy)
@@ -174,7 +170,7 @@ class TestBasicDerivedSensorsCoverage:
             source_discharge.state_class = "total_increasing"
             source_discharge.precision = 2
             s_pdd = PlantDailyDischargeEnergy(0, source_discharge)
-            assert "DailyDischargeEnergy" in s_pdd.get_attributes()["source"]
+            assert "DailyDischargeEnergy" in str(s_pdd.get_attributes()["source"])
 
 
 class TestPlantConsumedPowerCoverage:
@@ -251,10 +247,10 @@ class TestPlantConsumedPowerCoverage:
 
     def test_observable_topics_with_chargers(self):
         from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
-        from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
         class MockACCharger:
-            pass
+            def get_all_sensors(self):
+                pass
 
         with patch("sigenergy2mqtt.sensors.plant_derived.DeviceRegistry.get") as mock_get:
             charger = MockACCharger()
@@ -277,6 +273,7 @@ class TestPlantConsumedPowerCoverage:
                 assert any_added
 
     def test_set_source_values_branches(self, caplog):
+        caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = PlantConsumedPower(0, ConsumptionMethod.CALCULATED)
 
@@ -335,11 +332,11 @@ class TestTotalPVPowerCoverage:
     def test_get_attributes_smartport(self, mock_config):
         mock_config.modbus[0].smartport.enabled = True
         sensor = TotalPVPower(0)
-        assert "Smart-Port" in sensor.get_attributes()["source"]
+        assert "Smart-Port" in str(sensor.get_attributes()["source"])
 
         mock_config.modbus[0].smartport.enabled = False
         sensor2 = TotalPVPower(0)
-        assert "Third-Party" in sensor2.get_attributes()["source"]
+        assert "Third-Party" in str(sensor2.get_attributes()["source"])
 
     @pytest.mark.asyncio
     async def test_notify_edge_cases(self, caplog):
@@ -467,8 +464,8 @@ class TestTotalPVPowerCoverage:
                 await sensor.publish(MagicMock(), None)
 
             # Check source statuses - FAILOVER should be enabled, S1 disabled
-            assert sensor._sources["s1"].enabled is False, "S1 should be disabled after timeout"
-            assert sensor._sources["s2"].enabled is True, "S2 should be enabled after timeout"
+            assert sensor._sources["s1"].enabled == False, "S1 should be disabled after timeout"
+            assert sensor._sources["s2"].enabled == True, "S2 should be enabled after timeout"
 
 
 class TestTotalLifetimePVEnergyCoverage:
@@ -491,7 +488,7 @@ class TestTotalLifetimePVEnergyCoverage:
 
             sensor.plant_lifetime_pv_energy = 100.0
             sensor.plant_3rd_party_lifetime_pv_energy = 50.0
-            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
                 assert await sensor.publish(MagicMock(), None) is True
                 assert "Publishing READY" in caplog.text
                 assert sensor.plant_lifetime_pv_energy is None

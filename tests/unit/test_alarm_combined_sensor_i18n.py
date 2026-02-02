@@ -12,18 +12,20 @@ async def test_alarm_combined_sensor_translation_bug():
     alarm1 = MagicMock(spec=AlarmSensor)
     alarm1.scan_interval = 60
     alarm1.device_address = 1
-    alarm1.address = 100
+    alarm1.address = 30100
     alarm1.count = 1
     alarm1.protocol_version = 0.0
     alarm1.publishable = True
+    alarm1.plant_index = 0
 
     alarm2 = MagicMock(spec=AlarmSensor)
     alarm2.scan_interval = 60
     alarm2.device_address = 1
-    alarm2.address = 101  # Contiguous address
+    alarm2.address = 30101  # Contiguous address
     alarm2.count = 1
     alarm2.protocol_version = 0.0
     alarm2.publishable = True
+    alarm2.plant_index = 0
 
     combined = AlarmCombinedSensor("combined", "sigen.test_combined_1", "sigen_test_combined_1", alarm1, alarm2)
 

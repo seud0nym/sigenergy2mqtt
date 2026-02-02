@@ -2,56 +2,81 @@ class:
   ACCharger:
     name: Sigenergy AC-Ladegerät
   ACChargerAlarm1:
+    alarm:
+      '0': Netz-Überspannung
+      '1': Netz-Unterspannung
+      '2': Überlast
+      '3': Kurzschluss
+      '4': Lade-Ausgangsstrom zu hoch
+      '5': Fehlerstrom außerhalb der Grenzen
+      '6': Erdungsfehler
+      '7': Fehlerhafte Phasenfolge der Netzverkabelung
+      '8': PEN-Fehler
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: 'Alarm 1'
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ACChargerAlarm2:
+    alarm:
+      '0': Fehler Fehlerstromerkennungsschaltung
+      '1': Relais hängt
+      '2': Pilotstromkreisfehler
+      '3': Fehler Hilfsnetzteil
+      '4': Elektrisches Schloss Fehler
+      '5': Lampenpanel-Kommunikationsfehler
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: 'Alarm 2'
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ACChargerAlarm3:
-    name: 'Alarm 3'
+    alarm:
+      '0': Innentemperatur zu hoch
+      '1': Ladekabelfehler
+      '2': Zähler-Kommunikationsfehler
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: 'Alarm 3'
   ACChargerAlarms:
-    name: Alarme
     attributes:
       source: Modbus-Register 32012-32014
+      source_range: Modbus-Register {start}-{end}
+    name: Alarme
   ACChargerChargingPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Ladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ACChargerInputBreaker:
-    name: Eingangsschutzschalter
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Eingangsschutzschalter
   ACChargerOutputCurrent:
-    name: Ausgangsstrom
     attributes:
       comment: "Bereich: [6, kleiner von 'AC-Ladegerät Nennstrom' und 'AC-Ladegerät Eingangsschutzschalter Nennstrom']"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Ausgangsstrom
   ACChargerRatedCurrent:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennstrom
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ACChargerRatedPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ACChargerRatedVoltage:
-    name: Nennspannung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Nennspannung
   ACChargerRunningState:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Betriebszustand
     options:
       "0": Initialisierung
@@ -62,214 +87,278 @@ class:
       "5": Laden
       "6": Fehler
       "7": Störung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ACChargerStatus:
-    name: AC-Ladegerät Start/Stopp
     attributes:
       comment: 0:Start 1:Stopp
+    name: AC-Ladegerät Start/Stopp
     name_off: Stoppen
     name_on: Starten
   ACChargerTotalEnergyConsumed:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamter Energieverbrauch
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AccumulatedChargeEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Ladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AccumulatedDischargeEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Entladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ActivePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Wirkleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ActivePowerFixedAdjustmentTargetValue:
-    name: Zielwert Wirkleistung Festwertanpassung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Zielwert Wirkleistung Festwertanpassung
   ActivePowerPercentageAdjustmentTargetValue:
-    name: Zielwert Wirkleistung Prozentanpassung
     attributes:
       comment: "Bereich: [-100,00, 100,00]"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Zielwert Wirkleistung Prozentanpassung
   ActivePowerRegulationGradient:
-    name: Wirkleistungsregelungsgradient
     attributes:
       comment: "Bereich: [0, 5000]. Prozent der Nennleistung angepasst pro Sekunde"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Wirkleistungsregelungsgradient
   Alarm1Sensor:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand
+      '2': Übertemperatur
+      '3': Gerätefehler
+      '4': Systemerdungsfehler
+      '5': PV-String-Überspannung
+      '6': PV-String umgekehrt angeschlossen
+      '7': PV-String-Rückspeisung
+      '8': AFCI-Fehler
+      '9': Netzausfall
+      '10': Netz-Überspannung
+      '11': Netz-Unterspannung
+      '12': Netz-Überfrequenz
+      '13': Netz-Unterfrequenz
+      '14': Netzspannungsungleichgewicht
+      '15': Gleichstromkomponente des Ausgangsstroms außerhalb der Grenzen
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   Alarm2Sensor:
+    alarm:
+      '0': Fehlerstrom außerhalb der Grenzen
+      '1': Kommunikation abnormal
+      '2': Systemeigener Schutz
+      '3': AFCI-Selbstprüfungsschaltungsdefekt
+      '4': Netzunabhängiger Schutz
+      '5': Manueller Betriebsschutz
+      '7': Abnormale Phasenfolge
+      '8': Kurzschluss zu PE
+      '9': Sanftanlauf fehlgeschlagen
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   Alarm3Sensor:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand gegen Erde
+      '2': Temperatur zu hoch
+      '3': Gerätefehler
+      '4': Untertemperatur
+      '5': Interner Schutz
+      '6': Thermisches Durchgehen
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   Alarm4Sensor:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Temperatur zu hoch
+      '2': Gerätefehler
+      '3': Übermäßiger Fehlerstrom im Inselbetrieb-Ausgang
+      '4': N-Leiter-Erdungsfehler
+      '5': Fehlerhafte Phasenfolge der Netzverkabelung
+      '6': Fehlerhafte Phasenfolge der Wechselrichterverkabelung
+      '7': Netzphasenverlust
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   Alarm5Sensor:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand gegen Erde
+      '2': Übertemperatur
+      '3': Gerätefehler
+      '4': Ladefehler
+      '5': Geräteschutz
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   Alarm6:
+    alarm:
+      '0': Gateway-Kommunikation abnormal
+      '1': Zähler-Kommunikation abnormal
+      '2': AC-Leistungssensor-Kommunikation abnormal
+      '6': Hardwareschutz bei Überschreitung der Netzeinspeiseleistungsgrenze
+      '8': Generator-Startfehler
+      '10': CLS-Fehler
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: 'Alarm 6'
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   Alarm7:
-    name: 'Alarm 7'
+    alarm:
+      '0': OVGR-Fehler
+      '1': RPR-Fehler
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: 'Alarm 7'
   AlarmCombinedSensor:
-    name: '{name}'
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: 'Hybrid-Wechselrichter'
   AlarmSensor:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: '{name}'
     no_alarm: Kein Alarm
     unknown_alarm: Unbekannt (bit{bit}∈{value})
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: '{name}'
   AvailableBatteryChargeEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Verfügbare Ladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AvailableBatteryDischargeEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Verfügbare Entladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AvailableMaxActivePower:
+    attributes:
+      comment: Einspeisung am AC-Anschluss. Nur laufende Wechselrichter gezählt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Verfügbare Max. Wirkleistung
-    attributes:
-      comment: Einspeisung am AC-Anschluss. Nur laufende Wechselrichter gezählt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AvailableMaxChargingCapacity:
+    attributes:
+      comment: Nur laufende Wechselrichter gezählt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Verfügbare Max. Ladekapazität
-    attributes:
-      comment: Nur laufende Wechselrichter gezählt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AvailableMaxChargingPower:
+    attributes:
+      comment: Nur laufende Wechselrichter gezählt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Verfügbare Max. Ladeleistung
-    attributes:
-      comment: Nur laufende Wechselrichter gezählt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AvailableMaxDischargingCapacity:
-    name: Verfügbare Max. Entladekapazität
     attributes:
       comment: Nur laufende Wechselrichter gezählt
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Verfügbare Max. Entladekapazität
   AvailableMaxDischargingPower:
-    name: Verfügbare Max. Entladeleistung
     attributes:
       comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Verfügbare Max. Entladeleistung
   AvailableMaxReactivePower:
-    name: Verfügbare Max. Blindleistung
     attributes:
       comment: Einspeisung am AC-Anschluss. Nur laufende Wechselrichter gezählt
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Verfügbare Max. Blindleistung
   AvailableMinActivePower:
+    attributes:
+      comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Verfügbare Min. Wirkleistung
-    attributes:
-      comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AvailableMinReactivePower:
-    name: Verfügbare Min. Blindleistung
     attributes:
       comment: Bezug am AC-Anschluss. Nur laufende Wechselrichter gezählt
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Verfügbare Min. Blindleistung
   AverageCellTemperature:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Durchschnittliche Zellentemperatur
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   AverageCellVoltage:
-    name: Durchschnittliche Zellenspannung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Durchschnittliche Zellenspannung
   BatteryChargingPower:
-    name: Batterieladeleistung
     attributes:
       source: BatteryPower > 0
+    name: Batterieladeleistung
   BatteryDischargingPower:
-    name: Batterieentladeleistung
     attributes:
       source: BatteryPower < 0 × -1
+    name: Batterieentladeleistung
   BatteryPower:
-    name: Batterieleistung
     attributes:
       comment: "ESS-Leistung: <0 = Entladen, >0 = Laden"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-  ChargeCutOffSoC:
-    name: Ladungsabschalt-Ladezustand
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-  ChargeDischargePower:
     name: Batterieleistung
+  ChargeCutOffSoC:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Ladungsabschalt-Ladezustand
+  ChargeDischargePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: Batterieleistung
   CurrentControlCommandValue:
-    name: Aktueller Steuerbefehlswert
     attributes:
       comment: Verwendung der Fernausgangssteuerung in Japan
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Aktueller Steuerbefehlswert
   DCCharger:
     name: Sigenergy DC-Ladegerät
   DCChargerCurrentChargingCapacity:
+    attributes:
+      comment: Einzelvorgang
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Aktuelle Ladekapazität
-    attributes:
-      comment: Einzelvorgang
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   DCChargerCurrentChargingDuration:
-    name: Aktuelle Ladedauer
     attributes:
       comment: Einzelvorgang
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Aktuelle Ladedauer
   DCChargerOutputPower:
-    name: Ausgangsleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Ausgangsleistung
   DCChargerRunningState:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Betriebszustand
     options:
       "0": Leerlauf
@@ -278,46 +367,48 @@ class:
       "3": Laden
       "4": Fehler
       "5": Geplant
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   DCChargerStatus:
-    name: DC-Ladegerät Start/Stopp
     attributes:
       comment: 0:Start 1:Stopp
+    name: DC-Ladegerät Start/Stopp
     name_off: Stoppen
     name_on: Starten
   DCChargerVehicleBatteryVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Fahrzeugbatteriespannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   DCChargerVehicleChargingCurrent:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Fahrzeugladestrom
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   DCChargerVehicleSoC:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Fahrzeug-Ladezustand
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   DailyChargeEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Tägliche Ladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   DailyDischargeEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Tägliche Entladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
+  Device:
+    name: '{Config} {name}'
   DischargeCutOffSoC:
-    name: Entladungsabschalt-Ladezustand
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Entladungsabschalt-Ladezustand
   EMSWorkMode:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: EMS-Betriebsmodus
     options:
       "0": Max. Eigenverbrauch
@@ -327,49 +418,46 @@ class:
       "6": VPP-Planung
       "7": Fern-EMS
       "9": Zeitbasierte Steuerung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ESS:
     name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
+    attributes:
+      comment: "Bereich: [0,00, 100,00]"
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Backup-Ladezustand
-    attributes:
-      comment: "Bereich: [0,00, 100,00]"
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ESSChargeCutOffSOC:
+    attributes:
+      comment: "Bereich: [0,00, 100,00]"
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Ladungsabschalt-Ladezustand
-    attributes:
-      comment: "Bereich: [0,00, 100,00]"
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ESSDischargeCutOffSOC:
-    name: Entladungsabschalt-Ladezustand
     attributes:
       comment: "Bereich: [0,00, 100,00]"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Entladungsabschalt-Ladezustand
   ESSTotalChargedEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Ladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ESSTotalDischargedEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Entladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   EVDCTotalChargedEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte DC-EV-Ladeenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   EVDCTotalDischargedEnergy:
-    name: Gesamte DC-EV-Entladeenergie
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Gesamte DC-EV-Entladeenergie
   EnergyDailyAccumulationSensor:
     name: '{name}'
     name_reset: Setze {name}
@@ -377,86 +465,141 @@ class:
     name: '{name}'
     name_reset: Setze {name}
   EnphaseCurrent:
+    attributes:
+      source: Enphase Envoy API bei EnphasePVPower-Ableitung
     name: Strom
-    attributes:
-      source: Enphase Envoy API bei EnphasePVPower-Ableitung
   EnphaseDailyPVEnergy:
-    name: Tägliche Produktion
     attributes:
       source: Enphase Envoy API bei EnphasePVPower-Ableitung
+    name: Tägliche Produktion
     name_reset: Setze Tägliche Produktion
   EnphaseFrequency:
+    attributes:
+      source: Enphase Envoy API bei EnphasePVPower-Ableitung
     name: Frequenz
-    attributes:
-      source: Enphase Envoy API bei EnphasePVPower-Ableitung
   EnphaseLifetimePVEnergy:
-    name: Gesamtproduktion
     attributes:
       source: Enphase Envoy API bei EnphasePVPower-Ableitung
+    name: Gesamtproduktion
   EnphasePVPower:
-    name: PV-Leistung
     attributes:
       source: Enphase Envoy API
+    name: PV-Leistung
   EnphasePowerFactor:
+    attributes:
+      source: Enphase Envoy API bei EnphasePVPower-Ableitung
     name: Leistungsfaktor
-    attributes:
-      source: Enphase Envoy API bei EnphasePVPower-Ableitung
   EnphaseReactivePower:
+    attributes:
+      source: Enphase Envoy API bei EnphasePVPower-Ableitung
     name: Blindleistung
-    attributes:
-      source: Enphase Envoy API bei EnphasePVPower-Ableitung
   EnphaseVoltage:
-    name: Spannung
     attributes:
       source: Enphase Envoy API bei EnphasePVPower-Ableitung
+    name: Spannung
   GeneralAlarm1:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand
+      '2': Übertemperatur
+      '3': Gerätefehler
+      '4': Systemerdungsfehler
+      '5': PV-String-Überspannung
+      '6': PV-String umgekehrt angeschlossen
+      '7': PV-String-Rückspeisung
+      '8': AFCI-Fehler
+      '9': Netzausfall
+      '10': Netz-Überspannung
+      '11': Netz-Unterspannung
+      '12': Netz-Überfrequenz
+      '13': Netz-Unterfrequenz
+      '14': Netzspannungsungleichgewicht
+      '15': Gleichstromkomponente des Ausgangsstroms außerhalb der Grenzen
+    attributes:
+      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PCS-Alarme 1
-    attributes:
-      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GeneralAlarm2:
+    alarm:
+      '0': Fehlerstrom außerhalb der Grenzen
+      '1': Kommunikation abnormal
+      '2': Systemeigener Schutz
+      '3': AFCI-Selbstprüfungsschaltungsdefekt
+      '4': Netzunabhängiger Schutz
+      '5': Manueller Betriebsschutz
+      '7': Abnormale Phasenfolge
+      '8': Kurzschluss zu PE
+      '9': Sanftanlauf fehlgeschlagen
+    attributes:
+      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PCS-Alarme 2
-    attributes:
-      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GeneralAlarm3:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand gegen Erde
+      '2': Temperatur zu hoch
+      '3': Gerätefehler
+      '4': Untertemperatur
+      '5': Interner Schutz
+      '6': Thermisches Durchgehen
+    attributes:
+      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: ESS-Alarme
-    attributes:
-      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GeneralAlarm4:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Temperatur zu hoch
+      '2': Gerätefehler
+      '3': Übermäßiger Fehlerstrom im Inselbetrieb-Ausgang
+      '4': N-Leiter-Erdungsfehler
+      '5': Fehlerhafte Phasenfolge der Netzverkabelung
+      '6': Fehlerhafte Phasenfolge der Wechselrichterverkabelung
+      '7': Netzphasenverlust
+    attributes:
+      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gateway-Alarme
-    attributes:
-      comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GeneralAlarm5:
-    name: DC-Ladegerät-Alarme
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand gegen Erde
+      '2': Übertemperatur
+      '3': Gerätefehler
+      '4': Ladefehler
+      '5': Geräteschutz
     attributes:
       comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: DC-Ladegerät-Alarme
   GeneralLoadPower:
-    name: Allgemeine Lastleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Allgemeine Lastleistung
   GeneralPCSAlarm:
-    name: PCS-Alarme
     attributes:
       comment: Wenn ein Hybridwechselrichter einen Alarm hat, wird dieser entsprechend gesetzt
       source: Modbus-Register 30027-30028
+      source_range: Modbus-Register {start}-{end}
+    name: PCS-Alarme
   GridCode:
     name: Sigenergy-Anlage Netzcode
   GridCodeHVRT:
-    name: Hochspannungsdurchfahrt
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Hochspannungsdurchfahrt
   GridCodeHVRTMode:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: HVRT-Modus
     options:
       '0': Blindleistungskompensationsstrom, aktiver Nullstrommodus
@@ -464,32 +607,32 @@ class:
       '3': Konstantstrommodus
       '4': Reaktiver dynamischer Strom, aktiver Haltemodus
       '5': Blindleistungskompensationsstrom, aktiver Konstantstrommodus
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "Bereich: [0, 10,0]"
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: HVRT Gegensystem-Blindleistungskompensationsfaktor
-    attributes:
-      comment: "Bereich: [0, 10,0]"
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeHVRTReactivePowerCompensationFactor:
-    name: HVRT Blindleistungskompensationsfaktor
     attributes:
       comment: "Bereich: [0, 10,0]"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: HVRT Blindleistungskompensationsfaktor
   GridCodeHVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: HVRT Netzspannungsschutzblockierung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeLVRT:
-    name: Niederspannungsdurchfahrt
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Niederspannungsdurchfahrt
   GridCodeLVRTMode:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: LVRT-Modus
     options:
       '0': Blindleistungskompensationsstrom, aktiver Nullstrommodus
@@ -497,99 +640,96 @@ class:
       '3': Konstantstrommodus
       '4': Reaktiver dynamischer Strom, aktiver Nullstrommodus
       '5': Blindleistungskompensationsstrom, aktiver Konstantstrommodus
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "Bereich: [0, 10,0]"
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: LVRT Gegensystem-Blindleistungskompensationsfaktor
-    attributes:
-      comment: "Bereich: [0, 10,0]"
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeLVRTReactivePowerCompensationFactor:
-    name: LVRT Blindleistungskompensationsfaktor
     attributes:
       comment: "Bereich: [0, 10,0]"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: LVRT Blindleistungskompensationsfaktor
   GridCodeLVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: LVRT Netzspannungsschutzblockierung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeOverFrequencyDerating:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Überfrequenz-Abregelung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeOverFrequencyDeratingCutOffFrequency:
+    attributes:
+      comment: "Bereich: [1,0*Fn, 1,2*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Überfrequenz-Abregelung Abschaltfrequenz
-    attributes:
-      comment: "Bereich: [1,0*Fn, 1,2*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeOverFrequencyDeratingPowerRampRate:
-    name: Überfrequenz-Abregelung Leistungsrampenrate
     attributes:
       comment: "Bereich: [0, 100,0]"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Überfrequenz-Abregelung Leistungsrampenrate
   GridCodeOverFrequencyDeratingTriggerFrequency:
-    name: Überfrequenz-Abregelung Auslösefrequenz
     attributes:
       comment: "Bereich: [1,0*Fn, 1,2*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Überfrequenz-Abregelung Auslösefrequenz
   GridCodeRatedFrequency:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennfrequenz
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeRatedVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennspannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridCodeUnderFrequencyPowerBoost:
-    name: Unterfrequenz-Leistungsverstärkung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Unterfrequenz-Leistungsverstärkung
   GridCodeUnderFrequencyPowerBoostCutOffFrequency:
-    name: Unterfrequenz-Leistungsverstärkung Abschaltfrequenz
     attributes:
       comment: "Bereich: [0,8*Fn, 1,0*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Unterfrequenz-Leistungsverstärkung Abschaltfrequenz
   GridCodeUnderFrequencyPowerBoostPowerRampRate:
-    name: Unterfrequenz-Leistungsverstärkung Leistungsrampenrate
     attributes:
       comment: "Bereich: [0, 100,0]"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Unterfrequenz-Leistungsverstärkung Leistungsrampenrate
   GridCodeUnderFrequencyPowerBoostTriggerFrequency:
-    name: Unterfrequenz-Leistungsverstärkung Auslösefrequenz
     attributes:
       comment: "Bereich: [0,8*Fn, 1,0*Fn] Referenz: [Netzcode] Nennfrequenz (Register 30276)"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Unterfrequenz-Leistungsverstärkung Auslösefrequenz
   GridFrequency:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Netzfrequenz
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridMaxExportLimit:
+    attributes:
+      comment: Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Netz Max. Exportgrenze
-    attributes:
-      comment: Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   GridMaxImportLimit:
-    name: Netz Max. Importgrenze
     attributes:
       comment: Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Netz Max. Importgrenze
   GridPhaseActivePower:
     attributes:
       comment: "Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten; >0 Netzbezug; <0 Netzeinspeisung"
@@ -605,216 +745,289 @@ class:
   GridSensor:
     name: Sigenergy-Anlage Netzsensor
   GridSensorActivePower:
-    name: Wirkleistung
     attributes:
       comment: "Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten; >0 Netzbezug; <0 Netzeinspeisung"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Wirkleistung
   GridSensorDailyExportEnergy:
-    name: Tägliche Exportenergie
     attributes:
       source: PlantTotalExportedEnergy − PlantTotalExportedEnergy um Mitternacht
+    name: Tägliche Exportenergie
     name_reset: Setze Tägliche Exportenergie
   GridSensorDailyImportEnergy:
-    name: Tägliche Importenergie
     attributes:
       source: PlantTotalImportedEnergy − PlantTotalImportedEnergy um Mitternacht
+    name: Tägliche Importenergie
     name_reset: Setze Tägliche Importenergie
   GridSensorExportPower:
-    name: Exportleistung
     attributes:
       source: GridSensorActivePower < 0 × -1
+    name: Exportleistung
   GridSensorImportPower:
-    name: Importleistung
     attributes:
       source: GridSensorActivePower > 0
+    name: Importleistung
   GridSensorReactivePower:
-    name: Blindleistung
     attributes:
       comment: Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Blindleistung
   GridSensorStatus:
-    name: Netzsensorstatus
-    options:
-      "0": Nicht verbunden
-      "1": Verbunden
     attributes:
       comment: Gateway- oder Zählerverbindungsstatus
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Netzsensorstatus
+    options:
+      "0": Nicht verbunden
+      "1": Verbunden
   GridStatus:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Netzstatus
     options:
       "0": Am Netz
       "1": Inselbetrieb (auto)
       "2": Inselbetrieb (manuell)
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   HybridInverter:
     name: Hybrid-Wechselrichter
   IndependentPhasePowerControl:
-    name: Unabhängige Phasenleistungssteuerung
     attributes:
       comment: Nur gültig bei Ausgangstyp L1/L2/L3/N. Um unabhängige Phasensteuerung zu aktivieren, muss dieser Parameter aktiviert sein
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Unabhängige Phasenleistungssteuerung
+  InfluxDBQueries:
+    name: InfluxDB-Abfragen
+  InfluxDBQueryErrors:
+    name: InfluxDB-Abfragefehler
+  InfluxDBRetries:
+    name: InfluxDB-Wiederholungen
+  InfluxDBThroughput:
+    name: InfluxDB-Durchsatz
+  InfluxDBWriteErrors:
+    name: InfluxDB-Schreibfehler
+  InfluxDBWriteMax:
+    name: InfluxDB maximale Schreiblatenz
+  InfluxDBWriteMean:
+    name: InfluxDB mittlere Schreiblatenz
+  InfluxDBWrites:
+    name: InfluxDB-Schreibvorgänge
+  InfluxService:
+    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
   InsulationResistance:
-    name: Isolationswiderstand
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Isolationswiderstand
   Inverter:
     name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Wirkleistung Festwertanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterActivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Rückmeldung Wirkleistung Festwertanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterActivePowerPercentageAdjustment:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Wirkleistung Prozentanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterActivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Rückmeldung Wirkleistung Prozentanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterAlarm1:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand
+      '2': Übertemperatur
+      '3': Gerätefehler
+      '4': Systemerdungsfehler
+      '5': PV-String-Überspannung
+      '6': PV-String umgekehrt angeschlossen
+      '7': PV-String-Rückspeisung
+      '8': AFCI-Fehler
+      '9': Netzausfall
+      '10': Netz-Überspannung
+      '11': Netz-Unterspannung
+      '12': Netz-Überfrequenz
+      '13': Netz-Unterfrequenz
+      '14': Netzspannungsungleichgewicht
+      '15': Gleichstromkomponente des Ausgangsstroms außerhalb der Grenzen
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PCS-Alarme 1
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterAlarm2:
+    alarm:
+      '0': Fehlerstrom außerhalb der Grenzen
+      '1': Kommunikation abnormal
+      '2': Systemeigener Schutz
+      '3': AFCI-Selbstprüfungsschaltungsdefekt
+      '4': Netzunabhängiger Schutz
+      '5': Manueller Betriebsschutz
+      '7': Abnormale Phasenfolge
+      '8': Kurzschluss zu PE
+      '9': Sanftanlauf fehlgeschlagen
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PCS-Alarme 2
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterAlarm3:
-    name: Alarme
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand gegen Erde
+      '2': Temperatur zu hoch
+      '3': Gerätefehler
+      '4': Untertemperatur
+      '5': Interner Schutz
+      '6': Thermisches Durchgehen
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Alarme
   InverterAlarm4:
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Temperatur zu hoch
+      '2': Gerätefehler
+      '3': Übermäßiger Fehlerstrom im Inselbetrieb-Ausgang
+      '4': N-Leiter-Erdungsfehler
+      '5': Fehlerhafte Phasenfolge der Netzverkabelung
+      '6': Fehlerhafte Phasenfolge der Wechselrichterverkabelung
+      '7': Netzphasenverlust
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gateway-Alarme
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterAlarm5:
-    name: Alarme
+    alarm:
+      '0': Softwareversionskonflikt
+      '1': Niedriger Isolationswiderstand gegen Erde
+      '2': Übertemperatur
+      '3': Gerätefehler
+      '4': Ladefehler
+      '5': Geräteschutz
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Alarme
   InverterBatteryChargingPower:
-    name: Batterieladeleistung
     attributes:
       source: ChargeDischargePower > 0
+    name: Batterieladeleistung
   InverterBatteryDischargingPower:
-    name: Batterieentladeleistung
     attributes:
       source: ChargeDischargePower < 0 × -1
+    name: Batterieentladeleistung
   InverterBatterySoC:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Batterie-Ladezustand
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterBatterySoH:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Batterie-Gesundheitszustand
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterFirmwareVersion:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Firmware-Version
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterMaxActivePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Wirkleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterMaxBatteryTemperature:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Batterietemperatur
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterMaxCellVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Zellenspannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterMinBatteryTemperature:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Min. Batterietemperatur
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterMinCellVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Min. Zellenspannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterModel:
-    name: Modell
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Modell
   InverterPCSAlarm:
-    name: PCS-Alarme
     attributes:
       source: Modbus-Register 30605-30606
+      source_range: Modbus-Register {start}-{end}
+    name: PCS-Alarme
   InverterPVDailyGeneration:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Tägliche Produktion
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterPVLifetimeGeneration:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamtproduktion
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterPVPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PV-Leistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Leistungsfaktoranpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Rückmeldung Leistungsfaktoranpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterReactivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Blindleistung Festwertanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterReactivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Rückmeldung Blindleistung Festwertanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterReactivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Rückmeldung Blindleistung Prozentanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterReactivePowerQSAdjustment:
-    name: Blindleistung Q/S-Anpassung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Blindleistung Q/S-Anpassung
   InverterRunningState:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Betriebszustand
     options:
       '0': Standby
@@ -822,103 +1035,104 @@ class:
       '2': Fehler
       '3': Ausgeschaltet
       '7': Umgebungsanomalie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   InverterSerialNumber:
-    name: Seriennummer
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Seriennummer
   InverterStatus:
-    name: Wechselrichter Ein/Aus
     attributes:
       comment: 0:Stopp 1:Start
+    name: Wechselrichter Ein/Aus
   InverterTemperature:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Temperatur
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   LineVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: '{phase} Außenleiterspannung'
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MPTTCount:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: MPPT-Anzahl
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MaxAbsorptionPower:
-    name: Max. Aufnahmeleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Max. Aufnahmeleistung
   MaxActivePower:
-    name: Max. Wirkleistung
     attributes:
       comment: Dies sollte der Basiswert für alle Wirkleistungsanpassungen sein
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Max. Wirkleistung
   MaxActivePowerAdjustment:
-    name: Max. Wirkleistungsanpassung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Max. Wirkleistungsanpassung
   MaxApparentPower:
-    name: Max. Scheinleistung
     attributes:
       comment: Dies sollte der Basiswert für alle Blindleistungsanpassungen sein
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Max. Scheinleistung
   MaxBatteryChargePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Ladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MaxBatteryDischargePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Entladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MaxChargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Ladegrenze
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MaxDischargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Entladegrenze
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MaxRatedApparentPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Max. Nennscheinleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MaxReactivePowerAdjustment:
-    name: Max. Blindleistungsanpassung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Max. Blindleistungsanpassung
   MetricsSensor:
     name: '{name}'
   MetricsService:
     name: Sigenergy-Metriken
   MinActivePowerAdjustment:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Min. Wirkleistungsanpassung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   MinReactivePowerAdjustment:
-    name: Min. Blindleistungsanpassung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Min. Blindleistungsanpassung
   ModbusActiveLocks:
     name: Aktive Modbus-Sperren
   ModbusCacheHits:
     name: Modbus-Cache-Treffer
+  ModbusDevice:
+    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Physikalische Modbus-Lesevorgänge
   ModbusReadErrors:
@@ -950,45 +1164,45 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: '{availability_control_sensor}'
   OutputType:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Ausgangstyp
     options:
       "0": L/N
       "1": L1/L2/L3
       "2": L1/L2/L3/N
       "3": L1/L2/N
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PACKBCUCount:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PACK/BCU-Anzahl
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PCSMaxExportLimit:
+    attributes:
+      comment: "Bereich: [0, 0xFFFFFFFE]. Bei Wert 0xFFFFFFFF ist Register ungültig. In allen anderen Fällen gilt es global."
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PCS Max. Exportgrenze
-    attributes:
-      comment: "Bereich: [0, 0xFFFFFFFE]. Bei Wert 0xFFFFFFFF ist Register ungültig. In allen anderen Fällen gilt es global."
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PCSMaxImportLimit:
-    name: PCS Max. Importgrenze
     attributes:
       comment: "Bereich: [0, 0xFFFFFFFE]. Bei Wert 0xFFFFFFFF ist Register ungültig. In allen anderen Fällen gilt es global."
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: PCS Max. Importgrenze
   PVCurrentSensor:
-    name: Strom
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Strom
   PVInverter:
     name: PV-Wechselrichter
   PVMaxPowerLimit:
-    name: PV Max. Leistungsgrenze
     attributes:
       comment: Wirksam wenn Fern-EMS-Steuerungsmodus (40031) auf Befehlsladung/-entladung eingestellt ist
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: PV Max. Leistungsgrenze
   PVOutputOutputService:
     name: PVOutput Ausgabe-Service hinzufügen
   PVOutputStatusService:
@@ -996,29 +1210,29 @@ class:
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
-    name: PV-String-Anzahl
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: PV-String-Anzahl
   PVStringDailyEnergy:
-    name: Tägliche Produktion
     attributes:
       source: PVStringLifetimeEnergy − PVStringLifetimeEnergy um Mitternacht
+    name: Tägliche Produktion
     name_reset: Setze Tägliche Produktion
   PVStringLifetimeEnergy:
-    name: Gesamtproduktion
     attributes:
       source: Riemann Σ von PVStringPower
+    name: Gesamtproduktion
     name_reset: Setze Gesamtproduktion
   PVStringPower:
-    name: Leistung
     attributes:
       source: PVVoltageSensor × PVCurrentSensor
+    name: Leistung
   PVVoltageSensor:
-    name: Spannung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Spannung
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Nur gültig bei Ausgangstyp L1/L2/L3/N
@@ -1032,10 +1246,10 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Wirkleistung Prozentanpassung Sollwert
   PhaseCurrent:
-    name: Phase {phase} Strom
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Phase {phase} Strom
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "Nur gültig bei Ausgangstyp L1/L2/L3/N. Bereich: [-60,00, 60,00]"
@@ -1049,90 +1263,94 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Blindleistung Festwertanpassung Sollwert
   PhaseVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Spannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantActivePower:
-    name: Wirkleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Wirkleistung
   PlantAlarms:
-    name: Anlagenalarme
     attributes:
       source: Modbus-Register 30280-30281
+      source_range: Modbus-Register {start}-{end}
+    name: Anlagenalarme
   PlantBatterySoC:
-    name: Batterie-Ladezustand
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Batterie-Ladezustand
   PlantBatterySoH:
-    name: Batterie-Gesundheitszustand
     attributes:
       comment: Dieser Wert ist der gewichtete Durchschnitt des Gesundheitszustands aller ESS-Geräte in der Anlage, mit der jeweiligen Nennkapazität als Gewichtung
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Batterie-Gesundheitszustand
   PlantConsumedPower:
-    name: Verbrauchte Leistung
     attributes:
       source: TotalLoadPower
+    name: Verbrauchte Leistung
   PlantDailyChargeEnergy:
-    name: Tägliche Ladeenergie
     attributes:
       source: "Σ von DailyChargeEnergy über alle mit der Anlage verbundenen Wechselrichter"
+    name: Tägliche Ladeenergie
     name_reset: Setze Tägliche Ladeenergie
   PlantDailyDischargeEnergy:
-    name: Tägliche Entladeenergie
     attributes:
       source: "Σ von DailyDischargeEnergy über alle mit der Anlage verbundenen Wechselrichter"
+    name: Tägliche Entladeenergie
     name_reset: Setze Tägliche Entladeenergie
   PlantDailyPVEnergy:
-    name: Tägliche PV-Produktion
     attributes:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy um Mitternacht
+    name: Tägliche PV-Produktion
     name_reset: Setze Tägliche PV-Produktion
   PlantPVPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PV-Leistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantPVTotalGeneration:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte PV-Produktion
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantPhaseActivePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Wirkleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantPhaseReactivePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Blindleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantRatedChargingPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantRatedDischargingPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennentladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantRatedEnergyCapacity:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nenn-Energiekapazität
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantReactivePower:
-    name: Blindleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Blindleistung
   PlantRunningState:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Betriebszustand
     options:
       '0': Standby
@@ -1140,41 +1358,38 @@ class:
       '2': Fehler
       '3': Ausgeschaltet
       '7': Umgebungsanomalie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantStatistics:
     name: Sigenergy-Anlage Statistik
   PlantStatus:
-    name: Anlage Ein/Aus
     attributes:
       comment: 0:Stopp 1:Start
+    name: Anlage Ein/Aus
   PlantTotalExportedEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Exportenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantTotalGeneratorOutputEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Generatorausgangsenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PlantTotalImportedEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Importenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   PowerFactor:
-    name: Leistungsfaktor
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Leistungsfaktor
   PowerFactorAdjustmentTargetValue:
-    name: Zielwert Leistungsfaktoranpassung
     attributes:
       comment: "Bereich: [(-1,0, -0,8) U (0,8, 1,0)]. Netzsensor erforderlich. Gilt global unabhängig vom EMS-Betriebsmodus"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Zielwert Leistungsfaktoranpassung
   PowerPlant:
     name: 'Sigenergy-Anlage'
   ProtocolPublished:
@@ -1182,52 +1397,52 @@ class:
   ProtocolVersion:
     name: Protokollversion
   QSAdjustmentTargetValue:
-    name: Zielwert Q/S-Anpassung
     attributes:
       comment: "Bereich: [-60,0, 60,00]. Gilt global unabhängig vom EMS-Betriebsmodus"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Zielwert Q/S-Anpassung
   RatedActivePower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennwirkleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   RatedBatteryCapacity:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennbatteriekapazität
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   RatedChargingPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   RatedDischargingPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Nennentladeleistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   RatedGridFrequency:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Netz-Nennfrequenz
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   RatedGridVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Netz-Nennspannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReactivePower:
-    name: Blindleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Blindleistung
   ReactivePowerFixedAdjustmentTargetValue:
-    name: Zielwert Blindleistung Festwertanpassung
     attributes:
       comment: "Bereich: [-60,00 * Basiswert, 60,00 * Basiswert]. Gilt global unabhängig vom EMS-Betriebsmodus"
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Zielwert Blindleistung Festwertanpassung
   ReadOnlySensor:
     attributes:
       source: Modbus-Register {address}
@@ -1239,12 +1454,15 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   RemoteEMS:
-    name: Fern-EMS
     attributes:
       comment: Wenn EMS ferngesteuert werden soll, muss dieses Register aktiviert werden. Bei Aktivierung wechselt der EMS-Arbeitsmodus (30003) der Anlage zu RemoteEMS
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Fern-EMS
   RemoteEMSControlMode:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Fern-EMS-Steuerungsmodus
     options:
       '0': PCS-Fernsteuerung
@@ -1254,79 +1472,76 @@ class:
       '4': Befehlsladung (Zuerst Strom aus PV verbrauchen)
       '5': Befehlsentladung (Strom aus PV zuerst ausgeben)
       '6': Befehlsentladung (Strom aus Batterie zuerst ausgeben)
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   RemoteEMSLimit:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{availability_control_sensor}'
   Reserved30073:
-    name: Reserviert
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Reserviert
   Reserved30610:
-    name: Reserviert
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Reserviert
   Reserved40026:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Reserviert
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedAccumulatedExportEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Exportenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedAccumulatedImportEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Importenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedDailyExportEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Tägliche Exportenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedDailyImportEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Tägliche Importenergie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedGridCode:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Netzcode
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedGridPhaseCurrent:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Strom
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedGridPhaseVoltage:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Spannung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedInverterRemoteEMSDispatch:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Fern-EMS-Dispatch
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedPVTotalGenerationToday:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: PV-Gesamterzeugung Heute
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ReservedPVTotalGenerationYesterday:
-    name: PV-Gesamterzeugung Gestern
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: PV-Gesamterzeugung Gestern
   ReservedSensor:
     attributes:
       source: Modbus-Register {address}
@@ -1335,82 +1550,82 @@ class:
   ResettableAccumulationSensor:
     name: '{name}'
   RunningStateSensor:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: '{name}'
     options:
       "0": Standby
       "1": Normal
       "2": Fehler
       "3": Ausgeschaltet
       "7": Umgebungsanomalie
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: '{name}'
   SITotalChargedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Ladeenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalCommonLoadConsumption:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamter Allgemeiner Lastverbrauch
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalDischargedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Entladeenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalEVACChargedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte AC-EV-Ladeenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalEVDCChargedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte DC-EV-Ladeenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalEVDCDischargedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte DC-EV-Entladeenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalExportedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Exportenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalGeneratorOutputEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Generatorausgangsenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalImportedEnergy:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Importenergie
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalSelfPVGeneration:
+    attributes:
+      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte PV-Produktion
-    attributes:
-      comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SITotalThirdPartyPVGeneration:
-    name: Gesamte Drittanbieter-PV-Produktion
     attributes:
       comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Gesamte Drittanbieter-PV-Produktion
   SelectSensor:
     attributes:
       source: Modbus-Register {address}
@@ -1418,61 +1633,63 @@ class:
     name: '{name}'
   SensorGroup:
     name: '{sensors}'
+  Service:
+    name: '{Config} {name}'
   ShutdownTime:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Abschaltzeit
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SmartLoadPower:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Smart Load {smart_load_index} Leistung
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SmartLoadTotalConsumption:
-    name: Smart Load {smart_load_index} Gesamtverbrauch
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Smart Load {smart_load_index} Gesamtverbrauch
   SmartPort:
     name: Sigenergy-Anlage Smart-Port
   Started:
     name: Gestartet
   StartupTime:
-    name: Startzeit
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Startzeit
   StatisticsInterfaceSensor:
     attributes:
       comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: '{name}'
+    name: 'Hybrid-Wechselrichter'
   SwitchSensor:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   SystemTime:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Systemzeit
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   SystemTimeZone:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Systemzeitzone
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ThirdPartyLifetimePVEnergy:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamte Drittanbieter-PV-Produktion
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   ThirdPartyPVPower:
-    name: Drittanbieter-PV-Leistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Drittanbieter-PV-Leistung
   TimePeriodServiceTopics:
     name: '{service}'
   TimestampSensor:
@@ -1481,37 +1698,37 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: '{name}'
   TotalDailyPVEnergy:
-    name: Tägliche Gesamt-PV-Produktion
     attributes:
       source: TotalLifetimePVEnergy − TotalLifetimePVEnergy um Mitternacht
+    name: Tägliche Gesamt-PV-Produktion
     name_reset: Setze Tägliche Gesamt-PV-Produktion
   TotalLifetimePVEnergy:
-    name: Gesamte PV-Produktion
     attributes:
       source: "Σ von PlantPVTotalGeneration und ThirdPartyLifetimePVEnergy"
+    name: Gesamte PV-Produktion
   TotalLoadConsumption:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Gesamtverbrauch
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   TotalLoadDailyConsumption:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
     name: Täglicher Verbrauch
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
   TotalLoadPower:
-    name: Gesamtlastleistung
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+    name: Gesamtlastleistung
   TotalPVPower:
-    name: Gesamte PV-Leistung
     attributes:
       source: PV-Leistung + Drittanbieter-PV-Leistung
+    name: Gesamte PV-Leistung
   WriteOnlySensor:
-    name_on: Einschalten
-    name_off: Ausschalten
     name: '{name}'
+    name_off: Ausschalten
+    name_on: Einschalten
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Der Pfad zur JSON-Konfigurationsdatei (Standard: /etc/sigenergy2mqtt.yaml)'
@@ -1533,8 +1750,32 @@ cli:
     help: "Das Präfix für Home Assistant Unique-IDs. Beispiel: Ein Präfix 'prefix' stellt 'prefix_' den Unique-IDs voran (Standard: sigen). Einmal festgelegt, sollte dies NIE geändert werden, da es bestehende Entitäten in Home Assistant beschädigt."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Vereinfachte Topic-Struktur aktivieren (sigenergy2mqtt/object_id/state) anstelle der vollständigen Home Assistant Topic-Struktur (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: InfluxDB v2-Bucket-Name (Standardwert ist --influxdb-database, falls nicht festgelegt)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'InfluxDB-Datenbank zum Schreiben von Metriken (Standard: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Schreiben von Metriken in InfluxDB aktivieren.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: Liste der auszuschließenden Sensor-IDs (durch Leerzeichen getrennt)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'InfluxDB-Hostname oder IP-Adresse (Standard: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: Liste der einzuschließenden Sensor-IDs (durch Leerzeichen getrennt)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'InfluxDB-Subsystem-Protokollebene. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: InfluxDB-Organisationsname oder -ID
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: InfluxDB-Passwort
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'InfluxDB-Port (Standard: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2-Authentifizierungstoken (bevorzugt v2-APIs, falls angegeben)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: InfluxDB-Benutzername
   SIGENERGY2MQTT_LANGUAGE:
-    help: "Die zu verwendende Sprache für Übersetzungen festlegen. Standard wird vom System ermittelt (z.B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird."
+    help: 'Legen Sie die Sprache für Übersetzungen fest. Der Standardwert wird vom System ermittelt (z. B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
@@ -1655,6 +1896,5 @@ cli:
     help: Sofort nach Veröffentlichung der Discovery beenden. Liest keine Werte von der Modbus-Schnittstelle, außer zur Gerätekonfigurationsprüfung.
   show_version:
     help: Versionsnummer anzeigen, dann sofort beenden.
-
   validate_only:
     help: Konfiguration validieren, dann sofort beenden.

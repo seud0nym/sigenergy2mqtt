@@ -4,18 +4,17 @@ import os
 import sys
 from typing import cast
 
-from sigenergy2mqtt.common import HybridInverter, PVInverter
-from sigenergy2mqtt.devices import Device
-
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from sigenergy2mqtt.common import Protocol, ProtocolApplies
-from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
+from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.config import Config, initialize
+from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
+
+initialize()
 
 
 async def get_sensor_instances(
@@ -73,7 +72,7 @@ async def get_sensor_instances(
     hybrid_pack_bcu_count = PACKBCUCount(plant_index, hybrid_inverter_device_address)
     hybrid_model.set_state("SigenStor EC 12.0 TP")
     hybrid_serial.set_state("CMU123A45BP678")
-    hybrid_firmware.set_state("V100R001C00SPC108B088F")
+    hybrid_firmware.set_state("V100R001C00SPC112B107G")
     hybrid_pv_strings.set_state(16)
     hybrid_output_type.set_state(3)
     hybrid_inverter = Inverter(
@@ -103,7 +102,7 @@ async def get_sensor_instances(
     pv_pack_bcu_count = PACKBCUCount(plant_index, hybrid_inverter_device_address)
     pv_model.set_state("Sigen PV Max 5.0 TP")
     pv_serial.set_state("CMU876A65BP321")
-    pv_firmware.set_state("V100R001C00SPC108B088F")
+    pv_firmware.set_state("V100R001C00SPC112B107G")
     pv_pv_strings.set_state(36)
     pv_output_type.set_state(3)
     pv_inverter = Inverter(

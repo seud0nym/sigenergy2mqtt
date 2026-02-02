@@ -2,30 +2,81 @@ class:
   ACCharger:
     name: Sigenergy AC Charger
   ACChargerAlarm1:
+    alarm:
+      '0': Grid over-voltage
+      '1': Grid under-voltage
+      '2': Overload
+      '3': Short circuit
+      '4': Charging output over-current
+      '5': Leak current out of limit
+      '6': Grounding fault
+      '7': Abnormal phase sequence of grid wiring
+      '8': PEN Fault
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarm 1
   ACChargerAlarm2:
+    alarm:
+      '0': Leak current detection circuit fault
+      '1': Relay stuck
+      '2': Pilot circuit fault
+      '3': Auxiliary power supply module fault
+      '4': Electric lock fault
+      '5': Lamp panel communication fault
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarm 2
   ACChargerAlarm3:
+    alarm:
+      '0': Too high internal temperature
+      '1': Charging cable fault
+      '2': Meter communication fault
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarm 3
   ACChargerAlarms:
-    name: Alarms
     attributes:
       source: Modbus Registers 32012-32014
+      source_range: Modbus Registers {start}-{end}
+    name: Alarms
   ACChargerChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Charging Power
   ACChargerInputBreaker:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Input Breaker
   ACChargerOutputCurrent:
-    name: Output Current
     attributes:
       comment: "Range: [6, smaller of 'AC-Charger Rated Current' and 'AC-Charger Input Breaker Rated Current']"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Output Current
   ACChargerRatedCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Current
   ACChargerRatedPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Power
   ACChargerRatedVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Voltage
   ACChargerRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Running State
     options:
       '0': Initialising
@@ -37,109 +88,270 @@ class:
       '6': Fault
       '7': Error
   ACChargerStatus:
+    attributes:
+      comment: 0:Start 1:Stop
     name: AC Charger Stop/Start
     name_off: Stop
     name_on: Start
-    attributes:
-      comment: 0:Start 1:Stop
   ACChargerTotalEnergyConsumed:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Energy Consumed
   AccumulatedChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Charge Energy
   AccumulatedDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Discharge Energy
   ActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power
   ActivePowerFixedAdjustmentTargetValue:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power Fixed Adjustment Target Value
   ActivePowerPercentageAdjustmentTargetValue:
-    name: Active Power Percentage Adjustment Target Value
     attributes:
       comment: 'Range: [-100.00,100.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Active Power Percentage Adjustment Target Value
   ActivePowerRegulationGradient:
-    name: Active Power Regulation Gradient
     attributes:
       comment: Range:[0,5000]。Percentage of rated power adjusted per second
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Active Power Regulation Gradient
+  Alarm1Sensor:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': System grounding fault
+      '5': PV string over-voltage
+      '6': PV string reversely connected
+      '7': PV string back-filling
+      '8': AFCI fault
+      '9': Grid power outage
+      '10': Grid over-voltage
+      '11': Grid under-voltage
+      '12': Grid over-frequency
+      '13': Grid under-frequency
+      '14': Grid voltage imbalance
+      '15': DC component of output current out of limit
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  Alarm2Sensor:
+    alarm:
+      '0': Leak current out of limit
+      '1': Communication abnormal
+      '2': System internal protection
+      '3': AFCI self-checking circuit fault
+      '4': Off-grid protection
+      '5': Manual operation protection
+      '7': Abnormal phase sequence
+      '8': Short circuit to PE
+      '9': Soft start failure
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  Alarm3Sensor:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Temperature too high
+      '3': Equipment fault
+      '4': Under-temperature
+      '5': Internal protection
+      '6': Thermal runaway
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  Alarm4Sensor:
+    alarm:
+      '0': Software version mismatch
+      '1': Temperature too high
+      '2': Equipment fault
+      '3': Excessive leakage current in off-grid output
+      '4': N line grounding fault
+      '5': Abnormal phase sequence of grid wiring
+      '6': Abnormal phase sequence of inverter wiring
+      '7': Grid phase loss
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  Alarm5Sensor:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': Charging fault
+      '5': Equipment protection
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   Alarm6:
+    alarm:
+      '0': Gateway communication abnormal
+      '1': Meter communication abnormal
+      '2': AC power sensor communication abnormal
+      '6': Hard protection against grid-feed power limit exceeding
+      '8': Generator failure to start
+      '10': CLS fault
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarm 6
   Alarm7:
+    alarm:
+      '0': OVGR fault
+      '1': RPR Fault
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarm 7
+  AlarmCombinedSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   AlarmSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     no_alarm: No Alarm
     unknown_alarm: Unknown (bit{bit}∈{value})
   AvailableBatteryChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Available Charge Energy
   AvailableBatteryDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Available Discharge Energy
   AvailableMaxActivePower:
+    attributes:
+      comment: Feed to the AC terminal. Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Available Max Active Power
-    attributes:
-      comment: Feed to the AC terminal. Count only the running inverters
   AvailableMaxChargingCapacity:
+    attributes:
+      comment: Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Available Max Charging Capacity
-    attributes:
-      comment: Count only the running inverters
   AvailableMaxChargingPower:
+    attributes:
+      comment: Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Available Max Charging Power
-    attributes:
-      comment: Count only the running inverters
   AvailableMaxDischargingCapacity:
-    name: Available Max Discharging Capacity
     attributes:
       comment: Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Available Max Discharging Capacity
   AvailableMaxDischargingPower:
-    name: Available Max Discharging Power
     attributes:
       comment: Absorb from the AC terminal. Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Available Max Discharging Power
   AvailableMaxReactivePower:
-    name: Available Max Reactive Power
     attributes:
       comment: Feed to the AC terminal. Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Available Max Reactive Power
   AvailableMinActivePower:
+    attributes:
+      comment: Absorb from the AC terminal. Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Available Min Active Power
-    attributes:
-      comment: Absorb from the AC terminal. Count only the running inverters
   AvailableMinReactivePower:
-    name: Available Min Reactive Power
     attributes:
       comment: Absorb from the AC terminal. Count only the running inverters
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Available Min Reactive Power
   AverageCellTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Average Cell Temperature
   AverageCellVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Average Cell Voltage
   BatteryChargingPower:
-    name: Battery Charging Power
     attributes:
       source: BatteryPower &gt; 0
+    name: Battery Charging Power
   BatteryDischargingPower:
-    name: Battery Discharging Power
     attributes:
       source: BatteryPower &lt; 0 &times; -1
+    name: Battery Discharging Power
   BatteryPower:
-    name: Battery Power
     attributes:
       comment: 'ESS Power: <0 = discharging >0 = charging'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Battery Power
   ChargeCutOffSoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Charge Cut-Off SoC
   ChargeDischargePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Battery Power
   CurrentControlCommandValue:
-    name: Current Control Command Value
     attributes:
       comment: Use of Remote Output Control in Japan
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Current Control Command Value
   DCCharger:
     name: Sigenergy DC Charger
   DCChargerCurrentChargingCapacity:
+    attributes:
+      comment: Single time
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Current Charging Capacity
-    attributes:
-      comment: Single time
   DCChargerCurrentChargingDuration:
-    name: Current Charging Duration
     attributes:
       comment: Single time
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Current Charging Duration
   DCChargerOutputPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Output Power
   DCChargerRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Running State
     options:
       '0': Idle
@@ -149,24 +361,45 @@ class:
       '4': Fault
       '5': Scheduled
   DCChargerStatus:
+    attributes:
+      comment: 0:Start 1:Stop
     name: DC Charger Stop/Start
     name_off: Stop
     name_on: Start
-    attributes:
-      comment: 0:Start 1:Stop
   DCChargerVehicleBatteryVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Vehicle Battery Voltage
   DCChargerVehicleChargingCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Vehicle Charging Current
   DCChargerVehicleSoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Vehicle SoC
   DailyChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Daily Charge Energy
   DailyDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Daily Discharge Energy
   DischargeCutOffSoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Discharge Cut-Off SoC
   EMSWorkMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: EMS Work Mode
     options:
       '0': Max Self Consumption
@@ -179,90 +412,179 @@ class:
   ESS:
     name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
+    attributes:
+      comment: 'Range: [0.00,100.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Backup SoC
-    attributes:
-      comment: 'Range: [0.00,100.00]'
   ESSChargeCutOffSOC:
+    attributes:
+      comment: 'Range: [0.00,100.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Charge Cut-Off SoC
-    attributes:
-      comment: 'Range: [0.00,100.00]'
   ESSDischargeCutOffSOC:
-    name: Discharge Cut-Off SoC
     attributes:
       comment: 'Range: [0.00,100.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Discharge Cut-Off SoC
   ESSTotalChargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Charge Energy
   ESSTotalDischargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Discharge Energy
   EVDCTotalChargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime DC EV Charge Energy
   EVDCTotalDischargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime DC EV Discharge Energy
   EnphaseCurrent:
-    name: Current
     attributes:
       source: Enphase Envoy API when EnphasePVPower derived
+    name: Current
   EnphaseDailyPVEnergy:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
     name: Daily Production
     name_reset: Set Daily Production
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
   EnphaseFrequency:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
     name: Frequency
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
   EnphaseLifetimePVEnergy:
-    name: Lifetime Production
     attributes:
       source: Enphase Envoy API when EnphasePVPower derived
+    name: Lifetime Production
   EnphasePVPower:
-    name: PV Power
     attributes:
       source: Enphase Envoy API
+    name: PV Power
   EnphasePowerFactor:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
     name: Power Factor
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
   EnphaseReactivePower:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
     name: Reactive Power
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
   EnphaseVoltage:
-    name: Voltage
     attributes:
       source: Enphase Envoy API when EnphasePVPower derived
+    name: Voltage
   GeneralAlarm1:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': System grounding fault
+      '5': PV string over-voltage
+      '6': PV string reversely connected
+      '7': PV string back-filling
+      '8': AFCI fault
+      '9': Grid power outage
+      '10': Grid over-voltage
+      '11': Grid under-voltage
+      '12': Grid over-frequency
+      '13': Grid under-frequency
+      '14': Grid voltage imbalance
+      '15': DC component of output current out of limit
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarms 1
-    attributes:
-      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
   GeneralAlarm2:
+    alarm:
+      '0': Leak current out of limit
+      '1': Communication abnormal
+      '2': System internal protection
+      '3': AFCI self-checking circuit fault
+      '4': Off-grid protection
+      '5': Manual operation protection
+      '7': Abnormal phase sequence
+      '8': Short circuit to PE
+      '9': Soft start failure
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarms 2
-    attributes:
-      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
   GeneralAlarm3:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Temperature too high
+      '3': Equipment fault
+      '4': Under-temperature
+      '5': Internal protection
+      '6': Thermal runaway
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: ESS Alarms
-    attributes:
-      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
   GeneralAlarm4:
+    alarm:
+      '0': Software version mismatch
+      '1': Temperature too high
+      '2': Equipment fault
+      '3': Excessive leakage current in off-grid output
+      '4': N line grounding fault
+      '5': Abnormal phase sequence of grid wiring
+      '6': Abnormal phase sequence of inverter wiring
+      '7': Grid phase loss
+    attributes:
+      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Gateway Alarms
-    attributes:
-      comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
   GeneralAlarm5:
-    name: DC Charger Alarms
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': Charging fault
+      '5': Equipment protection
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: DC Charger Alarms
   GeneralLoadPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: General Load Power
   GeneralPCSAlarm:
-    name: PCS Alarms
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
       source: Modbus Registers 30027-30028
+      source_range: Modbus Registers {start}-{end}
+    name: PCS Alarms
   GridCode:
     name: Sigenergy Plant Grid Code
   GridCodeHVRT:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: High Voltage Ride Through
   GridCodeHVRTMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: HVRT Mode
     options:
       '0': Reactive power compensation current, active zero-current mode
@@ -271,18 +593,31 @@ class:
       '4': Reactive dynamic current, active hold mode
       '5': Reactive power compensation current, active constant-current mode
   GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: 'Range: [0,10.0]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: HVRT Negative Sequence Reactive Power Compensation Factor
-    attributes:
-      comment: 'Range: [0,10.0]'
   GridCodeHVRTReactivePowerCompensationFactor:
-    name: HVRT Reactive Power Compensation Factor
     attributes:
       comment: 'Range: [0,10.0]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: HVRT Reactive Power Compensation Factor
   GridCodeHVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: HVRT Grid Voltage Protection Blocking
   GridCodeLVRT:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Low Voltage Ride Through
   GridCodeLVRTMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: LVRT Mode
     options:
       '0': Reactive power compensation current, active zero-current mode
@@ -291,183 +626,389 @@ class:
       '4': Reactive dynamic current, active zero-current mode
       '5': Reactive power compensation current, active constant-current mode
   GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: 'Range: [0,10.0]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: LVRT Negative Sequence Reactive Power Compensation Factor
-    attributes:
-      comment: 'Range: [0,10.0]'
   GridCodeLVRTReactivePowerCompensationFactor:
-    name: LVRT Reactive Power Compensation Factor
     attributes:
       comment: 'Range: [0,10.0]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: LVRT Reactive Power Compensation Factor
   GridCodeLVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: LVRT Grid Voltage Protection Blocking
   GridCodeOverFrequencyDerating:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Over Frequency Derating
   GridCodeOverFrequencyDeratingCutOffFrequency:
-    name: Over Frequency Derating Cut-Off Frequency
     attributes:
       comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Over Frequency Derating Cut-Off Frequency
   GridCodeOverFrequencyDeratingPowerRampRate:
-    name: Over Frequency Derating Power Ramp Rate
     attributes:
       comment: 'Range: [0,100.0]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Over Frequency Derating Power Ramp Rate
   GridCodeOverFrequencyDeratingTriggerFrequency:
-    name: Over Frequency Derating Trigger Frequency
     attributes:
       comment: Range:[1.0*Fn, 1.2*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Over Frequency Derating Trigger Frequency
   GridCodeRatedFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Frequency
   GridCodeRatedVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Voltage
   GridCodeUnderFrequencyPowerBoost:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Under-Frequency Power Boost
   GridCodeUnderFrequencyPowerBoostCutOffFrequency:
-    name: Under-Frequency Power Boost Cut-Off Frequency
     attributes:
       comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Under-Frequency Power Boost Cut-Off Frequency
   GridCodeUnderFrequencyPowerBoostPowerRampRate:
-    name: Under-Frequency Power Boost Power Ramp Rate
     attributes:
       comment: 'Range: [0,100.0]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Under-Frequency Power Boost Power Ramp Rate
   GridCodeUnderFrequencyPowerBoostTriggerFrequency:
-    name: Under-Frequency Power Boost Trigger Frequency
     attributes:
       comment: Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Under-Frequency Power Boost Trigger Frequency
   GridFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Grid Frequency
   GridMaxExportLimit:
+    attributes:
+      comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Grid Max Export Limit
-    attributes:
-      comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
   GridMaxImportLimit:
-    name: Grid Max Import Limit
     attributes:
       comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Grid Max Import Limit
   GridPhaseActivePower:
-    name: Phase {phase} Active Power
     attributes:
       comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase {phase} Active Power
   GridPhaseReactivePower:
-    name: Phase {phase} Reactive Power
     attributes:
       comment: Data collected from grid sensor at grid to system checkpoint
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase {phase} Reactive Power
   GridSensor:
     name: Sigenergy Plant Grid Sensor
   GridSensorActivePower:
-    name: Active Power
     attributes:
       comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Active Power
   GridSensorDailyExportEnergy:
-    name: Daily Exported Energy
-    name_reset: Set Daily Exported Energy
     attributes:
       source: PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight
+    name: Daily Exported Energy
+    name_reset: Set Daily Exported Energy
   GridSensorDailyImportEnergy:
-    name: Daily Imported Energy
-    name_reset: Set Daily Imported Energy
     attributes:
       source: PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight
+    name: Daily Imported Energy
+    name_reset: Set Daily Imported Energy
   GridSensorExportPower:
-    name: Export Power
     attributes:
       source: GridSensorActivePower &lt; 0 &times; -1
+    name: Export Power
   GridSensorImportPower:
-    name: Import Power
     attributes:
       source: GridSensorActivePower &gt; 0
+    name: Import Power
   GridSensorReactivePower:
-    name: Reactive Power
     attributes:
       comment: Data collected from grid sensor at grid to system checkpoint
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Reactive Power
   GridSensorStatus:
+    attributes:
+      comment: Gateway or meter connection status
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Grid Sensor Status
     options:
       '0': Not Connected
       '1': Connected
-    attributes:
-      comment: Gateway or meter connection status
   GridStatus:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Grid Status
     options:
       '0': On Grid
       '1': Off Grid (auto)
       '2': Off Grid (manual)
-  HybridInverter:
-    name: Hybrid Inverter
   IndependentPhasePowerControl:
-    name: Independent Phase Power Control
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Independent Phase Power Control
+  InfluxDBQueries:
+    name: InfluxDB Queries
+  InfluxDBQueryErrors:
+    name: InfluxDB Query Errors
+  InfluxDBRetries:
+    name: InfluxDB Retries
+  InfluxDBThroughput:
+    name: InfluxDB Throughput
+  InfluxDBWriteErrors:
+    name: InfluxDB Write Errors
+  InfluxDBWriteMax:
+    name: InfluxDB Write Max
+  InfluxDBWriteMean:
+    name: InfluxDB Write Mean
+  InfluxDBWrites:
+    name: InfluxDB Writes
   InsulationResistance:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Insulation Resistance
   Inverter:
     name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power Fixed Value Adjustment
   InverterActivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power Fixed Value Adjustment Feedback
   InverterActivePowerPercentageAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power Percentage Adjustment
   InverterActivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power Percentage Adjustment Feedback
   InverterAlarm1:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': System grounding fault
+      '5': PV string over-voltage
+      '6': PV string reversely connected
+      '7': PV string back-filling
+      '8': AFCI fault
+      '9': Grid power outage
+      '10': Grid over-voltage
+      '11': Grid under-voltage
+      '12': Grid over-frequency
+      '13': Grid under-frequency
+      '14': Grid voltage imbalance
+      '15': DC component of output current out of limit
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarms 1
   InverterAlarm2:
+    alarm:
+      '0': Leak current out of limit
+      '1': Communication abnormal
+      '2': System internal protection
+      '3': AFCI self-checking circuit fault
+      '4': Off-grid protection
+      '5': Manual operation protection
+      '7': Abnormal phase sequence
+      '8': Short circuit to PE
+      '9': Soft start failure
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarms 2
   InverterAlarm3:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Temperature too high
+      '3': Equipment fault
+      '4': Under-temperature
+      '5': Internal protection
+      '6': Thermal runaway
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarms
   InverterAlarm4:
+    alarm:
+      '0': Software version mismatch
+      '1': Temperature too high
+      '2': Equipment fault
+      '3': Excessive leakage current in off-grid output
+      '4': N line grounding fault
+      '5': Abnormal phase sequence of grid wiring
+      '6': Abnormal phase sequence of inverter wiring
+      '7': Grid phase loss
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Gateway Alarms
   InverterAlarm5:
+    alarm:
+      '0': Software version mismatch
+      '1': Low insulation resistance to ground
+      '2': Over-temperature
+      '3': Equipment fault
+      '4': Charging fault
+      '5': Equipment protection
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarms
   InverterBatteryChargingPower:
-    name: Battery Charging Power
     attributes:
       source: ChargeDischargePower &gt; 0
+    name: Battery Charging Power
   InverterBatteryDischargingPower:
-    name: Battery Discharging Power
     attributes:
       source: ChargeDischargePower &lt; 0 &times; -1
+    name: Battery Discharging Power
   InverterBatterySoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Battery SoC
   InverterBatterySoH:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Battery SoH
   InverterFirmwareVersion:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Firmware Version
   InverterMaxActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Active Power
   InverterMaxBatteryTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Battery Temperature
   InverterMaxCellVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Cell Voltage
   InverterMinBatteryTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Battery Temperature
   InverterMinCellVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Cell Voltage
   InverterModel:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Model
   InverterPCSAlarm:
-    name: PCS Alarms
     attributes:
       source: Modbus Registers 30605-30606
+      source_range: Modbus Registers {start}-{end}
+    name: PCS Alarms
   InverterPVDailyGeneration:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Daily Production
   InverterPVLifetimeGeneration:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Production
   InverterPVPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Power
   InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Power Factor Adjustment
   InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Power Factor Adjustment Feedback
   InverterReactivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactive Power Fixed Value Adjustment
   InverterReactivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactive Power Fixed Value Adjustment Feedback
   InverterReactivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactive Power Percentage Adjustment Feedback
   InverterReactivePowerQSAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactive Power Q/S Adjustment
   InverterRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Running State
     options:
       '0': Standby
@@ -476,46 +1017,92 @@ class:
       '3': Power-Off
       '7': Environmental Abnormality
   InverterSerialNumber:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Serial Number
   InverterStatus:
-    name: Inverter Power On/Off
     attributes:
       comment: 0:Stop 1:Start
+    name: Inverter Power On/Off
   InverterTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Temperature
   LineVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: '{phase} Line Voltage'
   MPTTCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: MPTT Count
   MaxAbsorptionPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Absorption Power
   MaxActivePower:
-    name: Max Active Power
     attributes:
       comment: This should be the base value of all active power adjustment actions
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Max Active Power
   MaxActivePowerAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Active Power Adjustment
   MaxApparentPower:
-    name: Max Apparent Power
     attributes:
       comment: This should be the base value of all reactive power adjustment actions
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Max Apparent Power
   MaxBatteryChargePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Charge Power
   MaxBatteryDischargePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Discharge Power
   MaxChargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Charging Limit
   MaxDischargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Discharging Limit
   MaxRatedApparentPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Rated Apparent Power
   MaxReactivePowerAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Reactive Power Adjustment
-  MetricsService:
-    name: Sigenergy Metrics
   MinActivePowerAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Active Power Adjustment
   MinReactivePowerAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Reactive Power Adjustment
   ModbusActiveLocks:
     name: Modbus Active Locks
@@ -541,12 +1128,17 @@ class:
     name: Modbus Write Mean
   ModbusWriteMin:
     name: Modbus Write Min
-  MonitorService:
-    name: Sigenergy Monitor
   MqttOverriddenSensor:
     attributes:
       source: MQTT Override
+  NumericSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   OutputType:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Output Type
     options:
       '0': L/N
@@ -554,23 +1146,33 @@ class:
       '2': L1/L2/L3/N
       '3': L1/L2/N
   PACKBCUCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PACK/BCU Count
   PCSMaxExportLimit:
+    attributes:
+      comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Max Export Limit
-    attributes:
-      comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
   PCSMaxImportLimit:
-    name: PCS Max Import Limit
     attributes:
       comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PCS Max Import Limit
   PVCurrentSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Current
-  PVInverter:
-    name: PV Inverter
   PVMaxPowerLimit:
-    name: PV Max Power Limit
     attributes:
       comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PV Max Power Limit
   PVOutputOutputService:
     name: PVOutput Add Output Service
   PVOutputStatusService:
@@ -578,91 +1180,147 @@ class:
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV String Count
   PVStringDailyEnergy:
-    name: Daily Production
-    name_reset: Set Daily Production
     attributes:
       source: PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight
+    name: Daily Production
+    name_reset: Set Daily Production
   PVStringLifetimeEnergy:
-    name: Lifetime Production
-    name_reset: Set Lifetime Production
     attributes:
       source: Riemann &sum; of PVStringPower
+    name: Lifetime Production
+    name_reset: Set Lifetime Production
   PVStringPower:
-    name: Power
     attributes:
       source: PVVoltageSensor &times; PVCurrentSensor
+    name: Power
   PVVoltageSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Voltage
   PhaseActivePowerFixedAdjustmentTargetValue:
-    name: Phase {phase} Active Power Fixed Adjustment Target Value
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase {phase} Active Power Fixed Adjustment Target Value
   PhaseActivePowerPercentageAdjustmentTargetValue:
-    name: Phase {phase} Active Power Percentage Adjustment Target Value
     attributes:
       comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase {phase} Active Power Percentage Adjustment Target Value
   PhaseCurrent:
-    name: 'Phase {phase} Current'
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase Current
   PhaseQSAdjustmentTargetValue:
-    name: Phase {phase} Q/S Fixed Adjustment Target Value
     attributes:
       comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase {phase} Q/S Fixed Adjustment Target Value
   PhaseReactivePowerFixedAdjustmentTargetValue:
-    name: Phase {phase} Reactive Power Fixed Adjustment Target Value
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase {phase} Reactive Power Fixed Adjustment Target Value
   PhaseVoltage:
-    name: 'Phase {phase} Voltage'
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase Voltage
   PlantActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Active Power
   PlantAlarms:
-    name: Plant Alarms
     attributes:
       source: Modbus Registers 30280-30281
+      source_range: Modbus Registers {start}-{end}
+    name: Plant Alarms
   PlantBatterySoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Battery SoC
   PlantBatterySoH:
-    name: Battery SoH
     attributes:
       comment: This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Battery SoH
   PlantConsumedPower:
-    name: Consumed Power
     attributes:
       source: TotalLoadPower
+    name: Consumed Power
   PlantDailyChargeEnergy:
-    name: Daily Charge Energy
-    name_reset: Set Daily Charge Energy
     attributes:
       source: '&sum; of DailyChargeEnergy across all Inverters associated with the Plant'
+    name: Daily Charge Energy
+    name_reset: Set Daily Charge Energy
   PlantDailyDischargeEnergy:
-    name: Daily Discharge Energy
-    name_reset: Set Daily Discharge Energy
     attributes:
       source: '&sum; of DailyDischargeEnergy across all Inverters associated with the Plant'
+    name: Daily Discharge Energy
+    name_reset: Set Daily Discharge Energy
   PlantDailyPVEnergy:
-    name: Daily PV Production
-    name_reset: Set Daily PV Production
     attributes:
       source: PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight
+    name: Daily PV Production
+    name_reset: Set Daily PV Production
   PlantPVPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Power
   PlantPVTotalGeneration:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime PV Production
   PlantPhaseActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Active Power
   PlantPhaseReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Reactive Power
   PlantRatedChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Charging Power
   PlantRatedDischargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Discharging Power
   PlantRatedEnergyCapacity:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Energy Capacity
   PlantReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactive Power
   PlantRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Running State
     options:
       '0': Standby
@@ -673,21 +1331,35 @@ class:
   PlantStatistics:
     name: Sigenergy Plant Statistics
   PlantStatus:
-    name: Plant Power On/Off
     attributes:
       comment: 0:Stop 1:Start
+    name: Plant Power On/Off
   PlantTotalExportedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Exported Energy
   PlantTotalGeneratorOutputEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Generator Output Energy
   PlantTotalImportedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Imported Energy
   PowerFactor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Power Factor
   PowerFactorAdjustmentTargetValue:
-    name: Power Factor Adjustment Target Value
     attributes:
       comment: 'Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Power Factor Adjustment Target Value
   PowerPlant:
     name: Sigenergy Plant
   ProtocolPublished:
@@ -695,36 +1367,70 @@ class:
   ProtocolVersion:
     name: Protocol Version
   QSAdjustmentTargetValue:
-    name: Q/S Adjustment Target Value
     attributes:
       comment: 'Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Q/S Adjustment Target Value
   RatedActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Active Power
   RatedBatteryCapacity:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Battery Capacity
   RatedChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Charging Power
   RatedDischargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Discharging Power
   RatedGridFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Grid Frequency
   RatedGridVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Rated Grid Voltage
   ReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactive Power
   ReactivePowerFixedAdjustmentTargetValue:
-    name: Reactive Power Fixed Adjustment Target Value
     attributes:
       comment: 'Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Reactive Power Fixed Adjustment Target Value
   ReadOnlySensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  ReadWriteSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   RemoteEMS:
-    name: Remote EMS
     attributes:
       comment: When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Remote EMS
   RemoteEMSControlMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Remote EMS Control Mode
     options:
       '0': PCS remote control
@@ -734,33 +1440,83 @@ class:
       '4': Command Charging (Consume power from the PV first)
       '5': Command Discharging (Output power from PV first)
       '6': Command Discharging (Output power from the battery first)
+  RemoteEMSLimit:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   Reserved30073:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reserved
   Reserved30610:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reserved
   Reserved40026:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reserved
   ReservedAccumulatedExportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Energy Exported
   ReservedAccumulatedImportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Energy Imported
   ReservedDailyExportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Daily Energy Exported
   ReservedDailyImportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Daily Energy Imported
   ReservedGridCode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Grid Code
   ReservedGridPhaseCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Current
   ReservedGridPhaseVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Voltage
   ReservedInverterRemoteEMSDispatch:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Remote EMS Dispatch
   ReservedPVTotalGenerationToday:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Total Generation Today
   ReservedPVTotalGenerationYesterday:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Total Generation Yesterday
+  ReservedSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   RunningStateSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     options:
       '0': Standby
       '1': Normal
@@ -768,94 +1524,163 @@ class:
       '3': Power-Off
       '7': Environmental Abnormality
   SITotalChargedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Charge Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalCommonLoadConsumption:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Common Load Consumption
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalDischargedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Discharge Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalEVACChargedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total AC EV Charge Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalEVDCChargedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total DC EV Charge Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalEVDCDischargedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total DC EV Discharge Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalExportedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Exported Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalGeneratorOutputEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Generator Output Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalImportedEnergy:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Imported Energy
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalSelfPVGeneration:
+    attributes:
+      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total PV Production
-    attributes:
-      comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
   SITotalThirdPartyPVGeneration:
-    name: Total Third-Party PV Production
     attributes:
       comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Total Third-Party PV Production
+  SelectSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   ShutdownTime:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Shutdown Time
   SmartLoadPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Smart Load {smart_load_index} Power
   SmartLoadTotalConsumption:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Smart Load {smart_load_index} Total Consumption
   SmartPort:
     name: Sigenergy Plant Smart-Port
   Started:
     name: Started
   StartupTime:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Startup Time
   StatisticsInterfaceSensor:
     attributes:
       comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  SwitchSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   SystemTime:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: System Time
   SystemTimeZone:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: System Time Zone
   ThirdPartyLifetimePVEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Third-Party PV Production
   ThirdPartyPVPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Third-Party PV Power
+  TimestampSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   TotalDailyPVEnergy:
-    name: Daily Total PV Production
-    name_reset: Set Daily Total PV Production
     attributes:
       source: TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight
+    name: Daily Total PV Production
+    name_reset: Set Daily Total PV Production
   TotalLifetimePVEnergy:
-    name: Lifetime Total PV Production
     attributes:
       source: '&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
+    name: Lifetime Total PV Production
   TotalLoadConsumption:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Lifetime Consumption
   TotalLoadDailyConsumption:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Daily Consumption
   TotalLoadPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Total Load Power
   TotalPVPower:
-    name: Total PV Power
     attributes:
       source: PV Power + Third-Party PV Power
+    name: Total PV Power
   WriteOnlySensor:
-    name_on: Power On
     name_off: Power Off
+    name_on: Power On
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)'
@@ -877,6 +1702,32 @@ cli:
     help: "The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BUCKET:
+    help: InfluxDB v2 bucket name (defaults to --influxdb-database if not set)
+  SIGENERGY2MQTT_INFLUX_DATABASE:
+    help: 'InfluxDB database to write metrics to (default: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_ENABLED:
+    help: Enable writing metrics to InfluxDB.
+  SIGENERGY2MQTT_INFLUX_EXCLUDE:
+    help: List of sensor identifiers to exclude (space separated)
+  SIGENERGY2MQTT_INFLUX_HOST:
+    help: 'InfluxDB hostname or IP address (default: 127.0.0.1)'
+  SIGENERGY2MQTT_INFLUX_INCLUDE:
+    help: List of sensor identifiers to include (space separated)
+  SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
+    help: 'InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_INFLUX_ORG:
+    help: InfluxDB organization name or ID
+  SIGENERGY2MQTT_INFLUX_PASSWORD:
+    help: InfluxDB password
+  SIGENERGY2MQTT_INFLUX_PORT:
+    help: 'InfluxDB port (default: 8086)'
+  SIGENERGY2MQTT_INFLUX_TOKEN:
+    help: InfluxDB v2 authentication token (prefer v2 APIs when supplied)
+  SIGENERGY2MQTT_INFLUX_USERNAME:
+    help: InfluxDB username
+  SIGENERGY2MQTT_LANGUAGE:
+    help: 'Set the language to use for translations. Valid values are: {i18n}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     Alarm1Sensor,
@@ -47,11 +48,11 @@ class OtherSensor(Sensor):
 
 @pytest.fixture
 def modbus_client():
-    client = AsyncMock()
-    client.read_holding_registers.return_value = MagicMock(isError=lambda: False, registers=[100])
-    client.read_input_registers.return_value = MagicMock(isError=lambda: False, registers=[100])
-    client.convert_from_registers.return_value = 100
-    client.convert_to_registers.return_value = [100]
+    client = AsyncMock(spec=ModbusClient)
+    client.read_holding_registers.return_value = MagicMock(isError=lambda: False, registers=[0])
+    client.read_input_registers.return_value = MagicMock(isError=lambda: False, registers=[0])
+    client.convert_from_registers.side_effect = lambda r, t: r[0] if isinstance(r, list) and r else 0
+    client.convert_to_registers.return_value = [0]
     client.write_register.return_value = MagicMock(isError=lambda: False)
     client.write_registers.return_value = MagicMock(isError=lambda: False)
     return client
@@ -256,7 +257,7 @@ class TestSensorTypesCoverage:
             s._update_internal_state = AsyncMock(return_value=True)  # Override for general tests
             s.set_latest_state(100)
             assert await s.get_state(raw=True) == 100
-            assert await s.get_state() == 100.0
+            assert await s.get_state(republish=True) == 100.0
             assert await s.get_state(republish=True) == 100.0
 
     @pytest.mark.asyncio
@@ -532,7 +533,7 @@ class TestAccumulationSensorPersistence:
             source.precision = 2
 
             s = EnergyDailyAccumulationSensor("Daily", "sigenergy_u", "sigenergy_o", source)
-            s._update_state_at_midnight = AsyncMock()
+            s._update_state_at_midnight = MagicMock()
 
             # Simulate date change in values
             yesterday = time.mktime((2023, 1, 1, 0, 0, 0, 0, 0, 0))
@@ -558,9 +559,9 @@ class TestWritableSensorMixinLogic:
     async def test_write_registers_logic(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = self.DummyWritable()
-            modbus_client = AsyncMock()
-            modbus_client.convert_to_registers.return_value = [100]
-            modbus_client.write_register.return_value = MagicMock(isError=lambda: False)
+            modbus_client = MagicMock()
+            modbus_client.write_register = AsyncMock(return_value=MagicMock(isError=lambda: False))
+            modbus_client.convert_to_registers = MagicMock(return_value=[100])
 
             with patch("sigenergy2mqtt.sensors.base.Metrics") as mock_metrics:
                 mock_metrics.modbus_write = AsyncMock()
@@ -617,17 +618,17 @@ class TestSpecializedSensors:
             assert s["max"] == 100.0
 
             s.set_latest_state(50)
-            assert await s.get_state(modbus_client=modbus_client) == 50.0
+            assert await s.get_state(republish=True) == 50.0
 
             from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
 
             with pytest.raises(SanityCheckException):
                 s.set_latest_state(-10)
-            # assert await s.get_state(modbus_client=modbus_client) == 0.0
+            # assert await s.get_state(republish=True) == 0.0
 
             with pytest.raises(SanityCheckException):
                 s.set_latest_state(110)
-            # assert await s.get_state(modbus_client=modbus_client) == 100.0
+            # assert await s.get_state(republish=True) == 100.0
 
             assert await s.value_is_valid(None, 50) is True
             assert await s.value_is_valid(None, -1) is False
@@ -650,13 +651,13 @@ class TestSpecializedSensors:
             s.configure_mqtt_topics("dev1")
 
             s.set_latest_state(1)
-            assert await s.get_state(modbus_client=modbus_client) == "On"
+            assert await s.get_state(republish=True) == "On"
 
             from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
 
             with pytest.raises(SanityCheckException):
                 s.set_latest_state(99)
-            # result = await s.get_state(modbus_client=modbus_client)
+            # result = await s.get_state(republish=True)
             # assert result in ["Unknown Mode: 99", "Unknown Mode: 99.0"]
 
             assert await s.value_is_valid(None, "On") is True
@@ -674,35 +675,35 @@ class TestAlarmSensorsWave4:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm1Sensor("A1", "sigenergy_a1", 0, 1, 30008, Protocol.V2_4)
             s.set_latest_state(1)  # bit 0
-            assert "1001" in await s.get_state(modbus_client=modbus_client)
+            assert "Software version mismatch" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm2_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm2Sensor("A2", "sigenergy_a2", 0, 1, 30009, Protocol.V2_4)
             s.set_latest_state(2)  # bit 1
-            assert "1018" in await s.get_state(modbus_client=modbus_client)
+            assert "Communication abnormal" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm3_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm3Sensor("A3", "sigenergy_a3", 0, 1, 30010, Protocol.V2_4)
             s.set_latest_state(4)  # bit 2
-            assert "2003" in await s.get_state(modbus_client=modbus_client)
+            assert "Temperature too high" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm4_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm4Sensor("A4", "sigenergy_a4", 0, 1, 30011, Protocol.V2_4)
             s.set_latest_state(8)  # bit 3
-            assert "3004" in await s.get_state(modbus_client=modbus_client)
+            assert "Excessive leakage current in off-grid output" in await s.get_state(republish=True)
 
     @pytest.mark.asyncio
     async def test_alarm5_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = Alarm5Sensor("A5", "sigenergy_a5", 0, 1, 30012, Protocol.V2_4)
             s.set_latest_state(1)  # bit 0
-            assert "5101" in await s.get_state(modbus_client=modbus_client)
+            assert "Software version mismatch" in await s.get_state(republish=True)
 
 
 class TestRemainingSensorsWave4:
@@ -711,7 +712,7 @@ class TestRemainingSensorsWave4:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = RunningStateSensor("Running", "sigenergy_run", 0, 1, 30013, Protocol.V2_4)
             s.set_latest_state(1)
-            assert await s.get_state(modbus_client=modbus_client) == "Normal"
+            assert await s.get_state(republish=True) == "Normal"
 
     @pytest.mark.asyncio
     async def test_timestamp_sensor(self, modbus_client):
@@ -719,13 +720,14 @@ class TestRemainingSensorsWave4:
             s = TimestampSensor("TS", "sigenergy_ts", InputType.INPUT, 0, 1, 30014, 10, Protocol.V2_4)
             now = time.time()
             s.set_latest_state(now)
-            state = await s.get_state(modbus_client=modbus_client)
+            state = await s.get_state(republish=True)
             assert "T" in state  # ISO format
 
             s.set_latest_state(0)
-            assert await s.get_state(modbus_client=modbus_client) is None
+            assert await s.get_state(republish=True) == "--"
 
             assert s.state2raw(now) == int(now)
+            assert s.state2raw("--") == 0
             with pytest.raises(ValueError):
                 s.state2raw("invalid")
 
@@ -790,7 +792,7 @@ class TestEdgeCasesWave5:
             s = DerivedSensor(
                 name="Der", unique_id="sigenergy_der_u", object_id="sigenergy_der_o", unit="W", device_class=None, state_class=None, icon=None, gain=1.0, precision=0, data_type=ModbusDataType.UINT16
             )
-            assert asyncio.run(s.get_state()) == 0
+            assert asyncio.run(s.get_state(republish=True)) == 0
 
     def test_readable_sensor_mixin_init(self):
         with pytest.raises(AssertionError, match="Missing required parameter: scan_interval"):
@@ -821,7 +823,7 @@ class TestWave6Booster:
             s1 = Alarm1Sensor("A1", "sigenergy_a1", 0, 1, 30008, Protocol.V2_4)
             for i in range(16):
                 s1.set_latest_state(1 << i)
-                state = await s1.get_state(modbus_client=modbus_client)
+                state = await s1.get_state(republish=True)
                 assert state is not None
                 assert "Unknown" not in state
 
@@ -831,7 +833,7 @@ class TestWave6Booster:
                 if i == 6:
                     continue  # Alarm2 skips bit 6
                 s2.set_latest_state(1 << i)
-                state = await s2.get_state(modbus_client=modbus_client)
+                state = await s2.get_state(republish=True)
                 assert state is not None
                 assert "Unknown" not in state
 
@@ -839,7 +841,7 @@ class TestWave6Booster:
             s3 = Alarm3Sensor("A3", "sigenergy_a3", 0, 1, 30010, Protocol.V2_4)
             for i in range(7):
                 s3.set_latest_state(1 << i)
-                state = await s3.get_state(modbus_client=modbus_client)
+                state = await s3.get_state(republish=True)
                 assert state is not None
                 assert "Unknown" not in state
 
@@ -847,7 +849,7 @@ class TestWave6Booster:
             s4 = Alarm4Sensor("A4", "sigenergy_a4", 0, 1, 30011, Protocol.V2_4)
             for i in range(8):
                 s4.set_latest_state(1 << i)
-                state = await s4.get_state(modbus_client=modbus_client)
+                state = await s4.get_state(republish=True)
                 assert state is not None
                 assert "Unknown" not in state
 
@@ -855,7 +857,7 @@ class TestWave6Booster:
             s5 = Alarm5Sensor("A5", "sigenergy_a5", 0, 1, 30012, Protocol.V2_4)
             for i in range(4):
                 s5.set_latest_state(1 << i)
-                state = await s5.get_state(modbus_client=modbus_client)
+                state = await s5.get_state(republish=True)
                 assert state is not None
                 assert "Unknown" not in state
 
@@ -978,12 +980,12 @@ class TestWave7Booster:
 
             with pytest.raises(SanityCheckException):
                 s.set_latest_state(-5)
-            # assert await s.get_state(modbus_client=modbus_client) == 0.0  # clamped to min(min_tuple)
+            # assert await s.get_state(republish=True) == 0.0  # clamped to min(min_tuple)
 
             # Value > max tuple range
             with pytest.raises(SanityCheckException):
                 s.set_latest_state(105)
-            # assert await s.get_state(modbus_client=modbus_client) == 100.0  # clamped to max(max_tuple)
+            # assert await s.get_state(republish=True) == 100.0  # clamped to max(max_tuple)
 
             # set_value None
             assert await s.set_value(modbus_client, MagicMock(), None, s["command_topic"], MagicMock()) is False
@@ -1003,7 +1005,7 @@ class TestWave7Booster:
 
             a1 = Alarm1Sensor("A1", "sigenergy_a1", 0, 1, 30008, Protocol.V2_4)
             a1.set_latest_state(0)
-            state = await a1.get_state(modbus_client=modbus_client)
+            state = await a1.get_state(republish=True)
             # Should be None or handled comfortably.
 
             # AlarmCombinedSensor truncation logic:
@@ -1015,6 +1017,7 @@ class TestWave7Booster:
             a_mock.count = 1
             a_mock.device_address = 1
             a_mock.protocol_version = Protocol.V2_4
+            a_mock.plant_index = 0
 
             ac = AlarmCombinedSensor("AC", "sigenergy_ac_u", "sigenergy_ac", a_mock)
             # Create a very long alarm string
@@ -1023,7 +1026,7 @@ class TestWave7Booster:
             s_mock.get_state = AsyncMock(return_value="A" * 300)
             ac.add_derived_sensor(s_mock)
 
-            state = await ac.get_state(modbus_client=modbus_client)
+            state = await ac.get_state(republish=True)
             assert len(state) <= 255
 
 
@@ -1044,7 +1047,7 @@ class TestWave8Booster:
                 # Alarm5 has 4 bits. Bit 10 is unknown.
                 for i in range(16):
                     s.set_latest_state(1 << i)
-                    await s.get_state(modbus_client=modbus_client)
+                    await s.get_state(republish=True)
 
                 # Explicitly call decode_alarm_bit with huge number
                 assert s.decode_alarm_bit(99) is None

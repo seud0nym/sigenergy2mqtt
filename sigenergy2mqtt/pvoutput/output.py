@@ -145,28 +145,28 @@ class PVOutputOutputService(Service):
                         matches = False
                 else:
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} to {url=}...")
-                    with requests.get(url, headers=self.request_headers, timeout=10) as response:
-                        limit, remaining, at, reset = self.get_response_headers(response)
-                        if response.status_code == 200:
-                            self.logger.debug(
-                                f"{self.__class__.__name__} Verification attempt #{validate} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s) response={response.text}"
-                            )
-                            v = re.split(r"[,]", response.text)
-                            result["d"] = v[0]
-                            result["e"] = int(v[3]) if Config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
-                            result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
-                            result["ip"] = int(v[10]) if Config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
-                            result["io"] = int(v[11]) if Config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
-                            result["is"] = int(v[12]) if Config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
-                            result["ih"] = int(v[13]) if Config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
-                            result["ep"] = int(v[14]) if Config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
-                            result["eo"] = int(v[15]) if Config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
-                            result["es"] = int(v[16]) if Config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
-                            result["eh"] = int(v[17]) if Config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
-                            matches = True
-                        else:
-                            self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
-                            matches = False
+                    response = await asyncio.to_thread(requests.get, url, headers=self.request_headers, timeout=10)
+                    limit, remaining, at, reset = self.get_response_headers(response)
+                    if response.status_code == 200:
+                        self.logger.debug(
+                            f"{self.__class__.__name__} Verification attempt #{validate} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s) response={response.text}"
+                        )
+                        v = re.split(r"[,]", response.text)
+                        result["d"] = v[0]
+                        result["e"] = int(v[3]) if Config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
+                        result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
+                        result["ip"] = int(v[10]) if Config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
+                        result["io"] = int(v[11]) if Config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
+                        result["is"] = int(v[12]) if Config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
+                        result["ih"] = int(v[13]) if Config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
+                        result["ep"] = int(v[14]) if Config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
+                        result["eo"] = int(v[15]) if Config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
+                        result["es"] = int(v[16]) if Config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
+                        result["eh"] = int(v[17]) if Config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
+                        matches = True
+                    else:
+                        self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
+                        matches = False
                 if matches:
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                         if topic._value_key in payload and topic._value_key in result:
@@ -232,9 +232,14 @@ class PVOutputOutputService(Service):
                                 for topic in self._service_topics.values():
                                     topic.reset()
                     last = now
-                    sleep: float = min(next - now, 1)  # Only sleep for a maximum of 1 second so that changes to self.online are handled more quickly
+                    sleep: float = min(next - now, 1)
                     if sleep > 0:
-                        await asyncio.sleep(sleep)
+                        task = asyncio.create_task(asyncio.sleep(sleep))
+                        self.sleeper_task = task
+                        try:
+                            await task
+                        finally:
+                            self.sleeper_task = None
                 except asyncio.CancelledError:
                     self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
                 except asyncio.TimeoutError:

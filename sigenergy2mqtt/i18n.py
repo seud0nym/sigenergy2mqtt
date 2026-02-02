@@ -23,14 +23,23 @@ class Translator:
         """Return a list of available language codes (cached)."""
         if self._available_translations is None:
             self._available_translations = sorted([f.stem for f in self._translations_dir.glob("*.yaml")])
+            # Add 'zh' as an alias for 'zh-Hans' if it doesn't already exist and zh-Hans does
+            if "zh-Hans" in self._available_translations and "zh" not in self._available_translations:
+                self._available_translations.append("zh")
+                self._available_translations.sort()
         return self._available_translations
 
     def load(self, language: str):
         if self._language == language and self._translations:
             return
 
+        # Map 'zh' to 'zh-Hans' if necessary
+        load_lang = language
+        if language == "zh" and not (self._translations_dir / "zh.yaml").exists():
+            load_lang = "zh-Hans"
+
         self._language = language
-        self._translations = self._load_file(language)
+        self._translations = self._load_file(load_lang)
         if language != DEFAULT_LANGUAGE:
             self._fallback_translations = self._load_file(DEFAULT_LANGUAGE)
         else:
@@ -56,7 +65,12 @@ class Translator:
         if language in self._cache:
             return self._cache[language]
 
-        file_path = self._translations_dir / f"{language}.yaml"
+        # Map 'zh' to 'zh-Hans' if 'zh' file doesn't exist but 'zh-Hans' does
+        load_lang = language
+        if language == "zh" and not (self._translations_dir / "zh.yaml").exists() and (self._translations_dir / "zh-Hans.yaml").exists():
+            load_lang = "zh-Hans"
+
+        file_path = self._translations_dir / f"{load_lang}.yaml"
         if not file_path.exists():
             if language != DEFAULT_LANGUAGE:
                 logging.warning(f"Translation file not found: {file_path}")
@@ -117,10 +131,12 @@ def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) 
         logging.warning(f"{key} Failed to translate! Using {default=}")
 
     try:
-        return translation.format(**kwargs)
-    except KeyError as e:
-        logging.warning(f"{key} Translation formatting failed: missing key {e}")
-        return translation
+        # Use simple string replacement instead of .format() to avoid issues with {braces}
+        # which are common in alarm translations
+        result = translation
+        for k, v in kwargs.items():
+            result = result.replace(f"{{{k}}}", str(v))
+        return result
     except Exception as e:
         logging.warning(f"{key} Translation formatting failed: {e}")
         return translation
@@ -148,16 +164,16 @@ def get_default_language() -> str:
         sys_lang, _ = locale.getlocale()
         if sys_lang:
             lang = sys_lang.split("_")[0].lower()
-            if lang in available:
-                return lang
-    except Exception:
-        pass
-
-    try:
-        # Fallback to getdefaultlocale() if getlocale() didn't work
-        sys_lang, _ = locale.getdefaultlocale()
-        if sys_lang:
-            lang = sys_lang.split("_")[0].lower()
+            if lang == "zh":
+                # Special handling for Chinese to prefer zh-Hans if available
+                if "zh-Hans" in available:
+                    return "zh-Hans"
+                if "zh-hans" in available:
+                    return "zh-hans"
+                if "zh-Hant" in available:
+                    return "zh-Hant"
+                if "zh-hant" in available:
+                    return "zh-hant"
             if lang in available:
                 return lang
     except Exception:
@@ -168,6 +184,15 @@ def get_default_language() -> str:
     if lang_env:
         # Handle formats like en_US.UTF-8 or en_US:en
         lang = lang_env.split("_")[0].split(".")[0].split(":")[0].lower()
+        if lang == "zh":
+            if "zh-Hans" in available:
+                return "zh-Hans"
+            if "zh-hans" in available:
+                return "zh-hans"
+            if "zh-Hant" in available:
+                return "zh-Hant"
+            if "zh-hant" in available:
+                return "zh-hant"
         if lang in available:
             return lang
 

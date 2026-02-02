@@ -227,9 +227,9 @@ async def test_service_seconds_until_upload_full_path():
         patch("sigenergy2mqtt.config.Config.pvoutput.testing", False),
     ):
         resp = MagicMock()
-        resp.__enter__.return_value.status_code = 200
-        resp.__enter__.return_value.text = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,5;Don;1"
-        resp.__enter__.return_value.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 3600)}
+        resp.status_code = 200
+        resp.text = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,5;Don;1"
+        resp.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 3600)}
         mock_get.return_value = resp
 
         sec, next_t = await svc.seconds_until_status_upload()

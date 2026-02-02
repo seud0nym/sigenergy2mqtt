@@ -165,6 +165,7 @@ async def test_schedule_day_change_resets_topics():
 @pytest.mark.asyncio
 async def test_schedule_peak_power_logging(caplog):
     """Test peak power logging during schedule."""
+    caplog.set_level(logging.DEBUG)
     svc = make_output_service()
     svc.online = asyncio.Future()
 

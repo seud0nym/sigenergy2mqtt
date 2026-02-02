@@ -55,14 +55,14 @@ def clear_sensor_registries():
 @pytest.mark.parametrize(
     "sensor_class,bit,expected",
     [
-        (Alarm1Sensor, 0, "1001: Software version mismatch"),
-        (Alarm1Sensor, 15, "1016: DC component of output current out of limit"),
-        (Alarm2Sensor, 0, "1017: Leak current out of limit"),
-        (Alarm2Sensor, 9, "1026: Soft start failure"),
-        (Alarm3Sensor, 0, "2001: Software version mismatch"),
-        (Alarm3Sensor, 6, "2009: Thermal runaway"),
-        (Alarm4Sensor, 0, "3001: Software version mismatch"),
-        (Alarm5Sensor, 0, "5101: Software version mismatch"),
+        (Alarm1Sensor, 0, "Software version mismatch"),
+        (Alarm1Sensor, 15, "DC component of output current out of limit"),
+        (Alarm2Sensor, 0, "Leak current out of limit"),
+        (Alarm2Sensor, 9, "Soft start failure"),
+        (Alarm3Sensor, 0, "Software version mismatch"),
+        (Alarm3Sensor, 6, "Thermal runaway"),
+        (Alarm4Sensor, 0, "Software version mismatch"),
+        (Alarm5Sensor, 0, "Software version mismatch"),
     ],
 )
 def test_base_alarms(sensor_class, bit, expected):
@@ -73,9 +73,9 @@ def test_base_alarms(sensor_class, bit, expected):
 @pytest.mark.parametrize(
     "sensor_class,bit,expected",
     [
-        (ACChargerAlarm1, 0, "5001_1: Grid over-voltage"),
-        (ACChargerAlarm2, 1, "5002_2: Relay stuck"),
-        (ACChargerAlarm3, 0, "5003: Too high internal temperature"),
+        (ACChargerAlarm1, 0, "Grid over-voltage"),
+        (ACChargerAlarm2, 1, "Relay stuck"),
+        (ACChargerAlarm3, 0, "Too high internal temperature"),
     ],
 )
 def test_ac_charger_alarms(sensor_class, bit, expected):

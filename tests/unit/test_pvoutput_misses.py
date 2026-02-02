@@ -125,9 +125,9 @@ async def test_service_remaining_misses(caplog):
 
     with patch("sigenergy2mqtt.pvoutput.service.Config.pvoutput.api_key", "k"), patch("sigenergy2mqtt.pvoutput.service.Config.pvoutput.system_id", "s"), patch("requests.get") as mock_get:
         resp = MagicMock()
-        resp.__enter__.return_value.status_code = 200
-        resp.__enter__.return_value.text = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,5;Don;1"
-        resp.__enter__.return_value.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 3600)}
+        resp.status_code = 200
+        resp.text = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,5;Don;1"
+        resp.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 3600)}
         mock_get.return_value = resp
 
         Service._interval = 0
@@ -138,9 +138,9 @@ async def test_service_remaining_misses(caplog):
     Service._interval_updated = None
     with patch("requests.get") as mock_get2:
         resp2 = MagicMock()
-        resp2.__enter__.return_value.status_code = 200
-        resp2.__enter__.return_value.text = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,5;Not;0"
-        resp2.__enter__.return_value.headers = resp.headers
+        resp2.status_code = 200
+        resp2.text = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,5;Not;0"
+        resp2.headers = resp.headers
         mock_get2.return_value = resp2
 
         Service._donator = True

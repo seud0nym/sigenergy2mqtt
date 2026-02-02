@@ -664,4 +664,118 @@ pvoutput:
         end: 21:00
         days: 
           - All
+# influxdb
+#   added: 2026.1.30
+#   default: false
+#   description:  Configuration for sending the sensor data to InfluxDB. Both
+#                 InfluxDB v2 (token/org/bucket) and v1 (username/password,
+#                 retention-policy) authentication modes are supported; if a
+#                 `token` is supplied the v2 API will be used.
+influxdb:
+  # enabled
+  #   default: false
+  #   description: If true, sigenergy2mqtt will publish the sensor data to InfluxDB.
+  enabled: false
+  # host
+  #   default: 127.0.0.1
+  #   description: The hostname or IP address of your InfluxDB database.
+  host: 127.0.0.1
+  # port
+  #   default: 8086
+  #   description: The listening port of the InfluxDB database. The default is 8086.
+  port: 8086
+  # username
+  #   default: ""
+  #   description: The username for your InfluxDB database.
+  username: ""
+  # password
+  #   default: ""
+  #   description: The password for your InfluxDB database.
+  password: ""
+  # database
+  #   default: sigenergy
+  #   description: The name of the database to use. The default is sigenergy.
+  database: sigenergy
+  # org
+  #   default: ""
+  #   description: The InfluxDB v2 organization name or ID. If not specified,
+  #                the v1 API will be used.
+  org: ""
+  # token
+  #   default: ""
+  #   description: The InfluxDB v2 authentication token. If supplied, v2 APIs
+  #                (client or HTTP) will be used in preference to v1.
+  token: ""
+  # bucket
+  #   default: ""
+  #   description: The InfluxDB v2 bucket name. If not specified, the value of
+  #                'database' will be used as the v2 bucket name.
+  bucket: ""
+  # include
+  #   default: [ ]
+  #   description: A list of sensors to include when publishing to InfluxDB, 
+  #                using either the full or partial entity id or sensor class 
+  #                name, or a regular expression to be matched against the 
+  #                entity id or sensor class name.
+  #                If not specified, all sensors will be included.
+  include: []
+  # exclude
+  #   default: [ ]
+  #   description: A list of sensors to include when publishing to InfluxDB, 
+  #                using either the full or partial entity id or sensor class 
+  #                name, or a regular expression to be matched against the 
+  #                entity id or sensor class name.
+  #                If not specified, no sensors will be excluded.
+  exclude: []
+  # log-level
+  #   default: WARNING  
+  #   description:  The InfluxDB interface logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: CRITICAL
+  # write-timeout
+  #   added: 2026.1.31
+  #   default: 30.0
+  #   description: The timeout for write operations to InfluxDB, in seconds.
+  write-timeout: 30.0
+  # read-timeout
+  #   added: 2026.1.31
+  #   default: 120.0
+  #   description: The timeout for query and sync operations, in seconds.
+  read-timeout: 120.0
+  # batch-size
+  #   added: 2026.1.31
+  #   default: 100
+  #   description: The maximum number of records to buffer before flushing to InfluxDB.
+  batch-size: 100
+  # flush-interval
+  #   added: 2026.1.31
+  #   default: 1.0
+  #   description: The maximum interval (in seconds) between buffer flushes.
+  flush-interval: 1.0
+  # query-interval
+  #   added: 2026.1.31
+  #   default: 0.1
+  #   description: The minimum interval (in seconds) between subsequent queries (rate limiting).
+  query-interval: 0.1
+  # max-retries
+  #   added: 2026.1.31
+  #   default: 3
+  #   description: The maximum number of retry attempts for failed operations.
+  max-retries: 3
+  # pool-connections
+  #   added: 2026.1.31
+  #   default: 100
+  #   description: The number of connections to cache in the pool.
+  pool-connections: 100
+  # pool-maxsize
+  #   added: 2026.1.31
+  #   default: 100
+  #   description: The maximum number of connections to allow in the pool.
+  pool-maxsize: 100
+  # max-sync-workers
+  #   added: 2026.1.31
+  #   default: 4
+  #   description: The maximum number of parallel sync operations.
+  max-sync-workers: 4
+
 

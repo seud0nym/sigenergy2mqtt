@@ -54,6 +54,7 @@ async def mock_modbus_server():
         await server_task
     except asyncio.CancelledError:
         pass
+    await asyncio.sleep(0.1)
 
 
 @pytest.fixture(autouse=True)
