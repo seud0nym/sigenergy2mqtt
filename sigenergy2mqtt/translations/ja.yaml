@@ -2,10 +2,6 @@ class:
   ACCharger:
     name: Sigenergy AC充電器
   ACChargerAlarm1:
-    name: アラーム1
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
     alarm:
       '0': 系統過電圧
       '1': 系統低電圧
@@ -16,11 +12,11 @@ class:
       '6': 接地故障
       '7': 系統配線の位相順序異常
       '8': PEN故障
-  ACChargerAlarm2:
-    name: アラーム2
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: アラーム1
+  ACChargerAlarm2:
     alarm:
       '0': 漏電検出回路故障
       '1': リレー固着
@@ -28,51 +24,59 @@ class:
       '3': 補助電源モジュール故障
       '4': 電気錠故障
       '5': ランプパネル通信故障
-  ACChargerAlarm3:
-    name: アラーム3
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: アラーム2
+  ACChargerAlarm3:
     alarm:
       '0': 内部温度過高
       '1': 充電ケーブル故障
       '2': メーター通信故障
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: アラーム3
   ACChargerAlarms:
-    name: アラーム
     attributes:
       source: Modbusレジスタ 32012-32014
+      source_range: Modbusレジスタ {start}-{end}
+    name: アラーム
   ACChargerChargingPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 充電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ACChargerInputBreaker:
-    name: 入力ブレーカー
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 入力ブレーカー
   ACChargerOutputCurrent:
-    name: 出力電流
     attributes:
       comment: "範囲：[6, 'AC充電器定格電流'と'AC充電器入力ブレーカー定格電流'の小さい方]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 出力電流
   ACChargerRatedCurrent:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格電流
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ACChargerRatedPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ACChargerRatedVoltage:
-    name: 定格電圧
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 定格電圧
   ACChargerRunningState:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 運転状態
     options:
       "0": 初期化中
@@ -83,58 +87,51 @@ class:
       "5": 充電中
       "6": 故障
       "7": エラー
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ACChargerStatus:
-    name: AC充電器 開始/停止
     attributes:
       comment: 0:開始 1:停止
+    name: AC充電器 開始/停止
     name_off: 停止
     name_on: 開始
   ACChargerTotalEnergyConsumed:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 合計消費電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AccumulatedChargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計充電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AccumulatedDischargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計放電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ActivePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 有効電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ActivePowerFixedAdjustmentTargetValue:
-    name: 有効電力固定調整目標値
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 有効電力固定調整目標値
   ActivePowerPercentageAdjustmentTargetValue:
-    name: 有効電力パーセンテージ調整目標値
     attributes:
       comment: "範囲：[-100.00, 100.00]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 有効電力パーセンテージ調整目標値
   ActivePowerRegulationGradient:
-    name: 有効電力調整勾配
     attributes:
       comment: "範囲：[0, 5000]。毎秒調整される定格電力の割合"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 有効電力調整勾配
   Alarm1Sensor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: '{name}'
-    alarm: &id001
+    alarm:
       '0': ソフトウェアバージョン不一致
       '1': 絶縁抵抗低下
       '2': 過温度
@@ -151,12 +148,12 @@ class:
       '13': 系統低周波数
       '14': 系統電圧不均衡
       '15': 出力電流のDC成分制限超過
-  Alarm2Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
-    alarm: &id002
+  Alarm2Sensor:
+    alarm:
       '0': 漏電電流制限超過
       '1': 通信異常
       '2': システム内部保護
@@ -166,12 +163,12 @@ class:
       '7': 位相順序異常
       '8': PEへの短絡
       '9': ソフトスタート失敗
-  Alarm3Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
-    alarm: &id003
+  Alarm3Sensor:
+    alarm:
       '0': ソフトウェアバージョン不一致
       '1': 対地絶縁抵抗低下
       '2': 温度過高
@@ -179,12 +176,12 @@ class:
       '4': 温度過低
       '5': 内部保護
       '6': 熱暴走
-  Alarm4Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
-    alarm: &id004
+  Alarm4Sensor:
+    alarm:
       '0': ソフトウェアバージョン不一致
       '1': 温度過高
       '2': 機器故障
@@ -193,23 +190,23 @@ class:
       '5': 系統配線の位相順序異常
       '6': インバーター配線の位相順序異常
       '7': 系統相欠け
-  Alarm5Sensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
-    alarm: &id005
+  Alarm5Sensor:
+    alarm:
       '0': ソフトウェアバージョン不一致
       '1': 対地絶縁抵抗低下
       '2': 過温度
       '3': 機器故障
       '4': 充電故障
       '5': 機器保護
-  Alarm6:
-    name: アラーム6
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: '{name}'
+  Alarm6:
     alarm:
       '0': ゲートウェイ通信異常
       '1': メーター通信異常
@@ -217,141 +214,151 @@ class:
       '6': 系統給電制限超過ハード保護
       '8': 発電機起動失敗
       '10': CLS故障
-  Alarm7:
-    name: アラーム7
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: アラーム6
+  Alarm7:
     alarm:
       '0': OVGR故障
       '1': RPR故障
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: アラーム7
   AlarmCombinedSensor:
-    name: '{name}'
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 'ハイブリッドインバーター'
   AlarmSensor:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: '{name}'
     no_alarm: アラームなし
     unknown_alarm: 不明 (bit{bit}∈{value})
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: '{name}'
   AvailableBatteryChargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 利用可能充電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AvailableBatteryDischargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 利用可能放電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AvailableMaxActivePower:
+    attributes:
+      comment: AC端子への供給。稼働中のインバーターのみをカウント
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 利用可能最大有効電力
-    attributes:
-      comment: AC端子への供給。稼働中のインバーターのみをカウント
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AvailableMaxChargingCapacity:
+    attributes:
+      comment: 稼働中のインバーターのみをカウント
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 利用可能最大充電容量
-    attributes:
-      comment: 稼働中のインバーターのみをカウント
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AvailableMaxChargingPower:
+    attributes:
+      comment: 稼働中のインバーターのみをカウント
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 利用可能最大充電電力
-    attributes:
-      comment: 稼働中のインバーターのみをカウント
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AvailableMaxDischargingCapacity:
-    name: 利用可能最大放電容量
     attributes:
       comment: 稼働中のインバーターのみをカウント
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 利用可能最大放電容量
   AvailableMaxDischargingPower:
-    name: 利用可能最大放電電力
     attributes:
       comment: AC端子からの吸収。稼働中のインバーターのみをカウント
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 利用可能最大放電電力
   AvailableMaxReactivePower:
-    name: 利用可能最大無効電力
     attributes:
       comment: AC端子への供給。稼働中のインバーターのみをカウント
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 利用可能最大無効電力
   AvailableMinActivePower:
+    attributes:
+      comment: AC端子からの吸収。稼働中のインバーターのみをカウント
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 利用可能最小有効電力
-    attributes:
-      comment: AC端子からの吸収。稼働中のインバーターのみをカウント
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AvailableMinReactivePower:
-    name: 利用可能最小無効電力
     attributes:
       comment: AC端子からの吸収。稼働中のインバーターのみをカウント
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 利用可能最小無効電力
   AverageCellTemperature:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 平均セル温度
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   AverageCellVoltage:
-    name: 平均セル電圧
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 平均セル電圧
   BatteryChargingPower:
-    name: バッテリー充電電力
     attributes:
       source: BatteryPower > 0
+    name: バッテリー充電電力
   BatteryDischargingPower:
-    name: バッテリー放電電力
     attributes:
       source: BatteryPower < 0 × -1
+    name: バッテリー放電電力
   BatteryPower:
-    name: バッテリー電力
     attributes:
       comment: "ESS電力：<0 = 放電、>0 = 充電"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-  ChargeCutOffSoC:
-    name: 充電カットオフ率
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-  ChargeDischargePower:
     name: バッテリー電力
+  ChargeCutOffSoC:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 充電カットオフ率
+  ChargeDischargePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: バッテリー電力
   CurrentControlCommandValue:
-    name: 現在の制御コマンド値
     attributes:
       comment: 日本でのリモート出力制御の使用
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 現在の制御コマンド値
   DCCharger:
     name: Sigenergy DC充電器
   DCChargerCurrentChargingCapacity:
+    attributes:
+      comment: 単回
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 現在の充電容量
-    attributes:
-      comment: 単回
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   DCChargerCurrentChargingDuration:
-    name: 現在の充電時間
     attributes:
       comment: 単回
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 現在の充電時間
   DCChargerOutputPower:
-    name: 出力電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 出力電力
   DCChargerRunningState:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 運転状態
     options:
       "0": アイドル
@@ -360,46 +367,48 @@ class:
       "3": 充電中
       "4": 故障
       "5": 予約済み
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   DCChargerStatus:
-    name: DC充電器 開始/停止
     attributes:
       comment: 0:開始 1:停止
+    name: DC充電器 開始/停止
     name_off: 停止
     name_on: 開始
   DCChargerVehicleBatteryVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 車両バッテリー電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   DCChargerVehicleChargingCurrent:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 車両充電電流
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   DCChargerVehicleSoC:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 車両充電率
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   DailyChargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 日次充電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   DailyDischargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 日次放電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
+  Device:
+    name: '{Config} {name}'
   DischargeCutOffSoC:
-    name: 放電カットオフ率
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 放電カットオフ率
   EMSWorkMode:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: EMS動作モード
     options:
       "0": 最大自家消費
@@ -409,49 +418,46 @@ class:
       "6": VPPスケジューリング
       "7": リモートEMS
       "9": 時間ベース制御
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ESS:
     name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
+    attributes:
+      comment: "範囲：[0.00, 100.00]"
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: バックアップ充電率
-    attributes:
-      comment: "範囲：[0.00, 100.00]"
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ESSChargeCutOffSOC:
+    attributes:
+      comment: "範囲：[0.00, 100.00]"
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 充電カットオフ率
-    attributes:
-      comment: "範囲：[0.00, 100.00]"
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ESSDischargeCutOffSOC:
-    name: 放電カットオフ率
     attributes:
       comment: "範囲：[0.00, 100.00]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 放電カットオフ率
   ESSTotalChargedEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計充電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ESSTotalDischargedEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計放電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   EVDCTotalChargedEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: DC EV累計充電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   EVDCTotalDischargedEnergy:
-    name: DC EV累計放電電力量
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: DC EV累計放電電力量
   EnergyDailyAccumulationSensor:
     name: '{name}'
     name_reset: '{name}を設定'
@@ -459,91 +465,141 @@ class:
     name: '{name}'
     name_reset: '{name}を設定'
   EnphaseCurrent:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
     name: 電流
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
   EnphaseDailyPVEnergy:
-    name: 日次発電量
     attributes:
       source: EnphasePVPower導出時のEnphase Envoy API
+    name: 日次発電量
     name_reset: 日次発電量を設定
   EnphaseFrequency:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
     name: 周波数
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
   EnphaseLifetimePVEnergy:
-    name: 累計発電量
     attributes:
       source: EnphasePVPower導出時のEnphase Envoy API
+    name: 累計発電量
   EnphasePVPower:
-    name: PV電力
     attributes:
       source: Enphase Envoy API
+    name: PV電力
   EnphasePowerFactor:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
     name: 力率
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
   EnphaseReactivePower:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
     name: 無効電力
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
   EnphaseVoltage:
-    name: 電圧
     attributes:
       source: EnphasePVPower導出時のEnphase Envoy API
+    name: 電圧
   GeneralAlarm1:
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 絶縁抵抗低下
+      '2': 過温度
+      '3': 機器故障
+      '4': システム接地故障
+      '5': PVストリング過電圧
+      '6': PVストリング逆接続
+      '7': PVストリング逆流
+      '8': AFCI故障
+      '9': 系統停電
+      '10': 系統過電圧
+      '11': 系統低電圧
+      '12': 系統過周波数
+      '13': 系統低周波数
+      '14': 系統電圧不均衡
+      '15': 出力電流のDC成分制限超過
+    attributes:
+      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム1
-    attributes:
-      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id001
   GeneralAlarm2:
+    alarm:
+      '0': 漏電電流制限超過
+      '1': 通信異常
+      '2': システム内部保護
+      '3': AFCI自己診断回路故障
+      '4': 系統分離保護
+      '5': 手動操作保護
+      '7': 位相順序異常
+      '8': PEへの短絡
+      '9': ソフトスタート失敗
+    attributes:
+      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム2
-    attributes:
-      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id002
   GeneralAlarm3:
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 対地絶縁抵抗低下
+      '2': 温度過高
+      '3': 機器故障
+      '4': 温度過低
+      '5': 内部保護
+      '6': 熱暴走
+    attributes:
+      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: ESSアラーム
-    attributes:
-      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id003
   GeneralAlarm4:
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 温度過高
+      '2': 機器故障
+      '3': 系統分離出力での過大漏電電流
+      '4': N線接地故障
+      '5': 系統配線の位相順序異常
+      '6': インバーター配線の位相順序異常
+      '7': 系統相欠け
+    attributes:
+      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: ゲートウェイアラーム
-    attributes:
-      comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id004
   GeneralAlarm5:
-    name: DC充電器アラーム
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 対地絶縁抵抗低下
+      '2': 過温度
+      '3': 機器故障
+      '4': 充電故障
+      '5': 機器保護
     attributes:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    alarm: *id005
+    name: DC充電器アラーム
   GeneralLoadPower:
-    name: 一般負荷電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 一般負荷電力
   GeneralPCSAlarm:
-    name: PCSアラーム
     attributes:
       comment: ハイブリッドインバーターにアラームがある場合、このアラームがそれに応じて設定されます
       source: Modbusレジスタ 30027-30028
+      source_range: Modbusレジスタ {start}-{end}
+    name: PCSアラーム
   GridCode:
     name: Sigenergyシステム 系統規程
   GridCodeHVRT:
-    name: 高電圧ライドスルー
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 高電圧ライドスルー
   GridCodeHVRTMode:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: HVRTモード
     options:
       '0': 無効電力補償電流、アクティブゼロ電流モード
@@ -551,32 +607,32 @@ class:
       '3': 定電流モード
       '4': 無効動的電流、アクティブホールドモード
       '5': 無効電力補償電流、アクティブ定電流モード
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "範囲：[0, 10.0]"
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: HVRT逆相無効電力補償係数
-    attributes:
-      comment: "範囲：[0, 10.0]"
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeHVRTReactivePowerCompensationFactor:
-    name: HVRT無効電力補償係数
     attributes:
       comment: "範囲：[0, 10.0]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: HVRT無効電力補償係数
   GridCodeHVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: HVRT系統電圧保護ブロッキング
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeLVRT:
-    name: 低電圧ライドスルー
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 低電圧ライドスルー
   GridCodeLVRTMode:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: LVRTモード
     options:
       '0': 無効電力補償電流、アクティブゼロ電流モード
@@ -584,99 +640,96 @@ class:
       '3': 定電流モード
       '4': 無効動的電流、アクティブゼロ電流モード
       '5': 無効電力補償電流、アクティブ定電流モード
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "範囲：[0, 10.0]"
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: LVRT逆相無効電力補償係数
-    attributes:
-      comment: "範囲：[0, 10.0]"
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeLVRTReactivePowerCompensationFactor:
-    name: LVRT無効電力補償係数
     attributes:
       comment: "範囲：[0, 10.0]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: LVRT無効電力補償係数
   GridCodeLVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: LVRT系統電圧保護ブロッキング
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeOverFrequencyDerating:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 過周波数デレーティング
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeOverFrequencyDeratingCutOffFrequency:
+    attributes:
+      comment: "範囲：[1.0*Fn, 1.2*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 過周波数デレーティングカットオフ周波数
-    attributes:
-      comment: "範囲：[1.0*Fn, 1.2*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeOverFrequencyDeratingPowerRampRate:
-    name: 過周波数デレーティング電力ランプレート
     attributes:
       comment: "範囲：[0, 100.0]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 過周波数デレーティング電力ランプレート
   GridCodeOverFrequencyDeratingTriggerFrequency:
-    name: 過周波数デレーティングトリガー周波数
     attributes:
       comment: "範囲：[1.0*Fn, 1.2*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 過周波数デレーティングトリガー周波数
   GridCodeRatedFrequency:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格周波数
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeRatedVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridCodeUnderFrequencyPowerBoost:
-    name: 低周波数電力ブースト
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 低周波数電力ブースト
   GridCodeUnderFrequencyPowerBoostCutOffFrequency:
-    name: 低周波数電力ブーストカットオフ周波数
     attributes:
       comment: "範囲：[0.8*Fn, 1.0*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 低周波数電力ブーストカットオフ周波数
   GridCodeUnderFrequencyPowerBoostPowerRampRate:
-    name: 低周波数電力ブースト電力ランプレート
     attributes:
       comment: "範囲：[0, 100.0]"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 低周波数電力ブースト電力ランプレート
   GridCodeUnderFrequencyPowerBoostTriggerFrequency:
-    name: 低周波数電力ブーストトリガー周波数
     attributes:
       comment: "範囲：[0.8*Fn, 1.0*Fn] 参照：[系統規程] 定格周波数（レジスタ30276）"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 低周波数電力ブーストトリガー周波数
   GridFrequency:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 系統周波数
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridMaxExportLimit:
+    attributes:
+      comment: 系統センサーが必要。EMS動作モードに関係なくグローバルに有効
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 系統最大輸出制限
-    attributes:
-      comment: 系統センサーが必要。EMS動作モードに関係なくグローバルに有効
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   GridMaxImportLimit:
-    name: 系統最大輸入制限
     attributes:
       comment: 系統センサーが必要。EMS動作モードに関係なくグローバルに有効
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 系統最大輸入制限
   GridPhaseActivePower:
     attributes:
       comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
@@ -692,61 +745,61 @@ class:
   GridSensor:
     name: Sigenergyシステム 系統センサー
   GridSensorActivePower:
-    name: 有効電力
     attributes:
       comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 有効電力
   GridSensorDailyExportEnergy:
-    name: 日次売電電力量
     attributes:
       source: PlantTotalExportedEnergy − 深夜0時のPlantTotalExportedEnergy
+    name: 日次売電電力量
     name_reset: 日次売電電力量を設定
   GridSensorDailyImportEnergy:
-    name: 日次購入電力量
     attributes:
       source: PlantTotalImportedEnergy − 深夜0時のPlantTotalImportedEnergy
+    name: 日次購入電力量
     name_reset: 日次購入電力量を設定
   GridSensorExportPower:
-    name: 売電電力
     attributes:
       source: GridSensorActivePower < 0 × -1
+    name: 売電電力
   GridSensorImportPower:
-    name: 購入電力
     attributes:
       source: GridSensorActivePower > 0
+    name: 購入電力
   GridSensorReactivePower:
-    name: 無効電力
     attributes:
       comment: 系統センサーで系統からシステムへのチェックポイントで収集されたデータ
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 無効電力
   GridSensorStatus:
-    name: 系統センサー状態
-    options:
-      "0": 未接続
-      "1": 接続済み
     attributes:
       comment: ゲートウェイまたはメーターの接続状態
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 系統センサー状態
+    options:
+      "0": 未接続
+      "1": 接続済み
   GridStatus:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 系統状態
     options:
       "0": 系統連系
       "1": オフグリッド（自動）
       "2": オフグリッド（手動）
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   HybridInverter:
     name: ハイブリッドインバーター
   IndependentPhasePowerControl:
-    name: 独立相電力制御
     attributes:
       comment: 出力タイプがL1/L2/L3/Nの場合のみ有効。独立相制御を有効にするには、このパラメータを有効にする必要があります
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 独立相電力制御
   InfluxDBQueries:
     name: InfluxDB クエリ
   InfluxDBQueryErrors:
@@ -763,166 +816,218 @@ class:
     name: InfluxDB 書き込み平均レイテンシ
   InfluxDBWrites:
     name: InfluxDB 書き込み
+  InfluxService:
+    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
   InsulationResistance:
-    name: 絶縁抵抗
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 絶縁抵抗
   Inverter:
     name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 有効電力固定値調整
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterActivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 有効電力固定値調整フィードバック
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterActivePowerPercentageAdjustment:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 有効電力パーセンテージ調整
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterActivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 有効電力パーセンテージ調整フィードバック
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterAlarm1:
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 絶縁抵抗低下
+      '2': 過温度
+      '3': 機器故障
+      '4': システム接地故障
+      '5': PVストリング過電圧
+      '6': PVストリング逆接続
+      '7': PVストリング逆流
+      '8': AFCI故障
+      '9': 系統停電
+      '10': 系統過電圧
+      '11': 系統低電圧
+      '12': 系統過周波数
+      '13': 系統低周波数
+      '14': 系統電圧不均衡
+      '15': 出力電流のDC成分制限超過
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム1
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id001
   InverterAlarm2:
+    alarm:
+      '0': 漏電電流制限超過
+      '1': 通信異常
+      '2': システム内部保護
+      '3': AFCI自己診断回路故障
+      '4': 系統分離保護
+      '5': 手動操作保護
+      '7': 位相順序異常
+      '8': PEへの短絡
+      '9': ソフトスタート失敗
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム2
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id002
   InverterAlarm3:
-    name: アラーム
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 対地絶縁抵抗低下
+      '2': 温度過高
+      '3': 機器故障
+      '4': 温度過低
+      '5': 内部保護
+      '6': 熱暴走
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    alarm: *id003
+    name: アラーム
   InverterAlarm4:
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 温度過高
+      '2': 機器故障
+      '3': 系統分離出力での過大漏電電流
+      '4': N線接地故障
+      '5': 系統配線の位相順序異常
+      '6': インバーター配線の位相順序異常
+      '7': 系統相欠け
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: ゲートウェイアラーム
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    alarm: *id004
   InverterAlarm5:
-    name: アラーム
+    alarm:
+      '0': ソフトウェアバージョン不一致
+      '1': 対地絶縁抵抗低下
+      '2': 過温度
+      '3': 機器故障
+      '4': 充電故障
+      '5': 機器保護
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    alarm: *id005
+    name: アラーム
   InverterBatteryChargingPower:
-    name: バッテリー充電電力
     attributes:
       source: ChargeDischargePower > 0
+    name: バッテリー充電電力
   InverterBatteryDischargingPower:
-    name: バッテリー放電電力
     attributes:
       source: ChargeDischargePower < 0 × -1
+    name: バッテリー放電電力
   InverterBatterySoC:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: バッテリー充電率
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterBatterySoH:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: バッテリー健全度
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterFirmwareVersion:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: ファームウェアバージョン
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterMaxActivePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最大有効電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterMaxBatteryTemperature:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最高バッテリー温度
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterMaxCellVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最高セル電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterMinBatteryTemperature:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最低バッテリー温度
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterMinCellVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最低セル電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterModel:
-    name: モデル
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: モデル
   InverterPCSAlarm:
-    name: PCSアラーム
     attributes:
       source: Modbusレジスタ 30605-30606
+      source_range: Modbusレジスタ {start}-{end}
+    name: PCSアラーム
   InverterPVDailyGeneration:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 日次発電量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterPVLifetimeGeneration:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計発電量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterPVPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PV電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 力率調整
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 力率調整フィードバック
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterReactivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 無効電力固定値調整
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterReactivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 無効電力固定値調整フィードバック
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterReactivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 無効電力パーセンテージ調整フィードバック
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterReactivePowerQSAdjustment:
-    name: 無効電力Q/S調整
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 無効電力Q/S調整
   InverterRunningState:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 運転状態
     options:
       '0': スタンバイ
@@ -930,103 +1035,104 @@ class:
       '2': 故障
       '3': 電源オフ
       '7': 環境異常
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   InverterSerialNumber:
-    name: シリアル番号
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: シリアル番号
   InverterStatus:
-    name: インバーター電源オン/オフ
     attributes:
       comment: 0:停止 1:開始
+    name: インバーター電源オン/オフ
   InverterTemperature:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 温度
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   LineVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: '{phase} 線間電圧'
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MPTTCount:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: MPPT数
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MaxAbsorptionPower:
-    name: 最大吸収電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 最大吸収電力
   MaxActivePower:
-    name: 最大有効電力
     attributes:
       comment: これはすべての有効電力調整アクションの基準値であるべきです
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 最大有効電力
   MaxActivePowerAdjustment:
-    name: 最大有効電力調整
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 最大有効電力調整
   MaxApparentPower:
-    name: 最大皮相電力
     attributes:
       comment: これはすべての無効電力調整アクションの基準値であるべきです
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 最大皮相電力
   MaxBatteryChargePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最大充電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MaxBatteryDischargePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最大放電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MaxChargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最大充電制限
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MaxDischargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最大放電制限
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MaxRatedApparentPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最大定格皮相電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MaxReactivePowerAdjustment:
-    name: 最大無効電力調整
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 最大無効電力調整
   MetricsSensor:
     name: '{name}'
   MetricsService:
     name: Sigenergyメトリクス
   MinActivePowerAdjustment:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 最小有効電力調整
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   MinReactivePowerAdjustment:
-    name: 最小無効電力調整
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 最小無効電力調整
   ModbusActiveLocks:
     name: Modbusアクティブロック
   ModbusCacheHits:
     name: Modbusキャッシュヒット
+  ModbusDevice:
+    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Modbus物理読み取り
   ModbusReadErrors:
@@ -1058,45 +1164,45 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: '{availability_control_sensor}'
   OutputType:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 出力タイプ
     options:
       "0": L/N
       "1": L1/L2/L3
       "2": L1/L2/L3/N
       "3": L1/L2/N
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PACKBCUCount:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PACK/BCU数
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PCSMaxExportLimit:
+    attributes:
+      comment: "範囲：[0, 0xFFFFFFFE]。値が0xFFFFFFFFの場合、レジスタは無効。その他の場合、グローバルに有効。"
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PCS最大輸出制限
-    attributes:
-      comment: "範囲：[0, 0xFFFFFFFE]。値が0xFFFFFFFFの場合、レジスタは無効。その他の場合、グローバルに有効。"
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PCSMaxImportLimit:
-    name: PCS最大輸入制限
     attributes:
       comment: "範囲：[0, 0xFFFFFFFE]。値が0xFFFFFFFFの場合、レジスタは無効。その他の場合、グローバルに有効。"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: PCS最大輸入制限
   PVCurrentSensor:
-    name: 電流
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 電流
   PVInverter:
     name: PVインバータ
   PVMaxPowerLimit:
-    name: PV最大電力制限
     attributes:
       comment: リモートEMS制御モード（40031）がコマンド充放電に設定されている場合に有効
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: PV最大電力制限
   PVOutputOutputService:
     name: PVOutput出力サービス追加
   PVOutputStatusService:
@@ -1104,29 +1210,29 @@ class:
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
-    name: PVストリング数
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: PVストリング数
   PVStringDailyEnergy:
-    name: 日次発電量
     attributes:
       source: PVStringLifetimeEnergy − 深夜0時のPVStringLifetimeEnergy
+    name: 日次発電量
     name_reset: 日次発電量を設定
   PVStringLifetimeEnergy:
-    name: 累計発電量
     attributes:
       source: PVStringPowerのリーマン和
+    name: 累計発電量
     name_reset: 累計発電量を設定
   PVStringPower:
-    name: 電力
     attributes:
       source: PVVoltageSensor × PVCurrentSensor
+    name: 電力
   PVVoltageSensor:
-    name: 電圧
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 電圧
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 出力タイプがL1/L2/L3/Nの場合のみ有効
@@ -1140,10 +1246,10 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 有効電力パーセンテージ調整目標値
   PhaseCurrent:
-    name: フェーズ{phase} 電流
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: フェーズ{phase} 電流
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "出力タイプがL1/L2/L3/Nの場合のみ有効。範囲：[-60.00, 60.00]"
@@ -1157,90 +1263,94 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 無効電力固定調整目標値
   PhaseVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantActivePower:
-    name: 有効電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 有効電力
   PlantAlarms:
-    name: 発電所アラーム
     attributes:
       source: Modbusレジスタ 30280-30281
+      source_range: Modbusレジスタ {start}-{end}
+    name: 発電所アラーム
   PlantBatterySoC:
-    name: バッテリー充電率
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: バッテリー充電率
   PlantBatterySoH:
-    name: バッテリー健全度
     attributes:
       comment: この値は、発電所内のすべてのESS機器の健全度の加重平均であり、各定格容量を重みとしています
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: バッテリー健全度
   PlantConsumedPower:
-    name: 消費電力
     attributes:
       source: TotalLoadPower
+    name: 消費電力
   PlantDailyChargeEnergy:
-    name: 日次充電電力量
     attributes:
       source: "発電所に関連付けられたすべてのインバーターのDailyChargeEnergyの合計"
+    name: 日次充電電力量
     name_reset: 日次充電電力量を設定
   PlantDailyDischargeEnergy:
-    name: 日次放電電力量
     attributes:
       source: "発電所に関連付けられたすべてのインバーターのDailyDischargeEnergyの合計"
+    name: 日次放電電力量
     name_reset: 日次放電電力量を設定
   PlantDailyPVEnergy:
-    name: 日次PV発電量
     attributes:
       source: PlantLifetimePVEnergy − 深夜0時のPlantLifetimePVEnergy
+    name: 日次PV発電量
     name_reset: 日次PV発電量を設定
   PlantPVPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PV電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantPVTotalGeneration:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計PV発電量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantPhaseActivePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 有効電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantPhaseReactivePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 無効電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantRatedChargingPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格充電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantRatedDischargingPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格放電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantRatedEnergyCapacity:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格エネルギー容量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantReactivePower:
-    name: 無効電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 無効電力
   PlantRunningState:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 運転状態
     options:
       '0': スタンバイ
@@ -1248,41 +1358,38 @@ class:
       '2': 故障
       '3': 電源オフ
       '7': 環境異常
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantStatistics:
     name: Sigenergyシステム 統計
   PlantStatus:
-    name: 発電所 電源オン/オフ
     attributes:
       comment: 0:停止 1:開始
+    name: 発電所 電源オン/オフ
   PlantTotalExportedEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計売電電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantTotalGeneratorOutputEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 発電機累計出力電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PlantTotalImportedEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計購入電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   PowerFactor:
-    name: 力率
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 力率
   PowerFactorAdjustmentTargetValue:
-    name: 力率調整目標値
     attributes:
       comment: "範囲：[(-1.0, -0.8) U (0.8, 1.0)]。系統センサーが必要。EMS動作モードに関係なくグローバルに有効"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 力率調整目標値
   PowerPlant:
     name: 'Sigenergy システム'
   ProtocolPublished:
@@ -1290,52 +1397,52 @@ class:
   ProtocolVersion:
     name: プロトコルバージョン
   QSAdjustmentTargetValue:
-    name: Q/S調整目標値
     attributes:
       comment: "範囲：[-60.0, 60.00]。EMS動作モードに関係なくグローバルに有効"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: Q/S調整目標値
   RatedActivePower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格有効電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   RatedBatteryCapacity:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格バッテリー容量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   RatedChargingPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格充電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   RatedDischargingPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 定格放電電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   RatedGridFrequency:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 系統定格周波数
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   RatedGridVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 系統定格電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReactivePower:
-    name: 無効電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 無効電力
   ReactivePowerFixedAdjustmentTargetValue:
-    name: 無効電力固定調整目標値
     attributes:
       comment: "範囲：[-60.00 * 基準値, 60.00 * 基準値]。EMS動作モードに関係なくグローバルに有効"
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 無効電力固定調整目標値
   ReadOnlySensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1347,13 +1454,15 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
   RemoteEMS:
-    name: リモートEMS
     attributes:
-      comment: 
-        EMSをリモートで制御する必要がある場合、このレジスタを有効にする必要があります。有効にすると、発電所のEMS作業モード（30003）がRemoteEMSに切り替わります
+      comment: EMSをリモートで制御する必要がある場合、このレジスタを有効にする必要があります。有効にすると、発電所のEMS作業モード（30003）がRemoteEMSに切り替わります
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: リモートEMS
   RemoteEMSControlMode:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: リモートEMS制御モード
     options:
       '0': PCSリモート制御
@@ -1363,79 +1472,76 @@ class:
       '4': コマンド充電（PVからの電力を優先消費）
       '5': コマンド放電（PVからの電力を優先出力）
       '6': コマンド放電（バッテリーからの電力を優先出力）
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   RemoteEMSLimit:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{availability_control_sensor}'
   Reserved30073:
-    name: 予約
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 予約
   Reserved30610:
-    name: 予約
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 予約
   Reserved40026:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 予約
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedAccumulatedExportEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計輸出電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedAccumulatedImportEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計輸入電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedDailyExportEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 日次輸出電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedDailyImportEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 日次輸入電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedGridCode:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 系統規程
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedGridPhaseCurrent:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 電流
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedGridPhaseVoltage:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 電圧
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedInverterRemoteEMSDispatch:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: リモートEMSディスパッチ
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedPVTotalGenerationToday:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 本日のPV合計発電量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ReservedPVTotalGenerationYesterday:
-    name: 昨日のPV合計発電量
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 昨日のPV合計発電量
   ReservedSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1444,93 +1550,82 @@ class:
   ResettableAccumulationSensor:
     name: '{name}'
   RunningStateSensor:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: '{name}'
     options:
       "0": スタンバイ
       "1": 正常
       "2": 故障
       "3": 電源オフ
       "7": 環境異常
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: '{name}'
   SITotalChargedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 合計充電電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalCommonLoadConsumption:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 共通負荷合計消費電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalDischargedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 合計放電電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalEVACChargedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: AC EV合計充電電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalEVDCChargedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: DC EV合計充電電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalEVDCDischargedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: DC EV合計放電電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalExportedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 合計売電電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalGeneratorOutputEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 発電機合計出力電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalImportedEnergy:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 合計購入電力量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalSelfPVGeneration:
+    attributes:
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: PV合計発電量
-    attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SITotalThirdPartyPVGeneration:
-    name: サードパーティPV合計発電量
     attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: サードパーティPV合計発電量
   SelectSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1538,62 +1633,63 @@ class:
     name: '{name}'
   SensorGroup:
     name: '{sensors}'
+  Service:
+    name: '{Config} {name}'
   ShutdownTime:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 停止時間
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SmartLoadPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: スマートロード {smart_load_index} 電力
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SmartLoadTotalConsumption:
-    name: スマートロード {smart_load_index} 合計消費量
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: スマートロード {smart_load_index} 合計消費量
   SmartPort:
     name: Sigenergyシステム スマートポート
   Started:
     name: 起動済み
   StartupTime:
-    name: 起動時間
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 起動時間
   StatisticsInterfaceSensor:
     attributes:
-      comment: 
-        新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
+      comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: '{name}'
+    name: 'ハイブリッドインバーター'
   SwitchSensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
   SystemTime:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: システム時間
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   SystemTimeZone:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: システムタイムゾーン
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ThirdPartyLifetimePVEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: サードパーティPV累計発電量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   ThirdPartyPVPower:
-    name: サードパーティPV電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: サードパーティPV電力
   TimePeriodServiceTopics:
     name: '{service}'
   TimestampSensor:
@@ -1602,37 +1698,37 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: '{name}'
   TotalDailyPVEnergy:
-    name: 日次合計PV発電量
     attributes:
       source: TotalLifetimePVEnergy − 深夜0時のTotalLifetimePVEnergy
+    name: 日次合計PV発電量
     name_reset: 日次合計PV発電量を設定
   TotalLifetimePVEnergy:
-    name: 累計合計PV発電量
     attributes:
       source: "PlantPVTotalGenerationとThirdPartyLifetimePVEnergyの合計"
+    name: 累計合計PV発電量
   TotalLoadConsumption:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 累計消費電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   TotalLoadDailyConsumption:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
     name: 日次消費電力量
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
   TotalLoadPower:
-    name: 合計負荷電力
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: 合計負荷電力
   TotalPVPower:
-    name: 合計PV電力
     attributes:
       source: PV電力 + サードパーティPV電力
+    name: 合計PV電力
   WriteOnlySensor:
-    name_on: 電源オン
-    name_off: 電源オフ
     name: '{name}'
+    name_off: 電源オフ
+    name_on: 電源オン
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'JSON設定ファイルへのパス（デフォルト: /etc/sigenergy2mqtt.yaml）'
@@ -1651,8 +1747,7 @@ cli:
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Home AssistantエンティティIDのプレフィックス（デフォルト: sigen）'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home
-      Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
+    help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1668,8 +1763,7 @@ cli:
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 含めるセンサー識別子のリスト（スペース区切り）
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
-    help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは
-      WARNING（警告、エラー、致命的な障害）です。'
+    help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは WARNING（警告、エラー、致命的な障害）です。'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB 組織名または ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:

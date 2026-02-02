@@ -2,10 +2,6 @@ class:
   ACCharger:
     name: Sigenergy AC 충전기
   ACChargerAlarm1:
-    name: 알람 1
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
     alarm:
       '0': 계통 과전압
       '1': 계통 저전압
@@ -16,11 +12,11 @@ class:
       '6': 접지 고장
       '7': 계통 배선 위상 순서 이상
       '8': PEN 고장
-  ACChargerAlarm2:
-    name: 알람 2
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 알람 1
+  ACChargerAlarm2:
     alarm:
       '0': 누전 감지 회로 고장
       '1': 릴레이 고착
@@ -28,51 +24,59 @@ class:
       '3': 보조 전원 모듈 고장
       '4': 전기 잠금 고장
       '5': 램프 패널 통신 고장
-  ACChargerAlarm3:
-    name: 알람 3
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 알람 2
+  ACChargerAlarm3:
     alarm:
       '0': 내부 온도 과고
       '1': 충전 케이블 고장
       '2': 계량기 통신 고장
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 알람 3
   ACChargerAlarms:
-    name: 알람
     attributes:
       source: Modbus 레지스터 32012-32014
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 알람
   ACChargerChargingPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 충전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ACChargerInputBreaker:
-    name: 입력 차단기
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 입력 차단기
   ACChargerOutputCurrent:
-    name: 출력 전류
     attributes:
       comment: "범위: [6, 'AC 충전기 정격 전류'와 'AC 충전기 입력 차단기 정격 전류' 중 작은 값]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 출력 전류
   ACChargerRatedCurrent:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 전류
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ACChargerRatedPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ACChargerRatedVoltage:
-    name: 정격 전압
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 정격 전압
   ACChargerRunningState:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 운전 상태
     options:
       "0": 초기화 중
@@ -83,58 +87,51 @@ class:
       "5": 충전 중
       "6": 고장
       "7": 오류
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ACChargerStatus:
-    name: AC 충전기 시작/정지
     attributes:
       comment: 0:시작 1:정지
+    name: AC 충전기 시작/정지
     name_off: 정지
     name_on: 시작
   ACChargerTotalEnergyConsumed:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 총 소비 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AccumulatedChargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 충전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AccumulatedDischargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 방전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ActivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 유효 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ActivePowerFixedAdjustmentTargetValue:
-    name: 유효 전력 고정 조정 목표값
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 유효 전력 고정 조정 목표값
   ActivePowerPercentageAdjustmentTargetValue:
-    name: 유효 전력 백분율 조정 목표값
     attributes:
       comment: "범위: [-100.00, 100.00]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 유효 전력 백분율 조정 목표값
   ActivePowerRegulationGradient:
-    name: 유효 전력 조정 기울기
     attributes:
       comment: "범위: [0, 5000]. 초당 조정되는 정격 전력 비율"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 유효 전력 조정 기울기
   Alarm1Sensor:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: '{name}'
-    alarm: &id001
+    alarm:
       '0': 소프트웨어 버전 불일치
       '1': 낮은 절연 저항
       '2': 과온도
@@ -151,12 +148,12 @@ class:
       '13': 계통 저주파수
       '14': 계통 전압 불평형
       '15': 출력 전류 DC 성분 한계 초과
-  Alarm2Sensor:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
-    alarm: &id002
+  Alarm2Sensor:
+    alarm:
       '0': 누설 전류 한계 초과
       '1': 통신 이상
       '2': 시스템 내부 보호
@@ -166,12 +163,12 @@ class:
       '7': 위상 순서 이상
       '8': PE 단락
       '9': 소프트 스타트 실패
-  Alarm3Sensor:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
-    alarm: &id003
+  Alarm3Sensor:
+    alarm:
       '0': 소프트웨어 버전 불일치
       '1': 대지 절연 저항 저하
       '2': 온도 과고
@@ -179,12 +176,12 @@ class:
       '4': 저온도
       '5': 내부 보호
       '6': 열폭주
-  Alarm4Sensor:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
-    alarm: &id004
+  Alarm4Sensor:
+    alarm:
       '0': 소프트웨어 버전 불일치
       '1': 온도 과고
       '2': 장비 고장
@@ -193,23 +190,23 @@ class:
       '5': 계통 배선 위상 순서 이상
       '6': 인버터 배선 위상 순서 이상
       '7': 계통 상 결상
-  Alarm5Sensor:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
-    alarm: &id005
+  Alarm5Sensor:
+    alarm:
       '0': 소프트웨어 버전 불일치
       '1': 대지 절연 저항 저하
       '2': 과온도
       '3': 장비 고장
       '4': 충전 고장
       '5': 장비 보호
-  Alarm6:
-    name: 알람 6
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: '{name}'
+  Alarm6:
     alarm:
       '0': 게이트웨이 통신 이상
       '1': 계량기 통신 이상
@@ -217,141 +214,151 @@ class:
       '6': 계통 급전 제한 초과 하드웨어 보호
       '8': 발전기 시동 실패
       '10': CLS 고장
-  Alarm7:
-    name: 알람 7
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 알람 6
+  Alarm7:
     alarm:
       '0': OVGR 고장
       '1': RPR 고장
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 알람 7
   AlarmCombinedSensor:
-    name: '{name}'
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: '하이브리드 인버터'
   AlarmSensor:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: '{name}'
     no_alarm: 알람 없음
     unknown_alarm: 알 수 없음 (bit{bit}∈{value})
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: '{name}'
   AvailableBatteryChargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 사용 가능 충전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AvailableBatteryDischargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 사용 가능 방전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AvailableMaxActivePower:
+    attributes:
+      comment: AC 단자로 공급. 가동 중인 인버터만 계수
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 사용 가능 최대 유효 전력
-    attributes:
-      comment: AC 단자로 공급. 가동 중인 인버터만 계수
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AvailableMaxChargingCapacity:
+    attributes:
+      comment: 가동 중인 인버터만 계수
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 사용 가능 최대 충전 용량
-    attributes:
-      comment: 가동 중인 인버터만 계수
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AvailableMaxChargingPower:
+    attributes:
+      comment: 가동 중인 인버터만 계수
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 사용 가능 최대 충전 전력
-    attributes:
-      comment: 가동 중인 인버터만 계수
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AvailableMaxDischargingCapacity:
-    name: 사용 가능 최대 방전 용량
     attributes:
       comment: 가동 중인 인버터만 계수
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 사용 가능 최대 방전 용량
   AvailableMaxDischargingPower:
-    name: 사용 가능 최대 방전 전력
     attributes:
       comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 사용 가능 최대 방전 전력
   AvailableMaxReactivePower:
-    name: 사용 가능 최대 무효 전력
     attributes:
       comment: AC 단자로 공급. 가동 중인 인버터만 계수
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 사용 가능 최대 무효 전력
   AvailableMinActivePower:
+    attributes:
+      comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 사용 가능 최소 유효 전력
-    attributes:
-      comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AvailableMinReactivePower:
-    name: 사용 가능 최소 무효 전력
     attributes:
       comment: AC 단자에서 흡수. 가동 중인 인버터만 계수
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 사용 가능 최소 무효 전력
   AverageCellTemperature:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 평균 셀 온도
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   AverageCellVoltage:
-    name: 평균 셀 전압
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 평균 셀 전압
   BatteryChargingPower:
-    name: 배터리 충전 전력
     attributes:
       source: BatteryPower > 0
+    name: 배터리 충전 전력
   BatteryDischargingPower:
-    name: 배터리 방전 전력
     attributes:
       source: BatteryPower < 0 × -1
+    name: 배터리 방전 전력
   BatteryPower:
-    name: 배터리 전력
     attributes:
       comment: "ESS 전력: <0 = 방전, >0 = 충전"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-  ChargeCutOffSoC:
-    name: 충전 차단율
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-  ChargeDischargePower:
     name: 배터리 전력
+  ChargeCutOffSoC:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 충전 차단율
+  ChargeDischargePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 배터리 전력
   CurrentControlCommandValue:
-    name: 현재 제어 명령 값
     attributes:
       comment: 일본에서 원격 출력 제어 사용
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 현재 제어 명령 값
   DCCharger:
     name: Sigenergy DC 충전기
   DCChargerCurrentChargingCapacity:
+    attributes:
+      comment: 단회
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 현재 충전 용량
-    attributes:
-      comment: 단회
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   DCChargerCurrentChargingDuration:
-    name: 현재 충전 시간
     attributes:
       comment: 단회
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 현재 충전 시간
   DCChargerOutputPower:
-    name: 출력 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 출력 전력
   DCChargerRunningState:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 운전 상태
     options:
       "0": 유휴
@@ -360,46 +367,48 @@ class:
       "3": 충전 중
       "4": 고장
       "5": 예약됨
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   DCChargerStatus:
-    name: DC 충전기 시작/정지
     attributes:
       comment: 0:시작 1:정지
+    name: DC 충전기 시작/정지
     name_off: 정지
     name_on: 시작
   DCChargerVehicleBatteryVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 차량 배터리 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   DCChargerVehicleChargingCurrent:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 차량 충전 전류
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   DCChargerVehicleSoC:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 차량 충전율
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   DailyChargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 일일 충전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   DailyDischargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 일일 방전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
+  Device:
+    name: '{Config} {name}'
   DischargeCutOffSoC:
-    name: 방전 차단율
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 방전 차단율
   EMSWorkMode:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: EMS 작업 모드
     options:
       "0": 최대 자가소비
@@ -409,49 +418,46 @@ class:
       "6": VPP 스케줄링
       "7": 원격 EMS
       "9": 시간 기반 제어
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ESS:
     name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
+    attributes:
+      comment: "범위: [0.00, 100.00]"
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 백업 충전율
-    attributes:
-      comment: "범위: [0.00, 100.00]"
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ESSChargeCutOffSOC:
+    attributes:
+      comment: "범위: [0.00, 100.00]"
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 충전 차단율
-    attributes:
-      comment: "범위: [0.00, 100.00]"
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ESSDischargeCutOffSOC:
-    name: 방전 차단율
     attributes:
       comment: "범위: [0.00, 100.00]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 방전 차단율
   ESSTotalChargedEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 충전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ESSTotalDischargedEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 방전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   EVDCTotalChargedEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: DC EV 누적 충전 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   EVDCTotalDischargedEnergy:
-    name: DC EV 누적 방전 에너지
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: DC EV 누적 방전 에너지
   EnergyDailyAccumulationSensor:
     name: '{name}'
     name_reset: '{name} 설정'
@@ -459,91 +465,141 @@ class:
     name: '{name}'
     name_reset: '{name} 설정'
   EnphaseCurrent:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
     name: 전류
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
   EnphaseDailyPVEnergy:
-    name: 일일 생산량
     attributes:
       source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 일일 생산량
     name_reset: 일일 생산량 설정
   EnphaseFrequency:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
     name: 주파수
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
   EnphaseLifetimePVEnergy:
-    name: 누적 생산량
     attributes:
       source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 누적 생산량
   EnphasePVPower:
-    name: PV 전력
     attributes:
       source: Enphase Envoy API
+    name: PV 전력
   EnphasePowerFactor:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
     name: 역률
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
   EnphaseReactivePower:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
     name: 무효 전력
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
   EnphaseVoltage:
-    name: 전압
     attributes:
       source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 전압
   GeneralAlarm1:
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 낮은 절연 저항
+      '2': 과온도
+      '3': 장비 고장
+      '4': 시스템 접지 고장
+      '5': PV 스트링 과전압
+      '6': PV 스트링 역결선
+      '7': PV 스트링 역류
+      '8': AFCI 고장
+      '9': 계통 정전
+      '10': 계통 과전압
+      '11': 계통 저전압
+      '12': 계통 과주파수
+      '13': 계통 저주파수
+      '14': 계통 전압 불평형
+      '15': 출력 전류 DC 성분 한계 초과
+    attributes:
+      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PCS 알람 1
-    attributes:
-      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id001
   GeneralAlarm2:
+    alarm:
+      '0': 누설 전류 한계 초과
+      '1': 통신 이상
+      '2': 시스템 내부 보호
+      '3': AFCI 자가 점검 회로 고장
+      '4': 계통 분리 보호
+      '5': 수동 조작 보호
+      '7': 위상 순서 이상
+      '8': PE 단락
+      '9': 소프트 스타트 실패
+    attributes:
+      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PCS 알람 2
-    attributes:
-      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id002
   GeneralAlarm3:
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 대지 절연 저항 저하
+      '2': 온도 과고
+      '3': 장비 고장
+      '4': 저온도
+      '5': 내부 보호
+      '6': 열폭주
+    attributes:
+      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: ESS 알람
-    attributes:
-      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id003
   GeneralAlarm4:
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 온도 과고
+      '2': 장비 고장
+      '3': 계통 분리 출력 과대 누설 전류
+      '4': N선 접지 고장
+      '5': 계통 배선 위상 순서 이상
+      '6': 인버터 배선 위상 순서 이상
+      '7': 계통 상 결상
+    attributes:
+      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 게이트웨이 알람
-    attributes:
-      comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id004
   GeneralAlarm5:
-    name: DC 충전기 알람
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 대지 절연 저항 저하
+      '2': 과온도
+      '3': 장비 고장
+      '4': 충전 고장
+      '5': 장비 보호
     attributes:
       comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id005
+    name: DC 충전기 알람
   GeneralLoadPower:
-    name: 일반 부하 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 일반 부하 전력
   GeneralPCSAlarm:
-    name: PCS 알람
     attributes:
       comment: 하이브리드 인버터에 알람이 있으면 이 알람이 그에 따라 설정됨
       source: Modbus 레지스터 30027-30028
+      source_range: Modbus 레지스터 {start}-{end}
+    name: PCS 알람
   GridCode:
     name: Sigenergy 발전소 계통 규정
   GridCodeHVRT:
-    name: 고전압 내성
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 고전압 내성
   GridCodeHVRTMode:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: HVRT 모드
     options:
       '0': 무효 전력 보상 전류, 능동 영전류 모드
@@ -551,32 +607,32 @@ class:
       '3': 정전류 모드
       '4': 무효 동적 전류, 능동 유지 모드
       '5': 무효 전력 보상 전류, 능동 정전류 모드
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "범위: [0, 10.0]"
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: HVRT 역상 무효 전력 보상 계수
-    attributes:
-      comment: "범위: [0, 10.0]"
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeHVRTReactivePowerCompensationFactor:
-    name: HVRT 무효 전력 보상 계수
     attributes:
       comment: "범위: [0, 10.0]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: HVRT 무효 전력 보상 계수
   GridCodeHVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: HVRT 계통 전압 보호 차단
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeLVRT:
-    name: 저전압 내성
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 저전압 내성
   GridCodeLVRTMode:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: LVRT 모드
     options:
       '0': 무효 전력 보상 전류, 능동 영전류 모드
@@ -584,99 +640,96 @@ class:
       '3': 정전류 모드
       '4': 무효 동적 전류, 능동 영전류 모드
       '5': 무효 전력 보상 전류, 능동 정전류 모드
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "범위: [0, 10.0]"
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: LVRT 역상 무효 전력 보상 계수
-    attributes:
-      comment: "범위: [0, 10.0]"
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeLVRTReactivePowerCompensationFactor:
-    name: LVRT 무효 전력 보상 계수
     attributes:
       comment: "범위: [0, 10.0]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: LVRT 무효 전력 보상 계수
   GridCodeLVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: LVRT 계통 전압 보호 차단
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeOverFrequencyDerating:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 과주파수 디레이팅
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeOverFrequencyDeratingCutOffFrequency:
+    attributes:
+      comment: "범위: [1.0*Fn, 1.2*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 과주파수 디레이팅 차단 주파수
-    attributes:
-      comment: "범위: [1.0*Fn, 1.2*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeOverFrequencyDeratingPowerRampRate:
-    name: 과주파수 디레이팅 전력 램프율
     attributes:
       comment: "범위: [0, 100.0]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 과주파수 디레이팅 전력 램프율
   GridCodeOverFrequencyDeratingTriggerFrequency:
-    name: 과주파수 디레이팅 트리거 주파수
     attributes:
       comment: "범위: [1.0*Fn, 1.2*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 과주파수 디레이팅 트리거 주파수
   GridCodeRatedFrequency:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 주파수
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeRatedVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridCodeUnderFrequencyPowerBoost:
-    name: 저주파수 전력 부스트
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 저주파수 전력 부스트
   GridCodeUnderFrequencyPowerBoostCutOffFrequency:
-    name: 저주파수 전력 부스트 차단 주파수
     attributes:
       comment: "범위: [0.8*Fn, 1.0*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 저주파수 전력 부스트 차단 주파수
   GridCodeUnderFrequencyPowerBoostPowerRampRate:
-    name: 저주파수 전력 부스트 전력 램프율
     attributes:
       comment: "범위: [0, 100.0]"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 저주파수 전력 부스트 전력 램프율
   GridCodeUnderFrequencyPowerBoostTriggerFrequency:
-    name: 저주파수 전력 부스트 트리거 주파수
     attributes:
       comment: "범위: [0.8*Fn, 1.0*Fn] 참조: [계통 규정] 정격 주파수 (레지스터 30276)"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 저주파수 전력 부스트 트리거 주파수
   GridFrequency:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 계통 주파수
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridMaxExportLimit:
+    attributes:
+      comment: 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 계통 최대 수출 제한
-    attributes:
-      comment: 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   GridMaxImportLimit:
-    name: 계통 최대 수입 제한
     attributes:
       comment: 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 계통 최대 수입 제한
   GridPhaseActivePower:
     attributes:
       comment: "계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터; >0 계통에서 구매; <0 계통에 판매"
@@ -692,61 +745,61 @@ class:
   GridSensor:
     name: Sigenergy 발전소 계통 센서
   GridSensorActivePower:
-    name: 유효 전력
     attributes:
       comment: "계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터; >0 계통에서 구매; <0 계통에 판매"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 유효 전력
   GridSensorDailyExportEnergy:
-    name: 일일 수출 에너지
     attributes:
       source: PlantTotalExportedEnergy − 자정의 PlantTotalExportedEnergy
+    name: 일일 수출 에너지
     name_reset: 일일 수출 에너지 설정
   GridSensorDailyImportEnergy:
-    name: 일일 수입 에너지
     attributes:
       source: PlantTotalImportedEnergy − 자정의 PlantTotalImportedEnergy
+    name: 일일 수입 에너지
     name_reset: 일일 수입 에너지 설정
   GridSensorExportPower:
-    name: 수출 전력
     attributes:
       source: GridSensorActivePower < 0 × -1
+    name: 수출 전력
   GridSensorImportPower:
-    name: 수입 전력
     attributes:
       source: GridSensorActivePower > 0
+    name: 수입 전력
   GridSensorReactivePower:
-    name: 무효 전력
     attributes:
       comment: 계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 무효 전력
   GridSensorStatus:
-    name: 계통 센서 상태
-    options:
-      "0": 연결 안 됨
-      "1": 연결됨
     attributes:
       comment: 게이트웨이 또는 계량기 연결 상태
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 계통 센서 상태
+    options:
+      "0": 연결 안 됨
+      "1": 연결됨
   GridStatus:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 계통 상태
     options:
       "0": 계통 연계
       "1": 독립 운전 (자동)
       "2": 독립 운전 (수동)
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   HybridInverter:
     name: 하이브리드 인버터
   IndependentPhasePowerControl:
-    name: 독립 상 전력 제어
     attributes:
       comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함. 독립 상 제어를 활성화하려면 이 매개변수를 활성화해야 함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 독립 상 전력 제어
   InfluxDBQueries:
     name: InfluxDB 쿼리
   InfluxDBQueryErrors:
@@ -763,166 +816,218 @@ class:
     name: InfluxDB 평균 쓰기 지연 시간
   InfluxDBWrites:
     name: InfluxDB 쓰기
+  InfluxService:
+    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
   InsulationResistance:
-    name: 절연 저항
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 절연 저항
   Inverter:
     name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 유효 전력 고정값 조정
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterActivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 유효 전력 고정값 조정 피드백
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterActivePowerPercentageAdjustment:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 유효 전력 백분율 조정
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterActivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 유효 전력 백분율 조정 피드백
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterAlarm1:
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 낮은 절연 저항
+      '2': 과온도
+      '3': 장비 고장
+      '4': 시스템 접지 고장
+      '5': PV 스트링 과전압
+      '6': PV 스트링 역결선
+      '7': PV 스트링 역류
+      '8': AFCI 고장
+      '9': 계통 정전
+      '10': 계통 과전압
+      '11': 계통 저전압
+      '12': 계통 과주파수
+      '13': 계통 저주파수
+      '14': 계통 전압 불평형
+      '15': 출력 전류 DC 성분 한계 초과
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PCS 알람 1
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id001
   InverterAlarm2:
+    alarm:
+      '0': 누설 전류 한계 초과
+      '1': 통신 이상
+      '2': 시스템 내부 보호
+      '3': AFCI 자가 점검 회로 고장
+      '4': 계통 분리 보호
+      '5': 수동 조작 보호
+      '7': 위상 순서 이상
+      '8': PE 단락
+      '9': 소프트 스타트 실패
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PCS 알람 2
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id002
   InverterAlarm3:
-    name: 알람
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 대지 절연 저항 저하
+      '2': 온도 과고
+      '3': 장비 고장
+      '4': 저온도
+      '5': 내부 보호
+      '6': 열폭주
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id003
+    name: 알람
   InverterAlarm4:
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 온도 과고
+      '2': 장비 고장
+      '3': 계통 분리 출력 과대 누설 전류
+      '4': N선 접지 고장
+      '5': 계통 배선 위상 순서 이상
+      '6': 인버터 배선 위상 순서 이상
+      '7': 계통 상 결상
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 게이트웨이 알람
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id004
   InverterAlarm5:
-    name: 알람
+    alarm:
+      '0': 소프트웨어 버전 불일치
+      '1': 대지 절연 저항 저하
+      '2': 과온도
+      '3': 장비 고장
+      '4': 충전 고장
+      '5': 장비 보호
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    alarm: *id005
+    name: 알람
   InverterBatteryChargingPower:
-    name: 배터리 충전 전력
     attributes:
       source: ChargeDischargePower > 0
+    name: 배터리 충전 전력
   InverterBatteryDischargingPower:
-    name: 배터리 방전 전력
     attributes:
       source: ChargeDischargePower < 0 × -1
+    name: 배터리 방전 전력
   InverterBatterySoC:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 배터리 충전율
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterBatterySoH:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 배터리 건강상태
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterFirmwareVersion:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 펌웨어 버전
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterMaxActivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 유효 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterMaxBatteryTemperature:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 배터리 온도
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterMaxCellVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 셀 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterMinBatteryTemperature:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최소 배터리 온도
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterMinCellVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최소 셀 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterModel:
-    name: 모델
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 모델
   InverterPCSAlarm:
-    name: PCS 알람
     attributes:
       source: Modbus 레지스터 30605-30606
+      source_range: Modbus 레지스터 {start}-{end}
+    name: PCS 알람
   InverterPVDailyGeneration:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 일일 생산량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterPVLifetimeGeneration:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 생산량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterPVPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PV 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 역률 조정
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 역률 조정 피드백
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterReactivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 무효 전력 고정값 조정
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterReactivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 무효 전력 고정값 조정 피드백
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterReactivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 무효 전력 백분율 조정 피드백
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterReactivePowerQSAdjustment:
-    name: 무효 전력 Q/S 조정
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 무효 전력 Q/S 조정
   InverterRunningState:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 운전 상태
     options:
       '0': 대기
@@ -930,103 +1035,104 @@ class:
       '2': 고장
       '3': 전원 꺼짐
       '7': 환경 이상
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   InverterSerialNumber:
-    name: 일련 번호
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 일련 번호
   InverterStatus:
-    name: 인버터 전원 켜기/끄기
     attributes:
       comment: 0:정지 1:시작
+    name: 인버터 전원 켜기/끄기
   InverterTemperature:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 온도
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   LineVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: '{phase} 선간 전압'
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MPTTCount:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: MPPT 수
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MaxAbsorptionPower:
-    name: 최대 흡수 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 최대 흡수 전력
   MaxActivePower:
-    name: 최대 유효 전력
     attributes:
       comment: 이것은 모든 유효 전력 조정 작업의 기준값이어야 함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 최대 유효 전력
   MaxActivePowerAdjustment:
-    name: 최대 유효 전력 조정
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 최대 유효 전력 조정
   MaxApparentPower:
-    name: 최대 피상 전력
     attributes:
       comment: 이것은 모든 무효 전력 조정 작업의 기준값이어야 함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 최대 피상 전력
   MaxBatteryChargePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 충전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MaxBatteryDischargePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 방전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MaxChargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 충전 제한
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MaxDischargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 방전 제한
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MaxRatedApparentPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최대 정격 피상 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MaxReactivePowerAdjustment:
-    name: 최대 무효 전력 조정
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 최대 무효 전력 조정
   MetricsSensor:
     name: '{name}'
   MetricsService:
     name: Sigenergy 메트릭
   MinActivePowerAdjustment:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 최소 유효 전력 조정
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   MinReactivePowerAdjustment:
-    name: 최소 무효 전력 조정
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 최소 무효 전력 조정
   ModbusActiveLocks:
     name: Modbus 활성 잠금
   ModbusCacheHits:
     name: Modbus 캐시 적중
+  ModbusDevice:
+    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Modbus 물리적 읽기
   ModbusReadErrors:
@@ -1058,47 +1164,45 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: '{availability_control_sensor}'
   OutputType:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 출력 유형
     options:
       "0": L/N
       "1": L1/L2/L3
       "2": L1/L2/L3/N
       "3": L1/L2/N
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PACKBCUCount:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PACK/BCU 수
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PCSMaxExportLimit:
+    attributes:
+      comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로 적용됨."
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PCS 최대 수출 제한
-    attributes:
-      comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로
-        적용됨."
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PCSMaxImportLimit:
+    attributes:
+      comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로 적용됨."
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PCS 최대 수입 제한
-    attributes:
-      comment: "범위: [0, 0xFFFFFFFE]. 값이 0xFFFFFFFF인 경우 레지스터가 유효하지 않음. 그 외의 경우 전역적으로
-        적용됨."
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PVCurrentSensor:
-    name: 전류
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 전류
   PVInverter:
     name: PV 인버터
   PVMaxPowerLimit:
-    name: PV 최대 전력 제한
     attributes:
       comment: 원격 EMS 제어 모드(40031)가 명령 충전/방전으로 설정된 경우 적용됨
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: PV 최대 전력 제한
   PVOutputOutputService:
     name: PVOutput 출력 서비스 추가
   PVOutputStatusService:
@@ -1106,29 +1210,29 @@ class:
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
-    name: PV 스트링 수
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: PV 스트링 수
   PVStringDailyEnergy:
-    name: 일일 생산량
     attributes:
       source: PVStringLifetimeEnergy − 자정의 PVStringLifetimeEnergy
+    name: 일일 생산량
     name_reset: 일일 생산량 설정
   PVStringLifetimeEnergy:
-    name: 누적 생산량
     attributes:
       source: PVStringPower의 리만 합
+    name: 누적 생산량
     name_reset: 누적 생산량 설정
   PVStringPower:
-    name: 전력
     attributes:
       source: PVVoltageSensor × PVCurrentSensor
+    name: 전력
   PVVoltageSensor:
-    name: 전압
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 전압
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함
@@ -1142,10 +1246,10 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 유효 전력 백분율 조정 목표값
   PhaseCurrent:
-    name: 페이즈 {phase} 전류
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 페이즈 {phase} 전류
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "출력 유형이 L1/L2/L3/N인 경우에만 유효함. 범위: [-60.00, 60.00]"
@@ -1159,90 +1263,94 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 무효 전력 고정 조정 목표값
   PhaseVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantActivePower:
-    name: 유효 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 유효 전력
   PlantAlarms:
-    name: 발전소 알람
     attributes:
       source: Modbus 레지스터 30280-30281
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 발전소 알람
   PlantBatterySoC:
-    name: 배터리 충전율
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 배터리 충전율
   PlantBatterySoH:
-    name: 배터리 건강상태
     attributes:
       comment: 이 값은 발전소 내 모든 ESS 장치의 건강상태의 가중 평균이며, 각 정격 용량을 가중치로 사용
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 배터리 건강상태
   PlantConsumedPower:
-    name: 소비 전력
     attributes:
       source: TotalLoadPower
+    name: 소비 전력
   PlantDailyChargeEnergy:
-    name: 일일 충전 에너지
     attributes:
       source: "발전소와 연결된 모든 인버터의 DailyChargeEnergy 합계"
+    name: 일일 충전 에너지
     name_reset: 일일 충전 에너지 설정
   PlantDailyDischargeEnergy:
-    name: 일일 방전 에너지
     attributes:
       source: "발전소와 연결된 모든 인버터의 DailyDischargeEnergy 합계"
+    name: 일일 방전 에너지
     name_reset: 일일 방전 에너지 설정
   PlantDailyPVEnergy:
-    name: 일일 PV 생산량
     attributes:
       source: PlantLifetimePVEnergy − 자정의 PlantLifetimePVEnergy
+    name: 일일 PV 생산량
     name_reset: 일일 PV 생산량 설정
   PlantPVPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PV 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantPVTotalGeneration:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 PV 생산량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantPhaseActivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 유효 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantPhaseReactivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 무효 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantRatedChargingPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 충전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantRatedDischargingPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 방전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantRatedEnergyCapacity:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 에너지 용량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantReactivePower:
-    name: 무효 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 무효 전력
   PlantRunningState:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 운전 상태
     options:
       '0': 대기
@@ -1250,41 +1358,38 @@ class:
       '2': 고장
       '3': 전원 꺼짐
       '7': 환경 이상
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantStatistics:
     name: Sigenergy 발전소 통계
   PlantStatus:
-    name: 발전소 전원 켜기/끄기
     attributes:
       comment: 0:정지 1:시작
+    name: 발전소 전원 켜기/끄기
   PlantTotalExportedEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 수출 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantTotalGeneratorOutputEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 발전기 누적 출력 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PlantTotalImportedEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 수입 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   PowerFactor:
-    name: 역률
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 역률
   PowerFactorAdjustmentTargetValue:
-    name: 역률 조정 목표값
     attributes:
       comment: "범위: [(-1.0, -0.8) U (0.8, 1.0)]. 계통 센서 필요. EMS 작동 모드와 관계없이 전역적으로 적용됨"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 역률 조정 목표값
   PowerPlant:
     name: Sigenergy 발전소
   ProtocolPublished:
@@ -1292,52 +1397,52 @@ class:
   ProtocolVersion:
     name: 프로토콜 버전
   QSAdjustmentTargetValue:
-    name: Q/S 조정 목표값
     attributes:
       comment: "범위: [-60.0, 60.00]. EMS 작동 모드와 관계없이 전역적으로 적용됨"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: Q/S 조정 목표값
   RatedActivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 유효 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   RatedBatteryCapacity:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 배터리 용량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   RatedChargingPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 충전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   RatedDischargingPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 정격 방전 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   RatedGridFrequency:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 계통 정격 주파수
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   RatedGridVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 계통 정격 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReactivePower:
-    name: 무효 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 무효 전력
   ReactivePowerFixedAdjustmentTargetValue:
-    name: 무효 전력 고정 조정 목표값
     attributes:
       comment: "범위: [-60.00 * 기준값, 60.00 * 기준값]. EMS 작동 모드와 관계없이 전역적으로 적용됨"
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 무효 전력 고정 조정 목표값
   ReadOnlySensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1349,13 +1454,15 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
   RemoteEMS:
-    name: 원격 EMS
     attributes:
-      comment: EMS를 원격으로 제어해야 할 때 이 레지스터를 활성화해야 함. 활성화되면 발전소의 EMS 작업 모드(30003)가 
-        RemoteEMS로 전환됨
+      comment: EMS를 원격으로 제어해야 할 때 이 레지스터를 활성화해야 함. 활성화되면 발전소의 EMS 작업 모드(30003)가 RemoteEMS로 전환됨
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 원격 EMS
   RemoteEMSControlMode:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 원격 EMS 제어 모드
     options:
       '0': PCS 원격 제어
@@ -1365,79 +1472,76 @@ class:
       '4': 명령 충전 (PV 전력 우선 소비)
       '5': 명령 방전 (PV 전력 우선 출력)
       '6': 명령 방전 (배터리 전력 우선 출력)
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   RemoteEMSLimit:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{availability_control_sensor}'
   Reserved30073:
-    name: 예약됨
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 예약됨
   Reserved30610:
-    name: 예약됨
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 예약됨
   Reserved40026:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 예약됨
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedAccumulatedExportEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 수출 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedAccumulatedImportEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 수입 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedDailyExportEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 일일 수출 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedDailyImportEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 일일 수입 에너지
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedGridCode:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 계통 규정
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedGridPhaseCurrent:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 전류
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedGridPhaseVoltage:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 전압
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedInverterRemoteEMSDispatch:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 원격 EMS 디스패치
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedPVTotalGenerationToday:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 오늘 PV 총 생산량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ReservedPVTotalGenerationYesterday:
-    name: 어제 PV 총 생산량
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 어제 PV 총 생산량
   ReservedSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1446,93 +1550,82 @@ class:
   ResettableAccumulationSensor:
     name: '{name}'
   RunningStateSensor:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: '{name}'
     options:
       "0": 대기
       "1": 정상
       "2": 고장
       "3": 전원 꺼짐
       "7": 환경 이상
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: '{name}'
   SITotalChargedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 총 충전 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalCommonLoadConsumption:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 공통 부하 총 소비량
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalDischargedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 총 방전 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalEVACChargedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: AC EV 총 충전 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalEVDCChargedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: DC EV 총 충전 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalEVDCDischargedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: DC EV 총 방전 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalExportedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 총 수출 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalGeneratorOutputEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 발전기 총 출력 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalImportedEnergy:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 총 수입 에너지
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalSelfPVGeneration:
+    attributes:
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: PV 총 생산량
-    attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SITotalThirdPartyPVGeneration:
-    name: 제3자 PV 총 생산량
     attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 제3자 PV 총 생산량
   SelectSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1540,62 +1633,63 @@ class:
     name: '{name}'
   SensorGroup:
     name: '{sensors}'
+  Service:
+    name: '{Config} {name}'
   ShutdownTime:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 종료 시간
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SmartLoadPower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 스마트 부하 {smart_load_index} 전력
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SmartLoadTotalConsumption:
-    name: 스마트 부하 {smart_load_index} 총 소비량
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 스마트 부하 {smart_load_index} 총 소비량
   SmartPort:
     name: Sigenergy 발전소 스마트포트
   Started:
     name: 시작됨
   StartupTime:
-    name: 시작 시간
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 시작 시간
   StatisticsInterfaceSensor:
     attributes:
-      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 
-        상속하지 않고 새로 계수를 시작함
+      comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: '{name}'
+    name: '하이브리드 인버터'
   SwitchSensor:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
   SystemTime:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 시스템 시간
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   SystemTimeZone:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 시스템 시간대
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ThirdPartyLifetimePVEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 제3자 PV 누적 생산량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   ThirdPartyPVPower:
-    name: 제3자 PV 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 제3자 PV 전력
   TimePeriodServiceTopics:
     name: '{service}'
   TimestampSensor:
@@ -1604,48 +1698,44 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: '{name}'
   TotalDailyPVEnergy:
-    name: 일일 총 PV 생산량
     attributes:
       source: TotalLifetimePVEnergy − 자정의 TotalLifetimePVEnergy
+    name: 일일 총 PV 생산량
     name_reset: 일일 총 PV 생산량 설정
   TotalLifetimePVEnergy:
-    name: 누적 총 PV 생산량
     attributes:
       source: "PlantPVTotalGeneration과 ThirdPartyLifetimePVEnergy의 합계"
+    name: 누적 총 PV 생산량
   TotalLoadConsumption:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 누적 소비량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   TotalLoadDailyConsumption:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
     name: 일일 소비량
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   TotalLoadPower:
-    name: 총 부하 전력
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: 총 부하 전력
   TotalPVPower:
-    name: 총 PV 전력
     attributes:
       source: PV 전력 + 제3자 PV 전력
+    name: 총 PV 전력
   WriteOnlySensor:
-    name_on: 전원 켜기
-    name_off: 전원 끄기
     name: '{name}'
+    name_off: 전원 끄기
+    name_on: 전원 켜기
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'JSON 설정 파일 경로 (기본값: /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
-    help: "플랜트 소비 전력 센서 계산 방법을 설정합니다. 유효한 값은 'calculated', 'total'(총 부하 전력 레지스터) 또는
-      'general'(V2.8 일반 부하 전력 레지스터)입니다. 기본값은 'calculated'입니다. 이 옵션은 Modbus 프로토콜 V2.8을
-      지원하기 이전의 펌웨어에서는 무시됩니다."
+    help: "플랜트 소비 전력 센서 계산 방법을 설정합니다. 유효한 값은 'calculated', 'total'(총 부하 전력 레지스터) 또는 'general'(V2.8 일반 부하 전력 레지스터)입니다. 기본값은 'calculated'입니다. 이 옵션은 Modbus 프로토콜 V2.8을 지원하기 이전의 펌웨어에서는 무시됩니다."
   SIGENERGY2MQTT_DEBUG_SENSOR:
-    help: '전체 또는 부분적인 엔티티 ID 또는 센서 클래스 이름(예: ''daily''를 지정하면 엔티티 이름에 ''daily''가 포함된
-      모든 센서가 일치함) 또는 엔티티 ID 또는 센서 클래스 이름과 일치하는 정규식(예: ''^PowerFactor$''는 단일 클래스 이름만
-      일치함)을 사용하여 디버그할 센서를 지정합니다. 지정된 경우 --log-level도 DEBUG로 강제됩니다.'
+    help: '전체 또는 부분적인 엔티티 ID 또는 센서 클래스 이름(예: ''daily''를 지정하면 엔티티 이름에 ''daily''가 포함된 모든 센서가 일치함) 또는 엔티티 ID 또는 센서 클래스 이름과 일치하는 정규식(예: ''^PowerFactor$''는 단일 클래스 이름만 일치함)을 사용하여 디버그할 센서를 지정합니다. 지정된 경우 --log-level도 DEBUG로 강제됩니다.'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistant 엔티티 이름 접두사'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
@@ -1657,8 +1747,7 @@ cli:
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Home Assistant 엔티티 ID 접두사 (기본값: sigen)'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지
-      마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
+    help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지 마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1674,8 +1763,7 @@ cli:
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 포함할 센서 식별자 목록 (공백으로 구분)
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
-    help: 'InfluxDB 하위 시스템 로그 레벨. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다.
-      기본값은 WARNING(경고, 오류 및 치명적 오류)입니다.'
+    help: 'InfluxDB 하위 시스템 로그 레벨. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 WARNING(경고, 오류 및 치명적 오류)입니다.'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB 조직 이름 또는 ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:
@@ -1693,9 +1781,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
     help: 'Sigenergy AC 충전기 Modbus 장치 및 ID. 여러 ID는 쉼표로 구분하여 지정할 수 있습니다.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-    help: 'Sigenergy Modbus 호스트 및 장치 ID 자동 검색을 시도합니다. ''once''를 지정하면 기존 자동 검색 결과가
-      없는 경우에만 자동 검색이 수행됩니다. ''force''인 경우 이전에 검색된 Modbus 호스트 및 장치 ID를 덮어씁니다. 지정하지
-      않으면 자동 검색이 비활성화됩니다.'
+    help: 'Sigenergy Modbus 호스트 및 장치 ID 자동 검색을 시도합니다. ''once''를 지정하면 기존 자동 검색 결과가 없는 경우에만 자동 검색이 수행됩니다. ''force''인 경우 이전에 검색된 Modbus 호스트 및 장치 ID를 덮어씁니다. 지정하지 않으면 자동 검색이 비활성화됩니다.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: '네트워크에서 Sigenergy 장치 자동 검색을 수행할 때 사용할 핑 타임아웃(초)입니다. 기본값은 0.5초입니다.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
@@ -1743,8 +1829,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: MQTT 브로커 유효한 사용자명
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: '원격 EMS 제어 모드가 명령 충전/방전이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를
-      끕니다.'
+    help: '원격 EMS 제어 모드가 명령 충전/방전이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를 끕니다.'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'sigenergy2mqtt 메트릭 게시 안 함.'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
@@ -1780,8 +1865,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "PVOutput 전압 값 소스. 기본값: 'l/n-avg'."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
-    help: '전력 센서의 실제 값과 에너지 센서의 델타 값에 대한 최대값 및 최소값을 검증하기 위해 무결성 검사에 사용되는 기본값(kW).
-      기본값은 초당 500kW이며, 범위를 벗어난 측정값은 무시됩니다.'
+    help: '전력 센서의 실제 값과 에너지 센서의 델타 값에 대한 최대값 및 최소값을 검증하기 위해 무결성 검사에 사용되는 기본값(kW). 기본값은 초당 500kW이며, 범위를 벗어난 측정값은 무시됩니다.'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: '고빈도 레지스터 스캔 간격. 기본값: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

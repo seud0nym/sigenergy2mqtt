@@ -2,10 +2,6 @@ class:
   ACCharger:
     name: Sigenergy AC-lader
   ACChargerAlarm1:
-    name: 'Alarm 1'
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
     alarm:
       '0': Net overspanning
       '1': Net onderspanning
@@ -16,11 +12,11 @@ class:
       '6': Aardingsfout
       '7': Abnormale fasevolgorde netbekabeling
       '8': PEN-fout
-  ACChargerAlarm2:
-    name: 'Alarm 2'
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: 'Alarm 1'
+  ACChargerAlarm2:
     alarm:
       '0': Fout lekstroomdetectiecircuit
       '1': Relais vastgelopen
@@ -28,52 +24,59 @@ class:
       '3': Fout hulpvoedingsmodule
       '4': Elektrisch slot fout
       '5': Communicatiefout lamppaneel
-  ACChargerAlarm3:
-    name: 'Alarm 3'
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: 'Alarm 2'
+  ACChargerAlarm3:
     alarm:
       '0': Interne temperatuur te hoog
       '1': Laadkabelfout
       '2': Metercommunicatiefout
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: 'Alarm 3'
   ACChargerAlarms:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Alarmen
-    attributes:
-      source: Modbus Registers 32012-32014
   ACChargerChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Laadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ACChargerInputBreaker:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Ingangsschakelaar
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ACChargerOutputCurrent:
+    attributes:
+      comment: "Bereik: [6, kleinste van 'AC Lader Nominale Stroom' en 'AC Lader Ingangsschakelaar Nominale Stroom']"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Uitgangsstroom
-    attributes:
-      comment: "Bereik: [6, kleinste van 'AC Lader Nominale Stroom' en 'AC Lader Ingangsschakelaar
-        Nominale Stroom']"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ACChargerRatedCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Stroom
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ACChargerRatedPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominaal Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ACChargerRatedVoltage:
-    name: Nominale Spanning
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Nominale Spanning
   ACChargerRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Bedrijfsstatus
     options:
       "0": Initialiseren
@@ -84,59 +87,51 @@ class:
       "5": Laden
       "6": Storing
       "7": Fout
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ACChargerStatus:
-    name: AC Lader Start/Stop
     attributes:
       comment: 0:Start 1:Stop
+    name: AC Lader Start/Stop
     name_off: Stoppen
     name_on: Starten
   ACChargerTotalEnergyConsumed:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Verbruikte Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AccumulatedChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Laadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AccumulatedDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Ontlaadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ActivePowerFixedAdjustmentTargetValue:
-    name: Actief Vermogen Vast Instelwaarde
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Actief Vermogen Vast Instelwaarde
   ActivePowerPercentageAdjustmentTargetValue:
-    name: Actief Vermogen Percentage Instelwaarde
     attributes:
       comment: "Bereik: [-100,00, 100,00]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Actief Vermogen Percentage Instelwaarde
   ActivePowerRegulationGradient:
+    attributes:
+      comment: "Bereik: [0, 5000]. Percentage van nominaal vermogen aangepast per seconde"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen Regelgradiënt
-    attributes:
-      comment: "Bereik: [0, 5000]. Percentage van nominaal vermogen aangepast per
-        seconde"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   Alarm1Sensor:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: '{name}'
-    alarm: &id001
+    alarm:
       '0': Softwareversie komt niet overeen
       '1': Lage isolatieweerstand
       '2': Overtemperatuur
@@ -153,12 +148,12 @@ class:
       '13': Net onderfrequentie
       '14': Netspanning onbalans
       '15': DC-component van uitgangsstroom buiten limiet
-  Alarm2Sensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
-    alarm: &id002
+  Alarm2Sensor:
+    alarm:
       '0': Lekstroom buiten limiet
       '1': Communicatie abnormaal
       '2': Systeem interne beveiliging
@@ -168,12 +163,12 @@ class:
       '7': Abnormale fasevolgorde
       '8': Kortsluiting naar PE
       '9': Zachte start mislukt
-  Alarm3Sensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
-    alarm: &id003
+  Alarm3Sensor:
+    alarm:
       '0': Softwareversie komt niet overeen
       '1': Lage isolatieweerstand naar aarde
       '2': Temperatuur te hoog
@@ -181,12 +176,12 @@ class:
       '4': Ondertemperatuur
       '5': Interne beveiliging
       '6': Thermische doorsmelting
-  Alarm4Sensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
-    alarm: &id004
+  Alarm4Sensor:
+    alarm:
       '0': Softwareversie komt niet overeen
       '1': Temperatuur te hoog
       '2': Apparatuurfout
@@ -195,23 +190,23 @@ class:
       '5': Abnormale fasevolgorde netbekabeling
       '6': Abnormale fasevolgorde omvormerbekabeling
       '7': Net fase verlies
-  Alarm5Sensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
-    alarm: &id005
+  Alarm5Sensor:
+    alarm:
       '0': Softwareversie komt niet overeen
       '1': Lage isolatieweerstand naar aarde
       '2': Overtemperatuur
       '3': Apparatuurfout
       '4': Laadfout
       '5': Apparatuurbeveiliging
-  Alarm6:
-    name: 'Alarm 6'
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: '{name}'
+  Alarm6:
     alarm:
       '0': Gateway communicatie abnormaal
       '1': Meter communicatie abnormaal
@@ -219,141 +214,151 @@ class:
       '6': Harde beveiliging tegen overschrijding netleveringslimiet
       '8': Generator starfout
       '10': CLS-fout
-  Alarm7:
-    name: 'Alarm 7'
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: 'Alarm 6'
+  Alarm7:
     alarm:
       '0': OVGR-fout
       '1': RPR-fout
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: 'Alarm 7'
   AlarmCombinedSensor:
-    name: '{name}'
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: 'Hybride omvormer'
   AlarmSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: '{name}'
     no_alarm: Geen Alarm
     unknown_alarm: Onbekend (bit{bit}∈{value})
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   AvailableBatteryChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Beschikbare Laadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AvailableBatteryDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Beschikbare Ontlaadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AvailableMaxActivePower:
+    attributes:
+      comment: Levering aan AC-terminal. Telt alleen draaiende omvormers
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Beschikbaar Max Actief Vermogen
-    attributes:
-      comment: Levering aan AC-terminal. Telt alleen draaiende omvormers
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AvailableMaxChargingCapacity:
+    attributes:
+      comment: Telt alleen draaiende omvormers
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Beschikbare Max Laadcapaciteit
-    attributes:
-      comment: Telt alleen draaiende omvormers
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AvailableMaxChargingPower:
+    attributes:
+      comment: Telt alleen draaiende omvormers
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Beschikbaar Max Laadvermogen
-    attributes:
-      comment: Telt alleen draaiende omvormers
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AvailableMaxDischargingCapacity:
-    name: Beschikbare Max Ontlaadcapaciteit
     attributes:
       comment: Telt alleen draaiende omvormers
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Beschikbare Max Ontlaadcapaciteit
   AvailableMaxDischargingPower:
-    name: Beschikbaar Max Ontlaadvermogen
     attributes:
       comment: Opname van AC-terminal. Telt alleen draaiende omvormers
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Beschikbaar Max Ontlaadvermogen
   AvailableMaxReactivePower:
-    name: Beschikbaar Max Reactief Vermogen
     attributes:
       comment: Levering aan AC-terminal. Telt alleen draaiende omvormers
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Beschikbaar Max Reactief Vermogen
   AvailableMinActivePower:
+    attributes:
+      comment: Opname van AC-terminal. Telt alleen draaiende omvormers
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Beschikbaar Min Actief Vermogen
-    attributes:
-      comment: Opname van AC-terminal. Telt alleen draaiende omvormers
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AvailableMinReactivePower:
-    name: Beschikbaar Min Reactief Vermogen
     attributes:
       comment: Opname van AC-terminal. Telt alleen draaiende omvormers
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Beschikbaar Min Reactief Vermogen
   AverageCellTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Gemiddelde Celtemperatuur
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   AverageCellVoltage:
-    name: Gemiddelde Celspanning
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Gemiddelde Celspanning
   BatteryChargingPower:
-    name: Batterij Laadvermogen
     attributes:
       source: BatteryPower > 0
+    name: Batterij Laadvermogen
   BatteryDischargingPower:
-    name: Batterij Ontlaadvermogen
     attributes:
       source: BatteryPower < 0 × -1
+    name: Batterij Ontlaadvermogen
   BatteryPower:
-    name: Batterijvermogen
     attributes:
       comment: "ESS Vermogen: <0 = ontladen, >0 = laden"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-  ChargeCutOffSoC:
-    name: Laad Afkap Laadtoestand
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-  ChargeDischargePower:
     name: Batterijvermogen
+  ChargeCutOffSoC:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Laad Afkap Laadtoestand
+  ChargeDischargePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Batterijvermogen
   CurrentControlCommandValue:
-    name: Huidige Regelcommandowaarde
     attributes:
       comment: Gebruik van Externe Uitgangsregeling in Japan
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Huidige Regelcommandowaarde
   DCCharger:
     name: Sigenergy DC-lader
   DCChargerCurrentChargingCapacity:
+    attributes:
+      comment: Eenmalig
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Huidige Laadcapaciteit
-    attributes:
-      comment: Eenmalig
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   DCChargerCurrentChargingDuration:
-    name: Huidige Laadduur
     attributes:
       comment: Eenmalig
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Huidige Laadduur
   DCChargerOutputPower:
-    name: Uitgangsvermogen
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Uitgangsvermogen
   DCChargerRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Bedrijfsstatus
     options:
       "0": Inactief
@@ -362,46 +367,48 @@ class:
       "3": Laden
       "4": Storing
       "5": Gepland
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   DCChargerStatus:
-    name: DC Lader Start/Stop
     attributes:
       comment: 0:Start 1:Stop
+    name: DC Lader Start/Stop
     name_off: Stoppen
     name_on: Starten
   DCChargerVehicleBatteryVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Voertuig Batterijspanning
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   DCChargerVehicleChargingCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Voertuig Laadstroom
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   DCChargerVehicleSoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Voertuig Laadtoestand
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   DailyChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Dagelijkse Laadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   DailyDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Dagelijkse Ontlaadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
+  Device:
+    name: '{Config} {name}'
   DischargeCutOffSoC:
-    name: Ontlaad Afkap Laadtoestand
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Ontlaad Afkap Laadtoestand
   EMSWorkMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: EMS Werkmodus
     options:
       "0": Max Eigen Verbruik
@@ -411,49 +418,46 @@ class:
       "6": VPP Planning
       "7": Extern EMS
       "9": Tijdgebaseerde Regeling
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ESS:
     name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
+    attributes:
+      comment: "Bereik: [0,00, 100,00]"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Backup Laadtoestand
-    attributes:
-      comment: "Bereik: [0,00, 100,00]"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ESSChargeCutOffSOC:
+    attributes:
+      comment: "Bereik: [0,00, 100,00]"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Laad Afkap Laadtoestand
-    attributes:
-      comment: "Bereik: [0,00, 100,00]"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ESSDischargeCutOffSOC:
-    name: Ontlaad Afkap Laadtoestand
     attributes:
       comment: "Bereik: [0,00, 100,00]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Ontlaad Afkap Laadtoestand
   ESSTotalChargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Geladen Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ESSTotalDischargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Ontladen Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   EVDCTotalChargedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale DC EV Laadenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   EVDCTotalDischargedEnergy:
-    name: Totale DC EV Ontlaadenergie
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Totale DC EV Ontlaadenergie
   EnergyDailyAccumulationSensor:
     name: '{name}'
     name_reset: Stel {name} in
@@ -461,97 +465,141 @@ class:
     name: '{name}'
     name_reset: Stel {name} in
   EnphaseCurrent:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
     name: Stroom
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
   EnphaseDailyPVEnergy:
-    name: Dagelijkse Productie
     attributes:
       source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Dagelijkse Productie
     name_reset: Stel Dagelijkse Productie in
   EnphaseFrequency:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
     name: Frequentie
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
   EnphaseLifetimePVEnergy:
-    name: Totale Productie
     attributes:
       source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Totale Productie
   EnphasePVPower:
-    name: PV Vermogen
     attributes:
       source: Enphase Envoy API
+    name: PV Vermogen
   EnphasePowerFactor:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
     name: Arbeidsfactor
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
   EnphaseReactivePower:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
     name: Reactief Vermogen
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
   EnphaseVoltage:
-    name: Spanning
     attributes:
       source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Spanning
   GeneralAlarm1:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Lage isolatieweerstand
+      '2': Overtemperatuur
+      '3': Apparatuurfout
+      '4': Systeem aardingsfout
+      '5': PV-string overspanning
+      '6': PV-string omgekeerd aangesloten
+      '7': PV-string terugvoeding
+      '8': AFCI-fout
+      '9': Netstroomuitval
+      '10': Net overspanning
+      '11': Net onderspanning
+      '12': Net overfrequentie
+      '13': Net onderfrequentie
+      '14': Netspanning onbalans
+      '15': DC-component van uitgangsstroom buiten limiet
+    attributes:
+      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarmen 1
-    attributes:
-      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm 
-        dienovereenkomstig ingesteld
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id001
   GeneralAlarm2:
+    alarm:
+      '0': Lekstroom buiten limiet
+      '1': Communicatie abnormaal
+      '2': Systeem interne beveiliging
+      '3': AFCI zelftest circuitfout
+      '4': Off-grid beveiliging
+      '5': Handmatige operatiebeveiliging
+      '7': Abnormale fasevolgorde
+      '8': Kortsluiting naar PE
+      '9': Zachte start mislukt
+    attributes:
+      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarmen 2
-    attributes:
-      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm 
-        dienovereenkomstig ingesteld
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id002
   GeneralAlarm3:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Lage isolatieweerstand naar aarde
+      '2': Temperatuur te hoog
+      '3': Apparatuurfout
+      '4': Ondertemperatuur
+      '5': Interne beveiliging
+      '6': Thermische doorsmelting
+    attributes:
+      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: ESS Alarmen
-    attributes:
-      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm 
-        dienovereenkomstig ingesteld
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id003
   GeneralAlarm4:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Temperatuur te hoog
+      '2': Apparatuurfout
+      '3': Overmatige lekstroom in off-grid uitgang
+      '4': N-lijn aardingsfout
+      '5': Abnormale fasevolgorde netbekabeling
+      '6': Abnormale fasevolgorde omvormerbekabeling
+      '7': Net fase verlies
+    attributes:
+      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Gateway Alarmen
-    attributes:
-      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm 
-        dienovereenkomstig ingesteld
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id004
   GeneralAlarm5:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Lage isolatieweerstand naar aarde
+      '2': Overtemperatuur
+      '3': Apparatuurfout
+      '4': Laadfout
+      '5': Apparatuurbeveiliging
+    attributes:
+      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: DC Lader Alarmen
-    attributes:
-      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm 
-        dienovereenkomstig ingesteld
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id005
   GeneralLoadPower:
-    name: Algemeen Lastvermogen
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Algemeen Lastvermogen
   GeneralPCSAlarm:
-    name: PCS Alarmen
     attributes:
-      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm 
-        dienovereenkomstig ingesteld
-      source: Modbus Registers 30027-30028
+      comment: Als een hybride omvormer een alarm heeft, wordt dit alarm dienovereenkomstig ingesteld
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PCS Alarmen
   GridCode:
     name: Sigenergy-installatie Netcode
   GridCodeHVRT:
-    name: Hoogspanning Doorrijden
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Hoogspanning Doorrijden
   GridCodeHVRTMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: HVRT Modus
     options:
       '0': Reactief vermogen compensatiestroom, actieve nulstroom modus
@@ -559,32 +607,32 @@ class:
       '3': Constante stroom modus
       '4': Reactieve dynamische stroom, actieve vasthoudmodus
       '5': Reactief vermogen compensatiestroom, actieve constante stroom modus
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "Bereik: [0, 10,0]"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: HVRT Negatieve Sequentie Reactief Vermogen Compensatiefactor
-    attributes:
-      comment: "Bereik: [0, 10,0]"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeHVRTReactivePowerCompensationFactor:
-    name: HVRT Reactief Vermogen Compensatiefactor
     attributes:
       comment: "Bereik: [0, 10,0]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: HVRT Reactief Vermogen Compensatiefactor
   GridCodeHVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: HVRT Netspanningsbeveiliging Blokkering
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeLVRT:
-    name: Laagspanning Doorrijden
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Laagspanning Doorrijden
   GridCodeLVRTMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: LVRT Modus
     options:
       '0': Reactief vermogen compensatiestroom, actieve nulstroom modus
@@ -592,179 +640,166 @@ class:
       '3': Constante stroom modus
       '4': Reactieve dynamische stroom, actieve nulstroom modus
       '5': Reactief vermogen compensatiestroom, actieve constante stroom modus
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
+    attributes:
+      comment: "Bereik: [0, 10,0]"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: LVRT Negatieve Sequentie Reactief Vermogen Compensatiefactor
-    attributes:
-      comment: "Bereik: [0, 10,0]"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeLVRTReactivePowerCompensationFactor:
-    name: LVRT Reactief Vermogen Compensatiefactor
     attributes:
       comment: "Bereik: [0, 10,0]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: LVRT Reactief Vermogen Compensatiefactor
   GridCodeLVRTVoltageProtectionBlocking:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: LVRT Netspanningsbeveiliging Blokkering
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeOverFrequencyDerating:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Overfrequentie Afregeling
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeOverFrequencyDeratingCutOffFrequency:
+    attributes:
+      comment: "Bereik: [1,0*Fn, 1,2*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Overfrequentie Afregeling Afkapfrequentie
-    attributes:
-      comment: "Bereik: [1,0*Fn, 1,2*Fn] Referentie: [Netcode] Nominale Frequentie
-        (Register 30276)"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeOverFrequencyDeratingPowerRampRate:
+    attributes:
+      comment: "Bereik: [0, 100,0]"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Overfrequentie Afregeling Vermogensopbouwsnelheid
-    attributes:
-      comment: "Bereik: [0, 100,0]"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeOverFrequencyDeratingTriggerFrequency:
+    attributes:
+      comment: "Bereik: [1,0*Fn, 1,2*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Overfrequentie Afregeling Triggerfrequentie
-    attributes:
-      comment: "Bereik: [1,0*Fn, 1,2*Fn] Referentie: [Netcode] Nominale Frequentie
-        (Register 30276)"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeRatedFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Frequentie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeRatedVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Spanning
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeUnderFrequencyPowerBoost:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Onderfrequentie Vermogensverhoging
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridCodeUnderFrequencyPowerBoostCutOffFrequency:
-    name: Onderfrequentie Vermogensverhoging Afkapfrequentie
     attributes:
-      comment: "Bereik: [0,8*Fn, 1,0*Fn] Referentie: [Netcode] Nominale Frequentie
-        (Register 30276)"
+      comment: "Bereik: [0,8*Fn, 1,0*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Onderfrequentie Vermogensverhoging Afkapfrequentie
   GridCodeUnderFrequencyPowerBoostPowerRampRate:
-    name: Onderfrequentie Vermogensverhoging Opbouwsnelheid
     attributes:
       comment: "Bereik: [0, 100,0]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Onderfrequentie Vermogensverhoging Opbouwsnelheid
   GridCodeUnderFrequencyPowerBoostTriggerFrequency:
+    attributes:
+      comment: "Bereik: [0,8*Fn, 1,0*Fn] Referentie: [Netcode] Nominale Frequentie (Register 30276)"
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Onderfrequentie Vermogensverhoging Triggerfrequentie
-    attributes:
-      comment: "Bereik: [0,8*Fn, 1,0*Fn] Referentie: [Netcode] Nominale Frequentie
-        (Register 30276)"
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Netfrequentie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridMaxExportLimit:
+    attributes:
+      comment: Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Net Max Exportlimiet
-    attributes:
-      comment: Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   GridMaxImportLimit:
-    name: Net Max Importlimiet
     attributes:
       comment: Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Net Max Importlimiet
   GridPhaseActivePower:
     attributes:
-      comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt;
-        >0 kopen van net; <0 verkopen aan net"
+      comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt; >0 kopen van net; <0 verkopen aan net"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Actief vermogen fase {phase}
   GridPhaseReactivePower:
     attributes:
-      comment: Gegevens verzameld door netsensor bij net-naar-systeem 
-        controlepunt
+      comment: Gegevens verzameld door netsensor bij net-naar-systeem controlepunt
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Reactief vermogen fase {phase}
   GridSensor:
     name: Sigenergy-installatie Netsensor
   GridSensorActivePower:
-    name: Actief Vermogen
     attributes:
-      comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt;
-        >0 kopen van net; <0 verkopen aan net"
+      comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt; >0 kopen van net; <0 verkopen aan net"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Actief Vermogen
   GridSensorDailyExportEnergy:
-    name: Dagelijks Geëxporteerde Energie
     attributes:
       source: PlantTotalExportedEnergy − PlantTotalExportedEnergy om middernacht
+    name: Dagelijks Geëxporteerde Energie
     name_reset: Stel Dagelijks Geëxporteerde Energie in
   GridSensorDailyImportEnergy:
-    name: Dagelijks Geïmporteerde Energie
     attributes:
       source: PlantTotalImportedEnergy − PlantTotalImportedEnergy om middernacht
+    name: Dagelijks Geïmporteerde Energie
     name_reset: Stel Dagelijks Geïmporteerde Energie in
   GridSensorExportPower:
-    name: Exportvermogen
     attributes:
       source: GridSensorActivePower < 0 × -1
+    name: Exportvermogen
   GridSensorImportPower:
-    name: Importvermogen
     attributes:
       source: GridSensorActivePower > 0
+    name: Importvermogen
   GridSensorReactivePower:
-    name: Reactief Vermogen
     attributes:
-      comment: Gegevens verzameld door netsensor bij net-naar-systeem 
-        controlepunt
+      comment: Gegevens verzameld door netsensor bij net-naar-systeem controlepunt
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Reactief Vermogen
   GridSensorStatus:
-    name: Netsensor Status
-    options:
-      "0": Niet Verbonden
-      "1": Verbonden
     attributes:
       comment: Gateway of meter verbindingsstatus
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Netsensor Status
+    options:
+      "0": Niet Verbonden
+      "1": Verbonden
   GridStatus:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Netstatus
     options:
       "0": Aan Net
       "1": Eiland (auto)
       "2": Eiland (handmatig)
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   HybridInverter:
     name: Hybride omvormer
   IndependentPhasePowerControl:
-    name: Onafhankelijke Fasevermogensregeling
     attributes:
-      comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Om 
-        onafhankelijke faseregeling in te schakelen, moet deze parameter zijn 
-        ingeschakeld
+      comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Om onafhankelijke faseregeling in te schakelen, moet deze parameter zijn ingeschakeld
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Onafhankelijke Fasevermogensregeling
   InfluxDBQueries:
     name: InfluxDB-queries
   InfluxDBQueryErrors:
@@ -781,166 +816,218 @@ class:
     name: InfluxDB gemiddelde schrijflatentie
   InfluxDBWrites:
     name: InfluxDB-schrijfacties
+  InfluxService:
+    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
   InsulationResistance:
-    name: Isolatieweerstand
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Isolatieweerstand
   Inverter:
     name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen Vaste Waarde Aanpassing
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterActivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen Vaste Waarde Aanpassing Feedback
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterActivePowerPercentageAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen Percentage Aanpassing
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterActivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen Percentage Aanpassing Feedback
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterAlarm1:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Lage isolatieweerstand
+      '2': Overtemperatuur
+      '3': Apparatuurfout
+      '4': Systeem aardingsfout
+      '5': PV-string overspanning
+      '6': PV-string omgekeerd aangesloten
+      '7': PV-string terugvoeding
+      '8': AFCI-fout
+      '9': Netstroomuitval
+      '10': Net overspanning
+      '11': Net onderspanning
+      '12': Net overfrequentie
+      '13': Net onderfrequentie
+      '14': Netspanning onbalans
+      '15': DC-component van uitgangsstroom buiten limiet
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarmen 1
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id001
   InverterAlarm2:
+    alarm:
+      '0': Lekstroom buiten limiet
+      '1': Communicatie abnormaal
+      '2': Systeem interne beveiliging
+      '3': AFCI zelftest circuitfout
+      '4': Off-grid beveiliging
+      '5': Handmatige operatiebeveiliging
+      '7': Abnormale fasevolgorde
+      '8': Kortsluiting naar PE
+      '9': Zachte start mislukt
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarmen 2
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id002
   InverterAlarm3:
-    name: Alarmen
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Lage isolatieweerstand naar aarde
+      '2': Temperatuur te hoog
+      '3': Apparatuurfout
+      '4': Ondertemperatuur
+      '5': Interne beveiliging
+      '6': Thermische doorsmelting
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    alarm: *id003
+    name: Alarmen
   InverterAlarm4:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Temperatuur te hoog
+      '2': Apparatuurfout
+      '3': Overmatige lekstroom in off-grid uitgang
+      '4': N-lijn aardingsfout
+      '5': Abnormale fasevolgorde netbekabeling
+      '6': Abnormale fasevolgorde omvormerbekabeling
+      '7': Net fase verlies
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Gateway Alarmen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    alarm: *id004
   InverterAlarm5:
-    name: Alarmen
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Lage isolatieweerstand naar aarde
+      '2': Overtemperatuur
+      '3': Apparatuurfout
+      '4': Laadfout
+      '5': Apparatuurbeveiliging
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    alarm: *id005
+    name: Alarmen
   InverterBatteryChargingPower:
-    name: Batterij Laadvermogen
     attributes:
       source: ChargeDischargePower > 0
+    name: Batterij Laadvermogen
   InverterBatteryDischargingPower:
-    name: Batterij Ontlaadvermogen
     attributes:
       source: ChargeDischargePower < 0 × -1
+    name: Batterij Ontlaadvermogen
   InverterBatterySoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Batterij Laadtoestand
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterBatterySoH:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Batterij Gezondheidstoestand
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterFirmwareVersion:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Firmwareversie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterMaxActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Actief Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterMaxBatteryTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Batterijtemperatuur
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterMaxCellVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Celspanning
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterMinBatteryTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Batterijtemperatuur
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterMinCellVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Celspanning
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterModel:
-    name: Model
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: 'Hybride omvormer'
   InverterPCSAlarm:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Alarmen
-    attributes:
-      source: Modbus Registers 30605-30606
   InverterPVDailyGeneration:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Dagelijkse Productie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterPVLifetimeGeneration:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Productie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterPVPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Arbeidsfactor Aanpassing
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Arbeidsfactor Aanpassing Feedback
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterReactivePowerFixedValueAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactief Vermogen Vaste Waarde Aanpassing
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterReactivePowerFixedValueAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactief Vermogen Vaste Waarde Aanpassing Feedback
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterReactivePowerPercentageAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactief Vermogen Percentage Aanpassing Feedback
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterReactivePowerQSAdjustment:
-    name: Reactief Vermogen Q/S Aanpassing
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Reactief Vermogen Q/S Aanpassing
   InverterRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Bedrijfsstatus
     options:
       '0': Standby
@@ -948,105 +1035,104 @@ class:
       '2': Storing
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   InverterSerialNumber:
-    name: Serienummer
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Serienummer
   InverterStatus:
-    name: Omvormer Aan/Uit
     attributes:
       comment: 0:Stop 1:Start
+    name: Omvormer Aan/Uit
   InverterTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Temperatuur
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   LineVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: '{phase} Lijnspanning'
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MPTTCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: MPPT Aantal
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxAbsorptionPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Absorptievermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxActivePower:
+    attributes:
+      comment: Dit moet de basiswaarde zijn van alle actief vermogen aanpassingsacties
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Actief Vermogen
-    attributes:
-      comment: Dit moet de basiswaarde zijn van alle actief vermogen 
-        aanpassingsacties
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxActivePowerAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Actief Vermogen Aanpassing
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxApparentPower:
+    attributes:
+      comment: Dit moet de basiswaarde zijn van alle reactief vermogen aanpassingsacties
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Schijnbaar Vermogen
-    attributes:
-      comment: Dit moet de basiswaarde zijn van alle reactief vermogen 
-        aanpassingsacties
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxBatteryChargePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Laadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxBatteryDischargePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Ontlaadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxChargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Laadlimiet
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxDischargingLimit:
+    attributes:
+      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Ontlaadlimiet
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxRatedApparentPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Max Nominaal Schijnbaar Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MaxReactivePowerAdjustment:
-    name: Max Reactief Vermogen Aanpassing
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Max Reactief Vermogen Aanpassing
   MetricsSensor:
     name: '{name}'
   MetricsService:
     name: Sigenergy Statistieken
   MinActivePowerAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Min Actief Vermogen Aanpassing
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   MinReactivePowerAdjustment:
-    name: Min Reactief Vermogen Aanpassing
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Min Reactief Vermogen Aanpassing
   ModbusActiveLocks:
     name: Actieve Modbus Vergrendelingen
   ModbusCacheHits:
     name: Modbus Cache Treffers
+  ModbusDevice:
+    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Modbus Fysieke Lezingen
   ModbusReadErrors:
@@ -1068,7 +1154,7 @@ class:
   ModbusWriteMin:
     name: Modbus Schrijven Min
   MonitorService:
-    name: Sigenergy Monitor
+    name: 'Sigenergy Monitor'
   MqttOverriddenSensor:
     attributes:
       source: MQTT Overschrijving
@@ -1078,48 +1164,45 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: '{availability_control_sensor}'
   OutputType:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Uitgangstype
     options:
       "0": L/N
       "1": L1/L2/L3
       "2": L1/L2/L3/N
       "3": L1/L2/N
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PACKBCUCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PACK/BCU Aantal
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PCSMaxExportLimit:
+    attributes:
+      comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig. In alle andere gevallen geldt het globaal."
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Max Exportlimiet
-    attributes:
-      comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig.
-        In alle andere gevallen geldt het globaal."
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PCSMaxImportLimit:
+    attributes:
+      comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig. In alle andere gevallen geldt het globaal."
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PCS Max Importlimiet
-    attributes:
-      comment: "Bereik: [0, 0xFFFFFFFE]. Bij waarde 0xFFFFFFFF is register niet geldig.
-        In alle andere gevallen geldt het globaal."
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PVCurrentSensor:
-    name: Stroom
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Stroom
   PVInverter:
     name: PV-omvormer
   PVMaxPowerLimit:
-    name: PV Max Vermogenslimiet
     attributes:
-      comment: Van kracht wanneer externe EMS-regelmodus (40031) is ingesteld op
-        Commando Laden/Ontladen
+      comment: Van kracht wanneer externe EMS-regelmodus (40031) is ingesteld op Commando Laden/Ontladen
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: PV Max Vermogenslimiet
   PVOutputOutputService:
     name: PVOutput Uitgang Service Toevoegen
   PVOutputStatusService:
@@ -1127,29 +1210,29 @@ class:
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
-    name: PV String Aantal
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: PV String Aantal
   PVStringDailyEnergy:
-    name: Dagelijkse Productie
     attributes:
       source: PVStringLifetimeEnergy − PVStringLifetimeEnergy om middernacht
+    name: Dagelijkse Productie
     name_reset: Stel Dagelijkse Productie in
   PVStringLifetimeEnergy:
-    name: Totale Productie
     attributes:
       source: Riemann Σ van PVStringPower
+    name: Totale Productie
     name_reset: Stel Totale Productie in
   PVStringPower:
-    name: Vermogen
     attributes:
       source: PVVoltageSensor × PVCurrentSensor
+    name: Vermogen
   PVVoltageSensor:
-    name: Spanning
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Spanning
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is
@@ -1158,20 +1241,18 @@ class:
     name: Instelwaarde vaste aanpassing actief vermogen fase {phase}
   PhaseActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-100,00,
-        100,00]"
+      comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-100,00, 100,00]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Instelwaarde percentage aanpassing actief vermogen fase {phase}
   PhaseCurrent:
-    name: Stroom fase {phase}
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Stroom fase {phase}
   PhaseQSAdjustmentTargetValue:
     attributes:
-      comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-60,00,
-        60,00]"
+      comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-60,00, 60,00]"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Instelwaarde vaste aanpassing Q/S fase {phase}
@@ -1182,93 +1263,94 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Instelwaarde vaste aanpassing reactief vermogen fase {phase}
   PhaseVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Spanning fase {phase}
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantAlarms:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Installatie Alarmen
-    attributes:
-      source: Modbus Registers 30280-30281
   PlantBatterySoC:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Batterij Laadtoestand
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantBatterySoH:
-    name: Batterij Gezondheidstoestand
     attributes:
-      comment: Deze waarde is het gewogen gemiddelde van de gezondheidstoestand 
-        van alle ESS-apparaten in de installatie, met elke nominale capaciteit 
-        als gewicht
+      comment: Deze waarde is het gewogen gemiddelde van de gezondheidstoestand van alle ESS-apparaten in de installatie, met elke nominale capaciteit als gewicht
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Batterij Gezondheidstoestand
   PlantConsumedPower:
-    name: Verbruikt Vermogen
     attributes:
       source: TotalLoadPower
+    name: Verbruikt Vermogen
   PlantDailyChargeEnergy:
-    name: Dagelijkse Laadenergie
     attributes:
       source: "Σ van DailyChargeEnergy over alle Omvormers geassocieerd met de Installatie"
+    name: Dagelijkse Laadenergie
     name_reset: Stel Dagelijkse Laadenergie in
   PlantDailyDischargeEnergy:
-    name: Dagelijkse Ontlaadenergie
     attributes:
-      source: "Σ van DailyDischargeEnergy over alle Omvormers geassocieerd met de
-        Installatie"
+      source: "Σ van DailyDischargeEnergy over alle Omvormers geassocieerd met de Installatie"
+    name: Dagelijkse Ontlaadenergie
     name_reset: Stel Dagelijkse Ontlaadenergie in
   PlantDailyPVEnergy:
-    name: Dagelijkse PV Productie
     attributes:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy om middernacht
+    name: Dagelijkse PV Productie
     name_reset: Stel Dagelijkse PV Productie in
   PlantPVPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantPVTotalGeneration:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale PV Productie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantPhaseActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Actief vermogen fase {phase}
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantPhaseReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactief vermogen fase {phase}
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantRatedChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominaal Laadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantRatedDischargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominaal Ontlaadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantRatedEnergyCapacity:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Energiecapaciteit
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantReactivePower:
-    name: Reactief Vermogen
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Reactief Vermogen
   PlantRunningState:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Bedrijfsstatus
     options:
       '0': Standby
@@ -1276,42 +1358,38 @@ class:
       '2': Storing
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantStatistics:
     name: Sigenergy-installatie Statistieken
   PlantStatus:
-    name: Installatie Aan/Uit
     attributes:
       comment: 0:Stop 1:Start
+    name: Installatie Aan/Uit
   PlantTotalExportedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Geëxporteerde Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantTotalGeneratorOutputEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Generator Uitgangsenergie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PlantTotalImportedEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Geïmporteerde Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PowerFactor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Arbeidsfactor
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   PowerFactorAdjustmentTargetValue:
-    name: Arbeidsfactor Instelwaarde
     attributes:
-      comment: "Bereik: [(-1,0, -0,8) U (0,8, 1,0)]. Netsensor vereist. Geldt globaal
-        ongeacht de EMS-bedrijfsmodus"
+      comment: "Bereik: [(-1,0, -0,8) U (0,8, 1,0)]. Netsensor vereist. Geldt globaal ongeacht de EMS-bedrijfsmodus"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Arbeidsfactor Instelwaarde
   PowerPlant:
     name: 'Sigenergy-installatie'
   ProtocolPublished:
@@ -1319,53 +1397,52 @@ class:
   ProtocolVersion:
     name: Protocolversie
   QSAdjustmentTargetValue:
-    name: Q/S Instelwaarde
     attributes:
       comment: "Bereik: [-60,0, 60,00]. Geldt globaal ongeacht de EMS-bedrijfsmodus"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Q/S Instelwaarde
   RatedActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominaal Actief Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   RatedBatteryCapacity:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Batterijcapaciteit
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   RatedChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominaal Laadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   RatedDischargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominaal Ontlaadvermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   RatedGridFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Netfrequentie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   RatedGridVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Nominale Netspanning
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Reactief Vermogen
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReactivePowerFixedAdjustmentTargetValue:
-    name: Reactief Vermogen Vast Instelwaarde
     attributes:
-      comment: "Bereik: [-60,00 * basiswaarde, 60,00 * basiswaarde]. Geldt globaal
-        ongeacht de EMS-bedrijfsmodus"
+      comment: "Bereik: [-60,00 * basiswaarde, 60,00 * basiswaarde]. Geldt globaal ongeacht de EMS-bedrijfsmodus"
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Reactief Vermogen Vast Instelwaarde
   ReadOnlySensor:
     attributes:
       source: Modbus Register {address}
@@ -1377,14 +1454,15 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
   RemoteEMS:
-    name: Extern EMS
     attributes:
-      comment: Wanneer EMS op afstand moet worden aangestuurd, moet dit register
-        worden ingeschakeld. Wanneer ingeschakeld, schakelt de EMS-werkmodus 
-        (30003) van de installatie over naar RemoteEMS
+      comment: Wanneer EMS op afstand moet worden aangestuurd, moet dit register worden ingeschakeld. Wanneer ingeschakeld, schakelt de EMS-werkmodus (30003) van de installatie over naar RemoteEMS
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Extern EMS
   RemoteEMSControlMode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Externe EMS Regelmodus
     options:
       '0': PCS afstandsbediening
@@ -1394,79 +1472,76 @@ class:
       '4': Commando laden (eerst stroom van PV verbruiken)
       '5': Commando ontladen (eerst PV-vermogen uitvoeren)
       '6': Commando ontladen (eerst batterijvermogen uitvoeren)
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   RemoteEMSLimit:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{availability_control_sensor}'
   Reserved30073:
-    name: Gereserveerd
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Gereserveerd
   Reserved30610:
-    name: Gereserveerd
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Gereserveerd
   Reserved40026:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Gereserveerd
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedAccumulatedExportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Geëxporteerde Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedAccumulatedImportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Geïmporteerde Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedDailyExportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Dagelijkse Geëxporteerde Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedDailyImportEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Dagelijkse Geïmporteerde Energie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedGridCode:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Netcode
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedGridPhaseCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Stroom fase {phase}
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedGridPhaseVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Spanning fase {phase}
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedInverterRemoteEMSDispatch:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Extern EMS Dispatch
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedPVTotalGenerationToday:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: PV Totale Productie Vandaag
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ReservedPVTotalGenerationYesterday:
-    name: PV Totale Productie Gisteren
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: PV Totale Productie Gisteren
   ReservedSensor:
     attributes:
       source: Modbus Register {address}
@@ -1475,104 +1550,82 @@ class:
   ResettableAccumulationSensor:
     name: '{name}'
   RunningStateSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: '{name}'
     options:
       "0": Standby
       "1": Normaal
       "2": Storing
       "3": Uitgeschakeld
       "7": Omgevingsafwijking
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   SITotalChargedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Geladen Energie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalCommonLoadConsumption:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Algemeen Lastverbruik
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalDischargedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Ontladen Energie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalEVACChargedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale AC EV Laadenergie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalEVDCChargedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale DC EV Laadenergie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalEVDCDischargedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalExportedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Geëxporteerde Energie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalGeneratorOutputEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Generator Uitgangsenergie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalImportedEnergy:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Geïmporteerde Energie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalSelfPVGeneration:
+    attributes:
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale PV Productie
-    attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SITotalThirdPartyPVGeneration:
-    name: Totale Derde Partij PV Productie
     attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Totale Derde Partij PV Productie
   SelectSensor:
     attributes:
       source: Modbus Register {address}
@@ -1580,63 +1633,63 @@ class:
     name: '{name}'
   SensorGroup:
     name: '{sensors}'
+  Service:
+    name: '{Config} {name}'
   ShutdownTime:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Uitschakeltijd
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SmartLoadPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Vermogen slimme verbruiker {smart_load_index}
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SmartLoadTotalConsumption:
-    name: Totaal verbruik slimme verbruiker {smart_load_index}
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Totaal verbruik slimme verbruiker {smart_load_index}
   SmartPort:
     name: Sigenergy-installatie Smart-Port
   Started:
     name: Gestart
   StartupTime:
-    name: Opstarttijd
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Opstarttijd
   StatisticsInterfaceSensor:
     attributes:
-      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de 
-        nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 
-        en begint het tellen opnieuw zonder historische gegevens over te nemen
+      comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
+    name: 'Hybride omvormer'
   SwitchSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
   SystemTime:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Systeemtijd
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   SystemTimeZone:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Systeemtijdzone
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ThirdPartyLifetimePVEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totale Derde Partij PV Productie
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   ThirdPartyPVPower:
-    name: Derde Partij PV Vermogen
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Derde Partij PV Vermogen
   TimePeriodServiceTopics:
     name: '{service}'
   TimestampSensor:
@@ -1645,53 +1698,44 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: '{name}'
   TotalDailyPVEnergy:
-    name: Dagelijkse Totale PV Productie
     attributes:
       source: TotalLifetimePVEnergy − TotalLifetimePVEnergy om middernacht
+    name: Dagelijkse Totale PV Productie
     name_reset: Stel Dagelijkse Totale PV Productie in
   TotalLifetimePVEnergy:
-    name: Totale PV Productie
     attributes:
       source: "Σ van PlantPVTotalGeneration en ThirdPartyLifetimePVEnergy"
+    name: Totale PV Productie
   TotalLoadConsumption:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Totaal Verbruik
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   TotalLoadDailyConsumption:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
     name: Dagelijks Verbruik
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
   TotalLoadPower:
-    name: Totaal Lastvermogen
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Totaal Lastvermogen
   TotalPVPower:
-    name: Totaal PV Vermogen
     attributes:
       source: PV Vermogen + Derde Partij PV Vermogen
+    name: Totaal PV Vermogen
   WriteOnlySensor:
-    name_on: Inschakelen
-    name_off: Uitschakelen
     name: '{name}'
+    name_off: Uitschakelen
+    name_on: Inschakelen
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Het pad naar het JSON-configuratiebestand (standaard: /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
-    help: "Stel de methode in voor het berekenen van de Plant Verbruikt Vermogen sensor.
-      Geldige waarden zijn: 'calculated', 'total' (Totaal Belastingsvermogen register),
-      of 'general' (V2.8 Algemeen Belastingsvermogen register). De standaardwaarde
-      is 'calculated'. Deze optie wordt genegeerd op firmware die ouder is dan de
-      firmware die Modbus Protocol V2.8 ondersteunt."
+    help: "Stel de methode in voor het berekenen van de Plant Verbruikt Vermogen sensor. Geldige waarden zijn: 'calculated', 'total' (Totaal Belastingsvermogen register), of 'general' (V2.8 Algemeen Belastingsvermogen register). De standaardwaarde is 'calculated'. Deze optie wordt genegeerd op firmware die ouder is dan de firmware die Modbus Protocol V2.8 ondersteunt."
   SIGENERGY2MQTT_DEBUG_SENSOR:
-    help: 'Specificeer een sensor om te debuggen met de volledige of gedeeltelijke
-      entiteit-ID of de sensorklassenaam (bijv. ''daily'' komt overeen met alle sensoren
-      met ''daily'' in hun naam), of een reguliere expressie die vergeleken wordt
-      met de entiteit-ID of sensorklassenaam (bijv. ''^PowerFactor$'' komt alleen
-      overeen met de enkele klassenaam). Indien opgegeven, wordt --log-level ook geforceerd
-      naar DEBUG.'
+    help: 'Specificeer een sensor om te debuggen met de volledige of gedeeltelijke entiteit-ID of de sensorklassenaam (bijv. ''daily'' komt overeen met alle sensoren met ''daily'' in hun naam), of een reguliere expressie die vergeleken wordt met de entiteit-ID of sensorklassenaam (bijv. ''^PowerFactor$'' komt alleen overeen met de enkele klassenaam). Indien opgegeven, wordt --log-level ook geforceerd naar DEBUG.'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Het voorvoegsel voor Home Assistant entiteitsnamen'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
@@ -1703,15 +1747,11 @@ cli:
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Het voorvoegsel voor Home Assistant entiteit-IDs (standaard: sigen)'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
-    help: 'Het voorvoegsel voor Home Assistant unieke IDs. Voorbeeld: Een voorvoegsel
-      van ''prefix'' zal ''prefix_'' voorafgaan aan unieke IDs (standaard: sigen).
-      Zodra u dit heeft ingesteld, mag u dit NOOIT meer wijzigen, omdat dit bestaande
-      entiteiten in Home Assistant zal verbreken.'
+    help: 'Het voorvoegsel voor Home Assistant unieke IDs. Voorbeeld: Een voorvoegsel van ''prefix'' zal ''prefix_'' voorafgaan aan unieke IDs (standaard: sigen). Zodra u dit heeft ingesteld, mag u dit NOOIT meer wijzigen, omdat dit bestaande entiteiten in Home Assistant zal verbreken.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Gebruik vereenvoudigde topic-structuur (sigenergy2mqtt/object_id/state)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
-    help: Naam van de InfluxDB v2 bucket (standaard --influxdb-database indien 
-      niet ingesteld)
+    help: Naam van de InfluxDB v2 bucket (standaard --influxdb-database indien niet ingesteld)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'InfluxDB database om metingen naar te schrijven (standaard: sigenergy)'
   SIGENERGY2MQTT_INFLUX_ENABLED:
@@ -1723,9 +1763,7 @@ cli:
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: Lijst van sensor-ID's om op te nemen (gescheiden door spaties)
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
-    help: 'Logniveau van het InfluxDB-subsysteem. Geldige waarden zijn: DEBUG, INFO,
-      WARNING, ERROR of CRITICAL. Standaard is WARNING (waarschuwingen, fouten en
-      kritieke storingen)'
+    help: 'Logniveau van het InfluxDB-subsysteem. Geldige waarden zijn: DEBUG, INFO, WARNING, ERROR of CRITICAL. Standaard is WARNING (waarschuwingen, fouten en kritieke storingen)'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: Naam of ID van de InfluxDB-organisatie
   SIGENERGY2MQTT_INFLUX_PASSWORD:
@@ -1733,26 +1771,17 @@ cli:
   SIGENERGY2MQTT_INFLUX_PORT:
     help: 'Poort van InfluxDB (standaard: 8086)'
   SIGENERGY2MQTT_INFLUX_TOKEN:
-    help: InfluxDB v2 authenticatietoken (geeft de voorkeur aan v2 API's indien 
-      verstrekt)
+    help: InfluxDB v2 authenticatietoken (geeft de voorkeur aan v2 API's indien verstrekt)
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: Gebruikersnaam van InfluxDB
   SIGENERGY2MQTT_LANGUAGE:
-    help: 'Stelt de taal in die gebruikt moet worden voor vertalingen. De standaardwaarde
-      wordt bepaald door het systeem (bijv. de LANG-omgevingsvariabele) of Engels
-      als er geen alternatief wordt gevonden.'
+    help: 'Stelt de taal in die gebruikt moet worden voor vertalingen. De standaardwaarde wordt bepaald door het systeem (bijv. de LANG-omgevingsvariabele) of Engels als er geen alternatief wordt gevonden.'
   SIGENERGY2MQTT_LOG_LEVEL:
-    help: 'Stel het logniveau in. Geldige waarden: DEBUG, INFO, WARNING, ERROR of
-      CRITICAL. Standaard: WARNING'
+    help: 'Stel het logniveau in. Geldige waarden: DEBUG, INFO, WARNING, ERROR of CRITICAL. Standaard: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
-    help: 'De Sigenergy AC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs
-      worden opgegeven, gescheiden door komma''s.'
+    help: 'De Sigenergy AC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
-    help: 'Probeer Sigenergy Modbus-hosts en apparaat-IDs automatisch te ontdekken.
-      Indien ''once'' is opgegeven, vindt auto-discovery alleen plaats als er geen
-      bestaande resultaten voor automatische detectie gevonden zijn. Indien ''force'',
-      zal auto-discovery alle eerder ontdekte Modbus-hosts en apparaat-IDs overschrijven.
-      Indien niet opgegeven, is auto-discovery uitgeschakeld.'
+    help: 'Probeer Sigenergy Modbus-hosts en apparaat-IDs automatisch te ontdekken. Indien ''once'' is opgegeven, vindt auto-discovery alleen plaats als er geen bestaande resultaten voor automatische detectie gevonden zijn. Indien ''force'', zal auto-discovery alle eerder ontdekte Modbus-hosts en apparaat-IDs overschrijven. Indien niet opgegeven, is auto-discovery uitgeschakeld.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: 'Ping-timeout in seconden voor auto-discovery. Standaard: 0,5 seconden.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
@@ -1760,15 +1789,13 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
     help: 'Modbus-timeout in seconden voor auto-discovery. Standaard: 0,25 seconden.'
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
-    help: 'De Sigenergy DC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs
-      worden opgegeven, gescheiden door komma''s.'
+    help: 'De Sigenergy DC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
     help: 'Schakel Modbus-chunking uit bij het lezen van registers.'
   SIGENERGY2MQTT_MODBUS_HOST:
     help: 'De hostnaam of IP-adres van het Sigenergy-apparaat'
   SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID:
-    help: 'De Sigenergy Omvormer Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs
-      worden opgegeven, gescheiden door komma''s.'
+    help: 'De Sigenergy Omvormer Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: 'Stel het pymodbus-logniveau in.'
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
@@ -1786,15 +1813,13 @@ cli:
   SIGENERGY2MQTT_MQTT_BROKER:
     help: 'De hostnaam of IP-adres van de MQTT-broker (standaard: 127.0.0.1)'
   SIGENERGY2MQTT_MQTT_KEEPALIVE:
-    help: Maximale periode in seconden tussen communicaties met de broker. 
-      Standaard 60, minimum 1.
+    help: Maximale periode in seconden tussen communicaties met de broker. Standaard 60, minimum 1.
   SIGENERGY2MQTT_MQTT_LOG_LEVEL:
     help: Stel het paho.mqtt-logniveau in.
   SIGENERGY2MQTT_MQTT_PASSWORD:
     help: Een geldig wachtwoord voor de MQTT-broker
   SIGENERGY2MQTT_MQTT_PORT:
-    help: De luisterpoort van de MQTT-broker (standaard is 1883, tenzij 
-      --mqtt-tls is opgegeven, in welk geval de standaard 8883 is)
+    help: De luisterpoort van de MQTT-broker (standaard is 1883, tenzij --mqtt-tls is opgegeven, in welk geval de standaard 8883 is)
   SIGENERGY2MQTT_MQTT_TLS:
     help: Schakel beveiligde communicatie via TLS/SSL in.
   SIGENERGY2MQTT_MQTT_TLS_INSECURE:
@@ -1804,9 +1829,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: Een geldige gebruikersnaam voor de MQTT-broker
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: 'Schakel validatie uit die ESS Max Laden/Ontladen en PV Max Vermogen limieten
-      uitschakelt wanneer de Externe EMS Regelmodus niet op Commando Laden/Ontladen
-      staat.'
+    help: 'Schakel validatie uit die ESS Max Laden/Ontladen en PV Max Vermogen limieten uitschakelt wanneer de Externe EMS Regelmodus niet op Commando Laden/Ontladen staat.'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'Publiceer geen sigenergy2mqtt-statistieken.'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
@@ -1834,8 +1857,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: Stel het PVOutput-logniveau in.
   SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:
-    help: 'Het uur (20-23) waarop dagelijkse totalen naar PVOutput worden verzonden.
-      Standaard: 23.'
+    help: 'Het uur (20-23) waarop dagelijkse totalen naar PVOutput worden verzonden. Standaard: 23.'
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: Het PVOutput Systeem-ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
@@ -1843,19 +1865,13 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "De bron van de spanningswaarde voor PVOutput. Standaard: 'l/n-avg'."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
-    help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles
-      om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren
-      en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500
-      kW per seconde, en metingen buiten het bereik worden genegeerd.'
+    help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500 kW per seconde, en metingen buiten het bereik worden genegeerd.'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
-    help: 'Scaninterval in seconden voor registers met hoge frequentie. Standaard:
-      10.'
+    help: 'Scaninterval in seconden voor registers met hoge frequentie. Standaard: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
-    help: 'Scaninterval in seconden voor registers met lage frequentie. Standaard:
-      600.'
+    help: 'Scaninterval in seconden voor registers met lage frequentie. Standaard: 600.'
   SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM:
-    help: 'Scaninterval in seconden voor registers met gemiddelde frequentie. Standaard:
-      60.'
+    help: 'Scaninterval in seconden voor registers met gemiddelde frequentie. Standaard: 60.'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'Scaninterval in seconden voor real-time registers. Standaard: 5.'
   SIGENERGY2MQTT_SMARTPORT_ENABLED:
@@ -1865,8 +1881,7 @@ cli:
   SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
     help: De modulenaam voor productiegegevens van derden.
   SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: 'De versterking voor productiegegevens (bijv. 1000 voor kW). Standaard:
-      1 (Watt).'
+    help: 'De versterking voor productiegegevens (bijv. 1000 voor kW). Standaard: 1 (Watt).'
   SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
     help: Het MQTT-topic voor productiegegevens van derden.
   SIGENERGY2MQTT_SMARTPORT_PASSWORD:
@@ -1876,8 +1891,7 @@ cli:
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: De gebruikersnaam voor authenticatie bij het apparaat van derden.
   clean:
-    help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit 
-      dan af.
+    help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.
   discovery_only:
     help: 'Sluit direct af na publicatie van discovery.'
   show_version:
