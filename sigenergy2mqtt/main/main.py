@@ -1,5 +1,6 @@
 import logging
 import signal
+import sys
 from pathlib import Path
 from typing import Tuple, cast
 
@@ -39,6 +40,9 @@ async def async_main() -> None:
             config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
             modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
             async with modbus:
+                if not modbus.connected:
+                    logging.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
+                    sys.exit(1)
                 logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
                 plant: PowerPlant | None = None  # Make sure plant is only created with first inverter
                 inverters: dict[int, str] = {}
