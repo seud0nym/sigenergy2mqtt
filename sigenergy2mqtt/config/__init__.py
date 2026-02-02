@@ -41,11 +41,23 @@ def initialize():
     # The reload() call will pick up the environment variables we just set.
 
     # Check for config path
-    config_path = os.getenv(const.SIGENERGY2MQTT_CONFIG)
-    if config_path:
-        active_config.load(config_path)
-    else:
-        active_config.reload()
+    try:
+        config_path = os.getenv(const.SIGENERGY2MQTT_CONFIG)
+        if config_path:
+            filename = str(config_path).strip()
+            if os.path.isfile(filename):
+                active_config.load(filename)
+            else:
+                raise FileNotFoundError(f"Specified config file '{filename}' does not exist!")
+        elif os.path.isfile("/etc/sigenergy2mqtt.yaml"):
+            active_config.load("/etc/sigenergy2mqtt.yaml")
+        elif os.path.isfile("/data/sigenergy2mqtt.yaml"):
+            active_config.load("/data/sigenergy2mqtt.yaml")
+        else:
+            active_config.reload()
+    except Exception as e:
+        logging.critical(f"Error processing configuration: {e}")
+        sys.exit(1)
 
     # Handle early exit flags
     if getattr(args, "clean", False):
