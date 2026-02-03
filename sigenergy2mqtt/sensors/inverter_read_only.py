@@ -1287,9 +1287,10 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
                 address = 31015
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
+        phase = f" {phase}" if power_phases > 1 else ""
         super().__init__(
-            name="Phase Voltage" if (power_phases == 1 and phase == "A") else f"Phase {phase} Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_{phase.lower()}_voltage",
+            name=f"Phase{phase} Voltage",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_{phase.strip().lower()}_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1320,9 +1321,10 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
                 address = 31021
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
+        phase = f" {phase}" if power_phases > 1 else ""
         super().__init__(
-            name="Phase Current" if power_phases == 1 else f"Phase {phase} Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_{phase.lower()}_current",
+            name=f"Phase{phase} Current",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_phase_{phase.strip().lower()}_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,

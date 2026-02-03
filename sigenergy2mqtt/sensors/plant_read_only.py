@@ -372,9 +372,10 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
                 address = 30019
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
+        phase = f" {phase}" if power_phases > 1 else ""
         super().__init__(
-            name=f"Phase {phase} Active Power" if power_phases > 1 else "Phase Active Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power",
+            name=f"Phase{phase} Active Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.strip().lower()}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=247,
@@ -404,9 +405,10 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
                 address = 30025
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
+        phase = f" {phase}" if power_phases > 1 else ""
         super().__init__(
-            name=f"Phase {phase} Reactive Power" if power_phases > 1 else "Phase Reactive Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_reactive_power",
+            name=f"Phase{phase} Reactive Power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.strip().lower()}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=247,
