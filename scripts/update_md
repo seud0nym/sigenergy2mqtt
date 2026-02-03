@@ -1,0 +1,53 @@
+#!/bin/bash
+
+GREEN='\033[1;32m'
+ORANGE='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+cd "$(cd $(dirname $0)/..; pwd)"
+
+if [[ -n "$1" ]]; then
+    new_version="$1"
+else 
+    new_version=$(grep -oP 'added:\s*\K[\d.]+' sigenergy2mqtt/config/const.py | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+fi
+
+for var in $(grep -Eo '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py); do
+    grep -Eq "| \`${var}\`" resources/configuration/ENV.md || { echo -e "${RED}>>> Environment variable ${ORANGE}$var${RED} not found in ENV.md!"; exit; }
+done
+date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0071 All environment variables found in resources/configuration/ENV.md"
+
+OUTPUT_FILE="resources/configuration/CLI.md"
+NEW_HELP_TMP=$(mktemp)
+OLD_HELP_TMP=$(mktemp)
+# 1. Capture the fresh help output to a temp file
+python3 -m sigenergy2mqtt --help | sed -e 's/__main__.py/sigenergy2mqtt/g' > "$NEW_HELP_TMP" 2>/dev/null
+# 2. Extract the existing help output from the current file (if it exists)
+if [ -f "$OUTPUT_FILE" ]; then
+    # This sed command finds the text between the ```text and ``` markers
+    sed -n '/^```text/,/^```/ { /```/!p }' "$OUTPUT_FILE" > "$OLD_HELP_TMP"
+else
+    # Create an empty file so the comparison fails and forces a write
+    touch "$OLD_HELP_TMP"
+fi
+# 3. Compare the "pure" help text
+if cmp -s "$NEW_HELP_TMP" "$OLD_HELP_TMP"; then
+    date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0088 CLI options haven't changed. Keeping existing documentation (Version remains $(grep "Since Release" "$OUTPUT_FILE" | cut -d' ' -f3-))."
+else
+    date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0090 CLI changes detected. Updating $OUTPUT_FILE to version $new_version..."
+    {
+    echo "# Command Line Options"
+    echo "(Since Release $new_version)"
+    echo '```text'
+    cat "$NEW_HELP_TMP"
+    echo '```'
+    } > "$OUTPUT_FILE"
+fi
+# Cleanup
+rm "$NEW_HELP_TMP" "$OLD_HELP_TMP"
+date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0101 resources/configuration/CLI.md updated"
+
+cd scripts
+python3 update_md.py
+cd - >> /dev/null
