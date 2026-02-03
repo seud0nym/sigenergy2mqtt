@@ -151,7 +151,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   Alarm2Sensor:
     alarm:
       '0': Corriente de fuga fuera de límite
@@ -166,7 +165,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   Alarm3Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -179,7 +177,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   Alarm4Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -193,7 +190,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   Alarm5Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -205,7 +201,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   Alarm6:
     alarm:
       '0': Comunicación de Gateway anormal
@@ -230,12 +225,11 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: 'Inversor híbrido'
+    name: Hybrid Inverter
   AlarmSensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
     no_alarm: Sin Alarma
     unknown_alarm: Desconocido (bit{bit}∈{value})
   AvailableBatteryChargeEnergy:
@@ -398,8 +392,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Energía de Descarga Diaria
-  Device:
-    name: '{Config} {name}'
   DischargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}
@@ -458,12 +450,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Energía de Descarga CC VE Total
-  EnergyDailyAccumulationSensor:
-    name: '{name}'
-    name_reset: Establecer {name}
-  EnergyLifetimeAccumulationSensor:
-    name: '{name}'
-    name_reset: Establecer {name}
   EnphaseCurrent:
     attributes:
       source: API Enphase Envoy al derivar EnphasePVPower
@@ -1113,8 +1099,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Ajuste de Potencia Reactiva Máx
-  MetricsSensor:
-    name: '{name}'
   MetricsService:
     name: Métricas Sigenergy
   MinActivePowerAdjustment:
@@ -1131,8 +1115,6 @@ class:
     name: Bloqueos Modbus Activos
   ModbusCacheHits:
     name: Aciertos de Caché Modbus
-  ModbusDevice:
-    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Lecturas Físicas Modbus
   ModbusReadErrors:
@@ -1162,7 +1144,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{availability_control_sensor}'
   OutputType:
     attributes:
       source: Registro Modbus {address}
@@ -1447,12 +1428,10 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   ReadWriteSensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   RemoteEMS:
     attributes:
       comment: Cuando se necesita controlar el EMS de forma remota, este registro debe estar habilitado. Cuando está habilitado, el Modo de Trabajo EMS de la planta (30003) cambiará a RemoteEMS
@@ -1476,7 +1455,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{availability_control_sensor}'
   Reserved30073:
     attributes:
       source: Registro Modbus {address}
@@ -1546,14 +1524,12 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   ResettableAccumulationSensor:
-    name: '{name}'
+    name_reset: Establecer {self.name}
   RunningStateSensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
     options:
       "0": En Espera
       "1": Normal
@@ -1630,11 +1606,6 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
-  SensorGroup:
-    name: '{sensors}'
-  Service:
-    name: '{Config} {name}'
   ShutdownTime:
     attributes:
       source: Registro Modbus {address}
@@ -1664,12 +1635,11 @@ class:
       comment: Después de actualizar el firmware del dispositivo para soportar la nueva Interfaz de Estadísticas, los valores del registro se reiniciarán a 0 y comenzarán a contar de nuevo sin heredar datos históricos
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: 'Inversor híbrido'
+    name: Hybrid Inverter
   SwitchSensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   SystemTime:
     attributes:
       source: Registro Modbus {address}
@@ -1690,13 +1660,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Potencia PV de Terceros
-  TimePeriodServiceTopics:
-    name: '{service}'
   TimestampSensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: '{name}'
   TotalDailyPVEnergy:
     attributes:
       source: TotalLifetimePVEnergy − TotalLifetimePVEnergy a medianoche
@@ -1726,7 +1693,6 @@ class:
       source: Potencia PV + Potencia PV de Terceros
     name: Potencia PV Total
   WriteOnlySensor:
-    name: '{name}'
     name_off: Apagar
     name_on: Encender
 cli:

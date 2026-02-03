@@ -151,7 +151,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   Alarm2Sensor:
     alarm:
       '0': 漏电流超限
@@ -166,7 +165,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   Alarm3Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -179,7 +177,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   Alarm4Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -193,7 +190,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   Alarm5Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -205,7 +201,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   Alarm6:
     alarm:
       '0': 网关通信异常
@@ -230,12 +225,11 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '混合逆变器'
+    name: Hybrid Inverter
   AlarmSensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
     no_alarm: 无告警
     unknown_alarm: 未知 (bit{bit}∈{value})
   AvailableBatteryChargeEnergy:
@@ -398,8 +392,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 日放电电量
-  Device:
-    name: '{Config} {name}'
   DischargeCutOffSoC:
     attributes:
       source: Modbus 寄存器 {address}
@@ -458,12 +450,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 直流电动汽车累计放电电量
-  EnergyDailyAccumulationSensor:
-    name: '{name}'
-    name_reset: 设置 {name}
-  EnergyLifetimeAccumulationSensor:
-    name: '{name}'
-    name_reset: 设置 {name}
   EnphaseCurrent:
     attributes:
       source: 派生EnphasePVPower时的Enphase Envoy API
@@ -1113,8 +1099,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大无功功率调节
-  MetricsSensor:
-    name: '{name}'
   MetricsService:
     name: Sigenergy 指标
   MinActivePowerAdjustment:
@@ -1131,8 +1115,6 @@ class:
     name: Modbus 活动锁
   ModbusCacheHits:
     name: Modbus 缓存命中
-  ModbusDevice:
-    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Modbus 物理读取
   ModbusReadErrors:
@@ -1162,7 +1144,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{availability_control_sensor}'
   OutputType:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1447,12 +1428,10 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   ReadWriteSensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   RemoteEMS:
     attributes:
       comment: 当需要远程控制EMS时，需要启用此寄存器。启用后，电站的EMS工作模式（30003）将切换到RemoteEMS
@@ -1476,7 +1455,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{availability_control_sensor}'
   Reserved30073:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1546,14 +1524,12 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   ResettableAccumulationSensor:
-    name: '{name}'
+    name_reset: 设置 {self.name}
   RunningStateSensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
     options:
       "0": 待机
       "1": 正常
@@ -1630,11 +1606,6 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
-  SensorGroup:
-    name: '{sensors}'
-  Service:
-    name: '{Config} {name}'
   ShutdownTime:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1664,12 +1635,11 @@ class:
       comment: 将设备固件升级以支持新的统计接口后，寄存器值将重置为0并重新开始计数，不继承历史数据
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '混合逆变器'
+    name: Hybrid Inverter
   SwitchSensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   SystemTime:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1690,13 +1660,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 第三方PV功率
-  TimePeriodServiceTopics:
-    name: '{service}'
   TimestampSensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: '{name}'
   TotalDailyPVEnergy:
     attributes:
       source: TotalLifetimePVEnergy − 午夜时的TotalLifetimePVEnergy
@@ -1726,7 +1693,6 @@ class:
       source: PV功率 + 第三方PV功率
     name: 总PV功率
   WriteOnlySensor:
-    name: '{name}'
     name_off: 关机
     name_on: 开机
 cli:

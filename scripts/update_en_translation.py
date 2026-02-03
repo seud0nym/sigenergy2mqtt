@@ -83,6 +83,8 @@ def get_ast_string_values(node):
                 elif isinstance(val.value, ast.Call) and isinstance(val.value.func, ast.Attribute) and val.value.func.attr == "lower":
                     if isinstance(val.value.func.value, ast.Name):
                         parts.append(f"{{{val.value.func.value.id}}}")
+                elif isinstance(val.value, ast.Attribute) and isinstance(val.value.value, ast.Attribute) and val.value.attr == "__name__" and val.value.value.attr == "__class__":
+                    parts.append("{self}")
                 else:
                     # Be more aggressive: try to find any Name in the expression
                     found_names = [n.id for n in ast.walk(val.value) if isinstance(n, ast.Name)]
@@ -130,7 +132,7 @@ class TranslationExtractor(ast.NodeVisitor):
         self.resettable_bases = {"ResettableAccumulationSensor", "EnergyDailyAccumulationSensor", "EnergyLifetimeAccumulationSensor"}
         self.class_bases = {}
         self.local_vars = {}
-        self.ignore_name_classes = {"Device", "ModbusDevice", "InfluxService", "MetricsService", "MonitorService", "Service"}
+        self.ignore_name_classes = {"Device", "ModbusDevice", "Service"}
 
     def visit_ClassDef(self, node):
         prev_class = self.current_class
@@ -242,6 +244,30 @@ class TranslationExtractor(ast.NodeVisitor):
                                 options[str(i)] = opt_values[0]
                         if options:
                             self._add_translation(self.current_class, "options", options)
+
+        # Handle _t("key", "default")
+        if isinstance(node.func, ast.Name) and node.func.id == "_t":
+            if len(node.args) >= 2:
+                names = get_ast_string_values(node.args[0])
+                if names:
+                    key = names[0]
+                    defaults = get_ast_string_values(node.args[1])
+                    if defaults:
+                        default = defaults[0]
+                        if self.current_class:
+                            # Replace {self} or {} if it's the class name key or similar
+                            key = key.replace("{self}", self.current_class).replace("{}", self.current_class)
+
+                            # If it's something like "HybridInverter.name", extract the subkey
+                            if key.startswith(f"{self.current_class}."):
+                                sub_key = key[len(self.current_class) + 1 :]
+                                self._add_translation(self.current_class, sub_key, default)
+                            else:
+                                # Possibly a generic key used within a class, but we don't have a place for it
+                                # besides under the class itself in our current yaml structure.
+                                # For now, let's assume it's meant to be a subkey if it has no dot.
+                                if "." not in key:
+                                    self._add_translation(self.current_class, key, default)
 
         self.generic_visit(node)
 
@@ -421,10 +447,12 @@ def merge_translations(base, new):
             base[key] = value
 
 
-def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict):
+def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict, old_en_translations: dict | None = None):
     """Add new keys to other language files, preserving existing translations."""
     en_class = en_translations.get("class", {})
     en_cli = en_translations.get("cli", {})
+    old_en_class = old_en_translations.get("class", {}) if old_en_translations else {}
+    old_en_cli = old_en_translations.get("cli", {}) if old_en_translations else {}
 
     for language_file in translations_dir.glob("*.yaml"):
         if language_file.name == "en.yaml":
@@ -457,7 +485,22 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
             existing["cli"] = {}
             updated = True
 
-        # Recursive pruning of 'since-protocol'
+        # Prune keys from other languages that are missing in English
+        def prune_missing(d, ref_d):
+            nonlocal updated
+            if not isinstance(d, dict) or not isinstance(ref_d, dict):
+                return
+            for k in list(d.keys()):
+                if k not in ref_d:
+                    print(f"  Removing obsolete key: {k}")
+                    del d[k]
+                    updated = True
+                else:
+                    prune_missing(d[k], ref_d[k])
+
+        prune_missing(existing, en_translations)
+
+        # Recursive pruning of 'since-protocol' (covered by prune_missing if gone from EN, but good to keep explicit)
         def prune_obsolete(d):
             nonlocal updated
             if not isinstance(d, dict):
@@ -472,7 +515,6 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
         prune_empty_dicts(existing)
 
         # First, propagate existing translations within the language based on inheritance
-        updated = False
         changed = True
         while changed:
             changed = False
@@ -491,11 +533,15 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                                     updated = True
                                 elif not isinstance(base_trans[key], dict) and not isinstance(existing["class"][cls][key], dict):
                                     # Handle simple string values (e.g., 'name')
-                                    # Only update if existing is generic placeholder or matches English
+                                    # Only update if existing is generic placeholder or matches English (old or new)
                                     is_placeholder = any(p in str(existing["class"][cls][key]) for p in ["{name}", "{}", "{words}"])
                                     is_english = False
                                     if cls in en_class and key in en_class[cls]:
+                                        # Match new EN
                                         is_english = existing["class"][cls][key] == en_class[cls][key]
+                                        # Or match OLD EN (propagation of change)
+                                        if not is_english and cls in old_en_class and key in old_en_class[cls]:
+                                            is_english = existing["class"][cls][key] == old_en_class[cls][key]
 
                                     if is_placeholder or is_english:
                                         if existing["class"][cls][key] != base_trans[key]:
@@ -508,7 +554,11 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                                         is_missing = subkey not in existing["class"][cls][key]
                                         is_english = False
                                         if not is_missing and cls in en_class and key in en_class[cls] and isinstance(en_class[cls][key], dict) and subkey in en_class[cls][key]:
+                                            # Match new EN
                                             is_english = existing["class"][cls][key][subkey] == en_class[cls][key][subkey]
+                                            # Or match Old EN
+                                            if not is_english and cls in old_en_class and key in old_en_class[cls] and isinstance(old_en_class[cls][key], dict) and subkey in old_en_class[cls][key]:
+                                                is_english = existing["class"][cls][key][subkey] == old_en_class[cls][key][subkey]
                                         elif not is_missing:
                                             # If not matched against EN, it might still be a generic placeholder we want to update
                                             is_placeholder = any(p in str(existing["class"][cls][key][subkey]) for p in ["{name}", "{}", "{words}"])
@@ -573,11 +623,32 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                                 existing["class"][key][subkey][subsubkey] = subsubvalue
                                 updated = True
                                 print(f"  Added new subsubkey: {key}.{subkey}.{subsubkey}")
+                            elif existing["class"][key][subkey][subsubkey] != subsubvalue:
+                                # Update if matches Old EN
+                                if key in old_en_class and subkey in old_en_class[key] and isinstance(old_en_class[key][subkey], dict) and subsubkey in old_en_class[key][subkey]:
+                                    if existing["class"][key][subkey][subsubkey] == old_en_class[key][subkey][subsubkey]:
+                                        existing["class"][key][subkey][subsubkey] = subsubvalue
+                                        updated = True
+
                     elif existing["class"][key][subkey] != subvalue:
                         # If existing value exists but template changed in English, update it if it's still in English/Placeholder
                         is_placeholder = any(p in str(existing["class"][key][subkey]) for p in ["{name}", "{}", "{words}"])
-                        if is_placeholder:
-                            existing["class"][key][subkey] = subvalue
+                        is_english = False
+                        if key in old_en_class and subkey in old_en_class[key]:
+                            is_english = existing["class"][key][subkey] == old_en_class[key][subkey]
+
+                        if is_placeholder or is_english:
+                            # If name_reset, re-translate
+                            if subkey == "name_reset" and language_code in RESET_TRANSLATIONS:
+                                base_name = existing["class"][key].get("name", "")
+                                if not base_name and isinstance(subvalue, str) and subvalue.startswith("Set "):
+                                    base_name = subvalue[4:]
+                                if base_name:
+                                    existing["class"][key][subkey] = RESET_TRANSLATIONS[language_code].format(name=base_name)
+                                else:
+                                    existing["class"][key][subkey] = subvalue
+                            else:
+                                existing["class"][key][subkey] = subvalue
                             updated = True
 
         # Add new keys from English CLI translations
@@ -593,7 +664,11 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                         updated = True
                     elif existing["cli"][key][subkey] != subvalue:
                         is_placeholder = any(p in str(existing["cli"][key][subkey]) for p in ["{name}", "{}", "{words}"])
-                        if is_placeholder:
+                        is_english = False
+                        if key in old_en_cli and subkey in old_en_cli[key]:
+                            is_english = existing["cli"][key][subkey] == old_en_cli[key][subkey]
+
+                        if is_placeholder or is_english:
                             existing["cli"][key][subkey] = subvalue
                             updated = True
 
@@ -651,10 +726,15 @@ if __name__ == "__main__":
 
     # Write en.yaml
     en_yaml_path = package_dir / "translations" / "en.yaml"
+    old_all_translations = {}
+    if en_yaml_path.exists():
+        with open(en_yaml_path, "r", encoding="utf-8") as f:
+            old_all_translations = yaml_parser.load(f) or {}
+
     with open(en_yaml_path, "w", encoding="utf-8") as f:
         yaml_parser.dump(all_translations, f)
     print(f"Successfully updated {en_yaml_path}")
 
     # Propagate to other languages
-    propagate_to_other_translations(all_translations, package_dir / "translations", extractor.class_bases)
+    propagate_to_other_translations(all_translations, package_dir / "translations", extractor.class_bases, old_all_translations)
     print("Done!")

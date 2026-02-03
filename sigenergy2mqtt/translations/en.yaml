@@ -225,12 +225,13 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Hybrid Inverter
   AlarmSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     no_alarm: No Alarm
-    unknown_alarm: Unknown (bit{bit}∈{value})
+    unknown_alarm: Unknown (bit{bit}∈{value}, self.debug_logging)
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus Register {address}
@@ -777,6 +778,8 @@ class:
       '0': On Grid
       '1': Off Grid (auto)
       '2': Off Grid (manual)
+  HybridInverter:
+    name: Hybrid Inverter
   IndependentPhasePowerControl:
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled
@@ -799,6 +802,8 @@ class:
     name: InfluxDB Write Mean
   InfluxDBWrites:
     name: InfluxDB Writes
+  InfluxService:
+    name: Sigenergy InfluxDB Updater Service (Plant {plant_index})
   InsulationResistance:
     attributes:
       source: Modbus Register {address}
@@ -1094,6 +1099,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Reactive Power Adjustment
+  MetricsService:
+    name: Sigenergy Metrics
   MinActivePowerAdjustment:
     attributes:
       source: Modbus Register {address}
@@ -1128,6 +1135,8 @@ class:
     name: Modbus Write Mean
   ModbusWriteMin:
     name: Modbus Write Min
+  MonitorService:
+    name: Sigenergy Monitor
   MqttOverriddenSensor:
     attributes:
       source: MQTT Override
@@ -1167,6 +1176,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Current
+  PVInverter:
+    name: PV Inverter
   PVMaxPowerLimit:
     attributes:
       comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
@@ -1219,7 +1230,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase Current
+    name: Phase{phase} Current
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
@@ -1236,7 +1247,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase Voltage
+    name: Phase{phase} Voltage
   PlantActivePower:
     attributes:
       source: Modbus Register {address}
@@ -1291,12 +1302,12 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase {phase} Active Power
+    name: Phase{phase} Active Power
   PlantPhaseReactivePower:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase {phase} Reactive Power
+    name: Phase{phase} Reactive Power
   PlantRatedChargingPower:
     attributes:
       source: Modbus Register {address}
@@ -1513,6 +1524,8 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  ResettableAccumulationSensor:
+    name_reset: Set {self.name}
   RunningStateSensor:
     attributes:
       source: Modbus Register {address}
@@ -1622,6 +1635,7 @@ class:
       comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Hybrid Inverter
   SwitchSensor:
     attributes:
       source: Modbus Register {address}

@@ -151,7 +151,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   Alarm2Sensor:
     alarm:
       '0': Lekstroom buiten limiet
@@ -166,7 +165,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   Alarm3Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -179,7 +177,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   Alarm4Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -193,7 +190,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   Alarm5Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -205,7 +201,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   Alarm6:
     alarm:
       '0': Gateway communicatie abnormaal
@@ -230,12 +225,11 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: 'Hybride omvormer'
+    name: Hybrid Inverter
   AlarmSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
     no_alarm: Geen Alarm
     unknown_alarm: Onbekend (bit{bit}∈{value})
   AvailableBatteryChargeEnergy:
@@ -398,8 +392,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Dagelijkse Ontlaadenergie
-  Device:
-    name: '{Config} {name}'
   DischargeCutOffSoC:
     attributes:
       source: Modbus Register {address}
@@ -458,12 +450,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
-  EnergyDailyAccumulationSensor:
-    name: '{name}'
-    name_reset: Stel {name} in
-  EnergyLifetimeAccumulationSensor:
-    name: '{name}'
-    name_reset: Stel {name} in
   EnphaseCurrent:
     attributes:
       source: Enphase Envoy API bij afleiding EnphasePVPower
@@ -1113,8 +1099,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Reactief Vermogen Aanpassing
-  MetricsSensor:
-    name: '{name}'
   MetricsService:
     name: Sigenergy Statistieken
   MinActivePowerAdjustment:
@@ -1131,8 +1115,6 @@ class:
     name: Actieve Modbus Vergrendelingen
   ModbusCacheHits:
     name: Modbus Cache Treffers
-  ModbusDevice:
-    name: '{Config} {name}'
   ModbusPhysicalReads:
     name: Modbus Fysieke Lezingen
   ModbusReadErrors:
@@ -1162,7 +1144,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{availability_control_sensor}'
   OutputType:
     attributes:
       source: Modbus Register {address}
@@ -1447,12 +1428,10 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   ReadWriteSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   RemoteEMS:
     attributes:
       comment: Wanneer EMS op afstand moet worden aangestuurd, moet dit register worden ingeschakeld. Wanneer ingeschakeld, schakelt de EMS-werkmodus (30003) van de installatie over naar RemoteEMS
@@ -1476,7 +1455,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{availability_control_sensor}'
   Reserved30073:
     attributes:
       source: Modbus Register {address}
@@ -1546,14 +1524,12 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   ResettableAccumulationSensor:
-    name: '{name}'
+    name_reset: Stel {self.name} in
   RunningStateSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
     options:
       "0": Standby
       "1": Normaal
@@ -1630,11 +1606,6 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
-  SensorGroup:
-    name: '{sensors}'
-  Service:
-    name: '{Config} {name}'
   ShutdownTime:
     attributes:
       source: Modbus Register {address}
@@ -1664,12 +1635,11 @@ class:
       comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: 'Hybride omvormer'
+    name: Hybrid Inverter
   SwitchSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   SystemTime:
     attributes:
       source: Modbus Register {address}
@@ -1690,13 +1660,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Derde Partij PV Vermogen
-  TimePeriodServiceTopics:
-    name: '{service}'
   TimestampSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: '{name}'
   TotalDailyPVEnergy:
     attributes:
       source: TotalLifetimePVEnergy − TotalLifetimePVEnergy om middernacht
@@ -1726,7 +1693,6 @@ class:
       source: PV Vermogen + Derde Partij PV Vermogen
     name: Totaal PV Vermogen
   WriteOnlySensor:
-    name: '{name}'
     name_off: Uitschakelen
     name_on: Inschakelen
 cli:
