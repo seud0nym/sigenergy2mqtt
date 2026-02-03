@@ -524,6 +524,7 @@ def download_latest(path: str) -> None:
 
         if file.exists() and file.stat().st_mtime >= commit_date.timestamp():
             logging.info(f"{file} is already up to date.")
+            file.touch()
             return
 
         # 2. Download the file contents at that commit
