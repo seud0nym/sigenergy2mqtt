@@ -62,7 +62,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         self._online: asyncio.Future | bool | None = None
         self._sleeper_task: asyncio.Task | None = None
 
-        name = _t(f"{self.__class__.__name__}.name", name, **kwargs)
+        name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs)
         self["name"] = self.name = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
         self["ids"] = [unique_id]
         self["mf"] = manufacturer

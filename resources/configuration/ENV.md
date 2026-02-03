@@ -100,11 +100,31 @@ Environment variables override the configuration file, but *not* command line op
   </tbody>
 </table>
 
+
+## InfluxDB Configuration Variables
+
+| Name | Description | Since |
+|------|-------------|-------|
+| `SIGENERGY2MQTT_INFLUX_ENABLED` | Set to `true` to enable publishing of sensor updates to InfluxDB. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_HOST` | The hostname or IP address of the InfluxDB server. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_PORT` | The listening port of the InfluxDB database (default: `8086`) | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_USERNAME` | A valid user name for the InfluxDB database. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_PASSWORD` | A valid password for the InfluxDB database username. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_DATABASE` | The name of the database to use. The default is `sigenergy`. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_ORGANIZATION` | The InfluxDB v2 organization name or ID. If not specified, the v1 API will be used. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_TOKEN` | The InfluxDB v2 authentication token. If supplied, v2 APIs will be used in preference to v1. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_BUCKET` | The InfluxDB v2 bucket name. If not specified, the value of 'database' will be used as the v2 bucket name. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT` | The default measurement name to use for InfluxDB updates if a sensor does not have a Unit of Measurement defined. If not specified, `state` will be used. | 2026.2.3 |
+| `SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY` | If `true`, `sigenergy2mqtt` will attempt to load historical data from the Home Assistant InfluxDB database. This will only work if `sigenergy2mqtt` is configured to use the same InfluxDB server as Home Assistant with the same credentials. | 2026.2.3 |
+| `SIGENERGY2MQTT_INFLUX_INCLUDE` | A comma-separated list of sensors to include when publishing to InfluxDB, using either the full or partial entity id or sensor class name, or a regular expression to be matched against the entity id or sensor class name. If not specified, all sensors will be included. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_EXCLUDE` | A comma-separated list of sensors to exclude when publishing to InfluxDB, using either the full or partial entity id or sensor class name, or a regular expression to be matched against the entity id or sensor class name. If not specified, no sensors will be excluded. | 2026.1.30 |
+
+
 ## Third Party PV Production Configuration Variables
 
 | Name | Description | Since |
 |------|-------------|-------|
-| `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Enable interrogation of a third-party device for production data. | 2025.5.12 |
+| `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Set to `true` to enable interrogation of a third-party device for production data. | 2025.5.12 |
 | `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` | The name of the module which will be used to obtain third-party device production data. | 2025.5.12 |
 | `SIGENERGY2MQTT_SMARTPORT_HOST` | The IP address or hostname of the third-party device. | 2025.5.12 |
 | `SIGENERGY2MQTT_SMARTPORT_USERNAME` | The username to authenticate to the third-party device. | 2025.5.12 |

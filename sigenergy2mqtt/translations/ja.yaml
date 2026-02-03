@@ -225,7 +225,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: Hybrid Inverter
+    name: ハイブリッドインバーター
   AlarmSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1079,13 +1079,13 @@ class:
     name: 最大放電電力
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: '範囲: [0, 定格ESS充電電力]{Config}'
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 最大充電制限
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: '範囲: [0, 定格ESS充電電力]{Config}'
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 最大放電制限
@@ -1635,7 +1635,7 @@ class:
       comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: Hybrid Inverter
+    name: ハイブリッドインバーター
   SwitchSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1720,6 +1720,8 @@ cli:
     help: InfluxDB v2 バケット名（設定されていない場合は --influxdb-database がデフォルトとなります）
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'メトリクスを書き込む InfluxDB データベース（デフォルト: sigenergy）'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: センサーに測定単位が定義されていない場合に、InfluxDBの更新に使用するデフォルトの測定名（デフォルト：state）'
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: InfluxDB へのメトリクスの書き込みを有効にします。
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
@@ -1728,6 +1730,8 @@ cli:
     help: 'InfluxDB ホスト名または IP アドレス（デフォルト: 127.0.0.1）'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 含めるセンサー識別子のリスト（スペース区切り）
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: Home Assistant InfluxDBデータベースから履歴データをロードするように指定します。これは、sigenergy2mqttがHome Assistantと同じ認証情報で同じInfluxDBサーバーを使用するように構成されている場合にのみ機能します。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは WARNING（警告、エラー、致命的な障害）です。'
   SIGENERGY2MQTT_INFLUX_ORG:

@@ -1486,7 +1486,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                         if description:
                             active_alarms.append(_t(f"{self.__class__.__name__}.alarm.{bit_position}", description, self.debug_logging))
                         else:
-                            active_alarms.append(_t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value}, self.debug_logging)").format(bit=bit_position, value=value))
+                            active_alarms.append(_t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value})", self.debug_logging).format(bit=bit_position, value=value))
                             logging.warning(f"{self.__class__.__name__} Unknown {self.alarm_type} alarm bit {bit_position} set in value {value}")
             except TypeError as e:
                 logging.warning(f"{self.__class__.__name__} Failed to decode {self.alarm_type} alarm bits from '{value}': {e}")

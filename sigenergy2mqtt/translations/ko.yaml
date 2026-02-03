@@ -225,7 +225,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: Hybrid Inverter
+    name: 하이브리드 인버터
   AlarmSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1079,13 +1079,13 @@ class:
     name: 최대 방전 전력
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: '범위: [0, 정격 ESS 충전 전력]{Config}'
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 최대 충전 제한
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: '범위: [0, 정격 ESS 충전 전력]{Config}'
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 최대 방전 제한
@@ -1635,7 +1635,7 @@ class:
       comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: Hybrid Inverter
+    name: 하이브리드 인버터
   SwitchSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1720,6 +1720,8 @@ cli:
     help: InfluxDB v2 버킷 이름 (설정하지 않으면 --influxdb-database가 기본값입니다)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: '메트릭을 기록할 InfluxDB 데이터베이스 (기본값: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: '센서에 측정 단위가 정의되지 않은 경우 InfluxDB 업데이트에 사용할 기본 측정 이름 (기본값: state)'
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: InfluxDB로 메트릭 기록 활성화.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
@@ -1728,6 +1730,8 @@ cli:
     help: 'InfluxDB 호스트 이름 또는 IP 주소 (기본값: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 포함할 센서 식별자 목록 (공백으로 구분)
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: Home Assistant InfluxDB 데이터베이스에서 과거 데이터를 로드하도록 지정합니다. 이는 sigenergy2mqtt가 Home Assistant와 동일한 자격 증명으로 동일한 InfluxDB 서버를 사용하도록 구성된 경우에만 작동합니다。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB 하위 시스템 로그 레벨. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 WARNING(경고, 오류 및 치명적 오류)입니다.'
   SIGENERGY2MQTT_INFLUX_ORG:

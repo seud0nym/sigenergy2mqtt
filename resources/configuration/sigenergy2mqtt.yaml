@@ -711,6 +711,19 @@ influxdb:
   #   description: The InfluxDB v2 bucket name. If not specified, the value of
   #                'database' will be used as the v2 bucket name.
   bucket: ""
+  # default-measurement
+  #   default: "state"
+  #   description: The default measurement name to use for InfluxDB updates if 
+  #                a sensor does not have a Unit of Measurement defined.
+  #                The default value is "state".
+  default-measurement: "state"
+  # load-hass-history
+  #   default: false
+  #   description: If true, sigenergy2mqtt will attempt to load historical data 
+  #                from the Home Assistant InfluxDB database. This will only 
+  #                work if sigenergy2mqtt is configured to use the same InfluxDB 
+  #                server as Home Assistant with the same credentials.
+  load-hass-history: false
   # include
   #   default: [ ]
   #   description: A list of sensors to include when publishing to InfluxDB, 

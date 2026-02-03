@@ -452,7 +452,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--pvoutput-enabled",
         action="store_true",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_ENABLED,
-        help="Enable status updates to PVOutput.",
+        help="Enable uploading of data to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-api-key",
@@ -476,19 +476,19 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION,
         const="true",
-        help="Enable to send consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.",
+        help="Enable sending of consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.",
     )
     parser.add_argument(
         "--pvoutput-exports",
         action="store_true",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS,
-        help="Enable to send export data to PVOutput.",
+        help="Enable sending of export data to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-imports",
         action="store_true",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS,
-        help="Enable to send import data to PVOutput.",
+        help="Enable sending of import data to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-output-hour",
@@ -579,7 +579,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--influxdb-enabled",
         action="store_true",
         dest=const.SIGENERGY2MQTT_INFLUX_ENABLED,
-        help="Enable writing metrics to InfluxDB.",
+        help="Enable sending of sensor data to InfluxDB.",
     )
     parser.add_argument(
         "--influxdb-host",
@@ -647,12 +647,26 @@ def get_parser() -> argparse.ArgumentParser:
         help="InfluxDB password",
     )
     parser.add_argument(
+        "--influxdb-default-measurement",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT, None),
+        help="The default measurement name to use for InfluxDB updates if a sensor does not have a Unit of Measurement defined (default: state)",
+    )
+    parser.add_argument(
+        "--influxdb-load-hass-history",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY,
+        help="Specify to load historical data from the Home Assistant InfluxDB database. This will only work if sigenergy2mqtt is configured to use the same InfluxDB server as Home Assistant with the same credentials.",
+    )
+    parser.add_argument(
         "--influxdb-include",
         nargs="*",
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_INCLUDE,
         default=os.getenv(const.SIGENERGY2MQTT_INFLUX_INCLUDE, None),
-        help="List of sensor identifiers to include (space separated)",
+        help="Specify sensors to be included in InfluxDB updates using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name).",
     )
     parser.add_argument(
         "--influxdb-exclude",
@@ -660,7 +674,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_INFLUX_EXCLUDE,
         default=os.getenv(const.SIGENERGY2MQTT_INFLUX_EXCLUDE, None),
-        help="List of sensor identifiers to exclude (space separated)",
+        help="Specify sensors to be excluded from InfluxDB updates using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name).",
     )
     parser.add_argument(
         "--influxdb-log-level",

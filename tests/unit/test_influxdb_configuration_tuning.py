@@ -17,6 +17,8 @@ def test_influxdb_config_tuning_defaults():
     assert cfg.max_retries == 3
     assert cfg.pool_connections == 100
     assert cfg.pool_maxsize == 100
+    assert cfg.default_measurement == "state"
+    assert cfg.load_hass_history is False
 
 
 def test_influxdb_config_tuning_parsing():
@@ -33,6 +35,8 @@ def test_influxdb_config_tuning_parsing():
         "max-retries": 5,
         "pool-connections": "20",
         "pool-maxsize": "30",
+        "default-measurement": "energy",
+        "load-hass-history": True,
     }
     cfg.configure(config_dict)
 
@@ -44,6 +48,8 @@ def test_influxdb_config_tuning_parsing():
     assert cfg.max_retries == 5
     assert cfg.pool_connections == 20
     assert cfg.pool_maxsize == 30
+    assert cfg.default_measurement == "energy"
+    assert cfg.load_hass_history is True
 
 
 @pytest.mark.asyncio

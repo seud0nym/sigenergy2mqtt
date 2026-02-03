@@ -275,6 +275,10 @@ class Config(metaclass=ConfigMeta):
                 overrides["influxdb"]["bucket"] = check_string(value, key, allow_none=True, allow_empty=True)
             case const.SIGENERGY2MQTT_INFLUX_DATABASE:
                 overrides["influxdb"]["database"] = check_string(value, key, allow_none=False, allow_empty=False)
+            case const.SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+                overrides["influxdb"]["default-measurement"] = check_string(value, key, allow_none=False, allow_empty=False)
+            case const.SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+                overrides["influxdb"]["load-hass-history"] = check_bool(value, key)
             case const.SIGENERGY2MQTT_INFLUX_ENABLED:
                 overrides["influxdb"]["enabled"] = check_bool(value, key)
             case const.SIGENERGY2MQTT_INFLUX_EXCLUDE:

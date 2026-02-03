@@ -324,6 +324,8 @@ class TestMiscEdgeCases:
         mock_config.batch_size = 100
         mock_config.flush_interval = 1.0
         mock_config.query_interval = 0.1
+        mock_config.default_measurement = "state"
+        mock_config.load_hass_history = False
 
         with patch.object(Config, "influxdb", mock_config):
             svc = InfluxService(logger, plant_index=5)

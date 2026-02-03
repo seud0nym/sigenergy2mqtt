@@ -225,7 +225,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: Hybrid Inverter
+    name: 混合逆变器
   AlarmSensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1079,13 +1079,13 @@ class:
     name: 最大放电功率
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: '范围: [0, 额定 ESS 充电功率]{Config}'
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大充电限制
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: '范围: [0, 额定 ESS 充电功率]{Config}'
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大放电限制
@@ -1635,7 +1635,7 @@ class:
       comment: 将设备固件升级以支持新的统计接口后，寄存器值将重置为0并重新开始计数，不继承历史数据
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: Hybrid Inverter
+    name: 混合逆变器
   SwitchSensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1720,6 +1720,8 @@ cli:
     help: InfluxDB v2 存储桶名称（如果未设置，则默认为 --influxdb-database）
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: '用于写入指标的 InfluxDB 数据库（默认：sigenergy）'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: 如果传感器未定义测量单位，则用于 InfluxDB 更新的默认测量名称（默认值：state）
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: 启用将指标写入 InfluxDB。
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
@@ -1728,6 +1730,8 @@ cli:
     help: 'InfluxDB 主机名或 IP 地址（默认：127.0.0.1）'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 要包含的传感器标识符列表（以空格分隔）
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: 指定从 Home Assistant InfluxDB 数据库加载历史数据。仅当 sigenergy2mqtt 配置为使用与 Home Assistant 相同的 InfluxDB 服务器和相同的凭据时，此功能才有效。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB 子系统的日志级别。有效值为：DEBUG, INFO, WARNING, ERROR 或 CRITICAL。默认值为 WARNING（警告、错误和严重故障）'
   SIGENERGY2MQTT_INFLUX_ORG:

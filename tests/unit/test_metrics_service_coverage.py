@@ -12,9 +12,7 @@ class TestMetricsServiceCoverage:
         protocol = Protocol.V2_0
         # Mock Config to ensure influxdb is seemingly disabled or missing
         with patch("sigenergy2mqtt.metrics.metrics_service.Config") as MockConfig:
-            del MockConfig.influxdb  # Ensure attribute error or None if accessed
-            # Or just set it to None or ensure enabled is False
-            MockConfig.influxdb = None
+            MockConfig.influxdb.enabled = False
 
             service = MetricsService(protocol)
 

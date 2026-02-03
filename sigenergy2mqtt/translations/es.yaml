@@ -225,7 +225,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: Hybrid Inverter
+    name: Inversor híbrido
   AlarmSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1079,13 +1079,13 @@ class:
     name: Potencia de Descarga Máx
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Rango: [0, Potencia de carga nominal ESS]{Config}'
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Límite Máximo de Carga
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Rango: [0, Potencia de carga nominal ESS]{Config}'
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Límite Máximo de Descarga
@@ -1531,7 +1531,7 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     options:
-      "0": En Espera
+      "0": En espera
       "1": Normal
       "2": Fallo
       "3": Apagado
@@ -1635,7 +1635,7 @@ class:
       comment: Después de actualizar el firmware del dispositivo para soportar la nueva Interfaz de Estadísticas, los valores del registro se reiniciarán a 0 y comenzarán a contar de nuevo sin heredar datos históricos
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: Hybrid Inverter
+    name: Inversor híbrido
   SwitchSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1720,6 +1720,8 @@ cli:
     help: Nombre del bucket de InfluxDB v2 (por defecto es --influxdb-database si no se establece)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'Base de datos InfluxDB para escribir métricas (por defecto: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: 'El nombre de medición predeterminado para usar en actualizaciones de InfluxDB si un sensor no tiene una Unidad de Medición definida (predeterminado: state)'
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: Habilitar el envío de métricas a InfluxDB.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
@@ -1728,6 +1730,8 @@ cli:
     help: 'Nombre de host o dirección IP de InfluxDB (por defecto: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: Lista de identificadores de sensores a incluir (separados por espacios)
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: Especifique para cargar datos históricos de la base de datos InfluxDB de Home Assistant. Esto solo funcionará si sigenergy2mqtt está configurado para usar el mismo servidor InfluxDB que Home Assistant con las mismas credenciales.
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'Nivel de registro del subsistema InfluxDB. Los valores válidos son: DEBUG, INFO, WARNING, ERROR o CRITICAL. El valor predeterminado es WARNING (advertencias, errores y fallos críticos)'
   SIGENERGY2MQTT_INFLUX_ORG:

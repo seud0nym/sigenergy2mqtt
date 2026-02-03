@@ -225,7 +225,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: Hybrid Inverter
+    name: Hybrid-Wechselrichter
   AlarmSensor:
     attributes:
       source: Modbus-Register {address}
@@ -1016,7 +1016,7 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Betriebszustand
     options:
-      '0': Standby
+      '0': Bereitschaft
       '1': Normal
       '2': Fehler
       '3': Ausgeschaltet
@@ -1079,13 +1079,13 @@ class:
     name: Max. Entladeleistung
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Bereich: [0, Nenn-ESS-Ladeleistung]{Config}'
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Max. Ladegrenze
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Bereich: [0, Nenn-ESS-Ladeleistung]{Config}'
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Max. Entladegrenze
@@ -1334,7 +1334,7 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Betriebszustand
     options:
-      '0': Standby
+      '0': Bereitschaft
       '1': Normal
       '2': Fehler
       '3': Ausgeschaltet
@@ -1445,7 +1445,7 @@ class:
     name: Fern-EMS-Steuerungsmodus
     options:
       '0': PCS-Fernsteuerung
-      '1': Standby
+      '1': Bereitschaft
       '2': Maximaler Eigenverbrauch (Standard)
       '3': Befehlsladung (Zuerst Strom aus dem Netz verbrauchen)
       '4': Befehlsladung (Zuerst Strom aus PV verbrauchen)
@@ -1531,7 +1531,7 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     options:
-      "0": Standby
+      "0": Bereitschaft
       "1": Normal
       "2": Fehler
       "3": Ausgeschaltet
@@ -1635,7 +1635,7 @@ class:
       comment: Nach dem Geräte-Firmware-Update zur Unterstützung der neuen Statistikschnittstelle werden die Registerwerte auf 0 zurückgesetzt und beginnen ohne historische Daten neu zu zählen
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: Hybrid Inverter
+    name: Hybrid-Wechselrichter
   SwitchSensor:
     attributes:
       source: Modbus-Register {address}
@@ -1720,6 +1720,8 @@ cli:
     help: InfluxDB v2-Bucket-Name (Standardwert ist --influxdb-database, falls nicht festgelegt)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'InfluxDB-Datenbank zum Schreiben von Metriken (Standard: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: 'Der Standard-Messname für InfluxDB-Updates, falls ein Sensor keine Maßeinheit definiert hat (Standard: state)'
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: Schreiben von Metriken in InfluxDB aktivieren.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
@@ -1728,6 +1730,8 @@ cli:
     help: 'InfluxDB-Hostname oder IP-Adresse (Standard: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: Liste der einzuschließenden Sensor-IDs (durch Leerzeichen getrennt)
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: Geben Sie an, historische Daten aus der Home Assistant InfluxDB-Datenbank zu laden. Dies funktioniert nur, wenn sigenergy2mqtt so konfiguriert ist, dass derselbe InfluxDB-Server wie Home Assistant mit denselben Anmeldeinformationen verwendet wird.
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB-Subsystem-Protokollebene. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
   SIGENERGY2MQTT_INFLUX_ORG:

@@ -12,6 +12,8 @@ class TestInfluxDBConfigCoverage:
         assert config.host == "127.0.0.1"
         assert config.port == 8086
         assert config.database == "sigenergy"
+        assert config.default_measurement == "state"
+        assert config.load_hass_history is False
 
     def test_configure_enabled(self):
         config = InfluxDBConfiguration()
@@ -34,6 +36,8 @@ class TestInfluxDBConfigCoverage:
             "include": ["sensor1", "sensor2"],
             "exclude": ["sensor3"],
             "log-level": "DEBUG",
+            "default-measurement": "power",
+            "load-hass-history": True,
         }
         config.configure(data)
 
@@ -49,6 +53,8 @@ class TestInfluxDBConfigCoverage:
         assert config.include == ["sensor1", "sensor2"]
         assert config.exclude == ["sensor3"]
         assert config.log_level == logging.DEBUG
+        assert config.default_measurement == "power"
+        assert config.load_hass_history is True
 
     def test_configure_invalid_port(self):
         config = InfluxDBConfiguration()
@@ -69,6 +75,13 @@ class TestInfluxDBConfigCoverage:
         config.enabled = True
         data = {"exclude": "not_a_list"}
         with pytest.raises(ValueError, match="must be a list"):
+            config.configure(data)
+
+    def test_configure_invalid_default_measurement(self):
+        config = InfluxDBConfiguration()
+        config.enabled = True
+        data = {"default-measurement": ""}
+        with pytest.raises(ValueError, match="must be a valid string"):
             config.configure(data)
 
     def test_configure_unknown_option(self):

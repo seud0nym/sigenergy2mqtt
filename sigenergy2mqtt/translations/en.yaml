@@ -231,7 +231,7 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     no_alarm: No Alarm
-    unknown_alarm: Unknown (bit{bit}∈{value}, self.debug_logging)
+    unknown_alarm: Unknown (bit{bit}∈{value})
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus Register {address}
@@ -1720,14 +1720,18 @@ cli:
     help: InfluxDB v2 bucket name (defaults to --influxdb-database if not set)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'InfluxDB database to write metrics to (default: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: 'The default measurement name to use for InfluxDB updates if a sensor does not have a Unit of Measurement defined (default: state)'
   SIGENERGY2MQTT_INFLUX_ENABLED:
-    help: Enable writing metrics to InfluxDB.
+    help: Enable sending of sensor data to InfluxDB.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
-    help: List of sensor identifiers to exclude (space separated)
+    help: Specify sensors to be excluded from InfluxDB updates using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name).
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB hostname or IP address (default: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
-    help: List of sensor identifiers to include (space separated)
+    help: Specify sensors to be included in InfluxDB updates using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name).
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: Specify to load historical data from the Home Assistant InfluxDB database. This will only work if sigenergy2mqtt is configured to use the same InfluxDB server as Home Assistant with the same credentials.
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
   SIGENERGY2MQTT_INFLUX_ORG:
@@ -1801,11 +1805,11 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: The API Key for PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
-    help: Enable to send consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.
+    help: Enable sending of consumption data to PVOutput. May be specified without a value (in which case defaults to 'consumption') or one of 'net-of-battery', 'consumption', or 'imported'. If not specified, no consumption data is sent.
   SIGENERGY2MQTT_PVOUTPUT_ENABLED:
-    help: Enable status updates to PVOutput.
+    help: Enable uploading of data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
-    help: Enable to send export data to PVOutput.
+    help: Enable sending of export data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
     help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
@@ -1819,7 +1823,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
-    help: Enable to send import data to PVOutput.
+    help: Enable sending of import data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
     help: 'Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
   SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR:

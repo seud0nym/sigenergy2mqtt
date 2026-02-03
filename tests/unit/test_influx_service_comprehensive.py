@@ -345,6 +345,7 @@ async def test_init_v1_fallback_success(logger, influx_config):
 @pytest.mark.asyncio
 async def test_schedule_starts_and_cancels_sync_task(logger):
     svc = InfluxService(logger, plant_index=0)
+    Config.influxdb.load_hass_history = True
     # Manually simulate established connection
     svc._writer_type = "v2_http"
 

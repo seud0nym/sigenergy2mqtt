@@ -1,9 +1,9 @@
 # Command Line Options
-(Since Release 2026.1.28)
+(Since Release 2026.2.3)
 ```text
-usage: __main__.py [-h] [-c [SIGENERGY2MQTT_CONFIG]]
+usage: sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-                   [--language {de,en,es,fr,it,ja,ko,nl,pt,zh}]
+                   [--language {de,en,es,fr,it,ja,ko,nl,pt,zh,zh-Hans}]
                    [-d SIGENERGY2MQTT_DEBUG_SENSOR]
                    [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
                    [--no-ems-mode-check] [--no-metrics]
@@ -63,6 +63,20 @@ usage: __main__.py [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                    [--pvoutput-ext-v11 [SIGENERGY2MQTT_PVOUTPUT_EXT_V11]]
                    [--pvoutput-ext-v12 [SIGENERGY2MQTT_PVOUTPUT_EXT_V12]]
                    [--pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                   [--influxdb-enabled]
+                   [--influxdb-host [SIGENERGY2MQTT_INFLUX_HOST]]
+                   [--influxdb-port [SIGENERGY2MQTT_INFLUX_PORT]]
+                   [--influxdb-database [SIGENERGY2MQTT_INFLUX_DATABASE]]
+                   [--influxdb-org [SIGENERGY2MQTT_INFLUX_ORG]]
+                   [--influxdb-token [SIGENERGY2MQTT_INFLUX_TOKEN]]
+                   [--influxdb-bucket [SIGENERGY2MQTT_INFLUX_BUCKET]]
+                   [--influxdb-username [SIGENERGY2MQTT_INFLUX_USERNAME]]
+                   [--influxdb-password [SIGENERGY2MQTT_INFLUX_PASSWORD]]
+                   [--influxdb-default-measurement [SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT]]
+                   [--influxdb-load-hass-history]
+                   [--influxdb-include [SIGENERGY2MQTT_INFLUX_INCLUDE ...]]
+                   [--influxdb-exclude [SIGENERGY2MQTT_INFLUX_EXCLUDE ...]]
+                   [--influxdb-log-level [{DEBUG,INFO,WARNING,ERROR,CRITICAL}]]
                    [--clean] [--validate] [-v]
 
 Reads the Sigenergy modbus interface and publishes the data to MQTT. The data
@@ -77,10 +91,10 @@ options:
                         Set the log level. Valid values are: DEBUG, INFO,
                         WARNING, ERROR or CRITICAL. Default is WARNING
                         (warnings, errors and critical failures)
-  --language {de,en,es,fr,it,ja,ko,nl,pt,zh}
+  --language {de,en,es,fr,it,ja,ko,nl,pt,zh,zh-Hans}
                         Set the language to use for translations. Valid values
-                        are: de, en, es, fr, it, ja, ko, nl, pt, zh. The
-                        default is determined from the system (e.g. LANG
+                        are: de, en, es, fr, it, ja, ko, nl, pt, zh, zh-Hans.
+                        The default is determined from the system (e.g. LANG
                         environment variable) or English if no alternative is
                         found.
   -d, --debug-sensor SIGENERGY2MQTT_DEBUG_SENSOR
@@ -265,19 +279,19 @@ options:
                         The gain to be applied to the production data for the
                         third-party device obtained from the MQTT topic. (e.g.
                         1000 if the data is in kW) Default is 1 (Watts).
-  --pvoutput-enabled    Enable status updates to PVOutput.
+  --pvoutput-enabled    Enable uploading of data to PVOutput.
   --pvoutput-api-key [SIGENERGY2MQTT_PVOUTPUT_API_KEY]
                         The API Key for PVOutput
   --pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]
                         The PVOutput System ID
   --pvoutput-consumption [SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION]
-                        Enable to send consumption data to PVOutput. May be
+                        Enable sending of consumption data to PVOutput. May be
                         specified without a value (in which case defaults to
                         'consumption') or one of 'net-of-battery',
                         'consumption', or 'imported'. If not specified, no
                         consumption data is sent.
-  --pvoutput-exports    Enable to send export data to PVOutput.
-  --pvoutput-imports    Enable to send import data to PVOutput.
+  --pvoutput-exports    Enable sending of export data to PVOutput.
+  --pvoutput-imports    Enable sending of import data to PVOutput.
   --pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]
                         The hour of the day (20-23) at which the daily totals
                         are sent to PVOutput. The default is 23 (11pm). Valid
@@ -339,6 +353,55 @@ options:
                         numeric value.
   --pvoutput-log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the PVOutput log level. Valid values are: DEBUG,
+                        INFO, WARNING, ERROR or CRITICAL. Default is WARNING
+                        (warnings, errors and critical failures)
+  --influxdb-enabled    Enable sending of sensor data to InfluxDB.
+  --influxdb-host [SIGENERGY2MQTT_INFLUX_HOST]
+                        InfluxDB hostname or IP address (default: 127.0.0.1)
+  --influxdb-port [SIGENERGY2MQTT_INFLUX_PORT]
+                        InfluxDB port (default: 8086)
+  --influxdb-database [SIGENERGY2MQTT_INFLUX_DATABASE]
+                        InfluxDB database to write metrics to (default:
+                        sigenergy)
+  --influxdb-org [SIGENERGY2MQTT_INFLUX_ORG]
+                        InfluxDB organization name or ID
+  --influxdb-token [SIGENERGY2MQTT_INFLUX_TOKEN]
+                        InfluxDB v2 authentication token (prefer v2 APIs when
+                        supplied)
+  --influxdb-bucket [SIGENERGY2MQTT_INFLUX_BUCKET]
+                        InfluxDB v2 bucket name (defaults to --influxdb-
+                        database if not set)
+  --influxdb-username [SIGENERGY2MQTT_INFLUX_USERNAME]
+                        InfluxDB username
+  --influxdb-password [SIGENERGY2MQTT_INFLUX_PASSWORD]
+                        InfluxDB password
+  --influxdb-default-measurement [SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT]
+                        The default measurement name to use for InfluxDB
+                        updates if a sensor does not have a Unit of
+                        Measurement defined (default: state)
+  --influxdb-load-hass-history
+                        Specify to load historical data from the Home
+                        Assistant InfluxDB database. This will only work if
+                        sigenergy2mqtt is configured to use the same InfluxDB
+                        server as Home Assistant with the same credentials.
+  --influxdb-include [SIGENERGY2MQTT_INFLUX_INCLUDE ...]
+                        Specify sensors to be included in InfluxDB updates
+                        using either the full or partial entity id or sensor
+                        class name (e.g. specifying 'daily' would match all
+                        sensors with daily in their entity name), or a regular
+                        expression to be matched against the entity id or
+                        sensor class name (e.g. '^PowerFactor$' only matches
+                        the single class name).
+  --influxdb-exclude [SIGENERGY2MQTT_INFLUX_EXCLUDE ...]
+                        Specify sensors to be excluded from InfluxDB updates
+                        using either the full or partial entity id or sensor
+                        class name (e.g. specifying 'daily' would match all
+                        sensors with daily in their entity name), or a regular
+                        expression to be matched against the entity id or
+                        sensor class name (e.g. '^PowerFactor$' only matches
+                        the single class name).
+  --influxdb-log-level [{DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                        InfluxDB subsystem log level. Valid values are: DEBUG,
                         INFO, WARNING, ERROR or CRITICAL. Default is WARNING
                         (warnings, errors and critical failures)
   --clean               Publish empty discovery to delete existing devices,

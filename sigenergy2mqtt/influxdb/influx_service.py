@@ -75,7 +75,7 @@ class InfluxService(Device):
 
     async def _async_init(self) -> bool:
         """Perform asynchronous initialization of InfluxDB connection."""
-        if getattr(Config, "influxdb", None) and getattr(Config.influxdb, "enabled", False):
+        if Config.influxdb.enabled:
             try:
                 await asyncio.to_thread(self._init_connection)
                 return True
@@ -702,7 +702,7 @@ class InfluxService(Device):
                     return measurement, tags, 0
 
         for topic, sensor in self._topic_cache.items():
-            measurement = cast(str, sensor.get("uom", "state")).replace("/", "_")
+            measurement = cast(str, sensor.get("uom", Config.influxdb.default_measurement)).replace("/", "_")
             tags = {"entity_id": cast(str, sensor.get("object_id"))}
 
             # Create a hashable key for this combination
@@ -744,7 +744,10 @@ class InfluxService(Device):
 
         sync_task = None
         if self._writer_type:
-            sync_task = asyncio.create_task(self.sync_from_homeassistant())
+            if Config.influxdb.load_hass_history:
+                sync_task = asyncio.create_task(self.sync_from_homeassistant())
+            else:
+                self.logger.info(f"{self.name} Loading history from homeassistant database is disabled")
 
         while self.online:
             try:
@@ -796,7 +799,12 @@ class InfluxService(Device):
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is excluded")
                         continue
 
-                    self._topic_cache[tpc] = {"uom": s["unit_of_measurement"] if s["unit_of_measurement"] else "state", "object_id": obj, "unique_id": uid, "debug_logging": s.debug_logging}
+                    self._topic_cache[tpc] = {
+                        "uom": s["unit_of_measurement"] if s["unit_of_measurement"] else Config.influxdb.default_measurement,
+                        "object_id": obj,
+                        "unique_id": uid,
+                        "debug_logging": s.debug_logging,
+                    }
                     mqtt_handler.register(mqtt_client, tpc, self.handle_mqtt)
             except Exception:
                 continue

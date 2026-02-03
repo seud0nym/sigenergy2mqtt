@@ -225,7 +225,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
-    name: Hybrid Inverter
+    name: Inverter ibrido
   AlarmSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1016,7 +1016,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Stato di Funzionamento
     options:
-      '0': Standby
+      '0': In attesa
       '1': Normale
       '2': Guasto
       '3': Spento
@@ -1079,13 +1079,13 @@ class:
     name: Potenza di Scarica Max
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Intervallo: [0, Potenza di carica nominale ESS]{Config}'
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Massimo di Carica
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Intervallo: [0, Potenza di carica nominale ESS]{Config}'
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Massimo di Scarica
@@ -1334,7 +1334,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Stato di Funzionamento
     options:
-      '0': Standby
+      '0': In attesa
       '1': Normale
       '2': Guasto
       '3': Spento
@@ -1445,7 +1445,7 @@ class:
     name: Modalità Controllo EMS Remoto
     options:
       '0': Controllo PCS remoto
-      '1': Standby
+      '1': In attesa
       '2': Massimo autoconsumo (predefinito)
       '3': Carica a comando (consumare energia dalla rete prima)
       '4': Carica a comando (consumare energia dal PV prima)
@@ -1531,7 +1531,7 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     options:
-      "0": Standby
+      "0": In attesa
       "1": Normale
       "2": Guasto
       "3": Spento
@@ -1635,7 +1635,7 @@ class:
       comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
-    name: Hybrid Inverter
+    name: Inverter ibrido
   SwitchSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1720,6 +1720,8 @@ cli:
     help: Nome del bucket InfluxDB v2 (predefinito --influxdb-database se non impostato)
   SIGENERGY2MQTT_INFLUX_DATABASE:
     help: 'Database InfluxDB in cui scrivere le metriche (predefinito: sigenergy)'
+  SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT:
+    help: "Il nome di misurazione predefinito da utilizzare per gli aggiornamenti InfluxDB se un sensore non ha un'unità di misura definita (predefinito: state)"
   SIGENERGY2MQTT_INFLUX_ENABLED:
     help: Abilita l'invio delle metriche a InfluxDB.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
@@ -1728,6 +1730,8 @@ cli:
     help: 'Hostname o indirizzo IP di InfluxDB (predefinito: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: Elenco degli identificatori dei sensori da includere (separati da spazi)
+  SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
+    help: Specificare per caricare i dati storici dal database InfluxDB di Home Assistant. Funzionerà solo se sigenergy2mqtt è configurato per utilizzare lo stesso server InfluxDB di Home Assistant con le stesse credenziali.
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'Livello di log del sottosistema InfluxDB. I valori validi sono: DEBUG, INFO, WARNING, ERROR o CRITICAL. Il valore predefinito è WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_INFLUX_ORG:

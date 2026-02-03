@@ -15,6 +15,10 @@ class InfluxDBConfiguration:
     port: int = 8086
     database: str = "sigenergy"
 
+    default_measurement: str = "state"
+
+    load_hass_history: bool = False
+
     # v2 fields
     token: str = ""
     org: str = ""
@@ -65,6 +69,10 @@ class InfluxDBConfiguration:
                             self.username = "" if v is None else cast(str, check_string(v, "influxdb.username", allow_none=True, allow_empty=True))
                         case "password":
                             self.password = "" if v is None else cast(str, check_string(v, "influxdb.password", allow_none=True, allow_empty=True))
+                        case "default-measurement":
+                            self.default_measurement = cast(str, check_string(str(v), "influxdb.default-measurement", allow_none=False, allow_empty=False))
+                        case "load-hass-history":
+                            self.load_hass_history = check_bool(v, "influxdb.load-hass-history")
                         case "include":
                             if isinstance(v, list):
                                 self.include = [str(x) for x in v]
