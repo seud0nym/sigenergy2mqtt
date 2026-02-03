@@ -33,7 +33,7 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ProtocolPublished())
 
         # Conditionally add InfluxDB sensors when InfluxDB is enabled
-        if getattr(Config, "influxdb", None) and getattr(Config.influxdb, "enabled", False):
+        if Config.influxdb.enabled:
             self._add_read_sensor(sensors.InfluxDBWrites())
             self._add_read_sensor(sensors.InfluxDBWriteErrors())
             self._add_read_sensor(sensors.InfluxDBWriteMax())
