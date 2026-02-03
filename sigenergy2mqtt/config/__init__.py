@@ -95,6 +95,7 @@ def _apply_cli_overrides(args):
             or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
             or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
             or arg == const.SIGENERGY2MQTT_INFLUX_ENABLED
+            or arg == const.SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY
             or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
             or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
             or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
