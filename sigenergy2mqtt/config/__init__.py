@@ -89,25 +89,9 @@ def _apply_cli_overrides(args):
         if arg in ["clean", "discovery_only", "validate_only", "show_version"]:
             continue
 
-        # Handle boolean flags that should only be applied if true
-        if (
-            arg == const.SIGENERGY2MQTT_HASS_ENABLED
-            or arg == const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX
-            or arg == const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS
-            or arg == const.SIGENERGY2MQTT_INFLUX_ENABLED
-            or arg == const.SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY
-            or arg == const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING
-            or arg == const.SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS
-            or arg == const.SIGENERGY2MQTT_MQTT_ANONYMOUS
-            or arg == const.SIGENERGY2MQTT_MQTT_TLS
-            or arg == const.SIGENERGY2MQTT_MQTT_TLS_INSECURE
-            or arg == const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK
-            or arg == const.SIGENERGY2MQTT_NO_METRICS
-            or arg == const.SIGENERGY2MQTT_PVOUTPUT_ENABLED
-            or arg == const.SIGENERGY2MQTT_PVOUTPUT_EXPORTS
-            or arg == const.SIGENERGY2MQTT_PVOUTPUT_IMPORTS
-            or arg == const.SIGENERGY2MQTT_SMARTPORT_ENABLED
-        ) and value not in ["true", "True", True, 1]:
+        # argparse will store False if boolean CLI option was NOT specified, so we skip those
+        if (isinstance(value, bool) and value is False) or value is None or value in ["false", "False", ""]:  # also check None/strings that should be parsed as False
+            logging.debug(f"CLI arg {arg} was NOT specified ({value=}), skipping")
             continue
 
         # Handle Modbus read-only special case

@@ -94,7 +94,7 @@ class TestInfluxDBConfigCoverage:
     def test_configure_not_a_dict(self):
         config = InfluxDBConfiguration()
         with pytest.raises(ValueError, match="must contain options"):
-            config.configure("not_a_dict")
+            config.configure("not_a_dict")  # pyrefly: ignore
 
     def test_configure_missing_credentials(self):
         """Test that configuration fails when no valid credentials are provided."""
