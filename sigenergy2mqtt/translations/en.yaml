@@ -404,7 +404,7 @@ class:
     name: EMS Work Mode
     options:
       '0': Max Self Consumption
-      '1': Sigen AI
+      '1': Sigen AI # verify:ignore
       '2': Time of Use
       '5': Full Feed-in to Grid
       '6': VPP Scheduling
@@ -469,7 +469,7 @@ class:
     name: Lifetime Production
   EnphasePVPower:
     attributes:
-      source: Enphase Envoy API
+      source: Enphase Envoy API # verify:ignore
     name: PV Power
   EnphasePowerFactor:
     attributes:
@@ -1150,10 +1150,10 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Output Type
     options:
-      '0': L/N
-      '1': L1/L2/L3
-      '2': L1/L2/L3/N
-      '3': L1/L2/N
+      '0': L/N # verify:ignore
+      '1': L1/L2/L3 # verify:ignore
+      '2': L1/L2/L3/N # verify:ignore
+      '3': L1/L2/N # verify:ignore
   PACKBCUCount:
     attributes:
       source: Modbus Register {address}
@@ -1271,7 +1271,7 @@ class:
     name: Battery SoH
   PlantConsumedPower:
     attributes:
-      source: TotalLoadPower
+      source: TotalLoadPower # verify:ignore
     name: Consumed Power
   PlantDailyChargeEnergy:
     attributes:
@@ -1716,6 +1716,8 @@ cli:
     help: "The prefix to use for Home Assistant unique IDs. Example: A prefix of 'prefix' will prepend 'prefix_' to unique IDs (default: sigen). Once you have set this, you should NEVER change it, as it will break existing entities in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)
+  SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
+    help: 'InfluxDB batch size (default: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
     help: InfluxDB v2 bucket name (defaults to --influxdb-database if not set)
   SIGENERGY2MQTT_INFLUX_DATABASE:
@@ -1726,6 +1728,8 @@ cli:
     help: Enable sending of sensor data to InfluxDB.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
     help: Specify sensors to be excluded from InfluxDB updates using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name).
+  SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
+    help: 'InfluxDB flush interval in seconds (default: 1.0)'
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB hostname or IP address (default: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -1734,16 +1738,32 @@ cli:
     help: Specify to load historical data from the Home Assistant InfluxDB database. This will only work if sigenergy2mqtt is configured to use the same InfluxDB server as Home Assistant with the same credentials.
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
+    help: 'InfluxDB maximum retries (default: 3)'
+  SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS:
+    help: 'InfluxDB maximum sync workers (default: 4)'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB organization name or ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:
     help: InfluxDB password
+  SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS:
+    help: 'InfluxDB connection pool size (default: 100)'
+  SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE:
+    help: 'InfluxDB connection pool max size (default: 100)'
   SIGENERGY2MQTT_INFLUX_PORT:
     help: 'InfluxDB port (default: 8086)'
+  SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL:
+    help: 'InfluxDB query interval in seconds (default: 0.5)'
+  SIGENERGY2MQTT_INFLUX_READ_TIMEOUT:
+    help: 'InfluxDB read timeout in seconds (default: 120.0)'
+  SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE:
+    help: 'InfluxDB sync chunk size (default: 1000)'
   SIGENERGY2MQTT_INFLUX_TOKEN:
     help: InfluxDB v2 authentication token (prefer v2 APIs when supplied)
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: InfluxDB username
+  SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT:
+    help: 'InfluxDB write timeout in seconds (default: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Set the language to use for translations. Valid values are: {i18n}. The default is determined from the system (e.g. LANG environment variable) or English if no alternative is found.'
   SIGENERGY2MQTT_LOG_LEVEL:

@@ -767,9 +767,9 @@ influxdb:
   flush-interval: 1.0
   # query-interval
   #   added: 2026.1.31
-  #   default: 0.1
+  #   default: 0.5
   #   description: The minimum interval (in seconds) between subsequent queries (rate limiting).
-  query-interval: 0.1
+  query-interval: 0.5
   # max-retries
   #   added: 2026.1.31
   #   default: 3
@@ -785,6 +785,11 @@ influxdb:
   #   default: 100
   #   description: The maximum number of connections to allow in the pool.
   pool-maxsize: 100
+  # sync-chunk-size
+  #   added: 2026.1.31
+  #   default: 1000
+  #   description: The maximum number of records to buffer before flushing to InfluxDB.
+  sync-chunk-size: 1000
   # max-sync-workers
   #   added: 2026.1.31
   #   default: 4

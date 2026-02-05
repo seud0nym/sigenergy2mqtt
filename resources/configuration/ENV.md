@@ -118,6 +118,16 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY` | If `true`, `sigenergy2mqtt` will attempt to load historical data from the Home Assistant InfluxDB database. This will only work if `sigenergy2mqtt` is configured to use the same InfluxDB server as Home Assistant with the same credentials. | 2026.2.3 |
 | `SIGENERGY2MQTT_INFLUX_INCLUDE` | A comma-separated list of sensors to include when publishing to InfluxDB, using either the full or partial entity id or sensor class name, or a regular expression to be matched against the entity id or sensor class name. If not specified, all sensors will be included. | 2026.1.30 |
 | `SIGENERGY2MQTT_INFLUX_EXCLUDE` | A comma-separated list of sensors to exclude when publishing to InfluxDB, using either the full or partial entity id or sensor class name, or a regular expression to be matched against the entity id or sensor class name. If not specified, no sensors will be excluded. | 2026.1.30 |
+| `SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT` | InfluxDB write timeout in seconds (default: `30.0`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_READ_TIMEOUT` | InfluxDB read timeout in seconds (default: `120.0`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_BATCH_SIZE` | InfluxDB batch size (default: `100`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL` | InfluxDB flush interval in seconds (default: `1.0`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL` | InfluxDB query interval in seconds (default: `0.5`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_MAX_RETRIES` | InfluxDB maximum retries (default: `3`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS` | InfluxDB connection pool size (default: `100`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE` | InfluxDB connection pool max size (default: `100`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE` | InfluxDB sync chunk size (default: `1000`) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS` | InfluxDB maximum sync workers (default: `4`) | 2026.2.5 |
 
 
 ## Third Party PV Production Configuration Variables

@@ -1716,6 +1716,8 @@ cli:
     help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지 마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
+  SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
+    help: 'InfluxDB 배치 크기 (기본값: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
     help: InfluxDB v2 버킷 이름 (설정하지 않으면 --influxdb-database가 기본값입니다)
   SIGENERGY2MQTT_INFLUX_DATABASE:
@@ -1726,6 +1728,8 @@ cli:
     help: InfluxDB로 메트릭 기록 활성화.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
     help: 제외할 센서 식별자 목록 (공백으로 구분)
+  SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
+    help: 'InfluxDB 플러시 간격(초) (기본값: 1.0)'
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB 호스트 이름 또는 IP 주소 (기본값: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -1734,16 +1738,32 @@ cli:
     help: Home Assistant InfluxDB 데이터베이스에서 과거 데이터를 로드하도록 지정합니다. 이는 sigenergy2mqtt가 Home Assistant와 동일한 자격 증명으로 동일한 InfluxDB 서버를 사용하도록 구성된 경우에만 작동합니다。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB 하위 시스템 로그 레벨. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 WARNING(경고, 오류 및 치명적 오류)입니다.'
+  SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
+    help: 'InfluxDB 최대 재시도 횟수 (기본값: 3)'
+  SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS:
+    help: 'InfluxDB 최대 동기화 작업자 수 (기본값: 4)'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB 조직 이름 또는 ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:
     help: InfluxDB 비밀번호
+  SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS:
+    help: 'InfluxDB 연결 풀 크기 (기본값: 100)'
+  SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE:
+    help: 'InfluxDB 연결 풀 최대 크기 (기본값: 100)'
   SIGENERGY2MQTT_INFLUX_PORT:
     help: 'InfluxDB 포트 (기본값: 8086)'
+  SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL:
+    help: 'InfluxDB 쿼리 간격(초) (기본값: 0.5)'
+  SIGENERGY2MQTT_INFLUX_READ_TIMEOUT:
+    help: 'InfluxDB 읽기 타임아웃(초) (기본값: 120.0)'
+  SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE:
+    help: 'InfluxDB 동기화 청크 크기 (기본값: 1000)'
   SIGENERGY2MQTT_INFLUX_TOKEN:
     help: InfluxDB v2 인증 토큰 (제공된 경우 v2 API를 선호함)
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: InfluxDB 사용자 이름
+  SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT:
+    help: 'InfluxDB 쓰기 타임아웃(초) (기본값: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: '번역에 사용할 언어를 설정합니다. 기본값은 시스템(예: LANG 환경 변수)에서 결정되며, 대안이 없는 경우 영어가 사용됩니다.'
   SIGENERGY2MQTT_LOG_LEVEL:

@@ -13,10 +13,12 @@ def test_influxdb_config_tuning_defaults():
     assert cfg.read_timeout == 120.0
     assert cfg.batch_size == 100
     assert cfg.flush_interval == 1.0
-    assert cfg.query_interval == 0.1
+    assert cfg.query_interval == 0.5
     assert cfg.max_retries == 3
     assert cfg.pool_connections == 100
     assert cfg.pool_maxsize == 100
+    assert cfg.sync_chunk_size == 1000
+    assert cfg.max_sync_workers == 4
     assert cfg.default_measurement == "state"
     assert cfg.load_hass_history is False
 
@@ -35,6 +37,8 @@ def test_influxdb_config_tuning_parsing():
         "max-retries": 5,
         "pool-connections": "20",
         "pool-maxsize": "30",
+        "sync-chunk-size": "500",
+        "max-sync-workers": "8",
         "default-measurement": "energy",
         "load-hass-history": True,
     }
@@ -48,6 +52,8 @@ def test_influxdb_config_tuning_parsing():
     assert cfg.max_retries == 5
     assert cfg.pool_connections == 20
     assert cfg.pool_maxsize == 30
+    assert cfg.sync_chunk_size == 500
+    assert cfg.max_sync_workers == 8
     assert cfg.default_measurement == "energy"
     assert cfg.load_hass_history is True
 

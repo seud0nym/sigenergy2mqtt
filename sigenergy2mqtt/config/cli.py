@@ -685,6 +685,96 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL, None),
         help="InfluxDB subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
     )
+    parser.add_argument(
+        "--influxdb-write-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT, None),
+        help="InfluxDB write timeout in seconds (default: 30.0)",
+    )
+    parser.add_argument(
+        "--influxdb-read-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_READ_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_READ_TIMEOUT, None),
+        help="InfluxDB read timeout in seconds (default: 120.0)",
+    )
+    parser.add_argument(
+        "--influxdb-batch-size",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_BATCH_SIZE,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_BATCH_SIZE, None),
+        help="InfluxDB batch size (default: 100)",
+    )
+    parser.add_argument(
+        "--influxdb-flush-interval",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL, None),
+        help="InfluxDB flush interval in seconds (default: 1.0)",
+    )
+    parser.add_argument(
+        "--influxdb-query-interval",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL, None),
+        help="InfluxDB query interval in seconds (default: 0.5)",
+    )
+    parser.add_argument(
+        "--influxdb-max-retries",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_MAX_RETRIES,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_MAX_RETRIES, None),
+        help="InfluxDB maximum retries (default: 3)",
+    )
+    parser.add_argument(
+        "--influxdb-pool-connections",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS, None),
+        help="InfluxDB connection pool size (default: 100)",
+    )
+    parser.add_argument(
+        "--influxdb-pool-maxsize",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE, None),
+        help="InfluxDB connection pool max size (default: 100)",
+    )
+    parser.add_argument(
+        "--influxdb-sync-chunk-size",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE, None),
+        help="InfluxDB sync chunk size (default: 1000)",
+    )
+    parser.add_argument(
+        "--influxdb-max-sync-workers",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS, None),
+        help="InfluxDB maximum sync workers (default: 4)",
+    )
     # endregion
 
     parser.add_argument(

@@ -1716,6 +1716,8 @@ cli:
     help: '用于 Home Assistant 唯一 ID 的前缀。例如：前缀 ''prefix'' 将在唯一 ID 前加上 ''prefix_''（默认：sigen）。一旦设置，请永远不要更改它，因为它会破坏 Home Assistant 中的现有实体。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '使用简化的主题结构'
+  SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
+    help: 'InfluxDB 批处理大小（默认：100）'
   SIGENERGY2MQTT_INFLUX_BUCKET:
     help: InfluxDB v2 存储桶名称（如果未设置，则默认为 --influxdb-database）
   SIGENERGY2MQTT_INFLUX_DATABASE:
@@ -1726,6 +1728,8 @@ cli:
     help: 启用将指标写入 InfluxDB。
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
     help: 要排除的传感器标识符列表（以空格分隔）
+  SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
+    help: 'InfluxDB 刷新间隔（秒）（默认：1.0）'
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB 主机名或 IP 地址（默认：127.0.0.1）'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -1734,16 +1738,32 @@ cli:
     help: 指定从 Home Assistant InfluxDB 数据库加载历史数据。仅当 sigenergy2mqtt 配置为使用与 Home Assistant 相同的 InfluxDB 服务器和相同的凭据时，此功能才有效。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB 子系统的日志级别。有效值为：DEBUG, INFO, WARNING, ERROR 或 CRITICAL。默认值为 WARNING（警告、错误和严重故障）'
+  SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
+    help: 'InfluxDB 最大重试次数（默认：3）'
+  SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS:
+    help: 'InfluxDB 最大同步工作线程数（默认：4）'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB 组织名称或 ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:
     help: InfluxDB 密码
+  SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS:
+    help: 'InfluxDB 连接池大小（默认：100）'
+  SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE:
+    help: 'InfluxDB 连接池最大大小（默认：100）'
   SIGENERGY2MQTT_INFLUX_PORT:
     help: 'InfluxDB 端口（默认：8086）'
+  SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL:
+    help: 'InfluxDB 查询间隔（秒）（默认：0.5）'
+  SIGENERGY2MQTT_INFLUX_READ_TIMEOUT:
+    help: 'InfluxDB 读取超时（秒）（默认：120.0）'
+  SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE:
+    help: 'InfluxDB 同步块大小（默认：1000）'
   SIGENERGY2MQTT_INFLUX_TOKEN:
     help: InfluxDB v2 身份验证令牌（如果提供，则优先使用 v2 API）
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: InfluxDB 用户名
+  SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT:
+    help: 'InfluxDB 写入超时（秒）（默认：30.0）'
   SIGENERGY2MQTT_LANGUAGE:
     help: '设置翻译使用的语言。默认值由系统决定（例如 LANG 环境变量），如果找不到备选方案，则默认为英语。'
   SIGENERGY2MQTT_LOG_LEVEL:

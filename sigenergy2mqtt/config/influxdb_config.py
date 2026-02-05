@@ -33,11 +33,11 @@ class InfluxDBConfiguration:
     read_timeout: float = 120.0
     batch_size: int = 100
     flush_interval: float = 1.0
-    query_interval: float = 0.1
+    query_interval: float = 0.5
     max_retries: int = 3
     pool_connections: int = 100
     pool_maxsize: int = 100
-    sync_chunk_size: int = 5000
+    sync_chunk_size: int = 1000
     max_sync_workers: int = 4
 
     log_level: int = logging.WARNING

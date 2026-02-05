@@ -1716,6 +1716,8 @@ cli:
     help: 'Het voorvoegsel voor Home Assistant unieke IDs. Voorbeeld: Een voorvoegsel van ''prefix'' zal ''prefix_'' voorafgaan aan unieke IDs (standaard: sigen). Zodra u dit heeft ingesteld, mag u dit NOOIT meer wijzigen, omdat dit bestaande entiteiten in Home Assistant zal verbreken.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Gebruik vereenvoudigde topic-structuur (sigenergy2mqtt/object_id/state)'
+  SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
+    help: 'InfluxDB-batchgrootte (standaard: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
     help: Naam van de InfluxDB v2 bucket (standaard --influxdb-database indien niet ingesteld)
   SIGENERGY2MQTT_INFLUX_DATABASE:
@@ -1726,6 +1728,8 @@ cli:
     help: Schakel het verzenden van metingen naar InfluxDB in.
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
     help: Lijst van sensor-ID's om uit te sluiten (gescheiden door spaties)
+  SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
+    help: 'InfluxDB flush-interval in seconden (standaard: 1.0)'
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Hostnaam of IP-adres van InfluxDB (standaard: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -1734,16 +1738,32 @@ cli:
     help: Geef aan om historische gegevens te laden uit de Home Assistant InfluxDB-database. Dit werkt alleen als sigenergy2mqtt is geconfigureerd om dezelfde InfluxDB-server als Home Assistant te gebruiken met dezelfde inloggegevens.
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'Logniveau van het InfluxDB-subsysteem. Geldige waarden zijn: DEBUG, INFO, WARNING, ERROR of CRITICAL. Standaard is WARNING (waarschuwingen, fouten en kritieke storingen)'
+  SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
+    help: 'InfluxDB maximaal aantal nieuwe pogingen (standaard: 3)'
+  SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS:
+    help: 'InfluxDB maximaal aantal sync workers (standaard: 4)'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: Naam of ID van de InfluxDB-organisatie
   SIGENERGY2MQTT_INFLUX_PASSWORD:
     help: Wachtwoord van InfluxDB
+  SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS:
+    help: 'Grootte van InfluxDB-verbindingspool (standaard: 100)'
+  SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE:
+    help: 'Maximale grootte van InfluxDB-verbindingspool (standaard: 100)'
   SIGENERGY2MQTT_INFLUX_PORT:
     help: 'Poort van InfluxDB (standaard: 8086)'
+  SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL:
+    help: 'InfluxDB query-interval in seconden (standaard: 0.5)'
+  SIGENERGY2MQTT_INFLUX_READ_TIMEOUT:
+    help: 'InfluxDB lees-timeout in seconden (standaard: 120.0)'
+  SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE:
+    help: 'InfluxDB sync chunk grootte (standaard: 1000)'
   SIGENERGY2MQTT_INFLUX_TOKEN:
     help: InfluxDB v2 authenticatietoken (geeft de voorkeur aan v2 API's indien verstrekt)
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: Gebruikersnaam van InfluxDB
+  SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT:
+    help: 'InfluxDB schrijf-timeout in seconden (standaard: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Stelt de taal in die gebruikt moet worden voor vertalingen. De standaardwaarde wordt bepaald door het systeem (bijv. de LANG-omgevingsvariabele) of Engels als er geen alternatief wordt gevonden.'
   SIGENERGY2MQTT_LOG_LEVEL:

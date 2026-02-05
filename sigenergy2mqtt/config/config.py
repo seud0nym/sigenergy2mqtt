@@ -299,6 +299,26 @@ class Config(metaclass=ConfigMeta):
                 overrides["influxdb"]["token"] = check_string(value, key, allow_none=True, allow_empty=True)
             case const.SIGENERGY2MQTT_INFLUX_USERNAME:
                 overrides["influxdb"]["username"] = check_string(value, key, allow_none=True, allow_empty=True)
+            case const.SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT:
+                overrides["influxdb"]["write-timeout"] = check_float(value, key, min=0.1)
+            case const.SIGENERGY2MQTT_INFLUX_READ_TIMEOUT:
+                overrides["influxdb"]["read-timeout"] = check_float(value, key, min=0.1)
+            case const.SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
+                overrides["influxdb"]["batch-size"] = check_int(value, key, min=1)
+            case const.SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
+                overrides["influxdb"]["flush-interval"] = check_float(value, key, min=0.1)
+            case const.SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL:
+                overrides["influxdb"]["query-interval"] = check_float(value, key, min=0.0)
+            case const.SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
+                overrides["influxdb"]["max-retries"] = check_int(value, key, min=0)
+            case const.SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS:
+                overrides["influxdb"]["pool-connections"] = check_int(value, key, min=1)
+            case const.SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE:
+                overrides["influxdb"]["pool-maxsize"] = check_int(value, key, min=1)
+            case const.SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE:
+                overrides["influxdb"]["sync-chunk-size"] = check_int(value, key, min=1)
+            case const.SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS:
+                overrides["influxdb"]["max-sync-workers"] = check_int(value, key, min=1)
             case const.SIGENERGY2MQTT_LANGUAGE:
                 try:
                     overrides["language"] = check_string(value, key, *i18n.get_available_translations(), allow_empty=False, allow_none=False)

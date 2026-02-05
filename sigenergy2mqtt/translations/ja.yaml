@@ -1716,6 +1716,8 @@ cli:
     help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
+  SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
+    help: 'InfluxDBバッチサイズ（デフォルト: 100）'
   SIGENERGY2MQTT_INFLUX_BUCKET:
     help: InfluxDB v2 バケット名（設定されていない場合は --influxdb-database がデフォルトとなります）
   SIGENERGY2MQTT_INFLUX_DATABASE:
@@ -1726,6 +1728,8 @@ cli:
     help: InfluxDB へのメトリクスの書き込みを有効にします。
   SIGENERGY2MQTT_INFLUX_EXCLUDE:
     help: 除外するセンサー識別子のリスト（スペース区切り）
+  SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
+    help: 'InfluxDBフラッシュ間隔（秒）（デフォルト: 1.0）'
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB ホスト名または IP アドレス（デフォルト: 127.0.0.1）'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -1734,16 +1738,32 @@ cli:
     help: Home Assistant InfluxDBデータベースから履歴データをロードするように指定します。これは、sigenergy2mqttがHome Assistantと同じ認証情報で同じInfluxDBサーバーを使用するように構成されている場合にのみ機能します。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは WARNING（警告、エラー、致命的な障害）です。'
+  SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
+    help: 'InfluxDB最大再試行回数（デフォルト: 3）'
+  SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS:
+    help: 'InfluxDB最大同期ワーカー数（デフォルト: 4）'
   SIGENERGY2MQTT_INFLUX_ORG:
     help: InfluxDB 組織名または ID
   SIGENERGY2MQTT_INFLUX_PASSWORD:
     help: InfluxDB パスワード
+  SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS:
+    help: 'InfluxDB接続プールサイズ（デフォルト: 100）'
+  SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE:
+    help: 'InfluxDB接続プール最大サイズ（デフォルト: 100）'
   SIGENERGY2MQTT_INFLUX_PORT:
     help: 'InfluxDB ポート（デフォルト: 8086）'
+  SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL:
+    help: 'InfluxDBクエリ間隔（秒）（デフォルト: 0.5）'
+  SIGENERGY2MQTT_INFLUX_READ_TIMEOUT:
+    help: 'InfluxDB読み取りタイムアウト（秒）（デフォルト: 120.0）'
+  SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE:
+    help: 'InfluxDB同期チャンクサイズ（デフォルト: 1000）'
   SIGENERGY2MQTT_INFLUX_TOKEN:
     help: InfluxDB v2 認証トークン（提供されている場合は v2 API を優先します）
   SIGENERGY2MQTT_INFLUX_USERNAME:
     help: InfluxDB ユーザー名
+  SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT:
+    help: 'InfluxDB書き込みタイムアウト（秒）（デフォルト: 30.0）'
   SIGENERGY2MQTT_LANGUAGE:
     help: '翻訳に使用する言語を設定します。デフォルトはシステム（例：LANG 環境変数）から決定されますが、代替が見つからない場合は英語になります。'
   SIGENERGY2MQTT_LOG_LEVEL:
