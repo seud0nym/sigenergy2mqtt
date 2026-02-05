@@ -1,4 +1,5 @@
 import ast
+import re
 from pathlib import Path
 from typing import TypeVar, cast
 
@@ -22,6 +23,25 @@ RESET_TRANSLATIONS = {
     "pt": "Definir {name}",
     "zh-Hans": "设置 {name}",
 }
+
+
+def is_placeholder_only(s: str) -> bool:
+    """Check if a string contains only placeholders like {name} or {model_id}."""
+    if not isinstance(s, str):
+        return False
+    # Regex matches strings that are composed entirely of:
+    # 1. Placeholders: {something}
+    # 2. Whitespace: \s+
+    # 3. Punctuation/Symbols: [\W_]+
+    # It must contain at least one placeholder.
+    has_placeholder = "{" in s and "}" in s
+    if not has_placeholder:
+        return False
+
+    # Remove all placeholders and see what's left
+    remaining = re.sub(r"\{[^{}]+\}", "", s)
+    # If remaining contains any alphanumeric characters, it's not placeholder-only
+    return not bool(re.search(r"[a-zA-Z0-9]", remaining))
 
 
 T = TypeVar("T", dict, list)
@@ -228,7 +248,8 @@ class TranslationExtractor(ast.NodeVisitor):
                                     name_value = model_names[0]
 
                         if name_value and self.current_class not in self.ignore_name_classes:
-                            self._add_translation(self.current_class, "name", name_value)
+                            if not is_placeholder_only(name_value):
+                                self._add_translation(self.current_class, "name", name_value)
 
                 # If this is a resettable sensor and we found a name, add the reset name translation
                 if self.is_resettable and name_value:
@@ -314,13 +335,15 @@ class TranslationExtractor(ast.NodeVisitor):
             if isinstance(target, ast.Attribute) and target.attr == "name" and isinstance(target.value, ast.Name) and target.value.id == "self":
                 names = get_ast_string_values(node.value)
                 if names and self.current_class not in self.ignore_name_classes:
-                    self._add_translation(self.current_class, "name", names[0])
+                    if not is_placeholder_only(names[0]):
+                        self._add_translation(self.current_class, "name", names[0])
 
             if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id == "self":
                 if isinstance(target.slice, ast.Constant) and target.slice.value == "name":
                     names = get_ast_string_values(node.value)
                     if names and self.current_class not in self.ignore_name_classes:
-                        self._add_translation(self.current_class, "name", names[0])
+                        if not is_placeholder_only(names[0]):
+                            self._add_translation(self.current_class, "name", names[0])
 
         self.generic_visit(node)
 
@@ -349,12 +372,14 @@ class TranslationExtractor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _add_translation(self, cls, key, value):
+        if is_placeholder_only(value):
+            return
         if cls not in self.translations:
             self.translations[cls] = {}
         self.translations[cls][key] = value
 
     def _add_attr(self, cls, attr, value):
-        if attr == "since-protocol":
+        if attr == "since-protocol" or is_placeholder_only(value):
             return
         if cls not in self.translations:
             self.translations[cls] = {}
@@ -363,6 +388,8 @@ class TranslationExtractor(ast.NodeVisitor):
         self.translations[cls]["attributes"][attr] = value
 
     def _add_alarm(self, cls, bit, value):
+        if is_placeholder_only(value):
+            return
         if cls not in self.translations:
             self.translations[cls] = {}
         if "alarm" not in self.translations[cls]:
@@ -445,6 +472,36 @@ def merge_translations(base, new):
             merge_translations(base[key], value)
         else:
             base[key] = value
+
+
+def deep_update_commented(target, source):
+    """
+    Recursively update target (CommentedMap) from source (dict),
+    preserving comments and structure while maintaining source order.
+    """
+    if not isinstance(target, dict) or not isinstance(source, dict):
+        return source
+
+    # Remove keys from target that are not in source
+    to_remove = [k for k in target if k not in source]
+    for k in to_remove:
+        del target[k]
+
+    # Update current keys and add new ones
+    for k, v in source.items():
+        if k in target:
+            if isinstance(v, dict):
+                deep_update_commented(target[k], v)
+            else:
+                target[k] = v
+        else:
+            # New key
+            target[k] = v
+        # Ensure key is at the end to match source order (source is already sorted)
+        if hasattr(target, "move_to_end"):
+            target.move_to_end(k)
+
+    return target
 
 
 def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict, old_en_translations: dict | None = None):
@@ -724,16 +781,45 @@ if __name__ == "__main__":
     all_translations = sort_dict(all_translations)
     prune_empty_dicts(all_translations)
 
-    # Write en.yaml
     en_yaml_path = package_dir / "translations" / "en.yaml"
-    old_all_translations = {}
+    old_all_translations: dict | None = None
+    all_translations_commented = None
     if en_yaml_path.exists():
         with open(en_yaml_path, "r", encoding="utf-8") as f:
-            old_all_translations = yaml_parser.load(f) or {}
+            all_translations_commented = yaml_parser.load(f)
+            # Create a plain dict copy for propagation comparison
+            if isinstance(all_translations_commented, dict):
+
+                def strip_comments(obj):
+                    if isinstance(obj, dict):
+                        return {k: strip_comments(v) for k, v in obj.items()}
+                    if isinstance(obj, list):
+                        return [strip_comments(i) for i in obj]
+                    return obj
+
+                old_all_translations = cast(dict, strip_comments(all_translations_commented))
+
+    if all_translations_commented is not None:
+        # Preserve comments by updating existing structure
+        deep_update_commented(all_translations_commented, all_translations)
+    else:
+        # Convert all_translations to a CommentedMap to support future comments
+        from ruamel.yaml.comments import CommentedMap
+
+        def to_commented(obj):
+            if isinstance(obj, dict):
+                return CommentedMap({k: to_commented(v) for k, v in obj.items()})
+            if isinstance(obj, list):
+                from ruamel.yaml.comments import CommentedSeq
+
+                return CommentedSeq([to_commented(i) for i in obj])
+            return obj
+
+        all_translations_commented = to_commented(all_translations)
 
     with open(en_yaml_path, "w", encoding="utf-8") as f:
-        yaml_parser.dump(all_translations, f)
-    print(f"Successfully updated {en_yaml_path}")
+        yaml_parser.dump(all_translations_commented, f)
+    print(f"Successfully updated {en_yaml_path} (preserved comments)")
 
     # Propagate to other languages
     propagate_to_other_translations(all_translations, package_dir / "translations", extractor.class_bases, old_all_translations)

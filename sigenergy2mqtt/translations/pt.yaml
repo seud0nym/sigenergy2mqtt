@@ -809,8 +809,6 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Resistência de Isolamento
-  Inverter:
-    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Registo Modbus {address}

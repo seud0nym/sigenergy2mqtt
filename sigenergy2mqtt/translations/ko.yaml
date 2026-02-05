@@ -809,8 +809,6 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 절연 저항
-  Inverter:
-    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Modbus 레지스터 {address}

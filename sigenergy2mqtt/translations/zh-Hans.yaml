@@ -809,8 +809,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 绝缘电阻
-  Inverter:
-    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Modbus 寄存器 {address}

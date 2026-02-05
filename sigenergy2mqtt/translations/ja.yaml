@@ -809,8 +809,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 絶縁抵抗
-  Inverter:
-    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Modbusレジスタ {address}
