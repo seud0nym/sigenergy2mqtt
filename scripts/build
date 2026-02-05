@@ -79,6 +79,7 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
     grep -Eoe '"--[^"]+' sigenergy2mqtt/config/cli.py | cut -c4- | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.cli.options
+    grep -Eoe '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.env.vars
 fi
 
 echo -e "${GREEN}>>> Build successful${NC} $(date): Old version=${ORANGE}$old_version${NC} New version=${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"
