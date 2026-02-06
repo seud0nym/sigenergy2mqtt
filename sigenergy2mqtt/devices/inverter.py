@@ -48,7 +48,7 @@ class Inverter(ModbusDevice):
             hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion
             model_id=model_id,
             serial=serial,
-            Config="Sigenergy",  # For '{Config} {name}' placeholder
+            translate=False,
         )
 
         pv_power = ro.InverterPVPower(plant_index, device_address)

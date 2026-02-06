@@ -1077,13 +1077,13 @@ class:
     name: 最大放电功率
   MaxChargingLimit:
     attributes:
-      comment: '范围: [0, 额定 ESS 充电功率]{Config}'
+      comment: '范围: [0, 额定 ESS 充电功率]'
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大充电限制
   MaxDischargingLimit:
     attributes:
-      comment: '范围: [0, 额定 ESS 充电功率]{Config}'
+      comment: '范围: [0, 额定 ESS 充电功率]'
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大放电限制

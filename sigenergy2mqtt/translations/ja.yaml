@@ -1077,13 +1077,13 @@ class:
     name: 最大放電電力
   MaxChargingLimit:
     attributes:
-      comment: '範囲: [0, 定格ESS充電電力]{Config}'
+      comment: '範囲: [0, 定格ESS充電電力]'
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 最大充電制限
   MaxDischargingLimit:
     attributes:
-      comment: '範囲: [0, 定格ESS充電電力]{Config}'
+      comment: '範囲: [0, 定格ESS充電電力]'
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 最大放電制限

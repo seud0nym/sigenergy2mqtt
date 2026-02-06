@@ -1077,13 +1077,13 @@ class:
     name: 최대 방전 전력
   MaxChargingLimit:
     attributes:
-      comment: '범위: [0, 정격 ESS 충전 전력]{Config}'
+      comment: '범위: [0, 정격 ESS 충전 전력]'
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 최대 충전 제한
   MaxDischargingLimit:
     attributes:
-      comment: '범위: [0, 정격 ESS 충전 전력]{Config}'
+      comment: '범위: [0, 정격 ESS 충전 전력]'
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 최대 방전 제한

@@ -1077,13 +1077,13 @@ class:
     name: Max Discharge Power
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Range: [0, Rated ESS charging power]'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Charging Limit
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Range: [0, Rated ESS charging power]'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Discharging Limit

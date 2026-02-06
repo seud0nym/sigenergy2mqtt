@@ -1077,13 +1077,13 @@ class:
     name: Potência de Descarga Máx
   MaxChargingLimit:
     attributes:
-      comment: 'Faixa: [0, Potência de carga nominal ESS]{Config}'
+      comment: 'Faixa: [0, Potência de carga nominal ESS]'
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Limite Máximo de Carga
   MaxDischargingLimit:
     attributes:
-      comment: 'Faixa: [0, Potência de carga nominal ESS]{Config}'
+      comment: 'Faixa: [0, Potência de carga nominal ESS]'
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Limite Máximo de Descarga

@@ -1077,13 +1077,13 @@ class:
     name: Potenza di Scarica Max
   MaxChargingLimit:
     attributes:
-      comment: 'Intervallo: [0, Potenza di carica nominale ESS]{Config}'
+      comment: 'Intervallo: [0, Potenza di carica nominale ESS]'
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Massimo di Carica
   MaxDischargingLimit:
     attributes:
-      comment: 'Intervallo: [0, Potenza di carica nominale ESS]{Config}'
+      comment: 'Intervallo: [0, Potenza di carica nominale ESS]'
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Massimo di Scarica

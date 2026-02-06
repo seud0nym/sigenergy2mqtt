@@ -1077,13 +1077,13 @@ class:
     name: Puissance de Décharge Max
   MaxChargingLimit:
     attributes:
-      comment: 'Plage : [0, Puissance de charge nominale ESS]{Config}'
+      comment: 'Plage : [0, Puissance de charge nominale ESS]'
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Limite de Charge Maximum
   MaxDischargingLimit:
     attributes:
-      comment: 'Plage : [0, Puissance de charge nominale ESS]{Config}'
+      comment: 'Plage : [0, Puissance de charge nominale ESS]'
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Limite de Décharge Maximum
