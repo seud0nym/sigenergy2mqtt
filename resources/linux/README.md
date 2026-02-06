@@ -3,7 +3,7 @@
 ## Pre-requisites
 
 - Python 3.11 or later
-- An MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an add-on to Home Assistant
+- An MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an app to Home Assistant
 - A Linux server (physical hardware, or a virtual machine/container) that runs continuously in which to install `sigenergy2mqtt` (hardware requirements are minimal: I use a Proxmox LXC with 1 cores and 256MiB RAM)
 
 ## Installation
