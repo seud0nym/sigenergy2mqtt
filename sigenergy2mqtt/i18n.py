@@ -125,7 +125,7 @@ def load(language: str):
 
 def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) -> str:
     if kwargs.get("translate", True) is False:
-        return key
+        return default if default is not None else key
     translation, language, translated = _translator.translate(key, default)
     if not translated:
         if debugging:
