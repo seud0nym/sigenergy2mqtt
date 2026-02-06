@@ -789,7 +789,7 @@ class InfluxService(Device):
                     tpc: str = cast(str, getattr(s, "state_topic"))
 
                     if not getattr(s, "publishable", False):
-                        self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not publishable")
+                        self.logger.debug(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not publishable")
                         continue
 
                     if Config.influxdb.include and not any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in Config.influxdb.include):
