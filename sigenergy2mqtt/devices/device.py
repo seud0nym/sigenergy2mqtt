@@ -64,12 +64,37 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
         name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs)
         self["name"] = self.name = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
-        self["ids"] = [unique_id]
-        self["mf"] = manufacturer
-        self["mdl"] = model
 
+        self["identifiers"] = [unique_id]
+        self["manufacturer"] = manufacturer
+        self["model"] = model
         for k, v in kwargs.items():
-            self[k] = v
+            if k in [
+                "cu",
+                "configuration_url",
+                "cns",
+                "connections",
+                "ids",
+                "identifiers",
+                "name",
+                "mf",
+                "manufacturer",
+                "mdl",
+                "model",
+                "mdl_id",
+                "model_id",
+                "hw",
+                "hw_version",
+                "sw",
+                "sw_version",
+                "sa",
+                "suggested_area",
+                "sn",
+                "serial_number",
+            ]:
+                self[k] = v
+            else:
+                logging.debug(f"{self.name} - Ignored unknown device attribute: {k} (probably translation placeholder)")
 
         logging.debug(f"Created Device {self}")
         DeviceRegistry.add(self.plant_index, self)
@@ -135,7 +160,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
     @property
     def unique_id(self) -> str:
-        return self["ids"][0]
+        return self["ids"][0] if "ids" in self and len(self["ids"]) > 0 else self["identifiers"][0]
 
     @property
     def via_device(self) -> str | None:
