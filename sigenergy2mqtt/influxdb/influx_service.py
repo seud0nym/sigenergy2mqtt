@@ -558,7 +558,7 @@ class InfluxService(Device):
                 break
 
             records_copied += chunk_records
-            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {measurement}/{tags}")
+            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags['entity_id']} [{measurement}]")
 
             if earliest_timestamp is None or chunk_records < chunk_size:
                 break
@@ -628,7 +628,7 @@ class InfluxService(Device):
                 break
 
             records_copied += chunk_records
-            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {measurement}/{tags}")
+            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags['entity_id']} [{measurement}]")
 
             if last_timestamp is None or chunk_records < chunk_size:
                 break
@@ -694,11 +694,11 @@ class InfluxService(Device):
                     earliest_ts = await self.get_earliest_timestamp(measurement, tags)
 
                     # Copy records from homeassistant that are older than our earliest record
-                    self.logger.info(f"{self.name} Starting sync for {measurement}/{tags} (earliest existing: {earliest_ts})")
+                    self.logger.info(f"{self.name} Starting sync for {tags['entity_id']} [{measurement}] (earliest existing: {earliest_ts})")
                     count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=earliest_ts)
                     return measurement, tags, count
                 except Exception as e:
-                    self.logger.error(f"{self.name} Error syncing {measurement}/{tags}: {e}")
+                    self.logger.error(f"{self.name} Error syncing {tags['entity_id']} [{measurement}]: {e}")
                     return measurement, tags, 0
 
         for topic, sensor in self._topic_cache.items():
