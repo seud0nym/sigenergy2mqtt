@@ -92,7 +92,7 @@ async def test_influx_service_uses_config_values(monkeypatch):
     Config.influxdb.read_timeout = 99.0
     Config.influxdb.max_retries = 5
 
-    await svc._query_v2("base", "org", "tok", "q")
+    await svc.query_v2("base", "org", "tok", "q")
     assert captured_args["retries"] == 5
 
     # Verify write timeout logic
@@ -109,5 +109,5 @@ async def test_influx_service_uses_config_values(monkeypatch):
     svc._write_url = "http://localhost:8086/api/v2/write"
     Config.influxdb.write_timeout = 45.0
 
-    await svc._execute_write(b"data")
+    await svc.execute_write(b"data")
     assert captured_post["timeout"] == 45.0

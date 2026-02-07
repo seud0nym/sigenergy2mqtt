@@ -86,7 +86,7 @@ async def test_init_token_prefers_v2_http(logger, influx_config):
             MockResponse(204),  # v2 HTTP success
         ]
         svc = InfluxService(logger, plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
         assert svc._writer_type == "v2_http"
 
 
@@ -99,7 +99,7 @@ async def test_init_v2_http_success_no_token(logger, influx_config):
             MockResponse(204),  # v2 HTTP success
         ]
         svc = InfluxService(logger, plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
         assert svc._writer_type == "v2_http"
 
 
@@ -115,7 +115,7 @@ async def test_init_v2_http_bucket_creation(logger, influx_config):
         mock_get.return_value = MockResponse(200, {"orgs": [{"id": "org123"}]})
 
         svc = InfluxService(logger, plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
         assert svc._writer_type == "v2_http"
 
 
@@ -130,7 +130,7 @@ async def test_init_v1_http_database_creation(logger, influx_config):
         ]
 
         svc = InfluxService(logger, plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
         assert svc._writer_type == "v1_http"
 
 
@@ -140,21 +140,21 @@ async def test_init_all_fail_returns_false(logger, influx_config):
     influx_config.token = "tok"
     with patch("requests.Session.post", side_effect=Exception("all fail")):
         svc = InfluxService(logger, plant_index=0)
-        success = await svc._async_init()
+        success = await svc.async_init()
         assert success is False
 
 
-def test_to_line_protocol(logger):
+def testto_line_protocol(logger):
     svc = InfluxService(logger, plant_index=0)
     tags = {"t1": "v1", "t 2": "v 2"}
     fields = {"f1": 10, "f2": 10.5, "f3": "str val"}
     ts = 1234567890
-    line = svc._to_line_protocol("meas name", tags, fields, ts)
+    line = svc.to_line_protocol("meas name", tags, fields, ts)
     assert 'meas\\ name,t1=v1,t\\ 2=v\\ 2 f1=10i,f2=10.5,f3="str val" 1234567890000000000' in line
 
 
 @pytest.mark.asyncio
-async def test_write_line_http_fail(logger, influx_config):
+async def testwrite_line_http_fail(logger, influx_config):
     # Disable init so we can manually configure the writer for the test
     influx_config.enabled = False
     svc = InfluxService(logger, plant_index=0)
@@ -167,7 +167,7 @@ async def test_write_line_http_fail(logger, influx_config):
     # Mock clean session post failure
     with patch.object(svc._session, "post", side_effect=Exception("write error")):
         with patch.object(logger, "error") as mock_logger_error:
-            await svc._write_line("test line")
+            await svc.write_line("test line")
             await svc.flush_buffer()  # Force flush to trigger write
             # Log message contains exception detail and context
             found = any("InfluxDB write failed: write error" in c.args[0] for c in mock_logger_error.call_args_list)
@@ -180,7 +180,7 @@ async def test_handle_mqtt_numeric_and_string(logger):
     svc._topic_cache["topic1"] = {"uom": "W", "object_id": "obj1", "unique_id": "uid1"}
     svc._writer_type = "v1_http"
 
-    with patch.object(svc, "_write_line") as mock_write:
+    with patch.object(svc, "write_line") as mock_write:
         # Numeric payload
         await svc.handle_mqtt(None, None, "100.5", "topic1", None)
         assert "value=100.5" in mock_write.call_args[0][0]
@@ -205,7 +205,7 @@ async def test_handle_mqtt_exception_handling(logger):
     svc = InfluxService(logger, plant_index=0)
     svc._topic_cache["topic1"] = {"uom": "W", "object_id": "obj1", "unique_id": "uid1"}
 
-    with patch.object(svc, "_to_line_protocol", side_effect=Exception("format error")):
+    with patch.object(svc, "to_line_protocol", side_effect=Exception("format error")):
         with patch.object(logger, "error") as mock_error:
             res = await svc.handle_mqtt(None, None, "100", "topic1", None)
             assert res is False
@@ -298,7 +298,7 @@ def test_subscribe_edge_cases(logger):
 
 
 @pytest.mark.asyncio
-async def test_write_line_v2_http_and_v1_http(logger, influx_config):
+async def testwrite_line_v2_http_and_v1_http(logger, influx_config):
     influx_config.enabled = False  # Disable init
     svc = InfluxService(logger, plant_index=0)
     svc._online = True
@@ -308,7 +308,7 @@ async def test_write_line_v2_http_and_v1_http(logger, influx_config):
     svc._write_url = "http://v2"
     with patch.object(svc._session, "post") as mock_post:
         mock_post.return_value = MockResponse(204)
-        await svc._write_line("line2")
+        await svc.write_line("line2")
         await svc.flush_buffer()  # Force flush to trigger write
         mock_post.assert_called()
 
@@ -317,7 +317,7 @@ async def test_write_line_v2_http_and_v1_http(logger, influx_config):
     svc._write_url = "http://v1"
     with patch.object(svc._session, "post") as mock_post:
         mock_post.return_value = MockResponse(204)
-        await svc._write_line("line1")
+        await svc.write_line("line1")
         await svc.flush_buffer()  # Force flush to trigger write
         mock_post.assert_called()
 
@@ -338,25 +338,28 @@ async def test_init_v1_fallback_success(logger, influx_config):
         mock_post.side_effect = [Exception("v2 conn fail"), MockResponse(204)]
 
         svc = InfluxService(logger, plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
         assert svc._writer_type == "v1_http"
 
 
 @pytest.mark.asyncio
 async def test_schedule_starts_and_cancels_sync_task(logger):
+    from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
+
     svc = InfluxService(logger, plant_index=0)
     Config.influxdb.load_hass_history = True
     # Manually simulate established connection
     svc._writer_type = "v2_http"
 
-    # Mock sync_from_homeassistant to be a long running task
-    async def mock_sync():
+    # Mock sync_from_homeassistant on HassHistorySync class
+    async def mock_sync(topic_cache):
         try:
             await asyncio.sleep(10)
+            return {}
         except asyncio.CancelledError:
-            pass
+            return {}
 
-    with patch.object(svc, "sync_from_homeassistant", side_effect=mock_sync) as mock_method:
+    with patch.object(HassHistorySync, "sync_from_homeassistant", side_effect=mock_sync) as mock_method:
         tasks = svc.schedule(None, MagicMock())
 
         # Ensure online is True so loop runs (must be Future)

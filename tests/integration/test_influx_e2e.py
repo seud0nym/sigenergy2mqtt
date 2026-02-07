@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -17,7 +18,7 @@ def logger():
 
 @pytest.fixture
 def service(logger):
-    """Create InfluxService with disabled init for isolated testing."""
+    """Create HassHistorySync with disabled init for isolated testing."""
     mock_config = MagicMock()
     # Set defaults required by __init__
     mock_config.enabled = False
@@ -29,7 +30,7 @@ def service(logger):
     mock_config.query_interval = 0.1
 
     with patch.object(Config, "influxdb", mock_config):
-        svc = InfluxService(logger, plant_index=0)
+        svc = HassHistorySync(logger, plant_index=0)
     svc._online = True  # Mark as online for tests
     return svc
 
@@ -45,7 +46,7 @@ async def test_sync_from_homeassistant_no_db_found(service, logger):
     """Test sync_from_homeassistant returns empty when no homeassistant DB found."""
     service.detect_homeassistant_db = AsyncMock(return_value=False)
 
-    results = await service.sync_from_homeassistant()
+    results = await service.sync_from_homeassistant(service._topic_cache)
 
     assert results == {}
     service.detect_homeassistant_db.assert_called_once()
@@ -58,7 +59,7 @@ async def test_sync_from_homeassistant_empty_cache(service, logger):
     service.detect_homeassistant_db = AsyncMock(return_value=True)
     service._topic_cache = {}
 
-    results = await service.sync_from_homeassistant()
+    results = await service.sync_from_homeassistant(service._topic_cache)
 
     assert results == {}
 
@@ -93,7 +94,7 @@ async def test_sync_from_homeassistant_full_workflow(service, logger):
     service.copy_records_from_homeassistant = AsyncMock(side_effect=mock_copy_records)
 
     # Run sync
-    results = await service.sync_from_homeassistant()
+    results = await service.sync_from_homeassistant(service._topic_cache)
 
     # Verify results
     assert len(results) == 2
@@ -121,7 +122,7 @@ async def test_sync_from_homeassistant_deduplicates_combinations(service, logger
     service.get_earliest_timestamp = AsyncMock(return_value=1704110400)
     service.copy_records_from_homeassistant = AsyncMock(return_value=10)
 
-    results = await service.sync_from_homeassistant()
+    results = await service.sync_from_homeassistant(service._topic_cache)
 
     # Should only have one entry since measurement/tag combo is the same
     assert len(results) == 1
@@ -148,7 +149,7 @@ async def test_sync_from_homeassistant_handles_uom_with_slash(service, logger):
     service.get_earliest_timestamp = AsyncMock(return_value=1704110400)
     service.copy_records_from_homeassistant = AsyncMock(side_effect=mock_copy_records)
 
-    await service.sync_from_homeassistant()
+    await service.sync_from_homeassistant(service._topic_cache)
 
     # Measurement should have slash replaced with underscore
     assert captured_measurement[0] == "kWh_h"
@@ -175,7 +176,7 @@ async def test_sync_from_homeassistant_with_existing_data_copies_older(service, 
 
     service.copy_records_from_homeassistant = AsyncMock(side_effect=mock_copy_records)
 
-    await service.sync_from_homeassistant()
+    await service.sync_from_homeassistant(service._topic_cache)
 
     # Should pass earliest timestamp as before_timestamp
     assert captured_before[0] == earliest_ts
@@ -203,7 +204,7 @@ async def test_sync_from_homeassistant_no_existing_copies_older_than_now(service
 
     service.copy_records_from_homeassistant = AsyncMock(side_effect=mock_copy_records)
 
-    await service.sync_from_homeassistant()
+    await service.sync_from_homeassistant(service._topic_cache)
 
     # Should pass now_ts as before_timestamp
     assert captured_before[0] == now_ts
@@ -222,7 +223,7 @@ async def test_sync_from_homeassistant_returns_result_key_format(service, logger
     service.get_earliest_timestamp = AsyncMock(return_value=1704110400)
     service.copy_records_from_homeassistant = AsyncMock(return_value=42)
 
-    results = await service.sync_from_homeassistant()
+    results = await service.sync_from_homeassistant(service._topic_cache)
 
     # Key format should be: "{measurement}[{tag=value,...}]"
     expected_key = "kW[entity_id=sensor.power_output]"

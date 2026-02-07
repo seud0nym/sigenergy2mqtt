@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-__all__ = ["get_influxdb_services"]
+__all__ = ["get_influxdb_services", "InfluxBase", "InfluxService", "HassHistorySync"]
 
 import logging
 from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.config import Config
 
+from .hass_history_sync import HassHistorySync
+from .influx_base import InfluxBase
 from .influx_service import InfluxService
 
 if TYPE_CHECKING:

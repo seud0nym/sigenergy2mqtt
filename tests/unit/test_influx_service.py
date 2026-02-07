@@ -40,7 +40,7 @@ async def test_influx_handle_mqtt_writes_line():
     async def fake_write(line):
         wrote["line"] = line
 
-    svc._write_line = fake_write
+    svc.write_line = fake_write
     await svc.handle_mqtt(None, None, "123.45", "sigenergy2mqtt/sensor.test_1/state", None)
 
     # Check if write was called with correct value
@@ -65,7 +65,7 @@ async def test_influx_org_propagation():
     with patch("requests.Session.post") as mock_post:
         mock_post.return_value.status_code = 204
         svc = InfluxService(logger, plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
 
         # Verify URL contains org parameter
         args, kwargs = mock_post.call_args

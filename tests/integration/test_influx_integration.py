@@ -1,9 +1,11 @@
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 
-import sigenergy2mqtt.influxdb.influx_service as service_module
+import sigenergy2mqtt.influxdb.influx_base as base_module
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -25,7 +27,7 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
             return FakeResponse(204)
         return FakeResponse(404)
 
-    monkeypatch.setattr(service_module.requests.Session, "post", fake_post, raising=False)
+    monkeypatch.setattr(requests.Session, "post", fake_post)
 
     prev_enabled = getattr(Config.influxdb, "enabled", False)
     prev_db = Config.influxdb.database
@@ -38,7 +40,7 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
         Config.influxdb.token = "mytoken"
 
         svc = InfluxService(MagicMock(), plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
 
         # It should have chosen v2_http
         assert svc._writer_type == "v2_http"
@@ -70,7 +72,7 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
             return FakeResponse(204)
         return FakeResponse(404)
 
-    monkeypatch.setattr(service_module.requests.Session, "post", fake_post, raising=False)
+    monkeypatch.setattr(requests.Session, "post", fake_post)
 
     prev_enabled = getattr(Config.influxdb, "enabled", False)
     prev_db = Config.influxdb.database
@@ -81,7 +83,7 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
         Config.influxdb.password = None
 
         svc = InfluxService(MagicMock(), plant_index=0)
-        await svc._async_init()
+        await svc.async_init()
         assert svc._writer_type == "v2_http"
         assert svc._write_url is not None
     finally:
@@ -92,7 +94,7 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_write_line_uses_configured_writer(monkeypatch):
+async def testwrite_line_uses_configured_writer(monkeypatch):
     calls = {}
 
     class FakeResponse:
@@ -104,7 +106,7 @@ async def test_write_line_uses_configured_writer(monkeypatch):
         calls["data"] = data
         return FakeResponse(204)
 
-    monkeypatch.setattr(service_module.requests.Session, "post", fake_post, raising=False)
+    monkeypatch.setattr(requests.Session, "post", fake_post)
 
     svc = InfluxService(MagicMock(), plant_index=0)
     # Manually configure writer
@@ -113,7 +115,7 @@ async def test_write_line_uses_configured_writer(monkeypatch):
     svc._write_headers = {"Authorization": "Token tok"}
     svc._online = True
 
-    await svc._write_line("measurement,tag=1 value=42 1000000000")
+    await svc.write_line("measurement,tag=1 value=42 1000000000")
     await svc.flush_buffer()
     assert "url" in calls and "data" in calls
 
@@ -140,7 +142,7 @@ class FakeResponse:
 def test_try_v1_write_success_first_attempt(monkeypatch):
     """Test _try_v1_write succeeds on first attempt."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
 
     call_count = [0]
 
@@ -161,7 +163,7 @@ def test_try_v1_write_success_first_attempt(monkeypatch):
 def test_try_v1_write_creates_database_on_404(monkeypatch):
     """Test _try_v1_write creates database after 404 error."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
 
     call_count = [0]
 
@@ -188,7 +190,7 @@ def test_try_v1_write_creates_database_on_404(monkeypatch):
 def test_try_v1_write_complete_failure(monkeypatch):
     """Test _try_v1_write returns False on complete failure."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
 
     def fake_post(*args, **kwargs):
         raise Exception("Network error")
@@ -209,7 +211,7 @@ def test_try_v1_write_complete_failure(monkeypatch):
 def test_try_v2_write_success_first_attempt(monkeypatch):
     """Test _try_v2_write succeeds on first attempt."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
 
     call_count = [0]
     captured_url = [None]
@@ -233,7 +235,7 @@ def test_try_v2_write_success_first_attempt(monkeypatch):
 def test_try_v2_write_creates_bucket_on_404(monkeypatch):
     """Test _try_v2_write creates bucket after 404 error."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
 
     call_count = [0]
 
@@ -263,7 +265,7 @@ def test_try_v2_write_creates_bucket_on_404(monkeypatch):
 def test_try_v2_write_complete_failure(monkeypatch):
     """Test _try_v2_write returns False on complete failure."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
 
     def fake_post(*args, **kwargs):
         raise Exception("Network error")
@@ -276,16 +278,16 @@ def test_try_v2_write_complete_failure(monkeypatch):
 
 
 # =============================================================================
-# _query_v1() integration tests
+# query_v1() integration tests
 # =============================================================================
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v1_success(monkeypatch):
-    """Test _query_v1 returns successful query result."""
+async def testquery_v1_success(monkeypatch):
+    """Test query_v1 returns successful query result."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     expected_result = {"results": [{"series": [{"name": "meas", "columns": ["time", "value"], "values": [["2024-01-01T00:00:00Z", 42]]}]}]}
@@ -295,17 +297,17 @@ async def test_query_v1_success(monkeypatch):
 
     monkeypatch.setattr(svc._session, "get", fake_get)
 
-    success, result = await svc._query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas")
+    success, result = await svc.query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas")
     assert success is True
     assert result == expected_result
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v1_with_epoch(monkeypatch):
-    """Test _query_v1 passes epoch parameter correctly."""
+async def testquery_v1_with_epoch(monkeypatch):
+    """Test query_v1 passes epoch parameter correctly."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     captured_params = [None]
@@ -316,16 +318,16 @@ async def test_query_v1_with_epoch(monkeypatch):
 
     monkeypatch.setattr(svc._session, "get", fake_get)
 
-    await svc._query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas", epoch="s")
+    await svc.query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas", epoch="s")
     assert captured_params[0]["epoch"] == "s"
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v1_failure(monkeypatch):
-    """Test _query_v1 handles HTTP errors gracefully."""
+async def testquery_v1_failure(monkeypatch):
+    """Test query_v1 handles HTTP errors gracefully."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     def fake_get(*args, **kwargs):
@@ -333,17 +335,17 @@ async def test_query_v1_failure(monkeypatch):
 
     monkeypatch.setattr(svc._session, "get", fake_get)
 
-    success, result = await svc._query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas")
+    success, result = await svc.query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas")
     assert success is False
     assert result is None
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v1_exception(monkeypatch):
-    """Test _query_v1 handles exceptions gracefully."""
+async def testquery_v1_exception(monkeypatch):
+    """Test query_v1 handles exceptions gracefully."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     def fake_get(*args, **kwargs):
@@ -351,22 +353,22 @@ async def test_query_v1_exception(monkeypatch):
 
     monkeypatch.setattr(svc._session, "get", fake_get)
 
-    success, result = await svc._query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas")
+    success, result = await svc.query_v1("http://localhost:8086", "testdb", None, "SELECT * FROM meas")
     assert success is False
     assert result is None
 
 
 # =============================================================================
-# _query_v2() integration tests
+# query_v2() integration tests
 # =============================================================================
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v2_success(monkeypatch):
-    """Test _query_v2 returns successful Flux query result."""
+async def testquery_v2_success(monkeypatch):
+    """Test query_v2 returns successful Flux query result."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     csv_response = """#group,false,false,true,true,false,false,true,true
@@ -380,17 +382,17 @@ async def test_query_v2_success(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", fake_post)
 
-    success, result = await svc._query_v2("http://localhost:8086", "myorg", "mytoken", 'from(bucket: "test")')
+    success, result = await svc.query_v2("http://localhost:8086", "myorg", "mytoken", 'from(bucket: "test")')
     assert success is True
     assert "42.5" in result
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v2_with_org(monkeypatch):
-    """Test _query_v2 passes org parameter correctly."""
+async def testquery_v2_with_org(monkeypatch):
+    """Test query_v2 passes org parameter correctly."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     captured_params = [None]
@@ -401,16 +403,16 @@ async def test_query_v2_with_org(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", fake_post)
 
-    await svc._query_v2("http://localhost:8086", "myorg", "mytoken", 'from(bucket: "test")')
+    await svc.query_v2("http://localhost:8086", "myorg", "mytoken", 'from(bucket: "test")')
     assert captured_params[0]["org"] == "myorg"
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_query_v2_failure(monkeypatch):
-    """Test _query_v2 handles HTTP errors gracefully."""
+async def testquery_v2_failure(monkeypatch):
+    """Test query_v2 handles HTTP errors gracefully."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     def fake_post(*args, **kwargs):
@@ -418,22 +420,22 @@ async def test_query_v2_failure(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", fake_post)
 
-    success, result = await svc._query_v2("http://localhost:8086", "myorg", "mytoken", "query")
+    success, result = await svc.query_v2("http://localhost:8086", "myorg", "mytoken", "query")
     assert success is False
     assert result is None
 
 
 # =============================================================================
-# _copy_records_v1() integration tests
+# copy_records_v1() integration tests
 # =============================================================================
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_copy_records_v1_success(monkeypatch):
-    """Test _copy_records_v1 copies records correctly."""
+async def testcopy_records_v1_success(monkeypatch):
+    """Test copy_records_v1 copies records correctly."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     # Configure writer
@@ -473,7 +475,7 @@ async def test_copy_records_v1_success(monkeypatch):
     monkeypatch.setattr(svc._session, "post", fake_post)
 
     config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
-    count = await svc._copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
+    count = await svc.copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
     await svc.flush_buffer()
 
     assert count == 2
@@ -483,10 +485,10 @@ async def test_copy_records_v1_success(monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_copy_records_v1_empty_result(monkeypatch):
-    """Test _copy_records_v1 handles empty result set."""
+async def testcopy_records_v1_empty_result(monkeypatch):
+    """Test copy_records_v1 handles empty result set."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     query_result = {"results": [{}]}
@@ -497,17 +499,17 @@ async def test_copy_records_v1_empty_result(monkeypatch):
     monkeypatch.setattr(svc._session, "get", fake_get)
 
     config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
-    count = await svc._copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
+    count = await svc.copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
 
     assert count == 0
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_copy_records_v1_with_before_timestamp(monkeypatch):
-    """Test _copy_records_v1 passes before_timestamp in query."""
+async def testcopy_records_v1_with_before_timestamp(monkeypatch):
+    """Test copy_records_v1 passes before_timestamp in query."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     captured_params = [None]
@@ -519,7 +521,7 @@ async def test_copy_records_v1_with_before_timestamp(monkeypatch):
     monkeypatch.setattr(svc._session, "get", fake_get)
 
     config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
-    await svc._copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=1704067200)
+    await svc.copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=1704067200)
 
     # Check that the query includes time filter
     assert "time < 1704067200s" in captured_params[0]["q"]
@@ -527,10 +529,10 @@ async def test_copy_records_v1_with_before_timestamp(monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_copy_records_v1_multiple_series(monkeypatch):
-    """Test _copy_records_v1 handles multiple series."""
+async def testcopy_records_v1_multiple_series(monkeypatch):
+    """Test copy_records_v1 handles multiple series."""
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
 
     svc._writer_type = "v1_http"
@@ -569,15 +571,15 @@ async def test_copy_records_v1_multiple_series(monkeypatch):
     monkeypatch.setattr(svc._session, "post", fake_post)
 
     config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
-    count = await svc._copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
+    count = await svc.copy_records_v1(config, "power", {"entity_id": "sensor.power"}, before_timestamp=None)
 
     assert count == 2
 
 
 @pytest.mark.asyncio
-async def test_copy_records_v1_field_standardization():
+async def testcopy_records_v1_field_standardization():
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
     svc._writer_type = "v1_http"
     svc._write_url = "http://localhost:8086/write"
@@ -611,10 +613,10 @@ async def test_copy_records_v1_field_standardization():
     async def fake_write(line):
         written_lines.append(line)
 
-    svc._write_line = fake_write
+    svc.write_line = fake_write
 
     config = {"base": "http://localhost:8086", "db": "homeassistant", "auth": None}
-    await svc._copy_records_v1(config, "test_measurement", {}, None)
+    await svc.copy_records_v1(config, "test_measurement", {}, None)
 
     assert len(written_lines) == 2
 
@@ -633,9 +635,9 @@ async def test_copy_records_v1_field_standardization():
 
 
 @pytest.mark.asyncio
-async def test_copy_records_v2_field_standardization():
+async def testcopy_records_v2_field_standardization():
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = HassHistorySync(logger, plant_index=0)
     svc._online = True
     svc._writer_type = "v2_http"
     svc._write_url = "http://localhost:8086/api/v2/write"
@@ -662,10 +664,10 @@ async def test_copy_records_v2_field_standardization():
     async def fake_write(line):
         written_lines.append(line)
 
-    svc._write_line = fake_write
+    svc.write_line = fake_write
 
     config = {"base": "http://localhost:8086", "org": "org", "token": "tok", "bucket": "bkt"}
-    await svc._copy_records_v2(config, "test_meas", {}, None)
+    await svc.copy_records_v2(config, "test_meas", {}, None)
 
     assert len(written_lines) == 2
 
