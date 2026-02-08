@@ -9,20 +9,20 @@ from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics
 from sigenergy2mqtt.pvoutput.topic import Topic
 
 
-def make_service() -> Service:
+def make_service(unique_id: str = "uid") -> Service:
     logger = logging.getLogger("test")
-    return Service("pv", "uid", "model", logger)
+    return Service("pv", unique_id, "model", logger)
 
 
 def test_aggregate_disabled_returns_none():
-    svc = make_service()
+    svc = make_service("disabled")
     st = ServiceTopics(svc, enabled=False, logger=svc.logger, value_key=OutputField.GENERATION)
     total, at, count = st.aggregate(exclude_zero=True)
     assert total is None and at is None and count == 0
 
 
 def test_register_and_sum_and_check_updating(tmp_path, monkeypatch):
-    svc = make_service()
+    svc = make_service("updating")
     # ensure pvoutput thinks service has been started long ago
     Config.pvoutput.started = time.time() - 3600
     st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION)
@@ -45,7 +45,7 @@ def test_register_and_sum_and_check_updating(tmp_path, monkeypatch):
 
 
 def test_average_and_decimals():
-    svc = make_service()
+    svc = make_service("avg_dec")
     Config.pvoutput.started = time.time() - 3600
     st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.AVERAGE, decimals=1)
     t1 = Topic("t/a", gain=1.0, state=1.25, timestamp=time.localtime())
@@ -59,7 +59,7 @@ def test_average_and_decimals():
 
 
 def test_ll_avg_squared_root():
-    svc = make_service()
+    svc = make_service("ll_avg")
     Config.pvoutput.started = time.time() - 3600
     st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.L_L_AVG, decimals=2)
     # values contribute squared
@@ -75,43 +75,33 @@ def test_ll_avg_squared_root():
 
 
 def test_difference_and_convert_to_watts():
-    svc = make_service()
-    Config.pvoutput.started = time.time() - 3600
+    svc = make_service("diff_watts")
+    # Use a fixed time to avoid flakiness at midnight
+    # 2024-01-01 12:00:00
+    now_ts = 1704110400.0
+    now = time.localtime(now_ts)
+    Config.pvoutput.started = now_ts - 3600
+
     # configure calculation to include DIFFERENCE and CONVERT_TO_WATTS
     st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
+
     # create a topic with previous_state set to simulate energy reading earlier
-    now = time.time()
-    topic = Topic("t/d", gain=1.0, state=5.0, timestamp=time.localtime(now), previous_state=2.0, previous_timestamp=time.localtime(now - 3600))
+    # 1 hour earlier
+    prev_ts = now_ts - 3600
+    topic = Topic("t/d", gain=1.0, state=5.0, timestamp=now, previous_state=2.0, previous_timestamp=time.localtime(prev_ts))
     st.register(topic)
     payload = {}
+
     # check aggregate (difference should be 3.0, converted over 1 hour -> power=3.0)
-    assert st.add_to_payload(payload, 5, time.localtime()) is True
+    assert st.add_to_payload(payload, 5, now) is True
     assert OutputField.GENERATION.value in payload
     # float nearly equal to 3.0 (power)
     assert pytest.approx(payload[OutputField.GENERATION.value], rel=1e-3) == 3.0
 
 
-import logging
-import time
-
-import pytest
-
-from sigenergy2mqtt.config import OutputField
-from sigenergy2mqtt.config.config import Config
-from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
-from sigenergy2mqtt.pvoutput.topic import Topic
-
-
-def make_service_topics(calc=Calculation.SUM, enabled=True, decimals=0):
-    logger = logging.getLogger("pvtest")
-    from types import SimpleNamespace
-
-    svc = SimpleNamespace(unique_id="pvtest")
-    return ServiceTopics(svc, enabled, logger, value_key=OutputField.GENERATION, calc=calc, decimals=decimals)
-
-
 def test_sum_into_and_aggregate():
-    st = make_service_topics(Calculation.SUM)
+    svc = make_service("sum_into")
+    st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.SUM)
     t1 = Topic(topic="t1", state=1.0, timestamp=time.localtime(), gain=1.0)
     t2 = Topic(topic="t2", state=2.0, timestamp=time.localtime(), gain=2.0)
     st.register(t1)
@@ -124,7 +114,8 @@ def test_sum_into_and_aggregate():
 
 
 def test_average_into():
-    st = make_service_topics(Calculation.AVERAGE, decimals=1)
+    svc = make_service("avg_into")
+    st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.AVERAGE, decimals=1)
     t1 = Topic(topic="t1", state=1.5, timestamp=time.localtime(), gain=1.0)
     t2 = Topic(topic="t2", state=2.5, timestamp=time.localtime(), gain=1.0)
     st.register(t1)
@@ -136,7 +127,8 @@ def test_average_into():
 
 
 def test_squared_root_into():
-    st = make_service_topics(Calculation.L_L_AVG)
+    svc = make_service("sqrt_into")
+    st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.L_L_AVG)
     # squared total should be sum(state**2 * gain). L-L avg divides sqrt(total)/sqrt(3)
     t1 = Topic(topic="t1", state=3.0, timestamp=time.localtime(), gain=1.0)
     st.register(t1)
@@ -149,25 +141,10 @@ def test_squared_root_into():
     assert payload[OutputField.GENERATION.value] == expected
 
 
-def test_difference_and_convert_to_watts():
-    st = make_service_topics(Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
-    # create topic with previous state one hour earlier
-    now = time.localtime()
-    prev = time.localtime(time.time() - 3600)
-    t = Topic(topic="t1", state=200.0, timestamp=now, gain=1.0)
-    t.previous_state = 100.0
-    t.previous_timestamp = prev
-    st.register(t)
-    payload = {}
-    added = st.add_to_payload(payload, 1440, now)
-    # difference = 100 energy units over 1 hour -> converted to power = 100
-    assert added is True
-    assert payload[OutputField.GENERATION.value] == 100
-
-
 def test_check_is_updating_and_restore_warning(monkeypatch, caplog):
     caplog.set_level(logging.DEBUG)
-    st = make_service_topics(Calculation.SUM)
+    svc = make_service("is_updating")
+    st = ServiceTopics(svc, enabled=True, logger=svc.logger, value_key=OutputField.GENERATION, calc=Calculation.SUM)
     # service just started -> should skip updating check
     monkeypatch.setattr(Config.pvoutput, "started", time.time())
     t = Topic(topic="t1", state=1.0, timestamp=None, gain=1.0)

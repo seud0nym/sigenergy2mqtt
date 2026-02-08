@@ -178,7 +178,7 @@ class ServiceTopics(dict[str, Topic]):
                     topic.previous_timestamp = topic.timestamp
                     if Config.pvoutput.calc_debug_logging and state_was != topic.previous_state:
                         self._logger.debug(f"{self._service.__class__.__name__} Using {state_was=} for {self._value_key.name} because {topic.previous_state=} (allow_negative={self._allow_negative})")
-                    if state_was is not None and time_was is not None and topic.timestamp.tm_yday == time_was.tm_yday:
+                    if state_was is not None and time_was is not None and (topic.timestamp.tm_yday == time_was.tm_yday or 0 < (time.mktime(topic.timestamp) - time.mktime(time_was)) < 3600):
                         if Config.pvoutput.calc_debug_logging:
                             self._logger.debug(f"{self._service.__class__.__name__} Calculated difference for {self._name}: (current-previous=state) {state}-{state_was}={state - state_was} ({topic.topic})")
                         state -= state_was
