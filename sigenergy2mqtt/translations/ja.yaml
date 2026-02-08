@@ -411,7 +411,7 @@ class:
       "7": リモートEMS
       "9": 時間ベース制御
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} 蓄電システム'
   ESSBackupSOC:
     attributes:
       comment: "範囲：[0.00, 100.00]"
@@ -778,6 +778,8 @@ class:
       "0": 系統連系
       "1": オフグリッド（自動）
       "2": オフグリッド（手動）
+  HassHistorySync:
+    name: Sigenergy InfluxDB 履歴同期 (発電所 {plant_index})
   HybridInverter:
     name: ハイブリッドインバーター
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: InfluxDB 書き込み
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: Sigenergy InfluxDB アップデーターサービス (発電所 {plant_index})
   InsulationResistance:
     attributes:
       source: Modbusレジスタ {address}
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutputステータスサービス追加
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} PVストリング {string_number}'
   PVStringCount:
     attributes:
       source: Modbusレジスタ {address}

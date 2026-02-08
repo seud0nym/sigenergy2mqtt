@@ -411,7 +411,7 @@ class:
       "7": EMS Remoto
       "9": Controllo Basato sul Tempo
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} Sistema di Accumulo di Energia'
   ESSBackupSOC:
     attributes:
       comment: "Intervallo: [0,00, 100,00]"
@@ -778,6 +778,8 @@ class:
       "0": Connesso alla Rete
       "1": Isola (auto)
       "2": Isola (manuale)
+  HassHistorySync:
+    name: Sincronizzazione Cronologia Sigenergy InfluxDB (Impianto {plant_index})
   HybridInverter:
     name: Inverter ibrido
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: Scritture InfluxDB
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: Servizio Aggiornamento Sigenergy InfluxDB (Impianto {plant_index})
   InsulationResistance:
     attributes:
       source: Registro Modbus {address}
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Aggiungi Servizio Stato PVOutput
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} Stringa PV {string_number}'
   PVStringCount:
     attributes:
       source: Registro Modbus {address}

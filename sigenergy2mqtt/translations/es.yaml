@@ -86,7 +86,7 @@ class:
       "4": Cargador no listo; VE listo
       "5": Cargando
       "6": Fallo
-      "7": Error
+      "7": Error # verify:ignore
   ACChargerStatus:
     attributes:
       comment: 0:Iniciar 1:Detener
@@ -411,7 +411,7 @@ class:
       "7": EMS Remoto
       "9": Control Basado en Tiempo
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} Sistema de Almacenamiento de Energía'
   ESSBackupSOC:
     attributes:
       comment: "Rango: [0,00, 100,00]"
@@ -778,6 +778,8 @@ class:
       "0": Conectado a Red
       "1": Isla (auto)
       "2": Isla (manual)
+  HassHistorySync:
+    name: Sincronización de Historial Sigenergy InfluxDB (Planta {plant_index})
   HybridInverter:
     name: Inversor híbrido
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: Escrituras InfluxDB
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: 'Servicio de Actualización Sigenergy InfluxDB (Planta {plant_index})'
   InsulationResistance:
     attributes:
       source: Registro Modbus {address}
@@ -1015,7 +1017,7 @@ class:
     name: Estado de Funcionamiento
     options:
       '0': En Espera
-      '1': Normal
+      '1': Normal # verify:ignore
       '2': Fallo
       '3': Apagado
       '7': Anomalía Ambiental
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Agregar Servicio de Estado PVOutput
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} String PV {string_number}'
   PVStringCount:
     attributes:
       source: Registro Modbus {address}
@@ -1333,7 +1335,7 @@ class:
     name: Estado de Funcionamiento
     options:
       '0': En Espera
-      '1': Normal
+      '1': Normal # verify:ignore
       '2': Fallo
       '3': Apagado
       '7': Anomalía Ambiental
@@ -1530,7 +1532,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     options:
       "0": En espera
-      "1": Normal
+      "1": Normal # verify:ignore
       "2": Fallo
       "3": Apagado
       "7": Anomalía Ambiental

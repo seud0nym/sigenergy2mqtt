@@ -15,7 +15,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: 'Alarm 1'
+    name: 'Alarm 1' # verify:ignore
   ACChargerAlarm2:
     alarm:
       '0': Fehler Fehlerstromerkennungsschaltung
@@ -27,7 +27,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: 'Alarm 2'
+    name: 'Alarm 2' # verify:ignore
   ACChargerAlarm3:
     alarm:
       '0': Innentemperatur zu hoch
@@ -36,12 +36,12 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: 'Alarm 3'
+    name: 'Alarm 3' # verify:ignore
   ACChargerAlarms:
     attributes:
       source: Modbus-Register 32012-32014
       source_range: Modbus-Register {start}-{end}
-    name: Alarme
+    name: Alarme # verify:ignore
   ACChargerChargingPower:
     attributes:
       source: Modbus-Register {address}
@@ -212,7 +212,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: 'Alarm 6'
+    name: 'Alarm 6' # verify:ignore
   Alarm7:
     alarm:
       '0': OVGR-Fehler
@@ -220,7 +220,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: 'Alarm 7'
+    name: 'Alarm 7' # verify:ignore
   AlarmCombinedSensor:
     attributes:
       source: Modbus-Register {address}
@@ -411,7 +411,7 @@ class:
       "7": Fern-EMS
       "9": Zeitbasierte Steuerung
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} Energiespeichersystem'
   ESSBackupSOC:
     attributes:
       comment: "Bereich: [0,00, 100,00]"
@@ -778,6 +778,8 @@ class:
       "0": Am Netz
       "1": Inselbetrieb (auto)
       "2": Inselbetrieb (manuell)
+  HassHistorySync:
+    name: Sigenergy InfluxDB Verlaufssynchronisierung (Anlage {plant_index})
   HybridInverter:
     name: Hybrid-Wechselrichter
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: InfluxDB-Schreibvorgänge
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: 'Sigenergy InfluxDB Aktualisierungsdienst (Anlage {plant_index})'
   InsulationResistance:
     attributes:
       source: Modbus-Register {address}
@@ -1015,7 +1017,7 @@ class:
     name: Betriebszustand
     options:
       '0': Bereitschaft
-      '1': Normal
+      '1': Normal # verify:ignore
       '2': Fehler
       '3': Ausgeschaltet
       '7': Umgebungsanomalie
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutput Status-Service hinzufügen
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} PV String {string_number}' # verify:ignore
   PVStringCount:
     attributes:
       source: Modbus-Register {address}
@@ -1333,7 +1335,7 @@ class:
     name: Betriebszustand
     options:
       '0': Bereitschaft
-      '1': Normal
+      '1': Normal # verify:ignore
       '2': Fehler
       '3': Ausgeschaltet
       '7': Umgebungsanomalie
@@ -1530,7 +1532,7 @@ class:
       source_range: Modbus-Register {start}-{end}
     options:
       "0": Bereitschaft
-      "1": Normal
+      "1": Normal # verify:ignore
       "2": Fehler
       "3": Ausgeschaltet
       "7": Umgebungsanomalie

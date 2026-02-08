@@ -411,7 +411,7 @@ class:
       "7": 원격 EMS
       "9": 시간 기반 제어
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} 에너지 저장 시스템'
   ESSBackupSOC:
     attributes:
       comment: "범위: [0.00, 100.00]"
@@ -778,6 +778,8 @@ class:
       "0": 계통 연계
       "1": 독립 운전 (자동)
       "2": 독립 운전 (수동)
+  HassHistorySync:
+    name: Sigenergy InfluxDB 기록 동기화 (발전소 {plant_index})
   HybridInverter:
     name: 하이브리드 인버터
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: InfluxDB 쓰기
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: Sigenergy InfluxDB 업데이트 서비스 (발전소 {plant_index})
   InsulationResistance:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutput 상태 서비스 추가
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} PV 스트링 {string_number}'
   PVStringCount:
     attributes:
       source: Modbus 레지스터 {address}

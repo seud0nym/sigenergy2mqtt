@@ -15,7 +15,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: 'Alarm 1'
+    name: 'Alarm 1' # verify:ignore
   ACChargerAlarm2:
     alarm:
       '0': Fout lekstroomdetectiecircuit
@@ -27,7 +27,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: 'Alarm 2'
+    name: 'Alarm 2' # verify:ignore
   ACChargerAlarm3:
     alarm:
       '0': Interne temperatuur te hoog
@@ -36,7 +36,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: 'Alarm 3'
+    name: 'Alarm 3' # verify:ignore
   ACChargerAlarms:
     attributes:
       source: Modbus-register {address}
@@ -89,7 +89,7 @@ class:
       "7": Fout
   ACChargerStatus:
     attributes:
-      comment: 0:Start 1:Stop
+      comment: 0:Start 1:Stop # verify:ignore
     name: AC Lader Start/Stop
     name_off: Stoppen
     name_on: Starten
@@ -212,7 +212,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: 'Alarm 6'
+    name: 'Alarm 6' # verify:ignore
   Alarm7:
     alarm:
       '0': OVGR-fout
@@ -220,7 +220,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: 'Alarm 7'
+    name: 'Alarm 7' # verify:ignore
   AlarmCombinedSensor:
     attributes:
       source: Modbus-register {address}
@@ -363,7 +363,7 @@ class:
       "5": Gepland
   DCChargerStatus:
     attributes:
-      comment: 0:Start 1:Stop
+      comment: 0:Start 1:Stop # verify:ignore
     name: DC Lader Start/Stop
     name_off: Stoppen
     name_on: Starten
@@ -411,7 +411,7 @@ class:
       "7": Extern EMS
       "9": Tijdgebaseerde Regeling
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} Energieopslagsysteem'
   ESSBackupSOC:
     attributes:
       comment: "Bereik: [0,00, 100,00]"
@@ -778,6 +778,8 @@ class:
       "0": Aan Net
       "1": Eiland (auto)
       "2": Eiland (handmatig)
+  HassHistorySync:
+    name: Sigenergy InfluxDB Historie Synchronisatie (Installatie {plant_index})
   HybridInverter:
     name: Hybride omvormer
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: InfluxDB-schrijfacties
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: Sigenergy InfluxDB Updater Service (Installatie {plant_index})
   InsulationResistance:
     attributes:
       source: Modbus-register {address}
@@ -1015,7 +1017,7 @@ class:
     name: Bedrijfsstatus
     options:
       '0': Stand-by
-      '1': Normaal
+      '1': Normaal # verify:ignore
       '2': Storing
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
@@ -1026,7 +1028,7 @@ class:
     name: Serienummer
   InverterStatus:
     attributes:
-      comment: 0:Stop 1:Start
+      comment: 0:Stop 1:Start # verify:ignore
     name: Omvormer Aan/Uit
   InverterTemperature:
     attributes:
@@ -1134,7 +1136,7 @@ class:
   ModbusWriteMin:
     name: Modbus Schrijven Min
   MonitorService:
-    name: 'Sigenergy Monitor'
+    name: 'Sigenergy Monitor' # verify:ignore
   MqttOverriddenSensor:
     attributes:
       source: MQTT Overschrijving
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutput Status Service Toevoegen
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} PV-string {string_number}'
   PVStringCount:
     attributes:
       source: Modbus-register {address}
@@ -1333,7 +1335,7 @@ class:
     name: Bedrijfsstatus
     options:
       '0': Stand-by
-      '1': Normaal
+      '1': Normaal # verify:ignore
       '2': Storing
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
@@ -1341,7 +1343,7 @@ class:
     name: Sigenergy-installatie Statistieken
   PlantStatus:
     attributes:
-      comment: 0:Stop 1:Start
+      comment: 0:Stop 1:Start # verify:ignore
     name: Installatie Aan/Uit
   PlantTotalExportedEnergy:
     attributes:

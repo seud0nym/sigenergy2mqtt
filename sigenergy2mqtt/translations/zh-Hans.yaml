@@ -411,7 +411,7 @@ class:
       "7": 远程EMS
       "9": 时间控制
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} 储能系统'
   ESSBackupSOC:
     attributes:
       comment: "范围：[0.00, 100.00]"
@@ -778,6 +778,8 @@ class:
       "0": 并网
       "1": 离网（自动）
       "2": 离网（手动）
+  HassHistorySync:
+    name: Sigenergy InfluxDB 历史同步 (电站 {plant_index})
   HybridInverter:
     name: 混合逆变器
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: InfluxDB 写入
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: Sigenergy InfluxDB 更新服务 (电站 {plant_index})
   InsulationResistance:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: 添加PVOutput状态服务
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} 光伏组串 {string_number}'
   PVStringCount:
     attributes:
       source: Modbus 寄存器 {address}

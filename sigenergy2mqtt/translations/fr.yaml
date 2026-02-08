@@ -411,7 +411,7 @@ class:
       "7": EMS à Distance
       "9": Contrôle Basé sur le Temps
   ESS:
-    name: '{model_id} {serial_number} ESS'
+    name: '{model_id} {serial_number} Système de stockage d’énergie'
   ESSBackupSOC:
     attributes:
       comment: "Plage : [0,00, 100,00]"
@@ -778,6 +778,8 @@ class:
       "0": Connecté au Réseau
       "1": Hors Réseau (auto)
       "2": Hors Réseau (manuel)
+  HassHistorySync:
+    name: Synchronisation de l'historique Sigenergy InfluxDB (Installation {plant_index})
   HybridInverter:
     name: Onduleur hybride
   IndependentPhasePowerControl:
@@ -803,7 +805,7 @@ class:
   InfluxDBWrites:
     name: Écritures InfluxDB
   InfluxService:
-    name: 'Sigenergy InfluxDB Updater Service (Plant {plant_index})'
+    name: Service de mise à jour Sigenergy InfluxDB (Installation {plant_index})
   InsulationResistance:
     attributes:
       source: Registre Modbus {address}
@@ -1015,7 +1017,7 @@ class:
     name: État de Fonctionnement
     options:
       '0': Veille
-      '1': Normal
+      '1': Normal # verify:ignore
       '2': Défaut
       '3': Hors Tension
       '7': Anomalie Environnementale
@@ -1187,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Ajouter Service de Statut PVOutput
   PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
+    name: '{model_id} {serial_number} Chaîne PV {string_number}'
   PVStringCount:
     attributes:
       source: Registre Modbus {address}
@@ -1333,7 +1335,7 @@ class:
     name: État de Fonctionnement
     options:
       '0': Veille
-      '1': Normal
+      '1': Normal # verify:ignore
       '2': Défaut
       '3': Hors Tension
       '7': Anomalie Environnementale
@@ -1530,7 +1532,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     options:
       "0": Veille
-      "1": Normal
+      "1": Normal # verify:ignore
       "2": Défaut
       "3": Hors Tension
       "7": Anomalie Environnementale
