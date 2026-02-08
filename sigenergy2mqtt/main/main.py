@@ -28,141 +28,6 @@ from .threading import start
 serial_numbers = []
 
 
-async def async_main() -> None:
-    Config.validate()
-    pymodbus_apply_logging_config(Config.get_modbus_log_level())
-    configure_logging()
-
-    protocol_version: Protocol | None = None
-    for plant_index in range(len(Config.modbus)):
-        device = Config.modbus[plant_index]
-        if device.registers.read_only or device.registers.read_write or device.registers.write_only:
-            config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
-            modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
-            async with modbus:
-                if not modbus.connected:
-                    logging.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
-                    sys.exit(1)
-                logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
-                plant: PowerPlant | None = None  # Make sure plant is only created with first inverter
-                inverters: dict[int, str] = {}
-                for device_address in device.inverters:
-                    inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
-                    if plant is None and plant_tmp is not None:
-                        plant = plant_tmp
-                        availability_control_sensor = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
-                        assert availability_control_sensor is not None, "Failed to find RemoteEMS instance"
-                        config.add_device(plant_index, plant)
-                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, 30279, 30281, 40049)
-                        protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
-                        if not plant.has_battery:
-                            logging.debug(f"No battery modules attached to plant {device.host}:{device.port} - disabling charging/discharging statistics interface sensors")
-                            for register in (30244, 30248):
-                                si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
-                                if si_sensor:
-                                    si_sensor.publishable = False
-                    if inverter is not None:
-                        inverters[device_address] = inverter.unique_id
-                        config.add_device(plant_index, inverter)
-                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, 30622, 30623)
-                if plant and len(device.dc_chargers) == 0:
-                    logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
-                    for register in (30252, 30256):
-                        si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
-                        if si_sensor:
-                            si_sensor.publishable = False
-                elif plant:
-                    for device_address in device.dc_chargers:
-                        charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
-                        config.add_device(plant_index, charger)
-                if plant and len(device.ac_chargers) == 0:
-                    logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
-                    si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True)
-                    if si_sensor:
-                        si_sensor.publishable = False
-                elif plant and protocol_version is not None and protocol_version >= Protocol.V2_0:
-                    for device_address in device.ac_chargers:
-                        charger = await make_ac_charger(plant_index, modbus, device_address, plant)
-                        config.add_device(plant_index, charger)
-                elif protocol_version is not None and protocol_version < Protocol.V2_0:
-                    logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
-                logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
-        else:
-            logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
-
-    configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
-
-    svc_thread_cfg = ThreadConfig(None, None, name="Services")
-    if Config.metrics_enabled:
-        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
-    if Config.pvoutput.enabled and not Config.clean:
-        for service in get_pvoutput_services(configs):
-            svc_thread_cfg.add_device(-1, service)
-    if Config.influxdb.enabled and not Config.clean:
-        for service in get_influxdb_services(configs):
-            svc_thread_cfg.add_device(-1, service)
-    if svc_thread_cfg.has_devices:
-        configs.insert(0, svc_thread_cfg)
-    else:
-        logging.info("No services configured - skipping service thread")
-
-    if Config.log_level == logging.DEBUG:
-        mon_thread_cfg = ThreadConfig(None, None, name="Monitor")
-        mon_thread_cfg.add_device(-1, MonitorService([d for c in configs for d in c.devices]))
-        configs.append(mon_thread_cfg)
-
-    def configure_for_restart(caught, frame):
-        logging.info(f"Signal {caught} received - reconfiguring for restart")
-        Config.home_assistant.enabled = False  # Disable publishing Home Assistant offline availability since we are going to restart
-        exit_on_signal(caught, frame)
-
-    def exit_on_signal(caught, frame):
-        logging.info(f"Signal {caught} received - Shutdown commenced")
-        logging.getLogger("asyncio").setLevel(logging.ERROR)
-        for config in configs:
-            config.offline()
-
-    def reload_on_signal(caught, frame):
-        logging.info(f"Signal {caught} received - Reloading configuration")
-        Config.reload()
-        configure_logging()
-        for config in configs:
-            config.reload_config()
-
-    signal.signal(signal.SIGINT, exit_on_signal)
-    signal.signal(signal.SIGHUP, reload_on_signal)
-    signal.signal(signal.SIGTERM, exit_on_signal)
-    signal.signal(signal.SIGUSR1, configure_for_restart)
-
-    if Config.home_assistant.enabled:
-        current_version_file = Path(Config.persistent_state_path, ".current-version")
-        current_version: str | None = None
-        if current_version_file.exists():
-            try:
-                with current_version_file.open("r") as f:
-                    current_version = f.read()
-                    logging.debug(f"Loaded '{current_version}' from {current_version_file}")
-            except Exception as error:
-                logging.error(f"Failed to read {current_version_file}: {error}")
-        upgrade_detected: bool = current_version != Config.version()
-        if upgrade_detected:
-            if current_version:
-                logging.info(f"Upgrade to '{Config.version()}' from '{current_version}' detected")
-            else:
-                logging.info(f"Upgrade to '{Config.version()}' detected")
-            logging.debug(f"Writing '{Config.version()}' to {current_version_file}")
-            try:
-                with current_version_file.open("w") as f:
-                    f.write(Config.version())
-            except Exception as error:
-                logging.error(f"Failed to write to {current_version_file}: {error}")
-    else:
-        upgrade_detected = False
-
-    await start(configs)
-    logging.info("Shutdown completed")
-
-
 def configure_logging():
     root = logging.getLogger("root")
     pymodbus = logging.getLogger("pymodbus")
@@ -223,6 +88,18 @@ async def make_dc_charger(plant_index, device_address, protocol_version, inverte
     charger = DCCharger(plant_index, device_address, protocol_version)
     charger.via_device = inverter_unique_id
     return charger
+
+
+async def read_registers(modbus_client: ModbusClientType, register: int, count: int, device_id: int, input_type: InputType) -> ModbusPDU:
+    if modbus_client is None:
+        raise ValueError("modbus_client cannot be None")
+    if input_type == InputType.HOLDING:
+        rr = await modbus_client.read_holding_registers(register, count=count, device_id=device_id)
+    elif input_type == InputType.INPUT:
+        rr = await modbus_client.read_input_registers(register, count=count, device_id=device_id)
+    else:
+        raise Exception(f"Unknown input type '{input_type}'")
+    return rr
 
 
 async def make_plant_and_inverter(plant_index, modbus_client: ModbusClientType, device_address, plant) -> Tuple[Inverter | None, PowerPlant | None]:
@@ -361,18 +238,6 @@ async def make_plant_and_inverter(plant_index, modbus_client: ModbusClientType, 
     return inverter, plant
 
 
-async def read_registers(modbus_client: ModbusClientType, register: int, count: int, device_id: int, input_type: InputType) -> ModbusPDU:
-    if modbus_client is None:
-        raise ValueError("modbus_client cannot be None")
-    if input_type == InputType.HOLDING:
-        rr = await modbus_client.read_holding_registers(register, count=count, device_id=device_id)
-    elif input_type == InputType.INPUT:
-        rr = await modbus_client.read_input_registers(register, count=count, device_id=device_id)
-    else:
-        raise Exception(f"Unknown input type '{input_type}'")
-    return rr
-
-
 async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClientType, plant_index, device: PowerPlant | Inverter, *registers: int) -> None:
     device_id: int = device.device_address
     for register in registers:
@@ -388,3 +253,138 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClientType, pl
                 except Exception as e:
                     logging.info(f"Unpublishing {id}: {e}")
                     sensor.publishable = False
+
+
+async def async_main() -> None:
+    Config.validate()
+    pymodbus_apply_logging_config(Config.get_modbus_log_level())
+    configure_logging()
+
+    protocol_version: Protocol | None = None
+    for plant_index in range(len(Config.modbus)):
+        device = Config.modbus[plant_index]
+        if device.registers.read_only or device.registers.read_write or device.registers.write_only:
+            config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
+            modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
+            async with modbus:
+                if not modbus.connected:
+                    logging.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
+                    sys.exit(1)
+                logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
+                plant: PowerPlant | None = None  # Make sure plant is only created with first inverter
+                inverters: dict[int, str] = {}
+                for device_address in device.inverters:
+                    inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
+                    if plant is None and plant_tmp is not None:
+                        plant = plant_tmp
+                        availability_control_sensor = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_40029"]
+                        assert availability_control_sensor is not None, "Failed to find RemoteEMS instance"
+                        config.add_device(plant_index, plant)
+                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, 30279, 30281, 40049)
+                        protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
+                        if not plant.has_battery:
+                            logging.debug(f"No battery modules attached to plant {device.host}:{device.port} - disabling charging/discharging statistics interface sensors")
+                            for register in (30244, 30248):
+                                si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
+                                if si_sensor:
+                                    si_sensor.publishable = False
+                    if inverter is not None:
+                        inverters[device_address] = inverter.unique_id
+                        config.add_device(plant_index, inverter)
+                        await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, 30622, 30623)
+                if plant and len(device.dc_chargers) == 0:
+                    logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
+                    for register in (30252, 30256):
+                        si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_{register}", search_children=True)
+                        if si_sensor:
+                            si_sensor.publishable = False
+                elif plant:
+                    for device_address in device.dc_chargers:
+                        charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
+                        config.add_device(plant_index, charger)
+                if plant and len(device.ac_chargers) == 0:
+                    logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
+                    si_sensor = plant.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30232", search_children=True)
+                    if si_sensor:
+                        si_sensor.publishable = False
+                elif plant and protocol_version is not None and protocol_version >= Protocol.V2_0:
+                    for device_address in device.ac_chargers:
+                        charger = await make_ac_charger(plant_index, modbus, device_address, plant)
+                        config.add_device(plant_index, charger)
+                elif protocol_version is not None and protocol_version < Protocol.V2_0:
+                    logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
+                logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
+        else:
+            logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
+
+    configs: list[ThreadConfig] = ThreadConfigFactory.get_configs()
+
+    svc_thread_cfg = ThreadConfig(None, None, name="Services")
+    if Config.metrics_enabled:
+        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
+    if Config.pvoutput.enabled and not Config.clean:
+        for service in get_pvoutput_services(configs):
+            svc_thread_cfg.add_device(-1, service)
+    if Config.influxdb.enabled and not Config.clean:
+        for service in get_influxdb_services(configs):
+            svc_thread_cfg.add_device(-1, service)
+    if svc_thread_cfg.has_devices:
+        configs.insert(0, svc_thread_cfg)
+    else:
+        logging.info("No services configured - skipping service thread")
+
+    if Config.log_level == logging.DEBUG:
+        mon_thread_cfg = ThreadConfig(None, None, name="Monitor")
+        mon_thread_cfg.add_device(-1, MonitorService([d for c in configs for d in c.devices]))
+        configs.append(mon_thread_cfg)
+
+    def configure_for_restart(caught, frame):
+        logging.info(f"Signal {caught} received - reconfiguring for restart")
+        Config.home_assistant.enabled = False  # Disable publishing Home Assistant offline availability since we are going to restart
+        exit_on_signal(caught, frame)
+
+    def exit_on_signal(caught, frame):
+        logging.info(f"Signal {caught} received - Shutdown commenced")
+        logging.getLogger("asyncio").setLevel(logging.ERROR)
+        for config in configs:
+            config.offline()
+
+    def reload_on_signal(caught, frame):
+        logging.info(f"Signal {caught} received - Reloading configuration")
+        Config.reload()
+        configure_logging()
+        for config in configs:
+            config.reload_config()
+
+    signal.signal(signal.SIGINT, exit_on_signal)
+    signal.signal(signal.SIGHUP, reload_on_signal)
+    signal.signal(signal.SIGTERM, exit_on_signal)
+    signal.signal(signal.SIGUSR1, configure_for_restart)
+
+    if Config.home_assistant.enabled:
+        current_version_file = Path(Config.persistent_state_path, ".current-version")
+        current_version: str | None = None
+        if current_version_file.exists():
+            try:
+                with current_version_file.open("r") as f:
+                    current_version = f.read()
+                    logging.debug(f"Loaded '{current_version}' from {current_version_file}")
+            except Exception as error:
+                logging.error(f"Failed to read {current_version_file}: {error}")
+        upgrade_detected: bool = current_version != Config.version()
+        if upgrade_detected:
+            if current_version:
+                logging.info(f"Upgrade to '{Config.version()}' from '{current_version}' detected")
+            else:
+                logging.info(f"Upgrade to '{Config.version()}' detected")
+            logging.debug(f"Writing '{Config.version()}' to {current_version_file}")
+            try:
+                with current_version_file.open("w") as f:
+                    f.write(Config.version())
+            except Exception as error:
+                logging.error(f"Failed to write to {current_version_file}: {error}")
+    else:
+        upgrade_detected = False
+
+    await start(configs)
+    logging.info("Shutdown completed")

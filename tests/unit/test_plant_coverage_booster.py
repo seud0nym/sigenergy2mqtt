@@ -36,6 +36,9 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self.address = 30000
         self._protocol_version = Protocol.V1_8
 
+    def items(self):
+        return [].items()
+
     def __getitem__(self, key):
         return None
 
@@ -44,9 +47,6 @@ class MockAvailabilitySensor(AvailabilityMixin):
 
     def __contains__(self, key):
         return False
-
-    def items(self):
-        return [].items()
 
 
 def get_classes(module):

@@ -41,6 +41,9 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self._protocol_version = Protocol.V1_8
         self.publishable = True
 
+    def items(self):
+        return [].items()
+
     def __getitem__(self, key):
         return None
 
@@ -49,9 +52,6 @@ class MockAvailabilitySensor(AvailabilityMixin):
 
     def __contains__(self, key):
         return False
-
-    def items(self):
-        return [].items()
 
 
 def get_classes(module):

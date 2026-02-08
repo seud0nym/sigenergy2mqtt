@@ -13,6 +13,9 @@ def make_status_service(topics=None, extended=None):
     return PVOutputStatusService(logger, topics, extended)
 
 
+import pytest
+
+
 def test_create_payload_includes_generation_power():
     # ensure deterministic started time
     Config.pvoutput.started = time.time() - 3600
@@ -45,9 +48,6 @@ def test_create_payload_includes_donation_when_donator_true():
     svc = make_status_service(topics={StatusField.V7: [t]}, extended={})
     payload, snapshot = svc._create_payload(time.localtime())
     assert StatusField.V7.value in payload
-
-
-import pytest
 
 
 @pytest.mark.asyncio

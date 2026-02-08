@@ -79,6 +79,11 @@ class TranslationExtractor(ast.NodeVisitor):
         self.generic_visit(node)
         self.current_class = prev_class
 
+    def _add_translation(self, cls, key, value):
+        if cls not in self.translations:
+            self.translations[cls] = {}
+        self.translations[cls][key] = value
+
     def visit_Call(self, node):
         if not self.current_class:
             self.generic_visit(node)
@@ -110,6 +115,15 @@ class TranslationExtractor(ast.NodeVisitor):
                             self._add_translation(self.current_class, "options", options)
 
         self.generic_visit(node)
+
+    def _add_attr(self, cls, attr, value):
+        if attr == "since-protocol":
+            return
+        if cls not in self.translations:
+            self.translations[cls] = {}
+        if "attributes" not in self.translations[cls]:
+            self.translations[cls]["attributes"] = {}
+        self.translations[cls]["attributes"][attr] = value
 
     def visit_Assign(self, node):
         if not self.current_class:
@@ -143,11 +157,12 @@ class TranslationExtractor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def visit_match_case(self, node):
-        self._handle_match_case(node)
-
-    def visit_MatchCase(self, node):
-        self._handle_match_case(node)
+    def _add_alarm(self, cls, bit, value):
+        if cls not in self.translations:
+            self.translations[cls] = {}
+        if "alarm" not in self.translations[cls]:
+            self.translations[cls]["alarm"] = {}
+        self.translations[cls]["alarm"][bit] = value
 
     def _handle_match_case(self, node):
         if not self.current_class:
@@ -165,26 +180,11 @@ class TranslationExtractor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def _add_translation(self, cls, key, value):
-        if cls not in self.translations:
-            self.translations[cls] = {}
-        self.translations[cls][key] = value
+    def visit_match_case(self, node):
+        self._handle_match_case(node)
 
-    def _add_attr(self, cls, attr, value):
-        if attr == "since-protocol":
-            return
-        if cls not in self.translations:
-            self.translations[cls] = {}
-        if "attributes" not in self.translations[cls]:
-            self.translations[cls]["attributes"] = {}
-        self.translations[cls]["attributes"][attr] = value
-
-    def _add_alarm(self, cls, bit, value):
-        if cls not in self.translations:
-            self.translations[cls] = {}
-        if "alarm" not in self.translations[cls]:
-            self.translations[cls]["alarm"] = {}
-        self.translations[cls]["alarm"][bit] = value
+    def visit_MatchCase(self, node):
+        self._handle_match_case(node)
 
 
 def merge_translations(base, new):

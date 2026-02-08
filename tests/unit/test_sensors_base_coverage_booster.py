@@ -250,6 +250,35 @@ class TestSensorTypesCoverage:
                 **kwargs,
             )
 
+    class DummyReadWrite(ReadWriteSensor):
+        def __init__(self, **kwargs):
+            super().__init__(
+                availability_control_sensor=None,
+                name="RW",
+                object_id="sigenergy_rw",
+                input_type=InputType.HOLDING,
+                plant_index=0,
+                device_address=1,
+                address=30002,
+                count=1,
+                data_type=ModbusDataType.UINT16,
+                scan_interval=5,
+                unit="W",
+                device_class=DeviceClass.POWER,
+                state_class=StateClass.MEASUREMENT,
+                icon="mdi:sensor",
+                gain=1.0,
+                precision=2,
+                protocol_version=Protocol.V2_4,
+                **kwargs,
+            )
+
+        async def _update_internal_state(self, **kwargs):
+            return True
+
+        async def set_state(self, state, **kwargs):
+            return True
+
     @pytest.mark.asyncio
     async def test_read_only_get_state(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -283,35 +312,6 @@ class TestSensorTypesCoverage:
             )
             modbus_client.read_holding_registers.return_value = None
             assert await s._update_internal_state(modbus_client=modbus_client) is False
-
-    class DummyReadWrite(ReadWriteSensor):
-        def __init__(self, **kwargs):
-            super().__init__(
-                availability_control_sensor=None,
-                name="RW",
-                object_id="sigenergy_rw",
-                input_type=InputType.HOLDING,
-                plant_index=0,
-                device_address=1,
-                address=30002,
-                count=1,
-                data_type=ModbusDataType.UINT16,
-                scan_interval=5,
-                unit="W",
-                device_class=DeviceClass.POWER,
-                state_class=StateClass.MEASUREMENT,
-                icon="mdi:sensor",
-                gain=1.0,
-                precision=2,
-                protocol_version=Protocol.V2_4,
-                **kwargs,
-            )
-
-        async def _update_internal_state(self, **kwargs):
-            return True
-
-        async def set_state(self, state, **kwargs):
-            return True
 
     @pytest.mark.asyncio
     async def test_read_write_set_value(self):
@@ -707,6 +707,9 @@ class TestAlarmSensorsWave4:
 
 
 class TestRemainingSensorsWave4:
+
+    class DummyPVPower(PVPowerSensor, DummySensor):
+        pass
     @pytest.mark.asyncio
     async def test_running_state_sensor(self, modbus_client):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -740,9 +743,6 @@ class TestRemainingSensorsWave4:
         from sigenergy2mqtt.sensors.base import Metrics
 
         assert Metrics is not None or True
-
-    class DummyPVPower(PVPowerSensor, DummySensor):
-        pass
 
     def test_pv_power_mixin(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):

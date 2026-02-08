@@ -81,6 +81,33 @@ class CustomDataBlock(ModbusSparseDataBlock):
         self._total_sleep_time: int = 0
         self._read_count: int = 0
 
+    def _set_value(self, sensor, value: float | int | str, source: str = "", debug: bool = False) -> None:
+        if debug or sensor.debug_logging:
+            _logger.debug(f"_set_value({sensor['name']}, {value}) [address={sensor.address} device_address={self.device_address} {source=}]")
+        address = sensor.address
+        if address in self._written_addresses:
+            return  # Ignore messages for addresses that were just written to
+        if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
+            registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
+            if len(registers) < sensor.count:
+                registers.extend([0] * (sensor.count - len(registers)))  # Pad with zeros
+            elif len(registers) > sensor.count:
+                registers = registers[: sensor.count]  # Truncate to the required length
+        else:
+            raw = sensor.state2raw(value)
+            registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
+        super().setValues(address, registers)
+        if address == 31011:  # Use the Phase A Voltage for all three phases
+            super().setValues(31013, registers)
+            super().setValues(31015, registers)
+        elif address == 31017:  # Use the Phase A Current for all three phases
+            super().setValues(31019, registers)
+            super().setValues(31021, registers)
+
+    def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
+        sensor = self._topics.get(topic)
+        self._set_value(sensor, value, f"mqtt::{topic}", debug=debug)
+
     def add_sensor(self, sensor: Any) -> None:
         self.addresses[sensor.address] = sensor
         if sensor.__class__.__name__.startswith("Reserved"):
@@ -162,33 +189,6 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         _logger.warning(f"Sensor {sensor['name']} does not have a state_topic and cannot be updated via MQTT.")
         self._set_value(sensor, value, source)
 
-    def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
-        sensor = self._topics.get(topic)
-        self._set_value(sensor, value, f"mqtt::{topic}", debug=debug)
-
-    def _set_value(self, sensor, value: float | int | str, source: str = "", debug: bool = False) -> None:
-        if debug or sensor.debug_logging:
-            _logger.debug(f"_set_value({sensor['name']}, {value}) [address={sensor.address} device_address={self.device_address} {source=}]")
-        address = sensor.address
-        if address in self._written_addresses:
-            return  # Ignore messages for addresses that were just written to
-        if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
-            registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
-            if len(registers) < sensor.count:
-                registers.extend([0] * (sensor.count - len(registers)))  # Pad with zeros
-            elif len(registers) > sensor.count:
-                registers = registers[: sensor.count]  # Truncate to the required length
-        else:
-            raw = sensor.state2raw(value)
-            registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
-        super().setValues(address, registers)
-        if address == 31011:  # Use the Phase A Voltage for all three phases
-            super().setValues(31013, registers)
-            super().setValues(31015, registers)
-        elif address == 31017:  # Use the Phase A Current for all three phases
-            super().setValues(31019, registers)
-            super().setValues(31021, registers)
-
     async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
         delay_avg: int = 15
         delay_min: int = 5
@@ -243,6 +243,45 @@ class CustomDataBlock(ModbusSparseDataBlock):
         if sensor and sensor.debug_logging:
             _logger.debug(f"getValues({address}, {count}) -> {result}")
         return result
+
+
+async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: int, duration_seconds: int) -> None:
+    while True:
+        try:
+            _logger.info(f"Waiting for {wait_for_seconds} seconds before simulating grid outage for device address {data_block.device_address}...")
+            await asyncio.sleep(wait_for_seconds)
+            _logger.info(f"Simulating grid outage for device address {data_block.device_address} for {duration_seconds} seconds...")
+            await data_block.async_setValues(0x06, 30009, [1])
+            await asyncio.sleep(duration_seconds)
+            await data_block.async_setValues(0x06, 30009, [0])
+            _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
+        except asyncio.CancelledError:
+            break
+
+
+async def prepopulate(modbus_client, groups):
+    _logger.info("Pre-populating sensor values...")
+    skip_devices: list[int] = []
+    async with modbus_client:
+        await modbus_client.connect()
+        for group_sensors in groups.values():
+            if len(group_sensors) == 1 and (group_sensors[0].device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
+                continue
+            first_address: int = min([s.address for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
+            last_address: int = max([s.address + s.count - 1 for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
+            count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= getattr(s, "address") <= last_address])
+            assert first_address and last_address and (last_address - first_address + 1) == count
+            device_address = group_sensors[0].device_address
+            try:
+                if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0].input_type) == 0:
+                    for sensor in group_sensors:
+                        if sensor.publishable:
+                            await sensor.get_state(modbus_client=modbus_client)
+            except Exception:
+                if device_address not in skip_devices:
+                    skip_devices.append(device_address)
+                if not modbus_client.connected:
+                    await modbus_client.connect()
 
 
 async def run_async_server(
@@ -325,20 +364,6 @@ async def run_async_server(
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
 
 
-async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: int, duration_seconds: int) -> None:
-    while True:
-        try:
-            _logger.info(f"Waiting for {wait_for_seconds} seconds before simulating grid outage for device address {data_block.device_address}...")
-            await asyncio.sleep(wait_for_seconds)
-            _logger.info(f"Simulating grid outage for device address {data_block.device_address} for {duration_seconds} seconds...")
-            await data_block.async_setValues(0x06, 30009, [1])
-            await asyncio.sleep(duration_seconds)
-            await data_block.async_setValues(0x06, 30009, [0])
-            _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
-        except asyncio.CancelledError:
-            break
-
-
 async def wait_for_server_start(host: str, port: int, timeout: float = 10.0) -> bool:
     start_time = time.monotonic()
     while time.monotonic() - start_time < timeout:
@@ -350,31 +375,6 @@ async def wait_for_server_start(host: str, port: int, timeout: float = 10.0) -> 
         except (OSError, ConnectionRefusedError):
             await asyncio.sleep(0.1)
     return False
-
-
-async def prepopulate(modbus_client, groups):
-    _logger.info("Pre-populating sensor values...")
-    skip_devices: list[int] = []
-    async with modbus_client:
-        await modbus_client.connect()
-        for group_sensors in groups.values():
-            if len(group_sensors) == 1 and (group_sensors[0].device_address in skip_devices or group_sensors[0].__class__.__name__.startswith("Reserved")):
-                continue
-            first_address: int = min([s.address for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
-            last_address: int = max([s.address + s.count - 1 for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
-            count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= getattr(s, "address") <= last_address])
-            assert first_address and last_address and (last_address - first_address + 1) == count
-            device_address = group_sensors[0].device_address
-            try:
-                if await modbus_client.read_ahead_registers(first_address, count, device_id=device_address, input_type=group_sensors[0].input_type) == 0:
-                    for sensor in group_sensors:
-                        if sensor.publishable:
-                            await sensor.get_state(modbus_client=modbus_client)
-            except Exception:
-                if device_address not in skip_devices:
-                    skip_devices.append(device_address)
-                if not modbus_client.connected:
-                    await modbus_client.connect()
 
 
 def on_connect(client: mqtt.Client, userdata: CustomMqttHandler, flags, reason_code, properties) -> None:

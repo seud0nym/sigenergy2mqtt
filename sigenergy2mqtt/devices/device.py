@@ -181,6 +181,17 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         else:
             logging.debug(f"{self.name} cannot add child device {device.name} - No publishable sensors defined")
 
+    def _add_to_all_sensors(self, sensor: Sensor) -> None:
+        if not self.get_sensor(sensor.unique_id, search_children=True):
+            if sensor.debug_logging:
+                logging.debug(f"{self.name} adding sensor {sensor.unique_id} ({sensor.__class__.__name__})")
+            sensor.apply_sensor_overrides(self.registers)
+            sensor.parent_device = self
+            sensor.configure_mqtt_topics(self.unique_id)
+            self.all_sensors[sensor.unique_id] = sensor
+        elif sensor.debug_logging:
+            logging.debug(f"{self.name} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
+
     def _add_derived_sensor(self, sensor: DerivedSensor, *from_sensors: Sensor | None, search_children: bool = False) -> None:
         none_sensors = len([s for s in from_sensors if s is None])
         if none_sensors:
@@ -224,17 +235,6 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 self.group_sensors[group].append(sensor)
                 self._add_to_all_sensors(sensor)
             return True
-
-    def _add_to_all_sensors(self, sensor: Sensor) -> None:
-        if not self.get_sensor(sensor.unique_id, search_children=True):
-            if sensor.debug_logging:
-                logging.debug(f"{self.name} adding sensor {sensor.unique_id} ({sensor.__class__.__name__})")
-            sensor.apply_sensor_overrides(self.registers)
-            sensor.parent_device = self
-            sensor.configure_mqtt_topics(self.unique_id)
-            self.all_sensors[sensor.unique_id] = sensor
-        elif sensor.debug_logging:
-            logging.debug(f"{self.name} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
 
     def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
         if not isinstance(sensor, WriteOnlySensor):

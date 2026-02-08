@@ -67,18 +67,21 @@ class SensorDebuggingMixin:
         self.debug_logging: bool = Config.sensor_debug_logging
         super().__init__(**kwargs)
 
+    # endregion
+
+
+class TypedSensorMixin:
+    def __init__(self, **kwargs):
+        assert "data_type" in kwargs, "Missing required parameter: data_type"
+        if kwargs["data_type"] not in ModbusDataType:
+            raise AssertionError(f"Invalid data type {kwargs['data_type']}")
+        self.data_type = kwargs["data_type"]
+        super().__init__(**kwargs)
+
 
 class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str] | list[dict[str, str]] | tuple[float] | DeviceClass | StateClass | None], metaclass=abc.ABCMeta):
     _used_object_ids = {}
     _used_unique_ids = {}
-
-    def __hash__(self) -> int:  # pyright: ignore[reportIncompatibleVariableOverride]
-        return hash(self["unique_id"])
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Sensor):
-            return self["unique_id"] == other["unique_id"]
-        return False
 
     def __init__(
         self,
@@ -573,16 +576,13 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
                 value *= self.gain
         return int(value)
 
-    # endregion
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Sensor):
+            return self["unique_id"] == other["unique_id"]
+        return False
 
-
-class TypedSensorMixin:
-    def __init__(self, **kwargs):
-        assert "data_type" in kwargs, "Missing required parameter: data_type"
-        if kwargs["data_type"] not in ModbusDataType:
-            raise AssertionError(f"Invalid data type {kwargs['data_type']}")
-        self.data_type = kwargs["data_type"]
-        super().__init__(**kwargs)
+    def __hash__(self) -> int:  # pyright: ignore[reportIncompatibleVariableOverride]
+        return hash(self["unique_id"])
 
 
 class DerivedSensor(TypedSensorMixin, Sensor):
@@ -1888,6 +1888,11 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             attributes["reset_unit"] = self.unit
         return attributes
 
+    async def _persist_current_total(self, new_total: float) -> None:
+        async with self._current_total_lock:
+            with self._persistent_state_file.open("w") as f:
+                f.write(str(new_total))
+
     async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             new_total = (value if value is float else float(value)) * self.gain
@@ -1935,11 +1940,6 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             self._current_total = new_total
             self.set_latest_state(self._current_total)
             return True
-
-    async def _persist_current_total(self, new_total: float) -> None:
-        async with self._current_total_lock:
-            with self._persistent_state_file.open("w") as f:
-                f.write(str(new_total))
 
 
 class EnergyLifetimeAccumulationSensor(ResettableAccumulationSensor):
@@ -2029,6 +2029,13 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 logging.debug(f"{self.__class__.__name__} Ignored last midnight state file {self._persistent_state_file} because it is stale ({fmt})")
                 self._persistent_state_file.unlink(missing_ok=True)
 
+    async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
+        if midnight_state is not None:
+            async with self._state_at_midnight_lock:
+                with self._persistent_state_file.open("w") as f:
+                    f.write(str(midnight_state))
+                self._state_at_midnight = midnight_state
+
     async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self.observable_topics():
             if self.debug_logging:
@@ -2074,13 +2081,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._state_now = now_state - self._state_at_midnight
         self.set_latest_state(self._state_now)
         return True
-
-    async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
-        if midnight_state is not None:
-            async with self._state_at_midnight_lock:
-                with self._persistent_state_file.open("w") as f:
-                    f.write(str(midnight_state))
-                self._state_at_midnight = midnight_state
 
 
 class PVPowerSensor:

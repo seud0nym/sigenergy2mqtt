@@ -31,6 +31,16 @@ if TYPE_CHECKING:
     from sigenergy2mqtt.main.thread_config import ThreadConfig
 
 
+def get_gain(sensor: Sensor, negate: bool = False) -> float:
+    if sensor.gain is None:
+        gain = 1.0
+    elif sensor.unit in (UnitOfEnergy.KILO_WATT_HOUR, UnitOfPower.KILO_WATT) and sensor.gain == 100:
+        gain = 10.0
+    else:
+        gain = float(sensor.gain)
+    return gain if negate is False else gain * -1.0
+
+
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     if not Config.pvoutput.enabled:
         return []
@@ -145,13 +155,3 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     output = PVOutputOutputService(logger, output_topics)
 
     return [status, output]
-
-
-def get_gain(sensor: Sensor, negate: bool = False) -> float:
-    if sensor.gain is None:
-        gain = 1.0
-    elif sensor.unit in (UnitOfEnergy.KILO_WATT_HOUR, UnitOfPower.KILO_WATT) and sensor.gain == 100:
-        gain = 10.0
-    else:
-        gain = float(sensor.gain)
-    return gain if negate is False else gain * -1.0

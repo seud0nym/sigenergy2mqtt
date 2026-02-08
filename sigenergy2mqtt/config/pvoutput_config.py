@@ -127,6 +127,24 @@ class PVOutputConfiguration:
     def consumption_enabled(self) -> bool:
         return self.consumption in (ConsumptionSource.CONSUMPTION, ConsumptionSource.IMPORTED, ConsumptionSource.NET_OF_BATTERY)
 
+    def _type_to_output_fields(self, type: TariffType) -> tuple[OutputField, OutputField]:
+        match type:
+            case TariffType.OFF_PEAK:
+                export_type = OutputField.EXPORT_OFF_PEAK
+                import_type = OutputField.IMPORT_OFF_PEAK
+            case TariffType.PEAK:
+                export_type = OutputField.EXPORT_PEAK
+                import_type = OutputField.IMPORT_PEAK
+            case TariffType.SHOULDER:
+                export_type = OutputField.EXPORT_SHOULDER
+                import_type = OutputField.IMPORT_SHOULDER
+            case TariffType.HIGH_SHOULDER:
+                export_type = OutputField.EXPORT_HIGH_SHOULDER
+                import_type = OutputField.IMPORT_HIGH_SHOULDER
+            case _:
+                raise ValueError(f"Invalid tariff type: {type}")
+        return (export_type, import_type)
+
     @property
     def current_time_period(self) -> tuple[OutputField | None, OutputField]:
         export_type = None  # No export default if completely unmatched, because total exports is always reported, but time periods may not be defined
@@ -151,24 +169,6 @@ class PVOutputConfiguration:
                         export_type, import_type = self._type_to_output_fields(tariff.default)  # Set the default types if date matched but time outside of defined periods
         return (export_type, import_type)
 
-    def _type_to_output_fields(self, type: TariffType) -> tuple[OutputField, OutputField]:
-        match type:
-            case TariffType.OFF_PEAK:
-                export_type = OutputField.EXPORT_OFF_PEAK
-                import_type = OutputField.IMPORT_OFF_PEAK
-            case TariffType.PEAK:
-                export_type = OutputField.EXPORT_PEAK
-                import_type = OutputField.IMPORT_PEAK
-            case TariffType.SHOULDER:
-                export_type = OutputField.EXPORT_SHOULDER
-                import_type = OutputField.IMPORT_SHOULDER
-            case TariffType.HIGH_SHOULDER:
-                export_type = OutputField.EXPORT_HIGH_SHOULDER
-                import_type = OutputField.IMPORT_HIGH_SHOULDER
-            case _:
-                raise ValueError(f"Invalid tariff type: {type}")
-        return (export_type, import_type)
-
     def validate(self) -> None:
         if self.enabled:
             if not self.api_key:
@@ -179,6 +179,52 @@ class PVOutputConfiguration:
                 for period in tariff.periods:
                     if period.end <= period.start:
                         raise ValueError(f"pvoutput time period end time ({period.end}) must be after start time ({period.start})")
+
+    def _parse_time_periods(self, value: list[dict[str, str]]) -> list[TimePeriod]:
+        periods: list[TimePeriod] = []
+        if isinstance(value, list):
+            index = 0
+            for period in value:
+                if isinstance(period, dict):
+                    if "type" in period and "start" in period and "end" in period:
+                        type: TariffType = TariffType(
+                            cast(str, check_string(period["type"], f"pvoutput.time-periods[{index}].type", "off-peak", "peak", "shoulder", "high-shoulder", allow_empty=False, allow_none=False))
+                        )
+                        start: time = check_time(period["start"], f"pvoutput.time-periods[{index}].start")
+                        end: time = check_time(period["end"], f"pvoutput.time-periods[{index}].end")
+                        days: list[str] = []
+                        if "days" in period:
+                            if isinstance(period["days"], list):
+                                for day in period["days"]:
+                                    validated = check_string(
+                                        day.capitalize(),
+                                        f"pvoutput.time-periods[{period['type']}:{period['start']}-{period['end']}].days",
+                                        "Mon",
+                                        "Tue",
+                                        "Wed",
+                                        "Thu",
+                                        "Fri",
+                                        "Sat",
+                                        "Sun",
+                                        "Weekdays",
+                                        "Weekends",
+                                        "All",
+                                    )
+                                    if validated and isinstance(validated, str):
+                                        days.append(validated)
+                            else:
+                                raise ValueError(f"pvoutput.time-periods.periods[{index}].days must be a list of days, or Weekdays, Weekends, or All")
+                        else:
+                            days.append("All")
+                        periods.append(TimePeriod(type=type, start=start, end=end, days=days))
+                    else:
+                        raise ValueError(f"pvoutput.time-periods.periods[{index}] must contain 'type', 'start', and 'end' elements")
+                else:
+                    raise ValueError(f"pvoutput.time-periods.periods[{index}] must be a time period definition")
+                index += 1
+            return periods
+        else:
+            raise ValueError("pvoutput time-periods.periods configuration element must contain a list of time period definitions")
 
     def configure(self, config: Any, override: bool = False) -> None:
         if isinstance(config, dict):
@@ -283,49 +329,3 @@ class PVOutputConfiguration:
                                 raise ValueError(f"pvoutput configuration element contains unknown option '{field}'")
         else:
             raise ValueError("pvoutput configuration element must contain options and their values")
-
-    def _parse_time_periods(self, value: list[dict[str, str]]) -> list[TimePeriod]:
-        periods: list[TimePeriod] = []
-        if isinstance(value, list):
-            index = 0
-            for period in value:
-                if isinstance(period, dict):
-                    if "type" in period and "start" in period and "end" in period:
-                        type: TariffType = TariffType(
-                            cast(str, check_string(period["type"], f"pvoutput.time-periods[{index}].type", "off-peak", "peak", "shoulder", "high-shoulder", allow_empty=False, allow_none=False))
-                        )
-                        start: time = check_time(period["start"], f"pvoutput.time-periods[{index}].start")
-                        end: time = check_time(period["end"], f"pvoutput.time-periods[{index}].end")
-                        days: list[str] = []
-                        if "days" in period:
-                            if isinstance(period["days"], list):
-                                for day in period["days"]:
-                                    validated = check_string(
-                                        day.capitalize(),
-                                        f"pvoutput.time-periods[{period['type']}:{period['start']}-{period['end']}].days",
-                                        "Mon",
-                                        "Tue",
-                                        "Wed",
-                                        "Thu",
-                                        "Fri",
-                                        "Sat",
-                                        "Sun",
-                                        "Weekdays",
-                                        "Weekends",
-                                        "All",
-                                    )
-                                    if validated and isinstance(validated, str):
-                                        days.append(validated)
-                            else:
-                                raise ValueError(f"pvoutput.time-periods.periods[{index}].days must be a list of days, or Weekdays, Weekends, or All")
-                        else:
-                            days.append("All")
-                        periods.append(TimePeriod(type=type, start=start, end=end, days=days))
-                    else:
-                        raise ValueError(f"pvoutput.time-periods.periods[{index}] must contain 'type', 'start', and 'end' elements")
-                else:
-                    raise ValueError(f"pvoutput.time-periods.periods[{index}] must be a time period definition")
-                index += 1
-            return periods
-        else:
-            raise ValueError("pvoutput time-periods.periods configuration element must contain a list of time period definitions")

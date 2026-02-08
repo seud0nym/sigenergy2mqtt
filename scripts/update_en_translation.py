@@ -189,6 +189,13 @@ class TranslationExtractor(ast.NodeVisitor):
         self.generic_visit(node)
         self.local_vars = prev_vars
 
+    def _add_translation(self, cls, key, value):
+        if is_placeholder_only(value):
+            return
+        if cls not in self.translations:
+            self.translations[cls] = {}
+        self.translations[cls][key] = value
+
     def visit_Call(self, node):
         if not self.current_class:
             self.generic_visit(node)
@@ -292,6 +299,15 @@ class TranslationExtractor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
+    def _add_attr(self, cls, attr, value):
+        if attr == "since-protocol" or is_placeholder_only(value):
+            return
+        if cls not in self.translations:
+            self.translations[cls] = {}
+        if "attributes" not in self.translations[cls]:
+            self.translations[cls]["attributes"] = {}
+        self.translations[cls]["attributes"][attr] = value
+
     def visit_Assign(self, node):
         if not self.current_class:
             self.generic_visit(node)
@@ -347,11 +363,14 @@ class TranslationExtractor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def visit_match_case(self, node):
-        self._handle_match_case(node)
-
-    def visit_MatchCase(self, node):
-        self._handle_match_case(node)
+    def _add_alarm(self, cls, bit, value):
+        if is_placeholder_only(value):
+            return
+        if cls not in self.translations:
+            self.translations[cls] = {}
+        if "alarm" not in self.translations[cls]:
+            self.translations[cls]["alarm"] = {}
+        self.translations[cls]["alarm"][bit] = value
 
     def _handle_match_case(self, node):
         if not self.current_class:
@@ -371,30 +390,11 @@ class TranslationExtractor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def _add_translation(self, cls, key, value):
-        if is_placeholder_only(value):
-            return
-        if cls not in self.translations:
-            self.translations[cls] = {}
-        self.translations[cls][key] = value
+    def visit_match_case(self, node):
+        self._handle_match_case(node)
 
-    def _add_attr(self, cls, attr, value):
-        if attr == "since-protocol" or is_placeholder_only(value):
-            return
-        if cls not in self.translations:
-            self.translations[cls] = {}
-        if "attributes" not in self.translations[cls]:
-            self.translations[cls]["attributes"] = {}
-        self.translations[cls]["attributes"][attr] = value
-
-    def _add_alarm(self, cls, bit, value):
-        if is_placeholder_only(value):
-            return
-        if cls not in self.translations:
-            self.translations[cls] = {}
-        if "alarm" not in self.translations[cls]:
-            self.translations[cls]["alarm"] = {}
-        self.translations[cls]["alarm"][bit] = value
+    def visit_MatchCase(self, node):
+        self._handle_match_case(node)
 
     def propagate_translations(self, data=None):
         """Propagate options, attributes, and alarm bits from base classes to child classes."""
@@ -499,7 +499,7 @@ def deep_update_commented(target, source):
             target[k] = v
         # Ensure key is at the end to match source order (source is already sorted)
         if hasattr(target, "move_to_end"):
-            target.move_to_end(k)
+            target.move_to_end(k) # type: ignore
 
     return target
 

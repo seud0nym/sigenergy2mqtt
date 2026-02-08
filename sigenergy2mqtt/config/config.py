@@ -113,13 +113,6 @@ class Config(metaclass=ConfigMeta):
 
     _source: str | None
 
-    def __init__(self):
-        self._apply_defaults()
-
-    @DualMethod
-    def reset(self):
-        self._apply_defaults()
-
     def _apply_defaults(self):
         self.origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
@@ -145,6 +138,13 @@ class Config(metaclass=ConfigMeta):
         self._source = None
 
         self.persistent_state_path = Path(".")
+
+    def __init__(self):
+        self._apply_defaults()
+
+    @DualMethod
+    def reset(self):
+        self._apply_defaults()
 
     @DualMethod
     def validate(self) -> None:
@@ -180,62 +180,6 @@ class Config(metaclass=ConfigMeta):
         logging.info(f"Loading configuration from {filename}...")
         self._source = filename
         self.reload()
-
-    @DualMethod
-    def reload(self) -> None:
-        overrides: dict[str, Any] = {
-            "home-assistant": {},
-            "mqtt": {},
-            "modbus": [{"smart-port": {"mqtt": [{}], "module": {}}}],
-            "influxdb": {},
-            "pvoutput": {},
-            "sensor-overrides": {},
-        }
-
-        if self._source:
-            _yaml = YAML(typ="safe", pure=True)
-            with open(self._source, "r") as f:
-                data = _yaml.load(f)
-            if data:
-                self._configure(data)
-            else:
-                logging.warning(f"Ignored configuration file {self._source} because it contains no keys?")
-
-        auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
-        auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
-        auto_discovered = None
-        if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
-            port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
-            ping_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT, "0.5"))
-            modbus_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, "0.25"))
-            modbus_retries = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, "0"))
-            logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
-            auto_discovered = auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries)
-            if len(auto_discovered) > 0:
-                with open(auto_discovery_cache, "w") as f:
-                    _yaml = YAML(typ="safe", pure=True)
-                    _yaml.dump(auto_discovered, f)
-        elif auto_discovery == "once" and auto_discovery_cache.is_file():
-            logging.info("Auto-discovery already completed, using cached results.")
-            with open(auto_discovery_cache, "r") as f:
-                auto_discovered = YAML(typ="safe", pure=True).load(f)
-
-        self._load_from_env(overrides, auto_discovered)
-        self._configure(overrides, True)
-
-        i18n.load(self.language)
-
-        if auto_discovered:
-            self._apply_auto_discovery(auto_discovered)
-
-    def _load_from_env(self, overrides: dict[str, Any], auto_discovered: Any = None):
-        for key, value in os.environ.items():
-            if key.startswith("SIGENERGY2MQTT_") and key != "SIGENERGY2MQTT_CONFIG" and value is not None and value != "None":
-                logging.debug(f"Found env/cli override: {key} = {'[REDACTED]' if 'PASSWORD' in key or 'API_KEY' in key else value}")
-                try:
-                    self._process_env_key(key, value, overrides, auto_discovered)
-                except Exception as e:
-                    raise Exception(f"{repr(e)} when processing override '{key}'")
 
     def _process_env_key(self, key: str, value: str, overrides: dict[str, Any], auto_discovered: Any):
         match key:
@@ -495,6 +439,15 @@ class Config(metaclass=ConfigMeta):
             case _:
                 logging.warning(f"UNKNOWN env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
 
+    def _load_from_env(self, overrides: dict[str, Any], auto_discovered: Any = None):
+        for key, value in os.environ.items():
+            if key.startswith("SIGENERGY2MQTT_") and key != "SIGENERGY2MQTT_CONFIG" and value is not None and value != "None":
+                logging.debug(f"Found env/cli override: {key} = {'[REDACTED]' if 'PASSWORD' in key or 'API_KEY' in key else value}")
+                try:
+                    self._process_env_key(key, value, overrides, auto_discovered)
+                except Exception as e:
+                    raise Exception(f"{repr(e)} when processing override '{key}'")
+
     def _apply_auto_discovery(self, auto_discovered: Any):
         if isinstance(auto_discovered, list):
             for device in auto_discovered:
@@ -515,10 +468,6 @@ class Config(metaclass=ConfigMeta):
                     new_device = ModbusConfiguration()
                     new_device.configure(device, override=True, auto_discovered=True)
                     self.modbus.append(new_device)
-
-    @DualMethod
-    def version(self) -> str:
-        return version.__version__
 
     @DualMethod
     def _configure(self, data: dict, override: bool = False) -> None:
@@ -628,6 +577,57 @@ class Config(metaclass=ConfigMeta):
                 case _:
                     raise ValueError(f"Configuration contains unknown element '{name}'")
 
+    @DualMethod
+    def reload(self) -> None:
+        overrides: dict[str, Any] = {
+            "home-assistant": {},
+            "mqtt": {},
+            "modbus": [{"smart-port": {"mqtt": [{}], "module": {}}}],
+            "influxdb": {},
+            "pvoutput": {},
+            "sensor-overrides": {},
+        }
+
+        if self._source:
+            _yaml = YAML(typ="safe", pure=True)
+            with open(self._source, "r") as f:
+                data = _yaml.load(f)
+            if data:
+                self._configure(data)
+            else:
+                logging.warning(f"Ignored configuration file {self._source} because it contains no keys?")
+
+        auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
+        auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
+        auto_discovered = None
+        if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
+            port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
+            ping_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT, "0.5"))
+            modbus_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, "0.25"))
+            modbus_retries = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, "0"))
+            logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
+            auto_discovered = auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries)
+            if len(auto_discovered) > 0:
+                with open(auto_discovery_cache, "w") as f:
+                    _yaml = YAML(typ="safe", pure=True)
+                    _yaml.dump(auto_discovered, f)
+        elif auto_discovery == "once" and auto_discovery_cache.is_file():
+            logging.info("Auto-discovery already completed, using cached results.")
+            with open(auto_discovery_cache, "r") as f:
+                auto_discovered = YAML(typ="safe", pure=True).load(f)
+
+        self._load_from_env(overrides, auto_discovered)
+        self._configure(overrides, True)
+
+        i18n.load(self.language)
+
+        if auto_discovered:
+            self._apply_auto_discovery(auto_discovered)
+
+    @DualMethod
+    def version(self) -> str:
+        return version.__version__
+
     @classmethod
     def apply_cli_to_env(cls, variable: str, value: str) -> None:
         was = os.getenv(variable)
@@ -701,4 +701,5 @@ class Config(metaclass=ConfigMeta):
 
 # Global instance for compatibility
 active_config = Config()
+
 Config.persistent_state_path = Path(".")  # Initial default

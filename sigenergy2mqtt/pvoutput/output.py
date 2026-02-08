@@ -92,33 +92,6 @@ class PVOutputOutputService(Service):
                     next = tomorrow.timestamp()
         return next
 
-    async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
-        upload_retries: int = 5 if last_upload_of_day else 2
-        uploaded: bool = False
-        changed: bool = self._is_payload_changed(payload)
-        matches: bool = False
-        attempt: int = 0
-        for i in range(1, upload_retries + 1, 1):
-            attempt = i
-            if changed:
-                uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
-            else:
-                uploaded = False
-                self.logger.info(f"{self.__class__.__name__} Skipped uploading unchanged {payload=}")
-            if last_upload_of_day:
-                matches = await self._verify(payload, force=last_upload_of_day)
-                if matches:
-                    break
-                else:
-                    changed = True  # Force re-upload if verification failed
-                    if last_upload_of_day and attempt > 1:
-                        break
-            elif uploaded:
-                break
-        self.logger.debug(f"{self.__class__.__name__} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
-        if changed and Config.pvoutput.output_hour == -1:
-            self._previous_payload = payload
-
     async def _verify(self, payload: dict[str, float | int | str], force: bool = False) -> bool:
         self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
         url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if Config.pvoutput.exports else ''}"
@@ -197,6 +170,33 @@ class PVOutputOutputService(Service):
             except Exception as exc:
                 self.logger.error(f"{self.__class__.__name__} {exc}")
         return matches
+
+    async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
+        upload_retries: int = 5 if last_upload_of_day else 2
+        uploaded: bool = False
+        changed: bool = self._is_payload_changed(payload)
+        matches: bool = False
+        attempt: int = 0
+        for i in range(1, upload_retries + 1, 1):
+            attempt = i
+            if changed:
+                uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
+            else:
+                uploaded = False
+                self.logger.info(f"{self.__class__.__name__} Skipped uploading unchanged {payload=}")
+            if last_upload_of_day:
+                matches = await self._verify(payload, force=last_upload_of_day)
+                if matches:
+                    break
+                else:
+                    changed = True  # Force re-upload if verification failed
+                    if last_upload_of_day and attempt > 1:
+                        break
+            elif uploaded:
+                break
+        self.logger.debug(f"{self.__class__.__name__} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
+        if changed and Config.pvoutput.output_hour == -1:
+            self._previous_payload = payload
 
     def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:

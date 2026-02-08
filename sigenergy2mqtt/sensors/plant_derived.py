@@ -158,145 +158,6 @@ class GridSensorImportPower(DerivedSensor):
         return True
 
 
-class PlantConsumedPower(DerivedSensor, ObservableMixin):
-    @dataclass
-    class Value:
-        gain: float = 1.0
-        negate: bool = False
-        interval: int | None = None
-        state: float | None = None
-        last_update: float | None = None
-        requires_grid: bool = False
-
-        def __repr__(self):
-            if self.last_update:
-                if self.state is not None:
-                    return f"{self.state}"
-                else:
-                    return f"{time.time() - self.last_update:.1f}s ago"
-            else:
-                return "Never"
-
-    def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
-        super().__init__(
-            name="Consumed Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_consumed_power",
-            data_type=ModbusDataType.INT32,
-            unit=UnitOfPower.WATT,
-            device_class=DeviceClass.POWER,
-            state_class=StateClass.MEASUREMENT,
-            icon="mdi:home-lightning-bolt-outline",
-            gain=None,
-            precision=2,
-        )
-        self.plant_index = plant_index
-        self.method = method
-        self._grid_status: int | None = None
-        self.sanity_check.min_raw = 0.0
-        self._sources: dict[str, PlantConsumedPower.Value] = dict()
-        match self.method:
-            case ConsumptionMethod.CALCULATED:
-                self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
-                self.protocol_version = Protocol.N_A
-            case ConsumptionMethod.GENERAL:
-                self._sources.update({ConsumptionMethod.GENERAL.value: PlantConsumedPower.Value()})
-                self.protocol_version = Protocol.V2_8
-            case ConsumptionMethod.TOTAL:
-                self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
-                self.protocol_version = Protocol.V2_8
-
-    def _set_latest_consumption(self) -> bool:
-        if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
-            return False
-        consumed_power = sum([value.state for value in self._sources.values() if value.state and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
-        if consumed_power < 0:
-            logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
-            consumed_power = 0
-        if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources}")
-        self.set_latest_state(consumed_power)
-        return True
-
-    def _update_source(self, source: str, value: float) -> None:
-        self._sources[source].state = (-value if self._sources[source].negate else value) * self._sources[source].gain
-        self._sources[source].last_update = time.time()
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        match self.method:
-            case ConsumptionMethod.CALCULATED:
-                attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower"
-            case ConsumptionMethod.GENERAL:
-                attributes["source"] = "GeneralLoadPower"
-            case ConsumptionMethod.TOTAL:
-                attributes["source"] = "TotalLoadPower"
-        return attributes
-
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
-        if not republish:
-            if not self._set_latest_consumption():
-                if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources}")
-                return False  # until all values populated, can't do calculation
-            republish = True  # if we got here, we have a valid value to publish
-        await super().publish(mqtt_client, modbus_client, republish=republish)
-        # reset internal values to missing for next calculation
-        for value in self._sources.values():
-            value.state = None
-        return True
-
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source in self._sources:
-            self._update_source(source, value if isinstance(value, float) else float(value))
-            if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from topic {source} - {self._sources}")
-            if self._set_latest_consumption():
-                await self.publish(mqtt_client, modbus_client, republish=True)
-            return True
-        else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {source}, but topic is not registered")
-        return False
-
-    def observable_topics(self) -> set[str]:
-        topics: set[str] = set()
-        chargers = [device for device in DeviceRegistry.get(self.plant_index) if device.__class__.__name__.endswith("Charger")]
-        for charger in chargers:
-            for sensor in charger.get_all_sensors().values():
-                if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
-                    self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
-                    topics.add(sensor.state_topic)
-                    if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
-        return topics
-
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if isinstance(sensor, TotalLoadPower):
-            self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
-        elif isinstance(sensor, GeneralLoadPower):
-            self._update_source(ConsumptionMethod.GENERAL.value, values[-1][1])
-        elif isinstance(sensor, BatteryPower):
-            self._update_source("battery", values[-1][1])
-        elif isinstance(sensor, GridSensorActivePower):
-            self._update_source("grid", values[-1][1])
-        elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
-            self._update_source("pv", values[-1][1])
-        elif isinstance(sensor, GridStatus):
-            if Config.consumption == ConsumptionMethod.CALCULATED:
-                grid = int(values[-1][1])
-                if grid != self._grid_status:
-                    if self._grid_status is not None:
-                        if grid == 0:
-                            logging.info(f"{self.__class__.__name__} Grid restored - including AC/DC charger power in consumption calculations")
-                        else:
-                            logging.warning(f"{self.__class__.__name__} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
-                    self._grid_status = grid
-        else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        return self._set_latest_consumption()
-
-
 class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     class SourceType(StrEnum):
         SMARTPORT = "s"
@@ -445,6 +306,145 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             return False  # until all enabled values populated, can't do calculation
         self.set_latest_state(sum([cast(float, value.state) for value in self._sources.values() if value is not None and value.enabled]))
         return True
+
+
+class PlantConsumedPower(DerivedSensor, ObservableMixin):
+    @dataclass
+    class Value:
+        gain: float = 1.0
+        negate: bool = False
+        interval: int | None = None
+        state: float | None = None
+        last_update: float | None = None
+        requires_grid: bool = False
+
+        def __repr__(self):
+            if self.last_update:
+                if self.state is not None:
+                    return f"{self.state}"
+                else:
+                    return f"{time.time() - self.last_update:.1f}s ago"
+            else:
+                return "Never"
+
+    def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
+        super().__init__(
+            name="Consumed Power",
+            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
+            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_consumed_power",
+            data_type=ModbusDataType.INT32,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:home-lightning-bolt-outline",
+            gain=None,
+            precision=2,
+        )
+        self.plant_index = plant_index
+        self.method = method
+        self._grid_status: int | None = None
+        self.sanity_check.min_raw = 0.0
+        self._sources: dict[str, PlantConsumedPower.Value] = dict()
+        match self.method:
+            case ConsumptionMethod.CALCULATED:
+                self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
+                self.protocol_version = Protocol.N_A
+            case ConsumptionMethod.GENERAL:
+                self._sources.update({ConsumptionMethod.GENERAL.value: PlantConsumedPower.Value()})
+                self.protocol_version = Protocol.V2_8
+            case ConsumptionMethod.TOTAL:
+                self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
+                self.protocol_version = Protocol.V2_8
+
+    def _set_latest_consumption(self) -> bool:
+        if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
+            return False
+        consumed_power = sum([value.state for value in self._sources.values() if value.state and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
+        if consumed_power < 0:
+            logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
+            consumed_power = 0
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources}")
+        self.set_latest_state(consumed_power)
+        return True
+
+    def _update_source(self, source: str, value: float) -> None:
+        self._sources[source].state = (-value if self._sources[source].negate else value) * self._sources[source].gain
+        self._sources[source].last_update = time.time()
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        match self.method:
+            case ConsumptionMethod.CALCULATED:
+                attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower"
+            case ConsumptionMethod.GENERAL:
+                attributes["source"] = "GeneralLoadPower"
+            case ConsumptionMethod.TOTAL:
+                attributes["source"] = "TotalLoadPower"
+        return attributes
+
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+        if not republish:
+            if not self._set_latest_consumption():
+                if self.debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources}")
+                return False  # until all values populated, can't do calculation
+            republish = True  # if we got here, we have a valid value to publish
+        await super().publish(mqtt_client, modbus_client, republish=republish)
+        # reset internal values to missing for next calculation
+        for value in self._sources.values():
+            value.state = None
+        return True
+
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        if source in self._sources:
+            self._update_source(source, value if isinstance(value, float) else float(value))
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} Updated from topic {source} - {self._sources}")
+            if self._set_latest_consumption():
+                await self.publish(mqtt_client, modbus_client, republish=True)
+            return True
+        else:
+            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {source}, but topic is not registered")
+        return False
+
+    def observable_topics(self) -> set[str]:
+        topics: set[str] = set()
+        chargers = [device for device in DeviceRegistry.get(self.plant_index) if device.__class__.__name__.endswith("Charger")]
+        for charger in chargers:
+            for sensor in charger.get_all_sensors().values():
+                if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
+                    self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
+                    topics.add(sensor.state_topic)
+                    if self.debug_logging:
+                        logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
+        return topics
+
+    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+        if isinstance(sensor, TotalLoadPower):
+            self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
+        elif isinstance(sensor, GeneralLoadPower):
+            self._update_source(ConsumptionMethod.GENERAL.value, values[-1][1])
+        elif isinstance(sensor, BatteryPower):
+            self._update_source("battery", values[-1][1])
+        elif isinstance(sensor, GridSensorActivePower):
+            self._update_source("grid", values[-1][1])
+        elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
+            self._update_source("pv", values[-1][1])
+        elif isinstance(sensor, GridStatus):
+            if Config.consumption == ConsumptionMethod.CALCULATED:
+                grid = int(values[-1][1])
+                if grid != self._grid_status:
+                    if self._grid_status is not None:
+                        if grid == 0:
+                            logging.info(f"{self.__class__.__name__} Grid restored - including AC/DC charger power in consumption calculations")
+                        else:
+                            logging.warning(f"{self.__class__.__name__} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
+                    self._grid_status = grid
+        else:
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            return False
+        return self._set_latest_consumption()
 
 
 class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):

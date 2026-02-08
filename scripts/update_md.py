@@ -35,6 +35,28 @@ with open("../sigenergy2mqtt/main/main.py", "r") as file:
                 ILLEGAL_DATA_ADDRESSES.append(int(register))
 
 
+def write_naming_convention(f):
+    f.write("\n#### Naming Convention for Sensors in `sigenergy2mqtt`\n\n")
+    f.write("\n- Sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.")
+    f.write("\n- _ separator")
+    f.write("\n- The index of the Modbus host from the configuration file (or auto-discovery), starting from 0.")
+    f.write(" (This is to prevent clashes with the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ Sigenergy-Local-Modbus</a> HACS integration.)")
+    f.write("\n- _ separator")
+    f.write("\n##### _Followed by:_")
+    f.write("\n###### Plant Sensors\n\n")
+    f.write("\n- The sensor description.")
+    f.write("\n  - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity.")
+    f.write("\n  - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`).")
+    f.write("\n  - The description for Statistics Interface sensors will be prefixed by `si_` (not `plant_`).")
+    f.write("\n##### _OR:_")
+    f.write("\n###### Device Sensors\n\n")
+    f.write("\n- The device type (inverter, ac_charger, or dc_charger).")
+    f.write("\n- _ separator")
+    f.write("\n- The Modbus device ID. Normally 1 for the Inverter and DC Charger and 2 for an AC Charger, but depends on how the installer configured the Modbus interface.")
+    f.write("\n- _ separator")
+    f.write("\n- The sensor description.\n\n")
+
+
 async def sensor_index():
     def extract_min_max(range_string: str, precision: int | None, gain: float):
         """
@@ -343,28 +365,6 @@ def invert_dict_by_field(original_dict, field):
             new_dict[field_value] = []
         new_dict[field_value].append(orig_key)
     return new_dict
-
-
-def write_naming_convention(f):
-    f.write("\n#### Naming Convention for Sensors in `sigenergy2mqtt`\n\n")
-    f.write("\n- Sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.")
-    f.write("\n- _ separator")
-    f.write("\n- The index of the Modbus host from the configuration file (or auto-discovery), starting from 0.")
-    f.write(" (This is to prevent clashes with the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ Sigenergy-Local-Modbus</a> HACS integration.)")
-    f.write("\n- _ separator")
-    f.write("\n##### _Followed by:_")
-    f.write("\n###### Plant Sensors\n\n")
-    f.write("\n- The sensor description.")
-    f.write("\n  - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity.")
-    f.write("\n  - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`).")
-    f.write("\n  - The description for Statistics Interface sensors will be prefixed by `si_` (not `plant_`).")
-    f.write("\n##### _OR:_")
-    f.write("\n###### Device Sensors\n\n")
-    f.write("\n- The device type (inverter, ac_charger, or dc_charger).")
-    f.write("\n- _ separator")
-    f.write("\n- The Modbus device ID. Normally 1 for the Inverter and DC Charger and 2 for an AC Charger, but depends on how the installer configured the Modbus interface.")
-    f.write("\n- _ separator")
-    f.write("\n- The sensor description.\n\n")
 
 
 async def compare_sensor_instances():

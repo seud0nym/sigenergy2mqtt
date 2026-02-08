@@ -14,14 +14,6 @@ from .read_ahead import ReadAhead
 
 
 class ModbusClient(AsyncModbusTcpClient):
-    def __init__(self, *args, **kwargs):
-        kwargs["framer"] = FramerType.SOCKET
-        kwargs["trace_packet"] = self._trace_packet_handler
-        super().__init__(*args, **kwargs)
-        self._read_ahead_pdu: dict[int, dict[int, ReadAhead | None]] = {}
-        self._trace: bool = False
-        self._read_count: int = 0
-        self._cache_hits: int = 0
 
     def _trace_packet_handler(self, is_send: bool, data: bytes) -> bytes:
         if self._trace:
@@ -31,6 +23,14 @@ class ModbusClient(AsyncModbusTcpClient):
                 log_text = Log.build_msg("recv: {}", data, ":hex")
             logging.debug(log_text)
         return data
+    def __init__(self, *args, **kwargs):
+        kwargs["framer"] = FramerType.SOCKET
+        kwargs["trace_packet"] = self._trace_packet_handler
+        super().__init__(*args, **kwargs)
+        self._read_ahead_pdu: dict[int, dict[int, ReadAhead | None]] = {}
+        self._trace: bool = False
+        self._read_count: int = 0
+        self._cache_hits: int = 0
 
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False

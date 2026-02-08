@@ -15,6 +15,39 @@ from .smart_port_config import SmartPortConfiguration
 Config = _Config
 
 
+def _apply_cli_overrides(args):
+    """Applies parsed CLI arguments to environment variables and Config instance."""
+    # Special case for log level to set it early
+    log_level_arg = getattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
+    if log_level_arg:
+        active_config.log_level = getattr(logging, log_level_arg)
+        logging.getLogger("root").setLevel(active_config.log_level)
+        logging.info(f"sigenergy2mqtt log-level changed to {log_level_arg}")
+
+    for arg, value in vars(args).items():
+        if arg in ["clean", "discovery_only", "validate_only", "show_version"]:
+            continue
+
+        # argparse will store False if boolean CLI option was NOT specified, so we skip those
+        if (isinstance(value, bool) and value is False) or value is None or value in ["false", "False", ""]:  # also check None/strings that should be parsed as False
+            logging.debug(f"CLI arg {arg} was NOT specified ({value=}), skipping")
+            continue
+
+        # Handle Modbus read-only special case
+        if arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY:
+            if value in ["true", "True", True, 1]:
+                _Config.apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_ONLY, "true")
+                _Config.apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_WRITE, "false")
+                _Config.apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY, "false")
+            continue
+
+        if value is not None:
+            if isinstance(value, list):
+                _Config.apply_cli_to_env(arg, ",".join([str(x) for x in value]))
+            else:
+                _Config.apply_cli_to_env(arg, str(value))
+
+
 def initialize():
     """Explicitly initialize the configuration module.
 
@@ -74,36 +107,3 @@ def initialize():
 
     if getattr(args, "discovery_only", False):
         active_config.home_assistant.discovery_only = True
-
-
-def _apply_cli_overrides(args):
-    """Applies parsed CLI arguments to environment variables and Config instance."""
-    # Special case for log level to set it early
-    log_level_arg = getattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
-    if log_level_arg:
-        active_config.log_level = getattr(logging, log_level_arg)
-        logging.getLogger("root").setLevel(active_config.log_level)
-        logging.info(f"sigenergy2mqtt log-level changed to {log_level_arg}")
-
-    for arg, value in vars(args).items():
-        if arg in ["clean", "discovery_only", "validate_only", "show_version"]:
-            continue
-
-        # argparse will store False if boolean CLI option was NOT specified, so we skip those
-        if (isinstance(value, bool) and value is False) or value is None or value in ["false", "False", ""]:  # also check None/strings that should be parsed as False
-            logging.debug(f"CLI arg {arg} was NOT specified ({value=}), skipping")
-            continue
-
-        # Handle Modbus read-only special case
-        if arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY:
-            if value in ["true", "True", True, 1]:
-                _Config.apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_ONLY, "true")
-                _Config.apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_WRITE, "false")
-                _Config.apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY, "false")
-            continue
-
-        if value is not None:
-            if isinstance(value, list):
-                _Config.apply_cli_to_env(arg, ",".join([str(x) for x in value]))
-            else:
-                _Config.apply_cli_to_env(arg, str(value))

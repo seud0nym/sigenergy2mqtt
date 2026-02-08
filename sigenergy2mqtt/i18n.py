@@ -29,6 +29,30 @@ class Translator:
                 self._available_translations.sort()
         return self._available_translations
 
+    def _load_file(self, language: str) -> dict[str, Any]:
+        if language in self._cache:
+            return self._cache[language]
+
+        # Map 'zh' to 'zh-Hans' if 'zh' file doesn't exist but 'zh-Hans' does
+        load_lang = language
+        if language == "zh" and not (self._translations_dir / "zh.yaml").exists() and (self._translations_dir / "zh-Hans.yaml").exists():
+            load_lang = "zh-Hans"
+
+        file_path = self._translations_dir / f"{load_lang}.yaml"
+        if not file_path.exists():
+            if language != DEFAULT_LANGUAGE:
+                logging.warning(f"Translation file not found: {file_path}")
+            return {}
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = self._yaml.load(f) or {}
+                self._cache[language] = data
+                return data
+        except Exception as e:
+            logging.error(f"Failed to load translation file {file_path}: {e}")
+            return {}
+
     def load(self, language: str):
         if self._language == language and self._translations:
             return
@@ -61,29 +85,14 @@ class Translator:
         if language == DEFAULT_LANGUAGE:
             self._fallback_translations = data
 
-    def _load_file(self, language: str) -> dict[str, Any]:
-        if language in self._cache:
-            return self._cache[language]
-
-        # Map 'zh' to 'zh-Hans' if 'zh' file doesn't exist but 'zh-Hans' does
-        load_lang = language
-        if language == "zh" and not (self._translations_dir / "zh.yaml").exists() and (self._translations_dir / "zh-Hans.yaml").exists():
-            load_lang = "zh-Hans"
-
-        file_path = self._translations_dir / f"{load_lang}.yaml"
-        if not file_path.exists():
-            if language != DEFAULT_LANGUAGE:
-                logging.warning(f"Translation file not found: {file_path}")
-            return {}
-
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = self._yaml.load(f) or {}
-                self._cache[language] = data
-                return data
-        except Exception as e:
-            logging.error(f"Failed to load translation file {file_path}: {e}")
-            return {}
+    def _get_nested(self, data: dict, parts: list[str]) -> Any:
+        current = data
+        for part in parts:
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                return None
+        return current
 
     def translate(self, key: str, default: str | None = None) -> tuple[str, str, bool]:
         # Helper to prepend "class." if needed
@@ -105,15 +114,6 @@ class Translator:
             return str(value), DEFAULT_LANGUAGE, False
 
         return default if default is not None else key, DEFAULT_LANGUAGE, False
-
-    def _get_nested(self, data: dict, parts: list[str]) -> Any:
-        current = data
-        for part in parts:
-            if isinstance(current, dict) and part in current:
-                current = current[part]
-            else:
-                return None
-        return current
 
 
 _translator = Translator()
