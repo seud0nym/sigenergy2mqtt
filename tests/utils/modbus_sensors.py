@@ -61,7 +61,7 @@ async def get_sensor_instances(
         rated_discharging_power=PlantRatedDischargingPower(plant_index),
         rated_frequency=GridCodeRatedFrequency(plant_index),
     )
-    remote_ems = plant.sensors[f"{Config.home_assistant.entity_id_prefix}_0_247_40029"]
+    remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
     hybrid_model = InverterModel(plant_index, hybrid_inverter_device_address)
