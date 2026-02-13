@@ -31,6 +31,16 @@ async def get_sensor_instances(
         protocol_version = list(Protocol)[-1]
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
+    # Ensure Config.modbus has an entry - in test environments the reset_config
+    # conftest fixture may have cleared it
+    if len(Config.modbus) <= plant_index:
+        Config.reload()
+    if len(Config.modbus) <= plant_index:
+        from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
+
+        while len(Config.modbus) <= plant_index:
+            Config.modbus.append(ModbusConfiguration())
+
     Config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
     Config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 

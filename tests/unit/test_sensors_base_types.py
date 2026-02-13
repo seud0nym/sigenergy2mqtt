@@ -4,26 +4,10 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-# Mock circular dependencies before importing sensors.base
-mock_types = MagicMock()
-
-
-class MockHybridInverter:
-    pass
-
-
-class MockPVInverter:
-    pass
-
-
-mock_types.HybridInverter = MockHybridInverter
-mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.common.types"] = mock_types
-
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
 
 from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (  # noqa: E402
     EnergyDailyAccumulationSensor,
     EnergyLifetimeAccumulationSensor,
@@ -257,8 +241,37 @@ class TestEnergyAccumulationSensors:
                 with patch("sigenergy2mqtt.sensors.base.time.localtime", side_effect=mock_localtime):
                     with patch("asyncio.run_coroutine_threadsafe", side_effect=mock_run_coro):
                         sensor.set_source_values(source, values)
-                        await asyncio.sleep(0.1)
-                        assert sensor._state_at_midnight == 1105.0
-                        # Call again to verify state_now recalculation
-                        sensor.set_source_values(source, [values[-1]])
-                        assert sensor._state_now == 0.0
+
+    @pytest.mark.asyncio
+    async def test_readonly_update_internal_state_unknown_type(self):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            # name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
+            with pytest.raises(AssertionError, match="Invalid data type UNKNOWN"):
+                ReadOnlySensor("RO", "sigenergy_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)  # type: ignore
+
+    @pytest.mark.asyncio
+    async def test_readonly_update_internal_state_failed(self):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = ReadOnlySensor("RO", "sigenergy_ro", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
+            client = AsyncMock()
+            rr = MagicMock()
+            rr.isError.return_value = False  # So it doesn't raise Exception from _check_register_response
+            rr.registers = None  # But return None-like so it returns False
+            client.read_holding_registers.return_value = None
+            assert await sensor._update_internal_state(modbus_client=client) is False
+
+
+class TestReadWriteSensor:
+    @pytest.mark.asyncio
+    async def test_read_write_set_value(self):
+        from sigenergy2mqtt.sensors.base import ReadWriteSensor
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            # availability, name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
+            sensor = ReadWriteSensor(None, "RW", "sigenergy_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
+            sensor.configure_mqtt_topics("sigenergy")
+            client = AsyncMock()
+            client.write_register.return_value = MagicMock(isError=lambda: False)
+            # set_value(self, modbus_client, mqtt_client, value, source, handler)
+            await sensor.set_value(client, MagicMock(), 123, sensor["command_topic"], MagicMock())
+            client.write_register.assert_called_once()

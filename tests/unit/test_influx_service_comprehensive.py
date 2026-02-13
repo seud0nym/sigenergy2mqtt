@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -60,6 +61,13 @@ def test_init_no_influx_config(logger):
     # Defaults required for init to proceed past enabled check if logic allows?
     # InfluxService checks enabled first?
     # No, it sets defaults first.
+    mock_config.load_hass_history = False
+    mock_config.default_measurement = "sigen"
+    mock_config.version = "2.0"
+    mock_config.url = "http://localhost:8086"
+    mock_config.token = "token"
+    mock_config.org = "org"
+    mock_config.bucket = "bucket"
     mock_config.max_retries = 3
     mock_config.pool_connections = 100
     mock_config.pool_maxsize = 100
@@ -67,7 +75,7 @@ def test_init_no_influx_config(logger):
     mock_config.flush_interval = 1.0
     mock_config.query_interval = 0.1
 
-    with patch.object(Config, "influxdb", mock_config):
+    with patch.object(active_config, "influxdb", mock_config):
         svc = InfluxService(logger, plant_index=0)
         assert svc._writer_type is None
 

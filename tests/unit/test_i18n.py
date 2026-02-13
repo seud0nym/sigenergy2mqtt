@@ -14,20 +14,21 @@ from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
 def ensure_sane_config():
     """Ensure Config.home_assistant is sane, even if other tests leaked a SimpleNamespace."""
     from sigenergy2mqtt.config import Config
+    from sigenergy2mqtt.config.config import active_config
 
     # If it's a SimpleNamespace or Mock, it might be missing our keys
-    if not hasattr(Config.home_assistant, "entity_id_prefix"):
-        with patch.object(Config.home_assistant, "entity_id_prefix", "sigenergy", create=True):
-            with patch.object(Config.home_assistant, "unique_id_prefix", "sigenergy", create=True):
-                with patch.object(Config.home_assistant, "device_name_prefix", "", create=True):
-                    with patch("sigenergy2mqtt.config.Config.modbus", []):
+    if not hasattr(active_config.home_assistant, "entity_id_prefix"):
+        with patch.object(active_config.home_assistant, "entity_id_prefix", "sigenergy", create=True):
+            with patch.object(active_config.home_assistant, "unique_id_prefix", "sigenergy", create=True):
+                with patch.object(active_config.home_assistant, "device_name_prefix", "", create=True):
+                    with patch("sigenergy2mqtt.config.config.active_config.modbus", []):
                         yield
     else:
         # Even if it has the attributes, we want our specific values for these tests
-        with patch.object(Config.home_assistant, "entity_id_prefix", "sigenergy"):
-            with patch.object(Config.home_assistant, "unique_id_prefix", "sigenergy"):
-                with patch.object(Config.home_assistant, "device_name_prefix", ""):
-                    with patch("sigenergy2mqtt.config.Config.modbus", []):
+        with patch.object(active_config.home_assistant, "entity_id_prefix", "sigenergy"):
+            with patch.object(active_config.home_assistant, "unique_id_prefix", "sigenergy"):
+                with patch.object(active_config.home_assistant, "device_name_prefix", ""):
+                    with patch("sigenergy2mqtt.config.config.active_config.modbus", []):
                         yield
 
 
@@ -114,7 +115,7 @@ def test_sensor_name_translation():
     i18n.set_translations("fr", {"class": {"InverterModel": {"name": "Modèle"}}})
     i18n.load("fr")
     # InverterModel.name is translated in fr mock
-    with patch("sigenergy2mqtt.config.Config.home_assistant.unique_id_prefix", "sigenergy"), patch("sigenergy2mqtt.config.Config.home_assistant.entity_id_prefix", "sigenergy"):
+    with patch("sigenergy2mqtt.config.config.active_config.home_assistant.unique_id_prefix", "sigenergy"), patch("sigenergy2mqtt.config.config.active_config.home_assistant.entity_id_prefix", "sigenergy"):
         # We need a concrete class that matches the translation key
         class InverterModel(MockSensor):
             pass
@@ -126,7 +127,7 @@ def test_sensor_name_translation():
 def test_device_name_translation():
     i18n.set_translations("fr", {"class": {"Inverter": {"name": "Onduleur"}}})
     i18n.load("fr")
-    with patch("sigenergy2mqtt.config.Config.home_assistant.device_name_prefix", ""), patch("sigenergy2mqtt.config.Config.modbus", []):
+    with patch("sigenergy2mqtt.config.config.active_config.home_assistant.device_name_prefix", ""), patch("sigenergy2mqtt.config.config.active_config.modbus", []):
 
         class Inverter(MockDevice):
             pass
@@ -144,7 +145,7 @@ async def test_alarm_bit_translation():
     class Alarm1Sensor(MockAlarmSensor):
         pass
 
-    with patch("sigenergy2mqtt.config.Config.home_assistant.entity_id_prefix", "sigenergy"), patch.object(ReadOnlySensor, "_update_internal_state", return_value=True):
+    with patch("sigenergy2mqtt.config.config.active_config.home_assistant.entity_id_prefix", "sigenergy"), patch.object(ReadOnlySensor, "_update_internal_state", return_value=True):
         sensor = Alarm1Sensor()
         sensor._states = [(0.0, 1)]
         state = await sensor.get_state()

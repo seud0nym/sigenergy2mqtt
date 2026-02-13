@@ -800,8 +800,8 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_args():
+def parse_args(args=None):
     """Parses known arguments and returns them."""
     parser = get_parser()
-    args, unknown = parser.parse_known_args()
-    return args
+    args_parsed, unknown = parser.parse_known_args(args)
+    return args_parsed

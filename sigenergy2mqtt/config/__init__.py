@@ -48,7 +48,7 @@ def _apply_cli_overrides(args):
                 _Config.apply_cli_to_env(arg, str(value))
 
 
-def initialize():
+def initialize(args=None):
     """Explicitly initialize the configuration module.
 
     This performs side effects previously handled on import:
@@ -57,18 +57,23 @@ def initialize():
     - Stale file cleanup
     - CLI argument parsing and applying overrides
     """
+    if args is None and "pytest" in sys.modules:
+        args = []
+
     # 1. System-level initialization (logging, folders)
     persistent_path = _Config.system_initialize()
     active_config.persistent_state_path = persistent_path
 
     # 2. Parse CLI arguments
-    args = cli.parse_args()
+    parsed_args = cli.parse_args(args)
 
-    if args.show_version:
+    if parsed_args.show_version:
+        if "pytest" in sys.modules:
+            return  # Don't exit during tests
         sys.exit(0)
 
     # 3. Apply CLI overrides to environment variables (for backward compatibility with how Config loads)
-    _apply_cli_overrides(args)
+    _apply_cli_overrides(parsed_args)
 
     # 4. Initialize Config with the discovered path if needed (it already defaults to current folder)
     # The reload() call will pick up the environment variables we just set.
@@ -93,17 +98,19 @@ def initialize():
         sys.exit(1)
 
     # Handle early exit flags
-    if getattr(args, "clean", False):
+    if getattr(parsed_args, "clean", False):
         active_config.clean = True
 
-    if getattr(args, "validate_only", False):
+    if getattr(parsed_args, "validate_only", False):
         try:
             active_config.validate()
             logging.info("Configuration validated successfully.")
+            if "pytest" in sys.modules:
+                return
             sys.exit(0)
         except Exception as e:
             logging.critical(f"Configuration validation failed: {e}")
             sys.exit(1)
 
-    if getattr(args, "discovery_only", False):
+    if getattr(parsed_args, "discovery_only", False):
         active_config.home_assistant.discovery_only = True

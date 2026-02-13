@@ -55,17 +55,45 @@ def mock_language_detection(request):
             yield
 
 
+# Baseline env vars required for Config to initialize properly
+_BASELINE_ENV = {
+    "SIGENERGY2MQTT_MODBUS_HOST": "127.0.0.1",
+    "SIGENERGY2MQTT_MODBUS_PORT": "502",
+    "SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID": "1",
+}
+
+
 @pytest.fixture(autouse=True)
 def reset_config():
-    """Global fixture to ensure Config is reset for every test."""
+    """Global fixture to ensure Config is reset for every test.
+
+    Saves and restores SIGENERGY2MQTT_* env vars to prevent cross-test pollution.
+    Does NOT use monkeypatch because that conflicts with tests that also use
+    monkeypatch to set/clear these same env vars.
+    """
+    # Save all SIGENERGY2MQTT_* env vars
+    saved_env = {k: v for k, v in os.environ.items() if k.startswith("SIGENERGY2MQTT_")}
+
+    # Ensure baseline env vars are set for Config.reload()
+    for k, v in _BASELINE_ENV.items():
+        os.environ[k] = v
+
     Config.reset()
     Config.reload()
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()
+
     yield
-    Config.reset()
-    Config.reload()
+
+    # Teardown: restore env vars to pre-test state
+    # Remove any SIGENERGY2MQTT_* vars that tests may have added
+    for k in list(os.environ.keys()):
+        if k.startswith("SIGENERGY2MQTT_"):
+            del os.environ[k]
+    # Restore saved vars
+    os.environ.update(saved_env)
+
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()

@@ -5,7 +5,19 @@ import pytest
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import DerivedSensor, InputType, NumericSensor, ObservableMixin, ReadOnlySensor, Sensor, SubstituteMixin
+from sigenergy2mqtt.sensors.base import (
+    DerivedSensor,
+    InputType,
+    ModbusSensorMixin,
+    NumericSensor,
+    ObservableMixin,
+    ReadOnlySensor,
+    ResettableAccumulationSensor,
+    RunningStateSensor,
+    Sensor,
+    SubstituteMixin,
+    SwitchSensor,
+)
 
 
 class ConcreteSensor(Sensor):
@@ -138,3 +150,148 @@ class TestBaseCoverage:
 
             with pytest.raises(SanityCheckException):
                 sensor.set_latest_state(150.0)
+
+
+class TestModbusSensorMixinErrorHandling:
+    class DummyModbus(ModbusSensorMixin, Sensor):
+        async def _update_internal_state(self, **kw):
+            return True
+
+    def test_check_register_response_none(self):
+        sensor = self.DummyModbus(
+            InputType.HOLDING,
+            0,
+            1,
+            30001,
+            1,
+            name="N",
+            unique_id="sigenergy_u",
+            object_id="sigenergy_o",
+            unit="U",
+            device_class=None,
+            state_class=None,
+            icon="mdi:i",
+            gain=1.0,
+            precision=0,
+            protocol_version=Protocol.V2_4,
+        )
+        assert sensor._check_register_response(None, "test") is False
+
+    def test_check_register_response_errors(self):
+        sensor = self.DummyModbus(
+            InputType.HOLDING,
+            0,
+            1,
+            30001,
+            1,
+            name="N",
+            unique_id="sigenergy_u",
+            object_id="sigenergy_o",
+            unit="U",
+            device_class=None,
+            state_class=None,
+            icon="mdi:i",
+            gain=1.0,
+            precision=0,
+            protocol_version=Protocol.V2_4,
+        )
+        resp = MagicMock()
+        resp.isError.return_value = True
+        resp.exception_code = 1
+        with pytest.raises(Exception, match="0x01 ILLEGAL FUNCTION"):
+            sensor._check_register_response(resp, "test")
+
+
+class TestAccumulationSensorPersistence:
+    @pytest.mark.asyncio
+    async def test_resettable_persistence_load_save(self, tmp_path):
+        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+
+        source = MagicMock(spec=ReadOnlySensor)
+        source.unique_id = "src"
+        with patch("sigenergy2mqtt.sensors.base.Config.persistent_state_path", str(tmp_path)):
+            sensor = ResettableAccumulationSensor(
+                "Acc",
+                "sigenergy_acc_uid",
+                "sigenergy_acc_obj",
+                source,
+                ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:flash",
+                gain=1.0,
+                precision=2,
+            )
+            await sensor._persist_current_total(123.45)
+
+            sensor2 = ResettableAccumulationSensor(
+                "Acc2",
+                "sigenergy_acc_uid",
+                "sigenergy_acc_obj",
+                source,
+                ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:flash",
+                gain=1.0,
+                precision=2,
+            )
+            assert sensor2._current_total == 123.45
+
+    def test_resettable_discovery_components(self):
+        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+
+        source = MagicMock(spec=ReadOnlySensor)
+        source.unique_id = "src"
+        sensor = ResettableAccumulationSensor(
+            "Acc",
+            "sigenergy_acc_uid",
+            "sigenergy_acc_obj",
+            source,
+            ModbusDataType.UINT32,
+            unit="kWh",
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:flash",
+            gain=1.0,
+            precision=2,
+        )
+        comps = sensor.get_discovery_components()
+        assert "sigenergy_acc_uid" in comps
+        assert "unique_id" in comps["sigenergy_acc_uid"]
+
+
+class TestSpecializedSensors:
+    def test_switch_sensor_logic(self):
+        from sigenergy2mqtt.sensors.base import SwitchSensor
+
+        # availability_control_sensor, name, object_id, plant_index, device_address, address, scan_interval, protocol_version
+        s = SwitchSensor(None, "Switch", "sigenergy_sw", 0, 1, 30005, 10, Protocol.V2_4)
+        assert s.state2raw(1) == 1
+        assert s.state2raw("1") == 1
+
+    @pytest.mark.asyncio
+    async def test_numeric_sensor_logic(self):
+        from sigenergy2mqtt.sensors.base import NumericSensor
+        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+
+        s = NumericSensor(
+            None, "Num", "sigenergy_n", InputType.HOLDING, 0, 1, 30006, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4, minimum=0, maximum=100
+        )
+        assert await s.value_is_valid(None, 50) is True
+        assert await s.value_is_valid(None, 150) is False
+
+    @pytest.mark.asyncio
+    async def test_running_state_sensor(self):
+        from sigenergy2mqtt.sensors.base import RunningStateSensor
+
+        # name, object_id, plant_index, device_address, address, protocol_version
+        s = RunningStateSensor("State", "sigenergy_state", 0, 1, 30007, Protocol.V2_4)
+        client = AsyncMock()
+        client.read_input_registers.return_value = MagicMock(isError=lambda: False, registers=[2])
+        # Use MagicMock for synchronous method to avoid coroutine issues
+        client.convert_from_registers = MagicMock(return_value=2)
+        assert await s._update_internal_state(modbus_client=client) is True
+        assert await s.get_state(modbus_client=client) == "Fault"

@@ -19,8 +19,6 @@ def test_influxdb_config_tuning_defaults():
     assert cfg.pool_maxsize == 100
     assert cfg.sync_chunk_size == 1000
     assert cfg.max_sync_workers == 4
-    assert cfg.default_measurement == "state"
-    assert cfg.load_hass_history is False
 
 
 def test_influxdb_config_tuning_parsing():

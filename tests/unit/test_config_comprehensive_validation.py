@@ -1,9 +1,11 @@
 import logging
 from datetime import time
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
 from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
@@ -79,11 +81,18 @@ class TestConfigComprehensiveValidation:
 
     def test_config_global_validation(self):
         # Reset Config for testing
-        Config.modbus = []
-        with pytest.raises(ValueError, match="At least one Modbus device must be configured"):
-            Config.validate()
+        original_modbus = list(active_config.modbus)
+        try:
+            active_config.modbus.clear()
 
-        Config.modbus = [ModbusConfiguration(host="localhost")]
+            with pytest.raises(ValueError, match="At least one Modbus device must be configured"):
+                Config.validate()
+        finally:
+            active_config.modbus.clear()
+            active_config.modbus.extend(original_modbus)
+
+        active_config.modbus.clear()
+        active_config.modbus.extend([ModbusConfiguration(host="localhost")])
         Config.mqtt = MqttConfiguration(broker="localhost", anonymous=True)
         Config.home_assistant = HomeAssistantConfiguration(enabled=False)
         Config.pvoutput = PVOutputConfiguration(enabled=False)

@@ -41,7 +41,12 @@ async def mock_modbus_server():
     from tests.utils.modbus_test_server import wait_for_server_start
 
     if not await wait_for_server_start("127.0.0.1", port):
-        raise RuntimeError("Mock Modbus server failed to start")
+        if server_task.done():
+            try:
+                server_task.result()
+            except Exception as e:
+                raise RuntimeError(f"Mock Modbus server crashed: {e}") from e
+        raise RuntimeError("Mock Modbus server failed to start (timeout)")
 
     yield port
 

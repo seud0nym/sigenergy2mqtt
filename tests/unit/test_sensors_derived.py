@@ -4,22 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# Mock circular dependencies and other imports
-mock_types = MagicMock()
-
-
-class MockHybridInverter:
-    pass
-
-
-class MockPVInverter:
-    pass
-
-
-mock_types.HybridInverter = MockHybridInverter
-mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.common.types"] = mock_types
-
 # Mock Metrics
 mock_metrics = MagicMock()
 mock_metrics.modbus_read = AsyncMock()

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
@@ -39,7 +40,7 @@ def service(logger):
     mock_config.flush_interval = 1.0
     mock_config.query_interval = 0.1
 
-    with patch.object(Config, "influxdb", mock_config):
+    with patch.object(active_config, "influxdb", mock_config):
         svc = InfluxService(logger, plant_index=0)
     # Manually configure basic writer for these tests
     svc._writer_type = "v2_http"
@@ -62,7 +63,7 @@ def hass_sync(logger):
     mock_config.query_interval = 0.1
     mock_config.default_measurement = "state"
 
-    with patch.object(Config, "influxdb", mock_config):
+    with patch.object(active_config, "influxdb", mock_config):
         svc = HassHistorySync(logger, plant_index=0)
     svc._writer_type = "v2_http"
     svc._write_url = "http://localhost:8086/api/v2/write"
@@ -176,7 +177,7 @@ class TestInfluxChunking:
     @pytest.mark.asyncio
     async def testcopy_records_v1_chunking(self, hass_sync):
         """Test that copy_records_v1 fetches multiple chunks."""
-        Config.influxdb.sync_chunk_size = 2
+        active_config.influxdb.sync_chunk_size = 2
         hass_sync.write_line = AsyncMock()
 
         # Mock query_v1 to return two chunks of 2 records, then an empty result
@@ -227,7 +228,7 @@ class TestInfluxChunking:
     @pytest.mark.asyncio
     async def testcopy_records_v2_chunking(self, hass_sync):
         """Test that copy_records_v2 fetches multiple chunks."""
-        Config.influxdb.sync_chunk_size = 2
+        active_config.influxdb.sync_chunk_size = 2
         hass_sync.write_line = AsyncMock()
 
         # CSV Responses for Flux
@@ -253,7 +254,7 @@ class TestInfluxChunking:
     @pytest.mark.asyncio
     async def test_chunking_stops_on_offline(self, hass_sync):
         """Test that chunking loop aborts if service goes offline."""
-        Config.influxdb.sync_chunk_size = 2
+        active_config.influxdb.sync_chunk_size = 2
         hass_sync.write_line = AsyncMock()
 
         chunk1 = {
@@ -291,7 +292,7 @@ class TestInfluxChunking:
     @pytest.mark.asyncio
     async def test_sync_from_homeassistant_concurrency(self, hass_sync):
         """Test that sync_from_homeassistant respects max_sync_workers limit."""
-        Config.influxdb.max_sync_workers = 2
+        active_config.influxdb.max_sync_workers = 2
         hass_sync.detect_homeassistant_db = AsyncMock(return_value=True)
         topic_cache = {
             "topic1": {"uom": "W", "object_id": "sensor1"},

@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
 from sigenergy2mqtt.devices.device import Device
 

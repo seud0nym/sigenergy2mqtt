@@ -28,10 +28,19 @@ def test_threadconfig_properties_and_methods(monkeypatch):
     assert tc.description == tc.url
     assert tc.url == "modbus://1.1.1.1:502"
 
+    # description with space name
+    tc.name = "  "
+    assert tc.description == tc.url
+
+    # description with name
+    tc.name = "MyName"
+    assert tc.description == "MyName"
+
     # Create a Device and attach to ThreadConfig
     dev = Device("D1", 0, "uid-d1", "mf", "mdl", Protocol.N_A)
     tc.add_device(0, dev)
     assert dev in tc.devices
+    assert dev in tc.device_init
 
     # Test online assignment using a loop-bound Future
     loop = asyncio.new_event_loop()

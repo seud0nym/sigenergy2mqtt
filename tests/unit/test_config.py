@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest  # noqa: F401
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.config.modbus_config import ModbusConfiguration  # noqa: F401
 
 
@@ -12,18 +13,24 @@ class TestConfigStaticMethods:
 
     def test_get_modbus_log_level_single_device(self):
         """Test get_modbus_log_level with one device."""
-        with patch.object(Config, "modbus", []):
+        original_modbus = list(active_config.modbus)
+        try:
             device = MagicMock()
             device.log_level = logging.DEBUG
-            Config.modbus.append(device)
+            active_config.modbus.clear()
+            active_config.modbus.append(device)
 
-            level = Config.get_modbus_log_level()
+            level = active_config.get_modbus_log_level()
 
             assert level == logging.DEBUG
+        finally:
+            active_config.modbus.clear()
+            active_config.modbus.extend(original_modbus)
 
     def test_get_modbus_log_level_multiple_devices(self):
         """Test get_modbus_log_level returns minimum level."""
-        with patch.object(Config, "modbus", []):
+        original_modbus = list(active_config.modbus)
+        try:
             device1 = MagicMock()
             device1.log_level = logging.INFO
             device2 = MagicMock()
@@ -31,26 +38,34 @@ class TestConfigStaticMethods:
             device3 = MagicMock()
             device3.log_level = logging.WARNING
 
-            Config.modbus = [device1, device2, device3]
+            active_config.modbus.clear()
+            active_config.modbus.extend([device1, device2, device3])
 
-            level = Config.get_modbus_log_level()
+            level = active_config.get_modbus_log_level()
 
             # Should return minimum (DEBUG=10 < INFO=20 < WARNING=30)
             assert level == logging.DEBUG
+        finally:
+            active_config.modbus.clear()
+            active_config.modbus.extend(original_modbus)
 
     def test_set_modbus_log_level(self):
         """Test set_modbus_log_level sets all devices."""
-        device1 = MagicMock()
-        device1.log_level = logging.WARNING
-        device2 = MagicMock()
-        device2.log_level = logging.ERROR
+        original_modbus = active_config.modbus
+        try:
+            device1 = MagicMock()
+            device1.log_level = logging.WARNING
+            device2 = MagicMock()
+            device2.log_level = logging.ERROR
 
-        Config.modbus = [device1, device2]
+            active_config.modbus = [device1, device2]
 
-        Config.set_modbus_log_level(logging.INFO)
+            active_config.set_modbus_log_level(logging.INFO)
 
-        assert device1.log_level == logging.INFO
-        assert device2.log_level == logging.INFO
+            assert device1.log_level == logging.INFO
+            assert device2.log_level == logging.INFO
+        finally:
+            active_config.modbus = original_modbus
 
     def test_version(self):
         """Test version method returns version string."""

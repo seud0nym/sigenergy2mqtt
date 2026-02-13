@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 
@@ -21,6 +21,7 @@ def test_mqtt_setup_retries_then_succeeds(monkeypatch):
 
     # Monkeypatch paho Client methods to simulate connect failing once then succeeding
     import paho.mqtt.client as paho
+
     side = {"calls": 0}
 
     def fake_connect(self, broker, port=1883, keepalive=60):

@@ -4,6 +4,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.main.threading import read_and_publish_device_sensors
 
 
@@ -36,9 +37,9 @@ async def test_read_and_publish_device_sensors_ha_enabled_and_cancel():
     with (
         patch("sigenergy2mqtt.main.threading.ModbusClientFactory.get_client", return_value=modbus_client),
         patch("sigenergy2mqtt.main.threading.mqtt_setup", return_value=(mqtt_client, mqtt_handler)),
-        patch.object(Config.home_assistant, "enabled", True),
-        patch.object(Config.home_assistant, "discovery_only", False),
-        patch.object(Config, "clean", False),
+        patch.object(active_config.home_assistant, "enabled", True),
+        patch.object(active_config.home_assistant, "discovery_only", False),
+        patch.object(active_config, "clean", False),
     ):
         task = asyncio.create_task(read_and_publish_device_sensors(config, asyncio.get_event_loop()))
         await asyncio.sleep(0.1)
@@ -77,9 +78,9 @@ async def test_read_and_publish_device_sensors_clean_and_discovery_only():
 
     with (
         patch("sigenergy2mqtt.main.threading.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),
-        patch.object(Config.home_assistant, "enabled", True),
-        patch.object(Config.home_assistant, "discovery_only", True),
-        patch.object(Config, "clean", True),
+        patch.object(active_config.home_assistant, "enabled", True),
+        patch.object(active_config.home_assistant, "discovery_only", True),
+        patch.object(active_config, "clean", True),
     ):
         await read_and_publish_device_sensors(config, asyncio.get_event_loop())
         # discovery_only=True should prevent scheduling tasks

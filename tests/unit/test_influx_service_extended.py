@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -27,7 +28,9 @@ def service(logger):
     mock_config.flush_interval = 1.0
     mock_config.query_interval = 0.1
 
-    with patch.object(Config, "influxdb", mock_config):
+    mock_config.query_interval = 0.1
+
+    with patch.object(active_config, "influxdb", mock_config):
         svc = InfluxService(logger, plant_index=0)
     return svc
 
@@ -221,14 +224,14 @@ class TestGetConfigValues:
     @pytest.fixture
     def basic_config(self):
         """Setup basic InfluxDB config."""
-        Config.influxdb.host = "localhost"
-        Config.influxdb.port = 8086
-        Config.influxdb.database = "testdb"
-        Config.influxdb.username = None
-        Config.influxdb.password = None
-        Config.influxdb.token = None
-        Config.influxdb.org = None
-        Config.influxdb.bucket = None
+        active_config.influxdb.host = "localhost"
+        active_config.influxdb.port = 8086
+        active_config.influxdb.database = "testdb"
+        active_config.influxdb.username = None
+        active_config.influxdb.password = None
+        active_config.influxdb.token = None
+        active_config.influxdb.org = None
+        active_config.influxdb.bucket = None
         yield
         # Config is reset by conftest fixture
 
@@ -242,21 +245,21 @@ class TestGetConfigValues:
 
     def test_explicit_token(self, service, basic_config):
         """Extract configuration with explicit token."""
-        Config.influxdb.token = "my-secret-token"
+        active_config.influxdb.token = "my-secret-token"
         result = service.get_config_values()
         assert result["token"] == "my-secret-token"
 
     def test_token_from_password_no_username(self, service, basic_config):
         """Token derived from password when no username (backwards compat)."""
-        Config.influxdb.password = "password-as-token"
-        Config.influxdb.username = None
+        active_config.influxdb.password = "password-as-token"
+        active_config.influxdb.username = None
         result = service.get_config_values()
         assert result["token"] == "password-as-token"
 
     def test_password_not_token_when_username_present(self, service, basic_config):
         """Password is NOT used as token when username is present."""
-        Config.influxdb.password = "regular-password"
-        Config.influxdb.username = "regular-user"
+        active_config.influxdb.password = "regular-password"
+        active_config.influxdb.username = "regular-user"
         result = service.get_config_values()
         assert result["token"] is None
         assert result["user"] == "regular-user"
@@ -264,41 +267,41 @@ class TestGetConfigValues:
 
     def test_explicit_bucket(self, service, basic_config):
         """Extract configuration with explicit bucket."""
-        Config.influxdb.bucket = "my-bucket"
+        active_config.influxdb.bucket = "my-bucket"
         result = service.get_config_values()
         assert result["bucket"] == "my-bucket"
 
     def test_bucket_fallback_to_database(self, service, basic_config):
         """Bucket falls back to database name when not specified."""
-        Config.influxdb.bucket = None
-        Config.influxdb.database = "mydb"
+        active_config.influxdb.bucket = None
+        active_config.influxdb.database = "mydb"
         result = service.get_config_values()
         assert result["bucket"] == "mydb"
 
     def test_org_extraction(self, service, basic_config):
         """Extract organization configuration."""
-        Config.influxdb.org = "my-org"
+        active_config.influxdb.org = "my-org"
         result = service.get_config_values()
         assert result["org"] == "my-org"
 
     def test_auth_tuple_with_credentials(self, service, basic_config):
         """Auth tuple is created when username or password present."""
-        Config.influxdb.username = "user"
-        Config.influxdb.password = "pass"
+        active_config.influxdb.username = "user"
+        active_config.influxdb.password = "pass"
         result = service.get_config_values()
         assert result["auth"] == ("user", "pass")
 
     def test_auth_tuple_none_without_credentials(self, service, basic_config):
         """Auth tuple is None when no credentials."""
-        Config.influxdb.username = None
-        Config.influxdb.password = None
+        active_config.influxdb.username = None
+        active_config.influxdb.password = None
         result = service.get_config_values()
         assert result["auth"] is None
 
     def test_auth_tuple_partial_credentials(self, service, basic_config):
         """Auth tuple created with partial credentials (password only)."""
-        Config.influxdb.username = None
-        Config.influxdb.password = "pass-only"
+        active_config.influxdb.username = None
+        active_config.influxdb.password = "pass-only"
         result = service.get_config_values()
         # Password becomes token in backwards compat logic, so auth should still be None
         # because pwd is set but user isn't, making auth = (None, "pass-only") which is falsy for user
@@ -327,7 +330,10 @@ class TestMiscEdgeCases:
         mock_config.default_measurement = "state"
         mock_config.load_hass_history = False
 
-        with patch.object(Config, "influxdb", mock_config):
+        mock_config.default_measurement = "state"
+        mock_config.load_hass_history = False
+
+        with patch.object(active_config, "influxdb", mock_config):
             svc = InfluxService(logger, plant_index=5)
         assert "5" in svc.name
         assert "InfluxDB" in svc.name

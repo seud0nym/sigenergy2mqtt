@@ -4,6 +4,7 @@ import pytest
 
 from sigenergy2mqtt.common import Protocol, RegisterAccess
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import (
@@ -139,9 +140,9 @@ class MockDerivedSensor(DerivedSensor):
 class TestSensorPublishableState:
     @pytest.fixture(autouse=True)
     def setup_config(self, tmp_path):
-        with patch.object(Config, "home_assistant", MagicMock(unique_id_prefix="sigen", entity_id_prefix="sigen", enabled_by_default=True)):
-            with patch.object(Config, "sensor_overrides", {}):
-                with patch.object(Config, "persistent_state_path", tmp_path):
+        with patch.object(active_config, "home_assistant", MagicMock(unique_id_prefix="sigen", entity_id_prefix="sigen", enabled_by_default=True)):
+            with patch.object(active_config, "sensor_overrides", {}):
+                with patch.object(active_config, "persistent_state_path", tmp_path):
                     with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                         yield
 

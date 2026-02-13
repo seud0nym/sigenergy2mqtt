@@ -1,8 +1,8 @@
 import pytest
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.config import const
-from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.config import Config, const
+from sigenergy2mqtt.config.config import active_config
 
 
 def write_yaml(tmp_path, data: dict) -> str:
@@ -20,15 +20,20 @@ def test_reload_applies_yaml(tmp_path, monkeypatch):
     fn = write_yaml(tmp_path, data)
 
     # Directly configure from the parsed data to exercise _configure
-    Config.modbus = []
-    with open(fn, "r") as f:
-        parsed = YAML(typ="safe").load(f)
-    Config._configure(parsed)
+    original_modbus = list(active_config.modbus)
+    try:
+        active_config.modbus.clear()
+        with open(fn, "r") as f:
+            parsed = YAML(typ="safe").load(f)
+        active_config._configure(parsed)
 
-    assert Config.log_level == getattr(__import__("logging"), "DEBUG")
-    # Ensure modbus device was configured (check at least port)
-    assert len(Config.modbus) >= 1
-    assert Config.modbus[0].port == 1502
+        assert active_config.log_level == getattr(__import__("logging"), "DEBUG")
+        # Ensure modbus device was configured (check at least port)
+        assert len(active_config.modbus) >= 1
+        assert active_config.modbus[0].port == 1502
+    finally:
+        active_config.modbus.clear()
+        active_config.modbus.extend(original_modbus)
 
 
 def test_reload_env_overrides(monkeypatch):
@@ -37,23 +42,33 @@ def test_reload_env_overrides(monkeypatch):
     monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_PORT, "1503")
 
     # Reset devices and clear any source so reload uses env overrides
-    Config.modbus = []
-    Config._source = None
-
-    # Reload should apply overrides and create a modbus device
-    Config.reload()
-    assert len(Config.modbus) >= 1
-    assert Config.modbus[0].host == "8.8.8.8"
-    assert Config.modbus[0].port == 1503
+    original_modbus = list(active_config.modbus)
+    original_source = active_config._source
+    try:
+        active_config.modbus.clear()
+        active_config._source = None
+        # Reload should apply overrides and create a modbus device
+        active_config.reload()
+        assert len(active_config.modbus) >= 1
+        assert active_config.modbus[0].host == "8.8.8.8"
+        assert active_config.modbus[0].port == 1503
+    finally:
+        active_config.modbus.clear()
+        active_config.modbus.extend(original_modbus)
+        active_config._source = original_source
 
 
 def test_reload_invalid_yaml(tmp_path):
     # Write invalid YAML
     p = tmp_path / "bad.yaml"
     p.write_text("influxdb: [\n  - invalid")
-    Config._source = str(p)
-    with pytest.raises(Exception):
-        Config.reload()
+    original_source = active_config._source
+    try:
+        active_config._source = str(p)
+        with pytest.raises(Exception):
+            active_config.reload()
+    finally:
+        active_config._source = original_source
 
 
 def test_configure_unknown_key(tmp_path):

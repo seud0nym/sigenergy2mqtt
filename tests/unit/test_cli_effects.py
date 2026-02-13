@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main import threading as threading_mod
 from sigenergy2mqtt.main.thread_config import ThreadConfig
@@ -12,12 +13,12 @@ from sigenergy2mqtt.main.thread_config import ThreadConfig
 @pytest.mark.asyncio
 async def test_main_clean_disables_pvoutput(monkeypatch):
     """Verify that --clean disables PVOutput services in async_main."""
-    monkeypatch.setattr(Config, "modbus", [], raising=False)
-    monkeypatch.setattr(Config.pvoutput, "enabled", True, raising=False)
-    monkeypatch.setattr(Config, "clean", True, raising=False)
-    monkeypatch.setattr(Config, "metrics_enabled", False, raising=False)
-    monkeypatch.setattr(Config, "validate", classmethod(lambda cls: None), raising=False)
-    monkeypatch.setattr(Config, "get_modbus_log_level", classmethod(lambda cls: logging.INFO), raising=False)
+    active_config.modbus.clear()
+    monkeypatch.setattr(active_config.pvoutput, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config, "clean", True, raising=False)
+    monkeypatch.setattr(active_config, "metrics_enabled", False, raising=False)
+    monkeypatch.setattr(active_config, "validate", lambda: None, raising=False)
+    monkeypatch.setattr(active_config, "get_modbus_log_level", lambda: logging.INFO, raising=False)
 
     mock_get_pvoutput = MagicMock(return_value=[MagicMock()])
     monkeypatch.setattr(main_mod, "get_pvoutput_services", mock_get_pvoutput)
@@ -36,11 +37,11 @@ async def test_main_clean_disables_pvoutput(monkeypatch):
 @pytest.mark.asyncio
 async def test_threading_clean_effect(monkeypatch):
     """Verify that --clean prevents modbus client creation and skips task scheduling."""
-    monkeypatch.setattr(Config, "clean", True)
-    monkeypatch.setattr(Config, "home_assistant", type("HA", (), {"enabled": True, "discovery_only": False}))
-    monkeypatch.setattr(Config.mqtt, "client_id_prefix", "sigen")
-    monkeypatch.setattr(Config.mqtt, "broker", "localhost")
-    monkeypatch.setattr(Config.mqtt, "port", 1883)
+    monkeypatch.setattr(active_config, "clean", True)
+    monkeypatch.setattr(active_config, "home_assistant", type("HA", (), {"enabled": True, "discovery_only": False}))
+    monkeypatch.setattr(active_config.mqtt, "client_id_prefix", "sigen")
+    monkeypatch.setattr(active_config.mqtt, "broker", "localhost")
+    monkeypatch.setattr(active_config.mqtt, "port", 1883)
 
     cfg = ThreadConfig("127.0.0.1", 502, name="Test")
     mock_device = MagicMock()
@@ -75,11 +76,11 @@ async def test_threading_clean_effect(monkeypatch):
 @pytest.mark.asyncio
 async def test_threading_discovery_only_effect(monkeypatch):
     """Verify that --hass-discovery-only skips task scheduling."""
-    monkeypatch.setattr(Config, "clean", False)
-    monkeypatch.setattr(Config, "home_assistant", type("HA", (), {"enabled": True, "discovery_only": True}))
-    monkeypatch.setattr(Config.mqtt, "client_id_prefix", "sigen")
-    monkeypatch.setattr(Config.mqtt, "broker", "localhost")
-    monkeypatch.setattr(Config.mqtt, "port", 1883)
+    monkeypatch.setattr(active_config, "clean", False)
+    monkeypatch.setattr(active_config, "home_assistant", type("HA", (), {"enabled": True, "discovery_only": True}))
+    monkeypatch.setattr(active_config.mqtt, "client_id_prefix", "sigen")
+    monkeypatch.setattr(active_config.mqtt, "broker", "localhost")
+    monkeypatch.setattr(active_config.mqtt, "port", 1883)
 
     cfg = ThreadConfig("127.0.0.1", 502, name="TestHost")
     mock_device = MagicMock()

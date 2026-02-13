@@ -1,25 +1,8 @@
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Mock circular dependencies before importing sensors.base
-mock_types = MagicMock()
-
-
-class MockHybridInverter:
-    pass
-
-
-class MockPVInverter:
-    pass
-
-
-mock_types.HybridInverter = MockHybridInverter
-mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.common.types"] = mock_types
-
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 
