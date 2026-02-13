@@ -99,9 +99,9 @@ class ServiceTopics(dict[str, Topic]):
                 )
             return True
         else:
-            if value_key in payload:
+            if value_key.value in payload:
                 del payload[value_key.value]
-            self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
+                self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
             return False
 
     def _squared_root_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
@@ -120,9 +120,9 @@ class ServiceTopics(dict[str, Topic]):
                 )
             return True
         else:
-            if value_key in payload:
+            if value_key.value in payload:
                 del payload[value_key.value]
-            self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
+                self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
             return False
 
     def _sum_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
@@ -141,9 +141,9 @@ class ServiceTopics(dict[str, Topic]):
                 )
             return True
         else:
-            if value_key in payload:
+            if value_key.value in payload:
                 del payload[value_key.value]
-            self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
+                self._logger.info(f"{self._service.__class__.__name__} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
             return False
 
     def add_to_payload(self, payload: dict[str, float | int | str], interval_minutes: int, now: time.struct_time) -> bool:
