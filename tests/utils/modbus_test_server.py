@@ -293,6 +293,7 @@ async def run_async_server(
     protocol_version: Protocol = list(Protocol)[-1],
     log_level: int = logging.INFO,
     registers_to_debug: list[int] = [],
+    simulate_grid_outages: bool = False,
 ) -> None:
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
@@ -342,7 +343,8 @@ async def run_async_server(
     if log_level <= logging.INFO:
         logging.getLogger("pymodbus").setLevel(logging.INFO)
     try:
-        await asyncio.gather(
+        tasks = []
+        tasks.append(
             StartAsyncTcpServer(
                 context=ModbusServerContext(devices=context, single=False),
                 identity=ModbusDeviceIdentification(
@@ -357,11 +359,15 @@ async def run_async_server(
                 ),
                 address=(host, port),
                 framer=FramerType.SOCKET,
-            ),
-            simulate_grid_outage(context[247], wait_for_seconds=30, duration_seconds=30),
+            )
         )
+        if simulate_grid_outages:
+            tasks.append(simulate_grid_outage(context[247], wait_for_seconds=30, duration_seconds=30) if 247 in context else asyncio.sleep(0))
+        await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
+        # Ensure we don't leave the port bound
+        await asyncio.sleep(0.1)
 
 
 async def wait_for_server_start(host: str, port: int, timeout: float = 10.0) -> bool:
@@ -417,7 +423,13 @@ async def async_helper() -> None:
             protocol_version = Protocol(protocol_version)
 
     await run_async_server(
-        mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics")), protocol_version=protocol_version, log_level=modbus_log_level, registers_to_debug=registers_to_debug
+        mqtt_client,
+        modbus_client,
+        bool(config.get("home-assistant", {}).get("use-simplified-topics")),
+        protocol_version=protocol_version,
+        log_level=modbus_log_level,
+        registers_to_debug=registers_to_debug,
+        simulate_grid_outages=True,
     )
 
     mqtt_client.loop_stop()
