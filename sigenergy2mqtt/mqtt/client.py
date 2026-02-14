@@ -1,7 +1,6 @@
 import logging
 import os
 import ssl
-from collections import namedtuple
 from typing import Literal
 
 import paho.mqtt.client as mqtt
@@ -10,7 +9,6 @@ from paho.mqtt.enums import CallbackAPIVersion
 from .handler import MqttHandler
 
 logger = logging.getLogger("paho.mqtt")
-MqttResponse = namedtuple("MqttResponse", ["now", "handler"])
 
 
 class MqttClient(mqtt.Client):
