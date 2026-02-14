@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.mqtt.mqtt import MqttHandler
+from sigenergy2mqtt.mqtt.handler import MqttHandler
 
 
 class TestMqttMultiplexing:

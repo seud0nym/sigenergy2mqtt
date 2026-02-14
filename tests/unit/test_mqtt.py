@@ -6,7 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.mqtt.mqtt import MqttClient, MqttHandler, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
+from sigenergy2mqtt.mqtt.client import MqttClient, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
+from sigenergy2mqtt.mqtt.handler import MqttHandler
 
 
 class TestMqttHandler:
@@ -71,7 +72,7 @@ class TestMqttHandler:
         mock_client.reset_mock()
 
         # Trigger reconnect
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.handler.Config") as mock_config:
             mock_config.mqtt.broker = "test_broker"
             mock_config.mqtt.port = 1883
             handler.on_reconnect(mock_client)
@@ -186,7 +187,7 @@ class TestMqttHandler:
 
         handler._topics["test/topic"] = [async_handler]
 
-        with patch("sigenergy2mqtt.mqtt.mqtt.asyncio.run_coroutine_threadsafe") as mock_run:
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_message(mock_client, "test/topic", "test_payload")
             mock_run.assert_called_once()
             # Close the coroutine to avoid warning
@@ -206,7 +207,7 @@ class TestMqttHandler:
         async_handler = AsyncMock()
         handler._mids[123] = MagicMock(now=time.time(), handler=async_handler)
 
-        with patch("sigenergy2mqtt.mqtt.mqtt.asyncio.run_coroutine_threadsafe") as mock_run:
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_response(123, "publish", mock_client)
             mock_run.assert_called_once()
             # Close the coroutine to avoid warning
@@ -301,7 +302,7 @@ class TestMqttCallbacks:
 
         mock_client = MagicMock()
 
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
             mock_config.mqtt.broker = "test_broker"
             mock_config.mqtt.port = 1883
             mock_config.mqtt.username = "test_user"
@@ -321,7 +322,7 @@ class TestMqttCallbacks:
 
         mock_client = MagicMock()
 
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
             mock_config.mqtt.broker = "test_broker"
             mock_config.mqtt.port = 1883
 
@@ -375,7 +376,7 @@ class TestMqttCallbacks:
         handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
 
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
             mock_config.mqtt.broker = "test_broker"
             mock_config.mqtt.port = 1883
 
@@ -437,7 +438,7 @@ class TestMqttClient:
 
     def test_mqtt_client_init_no_tls(self):
         """Test mqtt.Client initialization without TLS."""
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
             mock_config.mqtt.tls = False
             loop = asyncio.new_event_loop()
             modbus_client = MagicMock()
@@ -448,7 +449,7 @@ class TestMqttClient:
 
     def test_mqtt_client_init_tls_secure(self):
         """Test mqtt.Client initialization with secure TLS."""
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
             mock_config.mqtt.tls = True
             mock_config.mqtt.tls_insecure = False
             mock_config.mqtt.broker = "test_broker"
@@ -464,7 +465,7 @@ class TestMqttClient:
 
     def test_mqtt_client_init_tls_insecure(self):
         """Test mqtt.Client initialization with insecure TLS."""
-        with patch("sigenergy2mqtt.mqtt.mqtt.Config") as mock_config:
+        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
             mock_config.mqtt.tls = True
             mock_config.mqtt.tls_insecure = True
             mock_config.mqtt.broker = "test_broker"

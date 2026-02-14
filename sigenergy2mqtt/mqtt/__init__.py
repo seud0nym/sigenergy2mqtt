@@ -8,7 +8,8 @@ from typing import Tuple
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusClientType
 
-from .mqtt import MqttClient, MqttHandler
+from .client import MqttClient
+from .handler import MqttHandler
 
 
 def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClientType | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
