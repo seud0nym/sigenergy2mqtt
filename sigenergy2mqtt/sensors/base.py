@@ -64,7 +64,7 @@ except Exception:
 
 class SensorDebuggingMixin:
     def __init__(self, **kwargs):
-        self.debug_logging: bool = Config.sensor_debug_logging
+        self.debug_logging: bool = kwargs.get("debug_logging", Config.sensor_debug_logging)
         super().__init__(**kwargs)
 
     # endregion
@@ -75,7 +75,7 @@ class TypedSensorMixin:
         assert "data_type" in kwargs, "Missing required parameter: data_type"
         if kwargs["data_type"] not in ModbusDataType:
             raise AssertionError(f"Invalid data type {kwargs['data_type']}")
-        self.data_type = kwargs["data_type"]
+        self.data_type = kwargs.pop("data_type")
         super().__init__(**kwargs)
 
 
@@ -108,7 +108,7 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         assert icon is None or icon.startswith("mdi:"), f"{self.__class__.__name__} icon {icon} does not start with 'mdi:'"
         assert isinstance(protocol_version, Protocol), f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid"
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self._used_unique_ids[unique_id] = self.__class__.__name__
         self._used_object_ids[object_id] = self.__class__.__name__
@@ -403,6 +403,9 @@ class Sensor(SensorDebuggingMixin, dict[str, str | int | bool | float | list[str
         for config in components.values():
             if "object_id" in config:
                 config["default_entity_id"] = f"{config['platform']}.{config['object_id']}"
+                del config["object_id"]
+            if "raw_state_topic" in config:
+                del config["raw_state_topic"]
         if self.publishable and not Config.clean:
             if self._persistent_publish_state_file.exists():
                 self._persistent_publish_state_file.unlink(missing_ok=True)
@@ -617,7 +620,7 @@ class ReadableSensorMixin(Sensor):
         assert "scan_interval" in kwargs, "Missing required parameter: scan_interval"
         assert isinstance(kwargs["scan_interval"], int), "scan_interval must be an int"
         assert kwargs["scan_interval"] is not None and kwargs["scan_interval"] >= 1, "scan_interval cannot be less than 1 second"
-        self.scan_interval = kwargs["scan_interval"]
+        self.scan_interval = kwargs.pop("scan_interval")
         super().__init__(**kwargs)
         for identifier in Config.sensor_overrides.keys():
             overrides = super()._get_applicable_overrides(identifier)
@@ -2083,6 +2086,9 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         return True
 
 
-class PVPowerSensor:
+class PVPowerSensor(ObservableMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        return True
