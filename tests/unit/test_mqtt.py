@@ -301,13 +301,11 @@ class TestMqttCallbacks:
         handler = MqttHandler("test_client", modbus_client, loop)
 
         mock_client = MagicMock()
+        mock_client.host = "test_broker"
+        mock_client.port = 1883
+        mock_client.username = "test_user"
 
-        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
-            mock_config.mqtt.username = "test_user"
-
-            on_connect(mock_client, handler, {}, 0, {})
+        on_connect(mock_client, handler, {}, 0, {})
 
         assert handler.connected is True  # on_reconnect always sets connected=True
 
@@ -321,12 +319,10 @@ class TestMqttCallbacks:
         handler.connected = True
 
         mock_client = MagicMock()
+        mock_client.host = "test_broker"
+        mock_client.port = 1883
 
-        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
-
-            on_disconnect(mock_client, handler, {}, 0, {})
+        on_disconnect(mock_client, handler, {}, 0, {})
 
         assert not handler.connected
         loop.close()
@@ -375,14 +371,12 @@ class TestMqttCallbacks:
         modbus_client = MagicMock()
         handler = MqttHandler("test_client", modbus_client, loop)
         mock_client = MagicMock()
+        mock_client.host = "test_broker"
+        mock_client.port = 1883
 
-        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
-
-            with patch("os._exit") as mock_exit:
-                on_connect(mock_client, handler, {}, 5, {})  # Reason code 5 = connection refused
-                mock_exit.assert_called_once_with(2)
+        with patch("os._exit") as mock_exit:
+            on_connect(mock_client, handler, {}, 5, {})  # Reason code 5 = connection refused
+            mock_exit.assert_called_once_with(2)
 
         loop.close()
 
@@ -438,43 +432,29 @@ class TestMqttClient:
 
     def test_mqtt_client_init_no_tls(self):
         """Test mqtt.Client initialization without TLS."""
-        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
-            mock_config.mqtt.tls = False
-            loop = asyncio.new_event_loop()
-            modbus_client = MagicMock()
-            handler = MqttHandler("test_client", modbus_client, loop)
-            _client = MqttClient(client_id="test_client", userdata=handler)
-            assert _client._userdata == handler
-            loop.close()
+        loop = asyncio.new_event_loop()
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
+        _client = MqttClient(client_id="test_client", userdata=handler, tls=False)
+        assert _client._userdata == handler
+        loop.close()
 
     def test_mqtt_client_init_tls_secure(self):
         """Test mqtt.Client initialization with secure TLS."""
-        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
-            mock_config.mqtt.tls = True
-            mock_config.mqtt.tls_insecure = False
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 8883
-
-            with patch("ssl.create_default_context") as mock_ssl:
-                handler = MagicMock()
-                _client = MqttClient(client_id="test_client", userdata=handler)
-                mock_ssl.assert_called_once()
-                context = mock_ssl.return_value
-                assert context.check_hostname is True
-                assert context.verify_mode == ssl.CERT_REQUIRED
+        with patch("ssl.create_default_context") as mock_ssl:
+            handler = MagicMock()
+            _client = MqttClient(client_id="test_client", userdata=handler, tls=True, tls_insecure=False)
+            mock_ssl.assert_called_once()
+            context = mock_ssl.return_value
+            assert context.check_hostname is True
+            assert context.verify_mode == ssl.CERT_REQUIRED
 
     def test_mqtt_client_init_tls_insecure(self):
         """Test mqtt.Client initialization with insecure TLS."""
-        with patch("sigenergy2mqtt.mqtt.client.Config") as mock_config:
-            mock_config.mqtt.tls = True
-            mock_config.mqtt.tls_insecure = True
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 8883
-
-            with patch("ssl.create_default_context") as mock_ssl:
-                handler = MagicMock()
-                _client = MqttClient(client_id="test_client", userdata=handler)
-                mock_ssl.assert_called_once()
-                context = mock_ssl.return_value
-                assert context.check_hostname is False
-                assert context.verify_mode == ssl.CERT_NONE
+        with patch("ssl.create_default_context") as mock_ssl:
+            handler = MagicMock()
+            _client = MqttClient(client_id="test_client", userdata=handler, tls=True, tls_insecure=True)
+            mock_ssl.assert_called_once()
+            context = mock_ssl.return_value
+            assert context.check_hostname is False
+            assert context.verify_mode == ssl.CERT_NONE

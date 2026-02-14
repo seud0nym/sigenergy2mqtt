@@ -18,7 +18,7 @@ def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClientType | None, loop
     logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for mqtt://{Config.mqtt.broker}:{Config.mqtt.port} over {Config.mqtt.transport}")
 
     mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop)
-    mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler, transport=Config.mqtt.transport)
+    mqtt_client = MqttClient(client_id=mqtt_client_id, userdata=mqtt_handler, transport=Config.mqtt.transport, tls=Config.mqtt.tls, tls_insecure=Config.mqtt.tls_insecure)
 
     if Config.mqtt.anonymous:
         logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} anonymously")
