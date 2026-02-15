@@ -137,7 +137,7 @@ async def test_auto_discovery_scan_multiple_mocked_ips(mock_modbus_server):
             # but for 127.0.0.1 we want it to run.
             # Actually, scan_host is called in a loop in scan().
 
-            results = await asyncio.to_thread(auto_discovery.scan, port=port, modbus_timeout=1.0)
+            results = await auto_discovery.scan(port=port, modbus_timeout=1.0)
 
             assert len(results) >= 1
             hosts = [r["host"] for r in results]
@@ -158,7 +158,7 @@ async def test_auto_discovery_workflow(mock_modbus_server):
         snicaddr.netmask = "255.255.255.0"
 
         with patch("psutil.net_if_addrs", return_value={"eth0": [snicaddr]}):
-            results = await asyncio.to_thread(auto_discovery.scan, port=port, modbus_timeout=1.0, modbus_retries=3)
+            results = await auto_discovery.scan(port=port, modbus_timeout=1.0, modbus_retries=3)
 
             assert len(results) == 1
             assert results[0]["host"] == "127.0.0.1"

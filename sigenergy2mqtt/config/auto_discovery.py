@@ -1,69 +1,110 @@
 import asyncio
 import ipaddress
 import logging
-import threading
 import time
-from queue import Queue
 from typing import cast
 
 import psutil
 from pymodbus import ExceptionResponse, FramerType, ModbusException
 from pymodbus.client import AsyncModbusTcpClient
-from scapy.all import ICMP, IP, sr1  # type: ignore
+
+_interrupted: bool = False
 
 
-def ping_worker(ip_queue: Queue[str], found_hosts: dict[str, float], timeout: float) -> None:
-    while not ip_queue.empty():
-        ip = ip_queue.get()
-        pkt = IP(dst=ip) / ICMP()
-        ans = sr1(pkt, timeout=timeout, verbose=0)
-        if ans:
-            rx = ans[0][1]  # type: ignore
-            tx = ans[0][0]  # type: ignore
-            found_hosts[ip] = rx.time - (tx.sent_time if tx.sent_time is not None else tx.time)
-        ip_queue.task_done()
+def _check_interrupted():
+    """Raise KeyboardInterrupt if a termination signal was received during auto-discovery."""
+    if _interrupted:
+        raise KeyboardInterrupt("Auto-discovery interrupted by signal")
 
 
-def ping_scan(ip_list: list[str], threads=100, timeout=0.5) -> dict[str, float]:
-    ip_queue: Queue[str] = Queue()
+async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 0.5, port: int = 502) -> dict[str, float]:
+    """Async TCP port scan to check host reachability.
+
+    Returns a dict mapping responsive IP (str) -> latency in seconds (float).
+    The `concurrent` parameter limits the number of hosts checked simultaneously.
+    The `timeout` is an int number of seconds for the connection attempt.
+    The `port` parameter specifies which TCP port to check (default: 502 for Modbus).
+    """
+    if not ip_list:
+        return {}
+
+    # If interrupted before starting, return immediately with no hosts.
+    if _interrupted:
+        return {}
+
     found_hosts: dict[str, float] = {}
 
-    for ip in ip_list:
-        ip_queue.put(ip)
+    async def check_single_host(ip: str) -> tuple[str, float | None]:
+        """Check a single host via TCP and return (ip, latency) or (ip, None) if unreachable."""
+        start = time.perf_counter()
+        try:
+            _, writer = await asyncio.wait_for(
+                asyncio.open_connection(ip, port),
+                timeout=float(timeout)
+            )
+            latency = time.perf_counter() - start
+            writer.close()
+            await writer.wait_closed()
+            logging.debug(f" -> {ip}:{port} responded in {latency:.2f}s")
+            return ip, latency
+        except (asyncio.TimeoutError, OSError, ConnectionRefusedError):
+            logging.debug(f" -> {ip}:{port} did not respond within {timeout:.2f}s")
+            return ip, None
 
-    for _ in range(threads):
-        t = threading.Thread(target=ping_worker, args=(ip_queue, found_hosts, timeout))
-        t.daemon = True
-        t.start()
+    try:
+        if concurrent <= 0:
+            concurrent = 1
 
-    ip_queue.join()
-    return found_hosts
+        # Process in chunks of `concurrent` hosts to limit simultaneous connections
+        for i in range(0, len(ip_list), concurrent):
+            chunk = ip_list[i : i + concurrent]
+
+            # Run all checks in the chunk concurrently
+            results = await asyncio.gather(*[check_single_host(ip) for ip in chunk], return_exceptions=True)
+
+            for result in results:
+                # Handle exceptions from gather
+                if isinstance(result, BaseException):
+                    logging.debug(f"TCP check failed with exception: {result}")
+                    continue
+
+                ip, latency = result
+                if latency is not None:
+                    found_hosts[ip] = latency
+
+        return found_hosts
+    except Exception as e:
+        logging.debug(f"TCP port scan failed: {e}")
+        return found_hosts
 
 
 async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int = 1, device_id: int = 247) -> bool:
     try:
+        logging.debug(f" -> Probing modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {device_id=} register {address} for {count=}")
         result = await modbus.read_input_registers(address=address, count=count, device_id=device_id)
         if result and not result.isError() and hasattr(result, "registers") and len(result.registers) >= count:
             return True
-    except ModbusException:
+    except ModbusException as e:
+        logging.debug(f" -> Probing modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {device_id=} register {address} for {count=} FAILED : {e}")
         while not modbus.connected:
             modbus.close()
             await modbus.connect()
     except Exception as e:
-        logging.debug(f"Unexpected error during Modbus probe for {modbus.comm_params.host}:{modbus.comm_params.port} at address {address} with device_id {device_id}: {e}")
+        logging.debug(f" -> Probing modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {device_id=} register {address} for {count=} FAILED : {e}")
     return False
 
 
 async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) -> str | None:
     try:
+        logging.debug(f" -> Reading modbus://{modbus.comm_params.host}:{modbus.comm_params.port} {device_id=} register 30515 for count=10 to retrieve serial number")
         rr = await modbus.read_input_registers(address=30515, count=10, device_id=device_id)
         if rr and not rr.isError() and not isinstance(rr, ExceptionResponse) and hasattr(rr, "registers") and len(rr.registers) >= 10:
             serial = modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING)
             return cast(str, serial)
     except ModbusException as e:
-        logging.debug(f"Failed to retrieve serial number for {modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
+        logging.debug(f" -> Failed to retrieve serial number for modbus://{modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
     except Exception as e:
-        logging.debug(f"Unexpected error when acquiring serial number for {modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
+        logging.debug(f" -> Unexpected error when acquiring serial number for modbus://{modbus.comm_params.host}:{modbus.comm_params.port} device_id {device_id}: {e}")
     return None
 
 
@@ -84,6 +125,7 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
                 if await probe_register(modbus, address=30051, device_id=247):  # Plant running state
                     logging.info(f" -> Found Sigenergy Plant at {ip}:{port}")
                     for device_id in range(1, 247):
+                        _check_interrupted()
                         if await probe_register(modbus, address=31501, device_id=device_id):  # [DC Charger] Charging current
                             serial = await get_serial_number(modbus, device_id=device_id)
                             if serial:
@@ -121,9 +163,8 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
         logging.debug(f"Modbus connection to {ip}:{port} failed: {e}")
 
 
-def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.25, modbus_retries: int = 0) -> list[dict[str, str | int | list[int]]]:
+async def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.25, modbus_retries: int = 0) -> list[dict[str, str | int | list[int]]]:
     logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
-    logging.getLogger("scapy").setLevel(logging.CRITICAL)
 
     started = time.perf_counter()
 
@@ -141,19 +182,20 @@ def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.2
                         break
 
     active_ips: dict[str, float] = {"127.0.0.1": 0.0}  # Scan localhost first
+    all_ips: list[str] = []
+    missing_ips: list[str] = []
     for addr, subnet in networks.items():
         logging.info(f"Scanning for active devices in network {subnet.with_prefixlen}...")
-        all_ips: list[str] = [str(ip) for ip in subnet.hosts()]
-        missing_ips: list[str] = [ip for ip in all_ips if ip != addr]
-        ping_results: dict[str, float] = ping_scan(missing_ips, timeout=ping_timeout)
-        active_ips.update(ping_results)
+        all_ips.extend([str(ip) for ip in subnet.hosts()])
+        missing_ips.extend([ip for ip in all_ips if ip != addr])
+    ping_results: dict[str, float] = await ping_scan(missing_ips, timeout=ping_timeout)
+    active_ips.update(ping_results)
     ips_sorted_by_latency = dict(sorted(active_ips.items(), key=lambda item: item[1]))
 
-    loop = asyncio.new_event_loop()
     results = []
     for ip in ips_sorted_by_latency:
-        loop.run_until_complete(scan_host(ip, port, results, modbus_timeout, modbus_retries))
-    loop.close()
+        _check_interrupted()
+        await scan_host(ip, port, results, modbus_timeout, modbus_retries)
 
     elapsed = time.perf_counter() - started
     logging.info(f"Scan completed in {elapsed:.2f} seconds")
@@ -163,5 +205,5 @@ def scan(port: int = 502, ping_timeout: float = 0.5, modbus_timeout: float = 0.2
 
 if __name__ == "__main__":
     logging.getLogger("root").setLevel(logging.DEBUG)
-    results = scan(502, 0.5, 0.25, 0)
+    results = asyncio.run(scan(502, 0.5, 0.25, 0))
     logging.info(f"Auto-discovered: {results}")

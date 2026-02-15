@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -606,7 +607,28 @@ class Config(metaclass=ConfigMeta):
             modbus_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, "0.25"))
             modbus_retries = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, "0"))
             logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
-            auto_discovered = auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries)
+            try:
+                auto_discovered = asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
+            except RuntimeError:
+                # An event loop is already running in this thread. Try submitting to the running loop
+                # (works if the loop is running in another thread). If that fails, fall back to an
+                # empty result to avoid deadlock.
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        try:
+                            future = asyncio.run_coroutine_threadsafe(
+                                auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries),
+                                loop,
+                            )
+                            auto_discovered = future.result(timeout=5)
+                        except Exception:
+                            logging.exception("Auto-discovery failed when submitting to running loop")
+                            auto_discovered = []
+                    else:
+                        auto_discovered = asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
+                except Exception:
+                    auto_discovered = []
             if len(auto_discovered) > 0:
                 with open(auto_discovery_cache, "w") as f:
                     _yaml = YAML(typ="safe", pure=True)

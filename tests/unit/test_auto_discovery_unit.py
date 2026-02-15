@@ -97,44 +97,45 @@ async def test_get_serial_number_modbus_exception():
 
 
 def test_ping_worker():
-    from queue import Queue
+    class Reply:
+        def __init__(self, dest, avg_rtt):
+            self.is_alive = True
+            self.avg_rtt = avg_rtt
+            self.destination = dest
 
-    ip_queue = Queue()
-    ip_queue.put("1.2.3.4")
-    found_hosts = {}
+    async def fake_open(host, port):
+        # simulate a successful connection returning (reader, writer)
+        writer = MagicMock()
+        writer.close = MagicMock()
+        writer.wait_closed = AsyncMock()
+        return (MagicMock(), writer)
 
-    class MockPacket:
-        def __init__(self, t):
-            self.time = t
-            self.sent_time = t - 5.0
+    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", new=AsyncMock(side_effect=fake_open)):
+        results = asyncio.run(auto_discovery.ping_scan(["1.2.3.4"], timeout=1))
 
-    rx = MockPacket(10.0)
-    tx = MockPacket(10.0)
-
-    mock_ans = MagicMock()
-    layer1 = MagicMock()
-    layer1.__getitem__.side_effect = lambda i: [tx, rx][i]
-    mock_ans.__getitem__.return_value = layer1
-
-    with patch("sigenergy2mqtt.config.auto_discovery.sr1", return_value=mock_ans):
-        auto_discovery.ping_worker(ip_queue, found_hosts, 0.5)
-
-    assert "1.2.3.4" in found_hosts
-    assert found_hosts["1.2.3.4"] == 5.0
+    assert "1.2.3.4" in results
+    assert isinstance(results["1.2.3.4"], float)
 
 
 def test_ping_scan():
-    with patch("sigenergy2mqtt.config.auto_discovery.threading.Thread") as mock_thread:
-        with patch("sigenergy2mqtt.config.auto_discovery.Queue") as mock_queue_cls:
-            mock_queue = mock_queue_cls.return_value
-            mock_t = MagicMock()
-            mock_thread.return_value = mock_t
+    # Ensure async ping_scan returns expected structure
+    class Reply:
+        def __init__(self, dest, avg_rtt):
+            self.is_alive = True
+            self.avg_rtt = avg_rtt
+            self.destination = dest
 
-            results = auto_discovery.ping_scan(["1.2.3.4"], threads=1)
+    async def fake_open(host, port):
+        writer = MagicMock()
+        writer.close = MagicMock()
+        writer.wait_closed = AsyncMock()
+        return (MagicMock(), writer)
 
-            assert mock_thread.called
-            assert mock_t.start.called
-            assert mock_queue.join.called
+    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", new=AsyncMock(side_effect=fake_open)):
+        results = asyncio.run(auto_discovery.ping_scan(["1.2.3.4"], concurrent=1))
+
+    assert isinstance(results, dict)
+    assert "1.2.3.4" in results
 
 
 @pytest.mark.asyncio
