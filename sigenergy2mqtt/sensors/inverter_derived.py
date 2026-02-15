@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
@@ -32,7 +33,7 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
         attributes["source"] = "ChargeDischargePower &gt; 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -63,7 +64,7 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
         attributes["source"] = "ChargeDischargePower &lt; 0 &times; -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -113,7 +114,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         self.current = None
         return True
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if isinstance(sensor, PVVoltageSensor):
             self.voltage = values[-1][1] / self.voltage_gain
         elif isinstance(sensor, PVCurrentSensor):

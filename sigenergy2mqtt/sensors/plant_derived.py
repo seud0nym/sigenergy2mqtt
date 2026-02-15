@@ -2,7 +2,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Dict, cast
+from typing import Any, Deque, Dict, cast
 
 import paho.mqtt.client as mqtt
 
@@ -54,7 +54,7 @@ class BatteryChargingPower(DerivedSensor):
         attributes["source"] = "BatteryPower &gt; 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -86,7 +86,7 @@ class BatteryDischargingPower(DerivedSensor):
         attributes["source"] = "BatteryPower &lt; 0 &times; -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -117,7 +117,7 @@ class GridSensorExportPower(DerivedSensor):
         attributes["source"] = "GridSensorActivePower &lt; 0 &times; -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -148,7 +148,7 @@ class GridSensorImportPower(DerivedSensor):
         attributes["source"] = "GridSensorActivePower &gt; 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
@@ -288,7 +288,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
             logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from {sensor.__class__.__name__} - not PVPower instance")
@@ -420,7 +420,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                         logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
         return topics
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if isinstance(sensor, TotalLoadPower):
             self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
         elif isinstance(sensor, GeneralLoadPower):
@@ -523,7 +523,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
         self.plant_3rd_party_lifetime_pv_energy = None
         return True
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if isinstance(sensor, PlantPVTotalGeneration):
             self.plant_lifetime_pv_energy = values[-1][1]
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):

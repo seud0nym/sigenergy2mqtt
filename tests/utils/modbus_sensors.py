@@ -10,7 +10,7 @@ from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVI
 from sigenergy2mqtt.config import Config, initialize
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, EnergyDailyAccumulationSensor, ModbusSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
 
@@ -211,14 +211,8 @@ async def get_sensor_instances(
     return sensors
 
 
-def cancel_sensor_futures():
-    for future in EnergyDailyAccumulationSensor.futures:
-        future.cancel()
-
-
 if __name__ == "__main__":
     logging.getLogger("root").setLevel(logging.DEBUG)
     loop = asyncio.new_event_loop()
     loop.run_until_complete(get_sensor_instances())
-    cancel_sensor_futures()
     loop.close()

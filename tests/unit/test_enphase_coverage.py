@@ -220,7 +220,6 @@ class TestEnphasePVPowerProcessMeterReading:
 
         assert result is True
         assert pv_power_sensor._states[-1][1] == 2500.5
-        assert pv_power_sensor._states[-1][2] == reading[0]
         assert pv_power_sensor._failover_initiated is False
 
     def test_process_meter_reading_clamps_negative_power(self, pv_power_sensor):

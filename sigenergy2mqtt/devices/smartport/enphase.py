@@ -11,7 +11,7 @@ import logging
 import os
 import xml.etree.ElementTree as xml
 from time import sleep
-from typing import cast
+from typing import Any, Deque, cast
 
 import requests
 
@@ -27,6 +27,23 @@ from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSe
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
 urllib3.disable_warnings()
+
+
+class EnphaseSensor(DerivedSensor):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+        if not isinstance(sensor, EnphasePVPower):
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            return False
+        value = values[-1][1]
+        if value < 0:
+            if self.debug_logging:
+                logging.info(f"{self.__class__.__name__} value is negative ({value}), setting to 0.0")
+            value = 0.0
+        self.set_latest_state(value)
+        return True
 
 
 class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
@@ -79,10 +96,26 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
                 logging.info(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
             state_is = 0.0
         self.set_state(state_is)
-        latest = self._states.pop()
-        self._states.append((latest[0], latest[1], solar))  # type: ignore
         for sensor in self._derived_sensors.values():
+            latest = self._states.pop()
+            match sensor:
+                case EnphaseLifetimePVEnergy():
+                    self._states.append((latest[0], solar["actEnergyDlvd"]))
+                case EnphaseCurrent():
+                    self._states.append((latest[0], solar["current"]))
+                case EnphaseFrequency():
+                    self._states.append((latest[0], solar["freq"]))
+                case EnphasePowerFactor():
+                    self._states.append((latest[0], solar["pwrFactor"]))
+                case EnphaseReactivePower():
+                    self._states.append((latest[0], solar["reactivePower"]))
+                case EnphaseVoltage():
+                    self._states.append((latest[0], solar["voltage"]))
+                case _:
+                    self._states.append(latest)
             sensor.set_source_values(self, self._states)
+        latest = self._states.pop()
+        self._states.append((latest[0], state_is))
         self._failover_initiated = False
         return True
 
@@ -197,7 +230,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
         return token
 
 
-class EnphaseLifetimePVEnergy(DerivedSensor):
+class EnphaseLifetimePVEnergy(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Lifetime Production",
@@ -217,18 +250,6 @@ class EnphaseLifetimePVEnergy(DerivedSensor):
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        value = values[-1][2]["actEnergyDlvd"]
-        if value < 0:
-            if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} actEnergyDlvd negative ({value}), setting to 0.0")
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, serial_number: str, source: EnphaseLifetimePVEnergy):
@@ -245,7 +266,7 @@ class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class EnphaseCurrent(DerivedSensor):
+class EnphaseCurrent(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Current",
@@ -266,20 +287,8 @@ class EnphaseCurrent(DerivedSensor):
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        value = values[-1][2]["current"]
-        if value < 0:
-            if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} current negative ({value}), setting to 0.0")
-            value = 0.0
-        self.set_latest_state(value)
-        return True
 
-
-class EnphaseFrequency(DerivedSensor):
+class EnphaseFrequency(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Frequency",
@@ -300,20 +309,8 @@ class EnphaseFrequency(DerivedSensor):
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        value = values[-1][2]["freq"]
-        if value < 0:
-            if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} freq negative ({value}), setting to 0.0")
-            value = 0.0
-        self.set_latest_state(value)
-        return True
 
-
-class EnphasePowerFactor(DerivedSensor):
+class EnphasePowerFactor(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Power Factor",
@@ -334,20 +331,8 @@ class EnphasePowerFactor(DerivedSensor):
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        value = values[-1][2]["pwrFactor"]
-        if value < 0:
-            if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} pwrFactor negative ({value}), setting to 0.0")
-            value = 0.0
-        self.set_latest_state(value)
-        return True
 
-
-class EnphaseReactivePower(DerivedSensor):
+class EnphaseReactivePower(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Reactive Power",
@@ -368,20 +353,8 @@ class EnphaseReactivePower(DerivedSensor):
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        value = values[-1][2]["reactivePower"]
-        if value < 0:
-            if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} reactivePower negative ({value}), setting to 0.0")
-            value = 0.0
-        self.set_latest_state(value)
-        return True
 
-
-class EnphaseVoltage(DerivedSensor):
+class EnphaseVoltage(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Voltage",
@@ -401,18 +374,6 @@ class EnphaseVoltage(DerivedSensor):
         attributes = super().get_attributes()
         attributes["source"] = "Enphase Envoy API when EnphasePVPower derived"
         return attributes
-
-    def set_source_values(self, sensor: Sensor, values: list) -> bool:
-        if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
-            return False
-        value = values[-1][2]["voltage"]
-        if value < 0:
-            if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} voltage negative ({value}), setting to 0.0")
-            value = 0.0
-        self.set_latest_state(value)
-        return True
 
 
 class SmartPort(Device):

@@ -21,7 +21,7 @@ from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, P
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
-from tests.utils import cancel_sensor_futures, get_sensor_instances
+from tests.utils import get_sensor_instances
 
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
 REGISTER_PATTERN = r"[3-4][0-9]+"
@@ -555,5 +555,4 @@ if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     loop.run_until_complete(sensor_index())
     loop.run_until_complete(compare_sensor_instances())
-    cancel_sensor_futures()
     loop.close()

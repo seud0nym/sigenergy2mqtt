@@ -2,6 +2,8 @@ import asyncio
 import bisect
 import logging
 import os
+import secrets
+import string
 import sys
 import threading
 import time
@@ -24,7 +26,7 @@ from ruamel.yaml import YAML
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
-from tests.utils import cancel_sensor_futures, get_sensor_instances
+from tests.utils import get_sensor_instances
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
@@ -337,7 +339,6 @@ async def run_async_server(
             if sensor.device_address not in context:
                 context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client)
             context[sensor.device_address].add_sensor(sensor)
-    cancel_sensor_futures()
 
     _logger.info("Starting ASYNC Modbus TCP Testing Server...")
     if log_level <= logging.INFO:
@@ -408,7 +409,11 @@ async def async_helper() -> None:
     with open("tests/utils/.modbus_test_server.yaml", "r") as f:
         config = _yaml.load(f)
         mqtt_log_level = logging.getLevelNamesMapping()[config.get("mqtt", {}).get("log-level", "INFO")]
-        mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2, client_id="modbus_test_server", userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level))
+        mqtt_client = mqtt.Client(
+            CallbackAPIVersion.VERSION2,
+            client_id=f"sigenergy2mqtt_modbus_test_server_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))}",
+            userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level),
+        )
         mqtt_client.username_pw_set(config.get("mqtt", {}).get("username"), config.get("mqtt", {}).get("password"))
         mqtt_client.connect(config.get("mqtt", {}).get("broker", "localhost"), config.get("mqtt", {}).get("port", 1883), 60)
         mqtt_client.on_disconnect = on_disconnect
