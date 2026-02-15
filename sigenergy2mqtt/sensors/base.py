@@ -8,6 +8,7 @@ import json
 import logging
 import re
 import sys
+import threading
 import time
 from concurrent.futures import Future
 from pathlib import Path
@@ -1939,7 +1940,28 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
                 try:
                     asyncio.get_running_loop().create_task(self._persist_current_total(new_total))
                 except RuntimeError:
-                    asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), asyncio.get_event_loop())
+                    try:
+                        loop = asyncio.get_event_loop()
+                        if isinstance(loop, asyncio.AbstractEventLoop) and loop.is_running():
+                            asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), loop)
+                        else:
+                            # Run in background thread to avoid blocking caller thread
+                            def _run_persist(val: float) -> None:
+                                try:
+                                    asyncio.run(self._persist_current_total(val))
+                                except Exception as e:
+                                    logging.exception("Failed to persist current total in background thread: %s", e)
+
+                            threading.Thread(target=_run_persist, args=(new_total,), daemon=True).start()
+                    except Exception:
+                        # As a last resort, run in background thread and log any failure
+                        def _run_persist(val: float) -> None:
+                            try:
+                                asyncio.run(self._persist_current_total(val))
+                            except Exception as e:
+                                logging.exception("Failed to persist current total in background thread: %s", e)
+
+                        threading.Thread(target=_run_persist, args=(new_total,), daemon=True).start()
             self._current_total = new_total
             self.set_latest_state(self._current_total)
             return True
@@ -2074,7 +2096,26 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 try:
                     asyncio.get_running_loop().create_task(self._update_state_at_midnight(now_state))
                 except RuntimeError:
-                    asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), asyncio.get_event_loop())
+                    try:
+                        loop = asyncio.get_event_loop()
+                        if isinstance(loop, asyncio.AbstractEventLoop) and loop.is_running():
+                            asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), loop)
+                        else:
+                            def _run_update(val: float) -> None:
+                                try:
+                                    asyncio.run(self._update_state_at_midnight(val))
+                                except Exception as e:
+                                    logging.exception("Failed to update state at midnight in background thread: %s", e)
+
+                            threading.Thread(target=_run_update, args=(now_state,), daemon=True).start()
+                    except Exception:
+                        def _run_update(val: float) -> None:
+                            try:
+                                asyncio.run(self._update_state_at_midnight(val))
+                            except Exception as e:
+                                logging.exception("Failed to update state at midnight in background thread: %s", e)
+
+                        threading.Thread(target=_run_update, args=(now_state,), daemon=True).start()
                 self._states.clear()
                 self._state_at_midnight = now_state
 
