@@ -116,6 +116,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_5,
         )
+        self.sanity_check.delta = False
 
 
 class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
@@ -139,6 +140,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_5,
         )
+        self.sanity_check.delta = False
 
 
 class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
@@ -164,6 +166,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             minimum=-100.00,
             maximum=100.00,
         )
+        self.sanity_check.delta = False
 
 
 class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
@@ -189,6 +192,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             minimum=-60.0,
             maximum=60.0,
         )
+        self.sanity_check.delta = False
 
 
 class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
@@ -214,3 +218,4 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             minimum=-1.0,
             maximum=1.0,
         )
+        self.sanity_check.delta = False

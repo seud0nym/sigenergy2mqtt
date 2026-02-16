@@ -207,17 +207,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     - Publishing state to MQTT brokers
     - Attribute management for Home Assistant integration
 
-    Attributes:
-        _requires_delta_check: Whether this sensor type requires delta validation.
-                               Override in subclasses to disable (e.g., Available sensors).
     """
 
     # Class-level tracking of used IDs (intentional shared state)
     _used_object_ids: dict[str, str] = {}
     _used_unique_ids: dict[str, str] = {}
-
-    # Class attribute to control delta checking behaviour
-    _requires_delta_check: bool = True
 
     def __init__(
         self,
@@ -311,7 +305,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             gain=gain,
             precision=precision,
             data_type=getattr(self, "data_type", None),
-            delta=not self._requires_delta_check if self._requires_delta_check is not None else None,
+            delta=None,
         )
 
     def _validate_unique_id(self, unique_id: str) -> None:
@@ -1114,7 +1108,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             # (temporary - will be removed once root cause is found)
             state = round(state, self.precision)
             if self.precision == 0:
-                state = int(state)
+                state = int(state)  # pyrefly: ignore (int and float are both valid)
 
         return state
 
@@ -1233,9 +1227,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
 class AvailabilityMixin(Sensor):
     """Mixin for sensors that control availability of other sensors."""
-
-    # Override delta checking for availability sensors
-    _requires_delta_check = False
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1655,9 +1646,6 @@ class ReservedSensor(ReadOnlySensor):
     Reserved sensors are never published but can be used for internal logic.
     """
 
-    # Override delta checking for reserved sensors
-    _requires_delta_check = False
-
     def __init__(
         self,
         name: str,
@@ -1700,6 +1688,8 @@ class ReservedSensor(ReadOnlySensor):
             unique_id_override=unique_id_override,
             **kwargs,
         )
+        self.sanity_check.min_raw = None
+        self.sanity_check.max_raw = None
 
         # Validate class name
         if not self.__class__.__name__.startswith("Reserved"):

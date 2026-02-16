@@ -219,6 +219,7 @@ class RatedBatteryCapacity(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
 
 
@@ -662,6 +663,7 @@ class AvailableBatteryChargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
         self["enabled_by_default"] = True
 
 
@@ -685,6 +687,7 @@ class AvailableBatteryDischargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
         self["enabled_by_default"] = True
 
 

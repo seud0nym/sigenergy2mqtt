@@ -51,6 +51,7 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
 
 
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -76,6 +77,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             minimum=-60.0,
             maximum=60.0,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -106,6 +108,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             minimum=-100.00,
             maximum=100.00,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -136,6 +139,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             minimum=-60.0,
             maximum=60.0,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -167,6 +171,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             minimum=(-1.0, -0.8),
             maximum=(0.8, 1.0),
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -227,6 +232,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             protocol_version=Protocol.V1_8,
             phase=phase,
         )
+        self.sanity_check.delta = False
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
@@ -267,6 +273,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             protocol_version=Protocol.V1_8,
             phase=phase,
         )
+        self.sanity_check.delta = False
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
@@ -309,6 +316,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             maximum=100.00,
             phase=phase,
         )
+        self.sanity_check.delta = False
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
@@ -351,6 +359,7 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             maximum=60.00,
             phase=phase,
         )
+        self.sanity_check.delta = False
         if output_type != 2:  # L1/L2/L3/N
             self.publishable = False
 
@@ -494,6 +503,7 @@ class RemoteEMSLimit(NumericSensor):
             protocol_version=protocol_version,
             maximum=maximum,
         )
+        self.sanity_check.delta = False
         self._remote_ems_mode = remote_ems_mode
         self._charging = charging
         self._discharging = discharging
@@ -531,6 +541,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_charging_power,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
         self.sanity_check.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -560,6 +571,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_discharging_power,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
         self.sanity_check.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -589,6 +601,7 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
             maximum=4294967.295,
             protocol_version=Protocol.V1_8,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -625,6 +638,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.295,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -654,6 +668,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.295,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -683,6 +698,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.295,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -721,6 +737,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.295,
         )
+        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
