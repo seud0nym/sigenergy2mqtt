@@ -193,6 +193,8 @@ class TestValueIsValidBase:
         assert await sensor.value_is_valid(None, 0) is True
         assert await sensor.value_is_valid(None, 1) is True
         assert await sensor.value_is_valid(None, 2) is False
+        # Strings are not accepted (payloads are numeric)
+        assert await sensor.value_is_valid(None, "1") is False
 
 
 class TestValueIsValidPlant:

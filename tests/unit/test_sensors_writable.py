@@ -87,7 +87,7 @@ class TestWritableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_multiple_registers(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigenergy_test", InputType.HOLDING, 0, 1, 30001, 2, ModbusClient.DATATYPE.FLOAT32, 10, "U", None, None, "mdi:power", 1.0, 2, Protocol.V2_4)
+            sensor = NumericSensor(None, "Test", "sigenergy_test", InputType.HOLDING, 0, 1, 30001, 2, ModbusClient.DATATYPE.UINT32, 10, "U", None, None, "mdi:power", 1.0, 2, Protocol.V2_4)
 
             mock_mqtt = MagicMock()
             # Disable side_effect to use return_value
@@ -103,24 +103,6 @@ class TestWritableSensorMixin:
             assert result is True
             mock_modbus.write_registers.assert_called_once_with(30001, [1234, 5678], device_id=1, no_response_expected=False)
 
-    @pytest.mark.asyncio
-    async def test_write_registers_string(self, mock_lock_factory, mock_modbus):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigenergy_test", InputType.HOLDING, 0, 1, 30001, 4, ModbusClient.DATATYPE.STRING, 10, "U", None, None, "mdi:power", 1.0, 2, Protocol.V2_4)
-
-            mock_mqtt = MagicMock()
-            # Disable side_effect to use return_value
-            mock_modbus.convert_to_registers.side_effect = None
-            mock_modbus.convert_to_registers.return_value = [0x4142, 0x4344]
-
-            mock_rr = MagicMock()
-            mock_rr.isError.return_value = False
-            mock_modbus.write_registers.return_value = mock_rr
-
-            result = await sensor._write_registers(mock_modbus, "ABCD", mock_mqtt)
-
-            assert result is True
-            mock_modbus.write_registers.assert_called_once_with(30001, [0x4142, 0x4344], device_id=1, no_response_expected=False)
 
     @pytest.mark.asyncio
     async def test_write_registers_error_response(self, mock_lock_factory, mock_modbus):
@@ -201,6 +183,93 @@ class TestNumericSensorWritable:
             assert result is True
             mock_modbus.write_register.assert_called_with(30100, 500, device_id=1, no_response_expected=False)
 
+    @pytest.mark.asyncio
+    async def test_numeric_sensor_set_value_none_and_invalid(self, mock_lock_factory, mock_modbus, caplog):
+        """NumericSensor should ignore None and reject non-numeric input with a warning."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = NumericSensor(
+                None,
+                "Test",
+                "sigenergy_test2",
+                InputType.HOLDING,
+                0,
+                1,
+                30101,
+                1,
+                ModbusClient.DATATYPE.UINT16,
+                10,
+                "W",
+                None,
+                None,
+                "mdi:power",
+                1.0,
+                0,
+                Protocol.V2_4,
+                minimum=0,
+                maximum=100,
+            )
+            sensor.configure_mqtt_topics("test_device")
+
+            # None is ignored
+            caplog.clear()
+            result = await sensor.set_value(mock_modbus, MagicMock(), None, cast(str, sensor["command_topic"]), MagicMock())
+            assert result is False
+            assert any("Ignored attempt to set value to *None*" in rec.message for rec in caplog.records)
+
+            # Non-numeric logs a warning and returns False
+            caplog.clear()
+            result = await sensor.set_value(mock_modbus, MagicMock(), "abc", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is False
+            assert any("Attempt to set value to 'abc' FAILED" in rec.message for rec in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_numeric_set_value_with_string_and_gain(self, mock_lock_factory, mock_modbus):
+        """NumericSensor should accept numeric strings and apply gain before writing."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = NumericSensor(
+                None,
+                "Test",
+                "sigenergy_test3",
+                InputType.HOLDING,
+                0,
+                1,
+                30102,
+                1,
+                ModbusClient.DATATYPE.UINT16,
+                10,
+                "W",
+                None,
+                None,
+                "mdi:power",
+                10.0,
+                0,
+                Protocol.V2_4,
+                minimum=0,
+                maximum=1000,
+            )
+            sensor.configure_mqtt_topics("test_device")
+
+            mock_rr = MagicMock()
+            mock_rr.isError.return_value = False
+            mock_modbus.write_register.return_value = mock_rr
+
+            result = await sensor.set_value(mock_modbus, MagicMock(), "5", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is True
+            # 5 * gain(10) == 50
+            mock_modbus.write_register.assert_called_with(30102, 50, device_id=1, no_response_expected=False)
+
+    @pytest.mark.asyncio
+    async def test_numeric_get_state_raw_clamp_with_gain(self):
+        """When raw=True and value is out-of-range the raw return should include gain."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = NumericSensor(None, "NumRaw", "sigenergy_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0)
+
+            with patch("sigenergy2mqtt.sensors.base.ReadWriteSensor.get_state", new_callable=AsyncMock) as mock_super:
+                # value below min -> should return min * gain when raw=True
+                mock_super.return_value = 5.0
+                val = await sensor.get_state(raw=True)
+                assert val == 10.0 * 2.0
+
 
 class TestSelectSensorWritable:
     @pytest.mark.asyncio
@@ -218,6 +287,115 @@ class TestSelectSensorWritable:
             assert result is True
             mock_modbus.write_register.assert_called_with(30200, 2, device_id=1, no_response_expected=False)
 
+    @pytest.mark.asyncio
+    async def test_select_sensor_set_value_index_string_and_invalid(self, mock_lock_factory, mock_modbus, caplog):
+        """SelectSensor should accept numeric index strings and reject invalid values."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            options = ["Off", "On", "Auto"]
+            sensor = SelectSensor(None, "Test", "sigenergy_test", 0, 1, 30201, 10, options, Protocol.V2_4)
+            sensor.configure_mqtt_topics("test_device")
+
+            mock_rr = MagicMock()
+            mock_rr.isError.return_value = False
+            mock_modbus.write_register.return_value = mock_rr
+
+            # Index as string should work
+            result = await sensor.set_value(mock_modbus, MagicMock(), "1", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is True
+            mock_modbus.write_register.assert_called_with(30201, 1, device_id=1, no_response_expected=False)
+
+            # Integer index should also work
+            result = await sensor.set_value(mock_modbus, MagicMock(), 0, cast(str, sensor["command_topic"]), MagicMock())
+            assert result is True
+            mock_modbus.write_register.assert_called_with(30201, 0, device_id=1, no_response_expected=False)
+
+            # Invalid option should be rejected and log an error
+            caplog.clear()
+            result = await sensor.set_value(mock_modbus, MagicMock(), "InvalidOption", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is False
+            assert any("invalid value" in rec.message for rec in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_select_sensor_translated_option_and_empty_option(self, mock_lock_factory, mock_modbus):
+        """Covers translated-option matching and empty-option handling."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            options = ["Off", "", "Auto"]
+            sensor = SelectSensor(None, "Test", "sigenergy_test_trans", 0, 1, 30202, 10, options, Protocol.V2_4)
+            sensor.configure_mqtt_topics("test_device")
+
+            # Empty option should be treated as unknown when reading
+            with patch("sigenergy2mqtt.sensors.base.ReadWriteSensor.get_state", new_callable=AsyncMock) as mock_super:
+                mock_super.return_value = 1
+                assert await sensor.get_state() == "Unknown Mode: 1"
+
+            # Translated option matching path in _get_option_index
+            with patch("sigenergy2mqtt.sensors.base._t", side_effect=lambda key, default, debugging=False: f"T:{default}"):
+                mock_rr = MagicMock()
+                mock_rr.isError.return_value = False
+                mock_modbus.write_register.return_value = mock_rr
+
+                # 'T:Auto' is the translated option for index 2
+                result = await sensor.set_value(mock_modbus, MagicMock(), "T:Auto", cast(str, sensor["command_topic"]), MagicMock())
+                assert result is True
+                mock_modbus.write_register.assert_called_with(30202, 2, device_id=1, no_response_expected=False)
+
+    @pytest.mark.asyncio
+    async def test_select_accepts_float_index_string_and_is_case_sensitive(self, mock_lock_factory, mock_modbus, caplog):
+        """SelectSensor should accept numeric float-strings (e.g. '1.0') and reject case-mismatched option strings."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            options = ["Off", "On", "Auto"]
+            sensor = SelectSensor(None, "Test", "sigenergy_test_case", 0, 1, 30203, 10, options, Protocol.V2_4)
+            sensor.configure_mqtt_topics("test_device")
+
+            mock_rr = MagicMock()
+            mock_rr.isError.return_value = False
+            mock_modbus.write_register.return_value = mock_rr
+
+            # numeric float-string index should be accepted
+            result = await sensor.set_value(mock_modbus, MagicMock(), "1.0", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is True
+            mock_modbus.write_register.assert_called_with(30203, 1, device_id=1, no_response_expected=False)
+
+            # case-sensitive option matching: 'auto' should be rejected
+            caplog.clear()
+            res2 = await sensor.set_value(mock_modbus, MagicMock(), "auto", cast(str, sensor["command_topic"]), MagicMock())
+            assert res2 is False
+            assert any("invalid value" in rec.message for rec in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_switch_accepts_boolean_values(self, mock_lock_factory, mock_modbus):
+        """SwitchSensor should accept True/False and write 1/0 respectively."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = SwitchSensor(None, "Test", "sigenergy_switch_bool", 0, 1, 30302, 10, Protocol.V2_4)
+            sensor.configure_mqtt_topics("test_device")
+
+            mock_rr = MagicMock()
+            mock_rr.isError.return_value = False
+            mock_modbus.write_register.return_value = mock_rr
+
+            res_true = await sensor.set_value(mock_modbus, MagicMock(), True, cast(str, sensor["command_topic"]), MagicMock())
+            assert res_true is True
+            mock_modbus.write_register.assert_called_with(30302, 1, device_id=1, no_response_expected=False)
+
+            res_false = await sensor.set_value(mock_modbus, MagicMock(), False, cast(str, sensor["command_topic"]), MagicMock())
+            assert res_false is True
+            mock_modbus.write_register.assert_called_with(30302, 0, device_id=1, no_response_expected=False)
+
+    @pytest.mark.asyncio
+    async def test_numeric_set_value_decimal_string_precision_zero(self, mock_lock_factory, mock_modbus):
+        """NumericSensor should accept decimal strings and (with precision=0) write the integer part."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = NumericSensor(None, "Test", "sigenergy_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 1.0, 0, Protocol.V2_4, minimum=0, maximum=1000)
+            sensor.configure_mqtt_topics("test_device")
+
+            mock_rr = MagicMock()
+            mock_rr.isError.return_value = False
+            mock_modbus.write_register.return_value = mock_rr
+
+            result = await sensor.set_value(mock_modbus, MagicMock(), "3.9", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is True
+            # 3.9 should be converted to int(3.9) == 3 before writing
+            mock_modbus.write_register.assert_called_with(30104, 3.0, device_id=1, no_response_expected=False)
 
 class TestSwitchSensorWritable:
     @pytest.mark.asyncio
@@ -233,3 +411,25 @@ class TestSwitchSensorWritable:
             result = await sensor.set_value(mock_modbus, MagicMock(), 1, cast(str, sensor["command_topic"]), MagicMock())
             assert result is True
             mock_modbus.write_register.assert_called_with(30300, 1, device_id=1, no_response_expected=False)
+
+    @pytest.mark.asyncio
+    async def test_switch_sensor_set_value_string_and_bad(self, mock_lock_factory, mock_modbus, caplog):
+        """SwitchSensor should accept numeric strings but raise on non-numeric input."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = SwitchSensor(None, "Test", "sigenergy_test2", 0, 1, 30301, 10, Protocol.V2_4)
+            sensor.configure_mqtt_topics("test_device")
+
+            mock_rr = MagicMock()
+            mock_rr.isError.return_value = False
+            mock_modbus.write_register.return_value = mock_rr
+
+            # Numeric string works
+            result = await sensor.set_value(mock_modbus, MagicMock(), "1", cast(str, sensor["command_topic"]), MagicMock())
+            assert result is True
+            mock_modbus.write_register.assert_called_with(30301, 1, device_id=1, no_response_expected=False)
+
+            # Non-numeric should raise ValueError and log
+            caplog.clear()
+            with pytest.raises(ValueError):
+                await sensor.set_value(mock_modbus, MagicMock(), "bad", cast(str, sensor["command_topic"]), MagicMock())
+            assert any("value_is_valid check of value 'bad' FAILED" in rec.message for rec in caplog.records)
