@@ -29,7 +29,7 @@ Follow these steps to get the app repository installed on your Home Assistant sy
 
 ## Post-Installation
 
-You can set the current values for the daily accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values.
+You can set the current values for daily accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values.
 
 ## Home Assistant Auto-Discovery
 

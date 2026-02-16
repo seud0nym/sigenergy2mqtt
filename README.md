@@ -1,5 +1,5 @@
 <img src="https://github.com/seud0nym/sigenergy2mqtt/raw/main/resources/logo.png" alt="sigenergy2mqtt" height="50"><br>
-[![License](https://img.shields.io/github/license/seud0nym/sigenergy2mqtt.svg?style=flat)](https://github.com/seud0nym/sigenergy2mqtt/blob/master/LICENSE) 
+
 ![Dynamic YAML Badge](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fseud0nym%2Fhome-assistant-addons%2Frefs%2Fheads%2Fmain%2Fsigenergy2mqtt%2Fconfig.yaml&query=%24.version&prefix=v&label=add-on)
 [![Docker Image Version](https://img.shields.io/docker/v/seud0nym/sigenergy2mqtt?label=docker)](https://hub.docker.com/r/seud0nym/sigenergy2mqtt)
 [![PyPI - Version](https://img.shields.io/pypi/v/sigenergy2mqtt)](https://pypi.org/project/sigenergy2mqtt/)
@@ -22,6 +22,12 @@ In addition, `sigenergy2mqtt` has several optional features:
 1. It can publish the appropriate messages to allow Home Assistant to automatically discover the Sigenergy devices, simplifying Home Assistant configuration. 
 1. Production and consumption data can automatically be uploaded to PVOutput. 
 1. It can publish the Modbus data to the InfluxDB (v1/2) time series database for long-term storage and analysis.
+
+
+## Pre-requisites
+
+- Sigenergy ESS or PV Inverter, with Modbus-TCP enabled by your installer
+- MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an app to Home Assistant
 
 ## Installation
 
@@ -46,7 +52,7 @@ Click on the links above to see the configuration options available.
 
 <span style='font-size:x-small'><sup>*</sup> Not applicable to the Home Assistant App</span>
 
-## Modbus Auto-Discovery
+### Modbus Auto-Discovery
 
 You can automatically discover Sigenergy devices on your network. Auto-discovery is triggered when you do not configure a Modbus host, or if you specify the command line option `--modbus-auto-discovery`, the  environment variable `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`, or you can force it through the Home Assistant App Configuration. The command line option and the environment variables take a value of either `once` or `force`:  If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs.
 
