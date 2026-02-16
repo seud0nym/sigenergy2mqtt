@@ -67,6 +67,9 @@ class SanityCheck:
             return
 
         match data_type:
+            case ModbusDataType.STRING:
+                # STRING data type doesn't have numeric ranges
+                return
             case ModbusDataType.INT16:
                 self.min_raw = -32768
                 self.max_raw = 32767
@@ -86,7 +89,8 @@ class SanityCheck:
                 self.min_raw = 0
                 self.max_raw = 18446744073709551615
             case _:
-                raise ValueError(f"Unsupported data type: {data_type}")
+                # Unknown data types - no default ranges
+                pass
         match unit:
             case const.UnitOfPower.WATT | const.UnitOfEnergy.WATT_HOUR | const.UnitOfPower.KILO_WATT | const.UnitOfEnergy.KILO_WATT_HOUR:
                 self.max_raw = Config.sanity_check_default_kw * 1000 if not self.max_raw else min(Config.sanity_check_default_kw * 1000, self.max_raw)
