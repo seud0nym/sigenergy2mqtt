@@ -1,9 +1,10 @@
 if __name__ == "__main__":
-    import os
     import sys
+    from pathlib import Path
 
-    parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../src"))
-    sys.path.insert(0, parent_dir)
+    # .parents[2] goes up three levels: file -> dir -> .. -> .. -> ..
+    parent_dir = (Path(__file__).resolve().parents[2] / "src").resolve()
+    sys.path.insert(0, str(parent_dir))
 
 import asyncio
 import json
