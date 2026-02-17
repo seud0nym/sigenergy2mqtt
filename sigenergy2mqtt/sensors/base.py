@@ -2473,9 +2473,8 @@ class NumericSensor(ReadWriteSensor):
         if not isinstance(state, (float, int)):
             return state
 
-        # Apply gain/precision first (unless raw requested)
-        processed = state if raw else self._apply_gain_and_precision(state)
-        original_value = processed
+        # Apply gain/precision first if raw requested, because min/max are defined in terms of having gain applied
+        processed = self._apply_gain_and_precision(state) if raw else state
 
         # Preserve integer when precision == 0
         if getattr(self, "precision", None) == 0:
@@ -2492,27 +2491,30 @@ class NumericSensor(ReadWriteSensor):
         if DiscoveryKeys.MIN in self and isinstance(self[DiscoveryKeys.MIN], float):
             min_val = cast(float, self[DiscoveryKeys.MIN])
             if value < min_val:
-                value = min_val if not raw else min_val * self.gain
+                value = min_val if not raw else min_val
 
         if DiscoveryKeys.MAX in self and isinstance(self[DiscoveryKeys.MAX], float):
             max_val = cast(float, self[DiscoveryKeys.MAX])
             if value > max_val:
-                value = max_val if not raw else max_val * self.gain
+                value = max_val if not raw else max_val
 
         # Constrain to negative range (tuple)
         if DiscoveryKeys.MIN in self and isinstance(self[DiscoveryKeys.MIN], tuple) and value < 0:
             min_range = cast(tuple[float, ...], self[DiscoveryKeys.MIN])
             if not (min(min_range) <= value <= max(min_range)):
-                value = min(min_range) if not raw else min(min_range) * self.gain
+                value = min(min_range) if not raw else min(min_range)
 
         # Constrain to positive range (tuple)
         if DiscoveryKeys.MAX in self and isinstance(self[DiscoveryKeys.MAX], tuple) and value > 0:
             max_range = cast(tuple[float, ...], self[DiscoveryKeys.MAX])
             if not (min(max_range) <= value <= max(max_range)):
-                value = max(max_range) if not raw else max(max_range) * self.gain
+                value = max(max_range) if not raw else max(max_range)
 
-        if value != original_value and self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} value={original_value} adjusted to {value}")
+        if value != processed and self.debug_logging:
+            # Re-apply gain to revert to back to raw value if necessary
+            if raw and self.gain and self.gain != 1:
+                value *= self.gain
+            logging.debug(f"{self.__class__.__name__} value={state} adjusted to {value}")
 
         return value
 

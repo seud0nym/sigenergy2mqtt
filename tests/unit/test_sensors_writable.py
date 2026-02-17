@@ -260,7 +260,7 @@ class TestNumericSensorWritable:
 
     @pytest.mark.asyncio
     async def test_numeric_get_state_raw_clamp_with_gain(self):
-        """When raw=True and value is out-of-range the raw return should include gain."""
+        """When raw=True and value is out-of-range the raw return should NOT include gain."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = NumericSensor(None, "NumRaw", "sigenergy_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0)
 
