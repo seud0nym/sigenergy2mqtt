@@ -403,6 +403,7 @@ class TestPhase2CoreSensor:
             ConcreteSensor(name="T7", unique_id="sigenergy_id7", object_id="sigenergy_obj7", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version="invalid")
 
     def test_properties(self, mock_config):
+        from sigenergy2mqtt.sensors.base import Protocol
         from sigenergy2mqtt.sensors.const import DeviceClass
 
         s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit="V", device_class=DeviceClass.VOLTAGE, state_class=None, icon=None, gain=1.5, precision=2)
@@ -415,13 +416,19 @@ class TestPhase2CoreSensor:
         s.gain = 2.0
         assert s.gain == 2.0
 
-        # latest_interval
-        assert s.latest_interval is None
-        s.set_state(100)
-        assert s.latest_interval is None
-        with patch("sigenergy2mqtt.sensors.base.time.time", return_value=time.time() + 10):
+        # latest_interval - Fixed with deterministic mocking
+        with patch("sigenergy2mqtt.sensors.base.time.time") as mock_t:
+            mock_t.return_value = 1000.0
+            assert s.latest_interval is None
+
+            s.set_state(100)
+            assert s.latest_interval is None
+
+            # Advance mock time exactly 10 seconds
+            mock_t.return_value = 1010.0
             s.set_state(200)
-        assert s.latest_interval == pytest.approx(10)
+            # Now exactly 10.0, no jitter
+            assert s.latest_interval == 10.0
 
         # latest_raw_state
         assert s.latest_raw_state == 200
@@ -525,7 +532,7 @@ class TestPhase3Logic:
         derived = MagicMock(spec=Sensor)
         # add_derived_sensor uses __class__.__name__ as key
         s.add_derived_sensor(derived)
-        assert "Sensor" in s._derived_sensors
+        assert "Sensor" in s.derived_sensors
 
         # 298-342: apply_sensor_overrides branches
         overrides = {

@@ -9,6 +9,10 @@ class ModbusLockFactory:
     _logger = logging.getLogger("pymodbus")
 
     @classmethod
+    def clear(cls):
+        cls._locks.clear()
+
+    @classmethod
     def get(cls, modbus: ModbusClientType | None) -> ModbusLock:
         if modbus is None:
             return ModbusLock(None)
@@ -25,7 +29,3 @@ class ModbusLockFactory:
         for lock in cls._locks.values():
             waiters += lock.waiters
         return waiters
-
-    @classmethod
-    def clear(cls):
-        cls._locks.clear()

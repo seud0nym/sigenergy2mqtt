@@ -24,7 +24,7 @@ from sigenergy2mqtt.sensors.const import InputType
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
     def __init__(self, name, plant_index, device_address, address, count=1, scan_interval=10):
         super().__init__(
-            input_type=InputType.HOLDING,
+            input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=address,

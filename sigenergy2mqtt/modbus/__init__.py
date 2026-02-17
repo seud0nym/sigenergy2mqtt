@@ -1,5 +1,6 @@
-__all__ = ["ModbusClientFactory", "ModbusClient", "ModbusLockFactory"]
+__all__ = ["ModbusClientFactory", "ModbusClient", "ModbusLockFactory", "ModbusLock"]
 
 from .client import ModbusClient
 from .client_factory import ModbusClientFactory
+from .lock import ModbusLock
 from .lock_factory import ModbusLockFactory
