@@ -2,15 +2,15 @@ import asyncio
 import importlib
 import os
 import time
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from sigenergy2mqtt.common.protocol import Protocol
+from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors import base
 from sigenergy2mqtt.sensors.const import InputType
-from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.config.config import Config
-from sigenergy2mqtt.common.protocol import Protocol
 
 
 @pytest.fixture(autouse=True)
@@ -20,20 +20,6 @@ def reset_env(tmp_path):
     base.Sensor._used_unique_ids.clear()
     Config.home_assistant.enabled = False
     yield
-
-
-def test__load_metrics_module_import_error(monkeypatch):
-    # force importlib.import_module to raise ImportError
-    monkeypatch.setattr(importlib, "import_module", lambda name: (_ for _ in ()).throw(ImportError()))
-    assert base._load_metrics_module() is None
-
-
-def test__load_metrics_module_returns_metrics(monkeypatch):
-    class DummyMod:
-        Metrics = "X"
-
-    monkeypatch.setattr(importlib, "import_module", lambda name: DummyMod)
-    assert base._load_metrics_module() == "X"
 
 
 def test_icon_validation_raises():

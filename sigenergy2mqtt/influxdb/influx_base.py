@@ -12,7 +12,7 @@ from urllib3.util.retry import Retry
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device
-from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.metrics import Metrics
 
 
 class InfluxBase(Device):

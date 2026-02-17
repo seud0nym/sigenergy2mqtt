@@ -25,6 +25,7 @@ from pymodbus.pdu import ExceptionResponse, ModbusPDU
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter, RegisterAccess
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.i18n import _t
+from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 if TYPE_CHECKING:
@@ -120,28 +121,6 @@ class _ModbusLockFactoryProxy:
 
 
 ModbusLockFactory = _ModbusLockFactoryProxy
-
-
-def _load_metrics_module() -> Any:
-    """Load the metrics module with proper error handling.
-
-    Returns:
-        The Metrics class/module if available, None otherwise.
-    """
-    try:
-        import importlib
-
-        metrics_module = importlib.import_module("sigenergy2mqtt.metrics.metrics")
-        return getattr(metrics_module, "Metrics", metrics_module)
-    except ImportError:
-        logging.info("Metrics module not available - metrics collection disabled")
-        return None
-    except Exception as e:
-        logging.error(f"Unexpected error loading metrics module: {e}")
-        return None
-
-
-Metrics = _load_metrics_module()
 
 
 def _sanitize_path_component(component: str) -> str:

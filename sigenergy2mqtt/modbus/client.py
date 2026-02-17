@@ -7,7 +7,7 @@ from pymodbus.exceptions import ModbusException
 from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.sensors.const import InputType
 
 from .read_ahead import ReadAhead
