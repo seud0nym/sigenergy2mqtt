@@ -49,7 +49,7 @@ class DummyDerived(DerivedSensor):
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "protocol_version", protocol_version)
         object.__setattr__(self, "debug_logging", True)
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
 
     def add_derived_sensor(self, sensor):
         pass
@@ -71,7 +71,7 @@ class DummySensor(ReadableSensorMixin):
         self["unique_id"] = unique_id
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "protocol_version", protocol_version)
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
         object.__setattr__(self, "scan_interval", 60)
         object.__setattr__(self, "address", 0)
         object.__setattr__(self, "count", 1)

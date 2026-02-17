@@ -33,7 +33,7 @@ class DummyReadable(ReadableSensorMixin, Sensor):
         object.__setattr__(self, "scan_interval", 10)
         object.__setattr__(self, "input_type", "holding")
         object.__setattr__(self, "_states", [])
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
         object.__setattr__(self, "sleeper_task", None)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "force_publish", False)
@@ -103,7 +103,7 @@ class DummyObservable(ObservableMixin, ReadableSensorMixin, Sensor):
         self.topic = topic
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "_publishable", False)
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
         object.__setattr__(self, "sleeper_task", None)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "scan_interval", 10)

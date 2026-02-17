@@ -71,7 +71,7 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         object.__setattr__(self, "input_type", input_type)
         object.__setattr__(self, "scan_interval", scan_interval)
         object.__setattr__(self, "_publishable", True)
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
         # provide internal _states used by Sensor.latest_raw_state
         import time
 

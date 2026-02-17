@@ -241,7 +241,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = Config.home_assistant.enabled_by_default
 
         self._gain: float | None = gain
-        self._derived_sensors: dict[str, DerivedSensor] = {}
 
         # Publishing state
         self._attributes_published: bool = False
@@ -266,6 +265,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._retain: bool = False
 
         # Public attributes
+        self.derived_sensors: dict[str, DerivedSensor] = {}
         self.force_publish: bool = False
         self.name: str = name
         self.object_id: str = object_id
@@ -450,7 +450,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Args:
             sensor: The derived sensor to add
         """
-        self._derived_sensors[sensor.__class__.__name__] = sensor
+        self.derived_sensors[sensor.__class__.__name__] = sensor
 
     def apply_sensor_overrides(self, registers: RegisterAccess | None):
         """Apply configuration overrides from config file.
@@ -913,7 +913,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             modbus_client: Modbus client for reading values
             republish: If True, republish last known state
         """
-        for sensor in self._derived_sensors.values():
+        for sensor in self.derived_sensors.values():
             await sensor.publish(mqtt_client, modbus_client, republish=republish)
 
     def _handle_publish_error(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, error: Exception) -> bool:
@@ -963,7 +963,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def _log_publish_disabled(self) -> None:
         """Log that publishing has been disabled due to too many failures."""
         next_str = "restart" if self._next_retry is None else time.strftime("%c", time.localtime(self._next_retry))
-        affected = [s.__class__.__name__ for s in self._derived_sensors.values()]
+        affected = [s.__class__.__name__ for s in self.derived_sensors.values()]
         logging.warning(f"{self.__class__.__name__} Publishing DISABLED until {next_str} ({self._failures} failures >= {self._max_failures}) Affected derived sensors={','.join(affected)}")
 
     def publish_attributes(self, mqtt_client: mqtt.Client, clean: bool = False, **kwargs) -> None:
@@ -981,7 +981,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 self._publish_current_attributes(mqtt_client, **kwargs)
 
         # Publish derived sensor attributes
-        for sensor in self._derived_sensors.values():
+        for sensor in self.derived_sensors.values():
             sensor.publish_attributes(mqtt_client, clean=clean)
 
     def _clean_attributes(self, mqtt_client: mqtt.Client) -> None:
@@ -1025,7 +1025,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self.set_state(state)
 
         # Propagate to derived sensors
-        for sensor in self._derived_sensors.values():
+        for sensor in self.derived_sensors.values():
             sensor.set_source_values(self, self._states)
 
     def _get_applicable_overrides(self, identifier: str) -> dict | None:

@@ -245,7 +245,7 @@ class TestEnphasePVPowerProcessMeterReading:
         """Test that derived sensors are updated with new values."""
         # Add a mock derived sensor
         mock_derived = MagicMock()
-        pv_power_sensor._derived_sensors["TestDerived"] = mock_derived
+        pv_power_sensor.derived_sensors["TestDerived"] = mock_derived
 
         reading = [{"activePower": 3000.0, "actEnergyDlvd": 2000000, "current": 12.5, "freq": 60.0, "pwrFactor": 0.98, "reactivePower": 50, "voltage": 230}]
 
@@ -432,7 +432,7 @@ class TestEnphasePVPowerUpdateInternalState:
         # Add a mock TotalPVPower derived sensor with failover method
         mock_derived = MagicMock()
         mock_derived.failover.return_value = True
-        pv_power_sensor._derived_sensors["TotalPVPower"] = mock_derived
+        pv_power_sensor.derived_sensors["TotalPVPower"] = mock_derived
 
         with patch("requests.get", side_effect=requests.exceptions.RequestException("Network error")):
             result = await pv_power_sensor._update_internal_state()
@@ -446,7 +446,7 @@ class TestEnphasePVPowerUpdateInternalState:
         pv_power_sensor._token = "valid_token"
         pv_power_sensor._failures = 4  # one less than max
         pv_power_sensor._failover_initiated = False
-        pv_power_sensor._derived_sensors = {}  # No TotalPVPower
+        pv_power_sensor.derived_sensors = {}  # No TotalPVPower
 
         with patch("requests.get", side_effect=requests.exceptions.RequestException("Network error")):
             result = await pv_power_sensor._update_internal_state()

@@ -97,7 +97,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
                 logging.info(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
             state_is = 0.0
         self.set_state(state_is)
-        for sensor in self._derived_sensors.values():
+        for sensor in self.derived_sensors.values():
             latest = self._states.pop()
             match sensor:
                 case EnphaseLifetimePVEnergy():
@@ -153,9 +153,9 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
             if self._failover_initiated or (self._failures + 1) < self._max_failures:
                 raise
             else:
-                if "TotalPVPower" in self._derived_sensors:
+                if "TotalPVPower" in self.derived_sensors:
                     logging.info(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
-                    self._failover_initiated = cast(SubstituteMixin, self._derived_sensors["TotalPVPower"]).failover(self)
+                    self._failover_initiated = cast(SubstituteMixin, self.derived_sensors["TotalPVPower"]).failover(self)
                 else:
                     logging.warning(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
                     return True
@@ -443,7 +443,7 @@ if __name__ == "__main__":
         if sensor:
             sensor.debug_logging = True
             print(f"{sensor.name} =  {await sensor.get_state()}")
-            for derived in sensor._derived_sensors.values():
+            for derived in sensor.derived_sensors.values():
                 print(f"{derived.name} =  {await derived.get_state()}")
         else:
             print(f"Sensor '{pv_power_unique_id}' not found!!!")

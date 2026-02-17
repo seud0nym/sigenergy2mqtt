@@ -27,7 +27,7 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         object.__setattr__(self, "input_type", InputType.HOLDING)
         object.__setattr__(self, "_publishable", True)
         object.__setattr__(self, "_states", [])
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
         object.__setattr__(self, "sleeper_task", None)
         object.__setattr__(self, "debug_logging", False)
 

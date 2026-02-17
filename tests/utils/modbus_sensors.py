@@ -169,7 +169,7 @@ async def get_sensor_instances(
         elif s.__class__.__name__ != sensors[key].__class__.__name__:
             logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensors[key].__class__.__name__}")
         classes[s.__class__.__name__] += 1
-        for d in s._derived_sensors.values():
+        for d in s.derived_sensors.values():
             add_sensor_instance(d)
 
     find_concrete_classes(Sensor)

@@ -8,7 +8,7 @@ import pytest
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry, SensorGroup
+from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
 
@@ -26,7 +26,7 @@ class DummyReadable(ReadableSensorMixin):
         object.__setattr__(self, "protocol_version", Protocol.V1_8)
         object.__setattr__(self, "_publishable", publishable)
         object.__setattr__(self, "_states", [])
-        object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "derived_sensors", {})
         object.__setattr__(self, "sleeper_task", None)
 
     async def _update_internal_state(self, **kwargs) -> bool:
@@ -70,16 +70,6 @@ def setup_module(module):
 def teardown_function(func):
     # clear device registry to avoid cross-test leakage
     DeviceRegistry._devices.clear()
-
-
-def test_sensor_group_scan_interval_empty_and_with_sensors():
-    sg_empty = SensorGroup()
-    assert sg_empty.scan_interval == 86400
-
-    s1 = DummyReadable(unique_id="s1", scan_interval=5)
-    s2 = DummyReadable(unique_id="s2", scan_interval=10)
-    sg = SensorGroup(s1, s2)
-    assert sg.scan_interval == 5
 
 
 async def test_device_online_setter_and_rediscover():
