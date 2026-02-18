@@ -60,7 +60,13 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
             chunk = ip_list[i : i + concurrent]
 
             # Run all checks in the chunk concurrently
-            results = await asyncio.gather(*[check_single_host(ip) for ip in chunk], return_exceptions=True)
+            checks = [check_single_host(ip) for ip in chunk]
+            try:
+                results = await asyncio.gather(*checks, return_exceptions=True)
+            except (asyncio.CancelledError, KeyboardInterrupt):
+                for coro in checks:
+                    coro.close()
+                raise            
 
             for result in results:
                 # Handle exceptions from gather
