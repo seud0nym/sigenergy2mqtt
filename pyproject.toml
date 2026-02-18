@@ -36,7 +36,7 @@ scripts.cov = "pytest --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "-n logical --dist loadscope"
+addopts = "-n auto --dist loadscope"
 markers = [
     "no_language_mock: disable global mock of i18n.get_default_language",
     "no_persistent_state_mock: disable global mock of Config.persistent_state_path",
