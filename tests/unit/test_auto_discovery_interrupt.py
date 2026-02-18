@@ -1,5 +1,4 @@
 import asyncio
-import os
 import signal
 import time
 from queue import Queue
@@ -144,7 +143,7 @@ class TestScanHostInterruption:
                 auto_discovery._interrupted = True
             return False
 
-        with patch("sigenergy2mqtt.config.auto_discovery.AsyncModbusTcpClient") as mock_client_cls:
+        with patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"1.2.3.4": 0.1}), patch("sigenergy2mqtt.config.auto_discovery.AsyncModbusTcpClient") as mock_client_cls:
             mock_client = mock_client_cls.return_value
             mock_client.connect = AsyncMock()
             mock_client.connected = True
@@ -225,9 +224,7 @@ class TestMainEarlySignalHandlers:
         assert signal.SIGTERM in handlers
 
     def test_early_exit_first_signal_sets_flag(self):
-        """Calling the early exit handler once should set _interrupted."""
         import sigenergy2mqtt.config.auto_discovery as ad
-
         ad._interrupted = False
 
         handlers = {}
@@ -237,51 +234,46 @@ class TestMainEarlySignalHandlers:
             handlers[sig] = handler
             return original_signal(sig, signal.SIG_DFL)
 
-        with patch("signal.signal", side_effect=capture_signal):
-            with patch("sigenergy2mqtt.__main__.initialize"):
-                with patch("sigenergy2mqtt.__main__.asyncio.run"), patch("sigenergy2mqtt.__main__.async_main"):
-                    import warnings
-
-                    from sigenergy2mqtt.__main__ import main
-
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings("ignore", message=r"coroutine .* was never awaited", category=RuntimeWarning)
-                        main()
-                        import gc
-
-                        gc.collect()
-
-        # Simulate first signal
-        handler = handlers[signal.SIGINT]
-        handler(signal.SIGINT, None)
-        assert ad._interrupted is True
-
-    def test_early_exit_second_signal_force_exits(self):
-        """Calling the early exit handler twice should os._exit()."""
-        import sigenergy2mqtt.config.auto_discovery as ad
-
-        ad._interrupted = False
-
-        handlers = {}
-        original_signal = signal.signal
-
-        def capture_signal(sig, handler):
-            handlers[sig] = handler
-            return original_signal(sig, signal.SIG_DFL)
+        def _noop_sync(*args, **kwargs): pass
+        async def _noop_async(*args, **kwargs): pass
 
         with patch("signal.signal", side_effect=capture_signal):
-            with patch("sigenergy2mqtt.__main__.initialize"):
-                with patch("sigenergy2mqtt.__main__.asyncio.run"), patch("sigenergy2mqtt.__main__.async_main"):
+            with patch("sigenergy2mqtt.__main__.initialize", new=_noop_sync):
+                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), \
+                    patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
                     from sigenergy2mqtt.__main__ import main
-
                     main()
 
         handler = handlers[signal.SIGINT]
-        # First call — sets flag
         handler(signal.SIGINT, None)
         assert ad._interrupted is True
 
-        # Second call — should force exit via os._exit
+
+    def test_early_exit_second_signal_force_exits(self):
+        import sigenergy2mqtt.config.auto_discovery as ad
+        ad._interrupted = False
+
+        handlers = {}
+        original_signal = signal.signal
+
+        def capture_signal(sig, handler):
+            handlers[sig] = handler
+            return original_signal(sig, signal.SIG_DFL)
+
+        def _noop_sync(*args, **kwargs): pass
+        async def _noop_async(*args, **kwargs): pass
+
+        with patch("signal.signal", side_effect=capture_signal):
+            with patch("sigenergy2mqtt.__main__.initialize", new=_noop_sync):
+                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), \
+                    patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
+                    from sigenergy2mqtt.__main__ import main
+                    main()
+
+        handler = handlers[signal.SIGINT]
+        handler(signal.SIGINT, None)
+        assert ad._interrupted is True
+
         with patch("os._exit") as mock_exit:
             handler(signal.SIGINT, None)
             mock_exit.assert_called_once_with(130)
@@ -299,11 +291,17 @@ class TestMainEarlySignalHandlers:
             handlers[sig] = handler
             return original_signal(sig, signal.SIG_DFL)
 
-        with patch("signal.signal", side_effect=capture_signal):
-            with patch("sigenergy2mqtt.__main__.initialize"):
-                with patch("sigenergy2mqtt.__main__.asyncio.run"), patch("sigenergy2mqtt.__main__.async_main"):
-                    from sigenergy2mqtt.__main__ import main
+        def _noop_sync(*args, **kwargs):
+            pass
 
+        async def _noop_async(*args, **kwargs):
+            pass
+
+        with patch("signal.signal", side_effect=capture_signal):
+            with patch("sigenergy2mqtt.__main__.initialize", new=_noop_sync):
+                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), \
+                    patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
+                    from sigenergy2mqtt.__main__ import main
                     main()
 
         handler = handlers[signal.SIGTERM]

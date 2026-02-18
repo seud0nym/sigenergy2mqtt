@@ -1,9 +1,8 @@
-import logging
 import os
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from sigenergy2mqtt.config import Config, _apply_cli_overrides, const
+from sigenergy2mqtt.config import _apply_cli_overrides, const
 
 
 @patch.dict(os.environ, {}, clear=True)
@@ -33,7 +32,8 @@ def test_apply_cli_overrides_boolean_flags():
 
     # Mock Config.apply_cli_to_env to verify calls
     # Patch the _Config class alias directly in the module where _apply_cli_overrides is defined
-    with patch("sigenergy2mqtt.config._Config") as mock_config_class:
+    with patch("sigenergy2mqtt.config._Config") as mock_config_class, \
+        patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
         mock_apply = mock_config_class.apply_cli_to_env
 
         _apply_cli_overrides(args)

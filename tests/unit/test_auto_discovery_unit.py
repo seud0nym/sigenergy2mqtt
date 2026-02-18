@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -126,12 +125,13 @@ def test_ping_scan():
             self.destination = dest
 
     async def fake_open(host, port):
+        async def _noop(): pass
         writer = MagicMock()
         writer.close = MagicMock()
-        writer.wait_closed = AsyncMock()
+        writer.wait_closed = _noop
         return (MagicMock(), writer)
 
-    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", new=AsyncMock(side_effect=fake_open)):
+    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", new=fake_open):
         results = asyncio.run(auto_discovery.ping_scan(["1.2.3.4"], concurrent=1))
 
     assert isinstance(results, dict)

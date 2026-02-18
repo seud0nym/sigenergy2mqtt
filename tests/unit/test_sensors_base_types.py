@@ -202,8 +202,11 @@ class TestEnergyAccumulationSensors:
                 values = [(1000.0, 10.0), (1100.0, 20.0)]
                 source.latest_interval = 100.0
 
-                with patch("asyncio.run_coroutine_threadsafe"):
-                    sensor._persist_current_total = AsyncMock()
+                async def _noop(*args, **kwargs):
+                    pass
+
+                sensor._persist_current_total = _noop
+                with patch("asyncio.run_coroutine_threadsafe", side_effect=lambda coro, loop: coro.close()):
                     result = sensor.set_source_values(source, values)
                     assert result is True
                     assert pytest.approx(sensor._current_total) == 100.4166666

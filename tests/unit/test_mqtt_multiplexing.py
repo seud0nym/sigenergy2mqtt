@@ -22,8 +22,8 @@ class TestMqttMultiplexing:
         mock_client = MagicMock(spec=mqtt.Client)
         topic = "homeassistant/status"
 
-        callback1 = MagicMock()
-        callback2 = MagicMock()
+        callback1 = MagicMock(return_value=False)
+        callback2 = MagicMock(return_value=False)
 
         # Register two handlers for the same topic
         mqtt_handler.register(mock_client, topic, callback1)
