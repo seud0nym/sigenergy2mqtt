@@ -610,9 +610,6 @@ class Config(metaclass=ConfigMeta):
             try:
                 auto_discovered = asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
             except RuntimeError:
-                # An event loop is already running in this thread. Try submitting to the running loop
-                # (works if the loop is running in another thread). If that fails, fall back to an
-                # empty result to avoid deadlock.
                 try:
                     loop = asyncio.get_event_loop()
                     if loop.is_running():
@@ -621,7 +618,7 @@ class Config(metaclass=ConfigMeta):
                                 auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries),
                                 loop,
                             )
-                            auto_discovered = future.result(timeout=5)
+                            auto_discovered = future.result()
                         except Exception:
                             logging.exception("Auto-discovery failed when submitting to running loop")
                             auto_discovered = []
