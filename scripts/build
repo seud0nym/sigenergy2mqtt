@@ -46,7 +46,7 @@ fi
 
 if [[ $new_version != $old_version ]]; then
     echo -e "${GREEN}>>> Running test suite...${NC}"
-    pytest -q --disable-warnings || exit
+    pytest -n logical -q --disable-warnings || exit
 
     echo -e "${GREEN}>>> Checking sensors...${NC}"
     python3 - <<EOF || exit

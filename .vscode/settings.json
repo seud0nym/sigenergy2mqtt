@@ -110,7 +110,7 @@
     "python.pyrefly.displayTypeErrors": "force-on",
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "tests"
+        "tests", "-n", "logical"
     ],
     "python.testing.unittestEnabled": false,
     "ruff.lineLength": 210,
