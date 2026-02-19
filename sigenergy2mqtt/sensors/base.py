@@ -1520,9 +1520,8 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             logging.warning(f"{self.__class__.__name__} Modbus read failed to acquire lock within {self.scan_interval}s")
             return False
         except Exception:
-            # Record error in metrics if available
-            if Metrics:
-                await Metrics.modbus_read_error()
+            # Record error in metrics
+            await Metrics.modbus_read_error()
             raise
 
     def _log_read_attempt(self) -> None:
@@ -1557,9 +1556,8 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
 
         elapsed = time.monotonic() - start
 
-        # Record metrics if available
-        if Metrics:
-            await Metrics.modbus_read(self.count, elapsed)
+        # Record metrics
+        await Metrics.modbus_read(self.count, elapsed)
 
         # Check response validity
         result = self._check_register_response(rr, f"read_{self.input_type}_registers")
@@ -1943,8 +1941,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             return False
         except Exception as e:
             logging.error(f"{self.__class__.__name__} write_registers: {repr(e)}")
-            if Metrics:
-                await Metrics.modbus_write_error()
+            await Metrics.modbus_write_error()
             raise
 
     def _convert_value_to_registers(self, modbus_client: ModbusClientType, raw_value: float | int | str) -> list[int]:
@@ -1991,9 +1988,8 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         elapsed = time.monotonic() - start
 
-        # Record metrics if available
-        if Metrics:
-            await Metrics.modbus_write(len(registers), elapsed)
+        # Record metrics
+        await Metrics.modbus_write(len(registers), elapsed)
 
         if self.debug_logging:
             logging.debug(
