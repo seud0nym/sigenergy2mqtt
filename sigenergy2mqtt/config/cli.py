@@ -76,6 +76,14 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_CONSUMPTION, None),
         help="Set the method of calculating the Plant Consumed Power sensor. Valid values are: 'calculated', 'total' (Total Load Power register), or 'general' (V2.8 General Load Power register). The default is 'calculated'. This option is ignored on firmware earlier than that supporting Modbus Protocol V2.8.",
     )
+    parser.add_argument(
+        "--repeated-state-publish-interval",
+        action="store",
+        dest=const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, None),
+        help="The interval in seconds at which repeated states are published. If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 0 (always publish).",
+    )
     # endregion
 
     # region Home Assistant Configuration

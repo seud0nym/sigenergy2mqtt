@@ -15,6 +15,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_NO_METRICS` | Set to `true` to prevent sigenergy2mqtt from publishing metrics to MQTT. | 2025.8.2 |
 | `SIGENERGY2MQTT_NO_EMS_MODE_CHECK` | Set to `true` to turn off the validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This setting does not comply with the Sigenergy Modbus Protocol documentation, but may be useful for some installations. | 2026.1.13 |
 | `SIGENERGY2MQTT_CONSUMPTION` | Set the method of calculating the `Plant Consumed Power` sensor. Valid values are: `calculated`, `total` (use the V2.8 `Total Load Power` register), or `general` (use the V2.8 `General Load Power` register). The default is `calculated`. This option is _ignored_ on firmware earlier than that supporting Modbus Protocol V2.8. | 2025.12.23 |
+| `SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL` | Set the interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 0 (always publish) | 2026.2.19 |
 
 ## Home Assistant Configuration Variables
 

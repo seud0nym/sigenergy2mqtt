@@ -1854,6 +1854,8 @@ cli:
     help: PVOutput用温度データのMQTTトピック。
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "PVOutput用電圧値のソース。デフォルト: 'l/n-avg'。"
+  SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
+    help:  "繰り返し状態が公開される間隔（秒単位）。0 未満の場合、繰り返し状態は公開されません。0 の場合、繰り返し状態は常に公開されます。0 より大きい場合、繰り返し状態は指定された間隔で公開されます。デフォルトは 0（常に公開）です。"
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '電力センサーの実際の値とエネルギーセンサーのデルタ値の最大値と最小値を検証するためにサニティチェックに使用されるデフォルト値（kW）。デフォルト値は1秒あたり500kWで、範囲外の読み取り値は無視されます。'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:

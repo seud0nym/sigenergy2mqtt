@@ -1854,6 +1854,8 @@ cli:
     help: Un tema MQTT del que se puede leer la temperatura actual. Esto se usa para enviar la temperatura a PVOutput. Si no se especifica, la temperatura no se enviará a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "La fuente del valor de voltaje a enviar a PVOutput. Valores válidos son: phase-a, phase-b, phase-c, l/n-avg (promedio línea a neutro), l/l-avg (promedio línea a línea) o pv (promedio de cadenas PV). El predeterminado es 'l/n-avg'."
+  SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
+    help:  "El intervalo en segundos en el que se publican los estados repetidos. Si < 0, los estados repetidos nunca se publican. Si 0, los estados repetidos siempre se publican. Si > 0, los estados repetidos se publican en el intervalo especificado. El valor predeterminado es 0 (publicar siempre)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: El valor predeterminado en kW usado para comprobaciones de cordura para validar los valores máximo y mínimo de sensores de potencia y el valor delta de sensores de energía. El valor predeterminado es 500 kW por segundo, y las lecturas fuera del rango se ignoran.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:

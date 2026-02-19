@@ -27,6 +27,16 @@ language: en
 #                 'calculated'. This option is ignored on firmware earlier
 #                 than that supporting Modbus Protocol V2.8.
 consumption: calculated
+# repeated-state-publish-interval
+#   added: 2026.2.19
+#   default: 0
+#   description:  The interval in seconds at which repeated states are published.
+#                 (Repeated states occur when the state that is acquired is
+#                 identical to the previous read.) If < 0, repeated states are
+#                 never published. If 0, repeated states are always published.
+#                 If > 0, repeated states are published at the specified
+#                 interval. The default is 0 (always publish).
+repeated-state-publish-interval: 0
 # sanity-check-default-kw
 #   added: 2025.7.9
 #   default: 500.0

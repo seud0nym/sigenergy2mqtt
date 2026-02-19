@@ -1,28 +1,22 @@
 import asyncio
-import importlib
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import sigenergy2mqtt.sensors.base as sensors_base
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     DerivedSensor,
     InputType,
-    ModbusDataType,
     ModbusLockFactory,
     ModbusSensorMixin,
     NumericSensor,
-    ObservableMixin,
-    ReadableSensorMixin,
     ReadOnlySensor,
     ReservedSensor,
     ResettableAccumulationSensor,
     RunningStateSensor,
     Sensor,
-    SubstituteMixin,
     SwitchSensor,
     TimestampSensor,
     TypedSensorMixin,
@@ -88,6 +82,7 @@ def mock_config():
         mock.sensor_debug_logging = False
         mock.modbus = []
         mock.sanity_check_default_kw = 100.0
+        mock.repeated_state_publish_interval = 0
         with patch("sigenergy2mqtt.sensors.sanity_check.Config", mock):
             yield mock
 
@@ -310,8 +305,6 @@ class TestAccumulationSensorPersistence:
 
 class TestSpecializedSensors:
     def test_switch_sensor_logic(self):
-        from sigenergy2mqtt.sensors.base import SwitchSensor
-
         # availability_control_sensor, name, object_id, plant_index, device_address, address, scan_interval, protocol_version
         s = SwitchSensor(None, "Switch", "sigenergy_sw", 0, 1, 30005, 10, Protocol.V2_4)
         assert s.state2raw(1) == 1
@@ -329,9 +322,7 @@ class TestSpecializedSensors:
         assert await s.value_is_valid(None, 150) is False
 
     @pytest.mark.asyncio
-    async def test_running_state_sensor(self):
-        from sigenergy2mqtt.sensors.base import RunningStateSensor
-
+    async def test_running_state_sensor(self, mock_config):
         # name, object_id, plant_index, device_address, address, protocol_version
         s = RunningStateSensor("State", "sigenergy_state", 0, 1, 30007, Protocol.V2_4)
         client = AsyncMock()
@@ -844,7 +835,6 @@ class TestCoverageGap:
             assert s.latest_time == 0
 
     def test_apply_sensor_overrides_device_logic(self, mock_config):
-        from sigenergy2mqtt.common import RegisterAccess
         from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
         class MockRegisters:
@@ -930,7 +920,6 @@ class TestCoverageGap:
 
     @pytest.mark.asyncio
     async def test_publish_error_branches(self, mock_config):
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
 
         s = ConcreteSensor(name="T", debug_logging=True)
         s.configure_mqtt_topics("dev1")
@@ -1219,7 +1208,7 @@ class TestCoverageGap:
         from unittest.mock import PropertyMock
 
         from sigenergy2mqtt.sensors.base import InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfEnergy
+        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         source = ReadOnlySensor("S", "sigenergy_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
@@ -1342,7 +1331,7 @@ class TestCoverageGap:
         from unittest.mock import PropertyMock
 
         from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfEnergy
+        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         source = ReadOnlySensor("S", "sigenergy_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
@@ -1454,3 +1443,53 @@ class TestCoverageGap:
             data_type=ModbusDataType.INT32,
         )
         assert s.name == "PV"
+
+
+class TestSetLatestState:
+    """Tests for Sensor.set_latest_state return value and suppression logic."""
+
+    def test_set_latest_state_returns_true_on_change(self, mock_config):
+        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        # Initial state
+        assert sensor.set_latest_state(100) is True
+        assert sensor.latest_raw_state == 100
+
+        # Changed state
+        assert sensor.set_latest_state(200) is True
+        assert sensor.latest_raw_state == 200
+
+    def test_set_latest_state_republish_interval_zero(self, mock_config):
+        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        mock_config.repeated_state_publish_interval = 0
+
+        assert sensor.set_latest_state(100) is True
+        # Repeat value - should still return True when interval is 0
+        assert sensor.set_latest_state(100) is True
+
+    def test_set_latest_state_republish_interval_negative(self, mock_config):
+        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        mock_config.repeated_state_publish_interval = -1
+
+        assert sensor.set_latest_state(100) is True
+        # Repeat value - should return False when interval is < 0
+        assert sensor.set_latest_state(100) is False
+
+    def test_set_latest_state_republish_interval_positive(self, mock_config):
+        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        mock_config.repeated_state_publish_interval = 10
+
+        with patch("sigenergy2mqtt.sensors.base.time.time") as mock_time:
+            now = 1000.0
+            mock_time.return_value = now
+
+            # Initial state
+            assert sensor.set_latest_state(100) is True
+
+            # Immediate repeat - should be False
+            mock_time.return_value = now + 5
+            assert sensor.set_latest_state(100) is False
+
+            # After interval - should be True
+            mock_time.return_value = now + 11
+            assert sensor.set_latest_state(100) is True
+            assert sensor._states[-1][0] == now + 11

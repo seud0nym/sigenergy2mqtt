@@ -1854,6 +1854,8 @@ cli:
     help: MQTT-topic voor temperatuurgegevens naar PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "De bron van de spanningswaarde voor PVOutput. Standaard: 'l/n-avg'."
+  SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
+    help:  "Het interval in seconden waarmee herhaalde staten worden gepubliceerd. Als < 0, worden herhaalde staten nooit gepubliceerd. Als 0, worden herhaalde staten altijd gepubliceerd. Als > 0, worden herhaalde staten gepubliceerd op het opgegeven interval. De standaardwaarde is 0 (altijd publiceren)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500 kW per seconde, en metingen buiten het bereik worden genegeerd.'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:

@@ -118,6 +118,10 @@ class TestConfigDefaults:
         """Test default ems_mode_check flag."""
         assert Config.ems_mode_check is True
 
+    def test_default_repeated_state_publish_interval(self):
+        """Test default repeated_state_publish_interval."""
+        assert Config.repeated_state_publish_interval == 0
+
 
 class TestConfigConfiguration:
     """Tests for Config._configure method."""
@@ -155,6 +159,11 @@ class TestConfigConfiguration:
         assert Config.ems_mode_check is False
         Config._configure({"no-ems-mode-check": False})
         assert Config.ems_mode_check is True
+
+    def test_configure_repeated_state_publish_interval(self):
+        """Test configuring repeated-state-publish-interval."""
+        Config._configure({"repeated-state-publish-interval": 10})
+        assert Config.repeated_state_publish_interval == 10
 
     def test_configure_language_invalid_fallback(self, caplog):
         """Test configuring an invalid language falls back to default."""

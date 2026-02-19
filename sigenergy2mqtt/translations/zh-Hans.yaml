@@ -1854,6 +1854,8 @@ cli:
     help: PVOutput温度数据MQTT主题。
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: PVOutput电压值来源。默认：'l/n-avg'。
+  SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
+    help:  "重复状态发布的时间间隔（以秒为单位）。如果 < 0，则永远不发布重复状态。如果为 0，则始终发布重复状态。如果 > 0，则以指定的间隔发布重复状态。默认值为 0（始终发布）。"
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '用于合理性检查的默认值（kW），用于验证功率传感器的当前值和能量传感器的增量值的最大和最小。默认值为每秒 500 kW，超出范围的读数将被忽略。'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:

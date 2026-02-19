@@ -98,6 +98,8 @@ class Config(metaclass=ConfigMeta):
 
     language: str
 
+    repeated_state_publish_interval: int
+
     sanity_check_default_kw: float
     sanity_check_failures_increment: bool
 
@@ -124,6 +126,8 @@ class Config(metaclass=ConfigMeta):
         self.metrics_enabled = True
 
         self.language = i18n.get_default_language()
+
+        self.repeated_state_publish_interval = 0
 
         self.sanity_check_default_kw = 500.0
         self.sanity_check_failures_increment = False
@@ -393,6 +397,8 @@ class Config(metaclass=ConfigMeta):
                 overrides["pvoutput"]["update-debug-logging"] = check_bool(value, key)
             case const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
                 overrides["pvoutput"]["voltage"] = check_string(value, key, *[v.value for v in VoltageSource])
+            case const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
+                overrides["repeated-state-publish-interval"] = check_int(value, key, allow_none=False)
             case const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
                 overrides["sanity-check-default-kw"] = check_float(value, key, allow_none=False, min=0)
             case const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT:
@@ -529,6 +535,9 @@ class Config(metaclass=ConfigMeta):
                     self.pvoutput.configure(data[name], override)
                 case "influxdb":
                     self.influxdb.configure(data[name], override)
+                case "repeated-state-publish-interval":
+                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: repeated-state-publish-interval = {data[name]}")
+                    self.repeated_state_publish_interval = cast(int, check_int(data[name], name, allow_none=False))
                 case "sanity-check-default-kw":
                     logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
                     self.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))

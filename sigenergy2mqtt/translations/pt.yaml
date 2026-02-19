@@ -1854,6 +1854,8 @@ cli:
     help: Tópico MQTT para dados de temperatura para PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "Fonte do valor de tensão para PVOutput. Padrão: 'l/n-avg'."
+  SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
+    help:  "O intervalo em segundos no qual os estados repetidos são publicados. Se < 0, os estados repetidos nunca são publicados. Se 0, os estados repetidos são sempre publicados. Se > 0, os estados repetidos são publicados no intervalo especificado. O padrão é 0 (publicar sempre)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: 'O valor padrão em kW usado para verificações de integridade para validar os valores máximo e mínimo para o valor real dos sensores de potência e o valor delta dos sensores de energia. O valor padrão é 500 kW por segundo, e as leituras fora do intervalo são ignoradas.'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:

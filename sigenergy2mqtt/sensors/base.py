@@ -1016,17 +1016,54 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._attributes_published = True
         self.force_publish = False
 
-    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and propagate to derived sensors.
 
         Args:
             state: The new state value
-        """
-        self.set_state(state)
 
-        # Propagate to derived sensors
+        Returns:
+            True if state was updated and should be published, False if state was suppressed as a repeated
+        """
+        # Determine whether the incoming value is a repeat of the last recorded state.
+        previous_raw = self._states[-1][1] if self._states else None
+        state_is_repeated = previous_raw is not None and state == previous_raw
+
+        if not state_is_repeated:
+            # Value has changed – always record and publish.
+            self.set_state(state)
+            updated = True
+        else:
+            interval = Config.repeated_state_publish_interval
+            if interval == 0:
+                # Always republish even when the value is unchanged.
+                self.set_state(state)
+                updated = True
+            elif interval < 0:
+                # Never republish an unchanged value.
+                if self.debug_logging:
+                    logging.debug(f"{self.__class__.__name__} Repeated state suppressed (repeated_state_publish_interval={interval}): {state=}")
+                updated = False
+            else:
+                # Republish only when a full interval (or multiple thereof) has elapsed
+                # since the state was first recorded at this value.
+                elapsed = time.time() - self._states[-1][0]
+                if elapsed >= interval:
+                    if self.debug_logging:
+                        logging.debug(f"{self.__class__.__name__} Repeated state republished after {elapsed:.1f}s (repeated_state_publish_interval={interval}): {state=}")
+                    self.set_state(state)
+                    updated = True
+                else:
+                    if self.debug_logging:
+                        logging.debug(f"{self.__class__.__name__} Repeated state suppressed ({elapsed:.1f}s < repeated_state_publish_interval={interval}): {state=}")
+                    updated = False
+
+        # Always pass the current state to derived sensors regardless of suppression,
+        # so they can make their own publishing decisions.
         for sensor in self.derived_sensors.values():
             sensor.set_source_values(self, self._states)
+
+        return updated
 
     def _get_applicable_overrides(self, identifier: str) -> dict | None:
         """Get override configuration if identifier matches this sensor.
@@ -1565,7 +1602,12 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         if result and rr:
             # Convert registers to value and update state
             value = modbus_client.convert_from_registers(rr.registers, self.data_type)  # pyright: ignore
-            self.set_latest_state(value)
+            # set_latest_state returns True only when self._states was updated
+            # (i.e. the value changed, or the repeat-publish interval has elapsed).
+            # Returning False here causes get_state() to return None, which
+            # suppresses MQTT publication for unchanged repeated values while
+            # still allowing derived sensors to evaluate their own state.
+            result = self.set_latest_state(value)
 
         if self.debug_logging:
             self._log_read_complete(elapsed, result)

@@ -32,8 +32,7 @@ def test_apply_cli_overrides_boolean_flags():
 
     # Mock Config.apply_cli_to_env to verify calls
     # Patch the _Config class alias directly in the module where _apply_cli_overrides is defined
-    with patch("sigenergy2mqtt.config._Config") as mock_config_class, \
-        patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
+    with patch("sigenergy2mqtt.config._Config") as mock_config_class, patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
         mock_apply = mock_config_class.apply_cli_to_env
 
         _apply_cli_overrides(args)
@@ -50,3 +49,16 @@ def test_apply_cli_overrides_boolean_flags():
         mock_apply.assert_any_call(const.SIGENERGY2MQTT_PVOUTPUT_ENABLED, "True")
         mock_apply.assert_any_call(const.SIGENERGY2MQTT_SMARTPORT_ENABLED, "true")
         mock_apply.assert_any_call("some_other_arg", "some_value")
+
+
+@patch.dict(os.environ, {}, clear=True)
+def test_apply_cli_overrides_repeated_interval():
+    """Test that repeated_state_publish_interval is correctly applied."""
+    args = SimpleNamespace()
+    setattr(args, const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, 10)
+    setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
+
+    with patch("sigenergy2mqtt.config._Config") as mock_config_class, patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
+        mock_apply = mock_config_class.apply_cli_to_env
+        _apply_cli_overrides(args)
+        mock_apply.assert_any_call(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, "10")
