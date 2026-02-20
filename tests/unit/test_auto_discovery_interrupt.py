@@ -37,9 +37,9 @@ class TestCheckInterrupted:
         auto_discovery._interrupted = False
         auto_discovery._check_interrupted()  # should not raise
 
-    def test_raises_keyboard_interrupt_when_interrupted(self):
+    def test_raises_interrupted_error_when_interrupted(self):
         auto_discovery._interrupted = True
-        with pytest.raises(KeyboardInterrupt, match="interrupted by signal"):
+        with pytest.raises(auto_discovery.DiscoveryInterruptedError, match="interrupted by signal"):
             auto_discovery._check_interrupted()
 
 
