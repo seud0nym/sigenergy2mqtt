@@ -1,11 +1,17 @@
 from unittest.mock import patch
 
 import pytest
-from sensor_stubs import ConcreteSensor
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+
+
+class ConcreteSensor(Sensor):
+    """Concrete implementation of Sensor for testing since Sensor is abstract."""
+
+    async def _update_internal_state(self, **kwargs):
+        return True
 
 
 class TestSensorBase:
@@ -205,8 +211,6 @@ class TestSensorLogic:
             assert await sensor.get_state() == "Error"
 
     def test_sensor_init_assertions(self):
-        from sensor_stubs import ConcreteSensor
-
         from sigenergy2mqtt.sensors.base import Sensor
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):

@@ -1,4 +1,5 @@
 import asyncio
+import time
 import types
 from pathlib import Path
 from typing import Any, cast
@@ -105,6 +106,33 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
 
 @pytest.mark.asyncio
 async def test_publish_updates_runs_one_iteration(monkeypatch):
+    # --- 1. SET UP TIME MOCKING ---
+    class MockClock:
+        def __init__(self):
+            self.current_time = 1000.0  # Start at an arbitrary timestamp
+
+        def get_time(self):
+            return self.current_time
+
+        def advance(self, amount):
+            self.current_time += amount
+
+    clock = MockClock()
+
+    # Patch the standard time functions (covers whichever your code uses to measure intervals)
+    monkeypatch.setattr(time, "time", clock.get_time)
+    monkeypatch.setattr(time, "monotonic", clock.get_time)
+
+    # Patch asyncio.sleep so the test runs instantly but "time" still passes
+    original_sleep = asyncio.sleep
+
+    async def mock_sleep(delay, result=None):
+        clock.advance(delay)  # Fast-forward our fake clock
+        return await original_sleep(0, result)  # Yield briefly to keep event loop happy
+
+    monkeypatch.setattr(asyncio, "sleep", mock_sleep)
+    # ------------------------------
+
     dev = Device("devpub", 0, "uidpub", "mf", "mdl", Protocol.V1_8)
 
     # create two modbus sensors
@@ -136,9 +164,11 @@ async def test_publish_updates_runs_one_iteration(monkeypatch):
 
     await asyncio.wait_for(coro, timeout=5)
 
-    # after run, sensors should have set latest_interval
-    assert s1.latest_interval == pytest.approx(1, rel=1e-3)
-    assert s2.latest_interval == pytest.approx(1, rel=1e-3)
+    # --- 2. EXACT ASSERTIONS ---
+    # Because we control the clock, there is no floating-point drift.
+    # We can assert exact integers.
+    assert s1.latest_interval == 1
+    assert s2.latest_interval == 1
 
 
 @pytest.mark.asyncio
@@ -245,3 +275,95 @@ async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatc
     await asyncio.wait_for(coro, timeout=5)
 
     assert modbus.connect_called >= 1
+
+
+@pytest.mark.asyncio
+async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
+    """When tm_yday changes between iterations, sensors with EnergyDailyAccumulationSensor
+    derived sensors are forced to publish immediately (covers device.py lines 1017-1025)."""
+    from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor
+
+    dev = Device("devpub4", 0, "uidpub4", "mf", "mdl", Protocol.V1_8)
+
+    # A daily sensor whose derived_sensors include an EnergyDailyAccumulationSensor
+    daily = DummyModbusSensor("daily1", address=1, count=1, device_address=3, scan_interval=60)
+    # A regular sensor with no daily derived sensor
+    regular = DummyModbusSensor("regular1", address=2, count=1, device_address=3, scan_interval=60)
+
+    # Inject a mock EnergyDailyAccumulationSensor as a derived sensor of 'daily'
+    class MockEDA(EnergyDailyAccumulationSensor):
+        def __init__(self):
+            # Skip real __init__; we just need isinstance() to pass
+            self.debug_logging = False
+
+    daily.derived_sensors = {"eda": MockEDA()}
+
+    dev._add_read_sensor(daily)
+    dev._add_read_sensor(regular)
+
+    # Track publishes per sensor
+    publish_log: list[str] = []
+
+    async def _tracking_publish(self, mqtt_client, modbus_client=None, republish=False):
+        publish_log.append(self.unique_id)
+        # After the second loop iteration (day change), stop the device
+        if publish_log.count("daily1") >= 2:
+            dev._online = False
+        return True
+
+    monkeypatch.setattr(DummyModbusSensor, "publish", _tracking_publish)
+
+    # --- Time control ---
+    # Start at a fixed time. localtime will first return day 100, then day 101.
+    call_count = 0
+    base_time = 1000.0
+    current_time = [base_time]
+
+    def fake_time():
+        return current_time[0]
+
+    def fake_localtime(secs=None):
+        nonlocal call_count
+        call_count += 1
+        s = time.struct_time((2025, 4, 10, 23, 59, 59, 3, 100, -1))
+        # After the first loop iteration completes, simulate day change
+        if call_count > 1:
+            s = time.struct_time((2025, 4, 11, 0, 0, 1, 4, 101, -1))
+        return s
+
+    monkeypatch.setattr(time, "time", fake_time)
+    monkeypatch.setattr(time, "localtime", fake_localtime)
+
+    # Make asyncio.sleep advance our clock to trigger the sensor intervals
+    _original_sleep = asyncio.sleep
+
+    async def _fast_sleep(delay, result=None):
+        current_time[0] += max(delay, 1)
+        await _original_sleep(0)
+
+    monkeypatch.setattr(asyncio, "sleep", _fast_sleep)
+
+    from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
+
+    monkeypatch.setattr(ModbusLockFactory, "get", staticmethod(lambda modbus: FakeLock()))
+
+    # Clear initial states so _init_next_publish_times does not trigger initial publish
+    daily._states = []
+    regular._states = []
+
+    # Force both sensors due immediately in the first iteration
+    daily.force_publish = True
+    regular.force_publish = True
+
+    dev._online = True
+
+    from paho.mqtt.client import Client as MqttClient
+
+    from sigenergy2mqtt.modbus.client import ModbusClient
+
+    modbus = FakeModbus()
+    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", daily, regular)
+    await asyncio.wait_for(coro, timeout=5)
+
+    # The daily sensor must have been published at least twice (initial + day-change forced)
+    assert publish_log.count("daily1") >= 2, f"Expected daily sensor to be published >=2 times, got {publish_log}"
