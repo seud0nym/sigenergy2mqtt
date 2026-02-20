@@ -3610,19 +3610,21 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
 
         # Update total
         if new_total != self._current_total:
-            # Schedule persistence asynchronously. If no running loop, fallback
-            # to getting the event loop and use run_coroutine_threadsafe.
+            coro = self._persist_current_total(new_total)
             try:
                 loop = asyncio.get_running_loop()
+                loop.create_task(coro)
             except RuntimeError:
                 try:
                     loop = asyncio.get_event_loop()
-                    asyncio.run_coroutine_threadsafe(self._persist_current_total(new_total), loop)
+                    if loop.is_running():
+                        asyncio.run_coroutine_threadsafe(coro, loop)
+                    else:
+                        coro.close()
                 except Exception:
-                    # Best effort; ignore scheduling failures
-                    pass
-            else:
-                loop.create_task(self._persist_current_total(new_total))
+                    coro.close()
+            except Exception:
+                coro.close()
 
         self._current_total = new_total
         self.set_latest_state(self._current_total)
@@ -3842,21 +3844,21 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             if was_time.tm_year != now_time.tm_year or was_time.tm_mon != now_time.tm_mon or was_time.tm_mday != now_time.tm_mday:
                 # Day changed - reset midnight state
-                # Schedule persistence asynchronously. If no running loop, fallback
-                # to getting the event loop and use run_coroutine_threadsafe.
+                coro = self._update_state_at_midnight(now_state)
                 try:
                     loop = asyncio.get_running_loop()
+                    loop.create_task(coro)
                 except RuntimeError:
                     try:
                         loop = asyncio.get_event_loop()
-                        asyncio.run_coroutine_threadsafe(self._update_state_at_midnight(now_state), loop)
+                        if loop.is_running():
+                            asyncio.run_coroutine_threadsafe(coro, loop)
+                        else:
+                            coro.close()
                     except Exception:
-                        # Best effort; ignore scheduling failures
-                        pass
-                else:
-                    loop.create_task(self._update_state_at_midnight(now_state))
-
-                asyncio.create_task(self._update_state_at_midnight(now_state))
+                        coro.close()
+                except Exception:
+                    coro.close()
                 self._states.clear()
                 self._state_at_midnight = now_state
 
