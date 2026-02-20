@@ -22,6 +22,10 @@ from .pvoutput_config import ConsumptionSource, PVOutputConfiguration, VoltageSo
 from .validation import check_bool, check_float, check_host, check_int, check_int_list, check_log_level, check_port, check_string, check_string_list
 
 
+class ConfigurationError(Exception):
+    """Raised when the configuration is invalid or cannot be loaded."""
+
+
 class DualMethod:
     """Descriptor that identifies if a method is called on a class or an instance.
 
@@ -657,21 +661,6 @@ class Config(metaclass=ConfigMeta):
         return version.__version__
 
     @classmethod
-    def apply_cli_to_env(cls, variable: str, value: str) -> None:
-        was = os.getenv(variable)
-        if value is not None:
-            if str(value) != was:
-                os.environ[variable] = str(value)
-                if was is not None:
-                    logging.debug(f"Environment variable '{variable}' overridden from command line: set to '{'[REDACTED]' if 'PASSWORD' in variable or 'API_KEY' in variable else value}' (was '{was}')")
-        else:
-            if was is not None:
-                os.environ[variable] = ""
-                logging.debug(f"Environment variable '{variable}' overridden from command line: cleared (was '{was}')")
-            else:
-                logging.debug(f"Environment variable '{variable}' not set")
-
-    @classmethod
     def system_initialize(cls):
         """Perform system-level initialization (logging, folders)."""
         # Logging setup
@@ -690,8 +679,7 @@ class Config(metaclass=ConfigMeta):
         # Version check
         min_version = (3, 12)
         if sys.version_info < min_version:
-            logging.critical(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
-            sys.exit(1)
+            raise ConfigurationError(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
 
         # Persistent state path
         found_path = None
@@ -707,8 +695,7 @@ class Config(metaclass=ConfigMeta):
                 break
 
         if not found_path:
-            logging.critical("Unable to create persistent state folder!")
-            sys.exit(1)
+            raise ConfigurationError("Unable to create persistent state folder!")
 
         # Stale file cleanup
         threshold_time = time.time() - (7 * 86400)

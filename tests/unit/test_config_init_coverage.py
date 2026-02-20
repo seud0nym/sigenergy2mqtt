@@ -22,7 +22,7 @@ def mock_cli_parse():
         args.clean = False
         args.validate_only = False
         args.discovery_only = False
-        # Mock vars(args) for _apply_cli_overrides
+        # Mock vars(args) for _promote_cli_to_env
         mock.return_value = args
         yield mock
 
@@ -35,42 +35,42 @@ def mock_system_init():
 
 
 @pytest.fixture
-def mock_apply_cli_overrides():
-    with patch("sigenergy2mqtt.config._apply_cli_overrides") as mock:
+def mock_promote_cli_to_env():
+    with patch("sigenergy2mqtt.config._promote_cli_to_env") as mock:
         yield mock
 
 
-def test_initialize_env_config_exists(mock_active_config, mock_cli_parse, mock_system_init, mock_apply_cli_overrides):
+def test_initialize_env_config_exists(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test loading from SIGENERGY2MQTT_CONFIG environment variable."""
     with patch.dict(os.environ, {SIGENERGY2MQTT_CONFIG: "/path/to/config.yaml"}), patch("os.path.isfile", side_effect=lambda x: x == "/path/to/config.yaml"):
         config_mod.initialize()
         mock_active_config.load.assert_called_once_with("/path/to/config.yaml")
 
 
-def test_initialize_env_config_not_found(mock_active_config, mock_cli_parse, mock_system_init, mock_apply_cli_overrides):
+def test_initialize_env_config_not_found(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test handling of missing file specified in SIGENERGY2MQTT_CONFIG."""
-    with patch.dict(os.environ, {SIGENERGY2MQTT_CONFIG: "/nonexistent/config.yaml"}), patch("os.path.isfile", return_value=False), patch("sys.exit") as mock_exit, patch("logging.critical") as mock_log:
-        config_mod.initialize()
-        mock_log.assert_called()
-        assert "Specified config file" in mock_log.call_args[0][0]
-        mock_exit.assert_called_once_with(1)
+    with patch.dict(os.environ, {SIGENERGY2MQTT_CONFIG: "/nonexistent/config.yaml"}), patch("os.path.isfile", return_value=False):
+        from sigenergy2mqtt.config import ConfigurationError
+
+        with pytest.raises(ConfigurationError, match="Specified config file"):
+            config_mod.initialize()
 
 
-def test_initialize_fallback_etc(mock_active_config, mock_cli_parse, mock_system_init, mock_apply_cli_overrides):
+def test_initialize_fallback_etc(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test fallback to /etc/sigenergy2mqtt.yaml."""
     with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", side_effect=lambda x: x == "/etc/sigenergy2mqtt.yaml"):
         config_mod.initialize()
         mock_active_config.load.assert_called_once_with("/etc/sigenergy2mqtt.yaml")
 
 
-def test_initialize_fallback_data(mock_active_config, mock_cli_parse, mock_system_init, mock_apply_cli_overrides):
+def test_initialize_fallback_data(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test fallback to /data/sigenergy2mqtt.yaml."""
     with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", side_effect=lambda x: x == "/data/sigenergy2mqtt.yaml"):
         config_mod.initialize()
         mock_active_config.load.assert_called_once_with("/data/sigenergy2mqtt.yaml")
 
 
-def test_initialize_default_reload(mock_active_config, mock_cli_parse, mock_system_init, mock_apply_cli_overrides):
+def test_initialize_default_reload(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test defaulting to active_config.reload() when no config files are found."""
     with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", return_value=False):
         config_mod.initialize()
@@ -78,11 +78,11 @@ def test_initialize_default_reload(mock_active_config, mock_cli_parse, mock_syst
         mock_active_config.load.assert_not_called()
 
 
-def test_initialize_exception_handling(mock_active_config, mock_cli_parse, mock_system_init, mock_apply_cli_overrides):
-    """Test general exception handling (logging and sys.exit(1))."""
+def test_initialize_exception_handling(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
+    """Test general exception handling (ConfigurationError)."""
     mock_active_config.reload.side_effect = Exception("Reload failed")
-    with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", return_value=False), patch("sys.exit") as mock_exit, patch("logging.critical") as mock_log:
-        config_mod.initialize()
-        mock_log.assert_called()
-        assert "Error processing configuration: Reload failed" in mock_log.call_args[0][0]
-        mock_exit.assert_called_once_with(1)
+    with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", return_value=False):
+        from sigenergy2mqtt.config import ConfigurationError
+
+        with pytest.raises(ConfigurationError, match="Error processing configuration: Reload failed"):
+            config_mod.initialize()

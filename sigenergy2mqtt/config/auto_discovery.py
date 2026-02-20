@@ -38,10 +38,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
         """Check a single host via TCP and return (ip, latency) or (ip, None) if unreachable."""
         start = time.perf_counter()
         try:
-            _, writer = await asyncio.wait_for(
-                asyncio.open_connection(ip, port),
-                timeout=float(timeout)
-            )
+            _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=float(timeout))
             latency = time.perf_counter() - start
             writer.close()
             await writer.wait_closed()
@@ -60,7 +57,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
             chunk = ip_list[i : i + concurrent]
 
             # Run all checks in the chunk concurrently
-            tasks = []
+            tasks: list[asyncio.Task] = []
             try:
                 for ip in chunk:
                     tasks.append(asyncio.ensure_future(check_single_host(ip)))
@@ -71,7 +68,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
                         task.cancel()
                 await asyncio.gather(*tasks, return_exceptions=True)
                 raise
-            
+
             for result in results:
                 # Handle exceptions from gather
                 if isinstance(result, BaseException):

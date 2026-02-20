@@ -4,7 +4,7 @@ import os
 import signal
 import sys
 
-from sigenergy2mqtt.config import Config, initialize
+from sigenergy2mqtt.config import Config, ConfigurationError, initialize
 from sigenergy2mqtt.config.auto_discovery import _interrupted as _  # noqa: F401 — ensure module is importable
 from sigenergy2mqtt.main import async_main
 
@@ -25,7 +25,12 @@ def main():
     signal.signal(signal.SIGTERM, _early_exit)
 
     try:
-        initialize()
+        continuing = initialize()
+        if not continuing:
+            sys.exit(0)
+    except ConfigurationError as e:
+        logging.critical(f"Configuration error: {e}")
+        sys.exit(1)
     except KeyboardInterrupt:
         logging.info("Initialization interrupted — exiting")
         sys.exit(130)

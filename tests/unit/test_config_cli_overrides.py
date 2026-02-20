@@ -2,7 +2,7 @@ import os
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from sigenergy2mqtt.config import _apply_cli_overrides, const
+from sigenergy2mqtt.config import _promote_cli_to_env, const
 
 
 @patch.dict(os.environ, {}, clear=True)
@@ -30,25 +30,18 @@ def test_apply_cli_overrides_boolean_flags():
     # 3. Non-boolean flags (should always be applied if not None)
     setattr(args, "some_other_arg", "some_value")
 
-    # Mock Config.apply_cli_to_env to verify calls
-    # Patch the _Config class alias directly in the module where _apply_cli_overrides is defined
-    with patch("sigenergy2mqtt.config._Config") as mock_config_class, patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
-        mock_apply = mock_config_class.apply_cli_to_env
+    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
+        _promote_cli_to_env(args)
 
-        _apply_cli_overrides(args)
+        # Verify ignored flags were NOT set in os.environ
+        assert const.SIGENERGY2MQTT_HASS_ENABLED not in os.environ
+        assert const.SIGENERGY2MQTT_INFLUX_ENABLED not in os.environ
+        assert const.SIGENERGY2MQTT_MQTT_TLS not in os.environ
 
-        # Verify calls
-        called_args = [call.args[0] for call in mock_apply.call_args_list]
-
-        # Verify ignored flags were NOT called
-        assert const.SIGENERGY2MQTT_HASS_ENABLED not in called_args, f"{const.SIGENERGY2MQTT_HASS_ENABLED} should be ignored"
-        assert const.SIGENERGY2MQTT_INFLUX_ENABLED not in called_args, f"{const.SIGENERGY2MQTT_INFLUX_ENABLED} should be ignored"
-        assert const.SIGENERGY2MQTT_MQTT_TLS not in called_args, f"{const.SIGENERGY2MQTT_MQTT_TLS} should be ignored"
-
-        # Verify applied flags WERE called
-        mock_apply.assert_any_call(const.SIGENERGY2MQTT_PVOUTPUT_ENABLED, "True")
-        mock_apply.assert_any_call(const.SIGENERGY2MQTT_SMARTPORT_ENABLED, "true")
-        mock_apply.assert_any_call("some_other_arg", "some_value")
+        # Verify applied flags WERE set in os.environ
+        assert os.environ[const.SIGENERGY2MQTT_PVOUTPUT_ENABLED] == "True"
+        assert os.environ[const.SIGENERGY2MQTT_SMARTPORT_ENABLED] == "true"
+        assert os.environ["some_other_arg"] == "some_value"
 
 
 @patch.dict(os.environ, {}, clear=True)
@@ -58,7 +51,6 @@ def test_apply_cli_overrides_repeated_interval():
     setattr(args, const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, 10)
     setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
 
-    with patch("sigenergy2mqtt.config._Config") as mock_config_class, patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
-        mock_apply = mock_config_class.apply_cli_to_env
-        _apply_cli_overrides(args)
-        mock_apply.assert_any_call(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, "10")
+    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
+        _promote_cli_to_env(args)
+        assert os.environ[const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL] == "10"

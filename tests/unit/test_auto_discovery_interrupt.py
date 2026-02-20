@@ -225,6 +225,7 @@ class TestMainEarlySignalHandlers:
 
     def test_early_exit_first_signal_sets_flag(self):
         import sigenergy2mqtt.config.auto_discovery as ad
+
         ad._interrupted = False
 
         handlers = {}
@@ -234,23 +235,27 @@ class TestMainEarlySignalHandlers:
             handlers[sig] = handler
             return original_signal(sig, signal.SIG_DFL)
 
-        def _noop_sync(*args, **kwargs): pass
-        async def _noop_async(*args, **kwargs): pass
+        def _noop_sync(*args, **kwargs):
+            pass
+
+        async def _noop_async(*args, **kwargs):
+            pass
 
         with patch("signal.signal", side_effect=capture_signal):
             with patch("sigenergy2mqtt.__main__.initialize", new=_noop_sync):
-                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), \
-                    patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
+                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
                     from sigenergy2mqtt.__main__ import main
-                    main()
+
+                    with pytest.raises(SystemExit):
+                        main()
 
         handler = handlers[signal.SIGINT]
         handler(signal.SIGINT, None)
         assert ad._interrupted is True
 
-
     def test_early_exit_second_signal_force_exits(self):
         import sigenergy2mqtt.config.auto_discovery as ad
+
         ad._interrupted = False
 
         handlers = {}
@@ -260,15 +265,19 @@ class TestMainEarlySignalHandlers:
             handlers[sig] = handler
             return original_signal(sig, signal.SIG_DFL)
 
-        def _noop_sync(*args, **kwargs): pass
-        async def _noop_async(*args, **kwargs): pass
+        def _noop_sync(*args, **kwargs):
+            pass
+
+        async def _noop_async(*args, **kwargs):
+            pass
 
         with patch("signal.signal", side_effect=capture_signal):
             with patch("sigenergy2mqtt.__main__.initialize", new=_noop_sync):
-                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), \
-                    patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
+                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
                     from sigenergy2mqtt.__main__ import main
-                    main()
+
+                    with pytest.raises(SystemExit):
+                        main()
 
         handler = handlers[signal.SIGINT]
         handler(signal.SIGINT, None)
@@ -299,10 +308,11 @@ class TestMainEarlySignalHandlers:
 
         with patch("signal.signal", side_effect=capture_signal):
             with patch("sigenergy2mqtt.__main__.initialize", new=_noop_sync):
-                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), \
-                    patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
+                with patch("sigenergy2mqtt.__main__.asyncio.run", side_effect=lambda coro, **kw: coro.close()), patch("sigenergy2mqtt.__main__.async_main", new=_noop_async):
                     from sigenergy2mqtt.__main__ import main
-                    main()
+
+                    with pytest.raises(SystemExit):
+                        main()
 
         handler = handlers[signal.SIGTERM]
         # First call
