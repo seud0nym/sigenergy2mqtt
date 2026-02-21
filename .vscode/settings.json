@@ -8,6 +8,7 @@
         "sigenergy2mqtt/translations",
         "tests",
     ],
+    "cSpell.language": "en-GB",
     "cSpell.words": [
         "_mids",
         "ACCHARGER",
@@ -110,7 +111,9 @@
     "python.pyrefly.displayTypeErrors": "force-on",
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "tests", "-n", "logical"
+        "tests",
+        "-n",
+        "logical"
     ],
     "python.testing.unittestEnabled": false,
     "ruff.lineLength": 210,
