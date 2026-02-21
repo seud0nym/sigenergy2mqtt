@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
 from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
@@ -86,15 +86,15 @@ class TestConfigComprehensiveValidation:
             active_config.modbus.clear()
 
             with pytest.raises(ValueError, match="At least one Modbus device must be configured"):
-                Config.validate()
+                active_config.validate()
         finally:
             active_config.modbus.clear()
             active_config.modbus.extend(original_modbus)
 
         active_config.modbus.clear()
         active_config.modbus.extend([ModbusConfiguration(host="localhost")])
-        Config.mqtt = MqttConfiguration(broker="localhost", anonymous=True)
-        Config.home_assistant = HomeAssistantConfiguration(enabled=False)
-        Config.pvoutput = PVOutputConfiguration(enabled=False)
+        active_config.mqtt = MqttConfiguration(broker="localhost", anonymous=True)
+        active_config.home_assistant = HomeAssistantConfiguration(enabled=False)
+        active_config.pvoutput = PVOutputConfiguration(enabled=False)
 
-        Config.validate()  # Should pass
+        active_config.validate()  # Should pass

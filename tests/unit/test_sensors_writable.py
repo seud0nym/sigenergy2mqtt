@@ -7,19 +7,29 @@ import pytest
 
 # Imported here (no hacks needed for mqtt any more)
 from sigenergy2mqtt.common import Protocol  # noqa: E402
-from sigenergy2mqtt.modbus import ModbusClient  # noqa: E402
-from sigenergy2mqtt.sensors.base import InputType, NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor  # noqa: E402
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.sensors.base import (
+    InputType,
+    NumericSensor,
+    SelectSensor,
+    Sensor,
+    SwitchSensor,
+    WriteOnlySensor,
+)
 
 
 @pytest.fixture(autouse=True)
 def mock_config_all():
-    with patch("sigenergy2mqtt.sensors.base.Config") as mock_config:
-        mock_config.home_assistant.unique_id_prefix = "sigenergy"
-        mock_config.home_assistant.entity_id_prefix = "sigenergy"
-        mock_config.home_assistant.enabled = True
-        mock_config.sensor_overrides = {}
-        mock_config.persistent_state_path = "."
-        yield mock_config
+    cfg = Config()
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.enabled = True
+    cfg.sensor_overrides = {}
+    cfg.persistent_state_path = "."
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 @pytest.fixture(autouse=True)
@@ -102,7 +112,6 @@ class TestWritableSensorMixin:
 
             assert result is True
             mock_modbus.write_registers.assert_called_once_with(30001, [1234, 5678], device_id=1, no_response_expected=False)
-
 
     @pytest.mark.asyncio
     async def test_write_registers_error_response(self, mock_lock_factory, mock_modbus):
@@ -262,7 +271,9 @@ class TestNumericSensorWritable:
     async def test_numeric_get_state_raw_clamp_with_gain(self):
         """When raw=True and value is out-of-range the raw return should NOT include gain."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "NumRaw", "sigenergy_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0)
+            sensor = NumericSensor(
+                None, "NumRaw", "sigenergy_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0
+            )
 
             with patch("sigenergy2mqtt.sensors.base.ReadWriteSensor.get_state", new_callable=AsyncMock) as mock_super:
                 # value below min -> should return min * gain when raw=True
@@ -385,7 +396,9 @@ class TestSelectSensorWritable:
     async def test_numeric_set_value_decimal_string_precision_zero(self, mock_lock_factory, mock_modbus):
         """NumericSensor should accept decimal strings and (with precision=0) write the integer part."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigenergy_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 1.0, 0, Protocol.V2_4, minimum=0, maximum=1000)
+            sensor = NumericSensor(
+                None, "Test", "sigenergy_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 1.0, 0, Protocol.V2_4, minimum=0, maximum=1000
+            )
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -396,6 +409,7 @@ class TestSelectSensorWritable:
             assert result is True
             # 3.9 should be converted to int(3.9) == 3 before writing
             mock_modbus.write_register.assert_called_with(30104, 3.0, device_id=1, no_response_expected=False)
+
 
 class TestSwitchSensorWritable:
     @pytest.mark.asyncio

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 
@@ -17,11 +18,11 @@ class TestMqttInit:
         loop = asyncio.new_event_loop()
         modbus = MagicMock()
 
-        with patch("sigenergy2mqtt.mqtt.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
-            mock_config.mqtt.anonymous = True
-            mock_config.mqtt.keepalive = 60
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+            cfg.mqtt.anonymous = True
+            cfg.mqtt.keepalive = 60
 
             client, handler = mqtt_setup("test_client", modbus, loop)
 
@@ -41,13 +42,13 @@ class TestMqttInit:
         loop = asyncio.new_event_loop()
         modbus = MagicMock()
 
-        with patch("sigenergy2mqtt.mqtt.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
-            mock_config.mqtt.anonymous = False
-            mock_config.mqtt.username = "user"
-            mock_config.mqtt.password = "pass"
-            mock_config.mqtt.keepalive = 60
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+            cfg.mqtt.anonymous = False
+            cfg.mqtt.username = "user"
+            cfg.mqtt.password = "pass"
+            cfg.mqtt.keepalive = 60
 
             client, handler = mqtt_setup("test_client", modbus, loop)
 
@@ -69,11 +70,11 @@ class TestMqttInit:
         # Side effect: fail twice, then succeed
         mock_client.connect.side_effect = [Exception("Fail 1"), Exception("Fail 2"), None]
 
-        with patch("sigenergy2mqtt.mqtt.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
-            mock_config.mqtt.keepalive = 10
-            mock_config.mqtt.retry_delay = 1
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+            cfg.mqtt.keepalive = 10
+            cfg.mqtt.retry_delay = 1
 
             client, handler = mqtt_setup("test_client", modbus, loop)
 
@@ -97,9 +98,9 @@ class TestMqttInit:
         # Side effect: always fail
         mock_client.connect.side_effect = Exception("Permanent Fail")
 
-        with patch("sigenergy2mqtt.mqtt.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
 
             with pytest.raises(Exception, match="Permanent Fail"):
                 mqtt_setup("test_client", modbus, loop)

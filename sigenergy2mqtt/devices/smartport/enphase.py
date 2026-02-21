@@ -20,7 +20,7 @@ import requests
 import urllib3
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.smart_port_config import ModuleConfig
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusDataType
@@ -51,8 +51,8 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
     def __init__(self, plant_index: int, serial_number: str, host: str, username: str, password: str):
         super().__init__(
             name="PV Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_active_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_active_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_active_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_active_power",
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -60,11 +60,11 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
             gain=None,
             precision=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.modbus[0].scan_interval.realtime,
+            scan_interval=active_config.modbus[0].scan_interval.realtime,
         )
         self["enabled_by_default"] = True
 
-        if Config.log_level == logging.DEBUG and not self.debug_logging:
+        if active_config.log_level == logging.DEBUG and not self.debug_logging:
             requests_log = logging.getLogger("urllib3")
             requests_log.setLevel(logging.INFO)
             requests_log.propagate = True
@@ -167,7 +167,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
         return attributes
 
     def get_token(self, reauthenticate: bool = False) -> str:
-        token_file = os.path.join(Config.persistent_state_path, f"{self.unique_id}.token")
+        token_file = os.path.join(active_config.persistent_state_path, f"{self.unique_id}.token")
 
         def load_token() -> str:
             if os.path.exists(token_file):
@@ -235,8 +235,8 @@ class EnphaseLifetimePVEnergy(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Lifetime Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
             data_type=ModbusDataType.UINT64,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
@@ -256,8 +256,8 @@ class EnphaseDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, serial_number: str, source: EnphaseLifetimePVEnergy):
         super().__init__(
             name="Daily Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_daily_pv_energy",
             source=source,
         )
 
@@ -271,8 +271,8 @@ class EnphaseCurrent(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Current",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_current",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_current",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_current",
             data_type=ModbusDataType.INT32,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
@@ -293,8 +293,8 @@ class EnphaseFrequency(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Frequency",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_frequency",
             data_type=ModbusDataType.UINT16,
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
@@ -315,8 +315,8 @@ class EnphasePowerFactor(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Power Factor",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_power_factor",
             data_type=ModbusDataType.UINT16,
             unit=None,
             device_class=DeviceClass.POWER_FACTOR,
@@ -337,8 +337,8 @@ class EnphaseReactivePower(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Reactive Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_reactive_power",
             data_type=ModbusDataType.UINT32,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
@@ -359,8 +359,8 @@ class EnphaseVoltage(EnphaseSensor):
     def __init__(self, plant_index: int, serial_number: str):
         super().__init__(
             name="Voltage",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_enphase_{serial_number}_voltage",
             data_type=ModbusDataType.UINT16,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
@@ -412,13 +412,13 @@ class SmartPort(Device):
                 sleep(10)
             else:
                 raise Exception(f"Unable to initialise from {url} after 3 attempts")
-        unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
+        unique_id = f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Smart-Port"
         super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", Protocol.N_A, mdl_id=pn, sn=sn, hw=fw)
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
         lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)
-        self._add_read_sensor(pv_power, "Consumption" if Config.consumption == ConsumptionMethod.CALCULATED else None)
+        self._add_read_sensor(pv_power, "Consumption" if active_config.consumption == ConsumptionMethod.CALCULATED else None)
         self._add_derived_sensor(lifetime_pv_energy, pv_power)
         self._add_derived_sensor(EnphaseDailyPVEnergy(plant_index, sn, lifetime_pv_energy), lifetime_pv_energy)
         self._add_derived_sensor(EnphaseCurrent(plant_index, sn), pv_power)
@@ -433,12 +433,12 @@ class SmartPort(Device):
 
 if __name__ == "__main__":
     logging.getLogger("root").setLevel(logging.DEBUG)
-    Config.sensor_debug_logging = True
+    active_config.sensor_debug_logging = True
 
     async def test():
-        smartport = SmartPort(0, Config.modbus[0].smartport.module)
+        smartport = SmartPort(0, active_config.modbus[0].smartport.module)
         print(smartport)
-        pv_power_unique_id = f"{Config.home_assistant.unique_id_prefix}_0_enphase_{smartport['serial_number']}_active_power"
+        pv_power_unique_id = f"{active_config.home_assistant.unique_id_prefix}_0_enphase_{smartport['serial_number']}_active_power"
         sensor = smartport.get_sensor(pv_power_unique_id)
         if sensor:
             sensor.debug_logging = True

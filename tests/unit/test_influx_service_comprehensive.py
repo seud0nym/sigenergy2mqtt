@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
@@ -26,35 +26,35 @@ def logger():
 
 @pytest.fixture
 def influx_config():
-    Config.influxdb.enabled = True
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "mydb"
-    Config.influxdb.username = None
-    Config.influxdb.password = None
-    Config.influxdb.token = None
-    Config.influxdb.org = "myorg"
-    Config.influxdb.bucket = "mybucket"
-    Config.influxdb.include = []
-    Config.influxdb.include = []
-    Config.influxdb.exclude = []
-    Config.influxdb.write_timeout = 30.0
-    Config.influxdb.read_timeout = 120.0
-    Config.influxdb.batch_size = 100
-    Config.influxdb.flush_interval = 1.0
-    Config.influxdb.query_interval = 0.1
-    Config.influxdb.max_retries = 3
-    Config.influxdb.pool_connections = 100
-    Config.influxdb.pool_maxsize = 100
-    return Config.influxdb
+    active_config.influxdb.enabled = True
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "mydb"
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
+    active_config.influxdb.token = None
+    active_config.influxdb.org = "myorg"
+    active_config.influxdb.bucket = "mybucket"
+    active_config.influxdb.include = []
+    active_config.influxdb.include = []
+    active_config.influxdb.exclude = []
+    active_config.influxdb.write_timeout = 30.0
+    active_config.influxdb.read_timeout = 120.0
+    active_config.influxdb.batch_size = 100
+    active_config.influxdb.flush_interval = 1.0
+    active_config.influxdb.query_interval = 0.1
+    active_config.influxdb.max_retries = 3
+    active_config.influxdb.pool_connections = 100
+    active_config.influxdb.pool_maxsize = 100
+    return active_config.influxdb
 
 
 def test_init_no_influx_config(logger):
     # This test intended to verify what happens if influxdb section is missing/None
     # But since __init__ now requires attributes, we should verify it handles missing optional config
     # OR if we want to test "enabled=False" (which is default)
-    # If Config.influxdb is completely None, __init__ will crash.
-    # But validation ensures Config.influxdb exists with defaults.
+    # If active_config.influxdb is completely None, __init__ will crash.
+    # But validation ensures active_config.influxdb exists with defaults.
     # So we should test "not enabled".
     mock_config = MagicMock()
     mock_config.enabled = False
@@ -81,7 +81,7 @@ def test_init_no_influx_config(logger):
 
 
 def test_init_influx_disabled(logger):
-    Config.influxdb.enabled = False
+    active_config.influxdb.enabled = False
     svc = InfluxService(logger, plant_index=0)
     assert svc._writer_type is None
 
@@ -355,7 +355,7 @@ async def test_schedule_starts_and_cancels_sync_task(logger):
     from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 
     svc = InfluxService(logger, plant_index=0)
-    Config.influxdb.load_hass_history = True
+    active_config.influxdb.load_hass_history = True
     # Manually simulate established connection
     svc._writer_type = "v2_http"
 

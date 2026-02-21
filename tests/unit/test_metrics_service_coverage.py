@@ -3,6 +3,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config.config import _swap_active_config
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 
 
@@ -10,14 +12,13 @@ class TestMetricsServiceCoverage:
     @pytest.mark.asyncio
     async def test_init_without_influxdb(self):
         protocol = Protocol.V2_0
-        # Mock Config to ensure influxdb is seemingly disabled or missing
-        with patch("sigenergy2mqtt.metrics.metrics_service.Config") as MockConfig:
-            MockConfig.influxdb.enabled = False
+        # Use _swap_active_config to ensure influxdb is disabled
+        with _swap_active_config(Config()) as cfg:
+            cfg.influxdb.enabled = False
 
             service = MetricsService(protocol)
 
             # Check if InfluxDB sensors are NOT present
-            # We can check the protected _sensors list key or try to iterate
             sensor_keys = list(service.sensors.keys())
             assert not any("influxdb_writes" in k for k in sensor_keys)
             assert any("modbus_write_errors" in k for k in sensor_keys)
@@ -25,9 +26,9 @@ class TestMetricsServiceCoverage:
     @pytest.mark.asyncio
     async def test_init_with_influxdb_enabled(self):
         protocol = Protocol.V2_0
-        with patch("sigenergy2mqtt.metrics.metrics_service.Config") as MockConfig:
-            MockConfig.home_assistant.unique_id_prefix = "test_prefix"
-            MockConfig.influxdb.enabled = True
+        with _swap_active_config(Config()) as cfg:
+            cfg.home_assistant.unique_id_prefix = "test_prefix"
+            cfg.influxdb.enabled = True
 
             service = MetricsService(protocol)
 
@@ -38,9 +39,9 @@ class TestMetricsServiceCoverage:
     @pytest.mark.asyncio
     async def test_publish_updates(self):
         protocol = Protocol.V2_0
-        with patch("sigenergy2mqtt.metrics.metrics_service.Config") as MockConfig:
-            MockConfig.home_assistant.unique_id_prefix = "test_prefix"
-            MockConfig.influxdb.enabled = False
+        with _swap_active_config(Config()) as cfg:
+            cfg.home_assistant.unique_id_prefix = "test_prefix"
+            cfg.influxdb.enabled = False
 
             service = MetricsService(protocol)
 

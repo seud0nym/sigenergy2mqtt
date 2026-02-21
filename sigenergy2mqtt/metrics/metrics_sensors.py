@@ -3,7 +3,7 @@ import time
 from typing import Any, cast
 
 from sigenergy2mqtt.common import Protocol, ProtocolApplies
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 from sigenergy2mqtt.sensors.const import PERCENTAGE, DeviceClass
@@ -61,7 +61,7 @@ class ModbusCacheHits(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Cache Hits",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_cache_hit_percentage",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_cache_hit_percentage",
             object_id="sigenergy2mqtt_modbus_cache_hit_percentage",
             unit=PERCENTAGE,
             icon="mdi:percent",
@@ -78,7 +78,7 @@ class ModbusPhysicalReads(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Physical Reads",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_physical_reads",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_physical_reads",
             object_id="sigenergy2mqtt_modbus_physical_reads",
             unit=PERCENTAGE,
             icon="mdi:percent",
@@ -95,7 +95,7 @@ class ModbusReadsPerSecond(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Reads/second",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_reads_sec",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_reads_sec",
             object_id="sigenergy2mqtt_modbus_reads_sec",
             icon="mdi:timer-play-outline",
             precision=2,
@@ -111,7 +111,7 @@ class ModbusReadErrors(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Read Errors",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_read_errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_errors",
             object_id="sigenergy2mqtt_modbus_read_errors",
             icon="mdi:counter",
             precision=0,
@@ -127,7 +127,7 @@ class ModbusReadMax(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Read Max",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_read_max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_max",
             object_id="sigenergy2mqtt_modbus_read_max",
             unit="ms",
             icon="mdi:timer-plus-outline",
@@ -146,7 +146,7 @@ class ModbusReadMean(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Read Mean",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_read_mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_mean",
             object_id="sigenergy2mqtt_modbus_read_mean",
             unit="ms",
             icon="mdi:timer-outline",
@@ -163,7 +163,7 @@ class ModbusReadMin(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Read Min",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_read_min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_min",
             object_id="sigenergy2mqtt_modbus_read_min",
             unit="ms",
             icon="mdi:timer-minus-outline",
@@ -182,7 +182,7 @@ class ModbusWriteErrors(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Write Errors",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_write_errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_errors",
             object_id="sigenergy2mqtt_modbus_write_errors",
             icon="mdi:counter",
             precision=0,
@@ -198,7 +198,7 @@ class ModbusWriteMax(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Write Max",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_write_max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_max",
             object_id="sigenergy2mqtt_modbus_write_max",
             unit="ms",
             icon="mdi:timer-plus-outline",
@@ -217,7 +217,7 @@ class ModbusWriteMean(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Write Mean",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_write_mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_mean",
             object_id="sigenergy2mqtt_modbus_write_mean",
             unit="ms",
             icon="mdi:timer-outline",
@@ -234,7 +234,7 @@ class ModbusWriteMin(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Write Min",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_write_min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_min",
             object_id="sigenergy2mqtt_modbus_write_min",
             unit="ms",
             icon="mdi:timer-minus-outline",
@@ -253,7 +253,7 @@ class ModbusActiveLocks(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Modbus Active Locks",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_locks",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_locks",
             object_id="sigenergy2mqtt_modbus_locks",
             icon="mdi:eye-lock",
             precision=0,
@@ -269,7 +269,7 @@ class Started(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Started",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_started",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_started",
             object_id="sigenergy2mqtt_started",
             device_class=DeviceClass.TIMESTAMP,
             icon="mdi:calendar-clock",
@@ -286,7 +286,7 @@ class ProtocolVersion(MetricsSensor):
     def __init__(self, protocol_version: Protocol):
         super().__init__(
             name="Protocol Version",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_protocol",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol",
             object_id="sigenergy2mqtt_modbus_protocol",
             icon="mdi:book-information-variant",
         )
@@ -303,7 +303,7 @@ class ProtocolPublished(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="Protocol Published",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_modbus_protocol_published",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol_published",
             object_id="sigenergy2mqtt_modbus_protocol_published",
             icon="mdi:book-clock",
         )
@@ -322,7 +322,7 @@ class InfluxDBWrites(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Writes",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_writes",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_writes",
             object_id="sigenergy2mqtt_influxdb_writes",
             icon="mdi:database-arrow-up",
             precision=0,
@@ -338,7 +338,7 @@ class InfluxDBWriteErrors(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Write Errors",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_write_errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_errors",
             object_id="sigenergy2mqtt_influxdb_write_errors",
             icon="mdi:database-alert",
             precision=0,
@@ -354,7 +354,7 @@ class InfluxDBWriteMax(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Write Max",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_write_max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_max",
             object_id="sigenergy2mqtt_influxdb_write_max",
             unit="ms",
             icon="mdi:timer-plus-outline",
@@ -371,7 +371,7 @@ class InfluxDBWriteMean(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Write Mean",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_write_mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_mean",
             object_id="sigenergy2mqtt_influxdb_write_mean",
             unit="ms",
             icon="mdi:timer-outline",
@@ -388,7 +388,7 @@ class InfluxDBQueries(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Queries",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_queries",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_queries",
             object_id="sigenergy2mqtt_influxdb_queries",
             icon="mdi:database-search",
             precision=0,
@@ -404,7 +404,7 @@ class InfluxDBQueryErrors(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Query Errors",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_query_errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_query_errors",
             object_id="sigenergy2mqtt_influxdb_query_errors",
             icon="mdi:database-alert-outline",
             precision=0,
@@ -420,7 +420,7 @@ class InfluxDBRetries(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Retries",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_retries",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_retries",
             object_id="sigenergy2mqtt_influxdb_retries",
             icon="mdi:reload",
             precision=0,
@@ -436,7 +436,7 @@ class InfluxDBThroughput(MetricsSensor):
     def __init__(self):
         super().__init__(
             name="InfluxDB Throughput",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_influxdb_throughput",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_throughput",
             object_id="sigenergy2mqtt_influxdb_throughput",
             icon="mdi:speedometer",
             precision=2,

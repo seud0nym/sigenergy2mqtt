@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, StatusField
+from sigenergy2mqtt.config import StatusField, active_config
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics
 from sigenergy2mqtt.pvoutput.status import PVOutputStatusService
 from sigenergy2mqtt.pvoutput.topic import Topic
@@ -23,7 +23,7 @@ class TestPVOutputStatus:
 
     def test_create_payload_includes_generation_power(self):
         # ensure deterministic started time
-        Config.pvoutput.started = time.time() - 3600
+        active_config.pvoutput.started = time.time() - 3600
         # create a generation power topic
         now = time.time()
         t = Topic("g/topic", gain=1.0, state=10.5, timestamp=time.localtime(now))
@@ -76,13 +76,13 @@ class TestPVOutputStatus:
 
     def test_create_payload_includes_donation_when_donator_true(self):
         # mark extended V7 present so it's enabled and donation-flagged
-        Config.pvoutput.extended[StatusField.V7] = "energy"
+        active_config.pvoutput.extended[StatusField.V7] = "energy"
         # force service donator state
         from sigenergy2mqtt.pvoutput.service import Service
 
         with patch("sigenergy2mqtt.pvoutput.service.Service._donator", True):
             # ensure started flag so updating checks pass
-            Config.pvoutput.started = time.time() - 3600
+            active_config.pvoutput.started = time.time() - 3600
             t = Topic("v7/topic", gain=1.0, state=2.0, timestamp=time.localtime())
             # pass empty extended to avoid forcing SUM/DIFFERENCE calculation in constructor
             svc = make_status_service(topics={StatusField.V7: [t]}, extended={})
@@ -92,7 +92,7 @@ class TestPVOutputStatus:
     @pytest.mark.asyncio
     async def test_seconds_until_status_upload_testing_mode(self):
         # ensure testing mode returns seconds == 60
-        Config.pvoutput.testing = True
+        active_config.pvoutput.testing = True
         svc = make_status_service()
         seconds, next_time = await svc.seconds_until_status_upload(1, 2)
         # in testing mode seconds should be 60 (per Service.seconds_until_status_upload)
@@ -188,7 +188,7 @@ class TestPVOutputStatus:
         payload = {StatusField.GENERATION_POWER.value: 500, StatusField.CONSUMPTION_POWER.value: -100}
 
         # Mock consumption_enabled to True using PropertyMock on the configuration object
-        with patch.object(type(Config.pvoutput), "consumption_enabled", new_callable=PropertyMock) as mock_ce:
+        with patch.object(type(active_config.pvoutput), "consumption_enabled", new_callable=PropertyMock) as mock_ce:
             mock_ce.return_value = True
 
             with (

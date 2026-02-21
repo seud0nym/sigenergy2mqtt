@@ -7,7 +7,7 @@ from typing import Any, Deque, Dict, cast
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -36,8 +36,8 @@ class BatteryChargingPower(DerivedSensor):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
         super().__init__(
             name="Battery Charging Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_battery_charging_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_battery_charging_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_charging_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_battery_charging_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
@@ -68,8 +68,8 @@ class BatteryDischargingPower(DerivedSensor):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
         super().__init__(
             name="Battery Discharging Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_battery_discharging_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_battery_discharging_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_discharging_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_battery_discharging_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
@@ -100,8 +100,8 @@ class GridSensorExportPower(DerivedSensor):
     def __init__(self, plant_index: int, active_power: GridSensorActivePower):
         super().__init__(
             name="Export Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_export_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_export_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_export_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_export_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=active_power.device_class,
@@ -131,8 +131,8 @@ class GridSensorImportPower(DerivedSensor):
     def __init__(self, plant_index: int, active_power: GridSensorActivePower):
         super().__init__(
             name="Import Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_import_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_import_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_import_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_import_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=active_power.device_class,
@@ -178,8 +178,8 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     def __init__(self, plant_index: int, *sensors: Sensor):
         super().__init__(
             name="Total PV Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_total_pv_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_pv_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_total_pv_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_total_pv_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
@@ -195,7 +195,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     async def _check_timeouts(self) -> None:
         # Check for timeouts
         now = time.time()
-        timeout = Config.modbus[self.plant_index].scan_interval.realtime * 5  # 5x poll interval grace period
+        timeout = active_config.modbus[self.plant_index].scan_interval.realtime * 5  # 5x poll interval grace period
         for source_id, value in self._sources.items():
             if value.enabled and value.type == TotalPVPower.SourceType.SMARTPORT:
                 if value.last_update and (now - value.last_update > timeout):
@@ -231,7 +231,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        if Config.modbus[self.plant_index].smartport.enabled:
+        if active_config.modbus[self.plant_index].smartport.enabled:
             attributes["source"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
         else:
             attributes["source"] = "PV Power + Third-Party PV Power"
@@ -255,8 +255,8 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
 
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
-        if Config.modbus[self.plant_index].smartport.enabled:
-            for topic in Config.modbus[self.plant_index].smartport.mqtt:
+        if active_config.modbus[self.plant_index].smartport.enabled:
+            for topic in active_config.modbus[self.plant_index].smartport.mqtt:
                 if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
                     self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     topics.add(topic.topic)
@@ -330,8 +330,8 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
     def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
         super().__init__(
             name="Consumed Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_consumed_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_consumed_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
@@ -432,7 +432,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
             self._update_source("pv", values[-1][1])
         elif isinstance(sensor, GridStatus):
-            if Config.consumption == ConsumptionMethod.CALCULATED:
+            if active_config.consumption == ConsumptionMethod.CALCULATED:
                 grid = int(values[-1][1])
                 if grid != self._grid_status:
                     if self._grid_status is not None:
@@ -451,8 +451,8 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantTotalExportedEnergy):
         super().__init__(
             name="Daily Exported Energy",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
             source=source,
         )
         self.protocol_version = source.protocol_version
@@ -467,8 +467,8 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantTotalImportedEnergy):
         super().__init__(
             name="Daily Imported Energy",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
             source=source,
         )
         self.protocol_version = source.protocol_version
@@ -483,8 +483,8 @@ class TotalLifetimePVEnergy(DerivedSensor):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Total PV Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
-            object_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
             data_type=ModbusDataType.UINT32,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
@@ -542,8 +542,8 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: TotalLifetimePVEnergy):
         super().__init__(
             name="Daily Total PV Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_total_daily_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_total_daily_pv_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_total_daily_pv_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_total_daily_pv_energy",
             source=source,
         )
         self.protocol_version = source.protocol_version
@@ -558,8 +558,8 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantPVTotalGeneration):
         super().__init__(
             name="Daily PV Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_pv_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_pv_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_pv_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_pv_energy",
             source=source,
         )
         self.protocol_version = source.protocol_version
@@ -574,8 +574,8 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: ESSTotalChargedEnergy):
         super().__init__(
             name="Daily Charge Energy",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_charge_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_charge_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_charge_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_charge_energy",
             source=source,
         )
         self.protocol_version = source.protocol_version
@@ -590,8 +590,8 @@ class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: ESSTotalDischargedEnergy):
         super().__init__(
             name="Daily Discharge Energy",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_daily_discharge_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_discharge_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_discharge_energy",
             source=source,
         )
         self.protocol_version = source.protocol_version

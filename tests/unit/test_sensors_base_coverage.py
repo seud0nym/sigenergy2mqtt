@@ -1,10 +1,12 @@
 import asyncio
 import time
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     DerivedSensor,
@@ -66,25 +68,25 @@ def clear_sensor_registry():
 
 @pytest.fixture
 def mock_config():
-    with patch("sigenergy2mqtt.sensors.base.Config") as mock:
-        # Set standard mock values
-        mock.home_assistant = MagicMock()
-        mock.home_assistant.entity_id_prefix = "sigenergy"
-        mock.home_assistant.unique_id_prefix = "sigenergy"
-        mock.home_assistant.discovery_prefix = "homeassistant"
-        mock.home_assistant.enabled = True
-        mock.home_assistant.use_simplified_topics = False
-        mock.home_assistant.edit_percentage_with_box = False
-        mock.home_assistant.enabled_by_default = True
-        mock.sensor_overrides = {}
-        mock.clean = False
-        mock.persistent_state_path = "/tmp"
-        mock.sensor_debug_logging = False
-        mock.modbus = []
-        mock.sanity_check_default_kw = 100.0
-        mock.repeated_state_publish_interval = 0
-        with patch("sigenergy2mqtt.sensors.sanity_check.Config", mock):
-            yield mock
+    cfg = Config()
+    # Set standard values
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.home_assistant.enabled_by_default = True
+    cfg.sensor_overrides = {}
+    cfg.clean = False
+    cfg.persistent_state_path = Path("/tmp")
+    cfg.sensor_debug_logging = False
+    cfg.modbus = []
+    cfg.sanity_check_default_kw = 100.0
+    cfg.repeated_state_publish_interval = 0
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestBaseCoverage:
@@ -244,41 +246,42 @@ class TestModbusSensorMixinErrorHandling:
 
 class TestAccumulationSensorPersistence:
     @pytest.mark.asyncio
-    async def test_resettable_persistence_load_save(self, tmp_path):
+    async def test_resettable_persistence_load_save(self, mock_config, tmp_path):
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+
+        mock_config.persistent_state_path = tmp_path
 
         source = MagicMock(spec=ReadOnlySensor)
         source.unique_id = "src"
-        with patch("sigenergy2mqtt.sensors.base.Config.persistent_state_path", str(tmp_path)):
-            sensor = ResettableAccumulationSensor(
-                "Acc",
-                "sigenergy_acc_uid",
-                "sigenergy_acc_obj",
-                source,
-                ModbusDataType.UINT32,
-                unit="kWh",
-                device_class=DeviceClass.ENERGY,
-                state_class=StateClass.TOTAL_INCREASING,
-                icon="mdi:flash",
-                gain=1.0,
-                precision=2,
-            )
-            await sensor._persist_current_total(123.45)
+        sensor = ResettableAccumulationSensor(
+            "Acc",
+            "sigenergy_acc_uid",
+            "sigenergy_acc_obj",
+            source,
+            ModbusDataType.UINT32,
+            unit="kWh",
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:flash",
+            gain=1.0,
+            precision=2,
+        )
+        await sensor._persist_current_total(123.45)
 
-            sensor2 = ResettableAccumulationSensor(
-                "Acc2",
-                "sigenergy_acc_uid",
-                "sigenergy_acc_obj",
-                source,
-                ModbusDataType.UINT32,
-                unit="kWh",
-                device_class=DeviceClass.ENERGY,
-                state_class=StateClass.TOTAL_INCREASING,
-                icon="mdi:flash",
-                gain=1.0,
-                precision=2,
-            )
-            assert sensor2._current_total == 123.45
+        sensor2 = ResettableAccumulationSensor(
+            "Acc2",
+            "sigenergy_acc_uid",
+            "sigenergy_acc_obj",
+            source,
+            ModbusDataType.UINT32,
+            unit="kWh",
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:flash",
+            gain=1.0,
+            precision=2,
+        )
+        assert sensor2._current_total == 123.45
 
     def test_resettable_discovery_components(self):
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
@@ -1246,6 +1249,8 @@ class TestCoverageGap:
                 # new_total = 200 + 15 = 215
                 assert res is True
                 assert s._current_total == 215.0
+                # Allow background persistence task to run to avoid RuntimeWarning
+                await asyncio.sleep(0)
 
                 # branch: negative increase IGNORED
                 s.state_class = StateClass.TOTAL_INCREASING
@@ -1326,7 +1331,6 @@ class TestCoverageGap:
             assert len(res) <= 20
 
     @pytest.mark.asyncio
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     async def test_accumulation_sensors_edge_cases(self, mock_config):
         from unittest.mock import PropertyMock
 
@@ -1383,6 +1387,16 @@ class TestCoverageGap:
                 # Reset interval to positive
                 with patch.object(Sensor, "latest_interval", new_callable=PropertyMock) as mock_interval:
                     mock_interval.return_value = 3600
+                    # Success branch
+                    mock_loop.is_running.return_value = True
+                    with patch("sigenergy2mqtt.sensors.base.asyncio.run_coroutine_threadsafe") as mock_run:
+                        s.set_source_values(source, [(time.time() - 3600, 10), (time.time(), 20)])
+                        assert mock_run.called
+                        # Close the coroutine to avoid RuntimeWarning
+                        mock_run.call_args[0][0].close()
+
+                    # Failure branch (loop not running)
+                    mock_loop.is_running.return_value = False
                     s.set_source_values(source, [(time.time() - 3600, 10), (time.time(), 20)])
                     assert mock_gel.called
 
@@ -1421,7 +1435,6 @@ class TestCoverageGap:
                 await daily.publish(mqtt_c, None)
                 assert mock_pub.called
 
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_pvpower_sensor(self, mock_config):
         from sigenergy2mqtt.sensors.base import DerivedSensor, PVPowerSensor
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass

@@ -1,7 +1,3 @@
-"""
-Additional tests for sigenergy2mqtt/sensors/base.py to increase coverage.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -12,18 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
-try:
-    from sensor_stubs import ConcreteSensor
-except ImportError:
-    # Provide a fallback ConcreteSensor if sensor_stubs not on path
-    from sigenergy2mqtt.sensors.base import Sensor
-
-    class ConcreteSensor(Sensor):
-        async def _update_internal_state(self, **kwargs):
-            return False
-
-
 from sigenergy2mqtt.common import Protocol, RegisterAccess
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AlarmSensor,
@@ -40,12 +26,17 @@ from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 # Helpers / Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
 
+
+class ConcreteSensor(Sensor):
+    async def _update_internal_state(self, **kwargs):
+        return False
+
+
 def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
     """Create a fresh ConcreteSensor with cleared ID registries."""
     uid = f"sigenergy_{uid_suffix}"
     oid = f"sigenergy_{uid_suffix}"
-    with patch.dict(Sensor._used_unique_ids, clear=True), \
-         patch.dict(Sensor._used_object_ids, clear=True):
+    with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
         s = ConcreteSensor(
             name=name,
             unique_id=uid,
@@ -72,6 +63,7 @@ def _mqtt_mock():
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Debug-logging branches in property setters
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestDebugLoggingBranches:
     """Cover debug_logging=True branches in property setters."""
@@ -121,12 +113,12 @@ class TestDebugLoggingBranches:
 # 2. apply_sensor_overrides branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestApplySensorOverrides:
     """Cover each override key branch in apply_sensor_overrides."""
 
     def _make_with_overrides(self, overrides: dict, suffix: str) -> Sensor:
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="Override Test",
                 unique_id=f"sigenergy_{suffix}",
@@ -139,10 +131,9 @@ class TestApplySensorOverrides:
                 precision=2,
                 protocol_version=Protocol.V2_4,
             )
-        with patch(
-            "sigenergy2mqtt.sensors.base.Config.sensor_overrides",
-            {f"sigenergy_{suffix}": overrides},
-        ):
+        cfg = Config()
+        cfg.sensor_overrides = {f"sigenergy_{suffix}": overrides}
+        with _swap_active_config(cfg):
             s.apply_sensor_overrides(None)
         return s
 
@@ -209,8 +200,7 @@ class TestApplySensorOverrides:
 
     def test_override_registers_read_only(self):
         """apply_sensor_overrides with ReadableSensorMixin + read_only=False."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="ReadOnly Test",
                 unique_id="sigenergy_ro_reg",
@@ -228,14 +218,14 @@ class TestApplySensorOverrides:
         registers.read_only = False
         registers.read_write = True
         registers.write_only = True
-        with patch.dict("sigenergy2mqtt.sensors.base.Config.sensor_overrides", {}):
+        cfg = Config()
+        with _swap_active_config(cfg):
             # DerivedSensor instance check path
             s.apply_sensor_overrides(registers)
 
     def test_override_registers_no_remote_ems(self):
         """Publishable set to False when no_remote_ems is True and sensor has _remote_ems."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="RemoteEMS",
                 unique_id="sigenergy_rems",
@@ -251,7 +241,8 @@ class TestApplySensorOverrides:
         s._remote_ems = True  # mark as remote EMS sensor
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = True
-        with patch.dict("sigenergy2mqtt.sensors.base.Config.sensor_overrides", {}):
+        cfg = Config()
+        with _swap_active_config(cfg):
             s.apply_sensor_overrides(registers)
         assert s.publishable is False
 
@@ -259,6 +250,7 @@ class TestApplySensorOverrides:
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. publish() method branches
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestPublishMethod:
     """Test the publish() method's various branches."""
@@ -275,8 +267,10 @@ class TestPublishMethod:
         """Cover debug branch when state is None and force_publish is False."""
         s = self._sensor_with_topics("pub_none_dbg", debug=True)
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
-            published = await s.publish(mqtt, None)
+        cfg = Config()
+        with _swap_active_config(cfg):
+            with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+                published = await s.publish(mqtt, None)
         assert published is False
 
     @pytest.mark.asyncio
@@ -323,8 +317,9 @@ class TestPublishMethod:
         async def _update(**kw):
             raise RuntimeError("Modbus error")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with patch.object(s, "_update_internal_state", side_effect=_update), _swap_active_config(cfg):
             await s.publish(mqtt, modbus)
         assert s._failures == 1
 
@@ -355,9 +350,13 @@ class TestPublishMethod:
         async def _update(**kw):
             raise RuntimeError("error")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False), \
-             patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with (
+            patch.object(s, "_update_internal_state", side_effect=_update),
+            _swap_active_config(cfg),
+            patch("sigenergy2mqtt.sensors.base.logging") as mock_log,
+        ):
             await s.publish(mqtt, modbus)
             await s.publish(mqtt, modbus)
             # After 2 failures reaching max, warning should be logged
@@ -408,9 +407,13 @@ class TestPublishMethod:
         async def _update(**kw):
             raise RuntimeError("ha test error")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", True), \
-             patch.object(s, "publish_attributes") as mock_pub_attrs:
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        with (
+            patch.object(s, "_update_internal_state", side_effect=_update),
+            _swap_active_config(cfg),
+            patch.object(s, "publish_attributes") as mock_pub_attrs,
+        ):
             await s.publish(mqtt, modbus)
         mock_pub_attrs.assert_called_once()
 
@@ -427,8 +430,9 @@ class TestPublishMethod:
         async def _update(**kw):
             raise RuntimeError("retry interval test")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with patch.object(s, "_update_internal_state", side_effect=_update), _swap_active_config(cfg):
             await s.publish(mqtt, modbus)
             await s.publish(mqtt, modbus)
         # After hitting max_failures with retry_interval set, _next_retry should be set
@@ -438,6 +442,7 @@ class TestPublishMethod:
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. publish_attributes() branches
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestPublishAttributes:
     def _sensor_with_attrs(self, suffix, debug=False):
@@ -479,6 +484,7 @@ class TestPublishAttributes:
         s.publish_attributes(mqtt, failures=3, exception="RuntimeError('x')")
         call_args = mqtt.publish.call_args
         import json
+
         payload = json.loads(call_args[0][1])
         assert payload["failures"] == 3
 
@@ -504,26 +510,31 @@ class TestPublishAttributes:
 # 5. configure_mqtt_topics() branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestConfigureMqttTopics:
     def test_simplified_topics(self):
         """Cover simplified topics path."""
         s = _make_sensor(uid_suffix="simplified")
-        with patch("sigenergy2mqtt.sensors.base.Config") as MockConfig:
-            MockConfig.home_assistant.enabled = True
-            MockConfig.home_assistant.use_simplified_topics = True
-            MockConfig.home_assistant.discovery_prefix = "homeassistant"
-            MockConfig.home_assistant.enabled_by_default = False
+        from sigenergy2mqtt.config import _swap_active_config
+
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        cfg.home_assistant.use_simplified_topics = True
+        cfg.home_assistant.discovery_prefix = "homeassistant"
+        cfg.home_assistant.enabled_by_default = False
+        with _swap_active_config(cfg):
             base = s.configure_mqtt_topics("test_device")
         assert base == "sigenergy2mqtt/sigenergy_simplified"
 
     def test_ha_disabled_topics(self):
         """Cover path when HA is not enabled."""
         s = _make_sensor(uid_suffix="ha_off")
-        with patch("sigenergy2mqtt.sensors.base.Config") as MockConfig:
-            MockConfig.home_assistant.enabled = False
-            MockConfig.home_assistant.use_simplified_topics = False
-            MockConfig.home_assistant.discovery_prefix = "homeassistant"
-            MockConfig.home_assistant.enabled_by_default = False
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        cfg.home_assistant.use_simplified_topics = False
+        cfg.home_assistant.discovery_prefix = "homeassistant"
+        cfg.home_assistant.enabled_by_default = False
+        with _swap_active_config(cfg):
             base = s.configure_mqtt_topics("test_device")
         assert "availability" not in s
         assert base == "sigenergy2mqtt/sigenergy_ha_off"
@@ -531,11 +542,12 @@ class TestConfigureMqttTopics:
     def test_ha_enabled_no_simplified_with_debug(self):
         """Debug branch in configure_mqtt_topics (line ~620+)."""
         s = _make_sensor(uid_suffix="cfg_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.Config") as MockConfig:
-            MockConfig.home_assistant.enabled = True
-            MockConfig.home_assistant.use_simplified_topics = False
-            MockConfig.home_assistant.discovery_prefix = "homeassistant"
-            MockConfig.home_assistant.enabled_by_default = False
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        cfg.home_assistant.use_simplified_topics = False
+        cfg.home_assistant.discovery_prefix = "homeassistant"
+        cfg.home_assistant.enabled_by_default = False
+        with _swap_active_config(cfg):
             with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
                 s.configure_mqtt_topics("test_device")
         mock_log.debug.assert_called()
@@ -545,19 +557,21 @@ class TestConfigureMqttTopics:
 # 6. get_attributes() branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestGetAttributes:
     def test_get_attributes_ha_disabled_includes_name_and_unit(self):
         """When HA disabled, name and unit included in attributes."""
         s = _make_sensor(uid_suffix="ga_ha_off")
-        with patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg):
             attrs = s.get_attributes()
         assert "name" in attrs
         assert "unit-of-measurement" in attrs
 
     def test_get_attributes_no_unit_ha_disabled(self):
         """When HA disabled and unit is None, unit-of-measurement omitted."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="No Unit",
                 unique_id="sigenergy_no_unit",
@@ -570,14 +584,15 @@ class TestGetAttributes:
                 precision=None,
                 protocol_version=Protocol.V2_4,
             )
-        with patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg):
             attrs = s.get_attributes()
         assert "unit-of-measurement" not in attrs
 
     def test_get_attributes_protocol_na_omits_since_protocol(self):
         """Protocol.N_A omits since-protocol from attributes."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="NA Protocol",
                 unique_id="sigenergy_na_proto",
@@ -605,6 +620,7 @@ class TestGetAttributes:
 # 7. get_discovery() branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestGetDiscovery:
     def _sensor_with_topics(self, suffix):
         s = _make_sensor(uid_suffix=suffix)
@@ -620,8 +636,10 @@ class TestGetDiscovery:
         pfile.write_text("0")
         s._persistent_publish_state_file = pfile
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.Config.clean", False), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.clean = False
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg):
             components = s.get_discovery(mqtt)
         assert not pfile.exists()
         assert len(components) > 0
@@ -632,8 +650,10 @@ class TestGetDiscovery:
         s._publishable = False
         s._persistent_publish_state_file = tmp_path / "gd_unpub.publishable"
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.Config.clean", False), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.clean = False
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg):
             s.get_discovery(mqtt)
         mqtt.publish.assert_called_with("test/attributes", None, qos=0, retain=False)
 
@@ -643,8 +663,10 @@ class TestGetDiscovery:
         s._publishable = False
         s._persistent_publish_state_file = tmp_path / "gd_clean.publishable"
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.Config.clean", True), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.clean = True
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg):
             components = s.get_discovery(mqtt)
         assert components == {}
 
@@ -655,8 +677,10 @@ class TestGetDiscovery:
         pfile = tmp_path / "gd_persist.publishable"
         s._persistent_publish_state_file = pfile
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.Config.clean", False), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False):
+        cfg = Config()
+        cfg.clean = False
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg):
             components = s.get_discovery(mqtt)
         assert pfile.exists()
         # Components should have minimal platform entry
@@ -667,6 +691,7 @@ class TestGetDiscovery:
 # ─────────────────────────────────────────────────────────────────────────────
 # 8. get_state() with republish=True
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestGetStateRepublish:
     @pytest.mark.asyncio
@@ -706,10 +731,10 @@ class TestGetStateRepublish:
 # 9. state2raw() edge cases
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestState2Raw:
     def _sensor_with_options(self, options: list, suffix: str):
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="Options",
                 unique_id=f"sigenergy_{suffix}",
@@ -765,12 +790,13 @@ class TestState2Raw:
 # 10. _check_register_response() exception code branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestCheckRegisterResponse:
     def _make_readonly_sensor(self, suffix):
         """Create a ReadOnlySensor instance for testing _check_register_response."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             from sigenergy2mqtt.sensors.const import InputType
+
             s = ReadOnlySensor(
                 name="RO Test",
                 object_id=f"sigenergy_{suffix}",
@@ -860,8 +886,7 @@ class TestCheckRegisterResponse:
         rr = MagicMock()
         rr.isError.return_value = True
         rr.exception_code = 2
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log, \
-             pytest.raises(Exception):
+        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log, pytest.raises(Exception):
             s._check_register_response(rr, "read_input_registers")
         mock_log.debug.assert_called()
 
@@ -870,11 +895,12 @@ class TestCheckRegisterResponse:
 # 11. ReadOnlySensor._update_internal_state() branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestReadOnlySensorUpdateInternalState:
     def _make_ro(self, suffix):
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             from sigenergy2mqtt.sensors.const import InputType
+
             return ReadOnlySensor(
                 name="RO",
                 object_id=f"sigenergy_{suffix}",
@@ -926,9 +952,9 @@ class TestReadOnlySensorUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_input_registers(self):
         """INPUT type uses read_input_registers."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             from sigenergy2mqtt.sensors.const import InputType
+
             s = ReadOnlySensor(
                 name="RO Input",
                 object_id="sigenergy_ro_input",
@@ -976,8 +1002,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics.modbus_read = AsyncMock()
         mock_metrics.modbus_read_error = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics), \
-             pytest.raises(Exception, match="generic"):
+        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
             await s._update_internal_state(modbus_client=modbus)
 
         mock_metrics.modbus_read_error.assert_awaited_once()
@@ -999,8 +1024,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics), \
-             patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is True
         mock_log.debug.assert_called()
@@ -1010,10 +1034,10 @@ class TestReadOnlySensorUpdateInternalState:
 # 12. AlarmSensor / AlarmCombinedSensor branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestAlarmSensorBranches:
     def _make_alarm(self, suffix):
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
             class ConcreteAlarm(AlarmSensor):
                 def decode_alarm_bit(self, bit_position: int):
@@ -1034,6 +1058,7 @@ class TestAlarmSensorBranches:
 # 13. DerivedSensor branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestDerivedSensorBranches:
     @pytest.mark.asyncio
     async def test_derived_sensor_get_state_no_states(self):
@@ -1044,8 +1069,7 @@ class TestDerivedSensorBranches:
         source.unique_id = "src_123"
         source.latest_interval = 60.0
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             derived = EnergyLifetimeAccumulationSensor(
                 "Accum",
                 "sigenergy_accum_d",
@@ -1071,8 +1095,7 @@ class TestDerivedSensorBranches:
         source.unique_id = "src_str"
         source.latest_interval = 60.0
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             derived = EnergyLifetimeAccumulationSensor(
                 "Accum Str",
                 "sigenergy_accum_str",
@@ -1095,6 +1118,7 @@ class TestDerivedSensorBranches:
 # 14. protocol_version setter edge cases
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestProtocolVersionSetter:
     def test_protocol_version_float_valid(self):
         s = _make_sensor(uid_suffix="pv_float")
@@ -1116,6 +1140,7 @@ class TestProtocolVersionSetter:
 # ─────────────────────────────────────────────────────────────────────────────
 # 15. set_latest_state propagates to derived sensors
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestSetLatestState:
     def test_set_latest_state_propagates_to_derived(self):
@@ -1140,13 +1165,13 @@ class TestSetLatestState:
 # 16. ReservedSensor branches
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestReservedSensor:
     def _make_reserved(self, suffix):
         from sigenergy2mqtt.sensors.base import ReservedSensor
         from sigenergy2mqtt.sensors.const import InputType
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
             class ConcreteReserved(ReservedSensor):
                 pass
@@ -1196,6 +1221,7 @@ class TestReservedSensor:
 # 17. SanityCheck failure increment config
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestSanityCheckFailureIncrement:
     @pytest.mark.asyncio
     async def test_sanity_check_exception_not_counted_when_config_disabled(self):
@@ -1212,10 +1238,12 @@ class TestSanityCheckFailureIncrement:
         async def _update(**kw):
             raise SanityCheckException("out of range")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update), \
-             patch("sigenergy2mqtt.sensors.base.Config.sanity_check_failures_increment", False), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False), \
-             patch("sigenergy2mqtt.sensors.base.logging"):
+        with (
+            patch.object(s, "_update_internal_state", side_effect=_update),
+            patch("sigenergy2mqtt.sensors.base.active_config.sanity_check_failures_increment", False),
+            patch("sigenergy2mqtt.sensors.base.active_config.home_assistant.enabled", False),
+            patch("sigenergy2mqtt.sensors.base.logging"),
+        ):
             await s.publish(mqtt, modbus)
 
         assert s._failures == 0  # not counted
@@ -1235,10 +1263,12 @@ class TestSanityCheckFailureIncrement:
         async def _update(**kw):
             raise SanityCheckException("out of range")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update), \
-             patch("sigenergy2mqtt.sensors.base.Config.sanity_check_failures_increment", True), \
-             patch("sigenergy2mqtt.sensors.base.Config.home_assistant.enabled", False), \
-             patch("sigenergy2mqtt.sensors.base.logging"):
+        with (
+            patch.object(s, "_update_internal_state", side_effect=_update),
+            patch("sigenergy2mqtt.sensors.base.active_config.sanity_check_failures_increment", True),
+            patch("sigenergy2mqtt.sensors.base.active_config.home_assistant.enabled", False),
+            patch("sigenergy2mqtt.sensors.base.logging"),
+        ):
             await s.publish(mqtt, modbus)
 
         assert s._failures == 1
@@ -1248,29 +1278,28 @@ class TestSanityCheckFailureIncrement:
 # 18. WritableSensorMixin publishable via apply_sensor_overrides
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestWritableSensorOverrides:
     def test_writable_sensor_read_write_false_sets_unpublishable(self):
         """WritableSensorMixin sensor becomes unpublishable when read_write=False."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # WriteOnlySensor is a concrete WritableSensorMixin subclass
             wo = WriteOnlySensor("WO", "sigenergy_wo_rw", 0, 1, 30001, Protocol.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
         registers.write_only = False
-        with patch.dict("sigenergy2mqtt.sensors.base.Config.sensor_overrides", {}):
+        with patch.dict("sigenergy2mqtt.sensors.base.active_config.sensor_overrides", {}):
             wo.apply_sensor_overrides(registers)
         assert wo.publishable is False
 
     def test_write_only_sensor_write_only_false_unpublishable(self):
         """WriteOnlySensor (not WritableSensorMixin ReadWrite) also respects write_only override."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             wo = WriteOnlySensor("WO2", "sigenergy_wo_wo", 0, 1, 30001, Protocol.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
         registers.write_only = False
-        with patch.dict("sigenergy2mqtt.sensors.base.Config.sensor_overrides", {}):
+        with patch.dict("sigenergy2mqtt.sensors.base.active_config.sensor_overrides", {}):
             wo.apply_sensor_overrides(registers)
         assert wo.publishable is False
 
@@ -1279,45 +1308,60 @@ class TestWritableSensorOverrides:
 # 19. __eq__ and __hash__
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestSensorEqualityAndHash:
     def test_eq_same_unique_id(self):
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s1 = ConcreteSensor(
                 name="S1",
                 unique_id="sigenergy_eq1",
                 object_id="sigenergy_eq1",
-                unit=None, device_class=None, state_class=None,
-                icon=None, gain=None, precision=None,
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
                 protocol_version=Protocol.V2_4,
             )
             s2 = ConcreteSensor(
                 name="S2",
                 unique_id="sigenergy_eq1",
                 object_id="sigenergy_eq1",
-                unit=None, device_class=None, state_class=None,
-                icon=None, gain=None, precision=None,
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
                 protocol_version=Protocol.V2_4,
             )
         assert s1 == s2
 
     def test_eq_different_unique_id(self):
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s1 = ConcreteSensor(
                 name="S1",
                 unique_id="sigenergy_eqa",
                 object_id="sigenergy_eqa",
-                unit=None, device_class=None, state_class=None,
-                icon=None, gain=None, precision=None,
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
                 protocol_version=Protocol.V2_4,
             )
             s2 = ConcreteSensor(
                 name="S2",
                 unique_id="sigenergy_eqb",
                 object_id="sigenergy_eqb",
-                unit=None, device_class=None, state_class=None,
-                icon=None, gain=None, precision=None,
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
                 protocol_version=Protocol.V2_4,
             )
         assert s1 != s2
@@ -1335,17 +1379,21 @@ class TestSensorEqualityAndHash:
 # 20. get_discovery_components with options
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestGetDiscoveryComponents:
     def test_options_are_translated(self):
         """Options list is properly translated in get_discovery_components."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="Opts",
                 unique_id="sigenergy_gdc_opts",
                 object_id="sigenergy_gdc_opts",
-                unit=None, device_class=None, state_class=None,
-                icon=None, gain=None, precision=None,
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
                 protocol_version=Protocol.V2_4,
             )
         s["options"] = ["Option A", "Option B", ""]  # empty string should be filtered
@@ -1360,6 +1408,7 @@ class TestGetDiscoveryComponents:
 # ─────────────────────────────────────────────────────────────────────────────
 # 21. gain property edge cases
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestGainProperty:
     def test_gain_returns_1_when_none(self):
@@ -1387,17 +1436,20 @@ class TestGainProperty:
 # 22. ReadableSensorMixin scan-interval override
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestReadableSensorScanIntervalOverride:
     def test_scan_interval_override_applied(self):
         """scan-interval override is applied during __init__."""
         from sigenergy2mqtt.sensors.const import InputType
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), \
-             patch.dict(Sensor._used_object_ids, clear=True), \
-             patch(
-                 "sigenergy2mqtt.sensors.base.Config.sensor_overrides",
-                 {"sigenergy_ro_si": {"scan-interval": 99}},
-             ):
+        with (
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+            patch(
+                "sigenergy2mqtt.sensors.base.active_config.sensor_overrides",
+                {"sigenergy_ro_si": {"scan-interval": 99}},
+            ),
+        ):
             s = ReadOnlySensor(
                 name="ScanInterval",
                 object_id="sigenergy_ro_si",

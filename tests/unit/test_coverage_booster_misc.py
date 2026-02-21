@@ -21,10 +21,14 @@ def test_protocol_applies_coverage():
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
 async def test_get_influxdb_services_coverage():
-    with patch("sigenergy2mqtt.influxdb.Config") as MockConfig:
-        MockConfig.modbus = [MagicMock(), MagicMock()]  # 2 plants
-        MockConfig.influxdb.log_level = logging.INFO
+    from sigenergy2mqtt.config import Config
+    from sigenergy2mqtt.config.config import _swap_active_config
+
+    with _swap_active_config(Config()) as cfg:
+        cfg.modbus = [MagicMock(), MagicMock()]  # 2 plants
+        cfg.influxdb.log_level = logging.INFO
 
         services = get_influxdb_services([])
         assert len(services) == 2

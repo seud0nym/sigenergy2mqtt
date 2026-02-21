@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 
 import sigenergy2mqtt.metrics.metrics_sensors as sensors
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.sensors.base import Sensor
@@ -12,7 +12,7 @@ from sigenergy2mqtt.sensors.base import Sensor
 
 class MetricsService(Device):
     def __init__(self, protocol_version: Protocol):
-        unique_id = f"{Config.home_assistant.unique_id_prefix}_metrics"
+        unique_id = f"{active_config.home_assistant.unique_id_prefix}_metrics"
         super().__init__("Sigenergy Metrics", -1, unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
 
         self._add_read_sensor(sensors.ModbusActiveLocks())
@@ -33,7 +33,7 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ProtocolPublished())
 
         # Conditionally add InfluxDB sensors when InfluxDB is enabled
-        if Config.influxdb.enabled:
+        if active_config.influxdb.enabled:
             self._add_read_sensor(sensors.InfluxDBWrites())
             self._add_read_sensor(sensors.InfluxDBWriteErrors())
             self._add_read_sensor(sensors.InfluxDBWriteMax())

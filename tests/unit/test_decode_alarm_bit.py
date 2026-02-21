@@ -5,18 +5,21 @@ import pytest
 ENTITY_PREFIX = "sigenergy"
 
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+
+
 @pytest.fixture(autouse=True)
 def setup_configs():
-    with patch("sigenergy2mqtt.sensors.base.Config") as m1, patch("sigenergy2mqtt.sensors.ac_charger_read_only.Config") as m2, patch("sigenergy2mqtt.sensors.plant_read_only.Config") as m3:
-        for m in [m1, m2, m3]:
-            m.home_assistant.unique_id_prefix = "sigenergy"
-            m.home_assistant.entity_id_prefix = ENTITY_PREFIX
-            m.sensor_overrides = {}
+    cfg = Config()
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = ENTITY_PREFIX
+    cfg.sensor_overrides = {}
 
-            mock_device = MagicMock()
-            mock_device.scan_interval.realtime = 5
-            m.modbus = [mock_device]
+    mock_device = MagicMock()
+    mock_device.scan_interval.realtime = 5
+    cfg.modbus = [mock_device]
 
+    with _swap_active_config(cfg):
         yield
 
 

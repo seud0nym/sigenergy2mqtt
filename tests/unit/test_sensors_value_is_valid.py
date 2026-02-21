@@ -35,26 +35,29 @@ def clear_sensor_registry():
         yield
 
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+
+
 @pytest.fixture
 def mock_config():
-    with patch("sigenergy2mqtt.config.Config") as mock:
-        mock.home_assistant.entity_id_prefix = "sigen"
-        mock.home_assistant.unique_id_prefix = "sigen"
-        mock.home_assistant.discovery_prefix = "homeassistant"
-        mock.home_assistant.enabled = True
-        mock.home_assistant.use_simplified_topics = False
-        mock.home_assistant.edit_percentage_with_box = False
-        mock.home_assistant.enabled_by_default = True
-        mock.sensor_overrides = {}
-        mock.clean = False
-        mock.persistent_state_path = "/tmp"
-        mock.ems_mode_check = True
-        mock.modbus = [MagicMock()]
-        mock.modbus[0].scan_interval.medium = 60
-        mock.modbus[0].scan_interval.high = 10
-        # Patch where it's imported in sensors
-        with patch("sigenergy2mqtt.sensors.base.Config", mock), patch("sigenergy2mqtt.sensors.plant_read_write.Config", mock):
-            yield mock
+    cfg = Config()
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.home_assistant.enabled_by_default = True
+    cfg.sensor_overrides = {}
+    cfg.clean = False
+    cfg.persistent_state_path = "/tmp"
+    cfg.ems_mode_check = True
+    cfg.modbus = [MagicMock()]
+    cfg.modbus[0].scan_interval.medium = 60
+    cfg.modbus[0].scan_interval.high = 10
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestValueIsValidBase:

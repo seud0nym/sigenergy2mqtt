@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import cast
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 
 from .influx_base import InfluxBase
 
@@ -112,7 +112,7 @@ class HassHistorySync(InfluxBase):
     async def copy_records_v2(self, config: dict, measurement: str, tags: dict[str, str], before_timestamp: int | None) -> int:
         """Copy records using v2 API with chunking (latest to earliest)."""
         records_copied = 0
-        chunk_size = Config.influxdb.sync_chunk_size
+        chunk_size = active_config.influxdb.sync_chunk_size
         current_before = before_timestamp
 
         while self.online:
@@ -194,7 +194,7 @@ class HassHistorySync(InfluxBase):
         """Copy records using v1 API with chunking (latest to earliest)."""
         records_copied = 0
         tag_filters = self.build_tag_filters(tags)
-        chunk_size = Config.influxdb.sync_chunk_size
+        chunk_size = active_config.influxdb.sync_chunk_size
         current_before = before_timestamp
 
         while self.online:
@@ -309,7 +309,7 @@ class HassHistorySync(InfluxBase):
         # Iterate through cached topics to get unique measurement/tag combinations
         seen_combinations = set()
         sync_tasks = []
-        semaphore = asyncio.Semaphore(Config.influxdb.max_sync_workers)
+        semaphore = asyncio.Semaphore(active_config.influxdb.max_sync_workers)
 
         async def sync_sensor(measurement: str, tags: dict[str, str]):
             async with semaphore:
@@ -328,7 +328,7 @@ class HassHistorySync(InfluxBase):
                     return measurement, tags, 0
 
         for topic, sensor in topic_cache.items():
-            measurement = cast(str, sensor.get("uom", Config.influxdb.default_measurement)).replace("/", "_")
+            measurement = cast(str, sensor.get("uom", active_config.influxdb.default_measurement)).replace("/", "_")
             tags = {"entity_id": cast(str, sensor.get("object_id"))}
 
             # Create a hashable key for this combination

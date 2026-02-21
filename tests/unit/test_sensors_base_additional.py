@@ -4,20 +4,20 @@ import json
 import logging
 import time
 from pathlib import Path
-
-import pytest
 from unittest.mock import Mock
 
-from sigenergy2mqtt.sensors import base
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass, PERCENTAGE, UnitOfEnergy
+import pytest
+
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.config.config import Config
+from sigenergy2mqtt.sensors import base
+from sigenergy2mqtt.sensors.const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 
 
 @pytest.fixture(autouse=True)
 def clear_usage_ids(tmp_path, monkeypatch):
     # Ensure persistent path is temporary
-    Config.persistent_state_path = tmp_path
+    active_config.persistent_state_path = tmp_path
     # Reset class-level registries to avoid test interference
     base.Sensor._used_object_ids.clear()
     base.Sensor._used_unique_ids.clear()
@@ -99,7 +99,7 @@ def test_timestamp_sensor_conversion():
 
 
 def test_select_options_and_indexing():
-    sel = base.SelectSensor(None, name="sel", object_id="sigen_sel", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A","B","C"], protocol_version=base.Protocol.N_A)
+    sel = base.SelectSensor(None, name="sel", object_id="sigen_sel", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A", "B", "C"], protocol_version=base.Protocol.N_A)
     # get option by index
     assert sel._get_option(1) == "B"
     assert sel._get_option_index("B") == 1
@@ -122,7 +122,27 @@ def test_writeonly_get_discovery_components():
 
 
 def test_numeric_min_max_behavior():
-    n = base.NumericSensor(None, name="num", object_id="sigen_num", input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30040, count=1, data_type=ModbusDataType.UINT16, scan_interval=1, unit=PERCENTAGE, device_class=DeviceClass.ENERGY, state_class=None, icon="mdi:test", gain=1, precision=0, protocol_version=base.Protocol.N_A, minimum=0.0, maximum=100.0)
+    n = base.NumericSensor(
+        None,
+        name="num",
+        object_id="sigen_num",
+        input_type=InputType.HOLDING,
+        plant_index=0,
+        device_address=1,
+        address=30040,
+        count=1,
+        data_type=ModbusDataType.UINT16,
+        scan_interval=1,
+        unit=PERCENTAGE,
+        device_class=DeviceClass.ENERGY,
+        state_class=None,
+        icon="mdi:test",
+        gain=1,
+        precision=0,
+        protocol_version=base.Protocol.N_A,
+        minimum=0.0,
+        maximum=100.0,
+    )
     # bypass sanity check by appending directly
     n._states.append((time.time(), 150))
     loop = asyncio.new_event_loop()
@@ -138,8 +158,8 @@ def test_alarm_decoding_and_truncate(monkeypatch):
     decoded = a._decode_alarm_bits(bits, bits)
     assert any("Over-temperature" in s or "Unknown" in s for s in decoded)
     # test truncate when home assistant enabled
-    Config.home_assistant.enabled = True
+    active_config.home_assistant.enabled = True
     long_alarms = ", ".join([f"alarm{i}" for i in range(500)])
     out = a._truncate_alarms(long_alarms, None)
     assert isinstance(out, str)
-    Config.home_assistant.enabled = False
+    active_config.home_assistant.enabled = False

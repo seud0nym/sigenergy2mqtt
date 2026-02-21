@@ -15,6 +15,7 @@ mock_registry = MagicMock()
 sys.modules["sigenergy2mqtt.devices"] = mock_registry
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol  # noqa: E402
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_derived import (  # noqa: E402
     BatteryChargingPower,
@@ -30,16 +31,18 @@ from sigenergy2mqtt.sensors.plant_read_only import BatteryPower, GridSensorActiv
 
 @pytest.fixture(autouse=True)
 def mock_config_all():
-    with patch("sigenergy2mqtt.sensors.plant_derived.Config") as mock_config:
-        mock_config.home_assistant.unique_id_prefix = "sigenergy"
-        mock_config.home_assistant.entity_id_prefix = "sigenergy"
-        mock_config.home_assistant.enabled = True
-        mock_config.sensor_overrides = {}
-        mock_config.consumption = ConsumptionMethod.CALCULATED
-        mock_dev = MagicMock()
-        mock_dev.smartport.enabled = False
-        mock_config.modbus = [mock_dev]
-        yield mock_config
+    cfg = Config()
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.enabled = True
+    cfg.sensor_overrides = {}
+    cfg.consumption = ConsumptionMethod.CALCULATED
+    mock_dev = MagicMock()
+    mock_dev.smartport.enabled = False
+    cfg.modbus = [mock_dev]
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestBatteryDerivedPower:

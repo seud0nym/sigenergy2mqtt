@@ -1,3 +1,4 @@
+from sigenergy2mqtt.config import active_config
 import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,10 +19,10 @@ def mock_config():
     modbus_config.scan_interval.low = 300
 
     with (
-        patch("sigenergy2mqtt.config.Config.home_assistant.unique_id_prefix", "sigen"),
-        patch("sigenergy2mqtt.config.Config.home_assistant.entity_id_prefix", "sigen"),
-        patch("sigenergy2mqtt.config.Config.sensor_overrides", {}),
-        patch("sigenergy2mqtt.config.Config.modbus", [modbus_config] * 10),
+        patch("sigenergy2mqtt.config.active_config.home_assistant.unique_id_prefix", "sigen"),
+        patch("sigenergy2mqtt.config.active_config.home_assistant.entity_id_prefix", "sigen"),
+        patch("sigenergy2mqtt.config.active_config.sensor_overrides", {}),
+        patch("sigenergy2mqtt.config.active_config.modbus", [modbus_config] * 10),
     ):
         yield
 
@@ -174,7 +175,7 @@ async def test_plant_read_write_coverage():
             if cls.__name__ == "RemoteEMSControlMode":
                 mock_mqtt = MagicMock()
                 sensor.latest_raw_state = 3
-                with patch("sigenergy2mqtt.config.Config.home_assistant.enabled", True), patch("sigenergy2mqtt.config.Config.ems_mode_check", True):
+                with patch("sigenergy2mqtt.config.active_config.home_assistant.enabled", True), patch("sigenergy2mqtt.config.active_config.ems_mode_check", True):
                     await sensor.publish(mock_mqtt, mock_modbus)
 
             if hasattr(sensor, "value_is_valid"):

@@ -593,6 +593,9 @@ class DummySensor(ReadableSensorMixin):
         return self["state_topic"]
 
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+
+
 @pytest.fixture
 def mock_config(tmp_path):
     # Ensure logging level doesn't trigger discovery dump unless we want it
@@ -600,28 +603,28 @@ def mock_config(tmp_path):
 
     old_level = logging.getLogger().level
 
-    # Patch the root Config object AND where it's imported in base and device
-    with patch("sigenergy2mqtt.config.Config") as mock_conf, patch("sigenergy2mqtt.devices.device.Config", mock_conf), patch("sigenergy2mqtt.sensors.base.Config", mock_conf):
-        mock_conf.home_assistant.enabled = True
-        mock_conf.home_assistant.discovery_prefix = "homeassistant"
-        mock_conf.home_assistant.unique_id_prefix = "sigen"
-        mock_conf.home_assistant.entity_id_prefix = "sigen"
-        mock_conf.home_assistant.use_simplified_topics = False
-        mock_conf.home_assistant.device_name_prefix = ""
-        mock_conf.home_assistant.enabled_by_default = True
-        mock_conf.origin = {"name": "sigenergy2mqtt", "sw": "1.0", "url": "http://test"}
-        mock_conf.persistent_state_path = tmp_path
-        mock_conf.clean = False
+    cfg = Config()
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.enabled_by_default = True
+    cfg.origin = {"name": "sigenergy2mqtt", "sw": "1.0", "url": "http://test"}
+    cfg.persistent_state_path = tmp_path
+    cfg.clean = False
 
-        mock_device = MagicMock()
-        mock_device.registers = None
-        mock_device.scan_interval.realtime = 5
-        mock_conf.modbus = [mock_device]
+    mock_device = MagicMock()
+    mock_device.registers = None
+    mock_device.scan_interval.realtime = 5
+    cfg.modbus = [mock_device]
 
-        mock_conf.sensor_overrides = {}
-        mock_conf.sensor_debug_logging = False
+    cfg.sensor_overrides = {}
+    cfg.sensor_debug_logging = False
 
-        yield mock_conf
+    with _swap_active_config(cfg):
+        yield cfg
 
     logging.getLogger().setLevel(old_level)
     DeviceRegistry._devices.clear()

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main import threading as threading_mod

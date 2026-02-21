@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
 from sigenergy2mqtt.sensors.plant_derived import (
@@ -23,19 +24,21 @@ from sigenergy2mqtt.sensors.plant_read_only import (
 
 @pytest.fixture(autouse=True)
 def mock_config():
-    with patch("sigenergy2mqtt.sensors.plant_derived.Config") as mock_der_config:
-        mock_der_config.home_assistant.entity_id_prefix = "sigenergy"
-        mock_der_config.home_assistant.unique_id_prefix = "sigenergy"
-        mock_der_config.home_assistant.discovery_prefix = "homeassistant"
-        mock_der_config.home_assistant.enabled = True
-        mock_der_config.home_assistant.use_simplified_topics = False
-        mock_der_config.home_assistant.edit_percentage_with_box = False
-        mock_der_config.modbus = [MagicMock()]
-        mock_der_config.modbus[0].smartport.enabled = False
-        mock_der_config.modbus[0].smartport.mqtt = []
-        mock_der_config.sensor_overrides = {}
-        mock_der_config.consumption = ConsumptionMethod.CALCULATED
-        yield mock_der_config
+    cfg = Config()
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.modbus = [MagicMock()]
+    cfg.modbus[0].smartport.enabled = False
+    cfg.modbus[0].smartport.mqtt = []
+    cfg.sensor_overrides = {}
+    cfg.consumption = ConsumptionMethod.CALCULATED
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestBasicDerivedSensorsCoverage:

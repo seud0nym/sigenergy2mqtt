@@ -9,7 +9,7 @@ from typing import Any, Awaitable
 import paho.mqtt.client as mqtt
 import requests
 
-from sigenergy2mqtt.config import Config, OutputField
+from sigenergy2mqtt.config import OutputField, active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .service import Service
@@ -22,17 +22,17 @@ class PVOutputOutputService(Service):
         super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
         _c = ServiceTopics(self, False, logger, value_key=OutputField.CONSUMPTION)  # Disable EoD consumption update because it is updated via the status service
-        _eh = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_HIGH_SHOULDER)
-        _eo = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_OFF_PEAK)
-        _ep = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_PEAK)
-        _es = TimePeriodServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORT_SHOULDER)
-        _e = ServiceTopics(self, Config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, periods=[_eh, _eo, _ep, _es])
+        _eh = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_HIGH_SHOULDER)
+        _eo = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_OFF_PEAK)
+        _ep = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_PEAK)
+        _es = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_SHOULDER)
+        _e = ServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, periods=[_eh, _eo, _ep, _es])
         _g = ServiceTopics(self, False, logger, value_key=OutputField.GENERATION)  # Disable EoD generation update because it is updated via the status service
-        _ih = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_HIGH_SHOULDER)
-        _io = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_OFF_PEAK)
-        _ip = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_PEAK)
-        _is = TimePeriodServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORT_SHOULDER)
-        _i = ServiceTopics(self, Config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, periods=[_ih, _io, _ip, _is])  # Dummy parent for import periods
+        _ih = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_HIGH_SHOULDER)
+        _io = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_OFF_PEAK)
+        _ip = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_PEAK)
+        _is = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_SHOULDER)
+        _i = ServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, periods=[_ih, _io, _ip, _is])  # Dummy parent for import periods
         _pp = ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calc=Calculation.SUM | Calculation.PEAK)
 
         self._latest_peak_at: str | None = None
@@ -78,14 +78,14 @@ class PVOutputOutputService(Service):
     async def _next_output_upload(self, minute: int = 58) -> float:
         t = time.localtime()
         now = time.mktime(t)
-        if Config.pvoutput.output_hour == -1:  # Update at status interval
+        if active_config.pvoutput.output_hour == -1:  # Update at status interval
             interval, _ = await self.seconds_until_status_upload(rand_min=16, rand_max=30)
             next = now + 120 + interval  # Wait 2 minutes plus the interval to ensure status upload has completed
         else:
-            if Config.pvoutput.testing:
+            if active_config.pvoutput.testing:
                 next = now + 60
             else:
-                next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, Config.pvoutput.output_hour, minute, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
+                next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, active_config.pvoutput.output_hour, minute, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
                 if next <= now:
                     today = datetime.fromtimestamp(next)
                     tomorrow = today + timedelta(days=1, seconds=randint(-15, 15))  # Add a random offset of up to 15 seconds for variability
@@ -94,10 +94,10 @@ class PVOutputOutputService(Service):
 
     async def _verify(self, payload: dict[str, float | int | str], force: bool = False) -> bool:
         self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
-        url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if Config.pvoutput.exports else ''}"
+        url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if active_config.pvoutput.exports else ''}"
         verify_retries: int = 3 if force else 1
-        initial_wait: float = 0.1 if not force or Config.pvoutput.testing else 120.0
-        subsequent_wait: float = 0.1 if Config.pvoutput.testing else 60.0
+        initial_wait: float = 0.1 if not force or active_config.pvoutput.testing else 120.0
+        subsequent_wait: float = 0.1 if active_config.pvoutput.testing else 60.0
         matches: bool = False
         for validate in range(1, verify_retries + 1, 1):
             wait: float = initial_wait if validate == 1 else subsequent_wait
@@ -105,7 +105,7 @@ class PVOutputOutputService(Service):
             await asyncio.sleep(wait)
             result = {}
             try:
-                if Config.pvoutput.testing:
+                if active_config.pvoutput.testing:
                     self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
                     if validate > 1:
                         v = re.split(
@@ -126,16 +126,16 @@ class PVOutputOutputService(Service):
                         )
                         v = re.split(r"[,]", response.text)
                         result["d"] = v[0]
-                        result["e"] = int(v[3]) if Config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
+                        result["e"] = int(v[3]) if active_config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
                         result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
-                        result["ip"] = int(v[10]) if Config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
-                        result["io"] = int(v[11]) if Config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
-                        result["is"] = int(v[12]) if Config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
-                        result["ih"] = int(v[13]) if Config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
-                        result["ep"] = int(v[14]) if Config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
-                        result["eo"] = int(v[15]) if Config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
-                        result["es"] = int(v[16]) if Config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
-                        result["eh"] = int(v[17]) if Config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
+                        result["ip"] = int(v[10]) if active_config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
+                        result["io"] = int(v[11]) if active_config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
+                        result["is"] = int(v[12]) if active_config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
+                        result["ih"] = int(v[13]) if active_config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
+                        result["ep"] = int(v[14]) if active_config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
+                        result["eo"] = int(v[15]) if active_config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
+                        result["es"] = int(v[16]) if active_config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
+                        result["eh"] = int(v[17]) if active_config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
                         matches = True
                     else:
                         self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
@@ -195,7 +195,7 @@ class PVOutputOutputService(Service):
             elif uploaded:
                 break
         self.logger.debug(f"{self.__class__.__name__} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
-        if changed and Config.pvoutput.output_hour == -1:
+        if changed and active_config.pvoutput.output_hour == -1:
             self._previous_payload = payload
 
     def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
@@ -216,7 +216,7 @@ class PVOutputOutputService(Service):
                         await self._upload(payload, last_update_of_day)
                         next = tomorrow
                         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({next - now:.2f}s)")
-                    elif int(now) % (30 if Config.pvoutput.testing else 900) == 0:
+                    elif int(now) % (30 if active_config.pvoutput.testing else 900) == 0:
                         for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.PEAK_POWER]:
                             topic.check_is_updating(5, now_struct)
                         total, at, _ = self._service_topics[OutputField.PEAK_POWER].aggregate(exclude_zero=False)

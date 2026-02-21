@@ -5,7 +5,7 @@ import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 
 from .device import ModbusDevice
 from .grid_code import GridCode
@@ -41,7 +41,7 @@ class PowerPlant(ModbusDevice):
 
         self.has_battery = isinstance(device_type, HybridInverter) and rcp_value > 0.0
 
-        consumption_source = ConsumptionMethod.CALCULATED if protocol_version < Protocol.V2_8 else Config.consumption
+        consumption_source = ConsumptionMethod.CALCULATED if protocol_version < Protocol.V2_8 else active_config.consumption
         consumption_group = "Consumption" if consumption_source == ConsumptionMethod.CALCULATED else None
 
         grid_sensor_active_power = ro.GridSensorActivePower(plant_index)
@@ -63,7 +63,7 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.GeneralPCSAlarm(plant_index, ro.GeneralAlarm1(plant_index), ro.GeneralAlarm2(plant_index)))
         self._add_read_sensor(ro.GeneralAlarm3(plant_index))
         self._add_read_sensor(ro.GeneralAlarm4(plant_index))
-        if len(Config.modbus[plant_index].dc_chargers) > 0:
+        if len(active_config.modbus[plant_index].dc_chargers) > 0:
             self._add_read_sensor(ro.GeneralAlarm5(plant_index))
         self._add_read_sensor(ro.PlantActivePower(plant_index), "Plant Power")
         self._add_read_sensor(ro.PlantReactivePower(plant_index), "Plant Power")
@@ -158,8 +158,8 @@ class PowerPlant(ModbusDevice):
         total_pv_power = derived.TotalPVPower(plant_index, plant_pv_power)
         self._add_derived_sensor(total_pv_power, plant_pv_power, search_children=False)
         smartport = None
-        if Config.modbus[plant_index].smartport.enabled:
-            smartport_config = Config.modbus[plant_index].smartport
+        if active_config.modbus[plant_index].smartport.enabled:
+            smartport_config = active_config.modbus[plant_index].smartport
             if smartport_config.module.name:
                 module_config = smartport_config.module
                 module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{module_config.name}")
@@ -203,7 +203,7 @@ class PowerPlant(ModbusDevice):
         plant_consumed_power = derived.PlantConsumedPower(plant_index, method=consumption_source)
         match plant_consumed_power.method:
             case ConsumptionMethod.CALCULATED:
-                grid_status = self.get_sensor(f"{Config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)  # pyrefly: ignore
+                grid_status = self.get_sensor(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_30009", True)  # pyrefly: ignore
                 assert grid_status is not None, "Grid Status sensor not found for Plant Consumed Power calculation"
                 self._add_derived_sensor(plant_consumed_power, total_pv_power, battery_power, grid_sensor_active_power, grid_status, search_children=True)
             case ConsumptionMethod.GENERAL:

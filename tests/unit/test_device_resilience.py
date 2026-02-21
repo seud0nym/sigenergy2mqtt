@@ -64,16 +64,20 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         return True
 
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+
+
 @pytest.fixture
 def mock_config():
-    with patch("sigenergy2mqtt.devices.device.Config") as mock_conf:
-        mock_conf.home_assistant.device_name_prefix = ""
-        mock_conf.home_assistant.unique_id_prefix = "sigen"
-        mock_conf.home_assistant.entity_id_prefix = "sigen"
-        mock_conf.home_assistant.enabled = False
-        mock_conf.modbus = [MagicMock()]
-        mock_conf.modbus[0].disable_chunking = False
-        yield mock_conf
+    cfg = Config()
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.enabled = False
+    cfg.modbus = [MagicMock()]
+    cfg.modbus[0].disable_chunking = False
+    with _swap_active_config(cfg):
+        yield cfg
     DeviceRegistry._devices.clear()
     Sensor._used_unique_ids.clear()
     Sensor._used_object_ids.clear()

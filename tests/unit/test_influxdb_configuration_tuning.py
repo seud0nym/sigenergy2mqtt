@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.influxdb_config import InfluxDBConfiguration
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
@@ -59,10 +59,10 @@ def test_influxdb_config_tuning_parsing():
 @pytest.mark.asyncio
 async def test_influx_service_uses_config_values(monkeypatch):
     # Setup custom config
-    Config.influxdb.batch_size = 50
-    Config.influxdb.flush_interval = 2.0
-    Config.influxdb.query_interval = 0.5
-    Config.influxdb.max_retries = 2
+    active_config.influxdb.batch_size = 50
+    active_config.influxdb.flush_interval = 2.0
+    active_config.influxdb.query_interval = 0.5
+    active_config.influxdb.max_retries = 2
 
     logger = MagicMock()
     svc = InfluxService(logger, plant_index=0)
@@ -87,8 +87,8 @@ async def test_influx_service_uses_config_values(monkeypatch):
         return True, "ok"
 
     svc._rate_limited_query = mock_rate_limit
-    Config.influxdb.read_timeout = 99.0
-    Config.influxdb.max_retries = 5
+    active_config.influxdb.read_timeout = 99.0
+    active_config.influxdb.max_retries = 5
 
     await svc.query_v2("base", "org", "tok", "q")
     assert captured_args["retries"] == 5
@@ -105,7 +105,7 @@ async def test_influx_service_uses_config_values(monkeypatch):
 
     svc._writer_type = "v2_http"
     svc._write_url = "http://localhost:8086/api/v2/write"
-    Config.influxdb.write_timeout = 45.0
+    active_config.influxdb.write_timeout = 45.0
 
     await svc.execute_write(b"data")
     assert captured_post["timeout"] == 45.0

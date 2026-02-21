@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Any, Awaitable
 
-from sigenergy2mqtt.config import Config, StatusField, VoltageSource
+from sigenergy2mqtt.config import StatusField, VoltageSource, active_config
 
 from .service import Service
 from .service_topics import Calculation, ServiceTopics
@@ -16,16 +16,16 @@ class PVOutputStatusService(Service):
 
         _v1 = ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY)
         _v2 = ServiceTopics(self, True, logger, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
-        _v3 = ServiceTopics(self, False and Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_ENERGY)
-        _v4 = ServiceTopics(self, Config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
-        _v5 = ServiceTopics(self, True if Config.pvoutput.temperature_topic else False, logger, value_key=StatusField.TEMPERATURE, calc=Calculation.AVERAGE, decimals=1, negative=True)
-        _v6 = ServiceTopics(self, True, logger, value_key=StatusField.VOLTAGE, calc=Calculation.L_L_AVG if Config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1)
-        _v7 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V7] else False, logger, value_key=StatusField.V7, calc=Calculation.AVERAGE, donation=True, negative=True)
-        _v8 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V8] else False, logger, value_key=StatusField.V8, calc=Calculation.AVERAGE, donation=True, negative=True)
-        _v9 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V9] else False, logger, value_key=StatusField.V9, calc=Calculation.AVERAGE, donation=True, negative=True)
-        _v10 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V10] else False, logger, value_key=StatusField.V10, calc=Calculation.AVERAGE, donation=True, negative=True)
-        _v11 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V11] else False, logger, value_key=StatusField.V11, calc=Calculation.AVERAGE, donation=True, negative=True)
-        _v12 = ServiceTopics(self, True if Config.pvoutput.extended[StatusField.V12] else False, logger, value_key=StatusField.V12, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v3 = ServiceTopics(self, False and active_config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_ENERGY)
+        _v4 = ServiceTopics(self, active_config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
+        _v5 = ServiceTopics(self, True if active_config.pvoutput.temperature_topic else False, logger, value_key=StatusField.TEMPERATURE, calc=Calculation.AVERAGE, decimals=1, negative=True)
+        _v6 = ServiceTopics(self, True, logger, value_key=StatusField.VOLTAGE, calc=Calculation.L_L_AVG if active_config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1)
+        _v7 = ServiceTopics(self, True if active_config.pvoutput.extended[StatusField.V7] else False, logger, value_key=StatusField.V7, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v8 = ServiceTopics(self, True if active_config.pvoutput.extended[StatusField.V8] else False, logger, value_key=StatusField.V8, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v9 = ServiceTopics(self, True if active_config.pvoutput.extended[StatusField.V9] else False, logger, value_key=StatusField.V9, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v10 = ServiceTopics(self, True if active_config.pvoutput.extended[StatusField.V10] else False, logger, value_key=StatusField.V10, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v11 = ServiceTopics(self, True if active_config.pvoutput.extended[StatusField.V11] else False, logger, value_key=StatusField.V11, calc=Calculation.AVERAGE, donation=True, negative=True)
+        _v12 = ServiceTopics(self, True if active_config.pvoutput.extended[StatusField.V12] else False, logger, value_key=StatusField.V12, calc=Calculation.AVERAGE, donation=True, negative=True)
         _b1 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS, decimals=1, donation=True, negative=True)
         _b2 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_SOC, calc=Calculation.AVERAGE, donation=True, decimals=1)
         _b3 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CAPACITY, donation=True)
@@ -97,7 +97,7 @@ class PVOutputStatusService(Service):
                             payload.get(StatusField.GENERATION_ENERGY.value) is not None
                             or payload.get(StatusField.GENERATION_POWER.value) is not None
                             or payload.get(StatusField.CONSUMPTION_ENERGY.value) is not None
-                            or (payload.get(StatusField.CONSUMPTION_POWER.value) is not None and Config.pvoutput.consumption_enabled)
+                            or (payload.get(StatusField.CONSUMPTION_POWER.value) is not None and active_config.pvoutput.consumption_enabled)
                         ):
                             if payload.get(StatusField.GENERATION_ENERGY.value) is not None and payload.get(StatusField.CONSUMPTION_ENERGY.value) is not None:
                                 payload["c1"] = 1
@@ -119,7 +119,7 @@ class PVOutputStatusService(Service):
                                             if st in snapshot and topic.topic in snapshot[st]:
                                                 topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic]
                         else:
-                            self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if Config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
+                            self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if active_config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
                     sleep = min(wait, 1)
                     wait -= sleep

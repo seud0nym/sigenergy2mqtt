@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -51,15 +51,15 @@ async def test_influx_handle_mqtt_writes_line():
 async def test_influx_org_propagation():
     """Test that org parameter is correctly propagated to v2 HTTP endpoint."""
     logger = MagicMock()
-    Config.influxdb.enabled = True
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "mydb"
-    Config.influxdb.org = "myorg"
-    Config.influxdb.token = "mytoken"
-    Config.influxdb.bucket = "mybucket"
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.enabled = True
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "mydb"
+    active_config.influxdb.org = "myorg"
+    active_config.influxdb.token = "mytoken"
+    active_config.influxdb.bucket = "mybucket"
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     # Test v2 HTTP path with org parameter
     with patch("requests.Session.post") as mock_post:

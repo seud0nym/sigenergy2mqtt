@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.mqtt.client import MqttClient, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
 from sigenergy2mqtt.mqtt.handler import MqttHandler
 
@@ -72,9 +73,10 @@ class TestMqttHandler:
         mock_client.reset_mock()
 
         # Trigger reconnect
-        with patch("sigenergy2mqtt.mqtt.handler.Config") as mock_config:
-            mock_config.mqtt.broker = "test_broker"
-            mock_config.mqtt.port = 1883
+        cfg = Config()
+        cfg.mqtt.broker = "test_broker"
+        cfg.mqtt.port = 1883
+        with _swap_active_config(cfg):
             handler.on_reconnect(mock_client)
 
         assert handler.connected is True

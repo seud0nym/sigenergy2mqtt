@@ -3,8 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol, RegisterAccess
-from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import (
@@ -140,11 +139,16 @@ class MockDerivedSensor(DerivedSensor):
 class TestSensorPublishableState:
     @pytest.fixture(autouse=True)
     def setup_config(self, tmp_path):
-        with patch.object(active_config, "home_assistant", MagicMock(unique_id_prefix="sigen", entity_id_prefix="sigen", enabled_by_default=True)):
-            with patch.object(active_config, "sensor_overrides", {}):
-                with patch.object(active_config, "persistent_state_path", tmp_path):
-                    with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                        yield
+        cfg = Config()
+        cfg.home_assistant.unique_id_prefix = "sigen"
+        cfg.home_assistant.entity_id_prefix = "sigen"
+        cfg.home_assistant.enabled_by_default = True
+        cfg.sensor_overrides = {}
+        cfg.persistent_state_path = tmp_path
+
+        with _swap_active_config(cfg):
+            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+                yield
 
     def test_no_remote_ems_override(self):
         reg_access = RegisterAccess(no_remote_ems=True)

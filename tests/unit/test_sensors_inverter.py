@@ -17,27 +17,26 @@ def clear_sensor_registry():
         yield
 
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+
+
 @pytest.fixture
 def mock_config():
-    with (
-        patch("sigenergy2mqtt.sensors.inverter_read_only.Config") as mock_ro_config,
-        patch("sigenergy2mqtt.sensors.inverter_read_write.Config") as mock_rw_config,
-        patch("sigenergy2mqtt.sensors.inverter_derived.Config") as mock_der_config,
-    ):
-        for cfg in [mock_ro_config, mock_rw_config, mock_der_config]:
-            cfg.home_assistant.entity_id_prefix = "sigenergy"
-            cfg.home_assistant.unique_id_prefix = "sigenergy"
-            cfg.home_assistant.discovery_prefix = "homeassistant"
-            cfg.home_assistant.enabled = True
-            cfg.home_assistant.use_simplified_topics = False
-            cfg.home_assistant.edit_percentage_with_box = False
-            cfg.modbus = [MagicMock()]
-            cfg.modbus[0].scan_interval.high = 10
-            cfg.modbus[0].scan_interval.realtime = 5
-            cfg.modbus[0].scan_interval.low = 600
-            cfg.modbus[0].scan_interval.medium = 60
+    cfg = Config()
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.modbus = [MagicMock()]
+    cfg.modbus[0].scan_interval.high = 10
+    cfg.modbus[0].scan_interval.realtime = 5
+    cfg.modbus[0].scan_interval.low = 600
+    cfg.modbus[0].scan_interval.medium = 60
 
-        yield mock_ro_config
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestInverterReadOnly:

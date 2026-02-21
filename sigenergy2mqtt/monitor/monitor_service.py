@@ -6,7 +6,7 @@ from typing import Any, Awaitable
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
@@ -16,7 +16,7 @@ from .monitored_sensor import MonitoredSensor
 
 class MonitorService(Device):
     def __init__(self, devices: list[Device]):
-        super().__init__("Sigenergy Monitor", -1, f"{Config.home_assistant.unique_id_prefix}_monitor", "sigenergy2mqtt", "Monitor", Protocol.N_A)
+        super().__init__("Sigenergy Monitor", -1, f"{active_config.home_assistant.unique_id_prefix}_monitor", "sigenergy2mqtt", "Monitor", Protocol.N_A)
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}

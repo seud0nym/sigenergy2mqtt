@@ -7,38 +7,32 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.sensors.const import InputType
 
 
 @pytest.fixture
-def bypass_setup_configs(monkeypatch):
-    """Bypass Config.validate() and pymodbus logging setup."""
-    monkeypatch.setattr(active_config, "validate", MagicMock())
-    monkeypatch.setattr(active_config, "get_modbus_log_level", MagicMock(return_value=logging.WARNING))
-    monkeypatch.setattr(main_mod, "pymodbus_apply_logging_config", MagicMock())
-    yield
-
-
-@pytest.fixture
 def clean_config_augment(monkeypatch):
-    """Fixture to ensure Config is clean and mocked appropriately, strictly for this test file."""
-    # Reset Config attributes to defaults or safe values
-    active_config.modbus.clear()
-    monkeypatch.setattr(active_config.home_assistant, "enabled", False, raising=False)
-    monkeypatch.setattr(active_config.pvoutput, "enabled", False, raising=False)
-    monkeypatch.setattr(active_config.pvoutput, "log_level", logging.WARNING, raising=False)
-    monkeypatch.setattr(active_config.influxdb, "enabled", False, raising=False)
-    monkeypatch.setattr(active_config, "metrics_enabled", False, raising=False)
-    monkeypatch.setattr(active_config, "log_level", logging.INFO, raising=False)
-    monkeypatch.setattr(active_config, "clean", False, raising=False)
-    monkeypatch.setattr(active_config, "persistent_state_path", str(Path("/tmp")), raising=False)
-    monkeypatch.setattr(active_config.mqtt, "anonymous", True, raising=False)
-    monkeypatch.setattr(active_config.mqtt, "log_level", logging.WARNING, raising=False)
+    """Fixture to ensure Config is clean and mocked appropriately."""
+    cfg = Config()
+    cfg.modbus = []
+    cfg.home_assistant.enabled = False
+    cfg.pvoutput.enabled = False
+    cfg.pvoutput.log_level = logging.WARNING
+    cfg.influxdb.enabled = False
+    cfg.metrics_enabled = False
+    cfg.log_level = logging.INFO
+    cfg.clean = False
+    cfg.persistent_state_path = "/tmp"
+    cfg.mqtt.anonymous = True
+    cfg.mqtt.log_level = logging.WARNING
 
-    yield active_config
+    with _swap_active_config(cfg):
+        # Bypass validation since we often test with empty modbus
+        monkeypatch.setattr(cfg, "validate", lambda: None)
+        monkeypatch.setattr(cfg, "get_modbus_log_level", lambda: logging.WARNING)
+        yield cfg
 
 
 def test_configure_logging_level_changes(clean_config_augment, monkeypatch):
@@ -120,12 +114,12 @@ async def test_make_plant_and_inverter_all_branches(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_async_main_connection_failure(clean_config_augment, monkeypatch, bypass_setup_configs):
+async def test_async_main_connection_failure(clean_config_augment, monkeypatch):
     mock_device = MagicMock()
     mock_device.registers.read_only = True
     mock_device.host = "1.2.3.4"
     mock_device.port = 502
-    monkeypatch.setattr(Config, "modbus", [mock_device], raising=False)
+    clean_config_augment.modbus = [mock_device]
 
     mock_instance = AsyncMock(connected=False)
     mock_instance.__aenter__.return_value = mock_instance
@@ -137,7 +131,7 @@ async def test_async_main_connection_failure(clean_config_augment, monkeypatch, 
 
 
 @pytest.mark.asyncio
-async def test_async_main_full_coverage(clean_config_augment, monkeypatch, bypass_setup_configs):
+async def test_async_main_full_coverage(clean_config_augment, monkeypatch):
     mock_device = MagicMock()
     mock_device.registers.read_only = True
     mock_device.host = "1.2.3.4"
@@ -149,12 +143,12 @@ async def test_async_main_full_coverage(clean_config_augment, monkeypatch, bypas
     mock_device.ac_chargers = [1]  # Trigger AC charger warning if protocol is low
     mock_device.ac_chargers = [1]  # Trigger AC charger warning if protocol is low
     mock_device.log_level = logging.WARNING
-    monkeypatch.setattr(active_config, "modbus", [mock_device], raising=False)
-    monkeypatch.setattr(active_config, "metrics_enabled", True, raising=False)
-    monkeypatch.setattr(active_config.pvoutput, "enabled", True, raising=False)
-    monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
-    monkeypatch.setattr(active_config, "log_level", logging.DEBUG, raising=False)
-    monkeypatch.setattr(active_config.home_assistant, "enabled", True, raising=False)
+    clean_config_augment.modbus = [mock_device]
+    clean_config_augment.metrics_enabled = True
+    clean_config_augment.pvoutput.enabled = True
+    clean_config_augment.influxdb.enabled = True
+    clean_config_augment.log_level = logging.DEBUG
+    clean_config_augment.home_assistant.enabled = True
 
     mock_instance = AsyncMock(connected=True)
     mock_instance.__aenter__.return_value = mock_instance

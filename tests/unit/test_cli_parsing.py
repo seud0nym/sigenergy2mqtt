@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 
 
 @pytest.fixture
@@ -19,8 +19,8 @@ def test_cli_parsing_clean(clean_argv, monkeypatch):
     # sigenergy2mqtt.config.__init__ is where the parsing happens
     import sigenergy2mqtt.config as config_mod
 
-    # Reset Config.clean before reload to ensure we are testing the reload effect
-    Config.clean = False
+    # Reset active_config.clean before reload to ensure we are testing the reload effect
+    active_config.clean = False
 
     # Mock sys.exit to prevent the script from exiting
     with patch("sys.exit"):
@@ -35,7 +35,7 @@ def test_cli_parsing_clean(clean_argv, monkeypatch):
         ):
             config_mod.initialize(args)
 
-            assert Config.clean is True
+            assert active_config.clean is True
 
 
 def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
@@ -43,7 +43,7 @@ def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
     import sigenergy2mqtt.config as config_mod
 
     # Reset discovery_only before reload
-    Config.home_assistant.discovery_only = False
+    active_config.home_assistant.discovery_only = False
 
     with patch("sys.exit"):
         with (
@@ -56,4 +56,4 @@ def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
         ):
             config_mod.initialize(args)
 
-            assert Config.home_assistant.discovery_only is True
+            assert active_config.home_assistant.discovery_only is True

@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol  # noqa: E402
-from sigenergy2mqtt.config import Config  # noqa: E402
+from sigenergy2mqtt.config import active_config  # noqa: E402
 from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration  # noqa: E402
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, RemoteEMSControlMode  # noqa: E402
@@ -36,13 +36,13 @@ class TestConfigSwitches:
     @pytest.fixture(autouse=True)
     def setup_config(self):
         """Reset Config to known state before each test."""
-        Config.home_assistant = HomeAssistantConfiguration()
-        Config.home_assistant.enabled = True
-        Config.home_assistant.use_simplified_topics = False
-        Config.home_assistant.discovery_prefix = "homeassistant"
-        Config.home_assistant.entity_id_prefix = "sigenergy"
-        Config.home_assistant.unique_id_prefix = "sigenergy"
-        Config.ems_mode_check = True
+        active_config.home_assistant = HomeAssistantConfiguration()
+        active_config.home_assistant.enabled = True
+        active_config.home_assistant.use_simplified_topics = False
+        active_config.home_assistant.discovery_prefix = "homeassistant"
+        active_config.home_assistant.entity_id_prefix = "sigenergy"
+        active_config.home_assistant.unique_id_prefix = "sigenergy"
+        active_config.ems_mode_check = True
 
         # Reset Sensor static registries
         Sensor._used_object_ids = {}
@@ -50,8 +50,8 @@ class TestConfigSwitches:
 
     def test_mqtt_topics_standard(self):
         """Test MQTT topics with HA enabled and standard topics."""
-        Config.home_assistant.enabled = True
-        Config.home_assistant.use_simplified_topics = False
+        active_config.home_assistant.enabled = True
+        active_config.home_assistant.use_simplified_topics = False
 
         sensor = MockSensor(object_id="sigenergy_test_obj")
         sensor.configure_mqtt_topics("test_device")
@@ -61,8 +61,8 @@ class TestConfigSwitches:
 
     def test_mqtt_topics_simplified(self):
         """Test MQTT topics with HA enabled and simplified topics."""
-        Config.home_assistant.enabled = True
-        Config.home_assistant.use_simplified_topics = True
+        active_config.home_assistant.enabled = True
+        active_config.home_assistant.use_simplified_topics = True
 
         sensor = MockSensor(object_id="sigenergy_test_obj")
         sensor.configure_mqtt_topics("test_device")
@@ -72,9 +72,9 @@ class TestConfigSwitches:
 
     def test_mqtt_topics_ha_disabled(self):
         """Test MQTT topics with HA disabled."""
-        Config.home_assistant.enabled = False
+        active_config.home_assistant.enabled = False
         # Simplified flag shouldn't matter if HA is disabled, logic defaults to simplified style
-        Config.home_assistant.use_simplified_topics = False
+        active_config.home_assistant.use_simplified_topics = False
 
         sensor = MockSensor(object_id="sigenergy_test_obj")
         sensor.configure_mqtt_topics("test_device")
@@ -83,7 +83,7 @@ class TestConfigSwitches:
 
     def test_sensor_attributes_ha_enabled(self):
         """Test sensor attributes when HA is enabled."""
-        Config.home_assistant.enabled = True
+        active_config.home_assistant.enabled = True
 
         sensor = MockSensor()
         attrs = sensor.get_attributes()
@@ -93,7 +93,7 @@ class TestConfigSwitches:
 
     def test_sensor_attributes_ha_disabled(self):
         """Test sensor attributes when HA is disabled."""
-        Config.home_assistant.enabled = False
+        active_config.home_assistant.enabled = False
 
         sensor = MockSensor()
         attrs = sensor.get_attributes()
@@ -106,8 +106,8 @@ class TestConfigSwitches:
     @pytest.mark.asyncio
     async def test_ems_mode_check_topics_and_publish(self):
         """Test RemoteEMSControlMode topic configuration and publishing with EMS check enabled."""
-        Config.home_assistant.enabled = True
-        Config.ems_mode_check = True
+        active_config.home_assistant.enabled = True
+        active_config.ems_mode_check = True
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_remote_ems.state_topic = "some/topic"
@@ -141,8 +141,8 @@ class TestConfigSwitches:
     @pytest.mark.asyncio
     async def test_ems_mode_check_disabled_topics_and_publish(self):
         """Test RemoteEMSControlMode logic when EMS check is disabled."""
-        Config.home_assistant.enabled = True
-        Config.ems_mode_check = False
+        active_config.home_assistant.enabled = True
+        active_config.ems_mode_check = False
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_remote_ems.state_topic = "some/topic"
@@ -182,7 +182,7 @@ class TestConfigSwitches:
     @pytest.mark.asyncio
     async def test_max_charging_limit_validation_enabled(self):
         """Test MaxChargingLimit validation with EMS check enabled."""
-        Config.ems_mode_check = True
+        active_config.ems_mode_check = True
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_mode = MagicMock(spec=RemoteEMSControlMode)
@@ -199,7 +199,7 @@ class TestConfigSwitches:
     @pytest.mark.asyncio
     async def test_max_charging_limit_validation_disabled(self):
         """Test MaxChargingLimit validation with EMS check disabled."""
-        Config.ems_mode_check = False
+        active_config.ems_mode_check = False
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_mode = MagicMock(spec=RemoteEMSControlMode)
@@ -212,7 +212,7 @@ class TestConfigSwitches:
 
     def test_max_charging_limit_attributes_comment(self):
         """Test comment attribute changes based on ems_mode_check."""
-        Config.ems_mode_check = True
+        active_config.ems_mode_check = True
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_remote_ems.state_topic = "availability/topic"
 
@@ -226,7 +226,7 @@ class TestConfigSwitches:
 
         assert "Takes effect when Remote EMS control mode" in sensor.get_attributes()["comment"]
 
-        Config.ems_mode_check = False
+        active_config.ems_mode_check = False
         sensor = MaxChargingLimit(0, mock_remote_ems, mock_mode, 10.0)
         sensor.configure_mqtt_topics("test_device")
 
@@ -236,31 +236,31 @@ class TestConfigSwitches:
         """Test if 'mode' attribute is 'slider' or 'box' based on edit_percentage_with_box."""
         from sigenergy2mqtt.sensors.plant_read_write import ESSBackupSOC
 
-        Config.home_assistant.enabled = True
-        Config.home_assistant.edit_percentage_with_box = False
+        active_config.home_assistant.enabled = True
+        active_config.home_assistant.edit_percentage_with_box = False
         sensor = ESSBackupSOC(0)
         assert sensor["mode"] == "slider"
 
-        Config.home_assistant.edit_percentage_with_box = True
+        active_config.home_assistant.edit_percentage_with_box = True
         sensor = ESSBackupSOC(0)
         assert sensor["mode"] == "box"
 
     def test_sensor_enabled_by_default(self):
         """Test if 'enabled_by_default' is correctly set from Config."""
-        Config.home_assistant.enabled_by_default = False
+        active_config.home_assistant.enabled_by_default = False
         sensor = MockSensor()
         assert sensor["enabled_by_default"] is False
 
-        Config.home_assistant.enabled_by_default = True
+        active_config.home_assistant.enabled_by_default = True
         sensor = MockSensor()
         assert sensor["enabled_by_default"] is True
 
     def test_sensor_debug_logging_inheritance(self):
-        """Test if sensor debug_logging is inherited from Config.sensor_debug_logging."""
-        Config.sensor_debug_logging = False
+        """Test if sensor debug_logging is inherited from active_config.sensor_debug_logging."""
+        active_config.sensor_debug_logging = False
         sensor = MockSensor()
         assert sensor.debug_logging is False
 
-        Config.sensor_debug_logging = True
+        active_config.sensor_debug_logging = True
         sensor = MockSensor()
         assert sensor.debug_logging is True

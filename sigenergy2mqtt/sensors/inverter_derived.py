@@ -4,7 +4,7 @@ from typing import Any, Deque
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
 from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor, StateClass
@@ -16,8 +16,8 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
         super().__init__(
             name="Battery Charging Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
@@ -47,8 +47,8 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
         super().__init__(
             name="Battery Discharging Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=battery_power.device_class,
@@ -78,8 +78,8 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, voltage: PVVoltageSensor, current: PVCurrentSensor):
         super().__init__(
             name="Power",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
             data_type=ModbusDataType.INT32,
             unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
@@ -132,8 +132,8 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor, HybridInverter, P
     def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringPower):
         super().__init__(
             name="Lifetime Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             source=source,
         )
         self.string_number = string_number
@@ -149,8 +149,8 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInver
     def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringLifetimeEnergy):
         super().__init__(
             name="Daily Production",
-            unique_id=f"{Config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             source=source,
         )
         self.string_number = string_number

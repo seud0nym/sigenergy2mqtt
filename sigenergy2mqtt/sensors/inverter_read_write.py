@@ -1,5 +1,5 @@
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, WriteOnlySensor
@@ -12,7 +12,7 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Inverter Power On/Off",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_status",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_status",
             plant_index=plant_index,
             device_address=device_address,
             address=40500,
@@ -29,14 +29,14 @@ class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reser
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Grid Code",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_grid_code",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_grid_code",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=40501,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -51,7 +51,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="DC Charger Stop/Start",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}",
             plant_index=plant_index,
             device_address=device_address,
             address=41000,
@@ -77,14 +77,14 @@ class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Ma
         super().__init__(
             availability_control_sensor=None,
             name="Remote EMS Dispatch",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_remote_ems_dispatch",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_remote_ems_dispatch",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=41500,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,
@@ -100,14 +100,14 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
         super().__init__(
             availability_control_sensor=None,
             name="Active Power Fixed Value Adjustment",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_fixed_value_adjustment",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_fixed_value_adjustment",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=41501,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -124,14 +124,14 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
         super().__init__(
             availability_control_sensor=None,
             name="Reactive Power Fixed Value Adjustment",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_fixed_value_adjustment",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_fixed_value_adjustment",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=41503,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -148,14 +148,14 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
         super().__init__(
             availability_control_sensor=None,
             name="Active Power Percentage Adjustment",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_percentage_adjustment",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_active_power_percentage_adjustment",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=41505,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -174,14 +174,14 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
         super().__init__(
             availability_control_sensor=None,
             name="Reactive Power Q/S Adjustment",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_q_s_adjustment",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reactive_power_q_s_adjustment",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=41506,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -200,14 +200,14 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
         super().__init__(
             availability_control_sensor=None,
             name="Power Factor Adjustment",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor_adjustment",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_power_factor_adjustment",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=41507,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=None,
             device_class=None,
             state_class=None,

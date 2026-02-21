@@ -1,7 +1,7 @@
 from typing import cast
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
@@ -14,14 +14,14 @@ class ACChargerRunningState(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Running State",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_running_state",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_running_state",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32000,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
+            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -74,14 +74,14 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Total Energy Consumed",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_total_energy_consumed",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_total_energy_consumed",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32001,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10,
+            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -97,14 +97,14 @@ class ACChargerChargingPower(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Charging Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_charging_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_charging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32003,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5,
+            scan_interval=active_config.modbus[plant_index].scan_interval.realtime if plant_index < len(active_config.modbus) else 5,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -120,14 +120,14 @@ class ACChargerRatedPower(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Rated Power",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32005,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
+            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -142,14 +142,14 @@ class ACChargerRatedCurrent(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Rated Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_current",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32007,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
+            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -164,14 +164,14 @@ class ACChargerRatedVoltage(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Rated Voltage",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_voltage",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32009,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
+            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -186,14 +186,14 @@ class ACChargerInputBreaker(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Input Breaker",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_input_breaker",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_input_breaker",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
             address=32010,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.low if plant_index < len(Config.modbus) else 600,
+            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -208,7 +208,7 @@ class ACChargerAlarm1(AlarmSensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Alarm 1",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_1",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_1",
             plant_index=plant_index,
             device_address=device_address,
             address=32012,
@@ -244,7 +244,7 @@ class ACChargerAlarm2(AlarmSensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Alarm 2",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_2",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_2",
             plant_index=plant_index,
             device_address=device_address,
             address=32013,
@@ -274,7 +274,7 @@ class ACChargerAlarm3(AlarmSensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Alarm 3",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_3",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_3",
             plant_index=plant_index,
             device_address=device_address,
             address=32014,
@@ -298,8 +298,8 @@ class ACChargerAlarms(AlarmCombinedSensor):
     def __init__(self, plant_index: int, device_address: int, *alarms: AlarmSensor):
         super().__init__(
             "Alarms",
-            f"{Config.home_assistant.unique_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm",
-            f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm",
+            f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm",
+            f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm",
             *alarms,
         )
 

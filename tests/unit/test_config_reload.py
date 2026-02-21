@@ -1,8 +1,7 @@
 import pytest
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.config import Config, const
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.config import active_config, const
 
 
 def write_yaml(tmp_path, data: dict) -> str:
@@ -75,4 +74,4 @@ def test_configure_unknown_key(tmp_path):
     data = {"unknown-section": {"foo": "bar"}}
     # Ensure _configure raises on unknown key processing
     with pytest.raises(ValueError):
-        Config._configure(data, override=False)
+        active_config._configure(data, override=False)

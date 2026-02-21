@@ -1,3 +1,4 @@
+from sigenergy2mqtt.config import active_config
 import time
 from unittest.mock import patch
 
@@ -27,7 +28,7 @@ from sigenergy2mqtt.metrics.metrics_sensors import (
 
 @pytest.fixture(autouse=True)
 def mock_config():
-    with patch("sigenergy2mqtt.config.Config.home_assistant.unique_id_prefix", "sigen"), patch("sigenergy2mqtt.config.Config.home_assistant.entity_id_prefix", "sigenergy2mqtt"):
+    with patch("sigenergy2mqtt.config.active_config.home_assistant.unique_id_prefix", "sigen"), patch("sigenergy2mqtt.config.active_config.home_assistant.entity_id_prefix", "sigenergy2mqtt"):
         yield
 
 

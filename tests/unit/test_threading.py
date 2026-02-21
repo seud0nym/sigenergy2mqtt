@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.main import threading as threading_mod
 from sigenergy2mqtt.main.thread_config import ThreadConfig
 
@@ -66,27 +66,30 @@ class DummyDevice:
 @pytest.mark.asyncio
 async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
     # Config: clean True should prevent modbus usage
-    monkeypatch.setattr(Config, "clean", True)
-    monkeypatch.setattr(Config, "home_assistant", type("HA", (), {"enabled": False}))
-    # Prepare ThreadConfig with no host
-    cfg = ThreadConfig(None, None, name="Test")
-    cfg.add_device(0, DummyDevice("dev1"))
+    cfg_obj = Config()
+    cfg_obj.clean = True
+    cfg_obj.home_assistant.enabled = False
 
-    # Patch mqtt_setup to return dummy client and handler
-    mqtt_client = DummyMQTTClient()
-    mqtt_handler = DummyMQTTHandler()
+    with _swap_active_config(cfg_obj):
+        # Prepare ThreadConfig with no host
+        cfg = ThreadConfig(None, None, name="Test")
+        cfg.add_device(0, DummyDevice("dev1"))
 
-    monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mqtt_client, mqtt_handler))
-    # Ensure ModbusFactory isn't called
-    monkeypatch.setattr(threading_mod, "ModbusClientFactory", type("M", (), {"get_client": lambda *a, **k: asyncio.sleep(0)}))
+        # Patch mqtt_setup to return dummy client and handler
+        mqtt_client = DummyMQTTClient()
+        mqtt_handler = DummyMQTTHandler()
 
-    loop = asyncio.new_event_loop()
-    orig_name = threading.current_thread().name
-    try:
-        await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
-    finally:
-        loop.close()
-        threading.current_thread().name = orig_name
+        monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mqtt_client, mqtt_handler))
+        # Ensure ModbusFactory isn't called
+        monkeypatch.setattr(threading_mod, "ModbusClientFactory", type("M", (), {"get_client": lambda *a, **k: asyncio.sleep(0)}))
+
+        loop = asyncio.new_event_loop()
+        orig_name = threading.current_thread().name
+        try:
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
+        finally:
+            loop.close()
+            threading.current_thread().name = orig_name
 
     assert mqtt_client.loop_stopped is True
     assert mqtt_client.disconnected is True
@@ -95,37 +98,39 @@ async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
 @pytest.mark.asyncio
 async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch):
     # Config: not clean, HA disabled
-    monkeypatch.setattr(Config, "clean", False)
-    monkeypatch.setattr(Config, "home_assistant", type("HA", (), {"enabled": False}))
+    cfg_obj = Config()
+    cfg_obj.clean = False
+    cfg_obj.home_assistant.enabled = False
 
-    # Create ThreadConfig with host so Modbus client is used
-    cfg = ThreadConfig("127.0.0.1", 502, name="TestHost")
-    cfg.add_device(0, DummyDevice("dev2"))
+    with _swap_active_config(cfg_obj):
+        # Create ThreadConfig with host so Modbus client is used
+        cfg = ThreadConfig("127.0.0.1", 502, name="TestHost")
+        cfg.add_device(0, DummyDevice("dev2"))
 
-    # Mock Modbus client
-    class MockModbus:
-        def __init__(self):
-            self.closed = False
+        # Mock Modbus client
+        class MockModbus:
+            def __init__(self):
+                self.closed = False
 
-        def close(self):
-            self.closed = True
+            def close(self):
+                self.closed = True
 
-    async def fake_get_client(host, port, timeout, retries):
-        return MockModbus()
+        async def fake_get_client(host, port, timeout, retries):
+            return MockModbus()
 
-    monkeypatch.setattr(threading_mod.ModbusClientFactory, "get_client", fake_get_client)
+        monkeypatch.setattr(threading_mod.ModbusClientFactory, "get_client", fake_get_client)
 
-    mqtt_client = DummyMQTTClient()
-    mqtt_handler = DummyMQTTHandler()
-    monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mqtt_client, mqtt_handler))
+        mqtt_client = DummyMQTTClient()
+        mqtt_handler = DummyMQTTHandler()
+        monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mqtt_client, mqtt_handler))
 
-    loop = asyncio.new_event_loop()
-    orig_name = threading.current_thread().name
-    try:
-        await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
-    finally:
-        loop.close()
-        threading.current_thread().name = orig_name
+        loop = asyncio.new_event_loop()
+        orig_name = threading.current_thread().name
+        try:
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
+        finally:
+            loop.close()
+            threading.current_thread().name = orig_name
 
     assert mqtt_client.loop_stopped is True
     assert mqtt_client.disconnected is True
@@ -165,32 +170,35 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
 @pytest.mark.asyncio
 async def test_read_and_publish_device_sensors_discovery_only(monkeypatch):
     """Verify that discovery_only mode doesn't schedule tasks but still connects to modbus."""
-    monkeypatch.setattr(Config, "clean", False)
-    monkeypatch.setattr(Config, "home_assistant", type("HA", (), {"enabled": True, "discovery_only": True}))
-    monkeypatch.setattr(Config.mqtt, "client_id_prefix", "sigen")
-    monkeypatch.setattr(Config.mqtt, "broker", "localhost")
-    monkeypatch.setattr(Config.mqtt, "port", 1883)
+    cfg_obj = Config()
+    cfg_obj.clean = False
+    cfg_obj.home_assistant.enabled = True
+    cfg_obj.home_assistant.discovery_only = True
+    cfg_obj.mqtt.client_id_prefix = "sigen"
+    cfg_obj.mqtt.broker = "localhost"
+    cfg_obj.mqtt.port = 1883
 
-    cfg = ThreadConfig("127.0.0.1", 502, name="DiscoveryOnly")
-    mock_device = DummyDevice("disc_only")
-    mock_device.schedule = MagicMock(return_value=[])
-    cfg.add_device(0, mock_device)
+    with _swap_active_config(cfg_obj):
+        cfg = ThreadConfig("127.0.0.1", 502, name="DiscoveryOnly")
+        mock_device = DummyDevice("disc_only")
+        mock_device.schedule = MagicMock(return_value=[])
+        cfg.add_device(0, mock_device)
 
-    mock_mqtt_client = DummyMQTTClient()
-    mock_mqtt_handler = DummyMQTTHandler()
-    monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mock_mqtt_client, mock_mqtt_handler))
+        mock_mqtt_client = DummyMQTTClient()
+        mock_mqtt_handler = DummyMQTTHandler()
+        monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mock_mqtt_client, mock_mqtt_handler))
 
-    # Mock Modbus
-    mock_modbus = MagicMock()
-    monkeypatch.setattr(threading_mod.ModbusClientFactory, "get_client", AsyncMock(return_value=mock_modbus))
+        # Mock Modbus
+        mock_modbus = MagicMock()
+        monkeypatch.setattr(threading_mod.ModbusClientFactory, "get_client", AsyncMock(return_value=mock_modbus))
 
-    loop = asyncio.new_event_loop()
-    orig_name = threading.current_thread().name
-    try:
-        await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
-    finally:
-        loop.close()
-        threading.current_thread().name = orig_name
+        loop = asyncio.new_event_loop()
+        orig_name = threading.current_thread().name
+        try:
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
+        finally:
+            loop.close()
+            threading.current_thread().name = orig_name
 
     # Should NOT have scheduled tasks
     mock_device.schedule.assert_not_called()

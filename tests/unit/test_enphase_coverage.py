@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock, patch
 import pytest
 import requests
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.smartport.enphase import (
     EnphaseCurrent,
     EnphaseDailyPVEnergy,
@@ -34,7 +34,7 @@ from sigenergy2mqtt.sensors.base import Sensor
 @pytest.fixture
 def mock_config():
     """Set up minimal Config mock for EnphasePVPower initialization."""
-    orig_modbus = Config.modbus
+    orig_modbus = active_config.modbus
 
     class SI:
         realtime = 5
@@ -43,15 +43,15 @@ def mock_config():
         scan_interval = SI()
         registers = None
 
-    Config.modbus = [D()]
+    active_config.modbus = [D()]
     yield
-    Config.modbus = orig_modbus
+    active_config.modbus = orig_modbus
 
 
 @pytest.fixture
 def pv_power_sensor(mock_config, tmp_path, monkeypatch):
     """Create an EnphasePVPower sensor with mocked config."""
-    monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+    monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
     return EnphasePVPower(0, "TEST123", "192.168.1.100", "user@example.com", "password123")
 
 
@@ -70,7 +70,7 @@ class TestEnphasePVPowerInit:
 
     def test_init_creates_sensor_with_correct_attributes(self, mock_config, tmp_path, monkeypatch):
         """Test that EnphasePVPower initializes with correct attributes."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         sensor = EnphasePVPower(0, "SN123", "host", "user", "pass")
 
         assert sensor._serial_number == "SN123"
@@ -85,8 +85,8 @@ class TestEnphasePVPowerInit:
 
     def test_init_with_debug_logging(self, mock_config, tmp_path, monkeypatch):
         """Test debug logging setup during init."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
-        monkeypatch.setattr(Config, "log_level", logging.DEBUG)
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "log_level", logging.DEBUG)
 
         sensor = EnphasePVPower(0, "SN123", "host", "user", "pass")
         sensor.debug_logging = False  # simulate condition on line 49
@@ -118,7 +118,7 @@ class TestEnphasePVPowerGetToken:
 
     def test_get_token_loads_from_file(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test loading token from file when not cached."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         token_file = tmp_path / f"{pv_power_sensor.unique_id}.token"
         token_file.write_text("file_token_456")
 
@@ -130,7 +130,7 @@ class TestEnphasePVPowerGetToken:
 
     def test_get_token_generates_new_token(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test generating a new token when none cached or in file."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = ""
 
         mock_login_response = MagicMock()
@@ -159,7 +159,7 @@ class TestEnphasePVPowerGetToken:
 
     def test_get_token_reauthenticate_forces_new_token(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test that reauthenticate=True forces new token generation."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "old_cached_token"
 
         mock_login_response = MagicMock()
@@ -182,7 +182,7 @@ class TestEnphasePVPowerGetToken:
 
     def test_load_token_handles_empty_file(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test loading token from an empty file returns empty string."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         token_file = tmp_path / f"{pv_power_sensor.unique_id}.token"
         token_file.write_text("")
 
@@ -309,7 +309,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_success(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test successful API response updates state."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         mock_response = MagicMock()
@@ -328,7 +328,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_clamps_negative_power(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test that negative power values are clamped to 0."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         mock_response = MagicMock()
@@ -347,7 +347,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_401_reauthenticates(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test 401 response triggers reauthentication."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "expired_token"
 
         mock_401_response = MagicMock()
@@ -392,7 +392,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_non_200_raises(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test non-200 response raises exception."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         mock_response = MagicMock()
@@ -407,7 +407,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_json_error(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test JSON parsing error is handled."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         mock_response = MagicMock()
@@ -424,7 +424,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_request_exception_failover(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test request exception triggers failover after max failures."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
         pv_power_sensor._failures = 4  # one less than max
         pv_power_sensor._failover_initiated = False
@@ -442,7 +442,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_request_exception_no_failover(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test request exception without TotalPVPower returns True after max failures."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
         pv_power_sensor._failures = 4  # one less than max
         pv_power_sensor._failover_initiated = False
@@ -456,7 +456,7 @@ class TestEnphasePVPowerUpdateInternalState:
     @pytest.mark.asyncio
     async def test_update_internal_state_request_exception_reraises_before_max(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test request exception re-raises before max failures."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
         pv_power_sensor._failures = 0  # Well below max
         pv_power_sensor._failover_initiated = False
@@ -482,7 +482,7 @@ class TestDerivedSensorGetAttributes:
 
     def test_enphase_daily_get_attributes(self, mock_config, tmp_path, monkeypatch):
         """Test EnphaseDailyPVEnergy.get_attributes includes source."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         lifetime = EnphaseLifetimePVEnergy(0, "SN123")
         sensor = EnphaseDailyPVEnergy(0, "SN123", lifetime)
         attrs = sensor.get_attributes()
@@ -547,7 +547,7 @@ class TestSmartPort:
 
     def test_smartport_testing_mode(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort initialization in testing mode."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
 
         class MockModuleConfig:
             testing = True
@@ -562,7 +562,7 @@ class TestSmartPort:
 
     def test_smartport_normal_init_success(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort initialization with mocked HTTP response."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
 
         class MockModuleConfig:
             testing = False
@@ -597,7 +597,7 @@ class TestSmartPort:
 
     def test_smartport_unsupported_firmware_raises(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort raises on unsupported firmware."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
 
         class MockModuleConfig:
             testing = False
@@ -631,7 +631,7 @@ class TestSmartPort:
 
     def test_smartport_retries_on_connection_error(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort retries on connection errors."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         # Speed up test by patching sleep
         monkeypatch.setattr("sigenergy2mqtt.devices.smartport.enphase.sleep", lambda x: None)
 
@@ -655,7 +655,7 @@ class TestSmartPort:
 
     def test_smartport_retries_on_non_200_response(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort retries on non-200 responses."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         monkeypatch.setattr("sigenergy2mqtt.devices.smartport.enphase.sleep", lambda x: None)
 
         class MockModuleConfig:
@@ -680,7 +680,7 @@ class TestSmartPort:
 
     def test_smartport_d8_firmware_supported(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort supports D8 firmware."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
 
         class MockModuleConfig:
             testing = False
@@ -715,7 +715,7 @@ class TestSmartPort:
 
     def test_smartport_plant_index_naming(self, mock_config, tmp_path, monkeypatch):
         """Test SmartPort name varies with plant_index."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
 
         class MockModuleConfig:
             testing = True
@@ -795,7 +795,7 @@ class TestDebugLogging:
     @pytest.mark.asyncio
     async def test_update_internal_state_with_debug_logging(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test _update_internal_state with debug_logging enabled."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
         pv_power_sensor.debug_logging = True
 
@@ -813,7 +813,7 @@ class TestDebugLogging:
 
     def test_get_token_with_debug_logging_cached(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test get_token debug logging with cached token."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "cached_token"
         pv_power_sensor.debug_logging = True
 
@@ -823,7 +823,7 @@ class TestDebugLogging:
 
     def test_get_token_with_debug_logging_from_file(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test get_token debug logging when loading from file."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         token_file = tmp_path / f"{pv_power_sensor.unique_id}.token"
         token_file.write_text("file_token")
 
@@ -836,7 +836,7 @@ class TestDebugLogging:
 
     def test_get_token_with_debug_logging_empty_file(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test get_token debug logging when file exists but is empty."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         token_file = tmp_path / f"{pv_power_sensor.unique_id}.token"
         token_file.write_text("")
 
@@ -864,7 +864,7 @@ class TestDebugLogging:
 
     def test_get_token_with_debug_logging_generate_new(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test get_token debug logging when generating new token."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = ""
         pv_power_sensor.debug_logging = True
 
@@ -892,7 +892,7 @@ class TestTokenFileErrors:
 
     def test_load_token_handles_read_exception(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test loading token handles read errors gracefully."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         token_file = tmp_path / f"{pv_power_sensor.unique_id}.token"
         token_file.write_text("some_token")
 
@@ -943,7 +943,7 @@ class TestSmartPortInitFromEnphaseInfo:
 
     def test_init_from_enphase_info_returns_none(self, mock_config, tmp_path, monkeypatch):
         """Test _init_from_enphase_info returns None, None, None."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
 
         class MockModuleConfig:
             testing = True
@@ -963,7 +963,7 @@ class TestExceptionHandling:
     @pytest.mark.asyncio
     async def test_update_internal_state_generic_exception(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test generic exception in JSON processing."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         mock_response = MagicMock()
@@ -984,7 +984,7 @@ class TestSaveTokenErrors:
 
     def test_save_token_handles_write_exception(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test save_token handles write errors gracefully."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor.debug_logging = True
 
         # Mock open to fail on write
@@ -1017,7 +1017,7 @@ class TestDerivedSensorTriggering:
     @pytest.mark.asyncio
     async def test_update_internal_state_calls_set_source_values(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test that _update_internal_state calls set_source_values on derived sensors."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         # Mock a derived sensor
@@ -1043,7 +1043,7 @@ class TestDerivedSensorValueIntegration:
     @pytest.mark.asyncio
     async def test_derived_sensors_update_values(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test that derived sensors update their state correctly from main sensor data."""
-        monkeypatch.setattr(Config, "persistent_state_path", str(tmp_path))
+        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
 
         # Instantiate and attach detailed sensors

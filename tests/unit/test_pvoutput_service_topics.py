@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, mock_open, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, OutputField, StatusField
+from sigenergy2mqtt.config import OutputField, StatusField, active_config
 from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
@@ -67,7 +67,7 @@ class TestPVOutputServiceTopics:
         assert total is None and at is None and count == 0
 
     def test_register_and_sum_and_check_updating(self):
-        Config.pvoutput.started = time.time() - 3600
+        active_config.pvoutput.started = time.time() - 3600
         st = make_service_topics()
 
         t1 = Topic("t/1", scan_interval=60, gain=1.0, state=2.0, timestamp=time.localtime())
@@ -107,7 +107,7 @@ class TestPVOutputServiceTopics:
     def test_difference_and_convert_to_watts(self):
         now_ts = 1704110400.0
         now = time.localtime(now_ts)
-        Config.pvoutput.started = now_ts - 3600
+        active_config.pvoutput.started = now_ts - 3600
 
         st = make_service_topics(calc=Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
         prev_ts = now_ts - 3600
@@ -183,7 +183,7 @@ class TestPVOutputServiceTopics:
         st = make_service_topics()
         t = Topic("t/1", gain=1.0, timestamp=time.localtime(time.time() - 3600))
         st.register(t)
-        with patch("sigenergy2mqtt.config.Config.pvoutput.started", time.time() - 4000):
+        with patch("sigenergy2mqtt.config.active_config.pvoutput.started", time.time() - 4000):
             result = st.check_is_updating(interval_minutes=5, now_struct=time.localtime())
             assert result is False
             assert "has not been updated for" in caplog.text
@@ -193,7 +193,7 @@ class TestPVOutputServiceTopics:
         """Targets specific missing lines in service_topics.py."""
         caplog.set_level(logging.DEBUG)
         st = make_service_topics(value_key=StatusField.GENERATION_POWER, decimals=2, calc=Calculation.AVERAGE, datetime_key="dt")
-        with patch.object(Config.pvoutput, "calc_debug_logging", True):
+        with patch.object(active_config.pvoutput, "calc_debug_logging", True):
             st.register(Topic("t1", state=10.0, timestamp=time.localtime()))
             payload = {"dt": "something"}
             st.add_to_payload(payload, 5, time.localtime())

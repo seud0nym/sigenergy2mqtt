@@ -9,8 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
-from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
@@ -27,21 +26,23 @@ get_state = main_mod.get_state
 @pytest.fixture
 def clean_config(monkeypatch):
     """Fixture to ensure Config is clean and mocked appropriately for tests."""
-    active_config.modbus.clear()
-    monkeypatch.setattr(active_config.pvoutput, "enabled", False, raising=False)
-    monkeypatch.setattr(active_config.home_assistant, "enabled", False, raising=False)
-    monkeypatch.setattr(active_config, "metrics_enabled", False, raising=False)
-    monkeypatch.setattr(active_config, "clean", False, raising=False)
-    monkeypatch.setattr(active_config, "log_level", logging.INFO, raising=False)
-    monkeypatch.setattr(active_config, "persistent_state_path", "/tmp", raising=False)
+    from sigenergy2mqtt.config import Config, active_config
 
-    # Mock validation and logging config to avoid side effects
-    monkeypatch.setattr(active_config, "validate", lambda: None, raising=False)
-    monkeypatch.setattr(active_config, "get_modbus_log_level", lambda: logging.INFO, raising=False)
-    monkeypatch.setattr("sigenergy2mqtt.main.main.configure_logging", lambda: None)
-    monkeypatch.setattr("sigenergy2mqtt.main.main.pymodbus_apply_logging_config", lambda *a: None)
+    cfg = Config()
+    cfg.modbus = []
+    cfg.pvoutput.enabled = False
+    cfg.home_assistant.enabled = False
+    cfg.metrics_enabled = False
+    cfg.clean = False
+    cfg.log_level = logging.INFO
+    cfg.persistent_state_path = "/tmp"
+    cfg.mqtt.anonymous = True
 
-    return active_config
+    with _swap_active_config(cfg):
+        # Mock validation and logging config to avoid side effects
+        monkeypatch.setattr("sigenergy2mqtt.main.main.configure_logging", lambda: None)
+        monkeypatch.setattr("sigenergy2mqtt.main.main.pymodbus_apply_logging_config", lambda *a: None)
+        yield cfg
 
 
 class ConcreteSensor(Sensor):
@@ -210,7 +211,7 @@ async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
     mock_client = MagicMock()
     mock_client.read_holding_registers = AsyncMock(return_value=MagicMock(isError=lambda: False))
 
-    plant = types.SimpleNamespace(protocol_version=Protocol.V2_8, unique_id="plant-uid")
+    plant = types.SimpleNamespace(protocol_version=Protocol.V2_8, unique_id="plant-uid", device_address=247)
     inv, returned_plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, plant)
     assert returned_plant is plant
 
@@ -223,7 +224,7 @@ async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatc
         def __init__(self):
             super().__init__()
             self.publishable = True
-            self.input_type = InputType.INPUT
+            self.input_type = InputType.HOLDING
             self.count = 1
             self.name = "Sensor"
             self.state_topic = "topic"
@@ -243,7 +244,7 @@ async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatc
             return 0x02
 
     class FakeModbus:
-        async def read_input_registers(self, *a, **k):
+        async def read_holding_registers(self, *a, **k):
             return RR()
 
         comm_params = types.SimpleNamespace(host="x", port=1)
@@ -294,14 +295,14 @@ async def test_make_plant_and_inverter_protocol_probe_sets_default(monkeypatch):
         return seq[i] if i < len(seq) else (None, 0)
 
     monkeypatch.setattr(main_mod, "get_state", fake_get_state)
-    monkeypatch.setattr(main_mod, "PowerPlant", lambda *a, **k: types.SimpleNamespace(protocol_version=a[2], unique_id="p"))
-    monkeypatch.setattr(main_mod, "Inverter", lambda *a, **k: types.SimpleNamespace(unique_id="i"))
+    monkeypatch.setattr(main_mod, "PowerPlant", lambda *a, **k: types.SimpleNamespace(protocol_version=a[2], unique_id="p", device_address=247))
+    monkeypatch.setattr(main_mod, "Inverter", lambda *a, **k: types.SimpleNamespace(unique_id="i", device_address=1))
 
     class FakeModbus:
         def __init__(self):
             self.comm_params = types.SimpleNamespace(host="h", port=1)
 
-        async def read_input_registers(self, *a, **k):
+        async def read_holding_registers(self, *a, **k):
             raise Exception("no")
 
     inv, plant = await main_mod.make_plant_and_inverter(0, FakeModbus(), 1, None)
@@ -316,21 +317,25 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     mock_device.timeout = 1
     mock_device.retries = 0
     mock_device.inverters = [1]
-    mock_device.dc_chargers = [1]
-    mock_device.ac_chargers = [6]
+    mock_device.dc_chargers = [1]  # Match inverter address to avoid KeyError
+    mock_device.ac_chargers = [1]
     mock_device.registers.read_only = True
+    mock_device.device_address = 247
+    active_config.mqtt.anonymous = True
     active_config.modbus.clear()
     active_config.modbus.extend([mock_device])
 
     mock_thread_config = MagicMock()
     monkeypatch.setattr(main_mod.ThreadConfigFactory, "get_config", lambda *a: mock_thread_config)
-    monkeypatch.setattr(main_mod.ThreadConfigFactory, "get_configs", lambda: [mock_thread_config])
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
-    mock_plant = MagicMock(protocol_version=Protocol.V2_8, has_battery=True, unique_id="p_uid")
-    mock_plant.sensors = {f"{Config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+    mock_plant = MagicMock(protocol_version=Protocol.V2_8, has_battery=True, unique_id="p_uid", device_address=247)
+    mock_plant.name = "Plant"
+    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
 
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(MagicMock(unique_id="i_uid"), mock_plant)))
+    mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
+    mock_inverter.name = "Inverter"
+    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
     monkeypatch.setattr(main_mod, "test_for_0x02_ILLEGAL_DATA_ADDRESS", AsyncMock())
     monkeypatch.setattr(main_mod, "make_dc_charger", AsyncMock(return_value=MagicMock()))
     monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(return_value=MagicMock()))
@@ -353,11 +358,13 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     mock_device.dc_chargers = []
     mock_device.ac_chargers = []
     mock_device.registers.read_only = True
+    active_config.mqtt.anonymous = True
     active_config.modbus.clear()
     active_config.modbus.extend([mock_device])
 
-    mock_plant = MagicMock(has_battery=False)
-    mock_plant.sensors = {f"{Config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+    mock_plant = MagicMock(has_battery=False, protocol_version=Protocol.V1_8, device_address=247)
+    mock_plant.name = "Plant"
+    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
     mock_si_sensor = MagicMock(publishable=True)
     mock_plant.get_sensor.return_value = mock_si_sensor
 
@@ -365,7 +372,9 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     monkeypatch.setattr(main_mod.ThreadConfigFactory, "get_config", lambda *a: mock_thread_config)
 
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(MagicMock(), mock_plant)))
+    mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
+    mock_inverter.name = "Inverter"
+    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
     monkeypatch.setattr(main_mod, "test_for_0x02_ILLEGAL_DATA_ADDRESS", AsyncMock())
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(signal, "signal", lambda *a: None)
@@ -377,9 +386,28 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
 @pytest.mark.asyncio
 async def test_async_main_registers_signal_handlers(clean_config, monkeypatch):
     """Test that async_main registers expected signal handlers."""
+    # Ensure at least one Modbus device is configured to pass validation
+    mock_device = MagicMock()
+    mock_device.host = "1.2.3.4"
+    mock_device.port = 502
+    mock_device.inverters = [1]
+    mock_device.dc_chargers = []
+    mock_device.ac_chargers = []
+    mock_device.registers.read_only = True
+    mock_device.device_address = 247
+    active_config.modbus.clear()
+    active_config.modbus.extend([mock_device])
+
     handlers = {}
     monkeypatch.setattr(signal, "signal", lambda sig, h: handlers.update({sig: h}))
     monkeypatch.setattr(main_mod, "start", AsyncMock())
+    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+
+    mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
+    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+    mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
+    mock_inverter.name = "Inverter"
+    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
 
     await main_mod.async_main()
     assert signal.SIGINT in handlers
@@ -391,31 +419,69 @@ async def test_async_main_registers_signal_handlers(clean_config, monkeypatch):
 @pytest.mark.asyncio
 async def test_async_main_version_upgrade_flow(clean_config, tmp_path, monkeypatch):
     """Test that version upgrade flow writes the new version to file."""
-    monkeypatch.setattr(Config, "home_assistant", Config.home_assistant, raising=False)
-    Config.home_assistant.enabled = True
-    monkeypatch.setattr(Config, "persistent_state_path", tmp_path, raising=False)
-    monkeypatch.setattr(Config, "version", staticmethod(lambda: "2.0.0"), raising=False)
+    # Ensure at least one Modbus device is configured to pass validation
+    mock_device = MagicMock()
+    mock_device.host = "1.2.3.4"
+    mock_device.port = 502
+    mock_device.inverters = [1]
+    mock_device.dc_chargers = []
+    mock_device.ac_chargers = []
+    mock_device.registers.read_only = True
+    mock_device.device_address = 247
+    active_config.modbus.clear()
+    active_config.modbus.extend([mock_device])
+
+    active_config.home_assistant.enabled = True
+    active_config.persistent_state_path = str(tmp_path)
+    monkeypatch.setattr(active_config, "version", lambda: "2.0.0")
 
     ver_file = tmp_path / ".current-version"
     ver_file.write_text("1.0.0")
 
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(signal, "signal", lambda *a: None)
+    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+
+    mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
+    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+    mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
+    mock_inverter.name = "Inverter"
+    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
 
     await main_mod.async_main()
+    # Path in main.py is constructed from persistent_state_path
     assert ver_file.read_text() == "2.0.0"
 
 
 @pytest.mark.asyncio
 async def test_async_main_version_upgrade_errors(clean_config, monkeypatch):
     """Test error handling when reading/writing version file."""
-    clean_config.home_assistant.enabled = True
+    # Ensure at least one Modbus device is configured to pass validation
+    mock_device = MagicMock()
+    mock_device.host = "1.2.3.4"
+    mock_device.port = 502
+    mock_device.inverters = [1]
+    mock_device.dc_chargers = []
+    mock_device.ac_chargers = []
+    mock_device.registers.read_only = True
+    mock_device.device_address = 247
+    active_config.modbus.clear()
+    active_config.modbus.extend([mock_device])
+
+    active_config.home_assistant.enabled = True
     with patch("sigenergy2mqtt.main.main.Path") as mock_path_cls, patch("sigenergy2mqtt.main.main.logging.error") as mock_log_err:
         mock_file = MagicMock(exists=lambda: True)
         mock_file.open.side_effect = Exception("IO Error")
         mock_path_cls.return_value = mock_file
         monkeypatch.setattr(main_mod, "start", AsyncMock())
         monkeypatch.setattr(signal, "signal", lambda *a: None)
+        monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+
+        mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
+        mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+        mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
+        mock_inverter.name = "Inverter"
+        monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
 
         await main_mod.async_main()
         assert mock_log_err.called
@@ -447,8 +513,8 @@ async def test_make_plant_and_inverter_edge_cases(clean_config, monkeypatch):
         return s, m.get(s.__class__.__name__, k.get("default_value"))
 
     monkeypatch.setattr(main_mod, "get_state", fake_get_state)
-    monkeypatch.setattr(main_mod, "PowerPlant", MagicMock(return_value=MagicMock(unique_id="p")))
-    monkeypatch.setattr(main_mod, "Inverter", MagicMock(return_value=MagicMock(unique_id="i")))
+    monkeypatch.setattr(main_mod, "PowerPlant", MagicMock(return_value=MagicMock(unique_id="p", device_address=247)))
+    monkeypatch.setattr(main_mod, "Inverter", MagicMock(return_value=MagicMock(unique_id="i", device_address=1)))
 
     await main_mod.make_plant_and_inverter(0, mock_client, 1, None)
     assert active_config.consumption == ConsumptionMethod.CALCULATED

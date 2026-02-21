@@ -11,7 +11,7 @@ import requests
 from requests.structures import CaseInsensitiveDict
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 
 
@@ -28,8 +28,8 @@ class Service(Device):
     @property
     def request_headers(self) -> dict[str, str]:
         return {
-            "X-Pvoutput-Apikey": Config.pvoutput.api_key,
-            "X-Pvoutput-SystemId": Config.pvoutput.system_id,
+            "X-Pvoutput-Apikey": active_config.pvoutput.api_key,
+            "X-Pvoutput-SystemId": active_config.pvoutput.system_id,
             "X-Rate-Limit": "1",
         }
 
@@ -73,7 +73,7 @@ class Service(Device):
                 self.logger.debug(
                     f"{self.__class__.__name__} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None else current_time}"
                 )
-                if Config.pvoutput.testing:
+                if active_config.pvoutput.testing:
                     Service._interval = 5
                     Service._interval_updated = current_time
                     Service._donator = True
@@ -110,7 +110,7 @@ class Service(Device):
         minutes = int(current_time // 60)  # Total minutes since epoch
         next_boundary = (minutes // Service._interval + 1) * Service._interval  # Next interval boundary
         next_time = (next_boundary * 60) + randint(rand_min, rand_max)  # Convert back to seconds with a random offset for variability
-        seconds = 60 if Config.pvoutput.testing else float(next_time - current_time)
+        seconds = 60 if active_config.pvoutput.testing else float(next_time - current_time)
         return seconds, next_time
 
     async def upload_payload(self, url: str, payload: dict[str, Any]) -> bool:
@@ -121,7 +121,7 @@ class Service(Device):
         for i in range(1, 4, 1):
             attempts = i
             try:
-                if Config.pvoutput.testing:
+                if active_config.pvoutput.testing:
                     uploaded = True
                     self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
                     cid = CaseInsensitiveDict()

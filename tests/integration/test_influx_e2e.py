@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
@@ -19,20 +19,21 @@ def logger():
 @pytest.fixture
 def service(logger):
     """Create HassHistorySync with disabled init for isolated testing."""
-    mock_config = MagicMock()
-    # Set defaults required by __init__
-    mock_config.enabled = False
-    mock_config.max_retries = 3
-    mock_config.pool_connections = 100
-    mock_config.pool_maxsize = 100
-    mock_config.batch_size = 100
-    mock_config.flush_interval = 1.0
-    mock_config.query_interval = 0.1
+    cfg = Config()
+    cfg.influxdb.enabled = False
+    cfg.influxdb.max_retries = 3
+    cfg.influxdb.pool_connections = 100
+    cfg.influxdb.pool_maxsize = 100
+    cfg.influxdb.batch_size = 100
+    cfg.influxdb.flush_interval = 1.0
+    cfg.influxdb.query_interval = 0.1
 
-    with patch.object(Config, "influxdb", mock_config):
+    from sigenergy2mqtt.config import _swap_active_config
+
+    with _swap_active_config(cfg):
         svc = HassHistorySync(logger, plant_index=0)
-    svc._online = True  # Mark as online for tests
-    return svc
+        svc._online = True  # Mark as online for tests
+        yield svc
 
 
 # =============================================================================
@@ -252,14 +253,14 @@ class FakeResponse:
 @pytest.mark.asyncio
 async def test_detect_homeassistant_db_v2_found(service, monkeypatch):
     """Test detect_homeassistant_db finds bucket via v2 API."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = "mytoken"
-    Config.influxdb.org = "myorg"
-    Config.influxdb.bucket = None
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = "mytoken"
+    active_config.influxdb.org = "myorg"
+    active_config.influxdb.bucket = None
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     def fake_get(url, headers=None, timeout=None, params=None, auth=None):
         return FakeResponse(200, {"buckets": [{"name": "homeassistant"}, {"name": "other"}]})
@@ -274,14 +275,14 @@ async def test_detect_homeassistant_db_v2_found(service, monkeypatch):
 @pytest.mark.asyncio
 async def test_detect_homeassistant_db_v1_found(service, monkeypatch):
     """Test detect_homeassistant_db finds database via v1 API."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = None
-    Config.influxdb.org = None
-    Config.influxdb.bucket = None
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = None
+    active_config.influxdb.org = None
+    active_config.influxdb.bucket = None
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     v1_result = {"results": [{"series": [{"values": [["homeassistant"], ["other"]]}]}]}
 
@@ -298,14 +299,14 @@ async def test_detect_homeassistant_db_v1_found(service, monkeypatch):
 @pytest.mark.asyncio
 async def test_detect_homeassistant_db_not_found(service, monkeypatch):
     """Test detect_homeassistant_db returns False when not found."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = None
-    Config.influxdb.org = None
-    Config.influxdb.bucket = None
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = None
+    active_config.influxdb.org = None
+    active_config.influxdb.bucket = None
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     v1_result = {"results": [{"series": [{"values": [["mydb"], ["other"]]}]}]}
 
@@ -327,14 +328,14 @@ async def test_detect_homeassistant_db_not_found(service, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_earliest_timestamp_v1_success(service, monkeypatch):
     """Test get_earliest_timestamp returns correct timestamp from v1 API."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = None
-    Config.influxdb.org = None
-    Config.influxdb.bucket = None
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = None
+    active_config.influxdb.org = None
+    active_config.influxdb.bucket = None
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     v1_result = {"results": [{"series": [{"values": [["2024-01-01T12:00:00Z", 42]]}]}]}
 
@@ -352,14 +353,14 @@ async def test_get_earliest_timestamp_v1_success(service, monkeypatch):
 @pytest.mark.asyncio
 async def test_get_earliest_timestamp_no_records(service, monkeypatch):
     """Test get_earliest_timestamp returns current time when no records exist."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = None
-    Config.influxdb.org = None
-    Config.influxdb.bucket = None
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = None
+    active_config.influxdb.org = None
+    active_config.influxdb.bucket = None
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     v1_result = {"results": [{}]}
 
@@ -383,14 +384,14 @@ async def test_get_earliest_timestamp_no_records(service, monkeypatch):
 @pytest.mark.asyncio
 async def test_copy_records_from_homeassistant_uses_v2_first(service, monkeypatch):
     """Test copy_records_from_homeassistant tries v2 API first when token present."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = "mytoken"
-    Config.influxdb.org = "myorg"
-    Config.influxdb.bucket = "mybucket"
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = "mytoken"
+    active_config.influxdb.org = "myorg"
+    active_config.influxdb.bucket = "mybucket"
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     service._writer_type = "v2_http"
     service._write_url = "http://localhost:8086/api/v2/write"
@@ -421,14 +422,14 @@ _,_time,_field,_value
 @pytest.mark.asyncio
 async def test_copy_records_from_homeassistant_falls_back_to_v1(service, monkeypatch):
     """Test copy_records_from_homeassistant falls back to v1 API."""
-    Config.influxdb.host = "localhost"
-    Config.influxdb.port = 8086
-    Config.influxdb.database = "testdb"
-    Config.influxdb.token = None
-    Config.influxdb.org = None
-    Config.influxdb.bucket = None
-    Config.influxdb.username = None
-    Config.influxdb.password = None
+    active_config.influxdb.host = "localhost"
+    active_config.influxdb.port = 8086
+    active_config.influxdb.database = "testdb"
+    active_config.influxdb.token = None
+    active_config.influxdb.org = None
+    active_config.influxdb.bucket = None
+    active_config.influxdb.username = None
+    active_config.influxdb.password = None
 
     service._writer_type = "v1_http"
     service._write_url = "http://localhost:8086/write"

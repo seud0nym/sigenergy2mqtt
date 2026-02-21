@@ -4,7 +4,7 @@ import os
 import signal
 import sys
 
-from sigenergy2mqtt.config import Config, ConfigurationError, initialize
+from sigenergy2mqtt.config import ConfigurationError, active_config, initialize
 from sigenergy2mqtt.config.auto_discovery import _interrupted as _  # noqa: F401 — ensure module is importable
 from sigenergy2mqtt.main import async_main
 
@@ -35,7 +35,7 @@ def main():
         logging.info("Initialization interrupted — exiting")
         sys.exit(130)
 
-    asyncio.run(async_main(), debug=True if Config.log_level == logging.DEBUG else False)
+    asyncio.run(async_main(), debug=True if active_config.log_level == logging.DEBUG else False)
 
 
 if __name__ == "__main__":

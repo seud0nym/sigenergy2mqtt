@@ -86,15 +86,6 @@ def test_check_module_extra():
             validation.check_module("error", "src")
 
 
-def test_check_port_extra():
-    # coverage for line 159 (which is probably unreachable if check_int works correctly)
-    from unittest.mock import patch
-
-    with patch("sigenergy2mqtt.config.validation.check_int", return_value="not-an-int"):
-        with pytest.raises(ValueError, match="must be a port number"):
-            validation.check_port(80, "src")
-
-
 def test_check_string_extra():
     # allow_none=False
     with pytest.raises(ValueError, match="not null"):

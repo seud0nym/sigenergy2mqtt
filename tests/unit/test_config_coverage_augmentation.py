@@ -11,45 +11,17 @@ import pytest
 from ruamel.yaml import YAML
 
 from sigenergy2mqtt.common import ConsumptionMethod
-from sigenergy2mqtt.config import Config, ConsumptionSource, VoltageSource, const
-from sigenergy2mqtt.config.config import ConfigMeta, active_config
+from sigenergy2mqtt.config import ConsumptionSource, VoltageSource, active_config, const
+from sigenergy2mqtt.config.config import active_config
 
 VersionInfo = collections.namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
-
-
-def test_dual_method_logic():
-    conf = Config()
-    conf.reload = lambda: "p1"
-    assert Config.reload.__get__(conf, Config)() == "p1"
-    with patch.object(active_config, "reload", lambda: "p2"):
-        assert Config.reload() == "p2"
-
-
-def test_config_meta_logic():
-    setattr(Config, "_initializing_singleton", True)
-    Config.version = Config.version
-
-    class Failing:
-        def __setattr__(self, k, v):
-            raise AttributeError
-
-        def __delattr__(self, k):
-            raise AttributeError
-
-        def __getattr__(self, k):
-            raise AttributeError
-
-    with patch("sigenergy2mqtt.config.config.active_config", Failing()):
-        Config.xyz_test = 1
-        assert Config.xyz_test == 1
-        del Config.xyz_test
 
 
 def test_validate_logic_exhaustive():
     with patch.object(active_config, "modbus", []):
         with pytest.raises(ValueError, match="At least one"):
             active_config.validate()
-        assert Config.get_modbus_log_level() == logging.WARNING
+        assert active_config.get_modbus_log_level() == logging.WARNING
     from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 
     d = ModbusConfiguration()
@@ -70,7 +42,7 @@ def test_validate_logic_exhaustive():
 
 def test_load_from_env_error_handling():
     with patch.dict(os.environ, {const.SIGENERGY2MQTT_DEBUG_SENSOR: "invalid"}, clear=True):
-        with pytest.raises(Exception, match="when processing override"):
+        with pytest.raises(Exception, match="Error processing override"):
             active_config._load_from_env({})
 
 
@@ -149,10 +121,10 @@ def test_system_initialize_missing_branches_3(tmp_path):
 
     with patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 11, 0, "f", 0)):
         with pytest.raises(ConfigurationError):
-            Config.system_initialize()
+            active_config.system_initialize()
     with patch("sigenergy2mqtt.config.config.os.path.isdir", return_value=False):
         with pytest.raises(ConfigurationError):
-            Config.system_initialize()
+            active_config.system_initialize()
 
 
 def test_stale_cleanup_full_v6(tmp_path):
@@ -172,13 +144,13 @@ def test_stale_cleanup_full_v6(tmp_path):
         patch("sigenergy2mqtt.config.config.Path", return_value=mock_path),
         patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 13, 0, "f", 0)),
     ):
-        Config.system_initialize()
+        active_config.system_initialize()
 
 
 def test_logging_branches_exhaustive_v3():
     with patch("sigenergy2mqtt.config.config.os.isatty", return_value=True), patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 13, 0, "f", 0)):
         try:
-            Config.system_initialize()
+            active_config.system_initialize()
         except:
             pass
 
@@ -191,7 +163,7 @@ def test_logging_branches_exhaustive_v3():
         patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 13, 0, "f", 0)),
     ):
         try:
-            Config.system_initialize()
+            active_config.system_initialize()
         except:
             pass
 
@@ -203,7 +175,7 @@ def test_logging_branches_exhaustive_v3():
         patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 13, 0, "f", 0)),
     ):
         try:
-            Config.system_initialize()
+            active_config.system_initialize()
         except:
             pass
 
@@ -262,7 +234,7 @@ def test_initialize_show_version_returns_false():
     """Cover line 154: show_version causes early return False."""
     fake_args = SimpleNamespace(show_version=True)
     with (
-        patch("sigenergy2mqtt.config.Config.system_initialize", return_value="/tmp"),
+        patch("sigenergy2mqtt.config.active_config.system_initialize", return_value="/tmp"),
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
     ):
         result = initialize(["--version"])
@@ -278,7 +250,7 @@ def test_initialize_log_level_from_env():
         validate_only=False,
     )
     with (
-        patch("sigenergy2mqtt.config.Config.system_initialize", return_value="/tmp"),
+        patch("sigenergy2mqtt.config.active_config.system_initialize", return_value="/tmp"),
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch("sigenergy2mqtt.config._promote_cli_to_env"),
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "DEBUG"}),
@@ -298,7 +270,7 @@ def test_initialize_log_level_invalid_raises():
         validate_only=False,
     )
     with (
-        patch("sigenergy2mqtt.config.Config.system_initialize", return_value="/tmp"),
+        patch("sigenergy2mqtt.config.active_config.system_initialize", return_value="/tmp"),
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch("sigenergy2mqtt.config._promote_cli_to_env"),
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "BOGUS_LEVEL"}),
@@ -316,7 +288,7 @@ def test_initialize_validate_only_returns_false():
         validate_only=True,
     )
     with (
-        patch("sigenergy2mqtt.config.Config.system_initialize", return_value="/tmp"),
+        patch("sigenergy2mqtt.config.active_config.system_initialize", return_value="/tmp"),
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch("sigenergy2mqtt.config._promote_cli_to_env"),
         patch.dict(os.environ, {}, clear=True),

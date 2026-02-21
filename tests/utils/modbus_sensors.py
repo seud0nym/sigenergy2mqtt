@@ -7,7 +7,7 @@ from typing import cast
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVInverter
-from sigenergy2mqtt.config import Config, initialize
+from sigenergy2mqtt.config import active_config, initialize
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, Sensor
@@ -31,25 +31,25 @@ async def get_sensor_instances(
         protocol_version = list(Protocol)[-1]
     logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({hass=})")
 
-    # Ensure Config.modbus has an entry - in test environments the reset_config
+    # Ensure active_config.modbus has an entry - in test environments the reset_config
     # conftest fixture may have cleared it
-    if len(Config.modbus) <= plant_index:
-        Config.reload()
-    if len(Config.modbus) <= plant_index:
+    if len(active_config.modbus) <= plant_index:
+        active_config.reload()
+    if len(active_config.modbus) <= plant_index:
         from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
 
-        while len(Config.modbus) <= plant_index:
-            Config.modbus.append(ModbusConfiguration())
+        while len(active_config.modbus) <= plant_index:
+            active_config.modbus.append(ModbusConfiguration())
 
-    Config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
-    Config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
+    active_config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
+    active_config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 
-    Config.modbus[plant_index].smartport.enabled = True
-    Config.modbus[plant_index].smartport.module.name = "enphase"
-    Config.modbus[plant_index].smartport.module.pv_power = "EnphasePVPower"
-    Config.modbus[plant_index].smartport.module.testing = True
+    active_config.modbus[plant_index].smartport.enabled = True
+    active_config.modbus[plant_index].smartport.module.name = "enphase"
+    active_config.modbus[plant_index].smartport.module.pv_power = "EnphasePVPower"
+    active_config.modbus[plant_index].smartport.module.testing = True
 
-    Config.home_assistant.enabled = hass
+    active_config.home_assistant.enabled = hass
 
     hi = HybridInverter()
     hi.has_grid_code_interface = True
@@ -71,7 +71,7 @@ async def get_sensor_instances(
         rated_discharging_power=PlantRatedDischargingPower(plant_index),
         rated_frequency=GridCodeRatedFrequency(plant_index),
     )
-    remote_ems = plant.sensors[f"{Config.home_assistant.unique_id_prefix}_0_247_40029"]
+    remote_ems = plant.sensors[f"{active_config.home_assistant.unique_id_prefix}_0_247_40029"]
     assert remote_ems is not None, "Failed to find RemoteEMS instance"
 
     hybrid_model = InverterModel(plant_index, hybrid_inverter_device_address)

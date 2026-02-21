@@ -12,7 +12,7 @@ import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import DeviceType, Protocol, RegisterAccess
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
@@ -144,8 +144,8 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
         Args:
             name: Human-readable device name. May be translated via _t() and
-                  prefixed by Config.home_assistant.device_name_prefix.
-            plant_index: Index into Config.modbus identifying which Modbus plant
+                  prefixed by active_config.home_assistant.device_name_prefix.
+            plant_index: Index into active_config.modbus identifying which Modbus plant
                          this device belongs to. Negative values or out-of-range
                          values result in self.registers being None.
             unique_id: Globally unique identifier for this device, used as the
@@ -160,7 +160,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         """
         self.plant_index = plant_index
         self.protocol_version = protocol_version
-        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(Config.modbus) else Config.modbus[plant_index].registers
+        self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(active_config.modbus) else active_config.modbus[plant_index].registers
 
         self.children: list[Device] = []
 
@@ -175,7 +175,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         self._shutdown_event: asyncio.Event = asyncio.Event()
 
         name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs)
-        self["name"] = self.name = name if Config.home_assistant.device_name_prefix == "" else f"{Config.home_assistant.device_name_prefix} {name}"
+        self["name"] = self.name = name if active_config.home_assistant.device_name_prefix == "" else f"{active_config.home_assistant.device_name_prefix} {name}"
 
         self["identifiers"] = [unique_id]
         self["manufacturer"] = manufacturer
@@ -319,7 +319,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         if not isinstance(value, bool):
             raise ValueError("rediscover must be a boolean")
         self._rediscover = value
-        if Config.home_assistant.enabled:
+        if active_config.home_assistant.enabled:
             if value:
                 logging.info(f"{self.name} set to rediscover")
             else:
@@ -495,7 +495,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         Groups are constructed to minimise the number of Modbus read requests:
         sensors with contiguous register addresses on the same device and of the
         same input type are batched into a single group, subject to the
-        MAX_MODBUS_REGISTERS_PER_REQUEST limit. If Config.modbus[plant_index].
+        MAX_MODBUS_REGISTERS_PER_REQUEST limit. If active_config.modbus[plant_index].
         disable_chunking is True, each sensor gets its own group.
 
         Named groups (registered via _add_read_sensor with a group key) are always
@@ -544,7 +544,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             key=lambda s: (s.device_address, s.address),
         ):
             if (  # Conditions for creating a new sensor scan group
-                Config.modbus[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
+                active_config.modbus[self.plant_index].disable_chunking  # If chunking is disabled, always create a new group
                 or group_name is None  # First sensor
                 or first_address == -1  # Safety check for uninitialized first_address
                 or sensor.device_address != device_address  # Device address changed
@@ -904,7 +904,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             qos:         MQTT QoS level. Defaults to 2.
         """
         logging.info(f"{self.name} publishing {ha_state} availability")
-        mqtt_client.publish(f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
+        mqtt_client.publish(f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
         for device in self.children:
             device.publish_availability(mqtt_client, ha_state)
 
@@ -921,7 +921,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         publishes a null payload to clear the discovery topic.
 
         If debug logging is enabled, the discovery JSON is also written to disk at
-        Config.persistent_state_path for inspection.
+        active_config.persistent_state_path for inspection.
 
         Calls publish_attributes() for this device (without propagating to children,
         since children will publish their own attributes when their own discovery is
@@ -935,7 +935,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         Returns:
             The MQTTMessageInfo from the final mqtt_client.publish() call, or None.
         """
-        topic = f"{Config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
+        topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean:
             logging.debug(f"{self.name} cleaning availability")
             self.publish_availability(mqtt_client, None, qos=1)
@@ -948,12 +948,12 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             if len(components) > 0:
                 discovery: dict[str, Any] = {}
                 discovery["dev"] = self
-                discovery["o"] = Config.origin
+                discovery["o"] = active_config.origin
                 discovery["cmps"] = components
                 discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
                 logging.debug(f"{self.name} publishing discovery")
                 if logging.getLogger().isEnabledFor(logging.DEBUG):
-                    discovery_dump = Path(Config.persistent_state_path, f"{self.unique_id}.discovery.json")
+                    discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
                     with discovery_dump.open("w") as f:
                         f.write(discovery_json)
                     logging.debug(f"{self.name} discovery JSON dumped to {discovery_dump.resolve()}")
@@ -1089,15 +1089,15 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         Args:
             mqtt_client: The MQTT client used for publishing discovery payloads.
         """
-        wait = Config.home_assistant.republish_discovery_interval
-        while self.online and not self._shutdown_event.is_set() and Config.home_assistant.republish_discovery_interval > 0:
+        wait = active_config.home_assistant.republish_discovery_interval
+        while self.online and not self._shutdown_event.is_set() and active_config.home_assistant.republish_discovery_interval > 0:
             try:
                 await asyncio.sleep(1)
                 wait -= 1
                 if wait <= 0:
                     logging.info(f"{self.name} re-publishing discovery")
                     self.publish_discovery(mqtt_client, clean=False)
-                    wait = Config.home_assistant.republish_discovery_interval
+                    wait = active_config.home_assistant.republish_discovery_interval
             except asyncio.CancelledError:
                 logging.debug(f"{self.__class__.__name__} republish_discovery sleep interrupted")
                 break
@@ -1126,7 +1126,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 tasks.append(self.publish_updates(modbus_client, mqtt_client, name, *sensors))
             else:
                 logging.debug(f"{self.name} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
-        if Config.home_assistant.enabled and Config.home_assistant.republish_discovery_interval > 0:
+        if active_config.home_assistant.enabled and active_config.home_assistant.republish_discovery_interval > 0:
             tasks.append(self.republish_discovery(mqtt_client))
         return tasks
 
@@ -1144,9 +1144,9 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             mqtt_client:  The MQTT client to subscribe on.
             mqtt_handler: The MqttHandler that manages topic-to-callback routing.
         """
-        if Config.home_assistant.enabled:
-            result = mqtt_handler.register(mqtt_client, f"{Config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
-            logging.debug(f"{self.name} subscribed to topic {Config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
+        if active_config.home_assistant.enabled:
+            result = mqtt_handler.register(mqtt_client, f"{active_config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
+            logging.debug(f"{self.name} subscribed to topic {active_config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
         for sensor in self.sensors.values():
             if isinstance(sensor, WritableSensorMixin):
                 try:
@@ -1201,25 +1201,25 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             **kwargs:        Additional HA device registry attributes, plus an
                              optional "unique_id" key. If "unique_id" is provided
                              it must be a string starting with
-                             Config.home_assistant.unique_id_prefix; otherwise a
+                             active_config.home_assistant.unique_id_prefix; otherwise a
                              default unique_id is generated from the prefix, plant
                              index, device address, and class name.
 
         Raises:
             ValueError: If device_address is outside the range 1–247.
             ValueError: If a "unique_id" kwarg is provided but does not start with
-                        Config.home_assistant.unique_id_prefix.
+                        active_config.home_assistant.unique_id_prefix.
         """
         if not (1 <= device_address <= 247):
             raise ValueError(f"Invalid device address {device_address}: must be between 1 and 247")
 
         if "unique_id" in kwargs:
-            if not (isinstance(kwargs["unique_id"], str) and kwargs["unique_id"].startswith(Config.home_assistant.unique_id_prefix)):
-                raise ValueError(f"unique_id must be a string starting with '{Config.home_assistant.unique_id_prefix}'")
+            if not (isinstance(kwargs["unique_id"], str) and kwargs["unique_id"].startswith(active_config.home_assistant.unique_id_prefix)):
+                raise ValueError(f"unique_id must be a string starting with '{active_config.home_assistant.unique_id_prefix}'")
             unique_id = kwargs["unique_id"]
             del kwargs["unique_id"]
         else:
-            unique_id = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}"
+            unique_id = f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}"
 
         super().__init__(name, plant_index, unique_id, "Sigenergy", model, protocol_version, **kwargs)
 

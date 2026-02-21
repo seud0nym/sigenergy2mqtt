@@ -10,7 +10,7 @@ from typing import Any, Callable, Coroutine
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusClientType
 
 logger = logging.getLogger("paho.mqtt")
@@ -43,7 +43,7 @@ class MqttHandler:
                 if not self.connected:
                     self.connected = True
                     if len(self._topics) > 0:
-                        logger.info(f"Reconnected to mqtt://{Config.mqtt.broker}:{Config.mqtt.port} (client_id={self.client_id})")
+                        logger.info(f"Reconnected to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} (client_id={self.client_id})")
                         for topic in self._topics.keys():
                             result = client.unsubscribe(topic)
                             logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result} (client_id={self.client_id})")
@@ -91,7 +91,7 @@ class MqttHandler:
                     if self._closing:
                         logger.debug(f"MqttHandler is closing - discarding response handler {method_name} coroutine")
                         if hasattr(method_result, "close"):
-                            method_result.close() # type: ignore
+                            method_result.close()  # type: ignore
                     else:
                         if not asyncio.iscoroutine(method_result):
                             method_result = _wrap(method_result)

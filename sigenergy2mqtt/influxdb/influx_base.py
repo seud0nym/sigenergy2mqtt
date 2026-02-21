@@ -10,7 +10,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.metrics import Metrics
 
@@ -31,13 +31,13 @@ class InfluxBase(Device):
         # Enhanced connection pooling with retry strategy
         self._session = requests.Session()
         retry_strategy = Retry(
-            total=Config.influxdb.max_retries,
+            total=active_config.influxdb.max_retries,
             backoff_factor=0.5,
             status_forcelist=[429, 500, 502, 503, 504],
         )
         adapter = HTTPAdapter(
-            pool_connections=Config.influxdb.pool_connections,
-            pool_maxsize=Config.influxdb.pool_maxsize,
+            pool_connections=active_config.influxdb.pool_connections,
+            pool_maxsize=active_config.influxdb.pool_maxsize,
             max_retries=retry_strategy,
         )
         self._session.mount("http://", adapter)
@@ -48,14 +48,14 @@ class InfluxBase(Device):
 
         # Batch write buffer
         self._write_buffer: list[str] = []
-        self._batch_size: int = Config.influxdb.batch_size
+        self._batch_size: int = active_config.influxdb.batch_size
         self._batch_lock = asyncio.Lock()
         self._last_flush: float = time.time()
-        self._flush_interval: float = Config.influxdb.flush_interval
+        self._flush_interval: float = active_config.influxdb.flush_interval
 
         # Rate limiting for queries
         self._rate_limit_semaphore = asyncio.Semaphore(10)  # Max 10 concurrent queries
-        self._query_interval: float = Config.influxdb.query_interval
+        self._query_interval: float = active_config.influxdb.query_interval
         self._last_query_time: float = 0.0
         self._query_lock = asyncio.Lock()
 
@@ -189,7 +189,7 @@ class InfluxBase(Device):
 
     async def async_init(self) -> bool:
         """Perform asynchronous initialization of InfluxDB connection."""
-        if Config.influxdb.enabled:
+        if active_config.influxdb.enabled:
             try:
                 await asyncio.to_thread(self._init_connection)
                 return True
@@ -200,14 +200,14 @@ class InfluxBase(Device):
 
     def get_config_values(self):
         """Extract InfluxDB configuration values with backwards compatibility."""
-        host = Config.influxdb.host
-        port = Config.influxdb.port
-        db = Config.influxdb.database
-        user = Config.influxdb.username
-        pwd = Config.influxdb.password
-        token = Config.influxdb.token
-        org = Config.influxdb.org
-        bucket = Config.influxdb.bucket or db
+        host = active_config.influxdb.host
+        port = active_config.influxdb.port
+        db = active_config.influxdb.database
+        user = active_config.influxdb.username
+        pwd = active_config.influxdb.password
+        token = active_config.influxdb.token
+        org = active_config.influxdb.org
+        bucket = active_config.influxdb.bucket or db
 
         # Backwards-compat: if no explicit token provided but a password is
         # supplied and no username, treat the password as a v2 token.
@@ -282,14 +282,14 @@ class InfluxBase(Device):
 
         try:
             if self._writer_type == "v2_http" and self._write_url:
-                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=data, timeout=Config.influxdb.write_timeout)
+                r = await asyncio.to_thread(self._session.post, self._write_url, headers=self._write_headers or {}, data=data, timeout=active_config.influxdb.write_timeout)
                 if r.status_code in (204, 200):
                     return True
                 else:
                     self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
                     return False
             elif self._writer_type == "v1_http" and self._write_url:
-                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": Config.influxdb.database}, data=data, auth=self._write_auth, timeout=Config.influxdb.write_timeout)
+                r = await asyncio.to_thread(self._session.post, self._write_url, params={"db": active_config.influxdb.database}, data=data, auth=self._write_auth, timeout=active_config.influxdb.write_timeout)
                 if r.status_code in (204, 200):
                     return True
                 else:
@@ -331,9 +331,9 @@ class InfluxBase(Device):
     async def query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: int | float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute a Flux query on v2 API with retry and rate limiting. Returns (success, response_text)."""
         if timeout is None:
-            timeout = Config.influxdb.read_timeout
+            timeout = active_config.influxdb.read_timeout
         if max_retries is None:
-            max_retries = Config.influxdb.max_retries
+            max_retries = active_config.influxdb.max_retries
         return await self._rate_limited_query(
             lambda: self.query_v2_internal(base, org, token, flux_query, timeout),
             "v2 query",
@@ -356,9 +356,9 @@ class InfluxBase(Device):
     async def query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: int | float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute an InfluxQL query on v1 API with retry and rate limiting. Returns (success, json_result)."""
         if timeout is None:
-            timeout = Config.influxdb.read_timeout
+            timeout = active_config.influxdb.read_timeout
         if max_retries is None:
-            max_retries = Config.influxdb.max_retries
+            max_retries = active_config.influxdb.max_retries
         return await self._rate_limited_query(
             lambda: self.query_v1_internal(base, db, auth, query, epoch, timeout),
             "v1 query",

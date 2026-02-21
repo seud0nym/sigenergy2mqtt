@@ -205,19 +205,9 @@ class TestMainEarlySignalHandlers:
 
         with patch("signal.signal", side_effect=capture_signal):
             with patch("sigenergy2mqtt.__main__.initialize", side_effect=KeyboardInterrupt):
-                import warnings
-
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", message=r"coroutine .* was never awaited", category=RuntimeWarning)
-                    with pytest.raises(SystemExit) as exc_info:
-                        main()
-                    # Force garbage collection while our warning filter is active so
-                    # any AsyncMock-created coroutine objects are collected under
-                    # the filter instead of emitting unraisable warnings later.
-                    import gc
-
-                    gc.collect()
-                assert exc_info.value.code == 130
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+            assert exc_info.value.code == 130
 
         # Check that handlers were registered
         assert signal.SIGINT in handlers

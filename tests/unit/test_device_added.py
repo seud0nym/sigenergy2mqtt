@@ -1,27 +1,25 @@
 import asyncio
+import types
 from typing import Any, cast
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 
 
+@pytest.fixture
+def mock_config():
+    cfg = Config()
+    cfg.modbus = [types.SimpleNamespace(registers={})]
+    with _swap_active_config(cfg):
+        yield cfg
+    DeviceRegistry._devices.clear()
+
+
 @pytest.mark.asyncio
-async def test_device_online_future_cancel(monkeypatch):
-    conf = cast(Any, Config)
-    orig_devices = conf.modbus
-
-    class D:
-        registers = {}
-
-    conf.modbus = [D()]
-
-    # Isolate DeviceRegistry
-    orig_registry = DeviceRegistry._devices.copy()
-    DeviceRegistry.clear()
-
+async def test_device_online_future_cancel(mock_config):
     dev = Device("TDev", 0, "uid123", "mf", "mdl", Protocol.V1_8)
 
     loop = asyncio.get_running_loop()
@@ -33,23 +31,8 @@ async def test_device_online_future_cancel(monkeypatch):
     assert dev._online is False
     assert fut.cancelled()
 
-    # restore
-    DeviceRegistry._devices = orig_registry
-    conf.modbus = orig_devices
 
-
-def test_device_rediscover_setter_and_type_check():
-    conf = cast(Any, Config)
-    orig_devices = conf.modbus
-
-    class D:
-        registers = {}
-
-    conf.modbus = [D()]
-
-    orig_registry = DeviceRegistry._devices.copy()
-    DeviceRegistry.clear()
-
+def test_device_rediscover_setter_and_type_check(mock_config):
     dev = Device("TDev", 0, "u_idx", "mf", "mdl", Protocol.V1_8)
     dev.rediscover = True
     assert dev.rediscover is True
@@ -58,21 +41,8 @@ def test_device_rediscover_setter_and_type_check():
     with pytest.raises(ValueError, match="rediscover must be a bool"):
         cast(Any, dev).rediscover = "yes"
 
-    DeviceRegistry._devices = orig_registry
-    conf.modbus = orig_devices
 
-
-def test_add_child_device_adds_when_publishable():
-    conf = cast(Any, Config)
-    orig_devices = conf.modbus
-
-    class D:
-        registers = {}
-
-    conf.modbus = [D()]
-    orig_registry = DeviceRegistry._devices.copy()
-    DeviceRegistry.clear()
-
+def test_add_child_device_adds_when_publishable(mock_config):
     parent = Device("Parent", 0, "p_uid", "mf", "mdl", Protocol.V1_8)
     child = Device("Child", 0, "c_uid", "mf", "mdl", Protocol.V1_8)
 
@@ -85,7 +55,3 @@ def test_add_child_device_adds_when_publishable():
     parent._add_child_device(child)
     assert child.via_device == parent.unique_id
     assert child in parent.children
-
-    # cleanup
-    DeviceRegistry._devices = orig_registry
-    conf.modbus = orig_devices

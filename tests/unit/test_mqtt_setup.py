@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 
@@ -12,12 +12,12 @@ def test_mqtt_setup_retries_then_succeeds(monkeypatch):
     monkeypatch.setitem(mqtt_setup.__globals__, "sleep", lambda s: None)
 
     # Prepare Config
-    Config.mqtt.broker = "localhost"
-    Config.mqtt.port = 1883
-    Config.mqtt.keepalive = 10
-    Config.mqtt.anonymous = False
-    Config.mqtt.username = "user"
-    Config.mqtt.password = "pass"
+    active_config.mqtt.broker = "localhost"
+    active_config.mqtt.port = 1883
+    active_config.mqtt.keepalive = 10
+    active_config.mqtt.anonymous = False
+    active_config.mqtt.username = "user"
+    active_config.mqtt.password = "pass"
 
     # Monkeypatch paho Client methods to simulate connect failing once then succeeding
     import paho.mqtt.client as paho
@@ -56,10 +56,10 @@ def test_mqtt_setup_fails_after_retries(monkeypatch):
     # Ensure the `sleep` name used by `mqtt_setup` is replaced (covers different import forms)
     monkeypatch.setitem(mqtt_setup.__globals__, "sleep", lambda s: None)
 
-    Config.mqtt.broker = "localhost"
-    Config.mqtt.port = 1883
-    Config.mqtt.keepalive = 10
-    Config.mqtt.anonymous = True
+    active_config.mqtt.broker = "localhost"
+    active_config.mqtt.port = 1883
+    active_config.mqtt.keepalive = 10
+    active_config.mqtt.anonymous = True
 
     import paho.mqtt.client as paho
 

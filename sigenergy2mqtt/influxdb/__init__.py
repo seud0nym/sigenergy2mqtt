@@ -5,7 +5,7 @@ __all__ = ["get_influxdb_services", "InfluxBase", "InfluxService", "HassHistoryS
 import logging
 from typing import TYPE_CHECKING
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 
 from .hass_history_sync import HassHistorySync
 from .influx_base import InfluxBase
@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 
 def get_influxdb_services(configs: list[ThreadConfig]):
     logger = logging.getLogger("influxdb")
-    logger.setLevel(Config.influxdb.log_level)
+    logger.setLevel(active_config.influxdb.log_level)
     services = []
     # Create one service instance per plant index
-    for plant_index in range(len(Config.modbus)):
+    for plant_index in range(len(active_config.modbus)):
         svc_logger = logging.getLogger(f"influxdb.plant{plant_index}")
-        svc_logger.setLevel(Config.influxdb.log_level)
+        svc_logger.setLevel(active_config.influxdb.log_level)
         svc = InfluxService(svc_logger, plant_index)
         services.append(svc)
     return services

@@ -5,26 +5,46 @@ from unittest.mock import Mock
 
 import pytest
 
+from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors import base
 from sigenergy2mqtt.sensors.const import InputType
-from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.config.config import Config
 
 
 @pytest.fixture(autouse=True)
 def reset_env(tmp_path):
-    Config.persistent_state_path = tmp_path
+    active_config.persistent_state_path = tmp_path
     base.Sensor._used_object_ids.clear()
     base.Sensor._used_unique_ids.clear()
-    Config.home_assistant.enabled = False
-    Config.home_assistant.use_simplified_topics = False
+    active_config.home_assistant.enabled = False
+    active_config.home_assistant.use_simplified_topics = False
     yield
 
 
 def test_numeric_min_max_tuple_validation():
     # mismatched tuple lengths
     with pytest.raises(AssertionError):
-        base.NumericSensor(None, name="n", object_id="sigen_n", input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30001, count=1, data_type=ModbusDataType.UINT16, scan_interval=1, unit=None, device_class=None, state_class=None, icon="mdi:test", gain=None, precision=None, protocol_version=base.Protocol.N_A, minimum=(0, 1), maximum=(0, 1, 2))
+        base.NumericSensor(
+            None,
+            name="n",
+            object_id="sigen_n",
+            input_type=InputType.HOLDING,
+            plant_index=0,
+            device_address=1,
+            address=30001,
+            count=1,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=1,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:test",
+            gain=None,
+            precision=None,
+            protocol_version=base.Protocol.N_A,
+            minimum=(0, 1),
+            maximum=(0, 1, 2),
+        )
 
 
 def test_get_base_topic_variants():
@@ -34,15 +54,15 @@ def test_get_base_topic_variants():
     assert base_topic.startswith("sigenergy2mqtt/")
 
     # when HA enabled and simplified topics disabled
-    Config.home_assistant.enabled = True
-    Config.home_assistant.use_simplified_topics = False
-    Config.home_assistant.discovery_prefix = "homeassistant"
+    active_config.home_assistant.enabled = True
+    active_config.home_assistant.use_simplified_topics = False
+    active_config.home_assistant.discovery_prefix = "homeassistant"
     t2 = s._get_base_topic("devx")
     assert "homeassistant" in t2
 
 
 def test_select_get_state_unknown_mode():
-    sel = base.SelectSensor(None, name="selx", object_id="sigen_selx", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A","B"], protocol_version=base.Protocol.N_A)
+    sel = base.SelectSensor(None, name="selx", object_id="sigen_selx", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A", "B"], protocol_version=base.Protocol.N_A)
     # no state set -> Unknown Mode
     # set a cached state and republish to avoid Modbus reads
     sel.set_latest_state(0)

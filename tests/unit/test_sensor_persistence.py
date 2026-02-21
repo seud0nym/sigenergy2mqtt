@@ -45,18 +45,24 @@ class MockSource(ReadOnlySensor):
         self.latest_raw_state = 1000.0
 
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+
+
 @pytest.fixture
 def mock_config(tmp_path):
     old_level = logging.getLogger().getEffectiveLevel()
     logging.getLogger().setLevel(logging.DEBUG)
-    with patch("sigenergy2mqtt.config.Config") as mock_conf, patch("sigenergy2mqtt.sensors.base.Config", mock_conf):
-        mock_conf.repeated_state_publish_interval = 0
-        mock_conf.persistent_state_path = tmp_path
-        mock_conf.home_assistant.enabled = True
-        mock_conf.home_assistant.discovery_prefix = "homeassistant"
-        mock_conf.home_assistant.unique_id_prefix = "sigen"
-        mock_conf.home_assistant.entity_id_prefix = "sigen"
-        yield mock_conf
+
+    cfg = Config()
+    cfg.repeated_state_publish_interval = 0
+    cfg.persistent_state_path = tmp_path
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+
+    with _swap_active_config(cfg):
+        yield cfg
 
     logging.getLogger().setLevel(old_level)
     # Cleanup global state

@@ -6,7 +6,7 @@ from typing import Awaitable, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.device import DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -34,7 +34,7 @@ class InfluxService(InfluxBase):
 
         sync_task = None
         if self._writer_type:
-            if Config.influxdb.load_hass_history:
+            if active_config.influxdb.load_hass_history:
                 # Create history sync helper that shares our connection state
                 self._history_sync = HassHistorySync(self.logger, self.plant_index)
                 # Copy connection settings from this service
@@ -128,15 +128,15 @@ class InfluxService(InfluxBase):
                         self.logger.debug(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not publishable")
                         continue
 
-                    if Config.influxdb.include and not any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in Config.influxdb.include):
+                    if active_config.influxdb.include and not any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in active_config.influxdb.include):
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not in include list")
                         continue
-                    if Config.influxdb.exclude and any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in Config.influxdb.exclude):
+                    if active_config.influxdb.exclude and any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in active_config.influxdb.exclude):
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is excluded")
                         continue
 
                     self._topic_cache[tpc] = {
-                        "uom": s["unit_of_measurement"] if s["unit_of_measurement"] else Config.influxdb.default_measurement,
+                        "uom": s["unit_of_measurement"] if s["unit_of_measurement"] else active_config.influxdb.default_measurement,
                         "object_id": obj,
                         "unique_id": uid,
                         "debug_logging": s.debug_logging,

@@ -1,30 +1,29 @@
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, Config, NumericSensor, RunningStateSensor, SelectSensor, Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass, UnitOfEnergy
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, NumericSensor, RunningStateSensor, SelectSensor, Sensor
+from sigenergy2mqtt.sensors.const import DeviceClass, InputType
 
 
 @pytest.fixture(autouse=True)
 def mock_config_global():
-    with patch("sigenergy2mqtt.config.Config") as mock:
-        mock.home_assistant.enabled = True
-        mock.home_assistant.enabled_by_default = True
-        mock.home_assistant.unique_id_prefix = "sigen"
-        mock.home_assistant.entity_id_prefix = "sigen"
-        mock.home_assistant.edit_percentage_with_box = False  # Default
-        mock.sensor_debug_logging = True
-        mock.persistent_state_path = "/tmp"
-        mock.modbus = []
-        mock.sensor_overrides = {}
+    cfg = Config()
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.enabled_by_default = True
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.edit_percentage_with_box = False  # Default
+    cfg.sensor_debug_logging = True
+    cfg.persistent_state_path = "/tmp"
+    cfg.modbus = []
+    cfg.sensor_overrides = {}
 
-        # Patch Config in base module
-        with patch("sigenergy2mqtt.sensors.base.Config", mock):
-            yield mock
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 @pytest.fixture(autouse=True)

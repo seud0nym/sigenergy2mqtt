@@ -7,7 +7,7 @@ import pytest
 import requests
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.config import Config, ConsumptionSource, StatusField, VoltageSource
+from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services

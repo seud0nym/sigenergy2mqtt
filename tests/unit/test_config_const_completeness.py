@@ -9,7 +9,7 @@ def test_reload_handles_all_env_constants():
     """
     Ensures that every constant defined in sigenergy2mqtt.config.const
     that starts with SIGENERGY2MQTT_ is explicitly handled in the
-    Config.reload method's match statement.
+    active_config.reload method's match statement.
     """
     # 1. Get all constants that should be handled
     expected_constants = set()
@@ -17,7 +17,7 @@ def test_reload_handles_all_env_constants():
         if name.startswith("SIGENERGY2MQTT_") and name != "SIGENERGY2MQTT_CONFIG":
             expected_constants.add(name)
 
-    # 2. Parse Config.reload to find handled constants
+    # 2. Parse active_config.reload to find handled constants
     # We use AST to avoid executing code and to ensure we find explicit usage
     config_file = Path(inspect.getfile(config.Config))
     tree = ast.parse(config_file.read_text())
@@ -26,7 +26,7 @@ def test_reload_handles_all_env_constants():
 
     class CaseVisitor(ast.NodeVisitor):
         def visit_Match(self, node):
-            # We are looking for the match block in Config.reload
+            # We are looking for the match block in active_config.reload
             # But the visitor visits all nodes.
             # So we just collect all attribute accesses that look like const.SOME_NAME
             # inside match cases.
@@ -59,7 +59,7 @@ def test_reload_handles_all_env_constants():
                 if isinstance(method, ast.FunctionDef) and method.name in ["reload", "_process_env_key"]:
                     methods_to_check.append(method)
 
-    assert methods_to_check, "Could not find Config.reload or Config._process_env_key methods"
+    assert methods_to_check, "Could not find active_config.reload or Config._process_env_key methods"
 
     # Visit the methods to find the match statement
     visitor = CaseVisitor()
@@ -84,4 +84,4 @@ def test_reload_handles_all_env_constants():
     #     pass
     # These are handled in the AST visitor (it handles MatchOr), so they should be in 'handled_constants'.
 
-    assert not missing, f"The following constants in const.py are not handled in Config.reload: {missing}"
+    assert not missing, f"The following constants in const.py are not handled in active_config.reload: {missing}"

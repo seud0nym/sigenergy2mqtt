@@ -4,8 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, const
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.config import active_config, const
 
 
 class TestConfigEnvironmentOverrides:
@@ -90,7 +89,7 @@ class TestConfigAutoDiscovery:
             with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=discovered) as mock_scan:
                 active_config.modbus.clear()
                 active_config.persistent_state_path = tmp_path
-                Config.reload()
+                active_config.reload()
                 mock_scan.assert_called_once()
                 # It should have written to cache in tmp_path
                 cache_file = tmp_path / "auto-discovery.yaml"
@@ -120,7 +119,7 @@ class TestConfigAutoDiscovery:
             with patch("sigenergy2mqtt.config.config.auto_discovery_scan") as mock_scan:
                 active_config.modbus.clear()
                 active_config.persistent_state_path = tmp_path
-                Config.reload()
+                active_config.reload()
                 mock_scan.assert_not_called()
                 # Should load from cache and merge/append with env.
                 # Host 192.168.1.1 from env, 192.168.1.100 from cache.
@@ -136,11 +135,11 @@ class TestConfigAutoDiscovery:
 class TestConfigFileLoading:
     @pytest.fixture(autouse=True)
     def reset_config_state(self):
-        Config.reset()
-        Config.reload()
+        active_config.reset()
+        active_config.reload()
         yield
-        Config.reset()
-        Config.reload()
+        active_config.reset()
+        active_config.reload()
 
     def test_load_from_file(self, tmp_path):
         config_file = tmp_path / "config.yaml"

@@ -22,10 +22,10 @@ def mock_config():
     modbus_config.scan_interval.low = 300
 
     with (
-        patch("sigenergy2mqtt.config.Config.home_assistant.unique_id_prefix", "sigen"),
-        patch("sigenergy2mqtt.config.Config.home_assistant.entity_id_prefix", "sigen"),
-        patch("sigenergy2mqtt.config.Config.sensor_overrides", {}),
-        patch("sigenergy2mqtt.config.Config.modbus", [modbus_config] * 10),
+        patch("sigenergy2mqtt.config.active_config.home_assistant.unique_id_prefix", "sigen"),
+        patch("sigenergy2mqtt.config.active_config.home_assistant.entity_id_prefix", "sigen"),
+        patch("sigenergy2mqtt.config.active_config.sensor_overrides", {}),
+        patch("sigenergy2mqtt.config.active_config.modbus", [modbus_config] * 10),
     ):
         yield
 

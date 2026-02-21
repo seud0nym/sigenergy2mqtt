@@ -5,101 +5,96 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import RegisterAccess
-from sigenergy2mqtt.config import Config, validation
+from sigenergy2mqtt.config import active_config, validation
+from sigenergy2mqtt.config.config import Config, _swap_active_config
 
 
 class TestConfigValidation:
     def setup_method(self):
-        # Reset Config state before each test
-        Config.modbus = []
-        Config.ems_mode_check = True
+        # Reset active_config state before each test
+        active_config.reset()
 
-    @patch("sigenergy2mqtt.config.config.Config.mqtt")
-    @patch("sigenergy2mqtt.config.config.Config.home_assistant")
-    @patch("sigenergy2mqtt.config.config.Config.pvoutput")
-    def test_ems_mode_check_enabled_validates(self, mock_pv, mock_ha, mock_mqtt):
+    def test_ems_mode_check_enabled_validates(self):
         """Test validation passes when ems_mode_check is enabled (default)."""
-        Config.ems_mode_check = True
+        with _swap_active_config(Config()) as cfg:
+            cfg.ems_mode_check = True
 
-        device = MagicMock()
-        device.validate.return_value = None
-        device.registers = RegisterAccess()  # Default values
+            device = MagicMock()
+            device.validate.return_value = None
+            device.registers = RegisterAccess()  # Default values
 
-        Config.modbus = [device]
+            cfg.modbus = [device]
 
-        # Should not raise
-        Config.validate()
+            with patch.object(cfg.mqtt, "validate"), patch.object(cfg.home_assistant, "validate"), patch.object(cfg.pvoutput, "validate"):
+                # Should not raise
+                cfg.validate()
 
-    @patch("sigenergy2mqtt.config.config.Config.mqtt")
-    @patch("sigenergy2mqtt.config.config.Config.home_assistant")
-    @patch("sigenergy2mqtt.config.config.Config.pvoutput")
-    def test_ems_mode_check_disabled_valid_config(self, mock_pv, mock_ha, mock_mqtt):
+    def test_ems_mode_check_disabled_valid_config(self):
         """Test validation passes when ems_mode_check is disabled and config is correct."""
-        Config.ems_mode_check = False
+        with _swap_active_config(Config()) as cfg:
+            cfg.ems_mode_check = False
 
-        device = MagicMock()
-        device.validate.return_value = None
-        # valid configuration: no_remote_ems=False, read_write=True
-        device.registers = RegisterAccess(no_remote_ems=False, read_write=True)
+            device = MagicMock()
+            device.validate.return_value = None
+            # valid configuration: no_remote_ems=False, read_write=True
+            device.registers = RegisterAccess(no_remote_ems=False, read_write=True)
 
-        Config.modbus = [device]
+            cfg.modbus = [device]
 
-        # Should not raise
-        Config.validate()
+            with patch.object(cfg.mqtt, "validate"), patch.object(cfg.home_assistant, "validate"), patch.object(cfg.pvoutput, "validate"):
+                # Should not raise
+                cfg.validate()
 
-    @patch("sigenergy2mqtt.config.config.Config.mqtt")
-    @patch("sigenergy2mqtt.config.config.Config.home_assistant")
-    @patch("sigenergy2mqtt.config.config.Config.pvoutput")
-    def test_ems_mode_check_disabled_invalid_no_remote_ems(self, mock_pv, mock_ha, mock_mqtt):
+    def test_ems_mode_check_disabled_invalid_no_remote_ems(self):
         """Test validation fails when ems_mode_check is disabled and no_remote_ems is True."""
-        Config.ems_mode_check = False
+        with _swap_active_config(Config()) as cfg:
+            cfg.ems_mode_check = False
 
-        device = MagicMock()
-        device.validate.return_value = None
-        # invalid: no_remote_ems=True
-        device.registers = RegisterAccess(no_remote_ems=True, read_write=True)
+            device = MagicMock()
+            device.validate.return_value = None
+            # invalid: no_remote_ems=True
+            device.registers = RegisterAccess(no_remote_ems=True, read_write=True)
 
-        Config.modbus = [device]
+            cfg.modbus = [device]
 
-        with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
-            Config.validate()
+            with patch.object(cfg.mqtt, "validate"), patch.object(cfg.home_assistant, "validate"), patch.object(cfg.pvoutput, "validate"):
+                with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
+                    cfg.validate()
 
-    @patch("sigenergy2mqtt.config.config.Config.mqtt")
-    @patch("sigenergy2mqtt.config.config.Config.home_assistant")
-    @patch("sigenergy2mqtt.config.config.Config.pvoutput")
-    def test_ems_mode_check_disabled_invalid_read_write(self, mock_pv, mock_ha, mock_mqtt):
+    def test_ems_mode_check_disabled_invalid_read_write(self):
         """Test validation fails when ems_mode_check is disabled and read_write is False."""
-        Config.ems_mode_check = False
+        with _swap_active_config(Config()) as cfg:
+            cfg.ems_mode_check = False
 
-        device = MagicMock()
-        device.validate.return_value = None
-        # invalid: read_write=False
-        device.registers = RegisterAccess(no_remote_ems=False, read_write=False)
+            device = MagicMock()
+            device.validate.return_value = None
+            # invalid: read_write=False
+            device.registers = RegisterAccess(no_remote_ems=False, read_write=False)
 
-        Config.modbus = [device]
+            cfg.modbus = [device]
 
-        with pytest.raises(ValueError, match="When ems_mode_check is disabled, read_write must be True"):
-            Config.validate()
+            with patch.object(cfg.mqtt, "validate"), patch.object(cfg.home_assistant, "validate"), patch.object(cfg.pvoutput, "validate"):
+                with pytest.raises(ValueError, match="When ems_mode_check is disabled, read_write must be True"):
+                    cfg.validate()
 
-    @patch("sigenergy2mqtt.config.config.Config.mqtt")
-    @patch("sigenergy2mqtt.config.config.Config.home_assistant")
-    @patch("sigenergy2mqtt.config.config.Config.pvoutput")
-    def test_ems_mode_check_disabled_multiple_devices_one_invalid(self, mock_pv, mock_ha, mock_mqtt):
+    def test_ems_mode_check_disabled_multiple_devices_one_invalid(self):
         """Test validation fails if any device is invalid."""
-        Config.ems_mode_check = False
+        with _swap_active_config(Config()) as cfg:
+            cfg.ems_mode_check = False
 
-        device1 = MagicMock()
-        device1.validate.return_value = None
-        device1.registers = RegisterAccess(no_remote_ems=False, read_write=True)
+            device1 = MagicMock()
+            device1.validate.return_value = None
+            device1.registers = RegisterAccess(no_remote_ems=False, read_write=True)
 
-        device2 = MagicMock()
-        device2.validate.return_value = None
-        device2.registers = RegisterAccess(no_remote_ems=True, read_write=True)  # Invalid
+            device2 = MagicMock()
+            device2.validate.return_value = None
+            device2.registers = RegisterAccess(no_remote_ems=True, read_write=True)  # Invalid
 
-        Config.modbus = [device1, device2]
+            cfg.modbus = [device1, device2]
 
-        with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
-            Config.validate()
+            with patch.object(cfg.mqtt, "validate"), patch.object(cfg.home_assistant, "validate"), patch.object(cfg.pvoutput, "validate"):
+                with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
+                    cfg.validate()
 
     def test_is_valid_ipv4(self):
         assert validation.is_valid_ipv4("192.168.1.1") is True

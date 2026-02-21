@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, OutputField, StatusField
+from sigenergy2mqtt.config import Config, OutputField, StatusField, _swap_active_config, active_config
 from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
 from sigenergy2mqtt.pvoutput.service_topics import Calculation as Calc
@@ -59,8 +59,9 @@ def test_registration(caplog):
 
 def test_aggregate_adjustment_logging(caplog):
     caplog.set_level(logging.DEBUG)
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.calc_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.calc_debug_logging = True
+    with _swap_active_config(cfg_obj):
         st = make_st(negative=False)
         st.register(Topic("t1", state=-10.0, timestamp=time.localtime()))
         st.aggregate(exclude_zero=False)
@@ -70,8 +71,9 @@ def test_aggregate_adjustment_logging(caplog):
 def test_aggregate_difference_logic(caplog):
     caplog.set_level(logging.DEBUG)
     now = time.time()
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.calc_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.calc_debug_logging = True
+    with _swap_active_config(cfg_obj):
         st = make_st(calc=Calc.DIFFERENCE | Calc.CONVERT_TO_WATTS)
         t = Topic("t1", state=100.0, timestamp=time.localtime(now))
         t.previous_state = 10.0
@@ -104,16 +106,17 @@ def test_check_is_updating_branches(caplog):
     caplog.set_level(logging.DEBUG)
     now = time.time()
     st = make_st()
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.update_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.update_debug_logging = True
 
-        # started recently
-        mock_config.pvoutput.started = now
+    # started recently
+    cfg_obj.pvoutput.started = now
+    with _swap_active_config(cfg_obj):
         assert st.check_is_updating(5, time.localtime(now)) is True
         assert "just started" in caplog.text
 
         # started long ago
-        mock_config.pvoutput.started = 0
+        active_config.pvoutput.started = 0
         caplog.clear()
         st.register(Topic("t1", timestamp=time.localtime(now)))
         st.check_is_updating(5, time.localtime(now))
@@ -196,8 +199,9 @@ def test_reset_with_child():
 
 def test_aggregate_logging_no_dt(caplog):
     caplog.set_level(logging.DEBUG)
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.calc_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.calc_debug_logging = True
+    with _swap_active_config(cfg_obj):
         # Average
         st = make_st(calc=Calc.AVERAGE | Calc.PEAK)
         st.register(Topic("t1", state=10.0, timestamp=time.localtime()))
@@ -220,8 +224,9 @@ def test_aggregate_logging_no_dt(caplog):
 
 def test_aggregate_logging_with_dt(caplog):
     caplog.set_level(logging.DEBUG)
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.calc_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.calc_debug_logging = True
+    with _swap_active_config(cfg_obj):
         st = make_st(calc=Calc.SUM | Calc.PEAK, value_key=OutputField.GENERATION)
         st._datetime_key = "dt"
         st.register(Topic("t1", state=10.0, timestamp=time.localtime()))
@@ -237,8 +242,9 @@ def test_payload_deletion_and_remaining_gaps(caplog):
     caplog.set_level(logging.DEBUG)
 
     # 158: check_is_updating fails
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.started = 0
+    cfg_obj = Config()
+    cfg_obj.pvoutput.started = 0
+    with _swap_active_config(cfg_obj):
         st = make_st(calc=Calc.SUM)
         # No topics -> check_is_updating returns False
         assert st.add_to_payload({}, 5, time.localtime()) is False
@@ -259,8 +265,9 @@ def test_payload_deletion_and_remaining_gaps(caplog):
 
     # 112-114: L-L Averaged with datetime
     caplog.clear()
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.calc_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.calc_debug_logging = True
+    with _swap_active_config(cfg_obj):
         st = make_st(calc=Calc.L_L_AVG | Calc.PEAK, value_key=OutputField.GENERATION)
         st._datetime_key = "dt"
         st.register(Topic("t1", state=10.0, timestamp=time.localtime()))
@@ -277,8 +284,9 @@ async def test_handle_update_complex_branches(caplog):
     st._time_periods = [child]
     st.register(Topic("t1", state=100.0, timestamp=time.localtime()))
 
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Config") as mock_config:
-        mock_config.pvoutput.update_debug_logging = True
+    cfg_obj = Config()
+    cfg_obj.pvoutput.update_debug_logging = True
+    with _swap_active_config(cfg_obj):
         await st.handle_update(None, MagicMock(), 110.0, "t1", MagicMock())
         assert "Updating" in caplog.text
         # child branch non-current
@@ -288,8 +296,11 @@ async def test_handle_update_complex_branches(caplog):
         # Peak ignoring
         t = st["t1"]
         t.state = 200.0
-        t.restore_timestamp = time.localtime(time.time() + 60)
-        await st.handle_update(None, MagicMock(), 150.0, "t1", MagicMock())
+        # Use a fixed time in the future and mock time.time() to ensure int(seconds) % 60 == 0
+        fixed_now = 1000000.0
+        t.restore_timestamp = time.localtime(fixed_now + 60)
+        with patch("time.time", return_value=fixed_now):
+            await st.handle_update(None, MagicMock(), 150.0, "t1", MagicMock())
         assert "Ignoring" in caplog.text
     # disabled
     st.enabled = False

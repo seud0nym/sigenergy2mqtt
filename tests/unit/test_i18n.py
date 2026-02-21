@@ -4,6 +4,7 @@ import pytest
 
 from sigenergy2mqtt import i18n
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmSensor, ReadOnlySensor, Sensor
@@ -12,24 +13,15 @@ from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
 
 @pytest.fixture(autouse=True)
 def ensure_sane_config():
-    """Ensure Config.home_assistant is sane, even if other tests leaked a SimpleNamespace."""
-    from sigenergy2mqtt.config import Config
-    from sigenergy2mqtt.config.config import active_config
+    """Ensure active_config is sane and isolated."""
+    cfg = Config()
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.modbus = []
 
-    # If it's a SimpleNamespace or Mock, it might be missing our keys
-    if not hasattr(active_config.home_assistant, "entity_id_prefix"):
-        with patch.object(active_config.home_assistant, "entity_id_prefix", "sigenergy", create=True):
-            with patch.object(active_config.home_assistant, "unique_id_prefix", "sigenergy", create=True):
-                with patch.object(active_config.home_assistant, "device_name_prefix", "", create=True):
-                    with patch("sigenergy2mqtt.config.config.active_config.modbus", []):
-                        yield
-    else:
-        # Even if it has the attributes, we want our specific values for these tests
-        with patch.object(active_config.home_assistant, "entity_id_prefix", "sigenergy"):
-            with patch.object(active_config.home_assistant, "unique_id_prefix", "sigenergy"):
-                with patch.object(active_config.home_assistant, "device_name_prefix", ""):
-                    with patch("sigenergy2mqtt.config.config.active_config.modbus", []):
-                        yield
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class MockSensor(Sensor):
@@ -114,26 +106,24 @@ def test_translator_fallback():
 def test_sensor_name_translation():
     i18n.set_translations("fr", {"class": {"InverterModel": {"name": "Modèle"}}})
     i18n.load("fr")
-    # InverterModel.name is translated in fr mock
-    with patch("sigenergy2mqtt.config.config.active_config.home_assistant.unique_id_prefix", "sigenergy"), patch("sigenergy2mqtt.config.config.active_config.home_assistant.entity_id_prefix", "sigenergy"):
-        # We need a concrete class that matches the translation key
-        class InverterModel(MockSensor):
-            pass
 
-        sensor = InverterModel("Model")
-        assert sensor["name"] == "Modèle"
+    # We need a concrete class that matches the translation key
+    class InverterModel(MockSensor):
+        pass
+
+    sensor = InverterModel("Model")
+    assert sensor["name"] == "Modèle"
 
 
 def test_device_name_translation():
     i18n.set_translations("fr", {"class": {"Inverter": {"name": "Onduleur"}}})
     i18n.load("fr")
-    with patch("sigenergy2mqtt.config.config.active_config.home_assistant.device_name_prefix", ""), patch("sigenergy2mqtt.config.config.active_config.modbus", []):
 
-        class Inverter(MockDevice):
-            pass
+    class Inverter(MockDevice):
+        pass
 
-        device = Inverter()
-        assert device["name"] == "Onduleur"
+    device = Inverter()
+    assert device["name"] == "Onduleur"
 
 
 @pytest.mark.asyncio
@@ -145,7 +135,7 @@ async def test_alarm_bit_translation():
     class Alarm1Sensor(MockAlarmSensor):
         pass
 
-    with patch("sigenergy2mqtt.config.config.active_config.home_assistant.entity_id_prefix", "sigenergy"), patch.object(ReadOnlySensor, "_update_internal_state", return_value=True):
+    with patch.object(ReadOnlySensor, "_update_internal_state", return_value=True):
         sensor = Alarm1Sensor()
         sensor._states = [(0.0, 1)]
         state = await sensor.get_state()

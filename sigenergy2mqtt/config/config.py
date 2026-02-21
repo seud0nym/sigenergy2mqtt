@@ -1,11 +1,35 @@
+"""
+Runtime configuration for sigenergy2mqtt.
+
+Configuration is loaded from a YAML file and optionally overridden by environment
+variables.  The single global instance :data:`active_config` is the authoritative
+source of truth at runtime.  All other modules should read from this instance rather
+than constructing their own.
+
+Typical startup sequence::
+
+    found_path = active_config.system_initialize()
+    active_config.persistent_state_path = found_path
+    active_config.load(config_filename)
+    active_config.validate()
+
+For testing, use :func:`_swap_active_config` to temporarily replace the global::
+
+    with _swap_active_config(Config()) as cfg:
+        cfg.load("test_fixture.yaml")
+        cfg.validate()
+        ...
+"""
+
 import asyncio
 import json
 import logging
 import os
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Generator
 
 from ruamel.yaml import YAML
 
@@ -26,72 +50,19 @@ class ConfigurationError(Exception):
     """Raised when the configuration is invalid or cannot be loaded."""
 
 
-class DualMethod:
-    """Descriptor that identifies if a method is called on a class or an instance.
+class Config:
+    """Holds the complete runtime configuration for sigenergy2mqtt.
 
-    If called on the class, it delegates to the 'active_config' singleton.
-    If called on an instance, it uses that instance.
+    Instances are initialised with sensible defaults via :meth:`_apply_defaults`.
+    Configuration is then layered in two passes:
+
+    1. A YAML file loaded by :meth:`load` / :meth:`reload`.
+    2. Environment variable overrides applied on top.
+
+    The global singleton :data:`active_config` is the instance used at runtime.
+    Direct instantiation is supported for testing via :func:`_swap_active_config`.
     """
 
-    def __init__(self, func):
-        self.func = func
-        self.__doc__ = func.__doc__
-        self.name = func.__name__
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-
-        # Check if the attribute has been patched on the instance specifically
-        if self.name in instance.__dict__:
-            return instance.__dict__[self.name]
-
-        return self.func.__get__(instance, owner)
-
-    def __call__(self, *args, **kwargs):
-        # Check if the attribute has been patched on active_config specifically
-        if self.name in active_config.__dict__:
-            return active_config.__dict__[self.name](*args, **kwargs)
-
-        return self.func(active_config, *args, **kwargs)
-
-
-class ConfigMeta(type):
-    """Metaclass to support backward compatibility for class-level access."""
-
-    def __getattr__(cls, name):
-        return getattr(active_config, name)
-
-    def __setattr__(cls, name, value):
-        if name == "_initializing_singleton" or name.startswith("__"):
-            type.__setattr__(cls, name, value)
-            return
-
-        if hasattr(value, "__get__"):
-            type.__setattr__(cls, name, value)
-            return
-
-        try:
-            setattr(active_config, name, value)
-        except (AttributeError, NameError):
-            type.__setattr__(cls, name, value)
-
-    def __delattr__(cls, name):
-        try:
-            delattr(active_config, name)
-        except (AttributeError, NameError):
-            pass
-
-        try:
-            type.__delattr__(cls, name)
-        except AttributeError:
-            pass
-
-
-class Config(metaclass=ConfigMeta):
-    _initializing_singleton = True
-    # Remove class-level attributes to let ConfigMeta.__getattr__ handle them
-    # but keep type hints for IDEs
     origin: dict[str, str]
 
     clean: bool
@@ -120,7 +91,16 @@ class Config(metaclass=ConfigMeta):
 
     _source: str | None
 
-    def _apply_defaults(self):
+    def _apply_defaults(self, reset_infrastructure: bool = True):
+        """Reset every attribute to its default value.
+
+        Called by :meth:`__init__` and at the start of every :meth:`reload` so that
+        a reload always starts from a clean slate rather than accumulating stale state.
+
+        Args:
+            reset_infrastructure: If True, resets fields that define the config source
+                and persistence (e.g. _source, persistent_state_path).
+        """
         self.origin = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
 
         self.clean = False
@@ -144,19 +124,36 @@ class Config(metaclass=ConfigMeta):
 
         self.sensor_debug_logging = False
         self.sensor_overrides = {}
-        self._source = None
 
-        self.persistent_state_path = Path(".")
+        if reset_infrastructure:
+            self._source = None
+            self.persistent_state_path = Path(".")
 
     def __init__(self):
         self._apply_defaults()
 
-    @DualMethod
     def reset(self):
+        """Reset all configuration to defaults, discarding any loaded state.
+
+        Equivalent to constructing a fresh ``Config()`` instance.  Useful in tests
+        that share a config object across multiple cases.
+        """
         self._apply_defaults()
 
-    @DualMethod
     def validate(self) -> None:
+        """Validate the current configuration, raising on the first error found.
+
+        Checks that at least one Modbus device is configured, then delegates to the
+        ``validate()`` method of each sub-configuration object (Modbus devices, MQTT,
+        Home Assistant, PVOutput).
+
+        Additionally enforces consistency between ``ems_mode_check`` and the per-device
+        register settings: when EMS mode checking is disabled the device must be
+        configured for full read/write access without the remote EMS restriction.
+
+        Raises:
+            ValueError: If any validation rule is violated.
+        """
         if len(self.modbus) == 0:
             raise ValueError("At least one Modbus device must be configured")
 
@@ -173,39 +170,82 @@ class Config(metaclass=ConfigMeta):
         self.home_assistant.validate()
         self.pvoutput.validate()
 
-    @DualMethod
     def get_modbus_log_level(self) -> int:
+        """Return the minimum log level across all configured Modbus devices.
+
+        This is used to set the log level of the underlying Modbus library so that
+        debug output is shown whenever any device is configured for debug logging.
+        Returns ``logging.WARNING`` when no devices are configured.
+        """
         if not self.modbus:
             return logging.WARNING
-        return min([device.log_level for device in self.modbus])
+        return min(device.log_level for device in self.modbus)
 
-    @DualMethod
     def set_modbus_log_level(self, level: int) -> None:
+        """Set the log level on every configured Modbus device.
+
+        Args:
+            level: A ``logging`` module level constant (e.g. ``logging.DEBUG``).
+        """
         for device in self.modbus:
             device.log_level = level
 
-    @DualMethod
     def load(self, filename: str) -> None:
+        """Load configuration from a YAML file and apply environment variable overrides.
+
+        Records *filename* as the configuration source and delegates to :meth:`reload`.
+        Subsequent calls to :meth:`reload` will re-read the same file.
+
+        Args:
+            filename: Path to the YAML configuration file.
+        """
         logging.info(f"Loading configuration from {filename}...")
         self._source = filename
         self.reload()
 
+    def _log_applying(self, name: str, value: Any, override: bool) -> None:
+        """Emit a debug log line describing a configuration value being applied.
+
+        Args:
+            name: The configuration key name.
+            value: The value being applied (logged as-is; callers should redact secrets
+                before passing them here).
+            override: If ``True``, the log message indicates an env/cli override;
+                otherwise it indicates a value from the YAML file.
+        """
+        source = "override from env/cli" if override else "configuration"
+        logging.debug(f"Applying {source}: {name} = {value}")
+
     def _process_env_key(self, key: str, value: str, overrides: dict[str, Any], auto_discovered: Any):
+        """Validate and store a single environment variable into the *overrides* dict.
+
+        This is called for every ``SIGENERGY2MQTT_*`` environment variable found by
+        :meth:`_load_from_env`.  Each recognised key is validated and written into the
+        appropriate nested location in *overrides*.  Unknown keys produce a warning.
+        Keys related to auto-discovery are silently skipped here because they are
+        consumed directly in :meth:`reload`.
+
+        Args:
+            key: The environment variable name.
+            value: The raw string value of the environment variable.
+            overrides: The mutable overrides dict that will be passed to
+                :meth:`_configure` after all env vars have been processed.
+            auto_discovered: The list of auto-discovered device dicts, or ``None``.
+                Some env vars (e.g. log level, read/write mode) are propagated to
+                auto-discovered devices as well as stored in *overrides*.
+        """
         match key:
             case const.SIGENERGY2MQTT_CONSUMPTION:
                 overrides["consumption"] = ConsumptionMethod(
-                    cast(
-                        str,
-                        check_string(
-                            value,
-                            key,
-                            ConsumptionMethod.CALCULATED.value,
-                            ConsumptionMethod.TOTAL.value,
-                            ConsumptionMethod.GENERAL.value,
-                            allow_empty=False,
-                            allow_none=False,
-                        ),
-                    ),
+                    check_string(
+                        value,
+                        key,
+                        ConsumptionMethod.CALCULATED.value,
+                        ConsumptionMethod.TOTAL.value,
+                        ConsumptionMethod.GENERAL.value,
+                        allow_empty=False,
+                        allow_none=False,
+                    )
                 )
             case const.SIGENERGY2MQTT_DEBUG_SENSOR:
                 overrides["sensor-overrides"][check_string(value, key, allow_empty=False, allow_none=False)] = {"debug-logging": True}
@@ -289,7 +329,7 @@ class Config(metaclass=ConfigMeta):
                 | const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT
                 | const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES
             ):
-                pass  # Handled above
+                pass  # Handled in reload()
             case const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
                 overrides["modbus"][0]["dc-chargers"] = check_int_list(value, key)
             case const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:
@@ -451,148 +491,211 @@ class Config(metaclass=ConfigMeta):
                 logging.warning(f"UNKNOWN env/cli override: {key} = {'******' if 'PASSWORD' in key or 'API_KEY' in key else value}")
 
     def _load_from_env(self, overrides: dict[str, Any], auto_discovered: Any = None):
+        """Scan environment variables and populate *overrides* with validated values.
+
+        Iterates over all environment variables whose names start with
+        ``SIGENERGY2MQTT_`` (excluding ``SIGENERGY2MQTT_CONFIG``) and delegates each
+        one to :meth:`_process_env_key`.  Values that are ``None`` or the literal
+        string ``"None"`` are skipped.
+
+        Args:
+            overrides: The mutable overrides dict to populate.
+            auto_discovered: The list of auto-discovered device dicts, or ``None``,
+                passed through to :meth:`_process_env_key`.
+
+        Raises:
+            ConfigurationError: Wrapping any exception raised by :meth:`_process_env_key`,
+                with the offending key name included in the message.
+        """
         for key, value in os.environ.items():
             if key.startswith("SIGENERGY2MQTT_") and key != "SIGENERGY2MQTT_CONFIG" and value is not None and value != "None":
                 logging.debug(f"Found env/cli override: {key} = {'[REDACTED]' if 'PASSWORD' in key or 'API_KEY' in key else value}")
                 try:
                     self._process_env_key(key, value, overrides, auto_discovered)
                 except Exception as e:
-                    raise Exception(f"{repr(e)} when processing override '{key}'")
+                    raise ConfigurationError(f"Error processing override '{key}'") from e
 
     def _apply_auto_discovery(self, auto_discovered: Any):
-        if isinstance(auto_discovered, list):
-            for device in auto_discovered:
-                updated = False
-                for defined in self.modbus:
-                    if (defined.host == device.get("host") or defined.host == "") and defined.port == device.get("port"):
-                        if defined.host == "":
-                            defined.host = cast(str, device.get("host"))
-                            defined.port = cast(int, device.get("port"))
-                            logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
-                        else:
-                            logging.info(f"Auto-discovered found configured Modbus device: {device.get('host')}:{device.get('port')}, updating with discovered device IDs")
-                        defined.configure(device, override=True, auto_discovered=True)
-                        updated = True
-                        break
-                if not updated:
-                    logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
-                    new_device = ModbusConfiguration()
-                    new_device.configure(device, override=True, auto_discovered=True)
-                    self.modbus.append(new_device)
+        """Merge auto-discovered Modbus devices into :attr:`modbus`.
 
-    @DualMethod
+        For each device returned by the auto-discovery scan:
+
+        - If an existing :class:`ModbusConfiguration` matches the discovered host/port
+          (or has a blank host acting as a wildcard), the existing entry is updated with
+          the discovered device IDs.
+        - Otherwise a new :class:`ModbusConfiguration` is appended to :attr:`modbus`.
+
+        Args:
+            auto_discovered: A list of device dicts as returned by the auto-discovery
+                scan, each containing at least ``host`` and ``port`` keys.  Non-list
+                values are silently ignored.
+        """
+        if not isinstance(auto_discovered, list):
+            return
+        for device in auto_discovered:
+            updated = False
+            for defined in self.modbus:
+                if (defined.host == device.get("host") or defined.host == "") and defined.port == device.get("port"):
+                    if defined.host == "":
+                        defined.host = device.get("host", "")
+                        defined.port = device.get("port", 502)
+                        logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
+                    else:
+                        logging.info(f"Auto-discovered found configured Modbus device: {device.get('host')}:{device.get('port')}, updating with discovered device IDs")
+                    defined.configure(device, override=True, auto_discovered=True)
+                    updated = True
+                    break
+            if not updated:
+                logging.info(f"Auto-discovery found new Modbus device: {device.get('host')}:{device.get('port')}")
+                new_device = ModbusConfiguration()
+                new_device.configure(device, override=True, auto_discovered=True)
+                self.modbus.append(new_device)
+
     def _configure(self, data: dict, override: bool = False) -> None:
-        for name in data.keys() if data else {}:
+        """Apply a dictionary of configuration values to this instance.
+
+        Used for both the primary YAML load and the env/cli override pass.  Each
+        top-level key in *data* is matched and its value is validated and assigned to
+        the appropriate attribute or sub-configuration object.
+
+        Args:
+            data: A mapping of configuration keys to values.  Must be a ``dict``;
+                passing any other type raises ``ValueError`` immediately.
+            override: If ``True``, debug log messages will indicate the values are
+                env/cli overrides rather than primary configuration.
+
+        Raises:
+            ValueError: If *data* is not a dict, if a key is unrecognised, or if any
+                value fails validation.
+        """
+        if not isinstance(data, dict):
+            raise ValueError(f"Configuration data must be a mapping, got {type(data).__name__}")
+        for name, value in data.items():
             match name:
                 case "consumption":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: consumption = {data[name]}")
+                    self._log_applying(name, value, override)
                     self.consumption = ConsumptionMethod(
-                        cast(
-                            str,
-                            check_string(
-                                data[name],
-                                name,
-                                ConsumptionMethod.CALCULATED.value,
-                                ConsumptionMethod.TOTAL.value,
-                                ConsumptionMethod.GENERAL.value,
-                                allow_empty=False,
-                                allow_none=False,
-                            ),
+                        check_string(
+                            value,
+                            name,
+                            ConsumptionMethod.CALCULATED.value,
+                            ConsumptionMethod.TOTAL.value,
+                            ConsumptionMethod.GENERAL.value,
+                            allow_empty=False,
+                            allow_none=False,
                         )
                     )
                 case "language":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: language = {data[name]}")
+                    self._log_applying(name, value, override)
                     try:
-                        self.language = cast(str, check_string(data[name], name, *i18n.get_available_translations(), allow_empty=False, allow_none=False))
+                        self.language = check_string(value, name, *i18n.get_available_translations(), allow_empty=False, allow_none=False)
                     except ValueError:
                         default = i18n.get_default_language()
-                        logging.warning(f"Invalid language '{data[name]}' for {name}, falling back to '{default}'")
+                        logging.warning(f"Invalid language '{value}' for {name}, falling back to '{default}'")
                         self.language = default
                 case "home-assistant":
-                    self.home_assistant.configure(data[name], override)
+                    self.home_assistant.configure(value, override)
                 case "log-level":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: log-level = {data[name]}")
-                    self.log_level = check_log_level(data[name], name)
+                    self._log_applying(name, value, override)
+                    self.log_level = check_log_level(value, name)
                 case "mqtt":
-                    self.mqtt.configure(data[name], override)
+                    self.mqtt.configure(value, override)
                 case "modbus":
-                    if isinstance(data[name], list):
-                        index = 0
-                        for config in data[name]:
-                            if isinstance(config, dict):
-                                if len(self.modbus) <= index:
-                                    device = ModbusConfiguration()
-                                    self.modbus.append(device)
-                                else:
-                                    device = self.modbus[index]
-                                device.configure(config, override)
-                            index += 1
-                    else:
+                    if not isinstance(value, list):
                         raise ValueError("modbus configuration element must contain a list of Sigenergy hosts")
+                    for index, config in enumerate(value):
+                        if isinstance(config, dict):
+                            if len(self.modbus) <= index:
+                                device = ModbusConfiguration()
+                                self.modbus.append(device)
+                            else:
+                                device = self.modbus[index]
+                            device.configure(config, override)
                 case "no-ems-mode-check":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-ems-mode-check = {data[name]}")
-                    self.ems_mode_check = not check_bool(data[name], name)
+                    self._log_applying(name, value, override)
+                    self.ems_mode_check = not check_bool(value, name)
                 case "no-metrics":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: no-metrics = {data[name]}")
-                    self.metrics_enabled = not check_bool(data[name], name)
+                    self._log_applying(name, value, override)
+                    self.metrics_enabled = not check_bool(value, name)
                 case "pvoutput":
-                    self.pvoutput.configure(data[name], override)
+                    self.pvoutput.configure(value, override)
                 case "influxdb":
-                    self.influxdb.configure(data[name], override)
+                    self.influxdb.configure(value, override)
                 case "repeated-state-publish-interval":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: repeated-state-publish-interval = {data[name]}")
-                    self.repeated_state_publish_interval = cast(int, check_int(data[name], name, allow_none=False))
+                    self._log_applying(name, value, override)
+                    self.repeated_state_publish_interval = check_int(value, name, allow_none=False)
                 case "sanity-check-default-kw":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-default-kw = {data[name]}")
-                    self.sanity_check_default_kw = cast(float, check_float(data[name], name, allow_none=False, min=0))
+                    self._log_applying(name, value, override)
+                    self.sanity_check_default_kw = check_float(value, name, allow_none=False, min=0)
                 case "sanity-check-failures-increment":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sanity-check-failures-increment = {data[name]}")
-                    self.sanity_check_failures_increment = check_bool(data[name], name)
+                    self._log_applying(name, value, override)
+                    self.sanity_check_failures_increment = check_bool(value, name)
                 case "sensor-debug-logging":
-                    logging.debug(f"Applying {'override from env/cli' if override else 'configuration'}: sensor-debug-logging = {data[name]}")
-                    self.sensor_debug_logging = check_bool(data[name], name)
+                    self._log_applying(name, value, override)
+                    self.sensor_debug_logging = check_bool(value, name)
                 case "sensor-overrides":
-                    if isinstance(data[name], dict):
-                        for sensor, settings in data[name].items():
+                    if value is None:
+                        pass
+                    elif not isinstance(value, dict):
+                        raise ValueError("sensor-overrides configuration elements must contain a list of class names, each followed by options and their values")
+                    else:
+                        for sensor, settings in value.items():
                             self.sensor_overrides[sensor] = {}
                             for p, v in settings.items():
                                 logging.debug(f"Applying configuration sensor-overrides: {sensor}.{p} = {v}")
+                                ctx = f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -"
                                 match p:
                                     case "debug-logging":
-                                        self.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                        self.sensor_overrides[sensor][p] = check_bool(v, ctx)
                                     case "gain":
-                                        self.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1)
+                                        self.sensor_overrides[sensor][p] = check_int(v, ctx, allow_none=True, min=1)
                                     case "icon":
-                                        self.sensor_overrides[sensor][p] = check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, starts_with="mdi:")
+                                        self.sensor_overrides[sensor][p] = check_string(v, ctx, allow_none=False, starts_with="mdi:")
                                     case "max-failures":
-                                        self.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=True, min=1)
+                                        self.sensor_overrides[sensor][p] = check_int(v, ctx, allow_none=True, min=1)
                                     case "max-failures-retry-interval":
-                                        self.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0)
+                                        self.sensor_overrides[sensor][p] = check_int(v, ctx, allow_none=False, min=0)
                                     case "precision":
-                                        self.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=0, max=6)
+                                        self.sensor_overrides[sensor][p] = check_int(v, ctx, allow_none=False, min=0, max=6)
                                     case "publishable":
-                                        self.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                        self.sensor_overrides[sensor][p] = check_bool(v, ctx)
                                     case "publish-raw":
-                                        self.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                        self.sensor_overrides[sensor][p] = check_bool(v, ctx)
                                     case "scan-interval":
-                                        self.sensor_overrides[sensor][p] = check_int(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False, min=1)
+                                        self.sensor_overrides[sensor][p] = check_int(v, ctx, allow_none=False, min=1)
                                     case "sanity-check-max-value":
-                                        self.sensor_overrides[sensor][p] = check_float(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                        self.sensor_overrides[sensor][p] = check_float(v, ctx, allow_none=False)
                                     case "sanity-check-min-value":
-                                        self.sensor_overrides[sensor][p] = check_float(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                        self.sensor_overrides[sensor][p] = check_float(v, ctx, allow_none=False)
                                     case "sanity-check-delta":
-                                        self.sensor_overrides[sensor][p] = check_bool(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -")
+                                        self.sensor_overrides[sensor][p] = check_bool(v, ctx)
                                     case "unit-of-measurement":
-                                        self.sensor_overrides[sensor][p] = check_string(v, f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} -", allow_none=False)
+                                        self.sensor_overrides[sensor][p] = check_string(v, ctx, allow_none=False)
                                     case _:
                                         raise ValueError(f"Error processing configuration sensor-overrides: {sensor}.{p} = {v} - property is not known or not overridable")
-                    elif data[name] is not None:
-                        raise ValueError("sensor-overrides configuration elements must contain a list of class names, each followed by options and their values")
                 case _:
                     raise ValueError(f"Configuration contains unknown element '{name}'")
 
-    @DualMethod
     def reload(self) -> None:
+        """Reload configuration from the YAML source file and re-apply all overrides.
+
+        The full load sequence on every call:
+
+        1. Reset all attributes to defaults via :meth:`_apply_defaults`.
+        2. If a source file was set by :meth:`load`, parse and apply it.
+        3. Run Modbus auto-discovery if requested (``force``) or not yet cached
+           (``once``), writing results to a YAML cache file for subsequent runs.
+        4. Apply environment variable overrides on top.
+        5. Load the i18n translation for the resolved language.
+        6. Merge auto-discovered devices into :attr:`modbus`.
+
+        Raises:
+            ConfigurationError: If an environment variable override cannot be processed.
+            OSError: If the YAML source file or auto-discovery cache cannot be read or
+                written.
+        """
+        self._apply_defaults(reset_infrastructure=False)
+
         overrides: dict[str, Any] = {
             "home-assistant": {},
             "mqtt": {},
@@ -614,31 +717,14 @@ class Config(metaclass=ConfigMeta):
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_discovered = None
+
         if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
             ping_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT, "0.5"))
             modbus_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, "0.25"))
             modbus_retries = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, "0"))
             logging.info(f"Auto-discovery required, scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
-            try:
-                auto_discovered = asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
-            except RuntimeError:
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        try:
-                            future = asyncio.run_coroutine_threadsafe(
-                                auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries),
-                                loop,
-                            )
-                            auto_discovered = future.result()
-                        except Exception:
-                            logging.exception("Auto-discovery failed when submitting to running loop")
-                            auto_discovered = []
-                    else:
-                        auto_discovered = asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
-                except Exception:
-                    auto_discovered = []
+            auto_discovered = self._run_auto_discovery(port, ping_timeout, modbus_timeout, modbus_retries)
             if len(auto_discovered) > 0:
                 with open(auto_discovery_cache, "w") as f:
                     _yaml = YAML(typ="safe", pure=True)
@@ -656,65 +742,232 @@ class Config(metaclass=ConfigMeta):
         if auto_discovered:
             self._apply_auto_discovery(auto_discovered)
 
-    @DualMethod
+    def _run_auto_discovery(self, port: int, ping_timeout: float, modbus_timeout: float, modbus_retries: int, timeout: float = 120.0) -> list:
+        """Execute the async auto-discovery scan, handling event loop edge cases.
+
+        If no event loop is running, uses asyncio.run(). If called from within
+        already-running async code (e.g. during a reload triggered by a signal
+        handler), submits the coroutine to the running loop via
+        run_coroutine_threadsafe and waits up to *timeout* seconds.
+
+        Args:
+            port: The Modbus TCP port to scan.
+            ping_timeout: Seconds to wait for an ICMP ping response.
+            modbus_timeout: Seconds to wait for a Modbus TCP response.
+            modbus_retries: Number of Modbus connection retries per host.
+            timeout: Maximum seconds to wait when submitting to a running loop.
+
+        Returns:
+            A list of discovered device dicts, or an empty list on failure.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is None:
+            # Normal case: no event loop running, asyncio.run() is safe.
+            try:
+                return asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
+            except Exception:
+                logging.exception("Auto-discovery failed")
+                return []
+
+        # A loop is already running (e.g. called from a signal handler or sync
+        # code invoked from async context). Submit to the running loop from this
+        # thread and wait with a finite timeout to avoid hanging indefinitely.
+        try:
+            future = asyncio.run_coroutine_threadsafe(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries), loop)
+            return future.result(timeout=timeout)
+        except TimeoutError:
+            future.cancel()  # pyrefly: ignore - future is always bound before .result() raises.
+            logging.error("Auto-discovery timed out after %.1fs", timeout)
+            return []
+        except Exception:
+            logging.exception("Auto-discovery failed when submitting to running loop")
+            return []
+
     def version(self) -> str:
+        """Return the current sigenergy2mqtt version string."""
         return version.__version__
 
     @classmethod
     def system_initialize(cls):
-        """Perform system-level initialization (logging, folders)."""
-        # Logging setup
-        if os.isatty(sys.stdout.fileno()):
-            logging.basicConfig(format="{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}", level=logging.INFO, style="{")
-        else:
-            cgroup = Path("/proc/self/cgroup")
-            if Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text()):
-                logging.basicConfig(format="{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}", level=logging.INFO, style="{")
-            else:
-                logging.basicConfig(format="{levelname:<8} {module:.<15.15}{lineno:04d} {message}", level=logging.INFO, style="{")
+        """Perform one-time system-level initialisation before configuration is loaded.
+
+        This classmethod should be called once at application startup, before
+        constructing or loading any :class:`Config` instance.  It:
+
+        1. Configures the root logger with an appropriate format (TTY, Docker, or
+           plain syslog-style) via :func:`_setup_logging`.
+        2. Logs the application and Python version.
+        3. Enforces the minimum Python version requirement (3.12+).
+        4. Locates or creates the persistent state directory via
+           :func:`_create_persistent_state_path`.
+        5. Removes stale state files older than 7 days via :func:`_clean_stale_files`.
+
+        Returns:
+            The resolved :class:`~pathlib.Path` to the persistent state directory.
+
+        Raises:
+            ConfigurationError: If the Python version requirement is not met, or if no
+                writable directory can be found for persistent state storage.
+        """
+        _setup_logging()
 
         logger = logging.getLogger("root")
         logger.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
 
-        # Version check
         min_version = (3, 12)
         if sys.version_info < min_version:
             raise ConfigurationError(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
 
-        # Persistent state path
-        found_path = None
-        for storage_base_path in ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]:
-            if os.path.isdir(storage_base_path) and os.access(storage_base_path, os.W_OK):
-                path = Path(storage_base_path, "sigenergy2mqtt")
-                if not path.is_dir():
-                    logging.info(f"Persistent state folder '{path}' created")
-                    path.mkdir()
-                else:
-                    logging.debug(f"Persistent state folder '{path}' already exists")
-                found_path = path.resolve()
-                break
-
-        if not found_path:
-            raise ConfigurationError("Unable to create persistent state folder!")
-
-        # Stale file cleanup
-        threshold_time = time.time() - (7 * 86400)
-        for file in found_path.iterdir():
-            if (
-                file.is_file()
-                and file.stat().st_mtime < threshold_time
-                and not file.name == ".current-version"
-                and not file.name.endswith(".yaml")
-                and not file.name.endswith(".publishable")
-                and not file.name.endswith(".token")
-            ):
-                logging.info(f"Removing stale state file: {file} (last modified: {time.ctime(file.stat().st_mtime)})")
-                file.unlink()
-
+        found_path = _create_persistent_state_path()
+        _clean_stale_files(found_path)
         return found_path
 
 
-# Global instance for compatibility
-active_config = Config()
+def _setup_logging() -> None:
+    """Configure the root logger with a format appropriate to the runtime environment.
 
-Config.persistent_state_path = Path(".")  # Initial default
+    Three formats are used:
+
+    - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
+    - **Docker**: includes timestamp but no prefix — for structured container log collectors.
+    - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
+    """
+    if os.isatty(sys.stdout.fileno()):
+        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
+    else:
+        cgroup = Path("/proc/self/cgroup")
+        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
+    logging.basicConfig(format=fmt, level=logging.INFO, style="{")
+
+
+def _create_persistent_state_path() -> Path:
+    """Find a writable base directory and create the ``sigenergy2mqtt`` subdirectory.
+
+    Candidate base directories are tried in order: ``/data/``, ``/var/lib/``, the
+    current user's home directory, and ``/tmp/``.  The first writable candidate is
+    used.
+
+    Returns:
+        The resolved absolute :class:`~pathlib.Path` of the persistent state directory.
+
+    Raises:
+        ConfigurationError: If none of the candidate directories are writable.
+    """
+    candidates = ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]
+    for base in candidates:
+        if os.path.isdir(base) and os.access(base, os.W_OK):
+            path = Path(base, "sigenergy2mqtt")
+            if not path.is_dir():
+                logging.info(f"Persistent state folder '{path}' created")
+                path.mkdir()
+            else:
+                logging.debug(f"Persistent state folder '{path}' already exists")
+            return path.resolve()
+    raise ConfigurationError("Unable to create persistent state folder!")
+
+
+def _clean_stale_files(path: Path) -> None:
+    """Remove files from *path* that have not been modified in the last 7 days.
+
+    The following files are always retained regardless of age:
+
+    - ``".current-version"``
+    - Files with the suffix ``.yaml``, ``.publishable``, or ``.token``
+
+    Args:
+        path: The directory to clean.  Only regular files are considered;
+            subdirectories are ignored.
+    """
+    threshold_time = time.time() - (7 * 86400)
+    _keep_suffixes = {".yaml", ".publishable", ".token"}
+    _keep_names = {".current-version"}
+    for file in path.iterdir():
+        if not file.is_file():
+            continue
+        stat = file.stat()
+        if stat.st_mtime < threshold_time and file.name not in _keep_names and file.suffix not in _keep_suffixes:
+            try:
+                file.unlink()
+                logging.info(f"Removed stale state file: {file} (last modified: {time.ctime(stat.st_mtime)})")
+            except (PermissionError, OSError) as e:
+                logging.error(f"Failed to remove stale state file: {file} ({e})")
+
+
+class _ConfigProxy:
+    """A proxy for the active Config instance that allows it to be swapped.
+
+    This ensures that internal modules which do 'from sigenergy2mqtt.config import active_config'
+    continue to refer to the same proxy object even when the underlying Config is replaced
+    by _swap_active_config.
+    """
+
+    def __init__(self, config: Config):
+        # Use super().__setattr__ to avoid recursion
+        super().__setattr__("_config", config)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._config, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == "_config":
+            super().__setattr__(name, value)
+        else:
+            setattr(self._config, name, value)
+
+    def __delattr__(self, name: str) -> None:
+        if name == "_config":
+            super().__delattr__(name)
+        else:
+            delattr(self._config, name)
+
+    def __repr__(self) -> str:
+        return f"<ConfigProxy for {self._config!r}>"
+
+    def __dir__(self):
+        return dir(self._config)
+
+
+@contextmanager
+def _swap_active_config(new_config: Config) -> Generator[Config, None, None]:
+    """Context manager that temporarily replaces the global :data:`active_config`.
+
+    Intended for use in tests that need to load a fixture configuration without
+    affecting the global singleton used by production code.  The original
+    ``active_config`` is restored when the context exits, even if an exception is
+    raised.
+
+    Args:
+        new_config: The :class:`Config` instance to install as the active config.
+
+    Yields:
+        *new_config*, so callers can use ``as`` to receive it::
+
+            with _swap_active_config(Config()) as cfg:
+                cfg.load("test_fixture.yaml")
+                ...
+    """
+    global active_config
+    if isinstance(active_config, _ConfigProxy):
+        old = active_config._config
+        active_config._config = new_config
+        try:
+            yield new_config
+        finally:
+            active_config._config = old
+    else:
+        # Fallback for when active_config is not proxied (e.g. during some edge cases in tests)
+        old = active_config
+        active_config = new_config
+        try:
+            yield new_config
+        finally:
+            active_config = old
+
+
+# Global singleton — the authoritative configuration instance at runtime.
+active_config = _ConfigProxy(Config())

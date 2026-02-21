@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import (
     ACChargerAlarm1,
@@ -29,21 +30,23 @@ def clear_sensor_registry():
 
 @pytest.fixture
 def mock_config():
-    with patch("sigenergy2mqtt.sensors.ac_charger_read_only.Config") as mock_ro_config, patch("sigenergy2mqtt.sensors.ac_charger_read_write.Config") as mock_rw_config:
-        for cfg in [mock_ro_config, mock_rw_config]:
-            cfg.home_assistant.entity_id_prefix = "sigenergy"
-            cfg.home_assistant.unique_id_prefix = "sigenergy"
-            cfg.home_assistant.discovery_prefix = "homeassistant"
-            cfg.home_assistant.enabled = True
-            cfg.home_assistant.use_simplified_topics = False
-            cfg.home_assistant.edit_percentage_with_box = False
-            cfg.modbus = [MagicMock()]
-            cfg.modbus[0].scan_interval.high = 10
-            cfg.modbus[0].scan_interval.realtime = 5
-            cfg.modbus[0].scan_interval.low = 600
-            cfg.modbus[0].scan_interval.medium = 60
+    cfg = Config()
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
 
-        yield mock_ro_config
+    mock_modbus = MagicMock()
+    mock_modbus.scan_interval.high = 10
+    mock_modbus.scan_interval.realtime = 5
+    mock_modbus.scan_interval.low = 600
+    mock_modbus.scan_interval.medium = 60
+    cfg.modbus = [mock_modbus]
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestACChargerReadOnly:

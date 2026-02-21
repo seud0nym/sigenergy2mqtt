@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import requests
 
-from sigenergy2mqtt.config import Config, OutputField
+from sigenergy2mqtt.config import OutputField, active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.config.pvoutput_config import ConsumptionSource, StatusField, VoltageSource
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
@@ -301,7 +301,7 @@ class TestPVOutputOutput:
             await svc._upload(payload, last_upload_of_day=False)
             assert "Upload completed" in caplog.text
 
-        with patch.object(Config.pvoutput, "output_hour", -1):
+        with patch.object(active_config.pvoutput, "output_hour", -1):
             svc._previous_payload = None
             with patch.object(svc, "upload_payload", AsyncMock(return_value=True)), patch.object(svc, "_verify", AsyncMock(return_value=True)):
                 await svc._upload(payload, last_upload_of_day=False)

@@ -18,7 +18,7 @@ os.environ["SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID"] = "1"
 with patch.object(sys, "argv", ["sigenergy2mqtt"]):
     try:
         from sigenergy2mqtt import i18n
-        from sigenergy2mqtt.config import Config
+        from sigenergy2mqtt.config import active_config
         from sigenergy2mqtt.devices.device import DeviceRegistry
         from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
         from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
@@ -38,7 +38,7 @@ def mock_persistent_state_path(request, tmp_path, reset_config):
     if "no_persistent_state_mock" in [m.name for m in request.node.iter_markers()]:
         yield tmp_path
     else:
-        with patch("sigenergy2mqtt.config.Config.persistent_state_path", tmp_path):
+        with patch("sigenergy2mqtt.config.active_config.persistent_state_path", tmp_path):
             yield tmp_path
 
 
@@ -74,12 +74,12 @@ def reset_config():
     # Save all SIGENERGY2MQTT_* env vars
     saved_env = {k: v for k, v in os.environ.items() if k.startswith("SIGENERGY2MQTT_")}
 
-    # Ensure baseline env vars are set for Config.reload()
+    # Ensure baseline env vars are set for active_config.reload()
     for k, v in _BASELINE_ENV.items():
         os.environ[k] = v
 
-    Config.reset()
-    Config.reload()
+    active_config.reset()
+    active_config.reload()
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()

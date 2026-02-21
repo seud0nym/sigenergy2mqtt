@@ -23,7 +23,7 @@ import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter, RegisterAccess
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
@@ -149,7 +149,7 @@ class SensorDebuggingMixin:
     """Mixin that adds debug logging capability to sensors."""
 
     def __init__(self, **kwargs):
-        self.debug_logging: bool = kwargs.get("debug_logging", Config.sensor_debug_logging)
+        self.debug_logging: bool = cast(bool, kwargs.get("debug_logging", active_config.sensor_debug_logging))
         super().__init__(**kwargs)
 
 
@@ -238,7 +238,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self[DiscoveryKeys.STATE_CLASS] = state_class
         self[DiscoveryKeys.UNIT_OF_MEASUREMENT] = unit
         self[DiscoveryKeys.DISPLAY_PRECISION] = precision
-        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = Config.home_assistant.enabled_by_default
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = active_config.home_assistant.enabled_by_default
 
         self._gain: float | None = gain
 
@@ -249,7 +249,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         # Use sanitized unique_id for file paths
         safe_unique_id = _sanitize_path_component(unique_id)
-        self._persistent_publish_state_file: Path = Path(Config.persistent_state_path, f"{safe_unique_id}.publishable")
+        self._persistent_publish_state_file: Path = Path(active_config.persistent_state_path, f"{safe_unique_id}.publishable")
 
         # State history - use deque for efficient bounded collection
         self._states: Deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
@@ -299,8 +299,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if unique_id in self._used_unique_ids and self._used_unique_ids[unique_id] != self.__class__.__name__:
             raise AssertionError(f"{self.__class__.__name__} unique_id {unique_id} has already been used for class {self._used_unique_ids[unique_id]}")
 
-        if not unique_id.startswith(Config.home_assistant.unique_id_prefix):
-            raise AssertionError(f"{self.__class__.__name__} unique_id {unique_id} does not start with '{Config.home_assistant.unique_id_prefix}'")
+        if not unique_id.startswith(active_config.home_assistant.unique_id_prefix):
+            raise AssertionError(f"{self.__class__.__name__} unique_id {unique_id} does not start with '{active_config.home_assistant.unique_id_prefix}'")
 
     def _validate_object_id(self, object_id: str) -> None:
         """Validate that object_id is not duplicated and has correct prefix.
@@ -314,8 +314,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if object_id in self._used_object_ids and self._used_object_ids[object_id] != self.__class__.__name__:
             raise AssertionError(f"{self.__class__.__name__} object_id {object_id} has already been used for class {self._used_object_ids[object_id]}")
 
-        if not object_id.startswith(Config.home_assistant.entity_id_prefix):
-            raise AssertionError(f"{self.__class__.__name__} object_id {object_id} does not start with '{Config.home_assistant.entity_id_prefix}'")
+        if not object_id.startswith(active_config.home_assistant.entity_id_prefix):
+            raise AssertionError(f"{self.__class__.__name__} object_id {object_id} does not start with '{active_config.home_assistant.entity_id_prefix}'")
 
     # =========================================================================
     # Properties
@@ -459,11 +459,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             registers: Register access configuration for this device
         """
         # Pre-compile regex patterns for efficiency
-        identifier_patterns = {identifier: re.compile(identifier) for identifier in Config.sensor_overrides.keys()}
+        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}
 
         for identifier, pattern in identifier_patterns.items():
             if self._matches_override_pattern(pattern):
-                self._apply_override(identifier, Config.sensor_overrides[identifier])
+                self._apply_override(identifier, active_config.sensor_overrides[identifier])
 
         # Apply device-level overrides
         if self.publishable and registers:
@@ -643,9 +643,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self[DiscoveryKeys.RAW_STATE_TOPIC] = f"{base}/raw"
         self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC] = f"{base}/attributes"
 
-        if Config.home_assistant.enabled:
+        if active_config.home_assistant.enabled:
             self[DiscoveryKeys.AVAILABILITY_MODE] = "all"
-            self[DiscoveryKeys.AVAILABILITY] = [{"topic": f"{Config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
+            self[DiscoveryKeys.AVAILABILITY] = [{"topic": f"{active_config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
 
         if self.debug_logging:
             self._log_configured_topics()
@@ -661,14 +661,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Returns:
             Base topic path
         """
-        if Config.home_assistant.enabled and not Config.home_assistant.use_simplified_topics:
-            return f"{Config.home_assistant.discovery_prefix}/{self[DiscoveryKeys.PLATFORM]}/{device_id}/{self[DiscoveryKeys.OBJECT_ID]}"
+        if active_config.home_assistant.enabled and not active_config.home_assistant.use_simplified_topics:
+            return f"{active_config.home_assistant.discovery_prefix}/{self[DiscoveryKeys.PLATFORM]}/{device_id}/{self[DiscoveryKeys.OBJECT_ID]}"
         else:
             return f"sigenergy2mqtt/{self[DiscoveryKeys.OBJECT_ID]}"
 
     def _log_configured_topics(self) -> None:
         """Log the configured MQTT topics for debugging."""
-        logging.debug(f"{self.__class__.__name__} Configured MQTT topics (enabled={Config.home_assistant.enabled} simplified={Config.home_assistant.use_simplified_topics})")
+        logging.debug(f"{self.__class__.__name__} Configured MQTT topics (enabled={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
         for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
             if key in self:
                 logging.debug(f"{self.__class__.__name__} >>> {key}={self[key]})")
@@ -681,7 +681,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         attributes: dict[str, float | int | str] = {}
 
-        if not Config.home_assistant.enabled:
+        if not active_config.home_assistant.enabled:
             attributes[SensorAttributeKeys.NAME] = self.name
             if self.unit:
                 attributes[SensorAttributeKeys.UNIT_OF_MEASUREMENT] = self.unit
@@ -728,7 +728,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 del config[DiscoveryKeys.RAW_STATE_TOPIC]
 
         # Handle unpublishable sensors
-        if self.publishable and not Config.clean:
+        if self.publishable and not active_config.clean:
             self._cleanup_persistent_state_file()
         else:
             components = self._handle_unpublishable_discovery(mqtt_client, components)
@@ -740,7 +740,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self._persistent_publish_state_file.exists():
             try:
                 self._persistent_publish_state_file.unlink(missing_ok=True)
-                logging.debug(f"{self.__class__.__name__} Removed {self._persistent_publish_state_file} (publishable={self.publishable} clean={Config.clean})")
+                logging.debug(f"{self.__class__.__name__} Removed {self._persistent_publish_state_file} (publishable={self.publishable} clean={active_config.clean})")
             except OSError as e:
                 logging.warning(f"Failed to remove persistent state file: {e}")
 
@@ -761,10 +761,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
         # Handle persistent state file
-        if self._persistent_publish_state_file.exists() or Config.clean:
+        if self._persistent_publish_state_file.exists() or active_config.clean:
             components = {}
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery (persistent file exists={self._persistent_publish_state_file.exists()} clean={Config.clean})")
+                logging.debug(f"{self.__class__.__name__} unpublished - removed all discovery (persistent file exists={self._persistent_publish_state_file.exists()} clean={active_config.clean})")
         else:
             # Create minimal discovery to remove entity
             for comp_id in components.keys():
@@ -934,7 +934,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         else:
             raise
 
-        if Config.home_assistant.enabled:
+        if active_config.home_assistant.enabled:
             self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{repr(error)}")
 
         if self._failures >= self._max_failures:
@@ -948,7 +948,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Args:
             error: The exception that occurred
         """
-        if isinstance(error, SanityCheckException) and not Config.sanity_check_failures_increment:
+        if isinstance(error, SanityCheckException) and not active_config.sanity_check_failures_increment:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} SanityCheck failure ignored for failure counting ({self._failures} failures)")
         else:
@@ -1034,7 +1034,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             self.set_state(state)
             updated = True
         else:
-            interval = Config.repeated_state_publish_interval
+            interval = active_config.repeated_state_publish_interval
             if interval == 0:
                 # Always republish even when the value is unchanged.
                 self.set_state(state)
@@ -1076,7 +1076,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         pattern = re.compile(identifier)
         if self._matches_override_pattern(pattern):
-            return Config.sensor_overrides[identifier]
+            return active_config.sensor_overrides[identifier]
         return None
 
     def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
@@ -1331,7 +1331,7 @@ class ReadableSensorMixin(Sensor):
 
     def _apply_scan_interval_overrides(self) -> None:
         """Apply scan interval overrides from configuration."""
-        for identifier in Config.sensor_overrides.keys():
+        for identifier in active_config.sensor_overrides.keys():
             overrides = self._get_applicable_overrides(identifier)
             if overrides and "scan-interval" in overrides:
                 if self.scan_interval != overrides["scan-interval"]:
@@ -1349,7 +1349,7 @@ class ReadableSensorMixin(Sensor):
         """
         pattern = re.compile(identifier)
         if self._matches_override_pattern(pattern):
-            return Config.sensor_overrides[identifier]
+            return active_config.sensor_overrides[identifier]
         return None
 
 
@@ -1386,7 +1386,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         if unique_id_override is not None:
             kwargs[DiscoveryKeys.UNIQUE_ID] = unique_id_override
         else:
-            kwargs[DiscoveryKeys.UNIQUE_ID] = f"{Config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{address}"
+            kwargs[DiscoveryKeys.UNIQUE_ID] = f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{address}"
 
         self.unique_id = kwargs[DiscoveryKeys.UNIQUE_ID]
 
@@ -2314,7 +2314,7 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
         base = super().configure_mqtt_topics(device_id)
 
         # Add availability from control sensor if configured
-        if self._availability_control_sensor is not None and Config.home_assistant.enabled:
+        if self._availability_control_sensor is not None and active_config.home_assistant.enabled:
             control_topic = self._availability_control_sensor.state_topic
 
             if not control_topic or control_topic.isspace():
@@ -2402,7 +2402,7 @@ class NumericSensor(ReadWriteSensor):
             self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
 
         # Set input mode and step
-        self[DiscoveryKeys.MODE] = "slider" if (unit == PERCENTAGE and not Config.home_assistant.edit_percentage_with_box) else "box"
+        self[DiscoveryKeys.MODE] = "slider" if (unit == PERCENTAGE and not active_config.home_assistant.edit_percentage_with_box) else "box"
         self[DiscoveryKeys.STEP] = 1 if precision is None else 10**-precision
 
         # Update sanity check ranges
@@ -2549,10 +2549,11 @@ class NumericSensor(ReadWriteSensor):
                 value = max(max_range) if not raw else max(max_range)
 
         if value != processed and self.debug_logging:
-            # Re-apply gain to revert to back to raw value if necessary
-            if raw and self.gain and self.gain != 1:
-                value *= self.gain
             logging.debug(f"{self.__class__.__name__} value={state} adjusted to {value}")
+
+        # Re-apply gain to revert to back to raw value if necessary
+        if raw and self.gain and self.gain != 1:
+            return value * self.gain
 
         return value
 
@@ -2878,7 +2879,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             address,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=(Config.modbus[plant_index].scan_interval.realtime if plant_index < len(Config.modbus) else 5),
+            scan_interval=(active_config.modbus[plant_index].scan_interval.realtime if plant_index < len(active_config.modbus) else 5),
             unit=None,
             device_class=None,
             state_class=None,
@@ -3008,7 +3009,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         Returns:
             Possibly truncated alarm string
         """
-        if not Config.home_assistant.enabled:
+        if not active_config.home_assistant.enabled:
             return alarms
 
         max_len = 255 if not max_length or max_length <= 0 else max_length
@@ -3287,7 +3288,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
                 result = state if result == no_alarm else f"{result}, {state}"
 
                 # Truncate if needed for Home Assistant
-                if len(result) > 255 and Config.home_assistant.enabled:
+                if len(result) > 255 and active_config.home_assistant.enabled:
                     result = self._compress_alarm_string(result)
 
         self.set_state(result)
@@ -3350,7 +3351,7 @@ class RunningStateSensor(ReadOnlySensor):
             address,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=(Config.modbus[plant_index].scan_interval.high if plant_index < len(Config.modbus) else 10),
+            scan_interval=(active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10),
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -3453,7 +3454,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             uid = "mock_uid"
 
         safe_uid = _sanitize_path_component(uid)
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{safe_uid}.state")
+        self._persistent_state_file = Path(active_config.persistent_state_path, f"{safe_uid}.state")
 
         # Load persisted state
         self._load_persisted_state()
@@ -3715,7 +3716,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             uid = "mock_uid_atmidnight"
 
         safe_uid = _sanitize_path_component(uid)
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{safe_uid}.atmidnight")
+        self._persistent_state_file = Path(active_config.persistent_state_path, f"{safe_uid}.atmidnight")
 
         # Load midnight state if it's from today
         self._load_midnight_state()

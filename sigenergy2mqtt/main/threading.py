@@ -4,7 +4,7 @@ import logging
 import threading
 from typing import Any, Awaitable
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
@@ -20,28 +20,28 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
     modbus_client: ModbusClientType | None = None
     tasks: list[Awaitable[Any]] = []
 
-    if config.host is None or Config.clean:
+    if config.host is None or active_config.clean:
         modbus_client = None
     else:
         modbus_client = await ModbusClientFactory.get_client(config.host, config.port if config.port else 502, config.timeout, config.retries)
 
-    mqtt_client_id = f"{Config.mqtt.client_id_prefix}_{config.description}"
+    mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
     for device in config.device_init:
-        method = device.publish_discovery if Config.home_assistant.enabled else device.publish_attributes
-        if Config.clean:
+        method = device.publish_discovery if active_config.home_assistant.enabled else device.publish_attributes
+        if active_config.clean:
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=True)
-        if not Config.clean:  # Publish HA device
+        if not active_config.clean:  # Publish HA device
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=False)
 
-        if Config.home_assistant.enabled and (Config.clean or Config.home_assistant.discovery_only):
-            logging.info(f"{device.name} configured for {'clean' if Config.clean else 'discovery'} only - shutting down...")
+        if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
+            logging.info(f"{device.name} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
         else:
             logging.debug(f"{device.name} registering MQTT subscriptions")
             device.subscribe(mqtt_client, mqtt_handler)
 
-            if Config.home_assistant.enabled:
+            if active_config.home_assistant.enabled:
                 device.publish_availability(mqtt_client, "online")
 
             logging.debug(f"{device.name} scheduling tasks")
@@ -57,7 +57,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
         except asyncio.CancelledError:
             logging.info(f"{config.url} scheduled tasks interrupted")
 
-        if Config.home_assistant.enabled:
+        if active_config.home_assistant.enabled:
             for device in config.devices:
                 device.publish_availability(mqtt_client, "offline")
 
@@ -65,7 +65,7 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
         logging.info(f"Closing Modbus connection to {config.url}")
         modbus_client.close()
 
-    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{Config.mqtt.broker}:{Config.mqtt.port}")
+    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
     await mqtt_handler.close()

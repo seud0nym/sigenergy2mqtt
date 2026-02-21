@@ -4,7 +4,7 @@ import pytest
 import requests
 
 import sigenergy2mqtt.influxdb.influx_base as base_module
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
@@ -29,15 +29,15 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
 
     monkeypatch.setattr(requests.Session, "post", fake_post)
 
-    prev_enabled = getattr(Config.influxdb, "enabled", False)
-    prev_db = Config.influxdb.database
-    prev_pwd = Config.influxdb.password
-    prev_tok = Config.influxdb.token
+    prev_enabled = getattr(active_config.influxdb, "enabled", False)
+    prev_db = active_config.influxdb.database
+    prev_pwd = active_config.influxdb.password
+    prev_tok = active_config.influxdb.token
 
     try:
-        Config.influxdb.enabled = True
-        Config.influxdb.database = "test_db"
-        Config.influxdb.token = "mytoken"
+        active_config.influxdb.enabled = True
+        active_config.influxdb.database = "test_db"
+        active_config.influxdb.token = "mytoken"
 
         svc = InfluxService(MagicMock(), plant_index=0)
         await svc.async_init()
@@ -52,10 +52,10 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
         assert "/api/v2/write" in calls[0]
 
     finally:
-        Config.influxdb.enabled = prev_enabled
-        Config.influxdb.database = prev_db
-        Config.influxdb.password = prev_pwd
-        Config.influxdb.token = prev_tok
+        active_config.influxdb.enabled = prev_enabled
+        active_config.influxdb.database = prev_db
+        active_config.influxdb.password = prev_pwd
+        active_config.influxdb.token = prev_tok
 
 
 @pytest.mark.integration
@@ -74,22 +74,22 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
 
     monkeypatch.setattr(requests.Session, "post", fake_post)
 
-    prev_enabled = getattr(Config.influxdb, "enabled", False)
-    prev_db = Config.influxdb.database
-    prev_pwd = Config.influxdb.password
+    prev_enabled = getattr(active_config.influxdb, "enabled", False)
+    prev_db = active_config.influxdb.database
+    prev_pwd = active_config.influxdb.password
     try:
-        Config.influxdb.enabled = True
-        Config.influxdb.database = "test_db"
-        Config.influxdb.password = None
+        active_config.influxdb.enabled = True
+        active_config.influxdb.database = "test_db"
+        active_config.influxdb.password = None
 
         svc = InfluxService(MagicMock(), plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v2_http"
         assert svc._write_url is not None
     finally:
-        Config.influxdb.enabled = prev_enabled
-        Config.influxdb.database = prev_db
-        Config.influxdb.password = prev_pwd
+        active_config.influxdb.enabled = prev_enabled
+        active_config.influxdb.database = prev_db
+        active_config.influxdb.password = prev_pwd
 
 
 @pytest.mark.integration
@@ -441,7 +441,7 @@ async def testcopy_records_v1_success(monkeypatch):
     # Configure writer
     svc._writer_type = "v1_http"
     svc._write_url = "http://localhost:8086/write"
-    Config.influxdb.database = "target_db"
+    active_config.influxdb.database = "target_db"
 
     query_result = {
         "results": [
@@ -537,7 +537,7 @@ async def testcopy_records_v1_multiple_series(monkeypatch):
 
     svc._writer_type = "v1_http"
     svc._write_url = "http://localhost:8086/write"
-    Config.influxdb.database = "target_db"
+    active_config.influxdb.database = "target_db"
 
     query_result = {
         "results": [

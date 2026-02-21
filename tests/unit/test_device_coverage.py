@@ -1,6 +1,7 @@
 """
 Tests targeting uncovered lines in sigenergy2mqtt/devices/device.py.
 """
+
 import asyncio
 import types
 from unittest.mock import AsyncMock, MagicMock, call, patch
@@ -177,6 +178,7 @@ class DummyObservable(ObservableMixin, ReadableSensorMixin, Sensor):
 
 class DummyDerived(DerivedSensor):
     """Minimal DerivedSensor stub."""
+
     def __init__(self, unique_id, protocol_version=Protocol.V1_8):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
@@ -200,11 +202,11 @@ class DummyDerived(DerivedSensor):
 
 class DummyModbusSensor(ModbusSensorMixin, DummyReadable):
     """A readable sensor that also looks like a Modbus sensor."""
+
     def __init__(self, unique_id, address=10, count=1, device_address=1, publishable=True, protocol_version=Protocol.V1_8):
         super().__init__(unique_id, publishable=publishable, address=address, count=count, protocol_version=protocol_version)
         object.__setattr__(self, "device_address", device_address)
         object.__setattr__(self, "input_type", InputType.HOLDING)
-
 
 
 class ConcreteModbusDevice(ModbusDevice):
@@ -216,22 +218,24 @@ class ConcreteModbusDevice(ModbusDevice):
 # ---------------------------------------------------------------------------
 
 
+from sigenergy2mqtt.config import _swap_active_config
+
+
 @pytest.fixture(autouse=True)
 def mock_config():
-    with patch("sigenergy2mqtt.devices.device.Config") as mock_conf:
-        mock_conf.modbus = [
-            types.SimpleNamespace(registers={}, disable_chunking=False)
-        ]
-        mock_conf.home_assistant = types.SimpleNamespace(
-            device_name_prefix="",
-            unique_id_prefix="sigen",
-            discovery_prefix="homeassistant",
-            enabled=True,
-            republish_discovery_interval=60,
-        )
-        mock_conf.origin = {}
-        mock_conf.persistent_state_path = "."
-        yield mock_conf
+    cfg = Config()
+    cfg.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    cfg.home_assistant = types.SimpleNamespace(
+        device_name_prefix="",
+        unique_id_prefix="sigen",
+        discovery_prefix="homeassistant",
+        enabled=True,
+        republish_discovery_interval=60,
+    )
+    cfg.origin = {}
+    cfg.persistent_state_path = "."
+    with _swap_active_config(cfg):
+        yield cfg
     DeviceRegistry._devices.clear()
 
 
@@ -243,6 +247,7 @@ def device():
 # ===========================================================================
 # unknown kwargs in Device.__init__ are silently ignored
 # ===========================================================================
+
 
 def test_device_init_ignores_unknown_kwargs():
     """extra kwargs that are not recognised device attributes are logged and dropped."""
@@ -257,10 +262,11 @@ def test_device_init_ignores_unknown_kwargs():
 # online property / setter branches
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_online_getter_returns_false_when_future_cancelled(device):
     """getter returns False when Future is cancelled."""
-    fut = asyncio.get_event_loop().create_future()
+    fut = asyncio.get_running_loop().create_future()
     fut.cancel()
     device._online = fut
     assert device.online is False
@@ -269,7 +275,7 @@ async def test_online_getter_returns_false_when_future_cancelled(device):
 @pytest.mark.asyncio
 async def test_online_getter_returns_true_when_future_not_cancelled(device):
     """getter returns True when Future is not cancelled."""
-    fut = asyncio.get_event_loop().create_future()
+    fut = asyncio.get_running_loop().create_future()
     device._online = fut
     assert device.online is True
     fut.cancel()
@@ -281,9 +287,10 @@ def test_online_setter_raises_on_true(device):
         device.online = True
 
 
-def test_online_setter_accepts_future(device):
+@pytest.mark.asyncio
+async def test_online_setter_accepts_future(device):
     """Lines 120-122: setting online to a Future stores it."""
-    fut = asyncio.get_event_loop().create_future()
+    fut = asyncio.get_running_loop().create_future()
     device.online = fut
     assert device._online is fut
     fut.cancel()
@@ -295,12 +302,13 @@ def test_online_setter_raises_on_invalid_type(device):
         device.online = "invalid"
 
 
-def test_online_setter_false_cancels_future_and_propagates(device):
+@pytest.mark.asyncio
+async def test_online_setter_false_cancels_future_and_propagates(device):
     """Line 116-119: setting False cancels the Future and propagates to children."""
-    fut = asyncio.get_event_loop().create_future()
+    fut = asyncio.get_running_loop().create_future()
     device._online = fut
     child = Device("Child", 0, "child_uid_x", "mf", "model", Protocol.V1_8)
-    child_fut = asyncio.get_event_loop().create_future()
+    child_fut = asyncio.get_running_loop().create_future()
     child._online = child_fut
     device.children.append(child)
 
@@ -314,6 +322,7 @@ def test_online_setter_false_cancels_future_and_propagates(device):
 # ===========================================================================
 # _add_child_device when no publishable sensors
 # ===========================================================================
+
 
 def test_add_child_device_no_publishable_sensors(device):
     """child without publishable sensors is not added to children list."""
@@ -335,6 +344,7 @@ def test_add_child_device_with_publishable_sensor(device):
 # ===========================================================================
 # _add_derived_sensor branches
 # ===========================================================================
+
 
 def test_add_derived_sensor_protocol_version_too_high(device):
     """Lines 323-326: derived sensor with protocol_version > device version is skipped."""
@@ -386,6 +396,7 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
 # _create_sensor_scan_groups: non-modbus sensors group
 # ===========================================================================
 
+
 def test_create_sensor_scan_groups_non_modbus(device):
     """non-Modbus readable sensors end up in their own scan group."""
     s = DummyReadable("non_modbus_s", publishable=True)
@@ -396,10 +407,10 @@ def test_create_sensor_scan_groups_non_modbus(device):
     assert s in groups["non_modbus_sensors"]
 
 
-
 # ===========================================================================
 # publish_updates
 # ===========================================================================
+
 
 @pytest.mark.asyncio
 async def test_publish_updates_exits_when_offline(device):
@@ -612,15 +623,17 @@ async def test_publish_updates_sleep_interrupted_by_cancel(device):
 # republish_discovery loop
 # ===========================================================================
 
+
 @pytest.mark.asyncio
 async def test_republish_discovery_runs_and_exits(device):
     """republish_discovery publishes at the correct interval then exits."""
     fut = asyncio.get_event_loop().create_future()
     device._online = fut
 
-    with patch("sigenergy2mqtt.devices.device.Config") as mock_conf:
-        mock_conf.home_assistant = types.SimpleNamespace(republish_discovery_interval=2)
+    cfg = Config()
+    cfg.home_assistant = types.SimpleNamespace(republish_discovery_interval=2)
 
+    with _swap_active_config(cfg):
         discovery_calls = []
         device.publish_discovery = lambda *a, **kw: discovery_calls.append(True)
 
@@ -646,8 +659,10 @@ async def test_republish_discovery_cancelled(device):
     fut = asyncio.get_event_loop().create_future()
     device._online = fut
 
-    with patch("sigenergy2mqtt.devices.device.Config") as mock_conf:
-        mock_conf.home_assistant = types.SimpleNamespace(republish_discovery_interval=100)
+    cfg = Config()
+    cfg.home_assistant = types.SimpleNamespace(republish_discovery_interval=100)
+
+    with _swap_active_config(cfg):
 
         async def raise_cancel(t):
             raise asyncio.CancelledError()
@@ -663,16 +678,16 @@ async def test_republish_discovery_cancelled(device):
 # schedule skips groups with no publishable sensors
 # ===========================================================================
 
+
 def test_schedule_skips_non_publishable_group(device):
     """Lines 835-836: groups with no publishable sensors are not scheduled."""
     s = DummyReadable("s_not_publishable", publishable=False)
     device._add_read_sensor(s)
 
-    with patch("sigenergy2mqtt.devices.device.Config") as mock_conf:
-        mock_conf.home_assistant = types.SimpleNamespace(
-            enabled=False, republish_discovery_interval=0
-        )
-        mock_conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    cfg = Config()
+    cfg.home_assistant = types.SimpleNamespace(enabled=False, republish_discovery_interval=0)
+    cfg.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    with _swap_active_config(cfg):
         tasks = device.schedule(MagicMock(), MagicMock())
 
     # No publishable sensors → no tasks (republish_discovery also disabled)
@@ -682,6 +697,7 @@ def test_schedule_skips_non_publishable_group(device):
 # ===========================================================================
 # subscribe error handling
 # ===========================================================================
+
 
 def test_subscribe_writable_sensor_exception_logged(device):
     """Lines 872-874: exception during writable sensor subscription is logged."""
@@ -715,6 +731,7 @@ def test_subscribe_observable_exception_logged(device):
 # ModbusDevice __init__ with explicit unique_id
 # ===========================================================================
 
+
 def test_modbus_device_explicit_unique_id():
     """unique_id kwarg is accepted and used directly."""
     dev = ConcreteModbusDevice(None, "ExplicitUID", 0, 1, "model", Protocol.V1_8, unique_id="sigen_explicit_uid")
@@ -739,6 +756,7 @@ def test_modbus_device_invalid_address():
 # ModbusDevice._add_read_sensor protocol version checks
 # ===========================================================================
 
+
 def test_modbus_device_add_read_sensor_protocol_too_high():
     """Lines 962-965: sensor with protocol_version > device is skipped."""
     dev = ConcreteModbusDevice(None, "Dev", 0, 1, "model", Protocol.V1_8)
@@ -759,8 +777,10 @@ def test_modbus_device_add_read_sensor_protocol_matches():
 # ModbusDevice._add_writeonly_sensor checks
 # ===========================================================================
 
+
 def test_modbus_device_add_writeonly_wrong_type():
     """Line 1005 area: sensor of wrong DeviceType is rejected."""
+
     class InverterDevice(ModbusDevice):
         def __init__(self, *args, **kwargs):
             super().__init__(HybridInverter(), *args, **kwargs)
@@ -791,8 +811,10 @@ def test_modbus_device_add_writeonly_valid():
 # _add_read_sensor when sensor not a ReadableSensorMixin
 # ===========================================================================
 
+
 def test_add_read_sensor_not_readable(device):
     """Lines 1042-1043: adding a non-ReadableSensorMixin logs error and returns False."""
+
     class NotReadable(Sensor):
         def __init__(self, uid):
             self.unique_id = uid
@@ -822,6 +844,7 @@ def test_add_read_sensor_not_readable(device):
 # _add_read_sensor with a named group
 # ===========================================================================
 
+
 def test_add_read_sensor_with_group(device):
     """Lines 1053-1055: sensor added under a named group is stored in group_sensors."""
     s = DummyReadable("s_grouped", publishable=True)
@@ -844,6 +867,7 @@ def test_add_read_sensor_appends_to_existing_group(device):
 # _add_to_all_sensors duplicate guard / debug path
 # ===========================================================================
 
+
 def test_add_to_all_sensors_duplicate_skipped(device):
     """adding a sensor that already exists is silently skipped."""
     s = DummyReadable("s_dup", publishable=True)
@@ -862,10 +886,10 @@ def test_add_to_all_sensors_debug_logging_enabled(device):
         mock_log.debug.assert_called()
 
 
-
 # ===========================================================================
 # publish_availability propagates to children
 # ===========================================================================
+
 
 def test_publish_availability_propagates_to_children(device):
     """publish_availability is called on each child device."""
@@ -882,6 +906,7 @@ def test_publish_availability_propagates_to_children(device):
 # ===========================================================================
 # publish_discovery with no components (empty device)
 # ===========================================================================
+
 
 def test_publish_discovery_no_components(device):
     """Lines 1155-1157: when there are no discovery components, empty discovery is published."""
@@ -904,6 +929,7 @@ def test_publish_discovery_clean(device):
 # publish_discovery with components
 # ===========================================================================
 
+
 def test_publish_discovery_with_components():
     """Lines 1167+: discovery JSON is published when sensors have components."""
     dev = Device("Disco", 0, "uid_disco", "mf", "model", Protocol.V1_8)
@@ -922,6 +948,7 @@ def test_publish_discovery_with_components():
 # ===========================================================================
 # publish_attributes propagation
 # ===========================================================================
+
 
 def test_publish_attributes_propagates_to_children(device):
     """publish_attributes propagates to child devices."""
@@ -944,6 +971,7 @@ def test_publish_attributes_no_propagation(device):
 # ===========================================================================
 # DeviceRegistry.get / DeviceRegistry.clear
 # ===========================================================================
+
 
 def test_device_registry_clear():
     """Lines 1266-1267: DeviceRegistry.clear removes all entries."""

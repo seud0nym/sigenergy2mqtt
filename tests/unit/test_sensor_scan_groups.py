@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
@@ -49,32 +49,35 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
 @pytest.fixture
 def mock_config():
     """Setup minimal Config for Device tests."""
-    conf = cast(Any, Config)
-    original_devices = conf.modbus if hasattr(conf, "devices") else []
-    original_ha = conf.home_assistant if hasattr(conf, "home_assistant") else None
+    from sigenergy2mqtt.config import Config, _swap_active_config
 
-    class D:
-        registers = {}
-        disable_chunking = False
+    cfg = Config()
+    cfg.modbus = [
+        types.SimpleNamespace(
+            registers=types.SimpleNamespace(read_only=True, read_write=False, write_only=False, no_remote_ems=False),
+            disable_chunking=False,
+            host="127.0.0.1",
+            port=502,
+            timeout=1,
+            retries=3,
+            inverters=[1],
+            dc_chargers=[],
+            ac_chargers=[],
+        )
+    ]
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = False
+    cfg.home_assistant.republish_discovery_interval = 0
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.persistent_state_path = Path(".")
 
-    conf.modbus = [D()]
-    conf.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=False,
-        republish_discovery_interval=0,
-        entity_id_prefix="sigen",
-        use_simplified_topics=False,
-        edit_percentage_with_box=False,
-    )
-    conf.persistent_state_path = Path(".")
+    with _swap_active_config(cfg):
+        yield cfg
 
-    yield conf
-
-    conf.modbus = original_devices
-    if original_ha:
-        conf.home_assistant = original_ha
     DeviceRegistry._devices.clear()
 
 

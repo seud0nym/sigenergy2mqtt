@@ -131,20 +131,25 @@ class ConcreteModbusDevice(ModbusDevice):
 # --- Fixtures ---
 
 
+from sigenergy2mqtt.config import _swap_active_config
+
+
 @pytest.fixture
 def mock_config():
-    with patch("sigenergy2mqtt.devices.device.Config") as mock_conf:
-        mock_conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-        mock_conf.home_assistant = types.SimpleNamespace(
-            device_name_prefix="",
-            unique_id_prefix="sigen",
-            discovery_prefix="homeassistant",
-            enabled=True,
-            republish_discovery_interval=60,
-        )
-        mock_conf.origin = {}
-        mock_conf.persistent_state_path = "."
-        yield mock_conf
+    cfg = Config()
+    cfg.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    cfg.home_assistant = types.SimpleNamespace(
+        device_name_prefix="",
+        unique_id_prefix="sigen",
+        discovery_prefix="homeassistant",
+        enabled=True,
+        republish_discovery_interval=60,
+    )
+    cfg.origin = {}
+    cfg.persistent_state_path = "."
+
+    with _swap_active_config(cfg):
+        yield cfg
     DeviceRegistry._devices.clear()
 
 

@@ -1,8 +1,9 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
@@ -26,8 +27,8 @@ class TestSensorBase:
         # Actually better to patch them if possible, or just use fresh IDs.
 
         # Checking Sensor.__init__ assertions:
-        # unique_id must start with Config.home_assistant.unique_id_prefix (default "sigenergy_")
-        # object_id must start with Config.home_assistant.entity_id_prefix (default "sigenergy_")
+        # unique_id must start with Config().home_assistant.unique_id_prefix (default "sigenergy_")
+        # object_id must start with Config().home_assistant.entity_id_prefix (default "sigenergy_")
 
         # We'll rely on default config values which should be loaded/mocked.
 
@@ -71,12 +72,12 @@ class TestSensorBase:
         assert sensor._apply_gain_and_precision(10.1234, raw=True) == 10.1234
 
     def test_configure_mqtt_topics(self, sensor):
-        # Mock Config to ensure consistent behaviour
-        with patch("sigenergy2mqtt.sensors.base.Config") as MockConfig:
-            MockConfig.home_assistant.enabled = True
-            MockConfig.home_assistant.use_simplified_topics = False
-            MockConfig.home_assistant.discovery_prefix = "homeassistant"
-
+        # Use _swap_active_config to ensure consistent behaviour
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        cfg.home_assistant.use_simplified_topics = False
+        cfg.home_assistant.discovery_prefix = "homeassistant"
+        with _swap_active_config(cfg):
             base_topic = sensor.configure_mqtt_topics(device_id="test_device")
 
             assert base_topic == "homeassistant/sensor/test_device/sigenergy_test_object_id"

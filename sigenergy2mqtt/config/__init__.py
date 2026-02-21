@@ -1,20 +1,14 @@
 """sigenergy2mqtt configuration package."""
 
-__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "SmartPortConfiguration", "StatusField", "VoltageSource"]
+__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "SmartPortConfiguration", "StatusField", "VoltageSource", "_swap_active_config"]
 
 import logging
 import os
 
 from . import cli, const
-from .config import Config as _Config
-from .config import ConfigurationError, active_config
+from .config import Config, ConfigurationError, _swap_active_config, active_config
 from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
 from .smart_port_config import SmartPortConfiguration
-
-# Export the Config class. It provides backward compatibility via ConfigMeta
-# but also allows creating new instances.
-Config = _Config
-
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -125,26 +119,11 @@ def initialize(args=None) -> bool:
     """
     Initialise the configuration module.
 
-    Precedence (highest to lowest): ENV > CLI > config file.
-
-    Steps:
-      1. System-level setup — logging framework, required directories.
-      2. CLI argument parsing.
-      3. Promote CLI args to env vars (ENV wins if already set), giving both
-         sources a single unified processing path through the config loader.
-      4. Load config — env vars are applied on top of file values automatically.
-      5. Handle early-exit flags (validate-only, discovery-only, clean).
-
-    Raises:
-        ConfigurationError: if the configuration is invalid or cannot be
-            loaded. The caller is responsible for translating this into an
-            appropriate exit code.
-
     Returns:
         False if early exit required, otherwise True
     """
     # 1. System setup
-    persistent_path = _Config.system_initialize()
+    persistent_path = active_config.system_initialize()
     active_config.persistent_state_path = persistent_path
 
     # 2. Parse CLI
@@ -166,7 +145,7 @@ def initialize(args=None) -> bool:
         logging.getLogger().setLevel(level)
         logging.info("sigenergy2mqtt log-level changed to %s", log_level_name)
 
-    # 4. Load config — env vars (CLI-promoted or original) override file values.
+    # 4. Load config
     try:
         _load_config()
     except ConfigurationError:

@@ -1,5 +1,5 @@
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from .base import DeviceClass, InputType, NumericSensor, StateClass, WriteOnlySensor
@@ -12,7 +12,7 @@ class ACChargerStatus(WriteOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="AC Charger Stop/Start",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}",
             plant_index=plant_index,
             device_address=device_address,
             address=42000,
@@ -46,14 +46,14 @@ class ACChargerOutputCurrent(NumericSensor):
         super().__init__(
             availability_control_sensor=None,
             name="Output Current",
-            object_id=f"{Config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_output_current",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_output_current",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
             address=42001,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=Config.modbus[plant_index].scan_interval.medium if plant_index < len(Config.modbus) else 60,
+            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=StateClass.MEASUREMENT,

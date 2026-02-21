@@ -38,23 +38,27 @@ class ConcreteDevice(Device):
     pass
 
 
+from sigenergy2mqtt.config import _swap_active_config
+
+
 @pytest.fixture
 def mock_config():
-    with patch("sigenergy2mqtt.devices.device.Config") as mock:
-        mock.modbus = [MagicMock()]
-        mock.modbus[0].registers = MagicMock()
-        mock.modbus[0].disable_chunking = False
-        mock.home_assistant.device_name_prefix = ""
-        mock.home_assistant.enabled = True
-        mock.home_assistant.discovery_prefix = "homeassistant"
-        mock.home_assistant.unique_id_prefix = "sigen"
-        mock.home_assistant.entity_id_prefix = "sigen"
+    cfg = Config()
+    cfg.modbus = [MagicMock()]
+    cfg.modbus[0].registers = MagicMock()
+    cfg.modbus[0].disable_chunking = False
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
 
-        # Clear sensor registration to avoid ID conflicts between tests
-        Sensor._used_unique_ids.clear()
-        Sensor._used_object_ids.clear()
+    # Clear sensor registration to avoid ID conflicts between tests
+    Sensor._used_unique_ids.clear()
+    Sensor._used_object_ids.clear()
 
-        yield mock
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 @pytest.mark.asyncio

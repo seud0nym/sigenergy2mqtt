@@ -9,7 +9,10 @@ from sigenergy2mqtt.config.const import SIGENERGY2MQTT_CONFIG
 
 @pytest.fixture
 def mock_active_config():
-    with patch("sigenergy2mqtt.config.active_config") as mock:
+    from sigenergy2mqtt.config.config import Config, _swap_active_config
+
+    mock = MagicMock(spec=Config)
+    with _swap_active_config(mock):
         yield mock
 
 
@@ -29,7 +32,7 @@ def mock_cli_parse():
 
 @pytest.fixture
 def mock_system_init():
-    with patch("sigenergy2mqtt.config._Config.system_initialize") as mock:
+    with patch("sigenergy2mqtt.config.active_config.system_initialize") as mock:
         mock.return_value = "/mock/path"
         yield mock
 

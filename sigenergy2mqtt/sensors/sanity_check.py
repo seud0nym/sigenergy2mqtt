@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import cast
 
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
 from . import const
@@ -93,7 +93,7 @@ class SanityCheck:
                 pass
         match unit:
             case const.UnitOfPower.WATT | const.UnitOfEnergy.WATT_HOUR | const.UnitOfPower.KILO_WATT | const.UnitOfEnergy.KILO_WATT_HOUR:
-                self.max_raw = Config.sanity_check_default_kw * 1000 if not self.max_raw else min(Config.sanity_check_default_kw * 1000, self.max_raw)
+                self.max_raw = active_config.sanity_check_default_kw * 1000 if not self.max_raw else min(active_config.sanity_check_default_kw * 1000, self.max_raw)
             case const.PERCENTAGE:
                 self.max_raw = 100 * (gain if gain else 1)
         if self.min_raw is not None and self.max_raw is not None:

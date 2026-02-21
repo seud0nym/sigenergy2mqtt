@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.const import PERCENTAGE
@@ -19,29 +19,29 @@ class TestMetricsService:
     @pytest.fixture(autouse=True)
     def setup(self):
         # Backup original config
-        original_enabled = Config.home_assistant.enabled
-        original_discovery_prefix = Config.home_assistant.discovery_prefix
-        original_unique_id_prefix = Config.home_assistant.unique_id_prefix
-        original_device_name_prefix = Config.home_assistant.device_name_prefix
-        original_devices = list(Config.modbus)
+        original_enabled = active_config.home_assistant.enabled
+        original_discovery_prefix = active_config.home_assistant.discovery_prefix
+        original_unique_id_prefix = active_config.home_assistant.unique_id_prefix
+        original_device_name_prefix = active_config.home_assistant.device_name_prefix
+        original_devices = list(active_config.modbus)
         original_started = Metrics._started
 
         # Set test config
-        Config.home_assistant.enabled = True
-        Config.home_assistant.discovery_prefix = "homeassistant"
-        Config.home_assistant.unique_id_prefix = "test_prefix"
-        Config.home_assistant.device_name_prefix = ""
-        Config.modbus = []
+        active_config.home_assistant.enabled = True
+        active_config.home_assistant.discovery_prefix = "homeassistant"
+        active_config.home_assistant.unique_id_prefix = "test_prefix"
+        active_config.home_assistant.device_name_prefix = ""
+        active_config.modbus = []
         Metrics._started = 0.0
 
         yield
 
         # Restore original config
-        Config.home_assistant.enabled = original_enabled
-        Config.home_assistant.discovery_prefix = original_discovery_prefix
-        Config.home_assistant.unique_id_prefix = original_unique_id_prefix
-        Config.home_assistant.device_name_prefix = original_device_name_prefix
-        Config.modbus = original_devices
+        active_config.home_assistant.enabled = original_enabled
+        active_config.home_assistant.discovery_prefix = original_discovery_prefix
+        active_config.home_assistant.unique_id_prefix = original_unique_id_prefix
+        active_config.home_assistant.device_name_prefix = original_device_name_prefix
+        active_config.modbus = original_devices
         Metrics._started = original_started
 
     def test_init(self):

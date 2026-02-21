@@ -8,7 +8,7 @@ from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.config import Config, OutputField, StatusField
+from sigenergy2mqtt.config import OutputField, StatusField, active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .service import Service
@@ -89,11 +89,11 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key.value] = round(total / count, self._decimals if self._decimals > 0 else None)
             if datetime_key is not None and at is not None:
                 payload[datetime_key] = at
-                if Config.pvoutput.calc_debug_logging:
+                if active_config.pvoutput.calc_debug_logging:
                     self._logger.debug(
                         f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key.value]} into {value_key.value=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                     )
-            elif Config.pvoutput.calc_debug_logging:
+            elif active_config.pvoutput.calc_debug_logging:
                 self._logger.debug(
                     f"{self._service.__class__.__name__} Averaged {self._name}: {total} / {count} = {payload[value_key.value]} into {value_key.value=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                 )
@@ -110,11 +110,11 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key.value] = round(math.sqrt(total) / math.sqrt(3), self._decimals if self._decimals > 0 else None)
             if datetime_key is not None and at is not None:
                 payload[datetime_key] = at
-                if Config.pvoutput.calc_debug_logging:
+                if active_config.pvoutput.calc_debug_logging:
                     self._logger.debug(
                         f"{self._service.__class__.__name__} L-L Averaged {self._name}: √{total} / √3 = {payload[value_key.value]} into {value_key.value=} ({datetime_key}={at}) {[(f'{v.state}^2', time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                     )
-            elif Config.pvoutput.calc_debug_logging:
+            elif active_config.pvoutput.calc_debug_logging:
                 self._logger.debug(
                     f"{self._service.__class__.__name__} L-L Averaged {self._name}: √{total} / √3 = {payload[value_key.value]} into {value_key.value=} {[(f'{v.state}^2', time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                 )
@@ -131,11 +131,11 @@ class ServiceTopics(dict[str, Topic]):
             payload[value_key.value] = round(total, self._decimals if self._decimals > 0 else None)
             if datetime_key is not None and at is not None:
                 payload[datetime_key] = at
-                if Config.pvoutput.calc_debug_logging:
+                if active_config.pvoutput.calc_debug_logging:
                     self._logger.debug(
                         f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key.value=} ({datetime_key}={at}) {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                     )
-            elif Config.pvoutput.calc_debug_logging:
+            elif active_config.pvoutput.calc_debug_logging:
                 self._logger.debug(
                     f"{self._service.__class__.__name__} Summed {self._name}: {total} into {value_key.value=} {[(v.state, time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
                 )
@@ -169,26 +169,26 @@ class ServiceTopics(dict[str, Topic]):
         for topic in self.values():
             if topic.timestamp is not None and (not exclude_zero or (topic.state is not None and topic.state > 0.0) or Calculation.DIFFERENCE in self._calculation):
                 state: float = topic.state if topic.state is not None and (self._allow_negative or topic.state >= 0.0) else 0.0
-                if Config.pvoutput.calc_debug_logging and state != topic.state:
+                if active_config.pvoutput.calc_debug_logging and state != topic.state:
                     self._logger.debug(f"{self._service.__class__.__name__} Using {state=} for {self._value_key.name} because {topic.state=} (allow_negative={self._allow_negative})")
                 if Calculation.DIFFERENCE in self._calculation:
                     state_was: float | None = topic.previous_state if topic.previous_state is None or self._allow_negative or topic.previous_state >= 0.0 else 0.0
                     time_was: time.struct_time | None = topic.previous_timestamp
                     topic.previous_state = state
                     topic.previous_timestamp = topic.timestamp
-                    if Config.pvoutput.calc_debug_logging and state_was != topic.previous_state:
+                    if active_config.pvoutput.calc_debug_logging and state_was != topic.previous_state:
                         self._logger.debug(f"{self._service.__class__.__name__} Using {state_was=} for {self._value_key.name} because {topic.previous_state=} (allow_negative={self._allow_negative})")
                     if state_was is not None and time_was is not None and (topic.timestamp.tm_yday == time_was.tm_yday or 0 < (time.mktime(topic.timestamp) - time.mktime(time_was)) < 3600):
-                        if Config.pvoutput.calc_debug_logging:
+                        if active_config.pvoutput.calc_debug_logging:
                             self._logger.debug(f"{self._service.__class__.__name__} Calculated difference for {self._name}: (current-previous=state) {state}-{state_was}={state - state_was} ({topic.topic})")
                         state -= state_was
                         if Calculation.CONVERT_TO_WATTS in self._calculation:
                             hours = (time.mktime(topic.timestamp) - time.mktime(time_was)) / 3600.0
                             if hours > 0:
-                                if Config.pvoutput.calc_debug_logging:
+                                if active_config.pvoutput.calc_debug_logging:
                                     self._logger.debug(f"{self._service.__class__.__name__} Converted {self._name}: (energy/hours=power) {state}/{hours:.3f}={state / hours} ({topic.topic})")
                                 state /= hours
-                            elif Config.pvoutput.calc_debug_logging:
+                            elif active_config.pvoutput.calc_debug_logging:
                                 self._logger.warning(f"{self._service.__class__.__name__} Skipped converting {self._name} energy to power: {hours:.3f} ({topic.topic}) ????")
                     else:
                         continue
@@ -196,7 +196,7 @@ class ServiceTopics(dict[str, Topic]):
                     total += state**2 * topic.gain
                 else:
                     total += state * topic.gain
-                if Config.pvoutput.calc_debug_logging:
+                if active_config.pvoutput.calc_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Applied gain to {self._name}: {state}*{topic.gain}={state * topic.gain} ({topic.topic}) and added to running {total=}")
                 at = time.strftime("%H:%M", topic.timestamp)
                 count += 1
@@ -208,8 +208,8 @@ class ServiceTopics(dict[str, Topic]):
     def check_is_updating(self, interval_minutes: int, now_struct: time.struct_time) -> bool:
         if self.enabled:
             now = time.mktime(now_struct)
-            if now - Config.pvoutput.started < 120:
-                if Config.pvoutput.update_debug_logging:
+            if now - active_config.pvoutput.started < 120:
+                if active_config.pvoutput.update_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Skipping updating check for {self._name} because service just started")
                 return True
             interval_seconds = interval_minutes * 60
@@ -220,7 +220,7 @@ class ServiceTopics(dict[str, Topic]):
                     seconds = int(now - time.mktime(topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp))
                     minutes = int(seconds / 60.0)
                     if seconds <= scan_interval:
-                        if Config.pvoutput.update_debug_logging:
+                        if active_config.pvoutput.update_debug_logging:
                             self._logger.debug(f"{self._service.__class__.__name__} Topic {topic.topic} for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
                         updated += 1
                     elif (self._last_update_warning is None or (now - self._last_update_warning) > 3600) and minutes > 0:
@@ -257,10 +257,10 @@ class ServiceTopics(dict[str, Topic]):
         name = str(self._name)
         if name.startswith("<MagicMock"):
             name = "mock_name"
-        self._persistent_state_file = Path(Config.persistent_state_path, f"{sid}-{name}.state")
+        self._persistent_state_file = Path(active_config.persistent_state_path, f"{sid}-{name}.state")
         # Migrate obsolete peak power state file
         if self._value_key == OutputField.PEAK_POWER:
-            obsolete = Path(Config.persistent_state_path, "pvoutput_output-peak_power.state")
+            obsolete = Path(active_config.persistent_state_path, "pvoutput_output-peak_power.state")
             if obsolete.is_file() and not self._persistent_state_file.is_file():
                 obsolete.rename(self._persistent_state_file.resolve())
         if self._persistent_state_file.is_file():
@@ -308,7 +308,7 @@ class ServiceTopics(dict[str, Topic]):
         if self.enabled:
             state = value if isinstance(value, float) else float(value)
             if Calculation.PEAK not in self._calculation or (self[topic].state is not None and state > cast(float, self[topic].state)):
-                if Config.pvoutput.update_debug_logging:
+                if active_config.pvoutput.update_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from topic {topic} {value=}")
                 async with self._service.lock(timeout=1):
                     state_was = self[topic].state
@@ -317,7 +317,7 @@ class ServiceTopics(dict[str, Topic]):
                     if self._persistent_state_file and ((self._always_persist and state_was != state) or (self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
                         with self._persistent_state_file.open("w") as f:
                             json.dump(self, f, default=Topic.json_encoder)
-            elif Config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
+            elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
                 ts = self[topic].timestamp
                 if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore
                     ts = self[topic].restore_timestamp
@@ -327,10 +327,10 @@ class ServiceTopics(dict[str, Topic]):
                     if int(seconds) % 60 == 0:
                         self._logger.debug(f"{self._service.__class__.__name__} Ignoring {self._name} from topic {topic}: {state=} (<= Previous peak={self[topic].state})")
             if self._time_periods:
-                current_period = Config.pvoutput.current_time_period
+                current_period = active_config.pvoutput.current_time_period
                 other_periods_total = sum((child.aggregate(True, never_return_none=True)[0] or 0.0) for child in self._time_periods if child._value_key not in current_period) / self[topic].gain
                 this_period_state = max(state - other_periods_total, 0.0)
-                if Config.pvoutput.update_debug_logging:
+                if active_config.pvoutput.update_debug_logging:
                     cp_log = f"{current_period[0].value if len(current_period) > 0 and current_period[0] is not None else '-'}/{current_period[1].value if len(current_period) > 1 else '-'}"
                     self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} children: {state=} {other_periods_total=} {this_period_state=} current_period={cp_log} {topic=}")
                 for child in self._time_periods:

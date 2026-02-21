@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import InputType, NumericSensor, SelectSensor
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
@@ -72,8 +72,8 @@ class TestSanityCheckIntegration:
 
     @pytest.mark.asyncio
     async def test_sensor_publish_sanity_failure_increment(self, mock_mqtt_client, mock_modbus_client):
-        # Config.sanity_check_failures_increment = True by default
-        Config.sanity_check_failures_increment = True
+        # active_config.sanity_check_failures_increment = True by default
+        active_config.sanity_check_failures_increment = True
 
         sensor = NumericSensor(
             availability_control_sensor=None,
@@ -114,7 +114,7 @@ class TestSanityCheckIntegration:
         assert sensor._failures == 1
 
         # Now try with config set to False
-        Config.sanity_check_failures_increment = False
+        active_config.sanity_check_failures_increment = False
         sensor._failures = 0
 
         await sensor.publish(mock_mqtt_client, mock_modbus_client)
@@ -123,7 +123,7 @@ class TestSanityCheckIntegration:
         assert sensor._failures == 0
 
         # Reset config
-        Config.sanity_check_failures_increment = True
+        active_config.sanity_check_failures_increment = True
 
     @pytest.mark.asyncio
     async def test_numeric_sensor_sanity_check_enforcement(self):

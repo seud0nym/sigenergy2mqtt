@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, ConsumptionSource, StatusField, VoltageSource, const
+from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, active_config, const
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
 
@@ -18,21 +18,21 @@ def mock_config():
     old_ha = getattr(Config, "home_assistant", None)
     old_path = getattr(Config, "persistent_state_path", None)
 
-    Config.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-    Config.home_assistant = types.SimpleNamespace(
+    active_config.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    active_config.home_assistant = types.SimpleNamespace(
         device_name_prefix="",
         unique_id_prefix="sigen",
         discovery_prefix="homeassistant",
         enabled=False,
         republish_discovery_interval=0,
     )
-    Config.persistent_state_path = Path(".")
+    active_config.persistent_state_path = Path(".")
 
     yield
 
-    Config.modbus = old_modbus
-    Config.home_assistant = old_ha
-    Config.persistent_state_path = old_path
+    active_config.modbus = old_modbus
+    active_config.home_assistant = old_ha
+    active_config.persistent_state_path = old_path
 
 
 @pytest.fixture(autouse=True)

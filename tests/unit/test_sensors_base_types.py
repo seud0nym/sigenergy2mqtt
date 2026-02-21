@@ -7,6 +7,7 @@ import pytest
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
 
 from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (  # noqa: E402
     EnergyDailyAccumulationSensor,
@@ -28,16 +29,21 @@ mock_metrics.modbus_write = AsyncMock()
 sys.modules["sigenergy2mqtt.metrics.metrics"] = mock_metrics
 
 
+from sigenergy2mqtt.config import _swap_active_config
+
+
 @pytest.fixture(autouse=True)
 def mock_config_all(tmp_path):
-    with patch("sigenergy2mqtt.sensors.base.Config") as mock_config:
-        mock_config.home_assistant.unique_id_prefix = "sigenergy"
-        mock_config.home_assistant.entity_id_prefix = "sigenergy"
-        mock_config.home_assistant.enabled = True
-        mock_config.sensor_overrides = {}
-        mock_config.persistent_state_path = tmp_path
-        mock_config.modbus = []
-        yield mock_config
+    cfg = Config()
+    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.enabled = True
+    cfg.sensor_overrides = {}
+    cfg.persistent_state_path = tmp_path
+    cfg.modbus = []
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestModbusSensor:
@@ -191,7 +197,9 @@ class TestSelectSensor:
 class TestEnergyAccumulationSensors:
     @pytest.mark.asyncio
     async def test_energy_lifetime_accumulation(self, tmp_path):
-        with patch("sigenergy2mqtt.sensors.base.Config.persistent_state_path", str(tmp_path)):
+        cfg = Config()
+        cfg.persistent_state_path = tmp_path
+        with _swap_active_config(cfg):
             source = MagicMock(spec=Sensor)
             source.unique_id = "source_uid"
 
@@ -213,7 +221,9 @@ class TestEnergyAccumulationSensors:
 
     @pytest.mark.asyncio
     async def test_energy_daily_accumulation_midnight(self, tmp_path):
-        with patch("sigenergy2mqtt.sensors.base.Config.persistent_state_path", str(tmp_path)):
+        cfg = Config()
+        cfg.persistent_state_path = tmp_path
+        with _swap_active_config(cfg):
             source = ReadOnlySensor(
                 "Source", "sigenergy_source", InputType.HOLDING, 0, 1, 30001, 1, ModbusClient.DATATYPE.UINT32, 10, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:energy", 1.0, 2, Protocol.V2_4
             )
