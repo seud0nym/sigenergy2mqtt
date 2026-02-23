@@ -50,6 +50,7 @@ async def get_sensor_instances(
     active_config.modbus[plant_index].smartport.module.testing = True
 
     active_config.home_assistant.enabled = hass
+    active_config.influxdb.enabled = True
 
     hi = HybridInverter()
     hi.has_grid_code_interface = True
