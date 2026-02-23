@@ -12,8 +12,11 @@ from sigenergy2mqtt.config import active_config, const
 VersionInfo = collections.namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
 
-def test_system_initialize_missing_branches_3(tmp_path):
+@pytest.mark.no_persistent_state_mock
+def test_system_initialize_missing_branches_3(tmp_path, monkeypatch):
     from sigenergy2mqtt.config import ConfigurationError
+
+    monkeypatch.delenv("SIGENERGY2MQTT_STATE_DIR", raising=False)
 
     with patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 11, 0, "f", 0)):
         with pytest.raises(ConfigurationError):

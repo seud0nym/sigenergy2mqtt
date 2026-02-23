@@ -65,7 +65,11 @@ class Config:
         self._source = None
         self._settings = None
 
-        self.persistent_state_path = Path(".")
+        try:
+            self.persistent_state_path = _create_persistent_state_path()
+        except Exception:
+            self.persistent_state_path = Path(".")
+
         try:
             self.reload()
         except Exception:
@@ -269,9 +273,10 @@ def _setup_logging() -> None:
 def _create_persistent_state_path() -> Path:
     """Find a writable base directory and create the ``sigenergy2mqtt`` subdirectory.
 
-    Candidate base directories are tried in order: ``/data/``, ``/var/lib/``, the
-    current user's home directory, and ``/tmp/``.  The first writable candidate is
-    used.
+    Candidate base directories are tried in order: the value of the environment
+    variable ``SIGENERGY2MQTT_STATE_DIR`` (if set), ``/data/``, ``/var/lib/``,
+    the current user's home directory, and ``/tmp/``.  The first writable candidate
+    is used.
 
     Returns:
         The resolved absolute :class:`~pathlib.Path` of the persistent state directory.
@@ -279,8 +284,10 @@ def _create_persistent_state_path() -> Path:
     Raises:
         ConfigurationError: If none of the candidate directories are writable.
     """
-    candidates = ["/data/", "/var/lib/", str(Path.home()), "/tmp/"]
+    candidates = [os.getenv("SIGENERGY2MQTT_STATE_DIR", None), "/data/", "/var/lib/", str(Path.home()), "/tmp/"]
     for base in candidates:
+        if base is None:
+            continue
         if os.path.isdir(base) and os.access(base, os.W_OK):
             path = Path(base, "sigenergy2mqtt")
             if not path.is_dir():
