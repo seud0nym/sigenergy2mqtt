@@ -1,14 +1,17 @@
 """sigenergy2mqtt configuration package."""
 
-__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "SmartPortConfiguration", "StatusField", "VoltageSource", "_swap_active_config"]
+__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "StatusField", "VoltageSource", "_swap_active_config"]
 
 import logging
 import os
 
+from sigenergy2mqtt.common.consumption_source import ConsumptionSource
+from sigenergy2mqtt.common.output_field import OutputField
+from sigenergy2mqtt.common.status_field import StatusField
+from sigenergy2mqtt.common.voltage_source import VoltageSource
+
 from . import cli, const
 from .config import Config, ConfigurationError, _swap_active_config, active_config
-from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
-from .smart_port_config import SmartPortConfiguration
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -158,7 +161,6 @@ def initialize(args=None) -> bool:
         active_config.clean = True
 
     if getattr(parsed_args, "validate_only", False):
-        active_config.validate()  # raises on failure; caller logs + exits
         return False
 
     if getattr(parsed_args, "discovery_only", False):

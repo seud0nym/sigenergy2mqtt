@@ -330,14 +330,10 @@ class InfluxBase(Device):
 
     async def query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: int | float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute a Flux query on v2 API with retry and rate limiting. Returns (success, response_text)."""
-        if timeout is None:
-            timeout = active_config.influxdb.read_timeout
-        if max_retries is None:
-            max_retries = active_config.influxdb.max_retries
         return await self._rate_limited_query(
-            lambda: self.query_v2_internal(base, org, token, flux_query, timeout),
+            lambda: self.query_v2_internal(base, org, token, flux_query, timeout if timeout is not None else active_config.influxdb.read_timeout),
             "v2 query",
-            max_retries,
+            max_retries if max_retries is not None else active_config.influxdb.max_retries,
         )
 
     async def query_v2_internal(self, base: str, org: str | None, token: str, flux_query: str, timeout: int | float) -> tuple[bool, Any]:
@@ -355,14 +351,10 @@ class InfluxBase(Device):
 
     async def query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: int | float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute an InfluxQL query on v1 API with retry and rate limiting. Returns (success, json_result)."""
-        if timeout is None:
-            timeout = active_config.influxdb.read_timeout
-        if max_retries is None:
-            max_retries = active_config.influxdb.max_retries
         return await self._rate_limited_query(
-            lambda: self.query_v1_internal(base, db, auth, query, epoch, timeout),
+            lambda: self.query_v1_internal(base, db, auth, query, epoch, timeout if timeout is not None else active_config.influxdb.read_timeout),
             "v1 query",
-            max_retries,
+            max_retries if max_retries is not None else active_config.influxdb.max_retries,
         )
 
     async def query_v1_internal(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None, timeout: int | float) -> tuple[bool, Any]:

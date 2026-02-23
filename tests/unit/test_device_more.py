@@ -1,13 +1,13 @@
 import asyncio
-import types
 from pathlib import Path
 from typing import Any, cast
+from unittest.mock import MagicMock
 
 import paho.mqtt.client as mqtt
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
@@ -53,25 +53,23 @@ class DummyDerived(DerivedSensor):
         object.__setattr__(self, "debug_logging", False)
 
 
-def setup_module(module):
-    # Minimal Config scaffolding used by Device
-    conf = cast(Any, Config)
-    conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-    conf.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=False,
-        republish_discovery_interval=0,
-    )
-    conf.persistent_state_path = Path(".")
+@pytest.fixture(autouse=True)
+def mock_config():
+    cfg = Config()
+    mock_modbus = MagicMock()
+    mock_modbus.registers = {}
+    mock_modbus.disable_chunking = False
+    mock_modbus.scan_interval.high = 60
+    cfg.modbus = [mock_modbus]
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.persistent_state_path = Path(".")
+
+    with _swap_active_config(cfg):
+        yield cfg
+    DeviceRegistry.clear()
 
 
-def teardown_function(func):
-    # clear device registry to avoid cross-test leakage
-    DeviceRegistry._devices.clear()
-
-
+@pytest.mark.asyncio
 async def test_device_online_setter_and_rediscover():
     dev = Device("dev", 0, "uid", "mf", "mdl", Protocol.V1_8)
     # set online future

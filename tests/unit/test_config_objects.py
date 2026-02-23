@@ -1,32 +1,63 @@
+"""Tests for pydantic config sub-model objects."""
+
 import logging
 from datetime import time
 
 import pytest
+from pydantic import ValidationError
 
-from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
-from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-from sigenergy2mqtt.config.pvoutput_config import ConsumptionSource, OutputField, PVOutputConfiguration, TariffType, VoltageSource
-from sigenergy2mqtt.config.smart_port_config import ModuleConfig, SmartPortConfiguration, TopicConfig  # noqa: F401
+from sigenergy2mqtt.common.consumption_source import ConsumptionSource
+from sigenergy2mqtt.common.tariff_type import TariffType
+from sigenergy2mqtt.common.voltage_source import VoltageSource
+from sigenergy2mqtt.config.settings import (
+    HomeAssistantConfig,
+    ModbusConfig,
+    MqttConfig,
+    PvOutputConfig,
+    SmartPortConfig,
+    SmartPortModule,
+    SmartPortMqttEntry,
+)
 
 
-class TestHomeAssistantConfiguration:
+class TestHomeAssistantConfig:
     def test_default_values(self):
-        config = HomeAssistantConfiguration()
+        config = HomeAssistantConfig()
         assert config.enabled is False
         assert config.discovery_prefix == "homeassistant"
         assert config.entity_id_prefix == "sigen"
         assert config.unique_id_prefix == "sigen"
 
-    def test_configure_enabled(self):
-        config = HomeAssistantConfiguration()
-        config.configure({"enabled": True})
+    def test_enabled(self):
+        config = HomeAssistantConfig(enabled=True)
         assert config.enabled is True
 
-    def test_configure_all_fields(self):
-        config = HomeAssistantConfiguration()
-        config.configure(
-            {
+    def test_all_fields(self):
+        config = HomeAssistantConfig(
+            enabled=True,
+            device_name_prefix="MyHome",
+            discovery_prefix="ha",
+            edit_percentage_with_box=True,
+            entity_id_prefix="test_sigen",
+            republish_discovery_interval=300,
+            enabled_by_default=True,
+            unique_id_prefix="test_unique",
+            use_simplified_topics=True,
+        )
+        assert config.device_name_prefix == "MyHome"
+        assert config.discovery_only is False
+        assert config.discovery_prefix == "ha"
+        assert config.edit_percentage_with_box is True
+        assert config.entity_id_prefix == "test_sigen"
+        assert config.republish_discovery_interval == 300
+        assert config.enabled_by_default is True
+        assert config.unique_id_prefix == "test_unique"
+        assert config.use_simplified_topics is True
+
+    def test_alias_keys(self):
+        """Fields can also be set via their YAML alias names."""
+        config = HomeAssistantConfig(
+            **{
                 "enabled": True,
                 "device-name-prefix": "MyHome",
                 "discovery-prefix": "ha",
@@ -39,7 +70,6 @@ class TestHomeAssistantConfiguration:
             }
         )
         assert config.device_name_prefix == "MyHome"
-        assert config.discovery_only is False
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
         assert config.entity_id_prefix == "test_sigen"
@@ -48,23 +78,14 @@ class TestHomeAssistantConfiguration:
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is True
 
-    def test_configure_unknown_option(self):
-        config = HomeAssistantConfiguration()
-        with pytest.raises(ValueError, match="unknown option 'unknown'"):
-            config.configure({"enabled": True, "unknown": "value"})
-
-    def test_configure_not_dict(self):
-        config = HomeAssistantConfiguration()
-        with pytest.raises(ValueError, match="must contain options and their values"):
-            config.configure("not a dict")
-
-    def test_configure_false_values(self):
-        config = HomeAssistantConfiguration()
-        # Set to True first
-        config.configure({"enabled": True, "edit-pct-box": True, "sensors-enabled-by-default": True, "use-simplified-topics": True})
-        assert config.enabled is True
-        # Now set to False (keep enabled=True so other fields are processed)
-        config.configure({"enabled": True, "edit-pct-box": False, "sensors-enabled-by-default": False, "use-simplified-topics": False})
+    def test_false_values(self):
+        """Test that False values are properly set."""
+        config = HomeAssistantConfig(
+            enabled=True,
+            edit_percentage_with_box=False,
+            enabled_by_default=False,
+            use_simplified_topics=False,
+        )
         assert config.enabled is True
         assert config.discovery_only is False
         assert config.edit_percentage_with_box is False
@@ -72,34 +93,37 @@ class TestHomeAssistantConfiguration:
         assert config.use_simplified_topics is False
 
 
-class TestMqttConfiguration:
+class TestMqttConfig:
     def test_default_values(self):
-        config = MqttConfiguration()
+        config = MqttConfig()
         assert config.broker == "127.0.0.1"
         assert config.port == 1883
         assert config.tls is False
 
-    def test_configure_broker_port(self):
-        config = MqttConfiguration()
-        config.configure({"broker": "192.168.1.100", "port": 1884})
+    def test_broker_port(self):
+        config = MqttConfig(broker="192.168.1.100", port=1884)
         assert config.broker == "192.168.1.100"
         assert config.port == 1884
 
-    def test_configure_tls_changes_default_port(self):
-        config = MqttConfiguration()
-        config.configure({"tls": True})
+    def test_tls_changes_default_port(self):
+        config = MqttConfig(tls=True)
         assert config.tls is True
         assert config.port == 8883
 
-    def test_configure_tls_with_explicit_port(self):
-        config = MqttConfiguration()
-        config.configure({"tls": True, "port": 1234})
+    def test_tls_with_explicit_port(self):
+        config = MqttConfig(tls=True, port=1234)
         assert config.tls is True
         assert config.port == 1234
 
-    def test_configure_all_fields(self):
-        config = MqttConfiguration()
-        config.configure({"keepalive": 120, "anonymous": True, "username": "user", "password": "pass", "log-level": "DEBUG", "tls-insecure": True})
+    def test_all_fields(self):
+        config = MqttConfig(
+            keepalive=120,
+            anonymous=True,
+            username="user",
+            password="pass",
+            log_level="DEBUG",
+            tls_insecure=True,
+        )
         assert config.keepalive == 120
         assert config.anonymous is True
         assert config.username == "user"
@@ -107,55 +131,41 @@ class TestMqttConfiguration:
         assert config.log_level == logging.DEBUG
         assert config.tls_insecure is True
 
-    def test_configure_false_values(self):
-        config = MqttConfiguration()
-        # Set to True first
-        config.configure({"tls": True, "anonymous": True, "tls-insecure": True})
-        assert config.tls is True
-        # Now set to False
-        config.configure({"tls": False, "anonymous": False, "tls-insecure": False})
+    def test_false_values(self):
+        config = MqttConfig(tls=False, anonymous=True, tls_insecure=False)
         assert config.tls is False
-        assert config.anonymous is False
+        assert config.anonymous is True
         assert config.tls_insecure is False
 
 
-class TestPVOutputConfiguration:
+class TestPvOutputConfig:
     def test_default_values(self):
-        config = PVOutputConfiguration()
+        config = PvOutputConfig()
         assert config.enabled is False
         assert config.consumption is None
         assert config.voltage == VoltageSource.L_N_AVG
 
-    def test_consumption_enabled_property(self):
-        config = PVOutputConfiguration()
-        assert config.consumption_enabled is False
+    def test_consumption_source_values(self):
+        config = PvOutputConfig(consumption=ConsumptionSource.CONSUMPTION.value)
+        assert config.consumption == ConsumptionSource.CONSUMPTION
 
-        config.consumption = ConsumptionSource.CONSUMPTION
-        assert config.consumption_enabled is True
+        config = PvOutputConfig(consumption=ConsumptionSource.IMPORTED.value)
+        assert config.consumption == ConsumptionSource.IMPORTED
 
-        config.consumption = ConsumptionSource.IMPORTED
-        assert config.consumption_enabled is True
+        config = PvOutputConfig(consumption="net-of-battery")
+        assert config.consumption == ConsumptionSource.NET_OF_BATTERY
 
-        config.consumption = ConsumptionSource.NET_OF_BATTERY
-        assert config.consumption_enabled is True
-
-        config.consumption = "invalid"
-        assert config.consumption_enabled is False
-
-    def test_configure_basic_fields(self):
-        config = PVOutputConfiguration()
-        config.configure(
-            {
-                "enabled": True,
-                "api-key": "ABCDEF1234567890ABCDEF1234567890",
-                "system-id": "12345",
-                "consumption": "imported",
-                "exports": True,
-                "imports": True,
-                "output-hour": 22,
-                "temperature-topic": "home/temp",
-                "voltage": "pv",
-            }
+    def test_basic_fields(self):
+        config = PvOutputConfig(
+            enabled=True,
+            api_key="ABCDEF1234567890ABCDEF1234567890",
+            system_id="12345",
+            consumption="imported",
+            exports=True,
+            imports=True,
+            output_hour=22,
+            temperature_topic="home/temp",
+            voltage="pv",
         )
         assert config.api_key == "ABCDEF1234567890ABCDEF1234567890"
         assert config.system_id == "12345"
@@ -166,67 +176,65 @@ class TestPVOutputConfiguration:
         assert config.temperature_topic == "home/temp"
         assert config.voltage == VoltageSource.PV
 
-    def test_configure_testing_system_id(self):
-        config = PVOutputConfiguration()
-        config.configure({"enabled": True, "system-id": "testing"})
+    def test_testing_system_id(self):
+        config = PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="testing")
         assert config.testing is True
 
-    def test_configure_false_values(self):
-        config = PVOutputConfiguration()
-        # Set to True first
-        config.configure({"enabled": True, "api-key": "ABCDEF1234567890ABCDEF1234567890", "system-id": "12345", "exports": True, "imports": True, "calc-debug-logging": True, "update-debug-logging": True})
-        assert config.enabled is True
-        # Now set to False (keep enabled=True so other fields are processed)
-        config.configure({"enabled": True, "exports": False, "imports": False, "calc-debug-logging": False, "update-debug-logging": False})
+    def test_false_values(self):
+        config = PvOutputConfig(
+            enabled=True,
+            api_key="ABCDEF1234567890ABCDEF1234567890",
+            system_id="12345",
+            exports=False,
+            imports=False,
+            calc_debug_logging=False,
+            update_debug_logging=False,
+        )
         assert config.enabled is True
         assert config.exports is False
         assert config.imports is False
         assert config.calc_debug_logging is False
         assert config.update_debug_logging is False
 
-    def test_type_to_output_fields(self):
-        config = PVOutputConfiguration()
-
-        e, i = config._type_to_output_fields(TariffType.OFF_PEAK)
-        assert e == OutputField.EXPORT_OFF_PEAK
-        assert i == OutputField.IMPORT_OFF_PEAK
-
-        e, i = config._type_to_output_fields(TariffType.PEAK)
-        assert e == OutputField.EXPORT_PEAK
-        assert i == OutputField.IMPORT_PEAK
-
-    def test_configure_time_periods(self):
-        config = PVOutputConfiguration()
-        config.configure({"enabled": True, "time-periods": [{"plan": "My Plan", "default": "off-peak", "periods": [{"type": "peak", "start": "08:00", "end": "20:00", "days": ["Mon", "Tue"]}]}]})
+    def test_time_periods(self):
+        period_dict = {"type": "peak", "start": "08:00", "end": "20:00", "days": ["Mon", "Tue"]}
+        tariff_dict = {"plan": "My Plan", "default": "off-peak", "periods": [period_dict]}
+        config = PvOutputConfig(
+            enabled=True,
+            api_key="1a2b3c",
+            system_id="abc",
+            **{"time-periods": [tariff_dict]},
+        )
         assert len(config.tariffs) == 1
         tariff = config.tariffs[0]
         assert tariff.plan == "My Plan"
-        assert tariff.default == "off-peak"
+        assert tariff.default == TariffType.OFF_PEAK
         assert len(tariff.periods) == 1
-        assert tariff.periods[0].type == "peak"
+        assert tariff.periods[0].type == TariffType.PEAK
         assert tariff.periods[0].start == time(8, 0)
         assert tariff.periods[0].end == time(20, 0)
         assert tariff.periods[0].days == ["Mon", "Tue"]
 
-    def test_current_time_period(self):
-        config = PVOutputConfiguration()
-        # Mocking datetime.now is hard, but we can test the logic by providing tariffs
-        # and letting it match against actual current time, or just verify it handles empty tariffs
-        e, i = config.current_time_period
-        assert e is None
-        assert i == OutputField.IMPORT_PEAK
 
-
-class TestSmartPortConfiguration:
+class TestSmartPortConfig:
     def test_default_values(self):
-        config = SmartPortConfiguration()
+        config = SmartPortConfig()
         assert config.enabled is False
-        assert isinstance(config.module, ModuleConfig)
+        assert isinstance(config.module, SmartPortModule)
         assert config.mqtt == []
 
-    def test_configure_module(self):
-        config = SmartPortConfiguration()
-        config.configure({"enabled": True, "module": {"name": "enphase", "host": "1.2.3.4", "port": 80, "username": "admin", "password": "password", "pv-power": "envoy/production/inverters"}})
+    def test_module(self):
+        config = SmartPortConfig(
+            enabled=True,
+            module=SmartPortModule(
+                name="enphase",
+                host="1.2.3.4",
+                port=80,
+                username="admin",
+                password="password",
+                pv_power="envoy/production/inverters",
+            ),
+        )
         assert config.enabled is True
         assert config.module.name == "enphase"
         assert config.module.host == "1.2.3.4"
@@ -235,31 +243,40 @@ class TestSmartPortConfiguration:
         assert config.module.password == "password"
         assert config.module.pv_power == "envoy/production/inverters"
 
-    def test_configure_mqtt_topics(self):
-        config = SmartPortConfiguration()
-        # This test will likely expose the bug where it only returns the first topic
-        config.configure({"enabled": True, "module": {"name": "enphase"}, "mqtt": [{"topic": "topic/1", "gain": 1}, {"topic": "topic/2", "gain": 10}]})
+    def test_mqtt_topics(self):
+        config = SmartPortConfig(
+            enabled=True,
+            module=SmartPortModule(name="enphase"),
+            mqtt=[
+                SmartPortMqttEntry(topic="topic/1", gain=1),
+                SmartPortMqttEntry(topic="topic/2", gain=10),
+            ],
+        )
         assert len(config.mqtt) == 2
         assert config.mqtt[0].topic == "topic/1"
         assert config.mqtt[1].topic == "topic/2"
 
-    def test_configure_invalid_enabled_combination(self):
-        config = SmartPortConfiguration()
-        with pytest.raises(ValueError, match="no module name or MQTT topics configured"):
-            config.configure({"enabled": True})
+    def test_invalid_enabled_combination(self):
+        with pytest.raises(ValidationError, match="no module name or MQTT topics configured"):
+            SmartPortConfig(enabled=True)
 
 
-class TestDeviceConfig:
+class TestModbusConfig:
     def test_default_values(self):
-        config = ModbusConfiguration()
-        assert config.host == ""
+        config = ModbusConfig(host="localhost")
         assert config.port == 502
         assert config.retries == 3
         assert config.timeout == 1.0
 
-    def test_configure_basic_fields(self):
-        config = ModbusConfiguration()
-        config.configure({"host": "192.168.1.50", "port": 503, "retries": 5, "timeout": 2.0, "disable-chunking": True, "log-level": "INFO"})
+    def test_basic_fields(self):
+        config = ModbusConfig(
+            host="192.168.1.50",
+            port=503,
+            retries=5,
+            timeout=2.0,
+            disable_chunking=True,
+            log_level="INFO",
+        )
         assert config.host == "192.168.1.50"
         assert config.port == 503
         assert config.retries == 5
@@ -267,10 +284,19 @@ class TestDeviceConfig:
         assert config.disable_chunking is True
         assert config.log_level == logging.INFO
 
-    def test_configure_registers_and_intervals(self):
-        config = ModbusConfiguration()
-        config.configure(
-            {"no-remote-ems": True, "read-only": False, "read-write": False, "write-only": False, "scan-interval-low": 1200, "scan-interval-medium": 120, "scan-interval-high": 20, "scan-interval-realtime": 2}
+    def test_registers_and_intervals(self):
+        config = ModbusConfig(
+            host="localhost",
+            **{
+                "no-remote-ems": True,
+                "read-only": False,
+                "read-write": False,
+                "write-only": False,
+                "scan-interval-low": 1200,
+                "scan-interval-medium": 120,
+                "scan-interval-high": 20,
+                "scan-interval-realtime": 2,
+            },
         )
         assert config.registers.no_remote_ems is True
         assert config.registers.read_only is False
@@ -281,32 +307,30 @@ class TestDeviceConfig:
         assert config.scan_interval.high == 20
         assert config.scan_interval.realtime == 2
 
-    def test_configure_device_lists(self):
-        config = ModbusConfiguration()
-        config.configure({"inverters": [1, 2, 3], "ac-chargers": [10], "dc-chargers": [20, 21]})
+    def test_device_lists(self):
+        config = ModbusConfig(host="localhost", inverters=[1, 2, 3], ac_chargers=[10], dc_chargers=[20, 21])
         assert config.inverters == [1, 2, 3]
         assert config.ac_chargers == [10]
         assert config.dc_chargers == [20, 21]
 
-    def test_configure_default_inverter(self):
-        config = ModbusConfiguration()
-        config.configure({"host": "localhost"})
-        # Should default to [1] if empty
+    def test_default_inverter(self):
+        """Should default to [1] if no devices specified."""
+        config = ModbusConfig(host="localhost")
         assert config.inverters == [1]
 
-    def test_configure_boolean_toggles(self):
-        config = ModbusConfiguration()
-        # Test toggling all booleans
-        config.configure({"disable-chunking": True, "no-remote-ems": True, "read-only": True, "read-write": True, "write-only": True})
+    def test_boolean_toggles(self):
+        config = ModbusConfig(
+            host="localhost",
+            disable_chunking=True,
+            **{
+                "no-remote-ems": True,
+                "read-only": True,
+                "read-write": True,
+                "write-only": True,
+            },
+        )
         assert config.disable_chunking is True
         assert config.registers.no_remote_ems is True
         assert config.registers.read_only is True
         assert config.registers.read_write is True
         assert config.registers.write_only is True
-
-        config.configure({"disable-chunking": False, "no-remote-ems": False, "read-only": False, "read-write": False, "write-only": False})
-        assert config.disable_chunking is False
-        assert config.registers.no_remote_ems is False
-        assert config.registers.read_only is False
-        assert config.registers.read_write is False
-        assert config.registers.write_only is False

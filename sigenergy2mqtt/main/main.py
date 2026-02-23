@@ -256,7 +256,6 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClientType, pl
 
 
 async def async_main() -> None:
-    active_config.validate()
     pymodbus_apply_logging_config(active_config.get_modbus_log_level())
     configure_logging()
 
@@ -273,7 +272,7 @@ async def async_main() -> None:
                 logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
                 plant: PowerPlant | None = None  # Make sure plant is only created with first inverter
                 inverters: dict[int, str] = {}
-                for device_address in device.inverters:
+                for device_address in device.inverters:  # type: ignore[reportGeneralTypeIssues]
                     inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
                     if plant is None and plant_tmp is not None:
                         plant = plant_tmp
@@ -299,7 +298,7 @@ async def async_main() -> None:
                         if si_sensor:
                             si_sensor.publishable = False
                 elif plant:
-                    for device_address in device.dc_chargers:
+                    for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
                         charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
                         config.add_device(plant_index, charger)
                 if plant and len(device.ac_chargers) == 0:
@@ -308,7 +307,7 @@ async def async_main() -> None:
                     if si_sensor:
                         si_sensor.publishable = False
                 elif plant and protocol_version is not None and protocol_version >= Protocol.V2_0:
-                    for device_address in device.ac_chargers:
+                    for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
                         charger = await make_ac_charger(plant_index, modbus, device_address, plant)
                         config.add_device(plant_index, charger)
                 elif protocol_version is not None and protocol_version < Protocol.V2_0:

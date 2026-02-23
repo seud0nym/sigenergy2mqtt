@@ -75,7 +75,7 @@ class Translator:
         self._fallback_translations = {}
         self._cache = {}
         self._available_translations = None
-        # We don't need to reset self._yaml as it is stateless regarding translations
+        self._yaml = YAML(typ="safe", pure=True)
 
     def set_translations(self, language: str, data: dict[str, Any]):
         """Inject translations directly into the cache (primarily for testing)."""

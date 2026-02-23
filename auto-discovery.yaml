@@ -1,0 +1,10 @@
+- ac-chargers: []
+  dc-chargers: []
+  host: 10.20.30.68
+  inverters: [3]
+  port: 502
+- ac-chargers: [2]
+  dc-chargers: [1]
+  host: 192.168.192.52
+  inverters: [1]
+  port: 502

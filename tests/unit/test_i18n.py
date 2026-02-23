@@ -15,8 +15,8 @@ from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
 def ensure_sane_config():
     """Ensure active_config is sane and isolated."""
     cfg = Config()
-    cfg.home_assistant.entity_id_prefix = "sigenergy"
-    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.device_name_prefix = ""
     cfg.modbus = []
 

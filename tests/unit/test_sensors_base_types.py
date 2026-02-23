@@ -35,8 +35,8 @@ from sigenergy2mqtt.config import _swap_active_config
 @pytest.fixture(autouse=True)
 def mock_config_all(tmp_path):
     cfg = Config()
-    cfg.home_assistant.unique_id_prefix = "sigenergy"
-    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
     cfg.home_assistant.enabled = True
     cfg.sensor_overrides = {}
     cfg.persistent_state_path = tmp_path
@@ -58,8 +58,8 @@ class TestModbusSensor:
                     30000,
                     1,
                     name="N",
-                    unique_id="sigenergy_o",
-                    object_id="sigenergy_o",
+                    unique_id="sigen_o",
+                    object_id="sigen_o",
                     unit="U",
                     device_class=None,
                     state_class=None,
@@ -77,8 +77,8 @@ class TestModbusSensor:
                     29999,
                     1,
                     name="N",
-                    unique_id="sigenergy_o",
-                    object_id="sigenergy_o",
+                    unique_id="sigen_o",
+                    object_id="sigen_o",
                     unit="U",
                     device_class=None,
                     state_class=None,
@@ -95,7 +95,7 @@ class TestReadOnlySensor:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = ReadOnlySensor(
                 name="Test RO",
-                object_id="sigenergy_test_ro",
+                object_id="sigen_test_ro",
                 input_type=InputType.HOLDING,
                 plant_index=0,
                 device_address=1,
@@ -130,7 +130,7 @@ class TestTimestampSensor:
     @pytest.mark.asyncio
     async def test_get_state_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigenergy_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
 
             ts = 1700000000  # 2023-11-14 22:13:20 UTC
             with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super_get:
@@ -142,7 +142,7 @@ class TestTimestampSensor:
 
     def test_state2raw_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigenergy_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
             iso_str = "2023-11-14T22:13:20+00:00"
             raw = sensor.state2raw(iso_str)
             assert raw == 1700000000
@@ -155,7 +155,7 @@ class TestNumericSensor:
             sensor = NumericSensor(
                 None,
                 "Num",
-                "sigenergy_num",
+                "sigen_num",
                 InputType.HOLDING,
                 0,
                 1,
@@ -184,7 +184,7 @@ class TestSelectSensor:
     async def test_select_sensor_logic(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             options = ["A", "B", "C"]
-            sensor = SelectSensor(None, "Sel", "sigenergy_sel", 0, 1, 30200, 10, options, Protocol.V2_4)
+            sensor = SelectSensor(None, "Sel", "sigen_sel", 0, 1, 30200, 10, options, Protocol.V2_4)
 
             with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super_get:
                 mock_super_get.return_value = 1
@@ -204,7 +204,7 @@ class TestEnergyAccumulationSensors:
             source.unique_id = "source_uid"
 
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                sensor = EnergyLifetimeAccumulationSensor("Lifetime", "sigenergy_lifetime", "sigenergy_lifetime", source)
+                sensor = EnergyLifetimeAccumulationSensor("Lifetime", "sigen_lifetime", "sigen_lifetime", source)
 
                 sensor._current_total = 100.0
                 values = [(1000.0, 10.0), (1100.0, 20.0)]
@@ -225,14 +225,14 @@ class TestEnergyAccumulationSensors:
         cfg.persistent_state_path = tmp_path
         with _swap_active_config(cfg):
             source = ReadOnlySensor(
-                "Source", "sigenergy_source", InputType.HOLDING, 0, 1, 30001, 1, ModbusClient.DATATYPE.UINT32, 10, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:energy", 1.0, 2, Protocol.V2_4
+                "Source", "sigen_source", InputType.HOLDING, 0, 1, 30001, 1, ModbusClient.DATATYPE.UINT32, 10, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:energy", 1.0, 2, Protocol.V2_4
             )
 
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 time_day1 = 1000000.0
                 time_day2 = 1100000.0
 
-                sensor = EnergyDailyAccumulationSensor("Daily", "sigenergy_daily", "sigenergy_daily", source)
+                sensor = EnergyDailyAccumulationSensor("Daily", "sigen_daily", "sigen_daily", source)
                 sensor._state_at_midnight = 1000.0
 
                 values = [(time_day1, 1100.0), (time_day2, 1105.0)]
@@ -260,12 +260,12 @@ class TestEnergyAccumulationSensors:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
             with pytest.raises(AssertionError, match="Invalid data type UNKNOWN"):
-                ReadOnlySensor("RO", "sigenergy_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)  # type: ignore
+                ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)  # type: ignore
 
     @pytest.mark.asyncio
     async def test_readonly_update_internal_state_failed(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = ReadOnlySensor("RO", "sigenergy_ro", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
+            sensor = ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
             client = AsyncMock()
             rr = MagicMock()
             rr.isError.return_value = False  # So it doesn't raise Exception from _check_register_response
@@ -281,8 +281,8 @@ class TestReadWriteSensor:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # availability, name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
-            sensor = ReadWriteSensor(None, "RW", "sigenergy_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
-            sensor.configure_mqtt_topics("sigenergy")
+            sensor = ReadWriteSensor(None, "RW", "sigen_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
+            sensor.configure_mqtt_topics("sigen")
             client = AsyncMock()
             client.write_register.return_value = MagicMock(isError=lambda: False)
             # set_value(self, modbus_client, mqtt_client, value, source, handler)
