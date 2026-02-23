@@ -183,7 +183,7 @@ class RegisterAccess(BaseModel):
 
     no_remote_ems: bool = Field(False, alias="no-remote-ems")
     read_only: bool = Field(True, alias="read-only")
-    read_write: bool = Field(False, alias="read-write")
+    read_write: bool = Field(True, alias="read-write")
     write_only: bool = Field(True, alias="write-only")
 
 
