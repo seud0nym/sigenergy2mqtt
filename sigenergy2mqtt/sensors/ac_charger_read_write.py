@@ -23,8 +23,8 @@ class ACChargerStatus(WriteOnlySensor):
             name_on="Start",
             icon_off="mdi:stop",
             icon_on="mdi:play",
-            value_off=1,
-            value_on=0,
+            value_off=1,  # Values are inverted as per protocol to map to Home Assistant buttons
+            value_on=0,  # Values are inverted as per protocol to map to Home Assistant buttons
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:

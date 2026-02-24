@@ -2417,6 +2417,7 @@ class NumericSensor(ReadWriteSensor):
             protocol_version,
             **kwargs,
         )
+        self.sanity_check.delta = False
 
         self[DiscoveryKeys.PLATFORM] = "number"
 
