@@ -1,5 +1,3 @@
-from typing import cast
-
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
@@ -30,32 +28,23 @@ class ACChargerRunningState(ReadOnlySensor):
             precision=None,
             protocol_version=Protocol.V2_0,
         )
-        self["enabled_by_default"] = True
-        self["options"] = [
-            "Initialising",  # 0
-            "EV not connected",  # 1
-            "Charger and EV not ready",  # 2
-            "Charger ready; EV not ready",  # 3
-            "Charger not ready; EV ready",  # 4
-            "Charging",  # 5
-            "Fault",  # 6
-            "Error",  # 7
+        options: list[str] = [  # https://www.mathworks.com/help/autoblks/ug/charge-an-electric-vehicle.html
+            "Initialising",  # 0: System init - System is initialising # Not part of the IEC 61851-1 standard
+            "EV not connected",  # 1: A1/A2 - Vehicle is not connected
+            "Charger and EV not ready",  # 2: B1 - Vehicle connected and not ready to accept energy, Charger not ready to supply energy
+            "Charger ready; EV not ready",  # 3: B2 - Vehicle connected and not ready to accept energy, Charger ready to supply energy
+            "Charger not ready; EV ready",  # 4: C1 - Vehicle connected and ready to accept energy, EV does not require charging area ventilation, Charger not ready to supply energy
+            "Charging",  # 5: C2 - Vehicle connected and ready to accept energy, EV does not require charging area ventilation, Charger ready to supply energy
+            "Fault",  # 6: F - Fault Other Charger problem (can be intentionally set by the Charger, for example, that maintenance is required)
+            "Error",  # 7: E - Error Charger disconnected from vehicle / Charger disconnected from utility, Charger loss of utility power or control pilot short to control pilot reference
         ]
+        self["enabled_by_default"] = True
+        self["options"] = options
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(options) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        """ https://www.mathworks.com/help/autoblks/ug/charge-an-electric-vehicle.html
-        0: System init - System is initialising # Not part of the IEC 61851-1 standard
-        1: A1/A2 - Vehicle is not connected # A1: Charger not ready, A2: Charger ready
-        2: B1 - Vehicle connected and not ready to accept energy, Charger not ready to supply energy
-        3: B2 - Vehicle connected and not ready to accept energy, Charger ready to supply energy
-        4: C1 - Vehicle connected and ready to accept energy, EV does not require charging area ventilation, Charger not ready to supply energy
-        5: C2 - Vehicle connected and ready to accept energy, EV does not require charging area ventilation, Charger ready to supply energy
-        6: F - Fault Other Charger problem (can be intentionally set by the Charger, for example, that maintenance is required)
-        7: E - Error Charger disconnected from vehicle / Charger disconnected from utility, Charger loss of utility power or control pilot short to control pilot reference
-        """
         if raw:
             return value
         elif value is None:
@@ -97,7 +86,7 @@ class ACChargerChargingPower(ReadOnlySensor):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Charging Power",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_rated_charging_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_charging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -107,7 +96,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             scan_interval=ScanInterval.realtime(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
+            state_class=StateClass.MEASUREMENT,
             icon="mdi:car-electric",
             gain=1000,
             precision=2,
@@ -302,8 +291,3 @@ class ACChargerAlarms(AlarmCombinedSensor):
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm",
             *alarms,
         )
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 32012-32014"
-        return attributes
