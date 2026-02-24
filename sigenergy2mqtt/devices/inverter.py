@@ -89,7 +89,7 @@ class Inverter(ModbusDevice):
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "B-C"))
             self._add_read_sensor(ro.LineVoltage(plant_index, device_address, "C-A"))
         self._add_read_sensor(ro.PowerFactor(plant_index, device_address, active_power, reactive_power))
-        self._add_read_sensor(ro.MPTTCount(plant_index, device_address))
+        self._add_read_sensor(ro.MPPTCount(plant_index, device_address))
         self._add_read_sensor(pv_string_count)
         self._add_read_sensor(pv_power)
         self._add_read_sensor(ro.InsulationResistance(plant_index, device_address))

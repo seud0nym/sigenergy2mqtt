@@ -1040,7 +1040,7 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{phase} 선간 전압'
-  MPTTCount:
+  MPPTCount:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}

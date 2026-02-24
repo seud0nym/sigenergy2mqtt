@@ -1040,11 +1040,11 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{phase} Line Voltage'
-  MPTTCount:
+  MPPTCount:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: MPTT Count
+    name: MPPT Count
   MaxAbsorptionPower:
     attributes:
       source: Modbus Register {address}

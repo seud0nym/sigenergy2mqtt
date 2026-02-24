@@ -96,7 +96,7 @@ and the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenerg
 | sigen_inverter_max_reactive_power_adjustment_value_fed | <a href='./TOPICS.md#sigen_0_001_30583'>sigen_0_inverter_1_max_reactive_power_adjustment</a><br> |
 | sigen_inverter_min_active_power_adjustment_value | <a href='./TOPICS.md#sigen_0_001_30581'>sigen_0_inverter_1_min_active_power_adjustment</a><br> |
 | sigen_inverter_model_type | <a href='./TOPICS.md#sigen_0_001_30500'>sigen_0_inverter_1_model</a><br> |
-| sigen_inverter_mppt_count | <a href='./TOPICS.md#sigen_0_001_31026'>sigen_0_inverter_1_mptt_count</a><br> |
+| sigen_inverter_mppt_count | <a href='./TOPICS.md#sigen_0_001_31026'>sigen_0_inverter_1_mppt_count</a><br> |
 | sigen_inverter_output_type | <a href='./TOPICS.md#sigen_0_001_31004'>sigen_0_inverter_1_output_type</a><br> |
 | sigen_inverter_pack_count | <a href='./TOPICS.md#sigen_0_001_31024'>sigen_0_inverter_1_pack_bcu_count</a><br> |
 | sigen_inverter_pcs_internal_temperature | <a href='./TOPICS.md#sigen_0_001_31003'>sigen_0_inverter_1_temperature</a><br> |

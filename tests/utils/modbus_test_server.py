@@ -183,7 +183,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         case _:
                             value = randint(0, 255)
                     value /= sensor.gain
-                if self._mqtt_client and sensor.address and source not in ("output_type", "pv_string_count", "mptt_count", "alarm_sensor", "power_factor"):
+                if self._mqtt_client and sensor.address and source not in ("output_type", "pv_string_count", "mppt_count", "alarm_sensor", "power_factor"):
                     if "state_topic" in sensor:
                         self._topics[sensor.state_topic] = sensor
                         self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)

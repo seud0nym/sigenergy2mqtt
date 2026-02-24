@@ -63,7 +63,7 @@
         "modbus",
         "modbusregisterdefinitions",
         "Mosquitto",
-        "MPTT",
+        "MPPT",
         "mqtt",
         "OVGR",
         "PACKBCUCount",
@@ -117,4 +117,5 @@
     ],
     "python.testing.unittestEnabled": false,
     "ruff.lineLength": 210,
+    "python.languageServer": "None",
 }

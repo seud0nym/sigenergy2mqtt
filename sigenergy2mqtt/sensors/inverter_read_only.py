@@ -99,7 +99,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value is not None:
-            device = getattr(self, "parent_device")
+            device = getattr(self, "parent_device", None)
             if device and device["hw"] != value:
                 logging.info(f"{device.name} firmware change detected: {device['hw']} -> {value} (device_address={device.device_address})")
                 device["hw"] = value
@@ -248,7 +248,6 @@ class RatedChargingPower(ReadOnlySensor, HybridInverter):
 
 class RatedDischargingPower(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
-        self["entity_category"] = "diagnostic"
         super().__init__(
             name="Rated Discharging Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_rated_discharging_power",
@@ -267,6 +266,7 @@ class RatedDischargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class ReservedDailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
@@ -703,11 +703,11 @@ class ChargeDischargePower(ReadOnlySensor, HybridInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=active_config.modbus[plant_index].scan_interval.realtime if plant_index < len(active_config.modbus) else 5,
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:battery-charging-outline",
-            gain=None,  # v1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V1_8,
         )
@@ -841,11 +841,6 @@ class InverterPCSAlarm(AlarmCombinedSensor):
             *alarms,
         )
 
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 30605-30606"
-        return attributes
-
 
 class InverterAlarm3(Alarm3Sensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
@@ -887,7 +882,7 @@ class Reserved30610(ReservedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Reserved",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_30610",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_reserved_30610",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1247,7 +1242,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
-    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N
+    # Invalid when Output Type is L/N, L1/L2/N, or L1/L2/N (sic as per Protocol V2.8 should be L1/L2/L3/N)
     def __init__(self, plant_index: int, device_address: int, phase: str):
         match phase:
             case "A-B":
@@ -1257,7 +1252,7 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             case "C-A":
                 address = 31009
             case _:
-                raise ValueError("Phase must be 'A', 'B', or 'C'")
+                raise ValueError("Phase must be 'A-B', 'B-C', or 'C-A'")
         super().__init__(
             name=f"{phase} Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_{phase.lower().replace('-', '_')}_line_voltage",
@@ -1308,7 +1303,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
-            phase=phase,
+            phase=phase,  # Used for i18n processing
         )
         self.phase = phase
 
@@ -1387,9 +1382,9 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                     logging.debug(
                         f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
                     )
-                    logging.info(
-                        f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
-                    )
+                logging.info(
+                    f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
+                )
                 super().set_state(power_factor)
             else:
                 raise e
@@ -1415,6 +1410,7 @@ class PACKBCUCount(ReadOnlySensor, HybridInverter):
             precision=None,
             protocol_version=Protocol.V1_8,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class PVStringCount(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1440,11 +1436,11 @@ class PVStringCount(ReadOnlySensor, HybridInverter, PVInverter):
         self["entity_category"] = "diagnostic"
 
 
-class MPTTCount(ReadOnlySensor, HybridInverter, PVInverter):
+class MPPTCount(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            name="MPTT Count",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_mptt_count",
+            name="MPPT Count",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_mppt_count",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1523,11 +1519,11 @@ class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",
-            gain=None,  # 1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V1_8,
         )
@@ -1584,11 +1580,11 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
         )
 
 
-class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle Battery Voltage",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_vehicle_battery_voltage",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_vehicle_battery_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1606,7 +1602,7 @@ class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter, PVInverter)
         )
 
 
-class DCChargerVehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleChargingCurrent(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle Charging Current",
@@ -1628,7 +1624,7 @@ class DCChargerVehicleChargingCurrent(ReadOnlySensor, HybridInverter, PVInverter
         )
 
 
-class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerOutputPower(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Output Power",
@@ -1650,7 +1646,7 @@ class DCChargerOutputPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class DCChargerVehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerVehicleSoC(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Vehicle SoC",
@@ -1672,7 +1668,7 @@ class DCChargerVehicleSoC(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Current Charging Capacity",
@@ -1699,7 +1695,7 @@ class DCChargerCurrentChargingCapacity(ReadOnlySensor, HybridInverter, PVInverte
         return attributes
 
 
-class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter, PVInverter):
+class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Current Charging Duration",
@@ -1730,7 +1726,7 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Daily Production",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1760,7 +1756,7 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Lifetime Production",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
@@ -1785,7 +1781,7 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
         return components
 
 
-class DCChargerRunningState(ReadOnlySensor):
+class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable to PVInverter as per Protocol V2.9
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Running State",
