@@ -5,7 +5,7 @@ import logging
 import pytest
 from pydantic import ValidationError
 
-from sigenergy2mqtt.config.settings import ModbusConfig, SmartPortConfig, SmartPortModule
+from sigenergy2mqtt.config.models import ModbusConfig, SmartPortConfig, SmartPortModule
 
 
 def test_modbus_config_empty_host_raises():

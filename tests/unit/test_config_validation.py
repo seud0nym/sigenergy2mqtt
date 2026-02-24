@@ -3,8 +3,9 @@ from datetime import date, time
 
 import pytest
 
-from sigenergy2mqtt.config import active_config, validation
-from sigenergy2mqtt.config.settings import ModbusConfig, RegisterAccess, Settings
+from sigenergy2mqtt.common import RegisterAccess
+from sigenergy2mqtt.config import Settings, active_config, validation
+from sigenergy2mqtt.config.models import ModbusConfig
 
 
 class TestConfigValidation:

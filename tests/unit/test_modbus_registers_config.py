@@ -23,7 +23,7 @@ class TestModbusRegistersConfig:
         config = ModbusConfig(host="dummy")
         assert config.registers.no_remote_ems is False
         assert config.registers.read_only is True
-        assert config.registers.read_write is False
+        assert config.registers.read_write is True
         assert config.registers.write_only is True
 
     def test_configure_registers_individually(self):
