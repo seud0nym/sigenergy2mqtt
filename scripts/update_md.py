@@ -183,7 +183,7 @@ async def sensor_index():
                     if sensor.address in ILLEGAL_DATA_ADDRESSES:
                         f.write(" (may not be available on all devices)")
                 else:
-                    logging.getLogger("root").error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
+                    logging.getLogger().error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("</td></tr>\n")
                 if "options" in sensor:
                     options = cast(list[str], sensor["options"])
@@ -541,7 +541,7 @@ def download_latest(path: str) -> None:
 
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
     try:
         download_latest("custom_components/sigen/modbusregisterdefinitions.py")
     except requests.exceptions.HTTPError:

@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 import sys
 from pathlib import Path
@@ -29,7 +30,23 @@ serial_numbers = []
 
 
 def configure_logging():
-    root = logging.getLogger("root")
+    """Configure the root logger with a format appropriate to the runtime environment.
+
+    Three formats are used:
+
+    - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
+    - **Docker**: includes timestamp but no prefix — for structured container log collectors.
+    - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
+    """
+    if os.isatty(sys.stdout.fileno()):
+        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
+    else:
+        cgroup = Path("/proc/self/cgroup")
+        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
+    logging.basicConfig(format=fmt, level=logging.INFO, style="{")
+
+    root = logging.getLogger()
     pymodbus = logging.getLogger("pymodbus")
     paho_mqtt = logging.getLogger("paho.mqtt")
     pvoutput = logging.getLogger("pvoutput")

@@ -431,7 +431,7 @@ class SmartPort(Device):
 
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
     active_config.sensor_debug_logging = True
 
     async def test():

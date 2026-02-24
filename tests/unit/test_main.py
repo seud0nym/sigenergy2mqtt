@@ -67,14 +67,14 @@ class TestConfigureLogging:
             patch.object(active_config.pvoutput, "log_level", logging.ERROR),
         ):
             # Reset loggers to known state
-            logging.getLogger("root").setLevel(logging.NOTSET)
+            logging.getLogger().setLevel(logging.NOTSET)
             logging.getLogger("pymodbus").setLevel(logging.NOTSET)
             logging.getLogger("paho.mqtt").setLevel(logging.NOTSET)
             logging.getLogger("pvoutput").setLevel(logging.NOTSET)
 
             main_mod.configure_logging()
 
-            assert logging.getLogger("root").level == logging.DEBUG
+            assert logging.getLogger().level == logging.DEBUG
             assert logging.getLogger("pymodbus").level == logging.INFO
             assert logging.getLogger("paho.mqtt").level == logging.WARNING
             assert logging.getLogger("pvoutput").level == logging.ERROR
