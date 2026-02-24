@@ -216,88 +216,6 @@ class Config:
         """Return the current sigenergy2mqtt version string."""
         return version.__version__
 
-    @classmethod
-    def system_initialize(cls):
-        """Perform one-time system-level initialisation before configuration is loaded.
-
-        This classmethod should be called once at application startup, before
-        constructing or loading any :class:`Config` instance.  It:
-
-        1. Configures the root logger with an appropriate format (TTY, Docker, or
-           plain syslog-style) via :func:`_setup_logging`.
-        2. Logs the application and Python version.
-        3. Enforces the minimum Python version requirement (3.12+).
-        4. Locates or creates the persistent state directory via
-           :func:`_create_persistent_state_path`.
-        5. Removes stale state files older than 7 days via :func:`_clean_stale_files`.
-
-        Returns:
-            The resolved :class:`~pathlib.Path` to the persistent state directory.
-
-        Raises:
-            ConfigurationError: If the Python version requirement is not met, or if no
-                writable directory can be found for persistent state storage.
-        """
-        _setup_logging()
-
-        logger = logging.getLogger("root")
-        logger.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
-
-        min_version = (3, 12)
-        if sys.version_info < min_version:
-            raise ConfigurationError(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
-
-        found_path = _create_persistent_state_path()
-        _clean_stale_files(found_path)
-        return found_path
-
-
-def _setup_logging() -> None:
-    """Configure the root logger with a format appropriate to the runtime environment.
-
-    Three formats are used:
-
-    - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
-    - **Docker**: includes timestamp but no prefix — for structured container log collectors.
-    - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
-    """
-    if os.isatty(sys.stdout.fileno()):
-        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
-    else:
-        cgroup = Path("/proc/self/cgroup")
-        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
-        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
-    logging.basicConfig(format=fmt, level=logging.INFO, style="{")
-
-
-def _create_persistent_state_path() -> Path:
-    """Find a writable base directory and create the ``sigenergy2mqtt`` subdirectory.
-
-    Candidate base directories are tried in order: the value of the environment
-    variable ``SIGENERGY2MQTT_STATE_DIR`` (if set), ``/data/``, ``/var/lib/``,
-    the current user's home directory, and ``/tmp/``.  The first writable candidate
-    is used.
-
-    Returns:
-        The resolved absolute :class:`~pathlib.Path` of the persistent state directory.
-
-    Raises:
-        ConfigurationError: If none of the candidate directories are writable.
-    """
-    candidates = [os.getenv("SIGENERGY2MQTT_STATE_DIR", None), "/data/", "/var/lib/", str(Path.home()), "/tmp/"]
-    for base in candidates:
-        if base is None:
-            continue
-        if os.path.isdir(base) and os.access(base, os.W_OK):
-            path = Path(base, "sigenergy2mqtt")
-            if not path.is_dir():
-                logging.info(f"Persistent state folder '{path}' created")
-                path.mkdir()
-            else:
-                logging.debug(f"Persistent state folder '{path}' already exists")
-            return path.resolve()
-    raise ConfigurationError("Unable to create persistent state folder!")
-
 
 def _clean_stale_files(path: Path) -> None:
     """Remove files from *path* that have not been modified in the last 7 days.
@@ -324,6 +242,88 @@ def _clean_stale_files(path: Path) -> None:
                 logging.info(f"Removed stale state file: {file} (last modified: {time.ctime(stat.st_mtime)})")
             except (PermissionError, OSError) as e:
                 logging.error(f"Failed to remove stale state file: {file} ({e})")
+
+
+def _create_persistent_state_path() -> Path:
+    """Find a writable base directory and create the ``sigenergy2mqtt`` subdirectory.
+
+    Candidate base directories are tried in order: the value of the environment
+    variable ``SIGENERGY2MQTT_STATE_DIR`` (if set), ``/data/``, ``/var/lib/``,
+    the current user's home directory, and ``/tmp/``.  The first writable candidate
+    is used.
+
+    If the path resolves to an existing directory, it is cleaned via
+    :func:`_clean_stale_files`.
+
+    Returns:
+        The resolved absolute :class:`~pathlib.Path` of the persistent state directory.
+
+    Raises:
+        ConfigurationError: If none of the candidate directories are writable.
+    """
+    candidates = [os.getenv("SIGENERGY2MQTT_STATE_DIR", None), "/data/", "/var/lib/", str(Path.home()), "/tmp/"]
+    for base in candidates:
+        if base is None:
+            continue
+        if os.path.isdir(base) and os.access(base, os.W_OK):
+            path = Path(base, "sigenergy2mqtt")
+            if not path.is_dir():
+                logging.info(f"Persistent state folder '{path}' created")
+                path.mkdir()
+            else:
+                logging.debug(f"Persistent state folder '{path}' already exists")
+                _clean_stale_files(path)
+            return path.resolve()
+    raise ConfigurationError("Unable to create persistent state folder!")
+
+
+def _setup_logging() -> None:
+    """Configure the root logger with a format appropriate to the runtime environment.
+
+    Three formats are used:
+
+    - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
+    - **Docker**: includes timestamp but no prefix — for structured container log collectors.
+    - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
+    """
+    if os.isatty(sys.stdout.fileno()):
+        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
+    else:
+        cgroup = Path("/proc/self/cgroup")
+        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
+    logging.basicConfig(format=fmt, level=logging.INFO, style="{")
+
+    # Apply log level immediately from env so initial logging is correct.
+    log_level_name = os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL)
+    if log_level_name:
+        level = getattr(logging, log_level_name, None)
+        if level:
+            logging.getLogger().setLevel(level)
+
+
+def _system_initialize():
+    """Perform one-time system-level initialisation before configuration is loaded.
+
+    This classmethod should be called once at application startup, before
+    constructing or loading any :class:`Config` instance.  It:
+
+    1. Configures the root logger with an appropriate format (TTY, Docker, or
+        plain syslog-style) via :func:`_setup_logging`.
+    2. Logs the application and Python version.
+    3. Enforces the minimum Python version requirement (3.12+).
+
+    Raises:
+        ConfigurationError: If the Python version requirement is not met, or if no
+            writable directory can be found for persistent state storage.
+    """
+    _setup_logging()
+
+    logging.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
+
+    min_version = (3, 12)
+    if sys.version_info < min_version:
+        raise ConfigurationError(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
 
 
 class _ConfigProxy:
@@ -396,6 +396,8 @@ def _swap_active_config(new_config: Config) -> Generator[Config, None, None]:
         finally:
             active_config = old
 
+
+_system_initialize()
 
 # Global singleton — the authoritative configuration instance at runtime.
 active_config = _ConfigProxy(Config())

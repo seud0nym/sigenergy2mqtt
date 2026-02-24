@@ -3,6 +3,7 @@ import os
 from unittest.mock import patch
 
 import pytest
+from pydantic import ValidationError
 
 from sigenergy2mqtt.config import Config, _swap_active_config, const
 
@@ -37,9 +38,6 @@ class TestConfigEnvironmentOverrides:
                 cfg.reload()
 
 
-from pydantic import ValidationError
-
-
 class TestConfigSensorOverrides:
     def test_sensor_overrides_yaml(self, tmp_path):
         config_file = tmp_path / "config.yaml"
@@ -68,11 +66,10 @@ class TestConfigAutoDiscovery:
     def test_auto_discovery_force(self, tmp_path, monkeypatch):
         discovered = [{"host": "192.168.1.200", "port": 502, "inverters": [1]}]
 
-        monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY, "force")
-        monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "192.168.1.1")
-
-        with _swap_active_config(Config()) as cfg:
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=discovered) as mock_scan:
+        with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=discovered) as mock_scan:
+            with _swap_active_config(Config()) as cfg:
+                monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY, "force")
+                monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "192.168.1.1")
                 cfg.persistent_state_path = tmp_path
                 cfg.reload()
                 mock_scan.assert_called_once()
@@ -88,11 +85,10 @@ class TestConfigAutoDiscovery:
         cache_file = tmp_path / "auto-discovery.yaml"
         cache_file.write_text("- host: 192.168.1.100\n  port: 502\n  inverters: [1]\n")
 
-        monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY, "once")
-        monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "192.168.1.1")
-
-        with _swap_active_config(Config()) as cfg:
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan") as mock_scan:
+        with patch("sigenergy2mqtt.config.config.auto_discovery_scan") as mock_scan:
+            with _swap_active_config(Config()) as cfg:
+                monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY, "once")
+                monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "192.168.1.1")
                 cfg.persistent_state_path = tmp_path
                 cfg.reload()
                 mock_scan.assert_not_called()
