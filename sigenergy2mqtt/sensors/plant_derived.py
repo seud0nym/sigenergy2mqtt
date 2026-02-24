@@ -256,7 +256,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     def observable_topics(self) -> set[str]:
         topics: set[str] = set()
         if active_config.modbus[self.plant_index].smartport.enabled:
-            for topic in active_config.modbus[self.plant_index].smartport.mqtt:
+            for topic in active_config.modbus[self.plant_index].smartport.mqtt:  # pyright: ignore[reportGeneralTypeIssues]
                 if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
                     self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     topics.add(topic.topic)

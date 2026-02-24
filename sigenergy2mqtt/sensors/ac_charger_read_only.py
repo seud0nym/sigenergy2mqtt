@@ -4,7 +4,7 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
-from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
+from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor, ScanInterval
 from .const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 
 # 5.5 AC-Charger running information address definition (read-only register)
@@ -21,7 +21,7 @@ class ACChargerRunningState(ReadOnlySensor):
             address=32000,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=None,
             device_class=DeviceClass.ENUM,
             state_class=None,
@@ -81,7 +81,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             address=32001,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
             state_class=StateClass.TOTAL_INCREASING,
@@ -104,7 +104,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             address=32003,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.realtime if plant_index < len(active_config.modbus) else 5,
+            scan_interval=ScanInterval.realtime(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -127,7 +127,7 @@ class ACChargerRatedPower(ReadOnlySensor):
             address=32005,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
+            scan_interval=ScanInterval.low(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -149,7 +149,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             address=32007,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
+            scan_interval=ScanInterval.low(plant_index),
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,
@@ -171,7 +171,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             address=32009,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
+            scan_interval=ScanInterval.low(plant_index),
             unit=UnitOfElectricPotential.VOLT,
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
@@ -193,7 +193,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
             address=32010,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.low if plant_index < len(active_config.modbus) else 600,
+            scan_interval=ScanInterval.low(plant_index),
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=None,

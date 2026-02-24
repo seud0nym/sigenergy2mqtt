@@ -2,7 +2,7 @@ from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
-from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, ScanInterval, WriteOnlySensor
 from .const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
 
 # 5.4 Hybrid inverter parameter setting address definition (holding register)
@@ -36,7 +36,7 @@ class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reser
             address=40501,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -84,7 +84,7 @@ class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Ma
             address=41500,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -107,7 +107,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             address=41501,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -131,7 +131,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             address=41503,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -155,7 +155,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             address=41505,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -181,7 +181,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             address=41506,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -207,7 +207,7 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             address=41507,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,

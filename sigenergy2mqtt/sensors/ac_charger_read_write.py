@@ -2,7 +2,7 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
-from .base import DeviceClass, InputType, NumericSensor, StateClass, WriteOnlySensor
+from .base import DeviceClass, InputType, NumericSensor, ScanInterval, StateClass, WriteOnlySensor
 from .const import UnitOfElectricCurrent
 
 # 5.6 AC-Charger parameter setting address definition (holding register)
@@ -53,7 +53,7 @@ class ACChargerOutputCurrent(NumericSensor):
             address=42001,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=StateClass.MEASUREMENT,

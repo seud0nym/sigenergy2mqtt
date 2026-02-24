@@ -100,6 +100,40 @@ StateHistory: TypeAlias = list[tuple[float, Any]]
 
 
 # =============================================================================
+# Helpers
+# =============================================================================
+
+
+class ScanInterval:
+    _realtime: int = 5
+    _high: int = 10
+    _medium: int = 60
+    _low: int = 600
+
+    @staticmethod
+    def _get(plant_index: int, tier: str) -> int:
+        if 0 <= plant_index < len(active_config.modbus):
+            return getattr(active_config.modbus[plant_index].scan_interval, tier)
+        return getattr(ScanInterval, f"_{tier}")
+
+    @staticmethod
+    def low(plant_index: int) -> int:
+        return ScanInterval._get(plant_index, "low")
+
+    @staticmethod
+    def medium(plant_index: int) -> int:
+        return ScanInterval._get(plant_index, "medium")
+
+    @staticmethod
+    def high(plant_index: int) -> int:
+        return ScanInterval._get(plant_index, "high")
+
+    @staticmethod
+    def realtime(plant_index: int) -> int:
+        return ScanInterval._get(plant_index, "realtime")
+
+
+# =============================================================================
 # Module-level utilities with proper error handling
 # =============================================================================
 
@@ -459,7 +493,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             registers: Register access configuration for this device
         """
         # Pre-compile regex patterns for efficiency
-        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}
+        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}  # pyright: ignore[reportGeneralTypeIssues]
 
         for identifier, pattern in identifier_patterns.items():
             if self._matches_override_pattern(pattern):
@@ -1331,7 +1365,7 @@ class ReadableSensorMixin(Sensor):
 
     def _apply_scan_interval_overrides(self) -> None:
         """Apply scan interval overrides from configuration."""
-        for identifier in active_config.sensor_overrides.keys():
+        for identifier in active_config.sensor_overrides.keys():  # pyright: ignore[reportGeneralTypeIssues]
             overrides = self._get_applicable_overrides(identifier)
             if overrides and "scan-interval" in overrides:
                 if self.scan_interval != overrides["scan-interval"]:
