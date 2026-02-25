@@ -50,7 +50,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     plant_pv_power: PlantPVPower | None = None
     total_pv_power: TotalPVPower | None = None
 
-    donation = {k: v for k, v in active_config.pvoutput.extended.items() if v != ""}
+    donation = {k: v for k, v in active_config.pvoutput.extended.items() if v != ""}  # pyright: ignore[reportGeneralTypeIssues]
 
     extended_data: dict[StatusField, str | None] = {field: None for field in StatusField}
     status_topics: dict[StatusField, list[Topic]] = {field: [] for field in StatusField}

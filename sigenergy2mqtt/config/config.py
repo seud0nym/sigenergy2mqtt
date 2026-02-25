@@ -780,7 +780,7 @@ class Config:
             future = asyncio.run_coroutine_threadsafe(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries), loop)
             return future.result(timeout=timeout)
         except TimeoutError:
-            future.cancel()  # pyrefly: ignore - future is always bound before .result() raises.
+            future.cancel()  # type: ignore[reportPossiblyUnboundVariable] - future is always bound before .result() raises.
             logging.error("Auto-discovery timed out after %.1fs", timeout)
             return []
         except Exception:
