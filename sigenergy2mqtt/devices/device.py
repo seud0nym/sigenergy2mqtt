@@ -5,7 +5,7 @@ import logging
 import time
 from collections import defaultdict
 from pathlib import Path
-from random import randint, uniform
+from random import uniform
 from typing import Any, Awaitable, cast
 
 import paho.mqtt.client as mqtt
@@ -82,7 +82,7 @@ class ReadableSensorGroup(list[ReadableSensorMixin | ModbusSensorMixin]):
         else:
             return -1
 
-    def append(self, object):
+    def append(self, sensor: ReadableSensorMixin | ModbusSensorMixin):
         """Append a sensor and update Modbus address range metadata if applicable.
 
         For publishable ModbusSensorMixin instances, updates first_address and
@@ -91,36 +91,36 @@ class ReadableSensorGroup(list[ReadableSensorMixin | ModbusSensorMixin]):
         members.
 
         Args:
-            object: The sensor to append. Must be a ReadableSensorMixin instance.
+            sensor: The sensor to append. Must be a ReadableSensorMixin instance.
 
         Raises:
-            ValueError: If object is not a ReadableSensorMixin.
-            ValueError: If object is a ModbusSensorMixin with a different device_address
+            ValueError: If sensor is not a ReadableSensorMixin.
+            ValueError: If sensor is a ModbusSensorMixin with a different device_address
                         than existing Modbus sensors in this group.
-            ValueError: If object is a ModbusSensorMixin with a different input_type
+            ValueError: If sensor is a ModbusSensorMixin with a different input_type
                         than existing Modbus sensors in this group.
-            ValueError: If object is a non-Modbus sensor being added to a group that
+            ValueError: If sensor is a non-Modbus sensor being added to a group that
                         already contains ModbusSensorMixin instances, or vice versa.
         """
-        if not isinstance(object, ReadableSensorMixin):
-            raise ValueError(f"Only ReadableSensorMixin instances can be added to ReadableSensorGroup, got {type(object)}")
-        if isinstance(object, ModbusSensorMixin):
-            if object.publishable:
-                if self.first_address == -1 or object.address < self.first_address:
-                    self.first_address = object.address
-                if self.last_address == -1 or (object.address + object.count - 1) > self.last_address:
-                    self.last_address = object.address + object.count - 1
+        if not isinstance(sensor, ReadableSensorMixin):
+            raise ValueError(f"Only ReadableSensorMixin instances can be added to ReadableSensorGroup, got {type(sensor)}")
+        if isinstance(sensor, ModbusSensorMixin):
+            if sensor.publishable:
+                if self.first_address == -1 or sensor.address < self.first_address:
+                    self.first_address = sensor.address
+                if self.last_address == -1 or (sensor.address + sensor.count - 1) > self.last_address:
+                    self.last_address = sensor.address + sensor.count - 1
                 if self.device_address == -1:
-                    self.device_address = object.device_address
-                elif self.device_address != object.device_address:
-                    raise ValueError(f"All ModbusSensorMixin instances in a ReadableSensorGroup must have the same device address, expected {self.device_address}, got {object.device_address}")
+                    self.device_address = sensor.device_address
+                elif self.device_address != sensor.device_address:
+                    raise ValueError(f"All ModbusSensorMixin instances in a ReadableSensorGroup must have the same device address, expected {self.device_address}, got {sensor.device_address}")
                 if self.input_type == InputType.NONE:
-                    self.input_type = object.input_type
-                elif self.input_type != object.input_type:
-                    raise ValueError(f"All ModbusSensorMixin instances in a ReadableSensorGroup must have the same input type, expected {self.input_type}, got {object.input_type}")
+                    self.input_type = sensor.input_type
+                elif self.input_type != sensor.input_type:
+                    raise ValueError(f"All ModbusSensorMixin instances in a ReadableSensorGroup must have the same input type, expected {self.input_type}, got {sensor.input_type}")
         elif any(s for s in self if isinstance(s, ModbusSensorMixin)):
             raise ValueError("Cannot add non-ModbusSensorMixin to a ReadableSensorGroup that already contains ModbusSensorMixin instances")
-        return super().append(object)
+        return super().append(sensor)
 
 
 class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
@@ -440,8 +440,6 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 elif isinstance(sensor, DerivedSensor):
                     to_sensor.add_derived_sensor(sensor)
                     self._add_to_all_sensors(sensor)
-                else:
-                    logging.error(f"{self.name} cannot add {sensor.__class__.__name__} - not a DerivedSensor")
 
     def _add_read_sensor(self, sensor: Sensor, group: str | None = None) -> bool:
         """Register a readable sensor, optionally placing it in a named scan group.
@@ -484,7 +482,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             sensor: The sensor to register. Must be a WriteOnlySensor instance.
         """
         if not isinstance(sensor, WriteOnlySensor):
-            logging.error(f"{self.name} cannot add {sensor.unique_id} ({sensor.unique_id}) - not a WriteOnlySensor")
+            logging.error(f"{self.name} cannot add {sensor.__class__.__name__} - not a WriteOnlySensor")
         else:
             self.write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
@@ -539,8 +537,9 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
         # Create Modbus sensor scan groups for sensors that are not already in a named group
         # Grouped by device_address and contiguous addresses only (scan_interval handled per-sensor in publish_updates)
+        all_grouped = [gs for lst in combined_groups.values() for gs in lst]
         for sensor in sorted(
-            [s for s in combined_sensors.values() if isinstance(s, ModbusSensorMixin) and s not in [gs for lst in combined_groups.values() for gs in lst]],
+            [s for s in combined_sensors.values() if isinstance(s, ModbusSensorMixin) and s not in all_grouped],
             key=lambda s: (s.device_address, s.address),
         ):
             if (  # Conditions for creating a new sensor scan group
@@ -582,9 +581,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 del combined_groups[g_name]
 
         # Create a single scan group for remaining non-Modbus readable sensors
-        non_modbus_sensors = [
-            s for s in combined_sensors.values() if not isinstance(s, ModbusSensorMixin) and isinstance(s, ReadableSensorMixin) and s not in [gs for lst in combined_groups.values() for gs in lst]
-        ]
+        non_modbus_sensors = [s for s in combined_sensors.values() if not isinstance(s, ModbusSensorMixin) and isinstance(s, ReadableSensorMixin) and s not in all_grouped]
         if non_modbus_sensors:
             group_name = "non_modbus_sensors"
             combined_groups[group_name] = non_modbus_sensors
@@ -622,14 +619,21 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         daily_sensors: list[ReadableSensorMixin] = []
         next_publish_times: dict[ReadableSensorMixin, float] = {}
         now = time.time()
+        # Compute a single group-level jitter so that all sensors in the group become
+        # due at the same time. Per-sensor jitter would permanently stagger sensors
+        # within the group, causing each to be published in a separate loop iteration
+        # and defeating the read-ahead optimisation entirely.
+        readable_sensors = [s for s in sensors if isinstance(s, ReadableSensorMixin)]
+        group_jitter = uniform(0.5, min(5, min((s.scan_interval for s in readable_sensors), default=5))) if readable_sensors else 0.0
         for sensor in sensors:
             debug_logging = debug_logging or sensor.debug_logging or any(ds.debug_logging for ds in sensor.derived_sensors.values())
             if isinstance(sensor, ReadableSensorMixin):
                 # Track sensors with EnergyDailyAccumulationSensor derived sensors
                 if any(isinstance(ds, EnergyDailyAccumulationSensor) for ds in sensor.derived_sensors.values()):
                     daily_sensors.append(sensor)
-                # Initialize with staggered start times
-                next_publish_times[sensor] = now + uniform(0.5, min(5, sensor.scan_interval))
+                # Initialize all sensors in the group with the same start time so they
+                # remain phase-aligned and are always published together in one iteration.
+                next_publish_times[sensor] = now + group_jitter
                 # Publish initial state if available
                 if sensor.publishable and sensor.latest_raw_state is not None:
                     await sensor.publish(mqtt_client, modbus_client, republish=True)
@@ -695,7 +699,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         read_ahead_enabled = True  # Must be currently enabled, otherwise should not have been called (multiple == True in calling method)
         due_modbus = [s for s in due_sensors if isinstance(s, ModbusSensorMixin)]
         if len(due_modbus) > 0:
-            debug_read_ahead = any(s for s in due_modbus if s.debug_logging)
+            debug_read_ahead = any(s.debug_logging for s in due_modbus)
             async with modbus_lock.lock():
                 read_ahead_start = 0.0
                 if debug_logging:
@@ -796,9 +800,10 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             A new dict mapping unique_id to Sensor.
         """
         if search_children:
-            all_sensors = self.all_sensors.copy()
+            all_sensors = {}
             for child in self.children:
                 all_sensors.update(child.get_all_sensors(search_children=True))
+            all_sensors.update(self.all_sensors)  # Parent takes precedence
             return all_sensors
         else:
             return self.all_sensors
@@ -827,8 +832,9 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 if unique_id in child.sensors:
                     return child.sensors[unique_id]
         for alarm in [s for s in self.all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
-            if unique_id in [a.unique_id for a in alarm.alarms]:
-                return next(a for a in alarm.alarms if a.unique_id == unique_id)
+            found = next((a for a in alarm.alarms if a.unique_id == unique_id), None)
+            if found:
+                return found
         if search_children:
             for child in self.children:
                 for alarm in [s for s in child.all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
@@ -861,12 +867,12 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             cancelled (e.g. during device shutdown) or if ha_state is not "online".
         """
         if ha_state == "online":
-            seconds = float(randint(int(HA_REPUBLISH_MIN_JITTER), int(HA_REPUBLISH_MAX_JITTER)) + (randint(0, 10) / 10))
+            seconds = uniform(HA_REPUBLISH_MIN_JITTER, HA_REPUBLISH_MAX_JITTER)
             logging.info(f"{self.name} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
             try:
                 await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
                 await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
-                for sensor in self.sensors.values():
+                for sensor in self.get_all_sensors(search_children=True).values():
                     await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
                 return True
             except asyncio.CancelledError:
@@ -945,7 +951,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
             components = {}
             for sensor in self.sensors.values():
                 components.update(sensor.get_discovery(mqtt_client))
-            if len(components) > 0:
+            if components:
                 discovery: dict[str, Any] = {}
                 discovery["dev"] = self
                 discovery["o"] = active_config.origin
@@ -1122,7 +1128,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         groups = self._create_sensor_scan_groups()
         tasks: list[Awaitable[None]] = []
         for name, sensors in groups.items():
-            if any([s for s in sensors if s.publishable]):
+            if any(s for s in sensors if s.publishable):
                 tasks.append(self.publish_updates(modbus_client, mqtt_client, name, *sensors))
             else:
                 logging.debug(f"{self.name} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
