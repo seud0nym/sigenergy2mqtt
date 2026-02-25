@@ -1,7 +1,7 @@
 from datetime import timedelta, timezone
-from typing import Any, cast
+from typing import cast
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import Constants, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
@@ -22,6 +22,7 @@ from .base import (
     ScanInterval,
     StateClass,
     TimestampSensor,
+    UnpublishResetSensorMixin,
 )
 from .const import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 
@@ -35,7 +36,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_system_time",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30000,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V1_8,
@@ -49,7 +50,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_system_time_zone",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30002,
             count=1,
             data_type=ModbusDataType.INT16,
@@ -81,12 +82,12 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
     def state2raw(self, state) -> float | int | str:
         if isinstance(state, str):
             offset = state.replace("UTC", "")
+            if not offset:
+                return 0
             sign = 1 if offset[0] == "+" else -1
             hours, minutes = map(int, offset[1:].split(":"))
-            total_minutes = sign * (hours * 60 + minutes)
-        else:
-            total_minutes = state
-        return int(total_minutes)
+            return sign * (hours * 60 + minutes)
+        return int(state)
 
 
 class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
@@ -96,7 +97,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_ems_work_mode",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30003,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -147,7 +148,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_sensor_status",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30004,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -192,16 +193,16 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_sensor_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30005,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:transmission-tower",
-            gain=None,  # 1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V1_8,
         )
@@ -222,16 +223,16 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_sensor_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30007,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.high(plant_index),
-            unit=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,  # UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
+            unit=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,  # Consistent with GridSensorActivePower
             device_class=None,
             state_class=None,
             icon="mdi:transmission-tower",
-            gain=None,  # 1000,
+            gain=None,  # Consistent with GridSensorActivePower
             precision=2,
             protocol_version=Protocol.V1_8,
         )
@@ -249,7 +250,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_status",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30009,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -290,7 +291,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30010,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -318,7 +319,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30012,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -346,7 +347,7 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_battery_soc",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30014,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -373,13 +374,14 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
                 address = 30019
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
-        phase = f" {phase}" if power_phases > 1 else ""
+        phase_label = f" {phase}" if power_phases > 1 else ""
+        phase_slug = phase.lower()
         super().__init__(
-            name=f"Phase{phase} Active Power",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.strip().lower()}_active_power",
+            name=f"Phase{phase_label} Active Power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase_slug}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -406,13 +408,14 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
                 address = 30025
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
-        phase = f" {phase}" if power_phases > 1 else ""
+        phase_label = f" {phase}" if power_phases > 1 else ""
+        phase_slug = phase.lower()
         super().__init__(
-            name=f"Phase{phase} Reactive Power",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.strip().lower()}_reactive_power",
+            name=f"Phase{phase_label} Reactive Power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase_slug}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -434,7 +437,7 @@ class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
             "PCS Alarms 1",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_1",
             plant_index,
-            247,
+            Constants.PLANT_DEVICE_ADDRESS,
             30027,
             protocol_version=Protocol.V1_8,
         )
@@ -451,7 +454,7 @@ class GeneralAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
             "PCS Alarms 2",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_2",
             plant_index,
-            247,
+            Constants.PLANT_DEVICE_ADDRESS,
             30028,
             protocol_version=Protocol.V1_8,
         )
@@ -474,7 +477,6 @@ class GeneralPCSAlarm(AlarmCombinedSensor):
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "If any hybrid inverter has alarm, then this alarm will be set accordingly"
-        attributes["source"] = "Modbus Registers 30027-30028"
         return attributes
 
 
@@ -484,7 +486,7 @@ class GeneralAlarm3(Alarm3Sensor, HybridInverter):
             "ESS Alarms",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_3",
             plant_index,
-            247,
+            Constants.PLANT_DEVICE_ADDRESS,
             30029,
             protocol_version=Protocol.V1_8,
         )
@@ -501,7 +503,7 @@ class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
             "Gateway Alarms",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_4",
             plant_index,
-            247,
+            Constants.PLANT_DEVICE_ADDRESS,
             30030,
             protocol_version=Protocol.V1_8,
         )
@@ -519,7 +521,7 @@ class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30031,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -541,7 +543,7 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30033,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -563,16 +565,16 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pv_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30035,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",
-            gain=None,  # 1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V1_8,
         )
@@ -586,16 +588,16 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_battery_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30037,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:home-battery-outline",
-            gain=None,  # 1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V1_8,
         )
@@ -614,7 +616,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_max_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30039,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -643,7 +645,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_min_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30041,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -672,7 +674,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_max_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30043,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -695,14 +697,13 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
-    # Absorb from the AC terminal. Count only the running inverters
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Min Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_min_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30045,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -731,7 +732,7 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_max_charging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30047,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -759,7 +760,7 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_max_discharging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30049,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -786,7 +787,7 @@ class PlantRunningState(RunningStateSensor, HybridInverter, PVInverter):
             "Running State",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_running_state",
             plant_index,
-            247,
+            Constants.PLANT_DEVICE_ADDRESS,
             30051,
             protocol_version=Protocol.V1_8,
         )
@@ -808,7 +809,7 @@ class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -845,7 +846,7 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -873,7 +874,7 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_max_charging_capacity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30064,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -901,7 +902,7 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_available_max_discharging_capacity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30066,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -929,7 +930,7 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_rated_charging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30068,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -953,7 +954,7 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_rated_discharging_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30070,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -976,7 +977,7 @@ class GeneralAlarm5(Alarm5Sensor, HybridInverter):
             "DC Charger Alarms",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_general_alarm_5",
             plant_index,
-            247,
+            Constants.PLANT_DEVICE_ADDRESS,
             30072,
             protocol_version=Protocol.V1_8,
         )
@@ -994,7 +995,7 @@ class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_30073",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30073,
             count=10,
             data_type=ModbusDataType.STRING,
@@ -1016,7 +1017,7 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_rated_energy_capacity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30083,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -1040,7 +1041,7 @@ class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_charge_cut_off_soc",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30085,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -1062,7 +1063,7 @@ class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_discharge_cut_off_soc",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30086,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -1084,7 +1085,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_battery_soh",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30087,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -1112,7 +1113,7 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_plant_lifetime_pv_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30088,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1127,14 +1128,14 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
+class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Daily Consumption",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30092,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -1151,20 +1152,15 @@ class TotalLoadDailyConsumption(ReadOnlySensor, HybridInverter, PVInverter):
         self["enabled_by_default"] = True
         self.sanity_check.min_raw = None
 
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        components: dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
 
-
-class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
+class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Consumption",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30094,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1180,11 +1176,6 @@ class TotalLoadConsumption(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        components: dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
-
 
 class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, address: int, smart_load_index: int):
@@ -1194,7 +1185,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_smart_load_{smart_load_index:02}_total_consumption",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -1218,7 +1209,7 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_smart_load_{smart_load_index:02}_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -1241,16 +1232,16 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_third_party_pv_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30194,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",
-            gain=None,  # 1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V2_7,
         )
@@ -1263,7 +1254,7 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_third_party_pv_lifetime_production",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30196,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1278,14 +1269,14 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
         )
 
 
-class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Charge Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30200,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1301,20 +1292,15 @@ class ESSTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        components: dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
 
-
-class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Discharge Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30204,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1330,11 +1316,6 @@ class ESSTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        components: dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
-
 
 class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
@@ -1343,7 +1324,7 @@ class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_evdc_total_charge_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30208,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1365,7 +1346,7 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_evdc_total_discharge_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30212,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1380,14 +1361,14 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Imported Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30216,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1403,20 +1384,15 @@ class PlantTotalImportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        components: dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
 
-
-class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Exported Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30220,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1432,11 +1408,6 @@ class PlantTotalExportedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self["enabled_by_default"] = True
 
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        components: dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
-
 
 class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
@@ -1445,7 +1416,7 @@ class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_plant_total_generator_output_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30224,
             count=4,
             data_type=ModbusDataType.UINT64,
@@ -1472,36 +1443,24 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
         address: int,
         scan_interval: int,
         icon: str,
-        input_type: InputType = InputType.INPUT,
-        device_address: int = 247,
-        count: int = 4,
-        data_type: ModbusDataType = ModbusDataType.UINT64,
-        unit: str = UnitOfEnergy.KILO_WATT_HOUR,
-        device_class: DeviceClass = DeviceClass.ENERGY,
-        state_class: StateClass = StateClass.TOTAL_INCREASING,
-        gain: float = 100,
-        precision: int = 2,
-        protocol_version: Protocol = Protocol.V2_7,
-        unique_id_override: str | None = None,
     ):
         super().__init__(
             name=name,
             object_id=object_id,
-            input_type=input_type,
+            input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=device_address,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
-            count=count,
-            data_type=data_type,
+            count=4,
+            data_type=ModbusDataType.UINT64,
             scan_interval=scan_interval,
-            unit=unit,
-            device_class=device_class,
-            state_class=state_class,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
             icon=icon,
-            gain=gain,
-            precision=precision,
-            protocol_version=protocol_version,
-            unique_id_override=unique_id_override,
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_7,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -1652,7 +1611,7 @@ class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter)
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pv_total_generation_today",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30272,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -1674,7 +1633,7 @@ class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInver
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pv_total_generation_yesterday",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30274,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -1696,7 +1655,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_frequency",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30276,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -1720,7 +1679,7 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_rated_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30277,
             count=2,
             data_type=ModbusDataType.UINT32,
@@ -1744,7 +1703,7 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_current_control_command_value",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30279,
             count=1,
             data_type=ModbusDataType.UINT16,
@@ -1770,7 +1729,7 @@ class Alarm6(AlarmSensor):
             name="Alarm 6",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_6",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30280,
             alarm_type="Plant",
             protocol_version=Protocol.V2_8,
@@ -1800,7 +1759,7 @@ class Alarm7(AlarmSensor):
             name="Alarm 7",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_7",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30281,
             alarm_type="Plant",
             protocol_version=Protocol.V2_8,
@@ -1817,19 +1776,13 @@ class Alarm7(AlarmSensor):
 
 
 class PlantAlarms(AlarmCombinedSensor):
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, *alarms: AlarmSensor):
         super().__init__(
             "Plant Alarms",
             f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_plant_alarms",
             f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_alarms",
-            Alarm6(plant_index),
-            Alarm7(plant_index),
+            *alarms,
         )
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["source"] = "Modbus Registers 30280-30281"
-        return attributes
 
 
 class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1839,16 +1792,16 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_general_load_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30282,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=None,
             icon="mdi:meter-electric-outline",
-            gain=None,  # v1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V2_8,
         )
@@ -1861,16 +1814,16 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_total_load_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=30284,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # UnitOfPower.KILO_WATT,
+            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=None,
             icon="mdi:meter-electric",
-            gain=None,  # v1000,
+            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
             precision=2,
             protocol_version=Protocol.V2_8,
         )
@@ -1892,7 +1845,7 @@ class ReservedGridPhaseVoltage(ReservedSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
@@ -1924,7 +1877,7 @@ class ReservedGridPhaseCurrent(ReservedSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,

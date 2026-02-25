@@ -2,7 +2,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Deque, Dict
+from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
@@ -12,6 +12,7 @@ from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
+from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
 from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, StateClass, SubstituteMixin
@@ -483,7 +484,7 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class TotalLifetimePVEnergy(DerivedSensor):
+class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Total PV Production",
@@ -506,11 +507,6 @@ class TotalLifetimePVEnergy(DerivedSensor):
         attributes = super().get_attributes()
         attributes["source"] = "∑ of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
         return attributes
-
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor as was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
-        return components
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:

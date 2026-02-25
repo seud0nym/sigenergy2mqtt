@@ -1,11 +1,12 @@
 import logging
 import math
 import time
-from typing import Any, Dict, cast
+from typing import cast
 
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
 
 from .base import (
     Alarm1Sensor,
@@ -1727,7 +1728,7 @@ class DCChargerCurrentChargingDuration(ReadOnlySensor, HybridInverter):
         return attributes
 
 
-class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+class InverterPVDailyGeneration(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Daily Production",
@@ -1751,13 +1752,8 @@ class InverterPVDailyGeneration(ReadOnlySensor, HybridInverter, PVInverter):
         self["enabled_by_default"] = True
         self.sanity_check.min_raw = None
 
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
 
-
-class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+class InverterPVLifetimeGeneration(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Lifetime Production",
@@ -1779,11 +1775,6 @@ class InverterPVLifetimeGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
         )
         self["enabled_by_default"] = True
-
-    def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
-        components: Dict[str, dict[str, Any]] = super().get_discovery_components()
-        components[f"{self.unique_id}_reset"] = {"platform": "number"}  # Unpublish the reset sensor
-        return components
 
 
 class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable to PVInverter as per Protocol V2.9

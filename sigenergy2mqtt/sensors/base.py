@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Deque, Final, Iterable, TypeAlias, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter, RegisterAccess
+from sigenergy2mqtt.common import Constants, HybridInverter, Protocol, PVInverter, RegisterAccess
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
@@ -1180,7 +1180,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         option = options[index]
         if option is None or option == "":
-            return None
+            return ""  # in-range but undocumented: return empty string, not None
 
         return _t(f"{self.__class__.__name__}.options.{index}", option, self.debug_logging)
 
@@ -1407,7 +1407,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
     def __init__(self, input_type: InputType, plant_index: int, device_address: int, address: int, count: int, unique_id_override: str | None = None, **kwargs):
         # Validate parameters
-        if not (1 <= device_address <= 247):
+        if not (1 <= device_address <= Constants.PLANT_DEVICE_ADDRESS):
             raise AssertionError(f"{self.__class__.__name__}: Invalid device address {device_address}")
 
         if address < 30000:
@@ -1688,13 +1688,31 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         return attributes
 
 
+class UnpublishResetSensorMixin(Sensor):
+    """Mixin that unpublishes the reset sensor created by a
+    ResettableAccumulationSensor that is no longer required
+    because the sensor has been redefined as a ModbusSensor
+    sub-class when Sigenergy provide access to the register
+    via Modbus, and therefore no longer needs to be
+    calculated (and optionally reset).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components: dict[str, dict[str, Any]] = super().get_discovery_components()
+        components[f"{self.unique_id}_reset"] = {"platform": "number"}
+        return components
+
+
 # =============================================================================
 # Reserved Sensor
 # =============================================================================
 
 
 class ReservedSensor(ReadOnlySensor):
-    """Sensor for reserved Modbus registers.
+    """Sensor for Modbus registers marked as Reserved in the Protocol document.
 
     Reserved sensors are never published but can be used for internal logic.
     """
