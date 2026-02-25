@@ -1,9 +1,10 @@
 import logging
+from dataclasses import dataclass, field
 from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import HybridInverter, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
@@ -30,16 +31,14 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "ChargeDischargePower &gt; 0"
+        attributes["source"] = "ChargeDischargePower > 0"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(
-            0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
-        )
+        self.set_latest_state(0 if values[-1][1] <= 0 else values[-1][1])
         return True
 
 
@@ -61,21 +60,35 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "ChargeDischargePower &lt; 0 &times; -1"
+        attributes["source"] = "ChargeDischargePower < 0 × -1"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
             return False
-        self.set_latest_state(
-            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
-        )
+        self.set_latest_state(0 if values[-1][1] >= 0 else values[-1][1] * -1)
         return True
 
 
+_MAX_PV_STRING_POWER_GAP_WARNING_SECONDS = 0.5
+
+
 class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, voltage: PVVoltageSensor, current: PVCurrentSensor):
+    @dataclass
+    class Value:
+        name: str = field(compare=False, repr=True)
+        divisor: float
+        value: float | None = None
+        timestamp: float = 0
+
+        def apply(self, values: Deque[tuple[float, Any]]) -> None:
+            if self.value is not None:
+                logging.warning(f"{self.name} Overwriting unconsumed value {self.value} (age={(values[-1][0] - self.timestamp):.2f}s)")
+            self.value = values[-1][1] / self.divisor
+            self.timestamp = values[-1][0]
+
+    def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):
         super().__init__(
             name="Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
@@ -86,50 +99,51 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             state_class=StateClass.MEASUREMENT,
             icon="mdi:home-lightning-bolt",
             gain=None,
-            precision=2,
-            protocol_version=protocol_version,
+            precision=0,  # Intentional rounding to nearest watt
         )
         self.string_number = string_number
-        self.current: float | None = None
-        self.current_gain: float = current.gain
-        self.voltage: float | None = None
-        self.voltage_gain: float = voltage.gain
+        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.__class__.__name__} [{self.string_number}] Amperes", PVCurrentSensor.raw2amps)
+        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.__class__.__name__} [{self.string_number}] Volts", PVVoltageSensor.raw2volts)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "PVVoltageSensor &times; PVCurrentSensor"
+        attributes["source"] = "PVVoltageSensor × PVCurrentSensor"
         return attributes
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
-        if self.voltage is None or self.current is None:
+        if self.volts.value is None or self.amperes.value is None:
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - current={self.current} voltage={self.voltage}")
+                logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - string={self.string_number} current={self.amperes.value} voltage={self.volts.value}")
             return False  # until all values populated, can't do calculation
+        gap = abs(self.volts.timestamp - self.amperes.timestamp)
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY   - current={self.current} voltage={self.voltage}")
-        await super().publish(mqtt_client, modbus_client, republish=republish)
-        # reset internal values to missing for next calculation
-        self.voltage = None
-        self.current = None
+            logging.debug(f"{self.__class__.__name__} Publishing READY   - string={self.string_number} current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
+        if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
+            logging.warning(f"{self.__class__.__name__} Publishing WARNING - string={self.string_number} gap between acquiring current and voltage was {gap:.2f}s")
+        await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        if not republish:
+            # reset internal values to missing for next calculation
+            self.volts.value = None
+            self.amperes.value = None
         return True
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if isinstance(sensor, PVVoltageSensor):
-            self.voltage = values[-1][1] / self.voltage_gain
+            self.volts.apply(values)
         elif isinstance(sensor, PVCurrentSensor):
-            self.current = values[-1][1] / self.current_gain
+            self.amperes.apply(values)
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values (string={self.string_number}) from {sensor.__class__.__name__}")
             return False
-        if self.voltage is None or self.current is None:
+        if self.volts.value is None or self.amperes.value is None:
             return False  # until all values populated, can't do calculation
-        self.set_latest_state(self.voltage * self.current)
+        self.set_latest_state(self.volts.value * self.amperes.value)
         return True
 
 
 class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringPower):
+    def __init__(self, plant_index: int, device_address: int, string_number: int, source: PVStringPower):
         super().__init__(
             name="Lifetime Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
@@ -137,16 +151,16 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor, HybridInverter, P
             source=source,
         )
         self.string_number = string_number
-        self.protocol_version = protocol_version
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "Riemann &sum; of PVStringPower"
+        attributes["source"] = "Riemann ∑ of PVStringPower"
         return attributes
 
 
 class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, string_number: int, protocol_version: Protocol, source: PVStringLifetimeEnergy):
+    def __init__(self, plant_index: int, device_address: int, string_number: int, source: PVStringLifetimeEnergy):
         super().__init__(
             name="Daily Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
@@ -154,9 +168,9 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInver
             source=source,
         )
         self.string_number = string_number
-        self.protocol_version = protocol_version
+        self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight"
+        attributes["source"] = "PVStringLifetimeEnergy − PVStringLifetimeEnergy at last midnight"
         return attributes

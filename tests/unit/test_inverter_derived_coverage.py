@@ -48,7 +48,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp.state_class = "measurement"
             cdp.protocol_version = Protocol.V2_4
             sensor = InverterBatteryChargingPower(0, 1, cdp)
-            assert "ChargeDischargePower &gt; 0" in sensor.get_attributes()["source"]
+            assert "ChargeDischargePower > 0" in sensor.get_attributes()["source"]
 
     def test_set_source_values_error_charging(self, caplog):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -69,7 +69,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp.state_class = "measurement"
             cdp.protocol_version = Protocol.V2_4
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
-            assert "ChargeDischargePower &lt; 0" in sensor.get_attributes()["source"]
+            assert "ChargeDischargePower < 0" in sensor.get_attributes()["source"]
 
     def test_set_source_values_error_discharging(self, caplog):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -93,8 +93,8 @@ class TestPVStringPowerCoverage:
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
             c.protocol_version = Protocol.V2_4
-            sensor = PVStringPower(0, 1, 1, Protocol.V2_4, v, c)
-            assert "PVVoltageSensor &times; PVCurrentSensor" in sensor.get_attributes()["source"]
+            sensor = PVStringPower(0, 1, 1, v, c)
+            assert "PVVoltageSensor × PVCurrentSensor" in sensor.get_attributes()["source"]
 
     @pytest.mark.asyncio
     async def test_publish_skipped_and_ready(self, caplog):
@@ -106,7 +106,7 @@ class TestPVStringPowerCoverage:
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
             c.protocol_version = Protocol.V2_4
-            sensor = PVStringPower(0, 1, 1, Protocol.V2_4, v, c)
+            sensor = PVStringPower(0, 1, 1, v, c)
             sensor.debug_logging = True
 
             # Missing values -> skip
@@ -114,13 +114,13 @@ class TestPVStringPowerCoverage:
             assert "Publishing SKIPPED" in caplog.text
 
             # Ready
-            sensor.voltage = 400.0
-            sensor.current = 10.0
+            sensor.volts.value = 400.0
+            sensor.amperes.value = 10.0
             with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
                 assert await sensor.publish(MagicMock(), None) is True
                 assert "Publishing READY" in caplog.text
-                assert sensor.voltage is None
-                assert sensor.current is None
+                assert sensor.volts.value is None
+                assert sensor.amperes.value is None
 
     def test_set_source_values_error(self, caplog):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -130,7 +130,7 @@ class TestPVStringPowerCoverage:
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
             c.protocol_version = Protocol.V2_4
-            sensor = PVStringPower(0, 1, 1, Protocol.V2_4, v, c)
+            sensor = PVStringPower(0, 1, 1, v, c)
 
             # Wrong sensor type
             assert sensor.set_source_values(MagicMock(spec=Sensor), []) is False
@@ -147,15 +147,15 @@ class TestPVStringEnergyCoverage:
             c.gain = 100
             c.protocol_version = Protocol.V2_4
 
-            power = PVStringPower(0, 1, 1, Protocol.V2_4, v, c)
+            power = PVStringPower(0, 1, 1, v, c)
             power.unique_id = "power_uid"
             power.object_id = "power_oid"
             power.precision = 2
 
             # Lifetime
-            lifetime = PVStringLifetimeEnergy(0, 1, 1, Protocol.V2_4, power)
-            assert "Riemann &sum; of PVStringPower" in lifetime.get_attributes()["source"]
+            lifetime = PVStringLifetimeEnergy(0, 1, 1, power)
+            assert "Riemann ∑ of PVStringPower" in lifetime.get_attributes()["source"]
 
             # Daily
-            daily = PVStringDailyEnergy(0, 1, 1, Protocol.V2_4, lifetime)
-            assert "PVStringLifetimeEnergy &minus;" in daily.get_attributes()["source"]
+            daily = PVStringDailyEnergy(0, 1, 1, lifetime)
+            assert "PVStringLifetimeEnergy −" in daily.get_attributes()["source"]
