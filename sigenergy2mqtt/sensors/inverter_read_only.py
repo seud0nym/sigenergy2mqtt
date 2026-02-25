@@ -1461,6 +1461,8 @@ class MPPTCount(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
+    raw2amps: float = 100  # divisor to convert raw value to amps
+
     def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
         assert 1 <= string_number <= 36, "string_number must be between 1 and 36"
         super().__init__(
@@ -1477,7 +1479,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
             device_class=DeviceClass.CURRENT,
             state_class=None,
             icon="mdi:current-dc",
-            gain=100,
+            gain=PVCurrentSensor.raw2amps,
             precision=2,
             protocol_version=protocol_version,
         )
@@ -1485,6 +1487,8 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
+    raw2volts: float = 10  # divisor to convert raw value to volts
+
     def __init__(self, plant_index: int, device_address: int, address: int, string_number: int, protocol_version: Protocol):
         assert 1 <= string_number <= 36, "string_number must be between 1 and 36"
         super().__init__(
@@ -1501,7 +1505,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
             device_class=DeviceClass.VOLTAGE,
             state_class=None,
             icon="mdi:flash",
-            gain=10,
+            gain=PVVoltageSensor.raw2volts,
             precision=1,
             protocol_version=protocol_version,
         )
