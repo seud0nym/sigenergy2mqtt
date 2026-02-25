@@ -2,7 +2,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Deque, Dict, cast
+from typing import Any, Deque, Dict
 
 import paho.mqtt.client as mqtt
 
@@ -51,7 +51,7 @@ class BatteryChargingPower(DerivedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "BatteryPower &gt; 0"
+        attributes["source"] = "BatteryPower > 0"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
@@ -83,7 +83,7 @@ class BatteryDischargingPower(DerivedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "BatteryPower &lt; 0 &times; -1"
+        attributes["source"] = "BatteryPower < 0 × -1"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
@@ -114,7 +114,7 @@ class GridSensorExportPower(DerivedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "GridSensorActivePower &lt; 0 &times; -1"
+        attributes["source"] = "GridSensorActivePower < 0 × -1"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
@@ -145,7 +145,7 @@ class GridSensorImportPower(DerivedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "GridSensorActivePower &gt; 0"
+        attributes["source"] = "GridSensorActivePower > 0"
         return attributes
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
@@ -190,10 +190,11 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         )
         self.plant_index = plant_index
         self._sources: dict[str, TotalPVPower.Value] = dict()
-        self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)
+        self._topics: set[str] = set()
+        self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)  # Register sensor sources
+        self.register_mqtt_sources()
 
-    async def _check_timeouts(self) -> None:
-        # Check for timeouts
+    async def _check_smartport_timeouts(self) -> None:
         now = time.time()
         timeout = active_config.modbus[self.plant_index].scan_interval.realtime * 5  # 5x poll interval grace period
         for source_id, value in self._sources.items():
@@ -246,7 +247,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[source].enabled else 'disabled'}) topic {source} - {self._sources=}")
             if self._sources[source].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
-                self.set_latest_state(sum([cast(float, value.state) for value in self._sources.values() if value.enabled]))
+                self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None and value.enabled]))
                 await self.publish(mqtt_client, modbus_client, republish=True)
             return True
         else:
@@ -254,21 +255,11 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             return False
 
     def observable_topics(self) -> set[str]:
-        topics: set[str] = set()
-        if active_config.modbus[self.plant_index].smartport.enabled:
-            for topic in active_config.modbus[self.plant_index].smartport.mqtt:  # pyright: ignore[reportGeneralTypeIssues]
-                if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
-                    self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
-                    topics.add(topic.topic)
-                    if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Added Smart-Port MQTT topic {topic.topic} as source")
-                else:
-                    logging.warning(f"{self.__class__.__name__} Empty Smart-Port MQTT topic ignored")
-        return topics
+        return set(self._topics)
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
         if not republish:
-            await self._check_timeouts()
+            await self._check_smartport_timeouts()
             if any(value.state is None for value in self._sources.values() if value.enabled):
                 if self.debug_logging:
                     logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
@@ -276,10 +267,22 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources=}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
-        # reset internal values to missing for next calculation
-        for value in self._sources.values():
-            value.state = None
+        if not republish:
+            # reset internal values to missing for next calculation
+            for value in self._sources.values():
+                value.state = None
         return True
+
+    def register_mqtt_sources(self):
+        if active_config.modbus[self.plant_index].smartport.enabled:  # Register MQTT sources
+            for topic in active_config.modbus[self.plant_index].smartport.mqtt:  # pyright: ignore[reportGeneralTypeIssues]
+                if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
+                    self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
+                    self._topics.add(topic.topic)
+                    if self.debug_logging:
+                        logging.debug(f"{self.__class__.__name__} Added Smart-Port MQTT topic {topic.topic} as source")
+                else:
+                    logging.warning(f"{self.__class__.__name__} Empty Smart-Port MQTT topic ignored")
 
     def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
         for sensor in sensors:
@@ -304,7 +307,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             logging.debug(f"{self.__class__.__name__} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
         if not self._sources[source].enabled or any(value.state is None for value in self._sources.values() if value.enabled):
             return False  # until all enabled values populated, can't do calculation
-        self.set_latest_state(sum([cast(float, value.state) for value in self._sources.values() if value is not None and value.enabled]))
+        self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None and value.enabled]))
         return True
 
 
@@ -345,6 +348,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
+        self._topics: set[str] = set()
         match self.method:
             case ConsumptionMethod.CALCULATED:
                 self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
@@ -359,7 +363,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
     def _set_latest_consumption(self) -> bool:
         if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
             return False
-        consumed_power = sum([value.state for value in self._sources.values() if value.state and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
+        consumed_power = sum([value.state for value in self._sources.values() if value.state is not None and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
         if consumed_power < 0:
             logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
             consumed_power = 0
@@ -376,7 +380,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         attributes = super().get_attributes()
         match self.method:
             case ConsumptionMethod.CALCULATED:
-                attributes["source"] = "TotalPVPower &plus; GridSensorActivePower &minus; BatteryPower &minus; ACChargerChargingPower &minus; DCChargerOutputPower"
+                attributes["source"] = "TotalPVPower + GridSensorActivePower − BatteryPower − ACChargerChargingPower − DCChargerOutputPower"
             case ConsumptionMethod.GENERAL:
                 attributes["source"] = "GeneralLoadPower"
             case ConsumptionMethod.TOTAL:
@@ -409,16 +413,16 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         return False
 
     def observable_topics(self) -> set[str]:
-        topics: set[str] = set()
-        chargers = [device for device in DeviceRegistry.get(self.plant_index) if device.__class__.__name__.endswith("Charger")]
-        for charger in chargers:
-            for sensor in charger.get_all_sensors().values():
-                if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
-                    self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
-                    topics.add(sensor.state_topic)
-                    if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
-        return topics
+        if not self._topics:
+            chargers = [device for device in DeviceRegistry.get(self.plant_index) if device.__class__.__name__.endswith("Charger")]
+            for charger in chargers:
+                for sensor in charger.get_all_sensors().values():
+                    if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
+                        self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
+                        self._topics.add(sensor.state_topic)
+                        if self.debug_logging:
+                            logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
+        return set(self._topics)
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if isinstance(sensor, TotalLoadPower):
@@ -432,7 +436,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
             self._update_source("pv", values[-1][1])
         elif isinstance(sensor, GridStatus):
-            if active_config.consumption == ConsumptionMethod.CALCULATED:
+            if self.method == ConsumptionMethod.CALCULATED:
                 grid = int(values[-1][1])
                 if grid != self._grid_status:
                     if self._grid_status is not None:
@@ -459,7 +463,7 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight"
+        attributes["source"] = "PlantTotalExportedEnergy − PlantTotalExportedEnergy at last midnight"
         return attributes
 
 
@@ -475,7 +479,7 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight"
+        attributes["source"] = "PlantTotalImportedEnergy − PlantTotalImportedEnergy at last midnight"
         return attributes
 
 
@@ -484,7 +488,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
         super().__init__(
             name="Lifetime Total PV Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
             data_type=ModbusDataType.UINT32,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
@@ -500,7 +504,7 @@ class TotalLifetimePVEnergy(DerivedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
+        attributes["source"] = "∑ of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
         return attributes
 
     def get_discovery_components(self) -> Dict[str, dict[str, Any]]:
@@ -550,7 +554,7 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight"
+        attributes["source"] = "TotalLifetimePVEnergy − TotalLifetimePVEnergy at last midnight"
         return attributes
 
 
@@ -566,7 +570,7 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight"
+        attributes["source"] = "PlantLifetimePVEnergy − PlantLifetimePVEnergy at last midnight"
         return attributes
 
 
@@ -582,7 +586,7 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "&sum; of DailyChargeEnergy across all Inverters associated with the Plant"
+        attributes["source"] = "∑ of DailyChargeEnergy across all Inverters associated with the Plant"
         return attributes
 
 
@@ -598,5 +602,5 @@ class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = "&sum; of DailyDischargeEnergy across all Inverters associated with the Plant"
+        attributes["source"] = "∑ of DailyDischargeEnergy across all Inverters associated with the Plant"
         return attributes

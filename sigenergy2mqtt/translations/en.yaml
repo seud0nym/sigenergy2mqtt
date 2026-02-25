@@ -302,11 +302,11 @@ class:
     name: Average Cell Voltage
   BatteryChargingPower:
     attributes:
-      source: BatteryPower &gt; 0
+      source: BatteryPower > 0
     name: Battery Charging Power
   BatteryDischargingPower:
     attributes:
-      source: BatteryPower &lt; 0 &times; -1
+      source: BatteryPower < 0 × -1
     name: Battery Discharging Power
   BatteryPower:
     attributes:
@@ -738,21 +738,21 @@ class:
     name: Active Power
   GridSensorDailyExportEnergy:
     attributes:
-      source: PlantTotalExportedEnergy &minus; PlantTotalExportedEnergy at last midnight
+      source: PlantTotalExportedEnergy − PlantTotalExportedEnergy at last midnight
     name: Daily Exported Energy
     name_reset: Set Daily Exported Energy
   GridSensorDailyImportEnergy:
     attributes:
-      source: PlantTotalImportedEnergy &minus; PlantTotalImportedEnergy at last midnight
+      source: PlantTotalImportedEnergy − PlantTotalImportedEnergy at last midnight
     name: Daily Imported Energy
     name_reset: Set Daily Imported Energy
   GridSensorExportPower:
     attributes:
-      source: GridSensorActivePower &lt; 0 &times; -1
+      source: GridSensorActivePower < 0 × -1
     name: Export Power
   GridSensorImportPower:
     attributes:
-      source: GridSensorActivePower &gt; 0
+      source: GridSensorActivePower > 0
     name: Import Power
   GridSensorReactivePower:
     attributes:
@@ -909,11 +909,11 @@ class:
     name: Alarms
   InverterBatteryChargingPower:
     attributes:
-      source: ChargeDischargePower &gt; 0
+      source: ChargeDischargePower > 0
     name: Battery Charging Power
   InverterBatteryDischargingPower:
     attributes:
-      source: ChargeDischargePower &lt; 0 &times; -1
+      source: ChargeDischargePower < 0 × -1
     name: Battery Discharging Power
   InverterBatterySoC:
     attributes:
@@ -1197,17 +1197,17 @@ class:
     name: PV String Count
   PVStringDailyEnergy:
     attributes:
-      source: PVStringLifetimeEnergy &minus; PVStringLifetimeEnergy at last midnight
+      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy at last midnight
     name: Daily Production
     name_reset: Set Daily Production
   PVStringLifetimeEnergy:
     attributes:
-      source: Riemann &sum; of PVStringPower
+      source: Riemann ∑ of PVStringPower
     name: Lifetime Production
     name_reset: Set Lifetime Production
   PVStringPower:
     attributes:
-      source: PVVoltageSensor &times; PVCurrentSensor
+      source: PVVoltageSensor × PVCurrentSensor
     name: Power
   PVVoltageSensor:
     attributes:
@@ -1275,17 +1275,17 @@ class:
     name: Consumed Power
   PlantDailyChargeEnergy:
     attributes:
-      source: '&sum; of DailyChargeEnergy across all Inverters associated with the Plant'
+      source: '∑ of DailyChargeEnergy across all Inverters associated with the Plant'
     name: Daily Charge Energy
     name_reset: Set Daily Charge Energy
   PlantDailyDischargeEnergy:
     attributes:
-      source: '&sum; of DailyDischargeEnergy across all Inverters associated with the Plant'
+      source: '∑ of DailyDischargeEnergy across all Inverters associated with the Plant'
     name: Daily Discharge Energy
     name_reset: Set Daily Discharge Energy
   PlantDailyPVEnergy:
     attributes:
-      source: PlantLifetimePVEnergy &minus; PlantLifetimePVEnergy at last midnight
+      source: PlantLifetimePVEnergy − PlantLifetimePVEnergy at last midnight
     name: Daily PV Production
     name_reset: Set Daily PV Production
   PlantPVPower:
@@ -1666,12 +1666,12 @@ class:
       source_range: Modbus Registers {start}-{end}
   TotalDailyPVEnergy:
     attributes:
-      source: TotalLifetimePVEnergy &minus; TotalLifetimePVEnergy at last midnight
+      source: TotalLifetimePVEnergy − TotalLifetimePVEnergy at last midnight
     name: Daily Total PV Production
     name_reset: Set Daily Total PV Production
   TotalLifetimePVEnergy:
     attributes:
-      source: '&sum; of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
+      source: '∑ of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy'
     name: Lifetime Total PV Production
   TotalLoadConsumption:
     attributes:
