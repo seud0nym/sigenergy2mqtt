@@ -2684,6 +2684,19 @@ class NumericSensor(ReadWriteSensor):
             return False
 
 
+class ThreePhaseAdjustmentTargetValue(NumericSensor):
+    """NumericSensor Mixin for setting adjustment target values on
+    three-phase systems.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if "output_type" not in kwargs:
+            raise ValueError(f"{self.__class__.__name__}: output_type parameter is required")
+        if kwargs["output_type"] != Constants.THREE_PHASE_OUTPUT_TYPE:  # L1/L2/L3/N
+            self.publishable = False
+
+
 # =============================================================================
 # Select Sensor
 # =============================================================================

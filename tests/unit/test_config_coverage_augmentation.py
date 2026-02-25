@@ -1,18 +1,15 @@
 import collections
-import json
 import logging
 import os
-import sys
-import time
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.common import ConsumptionMethod
-from sigenergy2mqtt.config import ConsumptionSource, VoltageSource, active_config, const
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.config import ConfigurationError, _promote_cli_to_env, active_config, const, initialize
+from sigenergy2mqtt.config.config import active_config  # noqa: F811
 
 VersionInfo = collections.namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
@@ -200,18 +197,6 @@ def test_reload_exhaustive_v7(tmp_path):
 # ---------------------------------------------------------------------------
 # Tests for sigenergy2mqtt/config/__init__.py  (uncovered lines)
 # ---------------------------------------------------------------------------
-
-from types import SimpleNamespace
-
-from sigenergy2mqtt.config import (
-    ConfigurationError,
-    _apply_cli_to_env,
-    _discover_config_file,
-    _is_arg_explicitly_set,
-    _load_config,
-    _promote_cli_to_env,
-    initialize,
-)
 
 
 def test_promote_cli_to_env_read_only_branch():

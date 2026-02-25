@@ -1,9 +1,9 @@
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AvailabilityMixin,
@@ -33,9 +33,6 @@ class ConcreteWritableSensor(WritableSensorMixin, Sensor):
 def clear_sensor_registry():
     with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
         yield
-
-
-from sigenergy2mqtt.config import Config, _swap_active_config
 
 
 @pytest.fixture
@@ -204,13 +201,15 @@ class TestValueIsValidPlant:
     @pytest.mark.asyncio
     async def test_remote_ems_control_mode(self, mock_config):
         mock_avail = MagicMock(spec=AvailabilityMixin)
-        mock_avail.get_state = AsyncMock(return_value=1)
         mock_avail.name = "Remote EMS"
+
+        latest_raw_state = PropertyMock(return_value=1)
+        type(mock_avail).latest_raw_state = latest_raw_state
 
         sensor = RemoteEMSControlMode(plant_index=0, remote_ems=mock_avail)
         assert await sensor.value_is_valid(None, 1) is True
 
-        mock_avail.get_state.return_value = 0
+        latest_raw_state.return_value = 0
         assert await sensor.value_is_valid(None, 1) is False
 
     @pytest.mark.asyncio
