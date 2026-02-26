@@ -18,17 +18,15 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      # 1. Install Hatch as a standalone tool (bypasses broken global libraries)
+      # Corrected action name
       - name: Setup Hatch
-        uses: pypa/hatch-installer-action@v1
+        uses: pypa/hatch-setup-action@v1
 
-      # 2. Set up Python 3.12 for the tests to use
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      # 3. Run tests (Hatch will automatically create the environment here)
       - name: Run tests with coverage
         id: pytest
         shell: bash
@@ -44,8 +42,6 @@ jobs:
           import xml.etree.ElementTree as ET
           try:
               if not os.path.exists('coverage.xml'):
-                  print("coverage.xml not found")
-                  # Fallback to 0 so the workflow doesn't crash
                   total = 0
               else:
                   tree = ET.parse('coverage.xml')
@@ -62,7 +58,6 @@ jobs:
       - name: Extract test count
         id: tests
         run: |
-          # Robust grep to find "X passed" and extract just the number
           count=$(grep -oP "\d+(?= passed)" pytest_output.txt | head -n 1 || echo "0")
           echo "count=$count" >> $GITHUB_OUTPUT
 
@@ -95,7 +90,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add resources/badges/*.svg
           
-          # Only commit if files actually changed
           if git diff --staged --quiet; then
             echo "No changes to badges. Skipping commit."
           else
