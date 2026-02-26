@@ -18,38 +18,29 @@ class ConcreteSensor(Sensor):
 class TestSensorBase:
     @pytest.fixture
     def sensor(self):
-        # We need to ensure unique_id and object_id allow re-use or are unique per test
-        # The Sensor class asserts uniqueness globally in class attributes.
-        # We might need to clear _used_unique_ids and _used_object_ids between tests?
-        # Let's inspect Sensor code again or just use unique values.
-        # Sensor._used_unique_ids = {}
-        # Sensor._used_object_ids = {}
-        # Actually better to patch them if possible, or just use fresh IDs.
+        cfg = Config()
+        cfg.home_assistant.unique_id_prefix = "sigen"
+        cfg.home_assistant.entity_id_prefix = "sigen"
 
-        # Checking Sensor.__init__ assertions:
-        # unique_id must start with Config().home_assistant.unique_id_prefix (default "sigenergy_")
-        # object_id must start with Config().home_assistant.entity_id_prefix (default "sigenergy_")
-
-        # We'll rely on default config values which should be loaded/mocked.
-
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            s = ConcreteSensor(
-                name="Test Sensor",
-                unique_id="sigenergy_test_unique_id",
-                object_id="sigenergy_test_object_id",
-                unit="W",
-                device_class=DeviceClass.POWER,
-                state_class=StateClass.MEASUREMENT,
-                icon="mdi:solar-power",
-                gain=1.0,
-                precision=2,
-                protocol_version=Protocol.V2_4,
-            )
-            yield s
+        with _swap_active_config(cfg):
+            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+                s = ConcreteSensor(
+                    name="Test Sensor",
+                    unique_id="sigen_test_unique_id",
+                    object_id="sigen_test_object_id",
+                    unit="W",
+                    device_class=DeviceClass.POWER,
+                    state_class=StateClass.MEASUREMENT,
+                    icon="mdi:solar-power",
+                    gain=1.0,
+                    precision=2,
+                    protocol_version=Protocol.V2_4,
+                )
+                yield s
 
     def test_init(self, sensor):
         assert sensor["name"] == "Test Sensor"
-        assert sensor["unique_id"] == "sigenergy_test_unique_id"
+        assert sensor["unique_id"] == "sigen_test_unique_id"
         assert sensor.gain == 1.0
         assert sensor.precision == 2
         assert sensor.protocol_version == Protocol.V2_4.value
@@ -80,7 +71,7 @@ class TestSensorBase:
         with _swap_active_config(cfg):
             base_topic = sensor.configure_mqtt_topics(device_id="test_device")
 
-            assert base_topic == "homeassistant/sensor/test_device/sigenergy_test_object_id"
+            assert base_topic == "homeassistant/sensor/test_device/sigen_test_object_id"
             assert sensor["state_topic"] == f"{base_topic}/state"
             assert sensor["raw_state_topic"] == f"{base_topic}/raw"
             assert sensor["json_attributes_topic"] == f"{base_topic}/attributes"
@@ -138,7 +129,6 @@ class TestSensorLogic:
     """Additional logic tests for specific sensor behaviors."""
 
     def test_resettable_accumulation_negative_increase(self, tmp_path):
-        from unittest.mock import MagicMock
 
         from sigenergy2mqtt.modbus.types import ModbusDataType
         from sigenergy2mqtt.sensors.base import EnergyLifetimeAccumulationSensor, ReadOnlySensor, Sensor
@@ -147,26 +137,36 @@ class TestSensorLogic:
         source.unique_id = "src"
         source.latest_interval = 100.0
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigenergy_acc", "sigenergy_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
-            sensor._current_total = 100.0
-            values = [(1000.0, -10.0), (1100.0, -20.0)]
-            with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
-                sensor.set_source_values(source, values)
-                assert sensor._current_total == 100.0
+        cfg = Config()
+        cfg.home_assistant.unique_id_prefix = "sigen"
+        cfg.home_assistant.entity_id_prefix = "sigen"
+
+        with _swap_active_config(cfg):
+            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+                sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
+                sensor._current_total = 100.0
+                values = [(1000.0, -10.0), (1100.0, -20.0)]
+                with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
+                    sensor.set_source_values(source, values)
+                    assert sensor._current_total == 100.0
 
     def test_alarm_sensor_binary(self):
         from sigenergy2mqtt.sensors.base import AlarmSensor, Sensor
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        cfg = Config()
+        cfg.home_assistant.unique_id_prefix = "sigen"
+        cfg.home_assistant.entity_id_prefix = "sigen"
 
-            class ConcreteAlarm(AlarmSensor):
-                def decode_alarm_bit(self, bit_position: int) -> str | None:
-                    return "Error"
+        with _swap_active_config(cfg):
+            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
-            sensor = ConcreteAlarm("Alarm", "sigenergy_alarm", 0, 1, 30001, Protocol.V2_4, "Equipment")
-            assert sensor.state2raw("No Alarm") == 0
-            assert sensor.state2raw(1) == 1
+                class ConcreteAlarm(AlarmSensor):
+                    def decode_alarm_bit(self, bit_position: int) -> str | None:
+                        return "Error"
+
+                sensor = ConcreteAlarm("Alarm", "sigen_alarm", 0, 1, 30001, Protocol.V2_4, "Equipment")
+                assert sensor.state2raw("No Alarm") == 0
+                assert sensor.state2raw(1) == 1
 
     @pytest.mark.asyncio
     async def test_alarm_combined_sensor(self):
@@ -204,12 +204,18 @@ class TestSensorLogic:
                 async def get_state(self, raw=False, republish=False, **kwargs):
                     return "No Alarm" if self.latest_raw_state == 0 else "Error"
 
-            a1 = ProxyAlarm("A1", "sigenergy_a1", 30001)
-            a2 = ProxyAlarm("A2", "sigenergy_a2", 30002)
-            sensor = AlarmCombinedSensor("Combined", "sigenergy_combined", "sigenergy_combined", a1, a2)
-            assert await sensor.get_state() == "No Alarm"
-            a1._states.append((0, 1))
-            assert await sensor.get_state() == "Error"
+            a1 = ProxyAlarm("A1", "sigen_a1", 30001)
+            a2 = ProxyAlarm("A2", "sigen_a2", 30002)
+
+            cfg = Config()
+            cfg.home_assistant.unique_id_prefix = "sigen"
+            cfg.home_assistant.entity_id_prefix = "sigen"
+
+            with _swap_active_config(cfg):
+                sensor = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", a1, a2)
+                assert await sensor.get_state() == "No Alarm"
+                a1._states.append((0, 1))
+                assert await sensor.get_state() == "Error"
 
     def test_sensor_init_assertions(self):
         from sigenergy2mqtt.sensors.base import Sensor
@@ -224,15 +230,25 @@ class TestSensorLogic:
                 async def _update_internal_state(self, **kw):
                     return True
 
-            SensorA("S1", "sigenergy_u1", "sigenergy_o1", "W", None, None, None, 1.0, 0)
-            with pytest.raises(AssertionError, match="unique_id sigenergy_u1 has already been used for class SensorA"):
-                SensorB("S2", "sigenergy_u1", "sigenergy_o2", "W", None, None, None, 1.0, 0)
+            cfg = Config()
+            cfg.home_assistant.unique_id_prefix = "sigen"
+            cfg.home_assistant.entity_id_prefix = "sigen"
+
+            with _swap_active_config(cfg):
+                SensorA("S1", "sigen_u1", "sigen_o1", "W", None, None, None, 1.0, 0)
+                with pytest.raises(AssertionError, match="unique_id sigen_u1 has already been used for class SensorA"):
+                    SensorB("S2", "sigen_u1", "sigen_o2", "W", None, None, None, 1.0, 0)
 
     def test_overrides_write_only_and_fallbacks(self):
         from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            # name, object_id, plant_index, device_address, address, protocol_version
-            s = WriteOnlySensor("WO", "sigenergy_wo", 0, 1, 30001, Protocol.V2_4)
-            assert s.publishable is True
-            assert s.publish_raw is False
+        cfg = Config()
+        cfg.home_assistant.unique_id_prefix = "sigen"
+        cfg.home_assistant.entity_id_prefix = "sigen"
+
+        with _swap_active_config(cfg):
+            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+                # name, object_id, plant_index, device_address, address, protocol_version
+                s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, Protocol.V2_4)
+                assert s.publishable is True
+                assert s.publish_raw is False

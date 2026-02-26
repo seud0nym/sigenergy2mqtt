@@ -128,10 +128,10 @@ class InfluxService(InfluxBase):
                         self.logger.debug(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not publishable")
                         continue
 
-                    if active_config.influxdb.include and not any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in active_config.influxdb.include):  # pyright: ignore[reportGeneralTypeIssues]
+                    if active_config.influxdb.include and not any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in active_config.influxdb.include):  # type: ignore[reportGeneralTypeIssues]
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not in include list")
                         continue
-                    if active_config.influxdb.exclude and any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in active_config.influxdb.exclude):  # pyright: ignore[reportGeneralTypeIssues]
+                    if active_config.influxdb.exclude and any(re.search(ident, s.__class__.__name__) or re.search(ident, obj) or re.search(ident, uid) for ident in active_config.influxdb.exclude):  # type: ignore[reportGeneralTypeIssues]
                         self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is excluded")
                         continue
 

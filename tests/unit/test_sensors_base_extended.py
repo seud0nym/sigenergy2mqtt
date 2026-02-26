@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -13,11 +11,8 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AlarmSensor,
-    DerivedSensor,
-    ReadableSensorMixin,
     ReadOnlySensor,
     Sensor,
-    WritableSensorMixin,
     WriteOnlySensor,
 )
 from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
@@ -34,23 +29,30 @@ class ConcreteSensor(Sensor):
 
 def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
     """Create a fresh ConcreteSensor with cleared ID registries."""
-    uid = f"sigenergy_{uid_suffix}"
-    oid = f"sigenergy_{uid_suffix}"
-    with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-        s = ConcreteSensor(
-            name=name,
-            unique_id=uid,
-            object_id=oid,
-            unit="W",
-            device_class=DeviceClass.POWER,
-            state_class=StateClass.MEASUREMENT,
-            icon="mdi:solar-power",
-            gain=1.0,
-            precision=2,
-            protocol_version=Protocol.V2_4,
-            debug_logging=debug,
-            **kwargs,
-        )
+    uid = f"sigen_{uid_suffix}"
+    oid = f"sigen_{uid_suffix}"
+
+    cfg = Config()
+    cfg.home_assistant.enabled = False
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+
+    with _swap_active_config(cfg):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            s = ConcreteSensor(
+                name=name,
+                unique_id=uid,
+                object_id=oid,
+                unit="W",
+                device_class=DeviceClass.POWER,
+                state_class=StateClass.MEASUREMENT,
+                icon="mdi:solar-power",
+                gain=1.0,
+                precision=2,
+                protocol_version=Protocol.V2_4,
+                debug_logging=debug,
+                **kwargs,
+            )
     return s
 
 
@@ -121,8 +123,8 @@ class TestApplySensorOverrides:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="Override Test",
-                unique_id=f"sigenergy_{suffix}",
-                object_id=f"sigenergy_{suffix}",
+                unique_id=f"sigen_{suffix}",
+                object_id=f"sigen_{suffix}",
                 unit="W",
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
@@ -132,7 +134,7 @@ class TestApplySensorOverrides:
                 protocol_version=Protocol.V2_4,
             )
         cfg = Config()
-        cfg.sensor_overrides = {f"sigenergy_{suffix}": overrides}
+        cfg.sensor_overrides = {f"sigen_{suffix}": overrides}
         with _swap_active_config(cfg):
             s.apply_sensor_overrides(None)
         return s
@@ -203,8 +205,8 @@ class TestApplySensorOverrides:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="ReadOnly Test",
-                unique_id="sigenergy_ro_reg",
-                object_id="sigenergy_ro_reg",
+                unique_id="sigen_ro_reg",
+                object_id="sigen_ro_reg",
                 unit="W",
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
@@ -228,8 +230,8 @@ class TestApplySensorOverrides:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="RemoteEMS",
-                unique_id="sigenergy_rems",
-                object_id="sigenergy_rems",
+                unique_id="sigen_rems",
+                object_id="sigen_rems",
                 unit="W",
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
@@ -524,7 +526,7 @@ class TestConfigureMqttTopics:
         cfg.home_assistant.enabled_by_default = False
         with _swap_active_config(cfg):
             base = s.configure_mqtt_topics("test_device")
-        assert base == "sigenergy2mqtt/sigenergy_simplified"
+        assert base == "sigenergy2mqtt/sigen_simplified"
 
     def test_ha_disabled_topics(self):
         """Cover path when HA is not enabled."""
@@ -537,7 +539,7 @@ class TestConfigureMqttTopics:
         with _swap_active_config(cfg):
             base = s.configure_mqtt_topics("test_device")
         assert "availability" not in s
-        assert base == "sigenergy2mqtt/sigenergy_ha_off"
+        assert base == "sigenergy2mqtt/sigen_ha_off"
 
     def test_ha_enabled_no_simplified_with_debug(self):
         """Debug branch in configure_mqtt_topics (line ~620+)."""
@@ -574,8 +576,8 @@ class TestGetAttributes:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="No Unit",
-                unique_id="sigenergy_no_unit",
-                object_id="sigenergy_no_unit",
+                unique_id="sigen_no_unit",
+                object_id="sigen_no_unit",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -595,8 +597,8 @@ class TestGetAttributes:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="NA Protocol",
-                unique_id="sigenergy_na_proto",
-                object_id="sigenergy_na_proto",
+                unique_id="sigen_na_proto",
+                object_id="sigen_na_proto",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -737,8 +739,8 @@ class TestState2Raw:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="Options",
-                unique_id=f"sigenergy_{suffix}",
-                object_id=f"sigenergy_{suffix}",
+                unique_id=f"sigen_{suffix}",
+                object_id=f"sigen_{suffix}",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -799,7 +801,7 @@ class TestCheckRegisterResponse:
 
             s = ReadOnlySensor(
                 name="RO Test",
-                object_id=f"sigenergy_{suffix}",
+                object_id=f"sigen_{suffix}",
                 input_type=InputType.INPUT,
                 plant_index=0,
                 device_address=1,
@@ -903,7 +905,7 @@ class TestReadOnlySensorUpdateInternalState:
 
             return ReadOnlySensor(
                 name="RO",
-                object_id=f"sigenergy_{suffix}",
+                object_id=f"sigen_{suffix}",
                 input_type=InputType.HOLDING,
                 plant_index=0,
                 device_address=1,
@@ -957,7 +959,7 @@ class TestReadOnlySensorUpdateInternalState:
 
             s = ReadOnlySensor(
                 name="RO Input",
-                object_id="sigenergy_ro_input",
+                object_id="sigen_ro_input",
                 input_type=InputType.INPUT,
                 plant_index=0,
                 device_address=1,
@@ -1043,7 +1045,7 @@ class TestAlarmSensorBranches:
                 def decode_alarm_bit(self, bit_position: int):
                     return f"Error bit {bit_position}" if bit_position == 0 else None
 
-            return ConcreteAlarm("Alarm", f"sigenergy_{suffix}", 0, 1, 30001, Protocol.V2_4, "Equipment")
+            return ConcreteAlarm("Alarm", f"sigen_{suffix}", 0, 1, 30001, Protocol.V2_4, "Equipment")
 
     def test_alarm_state2raw_string_no_alarm(self):
         s = self._make_alarm("alrm_s2r_na")
@@ -1072,8 +1074,8 @@ class TestDerivedSensorBranches:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             derived = EnergyLifetimeAccumulationSensor(
                 "Accum",
-                "sigenergy_accum_d",
-                "sigenergy_accum_d",
+                "sigen_accum_d",
+                "sigen_accum_d",
                 source,
                 ModbusDataType.UINT32,
                 "kWh",
@@ -1098,8 +1100,8 @@ class TestDerivedSensorBranches:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             derived = EnergyLifetimeAccumulationSensor(
                 "Accum Str",
-                "sigenergy_accum_str",
-                "sigenergy_accum_str",
+                "sigen_accum_str",
+                "sigen_accum_str",
                 source,
                 ModbusDataType.UINT32,
                 "kWh",
@@ -1183,7 +1185,7 @@ class TestReservedSensor:
             # Directly instantiate with required args
             s = ConcreteReserved(
                 "Reserved Sensor",
-                f"sigenergy_res_{suffix}",
+                f"sigen_res_{suffix}",
                 InputType.INPUT,
                 0,
                 1,
@@ -1284,7 +1286,7 @@ class TestWritableSensorOverrides:
         """WritableSensorMixin sensor becomes unpublishable when read_write=False."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # WriteOnlySensor is a concrete WritableSensorMixin subclass
-            wo = WriteOnlySensor("WO", "sigenergy_wo_rw", 0, 1, 30001, Protocol.V2_4)
+            wo = WriteOnlySensor("WO", "sigen_wo_rw", 0, 1, 30001, Protocol.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
         registers.write_only = False
@@ -1295,7 +1297,7 @@ class TestWritableSensorOverrides:
     def test_write_only_sensor_write_only_false_unpublishable(self):
         """WriteOnlySensor (not WritableSensorMixin ReadWrite) also respects write_only override."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            wo = WriteOnlySensor("WO2", "sigenergy_wo_wo", 0, 1, 30001, Protocol.V2_4)
+            wo = WriteOnlySensor("WO2", "sigen_wo_wo", 0, 1, 30001, Protocol.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
         registers.write_only = False
@@ -1314,8 +1316,8 @@ class TestSensorEqualityAndHash:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s1 = ConcreteSensor(
                 name="S1",
-                unique_id="sigenergy_eq1",
-                object_id="sigenergy_eq1",
+                unique_id="sigen_eq1",
+                object_id="sigen_eq1",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -1326,8 +1328,8 @@ class TestSensorEqualityAndHash:
             )
             s2 = ConcreteSensor(
                 name="S2",
-                unique_id="sigenergy_eq1",
-                object_id="sigenergy_eq1",
+                unique_id="sigen_eq1",
+                object_id="sigen_eq1",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -1342,8 +1344,8 @@ class TestSensorEqualityAndHash:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s1 = ConcreteSensor(
                 name="S1",
-                unique_id="sigenergy_eqa",
-                object_id="sigenergy_eqa",
+                unique_id="sigen_eqa",
+                object_id="sigen_eqa",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -1354,8 +1356,8 @@ class TestSensorEqualityAndHash:
             )
             s2 = ConcreteSensor(
                 name="S2",
-                unique_id="sigenergy_eqb",
-                object_id="sigenergy_eqb",
+                unique_id="sigen_eqb",
+                object_id="sigen_eqb",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -1386,8 +1388,8 @@ class TestGetDiscoveryComponents:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
                 name="Opts",
-                unique_id="sigenergy_gdc_opts",
-                object_id="sigenergy_gdc_opts",
+                unique_id="sigen_gdc_opts",
+                object_id="sigen_gdc_opts",
                 unit=None,
                 device_class=None,
                 state_class=None,
@@ -1447,12 +1449,12 @@ class TestReadableSensorScanIntervalOverride:
             patch.dict(Sensor._used_object_ids, clear=True),
             patch(
                 "sigenergy2mqtt.sensors.base.active_config.sensor_overrides",
-                {"sigenergy_ro_si": {"scan-interval": 99}},
+                {"sigen_ro_si": {"scan-interval": 99}},
             ),
         ):
             s = ReadOnlySensor(
                 name="ScanInterval",
-                object_id="sigenergy_ro_si",
+                object_id="sigen_ro_si",
                 input_type=InputType.INPUT,
                 plant_index=0,
                 device_address=1,

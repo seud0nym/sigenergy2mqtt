@@ -14,26 +14,34 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        id: setup-python
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
       - name: Install Hatch
-        run: pip install hatch
+        run: pipx install hatch
 
-      - name: Create Hatch environment
-        run: hatch env create
+      - name: Debug Environment
+        run: |
+          echo "Python Location: ${{ env.pythonLocation }}"
+          which python
+          python --version
+          hatch --version
 
       - name: Run tests with coverage
         id: pytest
         shell: bash
+        env:
+          # Force Hatch to use the clean Python from setup-python
+          HATCH_PYTHON: ${{ env.pythonLocation }}/bin/python
         run: |
           set -o pipefail
+          # We call 'hatch env create' explicitly first to catch errors early
+          hatch env create
           hatch run cov | tee pytest_output.txt
 
       - name: Extract coverage metrics
@@ -42,24 +50,24 @@ jobs:
         run: |
           import os
           import xml.etree.ElementTree as ET
-
           try:
-              tree = ET.parse('coverage.xml')
-              root = tree.getroot()
-              line_rate = float(root.attrib.get('line-rate', 0))
-              
-              total = int(round(line_rate * 100))
-              
+              if not os.path.exists('coverage.xml'):
+                  total = 0
+              else:
+                  tree = ET.parse('coverage.xml')
+                  root = tree.getroot()
+                  line_rate = float(root.attrib.get('line-rate', 0))
+                  total = int(round(line_rate * 100))
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"total={total}\n")
           except Exception as e:
-              print(f"Error extracting coverage: {e}")
+              print(f"Error: {e}")
               exit(1)
 
       - name: Extract test count
         id: tests
         run: |
-          count=$(grep -oP "(\d+) passed" pytest_output.txt | grep -oP "\d+")
+          count=$(grep -oP "\d+(?= passed)" pytest_output.txt | head -n 1 || echo "0")
           echo "count=$count" >> $GITHUB_OUTPUT
 
       - name: Determine Shields.io colors
@@ -67,7 +75,7 @@ jobs:
         run: |
           pick_color () {
             v=$1
-            if   [ "$v" -ge 90 ]; then echo "brightgreen";
+            if [ "$v" -ge 90 ]; then echo "brightgreen";
             elif [ "$v" -ge 80 ]; then echo "green";
             elif [ "$v" -ge 70 ]; then echo "yellowgreen";
             elif [ "$v" -ge 60 ]; then echo "yellow";
@@ -79,18 +87,16 @@ jobs:
       - name: Download Shields.io badges
         run: |
           mkdir -p resources/badges
-
-          curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
-            -o resources/badges/coverage-total.svg
-
-          curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
-            -o resources/badges/tests.svg
+          curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" -o resources/badges/coverage-total.svg
+          curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" -o resources/badges/tests.svg
 
       - name: Commit badges
         if: github.event_name == 'push'
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add resources/badges/*.svg
-          git commit -m "workflow: Update badges" || echo "No changes to commit"
-          git push
+          if ! git diff --staged --quiet; then
+            git commit -m "workflow: Update badges [skip ci]"
+            git push
+          fi

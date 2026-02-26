@@ -1,38 +1,31 @@
 import logging
-import types
 from pathlib import Path
-from typing import Any, cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config, active_config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
-from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
 
 
 @pytest.fixture(autouse=True)
 def mock_config():
-    old_modbus = getattr(Config, "modbus", [])
-    old_ha = getattr(Config, "home_assistant", None)
-    old_path = getattr(Config, "persistent_state_path", None)
+    cfg = Config()
+    mock_modbus = MagicMock()
+    mock_modbus.registers = {}
+    mock_modbus.disable_chunking = False
+    mock_modbus.scan_interval.high = 60
+    mock_modbus.scan_interval.low = 3600
+    mock_modbus.scan_interval.realtime = 10
+    cfg.modbus = [mock_modbus]
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.enabled = False
+    cfg.persistent_state_path = Path(".")
 
-    active_config.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-    active_config.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=False,
-        republish_discovery_interval=0,
-    )
-    active_config.persistent_state_path = Path(".")
-
-    yield
-
-    active_config.modbus = old_modbus
-    active_config.home_assistant = old_ha
-    active_config.persistent_state_path = old_path
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 @pytest.fixture(autouse=True)

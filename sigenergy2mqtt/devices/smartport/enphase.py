@@ -21,7 +21,7 @@ import urllib3
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.smart_port_config import ModuleConfig
+from sigenergy2mqtt.config.models.smart_port import SmartPortModule
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor, SubstituteMixin
@@ -383,7 +383,7 @@ class SmartPort(Device):
         element = root.find(path)
         return element.text if element is not None and element.text else ""
 
-    def __init__(self, plant_index: int, config: ModuleConfig):
+    def __init__(self, plant_index: int, config: SmartPortModule):
         fw: str = ""
         sn: str = ""
         pn: str = ""
@@ -403,8 +403,10 @@ class SmartPort(Device):
                                 sn = self._get_text(root, "./device/sn")
                                 pn = self._get_text(root, "./device/pn")
                                 fw = self._get_text(root, "./device/software")
-                                assert fw.startswith("D7") or fw.startswith("D8"), f"Unsupported Enphase Envoy firmware {fw}"
-                                break
+                                if fw.startswith("D7") or fw.startswith("D8"):
+                                    break
+                                else:
+                                    raise Exception(f"Unsupported Enphase Envoy firmware {fw}")
                             else:
                                 logging.error(f"SmartPort Failed to initialise from {url} (Attempt #{i}) - Response code was {response.status_code}")
                     except requests.exceptions.ConnectionError as e:
@@ -427,12 +429,9 @@ class SmartPort(Device):
         self._add_derived_sensor(EnphaseReactivePower(plant_index, sn), pv_power)
         self._add_derived_sensor(EnphaseVoltage(plant_index, sn), pv_power)
 
-    def _init_from_enphase_info(self, config):
-        return None, None, None
-
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
     active_config.sensor_debug_logging = True
 
     async def test():

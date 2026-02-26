@@ -7,6 +7,7 @@ authors = [{ name = "seud0nym", email = "seud0nym@yahoo.com.au" }]
 dependencies = [
     "paho-mqtt==2.1.0",
     "psutil==7.2.2",
+    "pydantic-settings==2.13.1",
     "pymodbus==3.12.1",
     "requests==2.32.5",
     "ruamel.yaml==0.19.1",

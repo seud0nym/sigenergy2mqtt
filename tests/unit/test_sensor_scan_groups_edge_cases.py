@@ -1,5 +1,5 @@
 import asyncio
-import types
+from pathlib import Path
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -10,7 +10,11 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base import (
+    ModbusSensorMixin,
+    ReadableSensorMixin,
+    Sensor,
+)
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
 
 
@@ -44,33 +48,26 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
 @pytest.fixture
 def mock_config():
     """Setup minimal Config for Device tests."""
-    conf = cast(Any, Config)
-    original_devices = conf.modbus if hasattr(conf, "devices") else []
-    original_ha = conf.home_assistant if hasattr(conf, "home_assistant") else None
+    from sigenergy2mqtt.config import _swap_active_config
+    from sigenergy2mqtt.config.settings import HomeAssistantConfig, ModbusConfig
 
-    class D:
-        registers = {}
-        disable_chunking = False
+    cfg = Config()
 
-    conf.modbus = [D()]
-    conf.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=False,
-        republish_discovery_interval=0,
-        entity_id_prefix="sigen",
-        use_simplified_topics=False,
-        edit_percentage_with_box=False,
-    )
+    # Setup minimal modbus config
+    mc = ModbusConfig(host="127.0.0.1", port=502, inverters=[1])
+    cfg.modbus = [mc]
+
+    # Setup minimal home assistant config
+    ha = HomeAssistantConfig(enabled=False, device_name_prefix="", unique_id_prefix="sigen", discovery_prefix="homeassistant", entity_id_prefix="sigen")
+    cfg.home_assistant = ha
+
     # Set logging to see debug messages if needed
-    conf.sensor_debug_logging = True
+    cfg.sensor_debug_logging = True
+    cfg.persistent_state_path = Path(".")
 
-    yield conf
+    with _swap_active_config(cfg):
+        yield cfg
 
-    conf.modbus = original_devices
-    if original_ha:
-        conf.home_assistant = original_ha
     DeviceRegistry._devices.clear()
 
 

@@ -9,7 +9,8 @@ from typing import Any, Awaitable
 import paho.mqtt.client as mqtt
 import requests
 
-from sigenergy2mqtt.config import OutputField, active_config
+from sigenergy2mqtt.common.output_field import OutputField
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .service import Service

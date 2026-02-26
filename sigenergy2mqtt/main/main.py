@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 import sys
 from pathlib import Path
@@ -29,7 +30,23 @@ serial_numbers = []
 
 
 def configure_logging():
-    root = logging.getLogger("root")
+    """Configure the root logger with a format appropriate to the runtime environment.
+
+    Three formats are used:
+
+    - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
+    - **Docker**: includes timestamp but no prefix — for structured container log collectors.
+    - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
+    """
+    if os.isatty(sys.stdout.fileno()):
+        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
+    else:
+        cgroup = Path("/proc/self/cgroup")
+        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
+    logging.basicConfig(format=fmt, level=logging.INFO, style="{")
+
+    root = logging.getLogger()
     pymodbus = logging.getLogger("pymodbus")
     paho_mqtt = logging.getLogger("paho.mqtt")
     pvoutput = logging.getLogger("pvoutput")
@@ -256,7 +273,6 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClientType, pl
 
 
 async def async_main() -> None:
-    active_config.validate()
     pymodbus_apply_logging_config(active_config.get_modbus_log_level())
     configure_logging()
 
@@ -273,7 +289,7 @@ async def async_main() -> None:
                 logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
                 plant: PowerPlant | None = None  # Make sure plant is only created with first inverter
                 inverters: dict[int, str] = {}
-                for device_address in device.inverters:  # pyright: ignore[reportGeneralTypeIssues]
+                for device_address in device.inverters:  # type: ignore[reportGeneralTypeIssues]
                     inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant)
                     if plant is None and plant_tmp is not None:
                         plant = plant_tmp
@@ -299,7 +315,7 @@ async def async_main() -> None:
                         if si_sensor:
                             si_sensor.publishable = False
                 elif plant:
-                    for device_address in device.dc_chargers:  # pyright: ignore[reportGeneralTypeIssues]
+                    for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
                         charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
                         config.add_device(plant_index, charger)
                 if plant and len(device.ac_chargers) == 0:
@@ -308,7 +324,7 @@ async def async_main() -> None:
                     if si_sensor:
                         si_sensor.publishable = False
                 elif plant and protocol_version is not None and protocol_version >= Protocol.V2_0:
-                    for device_address in device.ac_chargers:  # pyright: ignore[reportGeneralTypeIssues]
+                    for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
                         charger = await make_ac_charger(plant_index, modbus, device_address, plant)
                         config.add_device(plant_index, charger)
                 elif protocol_version is not None and protocol_version < Protocol.V2_0:

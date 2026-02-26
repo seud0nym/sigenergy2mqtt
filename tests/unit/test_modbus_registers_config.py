@@ -1,10 +1,10 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol, RegisterAccess
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
+from sigenergy2mqtt.config.settings import ModbusConfig
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import (
     DerivedSensor,
@@ -20,41 +20,37 @@ MODBUS_DATA_TYPE = ModbusClient.DATATYPE
 
 class TestModbusRegistersConfig:
     def test_default_values(self):
-        config = ModbusConfiguration()
+        config = ModbusConfig(host="dummy")
         assert config.registers.no_remote_ems is False
         assert config.registers.read_only is True
         assert config.registers.read_write is True
         assert config.registers.write_only is True
 
     def test_configure_registers_individually(self):
-        config = ModbusConfiguration()
-
-        config.configure({"no-remote-ems": True})
+        config = ModbusConfig(host="dummy", registers={"no-remote-ems": True})
         assert config.registers.no_remote_ems is True
 
-        config.configure({"read-only": False})
+        config = ModbusConfig(host="dummy", registers={"read-only": False})
         assert config.registers.read_only is False
 
-        config.configure({"read-write": False})
+        config = ModbusConfig(host="dummy", registers={"read-write": False})
         assert config.registers.read_write is False
 
-        config.configure({"write-only": False})
+        config = ModbusConfig(host="dummy", registers={"write-only": False})
         assert config.registers.write_only is False
 
     def test_instance_isolation(self):
-        c1 = ModbusConfiguration()
-        c2 = ModbusConfiguration()
+        c1 = ModbusConfig(host="dummy", registers={"read-only": False})
+        c2 = ModbusConfig(host="dummy")
 
-        c1.configure({"read-only": False})
         assert c1.registers.read_only is False
         assert c2.registers.read_only is True
         assert c1.registers is not c2.registers
 
     def test_scan_interval_isolation(self):
-        c1 = ModbusConfiguration()
-        c2 = ModbusConfiguration()
+        c1 = ModbusConfig(host="dummy", scan_interval={"low": 999})
+        c2 = ModbusConfig(host="dummy")
 
-        c1.configure({"scan-interval-low": 999})
         assert c1.scan_interval.low == 999
         assert c2.scan_interval.low == 600
         assert c1.scan_interval is not c2.scan_interval

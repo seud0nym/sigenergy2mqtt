@@ -17,7 +17,7 @@ def mock_config():
     cfg.home_assistant.edit_percentage_with_box = False
     cfg.home_assistant.discovery_prefix = "homeassistant"
     cfg.home_assistant.unique_id_prefix = "sigen"
-    cfg.home_assistant.entity_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigen"
     cfg.home_assistant.enabled_by_default = True
     cfg.sensor_debug_logging = False
     cfg.sensor_overrides = {}
@@ -32,8 +32,8 @@ class ConcreteSensor(Sensor):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             super().__init__(
                 name=f"Test Sensor {test_id}",
-                unique_id=f"sigenergy_{test_id}",
-                object_id=f"sigenergy_{test_id}",
+                unique_id=f"sigen_{test_id}",
+                object_id=f"sigen_{test_id}",
                 unit="W",
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
@@ -184,7 +184,7 @@ class TestSensorMqttTopics:
 
         state_topic = sensor.state_topic
 
-        assert "sigenergy_test_sensor" in state_topic
+        assert "sigen_test_sensor" in state_topic
         assert state_topic == sensor["state_topic"]
 
     def test_raw_state_topic_property(self):
@@ -194,7 +194,7 @@ class TestSensorMqttTopics:
 
         raw_topic = sensor.raw_state_topic
 
-        assert "sigenergy_test_sensor" in raw_topic
+        assert "sigen_test_sensor" in raw_topic
         assert raw_topic == sensor["raw_state_topic"]
 
 

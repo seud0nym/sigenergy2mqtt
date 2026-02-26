@@ -1,8 +1,6 @@
 import asyncio
 import time
-import types
 from pathlib import Path
-from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import paho.mqtt.client as mqtt
@@ -92,39 +90,39 @@ class DummyAlarmSensor(ModbusSensorMixin, ReadableSensorMixin):
 
 @pytest.fixture
 def mock_config():
-    conf = cast(Any, Config)
-    original_devices = conf.modbus if hasattr(conf, "modbus") else []
-    original_ha = conf.home_assistant if hasattr(conf, "home_assistant") else None
+    from sigenergy2mqtt.config import _swap_active_config
+    from sigenergy2mqtt.config.settings import ModbusConfig
+
+    cfg = Config()
+
+    mc = ModbusConfig(host="127.0.0.1", port=502, inverters=[1])
+    cfg.modbus = [mc]
+
+    # Set scan intervals on the first Modbus device for testing purposes
+    cfg.modbus[0].scan_interval.low = 600
+    cfg.modbus[0].scan_interval.medium = 60
+    cfg.modbus[0].scan_interval.high = 10
+    cfg.modbus[0].scan_interval.realtime = 5
+
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = False
+    cfg.home_assistant.republish_discovery_interval = 0
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.home_assistant.enabled_by_default = True
+    cfg.persistent_state_path = Path(".")
 
     # Clear used IDs between tests
     Sensor._used_unique_ids.clear()
     Sensor._used_object_ids.clear()
 
-    class D:
-        registers = {}
-        disable_chunking = False
-        scan_interval = types.SimpleNamespace(low=600, medium=60, high=10, realtime=5)
+    with _swap_active_config(cfg):
+        yield cfg
 
-    conf.modbus = [D()]
-    conf.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=False,
-        republish_discovery_interval=0,
-        entity_id_prefix="sigen",
-        use_simplified_topics=False,
-        edit_percentage_with_box=False,
-        enabled_by_default=True,
-    )
-    conf.persistent_state_path = Path(".")
-
-    yield conf
-
-    conf.modbus = original_devices
-    if original_ha:
-        conf.home_assistant = original_ha
-    DeviceRegistry._devices.clear()
+    DeviceRegistry.clear()
     Sensor._used_unique_ids.clear()
     Sensor._used_object_ids.clear()
 

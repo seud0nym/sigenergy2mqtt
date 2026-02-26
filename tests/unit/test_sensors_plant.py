@@ -21,8 +21,8 @@ def clear_sensor_registry():
 @pytest.fixture
 def mock_config():
     cfg = Config()
-    cfg.home_assistant.entity_id_prefix = "sigenergy"
-    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.discovery_prefix = "homeassistant"
     cfg.home_assistant.enabled = True
     cfg.home_assistant.use_simplified_topics = False

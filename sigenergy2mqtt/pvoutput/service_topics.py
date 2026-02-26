@@ -8,7 +8,9 @@ from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.config import OutputField, StatusField, active_config
+from sigenergy2mqtt.common.output_field import OutputField
+from sigenergy2mqtt.common.status_field import StatusField
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .service import Service

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-ENTITY_PREFIX = "sigenergy"
+ENTITY_PREFIX = "sigen"
 
 
 from sigenergy2mqtt.config import Config, _swap_active_config
@@ -11,7 +11,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 @pytest.fixture(autouse=True)
 def setup_configs():
     cfg = Config()
-    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = ENTITY_PREFIX
     cfg.sensor_overrides = {}
 

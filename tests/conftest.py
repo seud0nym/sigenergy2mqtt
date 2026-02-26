@@ -13,15 +13,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "util
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 os.environ["SIGENERGY2MQTT_MODBUS_PORT"] = "502"
 os.environ["SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID"] = "1"
+os.environ["SIGENERGY2MQTT_MQTT_ANONYMOUS"] = "true"
 
 # Prevent argparse from parsing pytest arguments by mocking sys.argv during import
 with patch.object(sys, "argv", ["sigenergy2mqtt"]):
     try:
         from sigenergy2mqtt import i18n
-        from sigenergy2mqtt.config import active_config
-        from sigenergy2mqtt.devices.device import DeviceRegistry
-        from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
-        from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
     except SystemExit:
         # If it still correctly exits (validation failure?), capture it.
         pass
@@ -31,14 +28,10 @@ with patch.object(sys, "argv", ["sigenergy2mqtt"]):
 
 @pytest.fixture(autouse=True)
 def mock_persistent_state_path(request, tmp_path, reset_config):
-    """Global fixture to ensure persistent_state_path is always a temp dir.
-
-    Use @pytest.mark.no_persistent_state_mock to disable this mock.
-    """
     if "no_persistent_state_mock" in [m.name for m in request.node.iter_markers()]:
         yield tmp_path
     else:
-        with patch("sigenergy2mqtt.config.active_config.persistent_state_path", tmp_path):
+        with patch("sigenergy2mqtt.config.config._create_persistent_state_path", return_value=tmp_path):
             yield tmp_path
 
 
@@ -60,6 +53,10 @@ _BASELINE_ENV = {
     "SIGENERGY2MQTT_MODBUS_HOST": "127.0.0.1",
     "SIGENERGY2MQTT_MODBUS_PORT": "502",
     "SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID": "1",
+    "SIGENERGY2MQTT_MQTT_ANONYMOUS": "true",
+    "SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX": "sigen",
+    "SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX": "sigen",
+    "SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX": "",
 }
 
 
@@ -78,25 +75,54 @@ def reset_config():
     for k, v in _BASELINE_ENV.items():
         os.environ[k] = v
 
-    active_config.reset()
+    from sigenergy2mqtt.config import active_config
+    from sigenergy2mqtt.config.config import Config
+    from sigenergy2mqtt.devices.device import DeviceRegistry
+    from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
+    from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
+
+    # Clear proxy attributes that might have been added by tests (e.g. active_config.home_assistant = ...)
+    # which would overshadow the proxy's redirection to _config.
+    for key in list(active_config.__dict__.keys()):
+        if key != "_config":
+            del active_config.__dict__[key]
+
+    os.environ.update(_BASELINE_ENV)
+    active_config._config = Config()
     active_config.reload()
+
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()
+
+    # Clear sensor registries
+    from sigenergy2mqtt.sensors.base import Sensor
+
+    Sensor._used_unique_ids.clear()
+    Sensor._used_object_ids.clear()
 
     yield
 
-    # Teardown: restore env vars to pre-test state
-    # Remove any SIGENERGY2MQTT_* vars that tests may have added
-    for k in list(os.environ.keys()):
-        if k.startswith("SIGENERGY2MQTT_"):
-            del os.environ[k]
-    # Restore saved vars
+    # Teardown: Restore environment and clear registries again
+    for key in list(os.environ.keys()):
+        if key.startswith("SIGENERGY2MQTT_"):
+            del os.environ[key]
     os.environ.update(saved_env)
+
+    # Clear proxy attributes again after test
+    for key in list(active_config.__dict__.keys()):
+        if key != "_config":
+            del active_config.__dict__[key]
+
+    active_config._config = Config()
+    active_config.reload()
 
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()
+
+    Sensor._used_unique_ids.clear()
+    Sensor._used_object_ids.clear()
 
 
 @pytest.fixture(autouse=True)

@@ -493,7 +493,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             registers: Register access configuration for this device
         """
         # Pre-compile regex patterns for efficiency
-        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}  # pyright: ignore[reportGeneralTypeIssues]
+        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}  # type: ignore[reportGeneralTypeIssues]
 
         for identifier, pattern in identifier_patterns.items():
             if self._matches_override_pattern(pattern):
@@ -1365,7 +1365,7 @@ class ReadableSensorMixin(Sensor):
 
     def _apply_scan_interval_overrides(self) -> None:
         """Apply scan interval overrides from configuration."""
-        for identifier in active_config.sensor_overrides.keys():  # pyright: ignore[reportGeneralTypeIssues]
+        for identifier in active_config.sensor_overrides.keys():  # type: ignore[reportGeneralTypeIssues]
             overrides = self._get_applicable_overrides(identifier)
             if overrides and "scan-interval" in overrides:
                 if self.scan_interval != overrides["scan-interval"]:

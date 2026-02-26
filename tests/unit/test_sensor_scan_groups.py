@@ -2,16 +2,14 @@
 
 import asyncio
 import time
-import types
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import paho.mqtt.client as mqtt
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
@@ -52,19 +50,9 @@ def mock_config():
     from sigenergy2mqtt.config import Config, _swap_active_config
 
     cfg = Config()
-    cfg.modbus = [
-        types.SimpleNamespace(
-            registers=types.SimpleNamespace(read_only=True, read_write=False, write_only=False, no_remote_ems=False),
-            disable_chunking=False,
-            host="127.0.0.1",
-            port=502,
-            timeout=1,
-            retries=3,
-            inverters=[1],
-            dc_chargers=[],
-            ac_chargers=[],
-        )
-    ]
+    from sigenergy2mqtt.config.settings import ModbusConfig
+
+    cfg.modbus = [ModbusConfig(host="127.0.0.1", port=502, inverters=[1])]
     cfg.home_assistant.device_name_prefix = ""
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.discovery_prefix = "homeassistant"

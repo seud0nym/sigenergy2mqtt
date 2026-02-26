@@ -19,14 +19,18 @@ from sigenergy2mqtt.sensors.inverter_read_only import (
 
 
 @pytest.fixture
-def mock_config(monkeypatch):
-    """Mock the global Config object using simple attributes."""
-    from types import SimpleNamespace
+def mock_config():
+    """Mock the global Config object using a fresh instance."""
+    from sigenergy2mqtt.config import _swap_active_config
+    from sigenergy2mqtt.config.settings import HomeAssistantConfig
 
-    ha = SimpleNamespace(unique_id_prefix="test", entity_id_prefix="test", enabled_by_default=False)
-    monkeypatch.setattr(Config, "home_assistant", ha, raising=False)
-    monkeypatch.setattr(Config, "modbus", [], raising=False)
-    yield Config
+    cfg = Config()
+    ha = HomeAssistantConfig(unique_id_prefix="test", entity_id_prefix="test", enabled_by_default=False)
+    cfg.home_assistant = ha
+    cfg.modbus = []
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class TestInverterFirmwareVersion:

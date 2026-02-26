@@ -1,13 +1,11 @@
 """Comprehensive test coverage for sigenergy2mqtt/devices/smartport/enphase.py"""
 
-import asyncio
 import json
 import logging
-import os
 import time
 import xml.etree.ElementTree as xml
-from typing import Any, cast
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from typing import cast
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
@@ -626,7 +624,7 @@ class TestSmartPort:
         mock_session.__exit__ = lambda s, *args: None
 
         with patch("requests.Session", return_value=mock_session):
-            with pytest.raises(AssertionError, match="Unsupported Enphase Envoy firmware"):
+            with pytest.raises(Exception, match="Unsupported Enphase Envoy firmware"):
                 SmartPort(0, MockModuleConfig())
 
     def test_smartport_retries_on_connection_error(self, mock_config, tmp_path, monkeypatch):
@@ -936,25 +934,6 @@ class TestTokenFileErrors:
 
         # Should have generated new token due to read failure
         assert token == "fallback_token"
-
-
-class TestSmartPortInitFromEnphaseInfo:
-    """Tests for SmartPort._init_from_enphase_info."""
-
-    def test_init_from_enphase_info_returns_none(self, mock_config, tmp_path, monkeypatch):
-        """Test _init_from_enphase_info returns None, None, None."""
-        monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
-
-        class MockModuleConfig:
-            testing = True
-            host = "192.168.1.100"
-            username = "user@example.com"
-            password = "password123"
-
-        smartport = SmartPort(0, MockModuleConfig())
-        result = smartport._init_from_enphase_info(MockModuleConfig())
-
-        assert result == (None, None, None)
 
 
 class TestExceptionHandling:
