@@ -499,6 +499,14 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_enphase_123456789012_voltage'>Voltage</a><br>
 
 <h6>Metrics</h6>
+<a href='#sigen_influxdb_queries'>InfluxDB Queries</a><br>
+<a href='#sigen_influxdb_query_errors'>InfluxDB Query Errors</a><br>
+<a href='#sigen_influxdb_retries'>InfluxDB Retries</a><br>
+<a href='#sigen_influxdb_throughput'>InfluxDB Throughput</a><br>
+<a href='#sigen_influxdb_write_errors'>InfluxDB Write Errors</a><br>
+<a href='#sigen_influxdb_write_max'>InfluxDB Write Max</a><br>
+<a href='#sigen_influxdb_write_mean'>InfluxDB Write Mean</a><br>
+<a href='#sigen_influxdb_writes'>InfluxDB Writes</a><br>
 <a href='#sigen_modbus_locks'>Modbus Active Locks</a><br>
 <a href='#sigen_modbus_cache_hit_percentage'>Modbus Cache Hits</a><br>
 <a href='#sigen_modbus_physical_reads'>Modbus Physical Reads</a><br>
@@ -564,7 +572,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 
 <h6>DC Charger</h6>
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -6407,8 +6415,19 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 ### Metrics
 
 Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.
+
+InfluxDB Metrics are only published when the InfluxDB integration is enabled.
+
 | Metric | Interval | Unit | State Topic|
 |--------|---------:|------|------------|
+| <a id='sigen_influxdb_queries'>InfluxDB Queries</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_queries |
+| <a id='sigen_influxdb_query_errors'>InfluxDB Query Errors</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_query_errors |
+| <a id='sigen_influxdb_retries'>InfluxDB Retries</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_retries |
+| <a id='sigen_influxdb_throughput'>InfluxDB Throughput</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_throughput |
+| <a id='sigen_influxdb_write_errors'>InfluxDB Write Errors</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_write_errors |
+| <a id='sigen_influxdb_write_max'>InfluxDB Write Max</a> | 1 | ms | sigenergy2mqtt/metrics/influxdb_write_max |
+| <a id='sigen_influxdb_write_mean'>InfluxDB Write Mean</a> | 1 | ms | sigenergy2mqtt/metrics/influxdb_write_mean |
+| <a id='sigen_influxdb_writes'>InfluxDB Writes</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_writes |
 | <a id='sigen_modbus_locks'>Modbus Active Locks</a> | 1 |  | sigenergy2mqtt/metrics/modbus_locks |
 | <a id='sigen_modbus_cache_hit_percentage'>Modbus Cache Hits</a> | 1 | % | sigenergy2mqtt/metrics/modbus_cache_hit_percentage |
 | <a id='sigen_modbus_physical_reads'>Modbus Physical Reads</a> | 1 | % | sigenergy2mqtt/metrics/modbus_physical_reads |

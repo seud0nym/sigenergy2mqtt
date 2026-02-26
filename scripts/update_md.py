@@ -338,6 +338,7 @@ async def sensor_index():
         published_topics("SmartPort")
         f.write("\n### Metrics\n")
         f.write("\nMetrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.\n")
+        f.write("\nInfluxDB Metrics are only published when the InfluxDB integration is enabled.\n\n")
         metrics_topics()
         f.write("\n## Subscribed Topics\n")
         f.write("\n### Plant\n")
