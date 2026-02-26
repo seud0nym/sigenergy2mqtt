@@ -18,19 +18,30 @@ jobs:
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
+        id: setup-python
         with:
           python-version: "3.12"
-          # Optional: Caching helps speed up subsequent runs
-          cache: 'pip'
 
       - name: Install Hatch
         run: pipx install hatch
 
+      - name: Debug Environment
+        run: |
+          echo "Python Location: ${{ env.pythonLocation }}"
+          which python
+          python --version
+          hatch --version
+
       - name: Run tests with coverage
         id: pytest
         shell: bash
+        env:
+          # Force Hatch to use the clean Python from setup-python
+          HATCH_PYTHON: ${{ env.pythonLocation }}/bin/python
         run: |
           set -o pipefail
+          # We call 'hatch env create' explicitly first to catch errors early
+          hatch env create
           hatch run cov | tee pytest_output.txt
 
       - name: Extract coverage metrics
@@ -63,11 +74,12 @@ jobs:
         id: colors
         run: |
           pick_color () {
-            if [ "$1" -ge 90 ]; then echo "brightgreen";
-            elif [ "$1" -ge 80 ]; then echo "green";
-            elif [ "$1" -ge 70 ]; then echo "yellowgreen";
-            elif [ "$1" -ge 60 ]; then echo "yellow";
-            elif [ "$1" -ge 50 ]; then echo "orange";
+            v=$1
+            if [ "$v" -ge 90 ]; then echo "brightgreen";
+            elif [ "$v" -ge 80 ]; then echo "green";
+            elif [ "$v" -ge 70 ]; then echo "yellowgreen";
+            elif [ "$v" -ge 60 ]; then echo "yellow";
+            elif [ "$v" -ge 50 ]; then echo "orange";
             else echo "red"; fi
           }
           echo "total_color=$(pick_color ${{ steps.coverage.outputs.total }})" >> $GITHUB_OUTPUT
