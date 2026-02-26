@@ -5,13 +5,13 @@ import pytest
 
 from sigenergy2mqtt.common import Protocol  # noqa: E402
 from sigenergy2mqtt.config import active_config  # noqa: E402
-from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration  # noqa: E402
+from sigenergy2mqtt.config.settings import HomeAssistantConfig  # noqa: E402
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, RemoteEMSControlMode  # noqa: E402
 
 
 class MockSensor(Sensor):
-    def __init__(self, name="Mock Sensor", unique_id="sigenergy_mock_unique_id", object_id="sigenergy_mock_object_id", **kwargs):
+    def __init__(self, name="Mock Sensor", unique_id="sigen_mock_unique_id", object_id="sigen_mock_object_id", **kwargs):
         super().__init__(
             name=name,
             unique_id=unique_id,
@@ -36,12 +36,12 @@ class TestConfigSwitches:
     @pytest.fixture(autouse=True)
     def setup_config(self):
         """Reset Config to known state before each test."""
-        active_config.home_assistant = HomeAssistantConfiguration()
+        active_config.home_assistant = HomeAssistantConfig()
         active_config.home_assistant.enabled = True
         active_config.home_assistant.use_simplified_topics = False
         active_config.home_assistant.discovery_prefix = "homeassistant"
-        active_config.home_assistant.entity_id_prefix = "sigenergy"
-        active_config.home_assistant.unique_id_prefix = "sigenergy"
+        active_config.home_assistant.entity_id_prefix = "sigen"
+        active_config.home_assistant.unique_id_prefix = "sigen"
         active_config.ems_mode_check = True
 
         # Reset Sensor static registries
@@ -53,22 +53,22 @@ class TestConfigSwitches:
         active_config.home_assistant.enabled = True
         active_config.home_assistant.use_simplified_topics = False
 
-        sensor = MockSensor(object_id="sigenergy_test_obj")
+        sensor = MockSensor(object_id="sigen_test_obj")
         sensor.configure_mqtt_topics("test_device")
 
-        assert sensor["state_topic"] == "homeassistant/sensor/test_device/sigenergy_test_obj/state"
-        assert sensor["raw_state_topic"] == "homeassistant/sensor/test_device/sigenergy_test_obj/raw"
+        assert sensor["state_topic"] == "homeassistant/sensor/test_device/sigen_test_obj/state"
+        assert sensor["raw_state_topic"] == "homeassistant/sensor/test_device/sigen_test_obj/raw"
 
     def test_mqtt_topics_simplified(self):
         """Test MQTT topics with HA enabled and simplified topics."""
         active_config.home_assistant.enabled = True
         active_config.home_assistant.use_simplified_topics = True
 
-        sensor = MockSensor(object_id="sigenergy_test_obj")
+        sensor = MockSensor(object_id="sigen_test_obj")
         sensor.configure_mqtt_topics("test_device")
 
-        assert sensor["state_topic"] == "sigenergy2mqtt/sigenergy_test_obj/state"
-        assert sensor["raw_state_topic"] == "sigenergy2mqtt/sigenergy_test_obj/raw"
+        assert sensor["state_topic"] == "sigenergy2mqtt/sigen_test_obj/state"
+        assert sensor["raw_state_topic"] == "sigenergy2mqtt/sigen_test_obj/raw"
 
     def test_mqtt_topics_ha_disabled(self):
         """Test MQTT topics with HA disabled."""
@@ -76,10 +76,10 @@ class TestConfigSwitches:
         # Simplified flag shouldn't matter if HA is disabled, logic defaults to simplified style
         active_config.home_assistant.use_simplified_topics = False
 
-        sensor = MockSensor(object_id="sigenergy_test_obj")
+        sensor = MockSensor(object_id="sigen_test_obj")
         sensor.configure_mqtt_topics("test_device")
 
-        assert sensor["state_topic"] == "sigenergy2mqtt/sigenergy_test_obj/state"
+        assert sensor["state_topic"] == "sigenergy2mqtt/sigen_test_obj/state"
 
     def test_sensor_attributes_ha_enabled(self):
         """Test sensor attributes when HA is enabled."""

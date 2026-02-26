@@ -108,6 +108,7 @@ class TestSanityCheckIntegration:
         mock_modbus_client.read_holding_registers.return_value = mock_rr
         mock_modbus_client.convert_from_registers.return_value = 5
 
+        sensor.configure_mqtt_topics("test_device")
         await sensor.publish(mock_mqtt_client, mock_modbus_client)
 
         # Should have incremented failures

@@ -32,7 +32,7 @@ def mock_cli_parse():
 
 @pytest.fixture
 def mock_system_init():
-    with patch("sigenergy2mqtt.config.active_config.system_initialize") as mock:
+    with patch("sigenergy2mqtt.config.config._create_persistent_state_path") as mock:
         mock.return_value = "/mock/path"
         yield mock
 

@@ -1,14 +1,14 @@
 import asyncio
 import time
-import types
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin
 
@@ -37,29 +37,27 @@ class FakeModbus:
         return 0
 
 
-def setup_module(module):
-    conf = cast(Any, Config)
-    conf.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-    defaults = dict(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=False,
-        republish_discovery_interval=0,
-        entity_id_prefix="sigen",
-        enabled_by_default=True,
-        use_simplified_topics=False,
-        edit_percentage_with_box=False,
-    )
-    ha = getattr(conf, "home_assistant", None)
-    if ha is None:
-        conf.home_assistant = types.SimpleNamespace(**defaults)
-    else:
-        for k, v in defaults.items():
-            if not hasattr(ha, k):
-                setattr(ha, k, v)
-    if not hasattr(conf, "persistent_state_path"):
-        conf.persistent_state_path = Path(".")
+@pytest.fixture(autouse=True)
+def mock_config():
+    cfg = Config()
+    mock_modbus = MagicMock()
+    mock_modbus.registers = {}
+    mock_modbus.disable_chunking = False
+    mock_modbus.scan_interval.high = 60
+    cfg.modbus = [mock_modbus]
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = False
+    cfg.home_assistant.republish_discovery_interval = 0
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.enabled_by_default = True
+    cfg.home_assistant.use_simplified_topics = False
+    cfg.home_assistant.edit_percentage_with_box = False
+    cfg.persistent_state_path = Path(".")
+
+    with _swap_active_config(cfg):
+        yield cfg
 
 
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):

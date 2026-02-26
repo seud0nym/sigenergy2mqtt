@@ -2,9 +2,7 @@ import logging
 import os
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, active_config, const
+from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, const
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services
@@ -158,7 +156,12 @@ def test_get_pvoutput_services_voltage_sources():
 
 def test_get_pvoutput_services_donation_logging(caplog):
     # Test warning for non-numeric sensor in donation
-    sensor = mock_sensor(TotalPVPower)
+    from sigenergy2mqtt.sensors.base import TypedSensorMixin
+
+    class MockTypedSensor(TotalPVPower, TypedSensorMixin):
+        pass
+
+    sensor = mock_sensor(MockTypedSensor)
     sensor.data_type = ModbusDataType.STRING
 
     mock_device = MagicMock()
@@ -170,10 +173,12 @@ def test_get_pvoutput_services_donation_logging(caplog):
 
     with (
         patch.object(active_config.pvoutput, "enabled", True),
-        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")} | {StatusField.V8: "TotalPVPower"}),
+        patch.object(active_config.pvoutput, "log_level", logging.WARNING),
+        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")} | {StatusField.V8: "MockTypedSensor"}),
     ):
-        get_pvoutput_services([mock_thread_config])
-        assert "does not have a numeric data type" in caplog.text
+        with caplog.at_level(logging.WARNING, logger="pvoutput"):
+            get_pvoutput_services([mock_thread_config])
+            assert "does not have a numeric data type" in caplog.text
 
 
 def test_get_gain_additional():

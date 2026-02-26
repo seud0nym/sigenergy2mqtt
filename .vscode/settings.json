@@ -29,6 +29,7 @@
         "Derating",
         "devpub",
         "dockerenv",
+        "dotenv",
         "ecowitt2mqtt",
         "elts",
         "emqx",
@@ -73,6 +74,7 @@
         "powerplant",
         "preread",
         "proc",
+        "propagatable",
         "psutil",
         "pvoutput",
         "pvstring",
@@ -104,9 +106,6 @@
         "wordorder",
         "writeonly"
     ],
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit"
-    },
     "python.analysis.diagnosticMode": "workspace",
     "python.pyrefly.displayTypeErrors": "force-on",
     "python.testing.pytestEnabled": true,
@@ -117,4 +116,13 @@
     ],
     "python.testing.unittestEnabled": false,
     "ruff.lineLength": 210,
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "python.languageServer": "None",
+    "basedpyright.analysis.diagnosticMode": "workspace"
 }

@@ -1,15 +1,12 @@
-import asyncio
 import json
 import logging
-import math
 import time
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, mock_open, patch
 
 import pytest
 
 from sigenergy2mqtt.config import OutputField, StatusField, active_config
-from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
+from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
 from sigenergy2mqtt.pvoutput.topic import Topic
@@ -171,7 +168,7 @@ class TestPVOutputServiceTopics:
         with patch("pathlib.Path.is_file", return_value=False):
             st.register(Topic("t_tp_st"))
 
-        with patch.object(PVOutputConfiguration, "current_time_period", new_callable=PropertyMock) as mock_cp:
+        with patch.object(PvOutputConfig, "current_time_period", new_callable=PropertyMock) as mock_cp:
             mock_cp.return_value = [OutputField.EXPORT_PEAK]
             st._service.lock.return_value.__aenter__ = AsyncMock()
             st._service.lock.return_value.__aexit__ = AsyncMock()

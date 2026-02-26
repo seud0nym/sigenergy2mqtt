@@ -9,7 +9,8 @@ import threading
 import time
 from typing import Any
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+if __name__ == "__main__":
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from datetime import datetime
 from random import randint
 
@@ -305,6 +306,8 @@ async def run_async_server(
     device_address: int | None = None
     input_type = None
 
+    _logger.setLevel(log_level)
+
     _logger.info("Getting sensor instances...")
     sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, protocol_version=protocol_version, pv_inverter_device_address=3, concrete_sensor_check=False)
     sorted_sensors: list = sorted(
@@ -331,7 +334,9 @@ async def run_async_server(
     if modbus_client:
         await prepopulate(modbus_client, groups)
 
-    _logger.setLevel(log_level if not any(registers_to_debug) else logging.DEBUG)
+    if any(registers_to_debug):
+        _logger.info(f"Enabling debug logging because registers {registers_to_debug} were specified for debugging...")
+        _logger.setLevel(logging.DEBUG)
 
     _logger.info("Creating data blocks...")
     for sensor in sorted_sensors:

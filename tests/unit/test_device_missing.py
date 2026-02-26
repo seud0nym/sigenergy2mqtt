@@ -1,16 +1,13 @@
-import asyncio
 import types
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from paho.mqtt.client import MQTTMessageInfo
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.common import HybridInverter, Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.sensors.base import (
     AlarmCombinedSensor,
-    DerivedSensor,
     ObservableMixin,
     ReadableSensorMixin,
     Sensor,
@@ -131,20 +128,19 @@ class ConcreteModbusDevice(ModbusDevice):
 # --- Fixtures ---
 
 
-from sigenergy2mqtt.config import _swap_active_config
-
-
 @pytest.fixture
 def mock_config():
     cfg = Config()
-    cfg.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-    cfg.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=True,
-        republish_discovery_interval=60,
-    )
+    mock_modbus = MagicMock()
+    mock_modbus.registers = {}
+    mock_modbus.disable_chunking = False
+    mock_modbus.scan_interval.high = 60
+    cfg.modbus = [mock_modbus]
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.republish_discovery_interval = 60
     cfg.origin = {}
     cfg.persistent_state_path = "."
 

@@ -8,12 +8,24 @@ import pytest
 mock_types = MagicMock()
 
 
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.i18n import _t
+
+
 class MockHybridInverter:
-    pass
+    def __init__(self, *args, **kwargs):
+        self.protocol_version = kwargs.get("protocol_version", Protocol.N_A)
+
+    def __str__(self) -> str:
+        return _t("HybridInverter.name", "Hybrid Inverter")
 
 
 class MockPVInverter:
-    pass
+    def __init__(self, *args, **kwargs):
+        self.protocol_version = kwargs.get("protocol_version", Protocol.N_A)
+
+    def __str__(self) -> str:
+        return _t("PVInverter.name", "PV Inverter")
 
 
 mock_types.HybridInverter = MockHybridInverter

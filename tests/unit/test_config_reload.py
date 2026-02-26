@@ -18,13 +18,17 @@ def test_reload_applies_yaml(tmp_path, monkeypatch):
     }
     fn = write_yaml(tmp_path, data)
 
-    # Directly configure from the parsed data to exercise _configure
+    import os
+
+    # Save current env and clear SIGENERGY2MQTT_ vars
+    original_env = {k: v for k, v in os.environ.items() if k.startswith("SIGENERGY2MQTT_")}
+    for k in original_env:
+        del os.environ[k]
+
     original_modbus = list(active_config.modbus)
     try:
         active_config.modbus.clear()
-        with open(fn, "r") as f:
-            parsed = YAML(typ="safe").load(f)
-        active_config._configure(parsed)
+        active_config.load(fn)
 
         assert active_config.log_level == getattr(__import__("logging"), "DEBUG")
         # Ensure modbus device was configured (check at least port)
@@ -33,6 +37,7 @@ def test_reload_applies_yaml(tmp_path, monkeypatch):
     finally:
         active_config.modbus.clear()
         active_config.modbus.extend(original_modbus)
+        os.environ.update(original_env)
 
 
 def test_reload_env_overrides(monkeypatch):
@@ -68,10 +73,3 @@ def test_reload_invalid_yaml(tmp_path):
             active_config.reload()
     finally:
         active_config._source = original_source
-
-
-def test_configure_unknown_key(tmp_path):
-    data = {"unknown-section": {"foo": "bar"}}
-    # Ensure _configure raises on unknown key processing
-    with pytest.raises(ValueError):
-        active_config._configure(data, override=False)

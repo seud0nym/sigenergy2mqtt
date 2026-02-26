@@ -1,21 +1,24 @@
 import asyncio
-import types
 from typing import Any, cast
+from unittest.mock import MagicMock
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config, _swap_active_config, active_config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry
 
 
 @pytest.fixture
 def mock_config():
     cfg = Config()
-    cfg.modbus = [types.SimpleNamespace(registers={})]
+    mock_modbus = MagicMock()
+    mock_modbus.registers = {}
+    mock_modbus.scan_interval.high = 60
+    cfg.modbus = [mock_modbus]
     with _swap_active_config(cfg):
         yield cfg
-    DeviceRegistry._devices.clear()
+    DeviceRegistry.clear()
 
 
 @pytest.mark.asyncio

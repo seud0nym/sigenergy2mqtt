@@ -952,7 +952,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 discovery["cmps"] = components
                 discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
                 logging.debug(f"{self.name} publishing discovery")
-                if logging.getLogger().isEnabledFor(logging.DEBUG):
+                if active_config.log_level == logging.DEBUG:
                     discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
                     with discovery_dump.open("w") as f:
                         f.write(discovery_json)

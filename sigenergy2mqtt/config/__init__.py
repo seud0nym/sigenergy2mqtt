@@ -1,14 +1,19 @@
 """sigenergy2mqtt configuration package."""
 
-__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "SmartPortConfiguration", "StatusField", "VoltageSource", "_swap_active_config"]
-
 import logging
 import os
 
+from sigenergy2mqtt.common.consumption_source import ConsumptionSource
+from sigenergy2mqtt.common.output_field import OutputField
+from sigenergy2mqtt.common.status_field import StatusField
+from sigenergy2mqtt.common.voltage_source import VoltageSource
+
 from . import cli, const
 from .config import Config, ConfigurationError, _swap_active_config, active_config
-from .pvoutput_config import ConsumptionSource, OutputField, StatusField, VoltageSource
-from .smart_port_config import SmartPortConfiguration
+from .settings import Settings
+
+__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "Settings", "StatusField", "VoltageSource", "_swap_active_config"]
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -122,30 +127,16 @@ def initialize(args=None) -> bool:
     Returns:
         False if early exit required, otherwise True
     """
-    # 1. System setup
-    persistent_path = active_config.system_initialize()
-    active_config.persistent_state_path = persistent_path
-
-    # 2. Parse CLI
+    # 1. Parse CLI
     parsed_args = cli.parse_args(args)
 
     if parsed_args.show_version:
         return False  # Caller handles sys.exit if appropriate
 
-    # 3. CLI → env (ENV already set takes priority, no duplicate processing logic)
+    # 2. CLI → env (ENV already set takes priority, no duplicate processing logic)
     _promote_cli_to_env(parsed_args)
 
-    # Apply log level immediately from env so subsequent logging is correct.
-    log_level_name = os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL)
-    if log_level_name:
-        level = getattr(logging, log_level_name, None)
-        if level is None:
-            raise ConfigurationError(f"Unknown log level: {log_level_name!r}")
-        active_config.log_level = level
-        logging.getLogger().setLevel(level)
-        logging.info("sigenergy2mqtt log-level changed to %s", log_level_name)
-
-    # 4. Load config
+    # 3. Load config
     try:
         _load_config()
     except ConfigurationError:
@@ -158,7 +149,6 @@ def initialize(args=None) -> bool:
         active_config.clean = True
 
     if getattr(parsed_args, "validate_only", False):
-        active_config.validate()  # raises on failure; caller logs + exits
         return False
 
     if getattr(parsed_args, "discovery_only", False):

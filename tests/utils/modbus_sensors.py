@@ -5,7 +5,8 @@ import sys
 from typing import cast
 
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+if __name__ == "__main__":
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import active_config, initialize
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
@@ -213,7 +214,7 @@ async def get_sensor_instances(
 
 
 if __name__ == "__main__":
-    logging.getLogger("root").setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
     loop = asyncio.new_event_loop()
     loop.run_until_complete(get_sensor_instances())
     loop.close()

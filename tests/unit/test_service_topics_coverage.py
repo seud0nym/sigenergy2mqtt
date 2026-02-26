@@ -1,16 +1,13 @@
-import asyncio
-import json
 import logging
 import time
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, OutputField, StatusField, _swap_active_config, active_config
-from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration
-from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
+from sigenergy2mqtt.config import Config, OutputField, _swap_active_config, active_config
+from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput.service_topics import Calculation as Calc
+from sigenergy2mqtt.pvoutput.service_topics import ServiceTopics, TimePeriodServiceTopics
 from sigenergy2mqtt.pvoutput.topic import Topic
 
 
@@ -290,7 +287,7 @@ async def test_handle_update_complex_branches(caplog):
         await st.handle_update(None, MagicMock(), 110.0, "t1", MagicMock())
         assert "Updating" in caplog.text
         # child branch non-current
-        with patch.object(PVOutputConfiguration, "current_time_period", return_value=[]):
+        with patch.object(PvOutputConfig, "current_time_period", return_value=[]):
             await st.handle_update(None, MagicMock(), 120.0, "t1", MagicMock())
             assert "Updating GENERATION children" in caplog.text
         # Peak ignoring
