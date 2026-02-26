@@ -14,17 +14,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          # Ensures we get the head of the branch for PRs and the commit for pushes
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
       - name: Install Hatch
-        run: pip install hatch
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade hatch
 
       - name: Create Hatch environment
         run: hatch env create
@@ -42,14 +45,15 @@ jobs:
         run: |
           import os
           import xml.etree.ElementTree as ET
-
           try:
+              # Ensure the file exists before parsing
+              if not os.path.exists('coverage.xml'):
+                  print("coverage.xml not found")
+                  exit(1)
               tree = ET.parse('coverage.xml')
               root = tree.getroot()
               line_rate = float(root.attrib.get('line-rate', 0))
-              
               total = int(round(line_rate * 100))
-              
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"total={total}\n")
           except Exception as e:
@@ -59,7 +63,8 @@ jobs:
       - name: Extract test count
         id: tests
         run: |
-          count=$(grep -oP "(\d+) passed" pytest_output.txt | grep -oP "\d+")
+          # Use a safer grep pattern
+          count=$(grep -oP "\d+(?= passed)" pytest_output.txt || echo "0")
           echo "count=$count" >> $GITHUB_OUTPUT
 
       - name: Determine Shields.io colors
@@ -79,18 +84,22 @@ jobs:
       - name: Download Shields.io badges
         run: |
           mkdir -p resources/badges
-
           curl -s "https://img.shields.io/badge/coverage-${{ steps.coverage.outputs.total }}%25-${{ steps.colors.outputs.total_color }}.svg" \
             -o resources/badges/coverage-total.svg
-
           curl -s "https://img.shields.io/badge/tests-${{ steps.tests.outputs.count }}-blue.svg" \
             -o resources/badges/tests.svg
 
       - name: Commit badges
         if: github.event_name == 'push'
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add resources/badges/*.svg
-          git commit -m "workflow: Update badges" || echo "No changes to commit"
-          git push
+          
+          # Check if there are actual changes staged before committing
+          if git diff --staged --quiet; then
+            echo "No changes to badges. Skipping commit."
+          else
+            git commit -m "workflow: Update badges [skip ci]"
+            git push
+          fi
