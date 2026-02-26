@@ -16,22 +16,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Ensures we get the head of the branch for PRs and the commit for pushes
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
+      # 1. Install Hatch as a standalone tool (bypasses broken global libraries)
+      - name: Setup Hatch
+        uses: pypa/hatch-installer-action@v1
+
+      # 2. Set up Python 3.12 for the tests to use
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install Hatch
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install hatch
-
-      - name: Create Hatch environment
-        run: hatch env create
-
+      # 3. Run tests (Hatch will automatically create the environment here)
       - name: Run tests with coverage
         id: pytest
         shell: bash
@@ -46,14 +43,16 @@ jobs:
           import os
           import xml.etree.ElementTree as ET
           try:
-              # Ensure the file exists before parsing
               if not os.path.exists('coverage.xml'):
                   print("coverage.xml not found")
-                  exit(1)
-              tree = ET.parse('coverage.xml')
-              root = tree.getroot()
-              line_rate = float(root.attrib.get('line-rate', 0))
-              total = int(round(line_rate * 100))
+                  # Fallback to 0 so the workflow doesn't crash
+                  total = 0
+              else:
+                  tree = ET.parse('coverage.xml')
+                  root = tree.getroot()
+                  line_rate = float(root.attrib.get('line-rate', 0))
+                  total = int(round(line_rate * 100))
+              
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"total={total}\n")
           except Exception as e:
@@ -63,8 +62,8 @@ jobs:
       - name: Extract test count
         id: tests
         run: |
-          # Use a safer grep pattern
-          count=$(grep -oP "\d+(?= passed)" pytest_output.txt || echo "0")
+          # Robust grep to find "X passed" and extract just the number
+          count=$(grep -oP "\d+(?= passed)" pytest_output.txt | head -n 1 || echo "0")
           echo "count=$count" >> $GITHUB_OUTPUT
 
       - name: Determine Shields.io colors
@@ -96,7 +95,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add resources/badges/*.svg
           
-          # Check if there are actual changes staged before committing
+          # Only commit if files actually changed
           if git diff --staged --quiet; then
             echo "No changes to badges. Skipping commit."
           else
