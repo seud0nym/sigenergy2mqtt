@@ -26,8 +26,8 @@ from sigenergy2mqtt.sensors.inverter_read_only import (
 @pytest.fixture(autouse=True)
 def mock_config():
     cfg = Config()
-    cfg.home_assistant.entity_id_prefix = "sigenergy"
-    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.discovery_prefix = "homeassistant"
     cfg.home_assistant.enabled = True
     cfg.home_assistant.use_simplified_topics = False

@@ -31,8 +31,8 @@ class ConcreteSensor(Sensor):
     def __init__(
         self,
         name="Test",
-        unique_id="sigenergy_test",
-        object_id="sigenergy_test",
+        unique_id="sigen_test",
+        object_id="sigen_test",
         unit=None,
         device_class=None,
         state_class=None,
@@ -70,8 +70,8 @@ def clear_sensor_registry():
 def mock_config():
     cfg = Config()
     # Set standard values
-    cfg.home_assistant.entity_id_prefix = "sigenergy"
-    cfg.home_assistant.unique_id_prefix = "sigenergy"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.discovery_prefix = "homeassistant"
     cfg.home_assistant.enabled = True
     cfg.home_assistant.use_simplified_topics = False
@@ -93,7 +93,7 @@ class TestBaseCoverage:
     def test_apply_sensor_overrides_regex(self, mock_config):
         mock_config.sensor_overrides = {"Concr.*": {"gain": 10.0, "precision": 3}}
         sensor = ConcreteSensor(
-            name="Test", unique_id="sigenergy_test", object_id="sigenergy_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
+            name="Test", unique_id="sigen_test", object_id="sigen_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
         )
         sensor.apply_sensor_overrides(None)
         assert sensor.gain == 10.0
@@ -101,17 +101,17 @@ class TestBaseCoverage:
 
     def test_get_discovery_components_basic(self, mock_config):
         sensor = ConcreteSensor(
-            name="Test", unique_id="sigenergy_test", object_id="sigenergy_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
+            name="Test", unique_id="sigen_test", object_id="sigen_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
         )
         components = sensor.get_discovery_components()
-        assert "sigenergy_test" in components
-        assert components["sigenergy_test"]["name"] == "Test"
+        assert "sigen_test" in components
+        assert components["sigen_test"]["name"] == "Test"
 
     @pytest.mark.asyncio
     async def test_publish_not_publishable(self, mock_config):
         sensor = ReadOnlySensor(
             name="Test",
-            object_id="sigenergy_test",
+            object_id="sigen_test",
             input_type=InputType.INPUT,
             plant_index=0,
             device_address=1,
@@ -139,7 +139,7 @@ class TestBaseCoverage:
         sensor = NumericSensor(
             availability_control_sensor=None,
             name="Test",
-            object_id="sigenergy_test",
+            object_id="sigen_test",
             input_type=InputType.INPUT,
             plant_index=0,
             device_address=1,
@@ -168,7 +168,7 @@ class TestBaseCoverage:
         sensor = NumericSensor(
             availability_control_sensor=None,
             name="Test",
-            object_id="sigenergy_test",
+            object_id="sigen_test",
             input_type=InputType.INPUT,
             plant_index=0,
             device_address=1,
@@ -199,7 +199,7 @@ class TestModbusSensorMixinErrorHandling:
         async def _update_internal_state(self, **kw):
             return True
 
-    def test_check_register_response_none(self):
+    def test_check_register_response_none(self, mock_config):
         sensor = self.DummyModbus(
             InputType.HOLDING,
             0,
@@ -207,8 +207,8 @@ class TestModbusSensorMixinErrorHandling:
             30001,
             1,
             name="N",
-            unique_id="sigenergy_u",
-            object_id="sigenergy_o",
+            unique_id="sigen_u",
+            object_id="sigen_o",
             unit="U",
             device_class=None,
             state_class=None,
@@ -219,7 +219,7 @@ class TestModbusSensorMixinErrorHandling:
         )
         assert sensor._check_register_response(None, "test") is False
 
-    def test_check_register_response_errors(self):
+    def test_check_register_response_errors(self, mock_config):
         sensor = self.DummyModbus(
             InputType.HOLDING,
             0,
@@ -227,8 +227,8 @@ class TestModbusSensorMixinErrorHandling:
             30001,
             1,
             name="N",
-            unique_id="sigenergy_u",
-            object_id="sigenergy_o",
+            unique_id="sigen_u",
+            object_id="sigen_o",
             unit="U",
             device_class=None,
             state_class=None,
@@ -255,8 +255,8 @@ class TestAccumulationSensorPersistence:
         source.unique_id = "src"
         sensor = ResettableAccumulationSensor(
             "Acc",
-            "sigenergy_acc_uid",
-            "sigenergy_acc_obj",
+            "sigen_acc_uid",
+            "sigen_acc_obj",
             source,
             ModbusDataType.UINT32,
             unit="kWh",
@@ -270,8 +270,8 @@ class TestAccumulationSensorPersistence:
 
         sensor2 = ResettableAccumulationSensor(
             "Acc2",
-            "sigenergy_acc_uid",
-            "sigenergy_acc_obj",
+            "sigen_acc_uid",
+            "sigen_acc_obj",
             source,
             ModbusDataType.UINT32,
             unit="kWh",
@@ -283,15 +283,15 @@ class TestAccumulationSensorPersistence:
         )
         assert sensor2._current_total == 123.45
 
-    def test_resettable_discovery_components(self):
+    def test_resettable_discovery_components(self, mock_config):
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         source = MagicMock(spec=ReadOnlySensor)
         source.unique_id = "src"
         sensor = ResettableAccumulationSensor(
             "Acc",
-            "sigenergy_acc_uid",
-            "sigenergy_acc_obj",
+            "sigen_acc_uid",
+            "sigen_acc_obj",
             source,
             ModbusDataType.UINT32,
             unit="kWh",
@@ -302,24 +302,24 @@ class TestAccumulationSensorPersistence:
             precision=2,
         )
         comps = sensor.get_discovery_components()
-        assert "sigenergy_acc_uid" in comps
-        assert "unique_id" in comps["sigenergy_acc_uid"]
+        assert "sigen_acc_uid" in comps
+        assert "unique_id" in comps["sigen_acc_uid"]
 
 
 class TestSpecializedSensors:
-    def test_switch_sensor_logic(self):
+    def test_switch_sensor_logic(self, mock_config):
         # availability_control_sensor, name, object_id, plant_index, device_address, address, scan_interval, protocol_version
-        s = SwitchSensor(None, "Switch", "sigenergy_sw", 0, 1, 30005, 10, Protocol.V2_4)
+        s = SwitchSensor(None, "Switch", "sigen_sw", 0, 1, 30005, 10, Protocol.V2_4)
         assert s.state2raw(1) == 1
         assert s.state2raw("1") == 1
 
     @pytest.mark.asyncio
-    async def test_numeric_sensor_logic(self):
+    async def test_numeric_sensor_logic(self, mock_config):
         from sigenergy2mqtt.sensors.base import NumericSensor
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         s = NumericSensor(
-            None, "Num", "sigenergy_n", InputType.HOLDING, 0, 1, 30006, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4, minimum=0, maximum=100
+            None, "Num", "sigen_n", InputType.HOLDING, 0, 1, 30006, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4, minimum=0, maximum=100
         )
         assert await s.value_is_valid(None, 50) is True
         assert await s.value_is_valid(None, 150) is False
@@ -327,7 +327,7 @@ class TestSpecializedSensors:
     @pytest.mark.asyncio
     async def test_running_state_sensor(self, mock_config):
         # name, object_id, plant_index, device_address, address, protocol_version
-        s = RunningStateSensor("State", "sigenergy_state", 0, 1, 30007, Protocol.V2_4)
+        s = RunningStateSensor("State", "sigen_state", 0, 1, 30007, Protocol.V2_4)
         client = AsyncMock()
         client.read_input_registers.return_value = MagicMock(isError=lambda: False, registers=[2])
         # Use MagicMock for synchronous method to avoid coroutine issues
@@ -337,7 +337,7 @@ class TestSpecializedSensors:
 
 
 class TestPhase1Utilities:
-    def test_modbus_lock_factory_proxy(self):
+    def test_modbus_lock_factory_proxy(self, mock_config):
         with patch("sigenergy2mqtt.modbus.ModbusLockFactory") as mock_real:
             mock_real.get.return_value = "lock"
             mock_real.get_waiter_count.return_value = 5
@@ -348,11 +348,11 @@ class TestPhase1Utilities:
             assert ModbusLockFactory.get_waiter_count() == 5
             mock_real.get_waiter_count.assert_called_once()
 
-    def test_metrics_fallback(self):
+    def test_metrics_fallback(self, mock_config):
         # Skipping reload test due to class identity issues in pytest
         pass
 
-    def test_typed_sensor_mixin_invalid_type(self):
+    def test_typed_sensor_mixin_invalid_type(self, mock_config):
         class BadTypedSensor(TypedSensorMixin, MagicMock):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
@@ -367,40 +367,40 @@ class TestPhase1Utilities:
 class TestPhase2CoreSensor:
     def test_init_assertions(self, mock_config):
         # 1. Duplicate unique_id across different classes
-        ConcreteSensor(name="T1", unique_id="sigenergy_id1", object_id="sigenergy_obj1", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        ConcreteSensor(name="T1", unique_id="sigen_id1", object_id="sigen_obj1", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         class OtherSensor(Sensor):
             async def _update_internal_state(self, **kwargs):
                 return True
 
-        with pytest.raises(AssertionError, match="OtherSensor unique_id sigenergy_id1 has already been used for class ConcreteSensor"):
-            OtherSensor(name="T2", unique_id="sigenergy_id1", object_id="sigenergy_obj2", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        with pytest.raises(AssertionError, match="OtherSensor unique_id sigen_id1 has already been used for class ConcreteSensor"):
+            OtherSensor(name="T2", unique_id="sigen_id1", object_id="sigen_obj2", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 2. unique_id without prefix
-        with pytest.raises(AssertionError, match="ConcreteSensor unique_id bad_id does not start with 'sigenergy'"):
-            ConcreteSensor(name="T3", unique_id="bad_id", object_id="sigenergy_obj3", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        with pytest.raises(AssertionError, match="ConcreteSensor unique_id bad_id does not start with 'sigen'"):
+            ConcreteSensor(name="T3", unique_id="bad_id", object_id="sigen_obj3", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 3. Duplicate object_id across different classes
-        with pytest.raises(AssertionError, match="OtherSensor object_id sigenergy_obj1 has already been used for class ConcreteSensor"):
-            OtherSensor(name="T4", unique_id="sigenergy_id4", object_id="sigenergy_obj1", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        with pytest.raises(AssertionError, match="OtherSensor object_id sigen_obj1 has already been used for class ConcreteSensor"):
+            OtherSensor(name="T4", unique_id="sigen_id4", object_id="sigen_obj1", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 4. object_id without prefix
-        with pytest.raises(AssertionError, match="ConcreteSensor object_id bad_obj does not start with 'sigenergy'"):
-            ConcreteSensor(name="T5", unique_id="sigenergy_id5", object_id="bad_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        with pytest.raises(AssertionError, match="ConcreteSensor object_id bad_obj does not start with 'sigen'"):
+            ConcreteSensor(name="T5", unique_id="sigen_id5", object_id="bad_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 5. icon without mdi: prefix
         with pytest.raises(AssertionError, match="ConcreteSensor icon bad_icon does not start with 'mdi:'"):
-            ConcreteSensor(name="T6", unique_id="sigenergy_id6", object_id="sigenergy_obj6", unit=None, device_class=None, state_class=None, icon="bad_icon", gain=1.0, precision=0)
+            ConcreteSensor(name="T6", unique_id="sigen_id6", object_id="sigen_obj6", unit=None, device_class=None, state_class=None, icon="bad_icon", gain=1.0, precision=0)
 
         # 6. Invalid protocol_version type in __init__
         with pytest.raises(AssertionError, match="ConcreteSensor protocol_version 'invalid' is invalid"):
-            ConcreteSensor(name="T7", unique_id="sigenergy_id7", object_id="sigenergy_obj7", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version="invalid")
+            ConcreteSensor(name="T7", unique_id="sigen_id7", object_id="sigen_obj7", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version="invalid")
 
     def test_properties(self, mock_config):
         from sigenergy2mqtt.sensors.base import Protocol
         from sigenergy2mqtt.sensors.const import DeviceClass
 
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit="V", device_class=DeviceClass.VOLTAGE, state_class=None, icon=None, gain=1.5, precision=2)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit="V", device_class=DeviceClass.VOLTAGE, state_class=None, icon=None, gain=1.5, precision=2)
 
         # device_class
         assert s.device_class == DeviceClass.VOLTAGE
@@ -447,7 +447,7 @@ class TestPhase2CoreSensor:
         class AvailableSensor(ConcreteSensor):
             pass
 
-        s_avail = AvailableSensor(name="Av", unique_id="sigenergy_avail", object_id="sigenergy_avail", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s_avail = AvailableSensor(name="Av", unique_id="sigen_avail", object_id="sigen_avail", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
         assert s_avail.sanity_check.delta is False
 
         # publishable/publish_raw validation
@@ -462,13 +462,13 @@ class TestPhase2CoreSensor:
 
         # topics
         s.configure_mqtt_topics("dev1")
-        assert s.raw_state_topic == "homeassistant/sensor/dev1/sigenergy_obj/raw"
-        assert s.state_topic == "homeassistant/sensor/dev1/sigenergy_obj/state"
+        assert s.raw_state_topic == "homeassistant/sensor/dev1/sigen_obj/raw"
+        assert s.state_topic == "homeassistant/sensor/dev1/sigen_obj/state"
 
     def test_special_methods(self, mock_config):
-        s1 = ConcreteSensor(name="T1", unique_id="sigenergy_id1", object_id="sigenergy_obj1", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
-        s2 = ConcreteSensor(name="T2", unique_id="sigenergy_id1", object_id="sigenergy_obj2", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
-        s3 = ConcreteSensor(name="T3", unique_id="sigenergy_id3", object_id="sigenergy_obj3", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s1 = ConcreteSensor(name="T1", unique_id="sigen_id1", object_id="sigen_obj1", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s2 = ConcreteSensor(name="T2", unique_id="sigen_id1", object_id="sigen_obj2", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s3 = ConcreteSensor(name="T3", unique_id="sigen_id3", object_id="sigen_obj3", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         assert s1 == s2
         assert s1 != s3
@@ -480,7 +480,7 @@ class TestPhase2CoreSensor:
 
 class TestPhase3Logic:
     def test_apply_gain_and_precision(self, mock_config):
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.5, precision=2)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.5, precision=2)
 
         # 259-261: None state
         assert s._apply_gain_and_precision(None) is None
@@ -505,22 +505,22 @@ class TestPhase3Logic:
         assert s._apply_gain_and_precision(15.5, raw=False) == pytest.approx(10.3)
 
     def test_overrides_logic(self, mock_config):
-        s = ConcreteSensor(name="TestSensor", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s = ConcreteSensor(name="TestSensor", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 276: _get_applicable_overrides returns None if no match
         mock_config.sensor_overrides = {"NonExistent": {"precision": 5}}
         assert s._get_applicable_overrides("NonExistent") is None
 
         # Regex matching logic (line 274)
-        mock_config.sensor_overrides = {"sigenergy_i.*": {"precision": 5}}
-        assert s._get_applicable_overrides("sigenergy_i.*") == {"precision": 5}
+        mock_config.sensor_overrides = {"sigen_i.*": {"precision": 5}}
+        assert s._get_applicable_overrides("sigen_i.*") == {"precision": 5}
 
         mock_config.sensor_overrides = {"Concrete.*": {"precision": 6}}
         assert s._get_applicable_overrides("Concrete.*") == {"precision": 6}
 
         # Case where it matches object_id
-        mock_config.sensor_overrides = {"sigenergy_obj": {"precision": 5}}
-        assert s._get_applicable_overrides("sigenergy_obj") == {"precision": 5}
+        mock_config.sensor_overrides = {"sigen_obj": {"precision": 5}}
+        assert s._get_applicable_overrides("sigen_obj") == {"precision": 5}
 
         # 291: add_derived_sensor
         derived = MagicMock(spec=Sensor)
@@ -530,7 +530,7 @@ class TestPhase3Logic:
 
         # 298-342: apply_sensor_overrides branches
         overrides = {
-            "sigenergy_id": {
+            "sigen_id": {
                 "gain": 2.5,
                 "precision": 4,
                 "icon": "mdi:overridden",
@@ -554,14 +554,14 @@ class TestPhase3Logic:
         assert s.publish_raw is True
 
         # 340-342: Applying name override
-        mock_config.sensor_overrides = {"sigenergy_id": {"name": "NewName"}}
+        mock_config.sensor_overrides = {"sigen_id": {"name": "NewName"}}
         s.apply_sensor_overrides(None)
         assert s["name"] == "NewName"
 
         # 344-360: Device level overrides (RegisterAccess)
         from sigenergy2mqtt.common import RegisterAccess
 
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # Test registers.no_remote_ems override (lines 344-346)
         registers = MagicMock(spec=RegisterAccess)
@@ -575,32 +575,32 @@ class TestPhase3Logic:
 
 class TestPhase4MQTT:
     def test_configure_mqtt_topics_extended(self, mock_config):
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 367: Discovery enabled, not simplified (default)
         s.configure_mqtt_topics("dev1")
-        assert s.state_topic == "homeassistant/sensor/dev1/sigenergy_obj/state"
-        assert s.raw_state_topic == "homeassistant/sensor/dev1/sigenergy_obj/raw"
-        assert s["json_attributes_topic"] == "homeassistant/sensor/dev1/sigenergy_obj/attributes"
+        assert s.state_topic == "homeassistant/sensor/dev1/sigen_obj/state"
+        assert s.raw_state_topic == "homeassistant/sensor/dev1/sigen_obj/raw"
+        assert s["json_attributes_topic"] == "homeassistant/sensor/dev1/sigen_obj/attributes"
 
         # 374: Discovery enabled, simplified topics
         mock_config.home_assistant.use_simplified_topics = True
         s.configure_mqtt_topics("dev1")
-        assert s.state_topic == "sigenergy2mqtt/sigenergy_obj/state"
+        assert s.state_topic == "sigenergy2mqtt/sigen_obj/state"
 
         # 383: Discovery disabled
         mock_config.home_assistant.enabled = False
         s.configure_mqtt_topics("dev1")
-        assert s.state_topic == "sigenergy2mqtt/sigenergy_obj/state"
+        assert s.state_topic == "sigenergy2mqtt/sigen_obj/state"
 
     def test_options_logic(self, mock_config):
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 430-432: get_discovery_components with options
         s["options"] = ["Off", "On", ""]
         comps = s.get_discovery_components()
         # translate mock: _t("ConcreteSensor.options.0", "Off") -> "Off"
-        assert comps["sigenergy_id"]["options"] == ["Off", "On"]
+        assert comps["sigen_id"]["options"] == ["Off", "On"]
 
         # 529-536: _get_option
         assert s._get_option(0) == "Off"
@@ -615,7 +615,7 @@ class TestPhase4MQTT:
             s._get_option_index("Invalid")
 
     def test_state2raw_extended(self, mock_config):
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=2.0, precision=0)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=2.0, precision=0)
         s["options"] = ["Off", "On"]
 
         assert s.state2raw(None) is None
@@ -635,7 +635,7 @@ class TestPhase4MQTT:
     async def test_publish_extended(self, mock_config):
         from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
 
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
         s.configure_mqtt_topics("dev1")
 
         mqtt_client = MagicMock()
@@ -694,7 +694,7 @@ class TestPhase4MQTT:
 
     @pytest.mark.asyncio
     async def test_publish_attributes_persistence(self, mock_config):
-        s = ConcreteSensor(name="T", unique_id="sigenergy_id", object_id="sigenergy_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
         s.configure_mqtt_topics("dev1")
         mqtt_client = MagicMock()
 
@@ -716,7 +716,7 @@ class TestPhase4MQTT:
 
 class TestPhase5Specialized:
     def test_reserved_sensor(self, mock_config):
-        s = ReservedSensor("R", "sigenergy_res", InputType.INPUT, 0, 1, 30000, 1, ModbusDataType.UINT16, 60, "V", None, None, None, 1.0, 0, Protocol.V1_8)
+        s = ReservedSensor("R", "sigen_res", InputType.INPUT, 0, 1, 30000, 1, ModbusDataType.UINT16, 60, "V", None, None, None, 1.0, 0, Protocol.V1_8)
         assert s.publishable is False
         with pytest.raises(ValueError, match="Cannot set publishable=True for ReservedSensor"):
             s.publishable = True
@@ -726,7 +726,7 @@ class TestPhase5Specialized:
 
     @pytest.mark.asyncio
     async def test_timestamp_sensor(self, mock_config):
-        s = TimestampSensor("T", "sigenergy_ts", InputType.INPUT, 0, 1, 30000, 60, Protocol.V1_8)
+        s = TimestampSensor("T", "sigen_ts", InputType.INPUT, 0, 1, 30000, 60, Protocol.V1_8)
 
         # 884-885: value == 0
         with patch.object(ReadOnlySensor, "get_state", new_callable=AsyncMock) as mock_get:
@@ -746,16 +746,16 @@ class TestPhase5Specialized:
 
     @pytest.mark.asyncio
     async def test_write_only_sensor(self, mock_config):
-        s = WriteOnlySensor("B", "sigenergy_btn", 0, 1, 30001, Protocol.V1_8)
+        s = WriteOnlySensor("B", "sigen_btn", 0, 1, 30001, Protocol.V1_8)
         assert s["platform"] == "button"
 
         # 1060-1079: discovery components
         comps = s.get_discovery_components()
-        # unique_id is generated: sigenergy_0_001_30001
+        # unique_id is generated: sigen_0_001_30001
         expected_key = f"{s.unique_id}_on"
         assert expected_key in comps
         assert comps[expected_key]["payload_press"] == "on"
-        assert comps[expected_key]["object_id"] == "sigenergy_btn_on"
+        assert comps[expected_key]["object_id"] == "sigen_btn_on"
 
         # 1081-1082: set_value
         modbus = MagicMock()
@@ -777,8 +777,8 @@ class TestPhase5Specialized:
                 # ModbusSensorMixin requires positional args
                 super().__init__(input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30001, count=1, **kwargs)
 
-        s = WritableConcrete(name="W", unique_id="sigenergy_id", object_id="sigenergy_obj", unit="V", device_class=None, state_class=None, icon=None, gain=1.0, precision=0, data_type=ModbusDataType.UINT16)
-        s["command_topic"] = "sigenergy/set"
+        s = WritableConcrete(name="W", unique_id="sigen_id", object_id="sigen_obj", unit="V", device_class=None, state_class=None, icon=None, gain=1.0, precision=0, data_type=ModbusDataType.UINT16)
+        s["command_topic"] = "sigen/set"
 
         modbus = AsyncMock()
         modbus.convert_to_registers.return_value = [123]
@@ -808,16 +808,16 @@ class TestPhase5Specialized:
         from sigenergy2mqtt.sensors.base import NumericSensor
 
         # 1188-1198: init assertions
-        s = NumericSensor(None, "N", "sigenergy_num", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 10, "V", None, None, None, 1.0, 0, Protocol.V1_8, minimum=0, maximum=100)
+        s = NumericSensor(None, "N", "sigen_num", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 10, "V", None, None, None, 1.0, 0, Protocol.V1_8, minimum=0, maximum=100)
         assert s.sanity_check.min_raw == 0
         assert s.sanity_check.max_raw == 100
 
         # Invalid min/max
         with pytest.raises(AssertionError, match="Invalid min/max values"):
-            NumericSensor(None, "N2", "sigenergy_n2", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 10, "V", None, None, None, 1.0, 0, Protocol.V1_8, minimum=100, maximum=0)
+            NumericSensor(None, "N2", "sigen_n2", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 10, "V", None, None, None, 1.0, 0, Protocol.V1_8, minimum=100, maximum=0)
 
         # Tuple min/max (line 1192)
-        s_tuple = NumericSensor(None, "N3", "sigenergy_n3", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 10, "V", None, None, None, 1.0, 0, Protocol.V1_8, minimum=(0, 10), maximum=(100, 200))
+        s_tuple = NumericSensor(None, "N3", "sigen_n3", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 10, "V", None, None, None, 1.0, 0, Protocol.V1_8, minimum=(0, 10), maximum=(100, 200))
         assert s_tuple.sanity_check.min_raw == 0
         assert s_tuple.sanity_check.max_raw == 200
 
@@ -850,7 +850,7 @@ class TestCoverageGap:
         regs = MockRegisters()
 
         # 344-346: no_remote_ems
-        s = ConcreteSensor(name="T", unique_id="sigenergy_t")
+        s = ConcreteSensor(name="T", unique_id="sigen_t")
         s._remote_ems = True
         regs.no_remote_ems = True
         s.apply_sensor_overrides(regs)
@@ -862,8 +862,8 @@ class TestCoverageGap:
 
         s_rw = RW(
             name="RW",
-            unique_id="sigenergy_rw",
-            object_id="sigenergy_rw",
+            unique_id="sigen_rw",
+            object_id="sigen_rw",
             input_type=InputType.HOLDING,
             plant_index=0,
             device_address=1,
@@ -887,15 +887,13 @@ class TestCoverageGap:
         class RO(ReadableSensorMixin, Sensor):
             pass
 
-        s_ro = RO(
-            name="RO", unique_id="sigenergy_ro", object_id="sigenergy_ro", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version=Protocol.V1_8, scan_interval=60
-        )
+        s_ro = RO(name="RO", unique_id="sigen_ro", object_id="sigen_ro", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version=Protocol.V1_8, scan_interval=60)
         regs.read_only = False
         s_ro.apply_sensor_overrides(regs)
         assert s_ro.publishable is False
 
         # 355-358: WriteOnlySensor write-only override
-        s_wo = WriteOnlySensor("WO", "sigenergy_wo", 0, 1, 30002, Protocol.V1_8)
+        s_wo = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30002, Protocol.V1_8)
         regs.write_only = False
         s_wo.apply_sensor_overrides(regs)
         assert s_wo.publishable is False
@@ -904,7 +902,7 @@ class TestCoverageGap:
         class Unknown(Sensor):
             pass
 
-        s_uk = Unknown("UK", "sigenergy_uk", "sigenergy_uk", None, None, None, None, 1.0, 0, Protocol.V1_8)
+        s_uk = Unknown("UK", "sigen_uk", "sigen_uk", None, None, None, None, 1.0, 0, Protocol.V1_8)
         with patch("sigenergy2mqtt.sensors.base.logging.warning") as mock_warn:
             s_uk.apply_sensor_overrides(regs)
             mock_warn.assert_any_call("Unknown Failed to determine superclass to apply device publishable overrides")
@@ -951,12 +949,12 @@ class TestCoverageGap:
 
     def test_sensor_comparison_hash(self, mock_config):
         # 582, 596-602: __eq__ and __hash__
-        s1 = ConcreteSensor(name="T1", unique_id="sigenergy_ID1")
+        s1 = ConcreteSensor(name="T1", unique_id="sigen_ID1")
         # Use different name but same ID for same class (this fails if registry not cleared)
         # But we want to test equality of DIFFERENT instances with same ID
         with patch.dict(Sensor._used_unique_ids, clear=True):
-            s2 = ConcreteSensor(name="T2", unique_id="sigenergy_ID1")
-        s3 = ConcreteSensor(name="T3", unique_id="sigenergy_ID2")
+            s2 = ConcreteSensor(name="T2", unique_id="sigen_ID1")
+        s3 = ConcreteSensor(name="T3", unique_id="sigen_ID2")
 
         assert s1 == s2
         assert s1 != s3
@@ -967,7 +965,7 @@ class TestCoverageGap:
     @pytest.mark.asyncio
     async def test_typed_sensor_mixin_update(self, mock_config):
         # 655-678: TypedSensorMixin branches (tested via ReadOnlySensor)
-        s = ReadOnlySensor("T", "sigenergy_t_typed", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 60, "V", None, None, None, 1.0, 0, Protocol.V1_8)
+        s = ReadOnlySensor("T", "sigen_t_typed", InputType.HOLDING, 0, 1, 30005, 1, ModbusDataType.UINT16, 60, "V", None, None, None, 1.0, 0, Protocol.V1_8)
         modbus = AsyncMock()
         modbus.read_holding_registers.return_value = MagicMock(registers=[100], isError=lambda: False)
         modbus.convert_from_registers = MagicMock(return_value=123.4)
@@ -995,7 +993,7 @@ class TestCoverageGap:
     @pytest.mark.asyncio
     async def test_readonly_sensor_update_branches(self, mock_config):
         # 732, 739, 743-744, 753-755, 757, 760, 771-777
-        s = ReadOnlySensor("R", "sigenergy_ro", InputType.HOLDING, 0, 1, 30101, 1, ModbusDataType.UINT16, 60, "V", None, None, None, 1.0, 0, Protocol.V1_8, debug_logging=True)
+        s = ReadOnlySensor("R", "sigen_ro", InputType.HOLDING, 0, 1, 30101, 1, ModbusDataType.UINT16, 60, "V", None, None, None, 1.0, 0, Protocol.V1_8, debug_logging=True)
         s["comment"] = "My comment"
 
         modbus = AsyncMock()
@@ -1050,7 +1048,7 @@ class TestCoverageGap:
             def set_source_values(self, source, states):
                 self._source_states = states
 
-        s_der = MyDerived(name="Der", unique_id="sigenergy_der", object_id="sigenergy_der", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version=Protocol.V1_8)
+        s_der = MyDerived(name="Der", unique_id="sigen_der", object_id="sigen_der", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version=Protocol.V1_8)
         s_base.add_derived_sensor(s_der)
 
         mqtt_c = MagicMock()
@@ -1132,7 +1130,7 @@ class TestCoverageGap:
         from sigenergy2mqtt.sensors.base import Alarm1Sensor, Alarm2Sensor, AlarmCombinedSensor
 
         # Use correct prefixes and signature (no unique_id)
-        s1 = Alarm1Sensor("A1", "sigenergy_a1", 0, 1, 30001, Protocol.V1_8)
+        s1 = Alarm1Sensor("A1", "sigen_a1", 0, 1, 30001, Protocol.V1_8)
         # Mock base.get_state
         with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_get:
             # case: value is 0 (No Alarm)
@@ -1156,8 +1154,8 @@ class TestCoverageGap:
             assert "DC component of output current out of limit" in res
 
         # 1641-1743: AlarmCombinedSensor
-        s2 = Alarm2Sensor("A2", "sigenergy_a2", 0, 1, 30002, Protocol.V1_8)
-        combined = AlarmCombinedSensor("Combined", "sigenergy_comb", "sigenergy_comb", s1, s2)
+        s2 = Alarm2Sensor("A2", "sigen_a2", 0, 1, 30002, Protocol.V1_8)
+        combined = AlarmCombinedSensor("Combined", "sigen_comb", "sigen_comb", s1, s2)
 
         # properties
         assert combined.protocol_version == Protocol.V1_8
@@ -1181,7 +1179,7 @@ class TestCoverageGap:
         # 1800-1808: RunningStateSensor.get_state
         from sigenergy2mqtt.sensors.base import RunningStateSensor
 
-        s = RunningStateSensor("State", "sigenergy_state", 0, 1, 30005, Protocol.V1_8)
+        s = RunningStateSensor("State", "sigen_state", 0, 1, 30005, Protocol.V1_8)
 
         with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = 1
@@ -1195,7 +1193,7 @@ class TestCoverageGap:
         # 1499-1502: HASS message length cutting logic
         from sigenergy2mqtt.sensors.base import Alarm1Sensor
 
-        s = Alarm1Sensor("A1", "sigenergy_a1", 0, 1, 30001, Protocol.V1_8)
+        s = Alarm1Sensor("A1", "sigen_a1", 0, 1, 30001, Protocol.V1_8)
 
         mock_config.home_assistant.enabled = True
 
@@ -1213,7 +1211,7 @@ class TestCoverageGap:
         from sigenergy2mqtt.sensors.base import InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
-        source = ReadOnlySensor("S", "sigenergy_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
+        source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
         # Mock Path for persistence
         with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
@@ -1222,12 +1220,12 @@ class TestCoverageGap:
             mock_file.is_file.return_value = True
             mock_file.open.return_value.__enter__.return_value.read.return_value = "100.5"
 
-            s = ResettableAccumulationSensor("Acc", "sigenergy_acc", "sigenergy_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:test", 1.0, 2)
+            s = ResettableAccumulationSensor("Acc", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:test", 1.0, 2)
             assert s._current_total == 100.5
 
             # 1861: get_discovery_components
             comps = s.get_discovery_components()
-            assert "sigenergy_acc_reset" in comps
+            assert "sigen_acc_reset" in comps
 
             # 1884: get_attributes
             attrs = s.get_attributes()
@@ -1276,7 +1274,7 @@ class TestCoverageGap:
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = False
 
-            daily = EnergyDailyAccumulationSensor("Daily", "sigenergy_daily", "sigenergy_daily", source)
+            daily = EnergyDailyAccumulationSensor("Daily", "sigen_daily", "sigen_daily", source)
 
             # 2062: set_source_values day change
             # Mock time to simulate day change
@@ -1307,7 +1305,7 @@ class TestCoverageGap:
         from sigenergy2mqtt.sensors.base import Alarm2Sensor
 
         # Using Alarm2Sensor because it has missing bits (e.g. 6)
-        s = Alarm2Sensor("A2", "sigenergy_a2", 0, 1, 30001, Protocol.V1_8)
+        s = Alarm2Sensor("A2", "sigen_a2", 0, 1, 30001, Protocol.V1_8)
 
         with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_get:
             # 1473: raw=True
@@ -1337,7 +1335,7 @@ class TestCoverageGap:
         from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
         from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
-        source = ReadOnlySensor("S", "sigenergy_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
+        source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
         # 1857-1858: ValueError when loading state
         with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
@@ -1346,7 +1344,7 @@ class TestCoverageGap:
             mock_file.is_file.return_value = True
             mock_file.open.return_value.__enter__.return_value.read.return_value = "invalid"
 
-            s = ResettableAccumulationSensor("Acc", "sigenergy_acc", "sigenergy_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:test", 1.0, 2)
+            s = ResettableAccumulationSensor("Acc", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:test", 1.0, 2)
             assert s._current_total == 0.0  # defaulted on error
 
         # 1909: return False in notify if topic doesn't match
@@ -1407,7 +1405,7 @@ class TestCoverageGap:
             mock_file.is_file.return_value = True
             # stale file
             mock_file.stat.return_value.st_mtime = time.time() - 86400 * 2  # 2 days ago
-            daily = EnergyDailyAccumulationSensor("Daily", "sigenergy_daily", "sigenergy_daily", source)
+            daily = EnergyDailyAccumulationSensor("Daily", "sigen_daily", "sigen_daily", source)
             assert daily._state_at_midnight is None
             assert mock_file.unlink.called
 
@@ -1415,14 +1413,14 @@ class TestCoverageGap:
             mock_file.unlink.reset_mock()
             mock_file.stat.return_value.st_mtime = time.time()
             mock_file.open.return_value.__enter__.return_value.read.return_value = "123.4"
-            daily = EnergyDailyAccumulationSensor("Daily", "sigenergy_daily", "sigenergy_daily", source)
+            daily = EnergyDailyAccumulationSensor("Daily", "sigen_daily", "sigen_daily", source)
             assert daily._state_at_midnight == 123.4
 
             # negative value in file (should trigger debug and unlink)
             mock_file.open.return_value.__enter__.return_value.read.return_value = "-10.0"
             # Mock sanity check to allow negative for this specific test of the load logic
             with patch("sigenergy2mqtt.sensors.base.SanityCheck.is_sane", return_value=True):
-                daily = EnergyDailyAccumulationSensor("Daily", "sigenergy_daily", "sigenergy_daily", source)
+                daily = EnergyDailyAccumulationSensor("Daily", "sigen_daily", "sigen_daily", source)
                 assert daily._state_at_midnight is None
                 assert mock_file.unlink.called
 
@@ -1445,8 +1443,8 @@ class TestCoverageGap:
 
         s = ConcretePVPower(
             name="PV",
-            unique_id="sigenergy_pv",
-            object_id="sigenergy_pv",
+            unique_id="sigen_pv",
+            object_id="sigen_pv",
             unit="W",
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
@@ -1461,8 +1459,35 @@ class TestCoverageGap:
 class TestSetLatestState:
     """Tests for Sensor.set_latest_state return value and suppression logic."""
 
+    def test_apply_gain_and_precision_numeric(self, mock_config):
+        sensor = NumericSensor(
+            availability_control_sensor=None,
+            name="Test",
+            unique_id="sigen_test",
+            object_id="sigen_test",
+            input_type=InputType.INPUT,
+            plant_index=0,
+            device_address=1,
+            address=30000,
+            count=1,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=10,
+            unit="V",
+            device_class=None,
+            state_class=None,
+            icon=None,
+            gain=10.0,
+            precision=2,
+            protocol_version=Protocol.V1_8,
+        )
+        assert sensor._apply_gain_and_precision(1.234) == 0.12
+
+    def test_apply_gain_and_precision_non_numeric(self, mock_config):
+        sensor = ConcreteSensor(unique_id="sigen_test", object_id="sigen_test")
+        assert sensor._apply_gain_and_precision("test") == "test"
+
     def test_set_latest_state_returns_true_on_change(self, mock_config):
-        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        sensor = ConcreteSensor(unique_id="sigen_test", object_id="sigen_test")
         # Initial state
         assert sensor.set_latest_state(100) is True
         assert sensor.latest_raw_state == 100
@@ -1472,7 +1497,7 @@ class TestSetLatestState:
         assert sensor.latest_raw_state == 200
 
     def test_set_latest_state_republish_interval_zero(self, mock_config):
-        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        sensor = ConcreteSensor(unique_id="sigen_test", object_id="sigen_test")
         mock_config.repeated_state_publish_interval = 0
 
         assert sensor.set_latest_state(100) is True
@@ -1480,7 +1505,7 @@ class TestSetLatestState:
         assert sensor.set_latest_state(100) is True
 
     def test_set_latest_state_republish_interval_negative(self, mock_config):
-        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        sensor = ConcreteSensor(unique_id="sigen_test", object_id="sigen_test")
         mock_config.repeated_state_publish_interval = -1
 
         assert sensor.set_latest_state(100) is True
@@ -1488,7 +1513,7 @@ class TestSetLatestState:
         assert sensor.set_latest_state(100) is False
 
     def test_set_latest_state_republish_interval_positive(self, mock_config):
-        sensor = ConcreteSensor(unique_id="sigenergy_test", object_id="sigenergy_test")
+        sensor = ConcreteSensor(unique_id="sigen_test", object_id="sigen_test")
         mock_config.repeated_state_publish_interval = 10
 
         with patch("sigenergy2mqtt.sensors.base.time.time") as mock_time:

@@ -1,100 +1,87 @@
-import logging
-from datetime import time
-from unittest.mock import MagicMock, patch
+"""Comprehensive validation tests for pydantic config models."""
 
 import pytest
+from pydantic import ValidationError
 
-from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import active_config
-from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
-from sigenergy2mqtt.config.modbus_config import ModbusConfiguration
-from sigenergy2mqtt.config.mqtt_config import MqttConfiguration
-from sigenergy2mqtt.config.pvoutput_config import PVOutputConfiguration, Tariff, TariffType, TimePeriod
+from sigenergy2mqtt.config.settings import (
+    HomeAssistantConfig,
+    ModbusConfig,
+    MqttConfig,
+    PvOutputConfig,
+    Settings,
+)
 
 
 class TestConfigComprehensiveValidation:
-    def test_mqtt_validation(self):
-        mqtt = MqttConfiguration(broker="")
-        with pytest.raises(ValueError, match="mqtt.broker must be provided"):
-            mqtt.validate()
+    def test_mqtt_validation_empty_broker(self):
+        """MqttConfig itself does not raise on empty broker, but Settings cross-validates."""
+        config = MqttConfig(broker="")
+        assert config.broker == ""
 
-        mqtt.broker = "localhost"
-        mqtt.anonymous = False
-        mqtt.username = ""
-        with pytest.raises(ValueError, match="mqtt.username must be provided"):
-            mqtt.validate()
+    def test_mqtt_validation_non_anonymous_requires_username(self):
+        with pytest.raises(ValidationError, match="mqtt.username must be provided"):
+            MqttConfig(broker="localhost", anonymous=False, username="", password="pass")
 
-        mqtt.username = "user"
-        mqtt.password = ""
-        with pytest.raises(ValueError, match="mqtt.password must be provided"):
-            mqtt.validate()
+    def test_mqtt_validation_non_anonymous_requires_password(self):
+        with pytest.raises(ValidationError, match="mqtt.password must be provided"):
+            MqttConfig(broker="localhost", anonymous=False, username="user", password="")
 
-        mqtt.password = "pass"
-        mqtt.validate()  # Should pass
+    def test_mqtt_validation_passes(self):
+        config = MqttConfig(broker="localhost", anonymous=False, username="user", password="pass")
+        assert config.broker == "localhost"
+        assert config.username == "user"
 
-    def test_device_validation(self):
-        dev = ModbusConfiguration(host="")
-        with pytest.raises(ValueError, match="modbus.host must be provided"):
-            dev.validate()
+    def test_device_validation_empty_host(self):
+        with pytest.raises(ValidationError, match="modbus entry must have a host"):
+            ModbusConfig(host="")
 
-        dev.host = "1.2.3.4"
-        dev.validate()  # Should pass
+    def test_device_validation_passes(self):
+        config = ModbusConfig(host="1.2.3.4")
+        assert config.host == "1.2.3.4"
 
-    def test_ha_validation(self):
-        ha = HomeAssistantConfiguration(enabled=True, discovery_prefix="")
-        with pytest.raises(ValueError, match="home-assistant.discovery-prefix must be provided"):
-            ha.validate()
+    def test_ha_validation_enabled_empty_discovery_prefix(self):
+        with pytest.raises(ValidationError, match="home-assistant.discovery-prefix must be provided"):
+            HomeAssistantConfig(enabled=True, discovery_prefix="")
 
-        ha.discovery_prefix = "homeassistant"
-        ha.entity_id_prefix = ""
-        with pytest.raises(ValueError, match="home-assistant.entity-id-prefix must be provided"):
-            ha.validate()
+    def test_ha_validation_enabled_empty_entity_id_prefix(self):
+        with pytest.raises(ValidationError, match="home-assistant.entity-id-prefix must be provided"):
+            HomeAssistantConfig(enabled=True, entity_id_prefix="")
 
-        ha.entity_id_prefix = "sigen"
-        ha.unique_id_prefix = ""
-        with pytest.raises(ValueError, match="home-assistant.unique-id-prefix must be provided"):
-            ha.validate()
+    def test_ha_validation_enabled_empty_unique_id_prefix(self):
+        with pytest.raises(ValidationError, match="home-assistant.unique-id-prefix must be provided"):
+            HomeAssistantConfig(enabled=True, unique_id_prefix="")
 
-        ha.unique_id_prefix = "sigen"
-        ha.validate()  # Should pass
+    def test_ha_validation_passes(self):
+        config = HomeAssistantConfig(enabled=True, discovery_prefix="homeassistant", entity_id_prefix="sigen", unique_id_prefix="sigen")
+        assert config.enabled is True
+        assert config.discovery_prefix == "homeassistant"
 
-    def test_pvoutput_validation(self):
-        pv = PVOutputConfiguration(enabled=True, api_key="")
-        with pytest.raises(ValueError, match="pvoutput.api-key must be provided"):
-            pv.validate()
+    def test_pvoutput_validation_enabled_empty_api_key(self):
+        with pytest.raises(ValidationError, match="pvoutput.api-key must be provided"):
+            PvOutputConfig(enabled=True, api_key="", system_id="abc")
 
-        pv.api_key = "123"
-        pv.system_id = ""
-        with pytest.raises(ValueError, match="pvoutput.system-id must be provided"):
-            pv.validate()
+    def test_pvoutput_validation_enabled_empty_system_id(self):
+        with pytest.raises(ValidationError, match="pvoutput.system-id must be provided"):
+            PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="")
 
-        pv.system_id = "abc"
-        # Test time periods
-        period = TimePeriod(type=TariffType.PEAK, start=time(12, 0), end=time(11, 0))
-        tariff = Tariff(periods=[period])
-        pv.tariffs = [tariff]
-        with pytest.raises(ValueError, match="pvoutput time period end time .* must be after start time"):
-            pv.validate()
+    def test_pvoutput_validation_time_period_end_before_start(self):
+        period_dict = {"type": "peak", "start": "12:00", "end": "11:00"}
+        tariff_dict = {"plan": "test", "periods": [period_dict]}
+        with pytest.raises(ValidationError, match="pvoutput time period end time .* must be after start time"):
+            PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="abc", **{"time-periods": [tariff_dict]})
 
-        period.end = time(13, 0)
-        pv.validate()  # Should pass
+    def test_pvoutput_validation_passes(self):
+        period_dict = {"type": "peak", "start": "12:00", "end": "13:00"}
+        tariff_dict = {"plan": "test", "periods": [period_dict]}
+        config = PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="abc", **{"time-periods": [tariff_dict]})
+        assert config.enabled is True
+        assert len(config.tariffs) == 1
 
-    def test_config_global_validation(self):
-        # Reset Config for testing
-        original_modbus = list(active_config.modbus)
-        try:
-            active_config.modbus.clear()
+    def test_settings_no_modbus_raises(self):
+        """Settings cross-model validation requires at least one Modbus device."""
+        import os
+        from unittest.mock import patch
 
-            with pytest.raises(ValueError, match="At least one Modbus device must be configured"):
-                active_config.validate()
-        finally:
-            active_config.modbus.clear()
-            active_config.modbus.extend(original_modbus)
-
-        active_config.modbus.clear()
-        active_config.modbus.extend([ModbusConfiguration(host="localhost")])
-        active_config.mqtt = MqttConfiguration(broker="localhost", anonymous=True)
-        active_config.home_assistant = HomeAssistantConfiguration(enabled=False)
-        active_config.pvoutput = PVOutputConfiguration(enabled=False)
-
-        active_config.validate()  # Should pass
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(ValidationError, match="At least one Modbus device must be configured"):
+                Settings(modbus=[])

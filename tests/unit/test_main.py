@@ -1,9 +1,6 @@
 import logging
 import signal
-import sys
 import types
-from pathlib import Path
-from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,9 +8,8 @@ import pytest
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
-from sigenergy2mqtt.sensors.base import DerivedSensor, ModbusSensorMixin, ReadOnlySensor, Sensor
+from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
 from sigenergy2mqtt.sensors.plant_read_only import SystemTimeZone
@@ -26,10 +22,15 @@ get_state = main_mod.get_state
 @pytest.fixture
 def clean_config(monkeypatch):
     """Fixture to ensure Config is clean and mocked appropriately for tests."""
-    from sigenergy2mqtt.config import Config, active_config
+    from sigenergy2mqtt.config import Config
 
     cfg = Config()
-    cfg.modbus = []
+    mock_modbus = MagicMock()
+    mock_modbus.scan_interval.low = 600
+    mock_modbus.scan_interval.medium = 60
+    mock_modbus.scan_interval.high = 10
+    mock_modbus.scan_interval.realtime = 5
+    cfg.modbus = [mock_modbus]
     cfg.pvoutput.enabled = False
     cfg.home_assistant.enabled = False
     cfg.metrics_enabled = False
@@ -66,14 +67,14 @@ class TestConfigureLogging:
             patch.object(active_config.pvoutput, "log_level", logging.ERROR),
         ):
             # Reset loggers to known state
-            logging.getLogger("root").setLevel(logging.NOTSET)
+            logging.getLogger().setLevel(logging.NOTSET)
             logging.getLogger("pymodbus").setLevel(logging.NOTSET)
             logging.getLogger("paho.mqtt").setLevel(logging.NOTSET)
             logging.getLogger("pvoutput").setLevel(logging.NOTSET)
 
             main_mod.configure_logging()
 
-            assert logging.getLogger("root").level == logging.DEBUG
+            assert logging.getLogger().level == logging.DEBUG
             assert logging.getLogger("pymodbus").level == logging.INFO
             assert logging.getLogger("paho.mqtt").level == logging.WARNING
             assert logging.getLogger("pvoutput").level == logging.ERROR

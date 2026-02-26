@@ -3,7 +3,9 @@ import logging
 import time
 from typing import Any, Awaitable
 
-from sigenergy2mqtt.config import StatusField, VoltageSource, active_config
+from sigenergy2mqtt.common.status_field import StatusField
+from sigenergy2mqtt.common.voltage_source import VoltageSource
+from sigenergy2mqtt.config import active_config
 
 from .service import Service
 from .service_topics import Calculation, ServiceTopics

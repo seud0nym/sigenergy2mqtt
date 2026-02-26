@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from sigenergy2mqtt.common.consumption_source import ConsumptionSource
+from sigenergy2mqtt.common.output_field import OutputField
+from sigenergy2mqtt.common.status_field import StatusField
+from sigenergy2mqtt.common.voltage_source import VoltageSource
+
 __all__ = ["get_pvoutput_services"]
 
 import logging
 from typing import TYPE_CHECKING
 
-from sigenergy2mqtt.config import ConsumptionSource, OutputField, StatusField, VoltageSource, active_config
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import Sensor, TypedSensorMixin
@@ -50,7 +55,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     plant_pv_power: PlantPVPower | None = None
     total_pv_power: TotalPVPower | None = None
 
-    donation = {k: v for k, v in active_config.pvoutput.extended.items() if v != ""}
+    donation = {k: v for k, v in active_config.pvoutput.extended.items() if v != ""}  # type: ignore[reportGeneralTypeIssues]
 
     extended_data: dict[StatusField, str | None] = {field: None for field in StatusField}
     status_topics: dict[StatusField, list[Topic]] = {field: [] for field in StatusField}

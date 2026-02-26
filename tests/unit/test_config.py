@@ -1,11 +1,11 @@
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest  # noqa: F401
 
 from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.config.config import _swap_active_config
-from sigenergy2mqtt.config.modbus_config import ModbusConfiguration  # noqa: F401
+from sigenergy2mqtt.config.settings import ModbusConfig, Settings
 
 
 class TestConfigStaticMethods:
@@ -51,21 +51,19 @@ class TestConfigStaticMethods:
 
     def test_set_modbus_log_level(self):
         """Test set_modbus_log_level sets all devices."""
-        original_modbus = active_config.modbus
-        try:
+        with _swap_active_config(Config()) as cfg:
             device1 = MagicMock()
             device1.log_level = logging.WARNING
             device2 = MagicMock()
             device2.log_level = logging.ERROR
 
-            active_config.modbus = [device1, device2]
+            cfg._settings = MagicMock()
+            cfg._settings.modbus = [device1, device2]
 
-            active_config.set_modbus_log_level(logging.INFO)
+            cfg.set_modbus_log_level(logging.INFO)
 
             assert device1.log_level == logging.INFO
             assert device2.log_level == logging.INFO
-        finally:
-            active_config.modbus = original_modbus
 
     def test_version(self):
         """Test version method returns version string."""
@@ -123,109 +121,98 @@ class TestConfigDefaults:
         assert active_config.repeated_state_publish_interval == 0
 
 
-class TestConfigConfiguration:
-    """Tests for Config._configure method."""
+class TestConfigSettings:
+    """Tests for Settings-based configuration via constructor."""
 
-    def test_configure_log_level(self):
-        """Test configuring log level."""
-        with _swap_active_config(Config()) as cfg:
-            with patch("sigenergy2mqtt.config.config.check_log_level") as mock_check:
-                mock_check.return_value = logging.INFO
-                cfg._configure({"log-level": "INFO"})
-                assert cfg.log_level == logging.INFO
-                mock_check.assert_called_once_with("INFO", "log-level")
+    def test_settings_log_level(self):
+        """Test configuring log level via Settings."""
+        s = Settings(log_level="INFO", modbus=[ModbusConfig(host="localhost")])
+        assert s.log_level == logging.INFO
 
-    def test_configure_consumption(self):
-        """Test configuring consumption method."""
-        with _swap_active_config(Config()) as cfg:
-            cfg._configure({"consumption": "total"})
-            from sigenergy2mqtt.common import ConsumptionMethod
+    def test_settings_consumption(self):
+        """Test configuring consumption method via Settings."""
+        from sigenergy2mqtt.common import ConsumptionMethod
 
-            assert cfg.consumption == ConsumptionMethod.TOTAL
+        s = Settings(consumption="total", modbus=[ModbusConfig(host="localhost")])
+        assert s.consumption == ConsumptionMethod.TOTAL
 
-    def test_configure_sanity_check_kw(self):
-        """Test configuring sanity check kW."""
-        with _swap_active_config(Config()) as cfg:
-            cfg._configure({"sanity-check-default-kw": 100.0})
-            assert cfg.sanity_check_default_kw == 100.0
+    def test_settings_sanity_check_kw(self):
+        """Test configuring sanity check kW via Settings."""
+        s = Settings(sanity_check_default_kw=100.0, modbus=[ModbusConfig(host="localhost")])
+        assert s.sanity_check_default_kw == 100.0
 
-    def test_configure_no_metrics(self):
-        """Test configuring no-metrics."""
-        with _swap_active_config(Config()) as cfg:
-            cfg._configure({"no-metrics": True})
-            assert cfg.metrics_enabled is False
-            cfg._configure({"no-metrics": False})
-            assert cfg.metrics_enabled is True
+    def test_settings_metrics_enabled(self):
+        """Test configuring metrics_enabled via Settings."""
+        s = Settings(metrics_enabled=False, modbus=[ModbusConfig(host="localhost")])
+        assert s.metrics_enabled is False
 
-    def test_configure_ems_mode_check(self):
-        """Test configuring ems_mode_check."""
-        with _swap_active_config(Config()) as cfg:
-            cfg._configure({"no-ems-mode-check": True})
-            assert cfg.ems_mode_check is False
-            cfg._configure({"no-ems-mode-check": False})
-            assert cfg.ems_mode_check is True
+        s2 = Settings(metrics_enabled=True, modbus=[ModbusConfig(host="localhost")])
+        assert s2.metrics_enabled is True
 
-    def test_configure_repeated_state_publish_interval(self):
-        """Test configuring repeated-state-publish-interval."""
-        with _swap_active_config(Config()) as cfg:
-            cfg._configure({"repeated-state-publish-interval": 10})
-            assert cfg.repeated_state_publish_interval == 10
+    def test_settings_ems_mode_check(self):
+        """Test configuring ems_mode_check via Settings."""
+        s = Settings(ems_mode_check=False, modbus=[ModbusConfig(host="localhost", **{"read-write": True})])
+        assert s.ems_mode_check is False
 
-    def test_configure_language_invalid_fallback(self, caplog):
-        """Test configuring an invalid language falls back to default."""
-        with _swap_active_config(Config()) as cfg:
-            cfg.reset()
-            from sigenergy2mqtt import i18n
+    def test_settings_repeated_state_publish_interval(self):
+        """Test configuring repeated-state-publish-interval via Settings."""
+        s = Settings(repeated_state_publish_interval=10, modbus=[ModbusConfig(host="localhost")])
+        assert s.repeated_state_publish_interval == 10
 
-            with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
-                with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
-                    with caplog.at_level(logging.WARNING):
-                        cfg._configure({"language": "de"})
-                        assert cfg.language == "en"
-                        assert "Invalid language 'de' for language, falling back to 'en'" in caplog.text
+    def test_settings_language_invalid_fallback(self, caplog):
+        """Test that invalid language falls back to default."""
+        with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
+            with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
+                with caplog.at_level(logging.WARNING):
+                    s = Settings(language="de", modbus=[ModbusConfig(host="localhost")])
+                    assert s.language == "en"
+                    assert "Invalid language 'de'" in caplog.text
 
 
 class TestConfigReload:
     """Tests for active_config.reload method."""
 
-    @patch("sigenergy2mqtt.config.config.os.getenv")
-    @patch("sigenergy2mqtt.config.config.os.environ", {})
-    def test_reload_with_env_overrides(self, mock_getenv):
+    def test_reload_with_env_overrides(self):
         """Test reload with environment variable overrides."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LOG_LEVEL
+        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LOG_LEVEL, SIGENERGY2MQTT_MODBUS_HOST
 
-        # Mock SIGENERGY2MQTT_LOG_LEVEL env var
         with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG"}):
+            with patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
                 cfg.reload()
                 assert cfg.log_level == logging.DEBUG
 
-    @patch("sigenergy2mqtt.config.config.os.getenv")
-    @patch("sigenergy2mqtt.config.config.os.environ", {})
-    def test_reload_with_no_ems_mode_check_env(self, mock_getenv):
+    def test_reload_with_no_ems_mode_check_env(self):
         """Test reload with SIGENERGY2MQTT_NO_EMS_MODE_CHECK environment variable."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_NO_EMS_MODE_CHECK
+        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_MODBUS_HOST, SIGENERGY2MQTT_NO_EMS_MODE_CHECK
 
         with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {SIGENERGY2MQTT_NO_EMS_MODE_CHECK: "true"}):
+            with patch.dict(
+                "os.environ",
+                {
+                    SIGENERGY2MQTT_NO_EMS_MODE_CHECK: "true",
+                    SIGENERGY2MQTT_MODBUS_HOST: "localhost",
+                    # ems_mode_check=False requires read-write=True on all devices
+                    "SIGENERGY2MQTT_MODBUS_READ_WRITE": "true",
+                },
+                clear=True,
+            ):
                 cfg.reload()
                 assert cfg.ems_mode_check is False
 
-    @patch("sigenergy2mqtt.config.config.os.environ", {})
     def test_reload_with_language_env_invalid_fallback(self, caplog):
         """Test reload with invalid language environment variable."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LANGUAGE
+        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LANGUAGE, SIGENERGY2MQTT_MODBUS_HOST
 
         with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de"}):
+            with patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
                 with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
                     with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
                         with caplog.at_level(logging.WARNING):
                             cfg.reload()
                             assert cfg.language == "en"
-                            assert "Invalid language 'de' for SIGENERGY2MQTT_LANGUAGE, falling back to 'en'" in caplog.text
+                            assert "Invalid language 'de'" in caplog.text
 
-    @patch("sigenergy2mqtt.config.config.auto_discovery_scan")
+    @patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock)
     @patch("sigenergy2mqtt.config.config.os.getenv")
     def test_reload_with_auto_discovery_force(self, mock_getenv, mock_scan):
         """Test reload with auto-discovery forced."""
@@ -235,9 +222,12 @@ class TestConfigReload:
             mock_getenv.side_effect = lambda k, default=None: "force" if k == SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY else default
             mock_scan.return_value = [{"host": "1.2.3.4", "port": 502}]
 
-            # We need to mock open to avoid writing discovery cache
-            with patch("builtins.open", MagicMock()):
-                with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=False):
+            # We need to mock open properly to avoid infinite loops in ruamel.yaml
+            from unittest.mock import mock_open
+
+            m = mock_open(read_data="- host: 1.2.3.4\n  port: 502\n")
+            with patch("builtins.open", m):
+                with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
                     cfg.reload()
 
             mock_scan.assert_called_once()

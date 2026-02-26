@@ -1,7 +1,5 @@
-import asyncio
 import logging
 import signal
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,7 +14,12 @@ from sigenergy2mqtt.sensors.const import InputType
 def clean_config_augment(monkeypatch):
     """Fixture to ensure Config is clean and mocked appropriately."""
     cfg = Config()
-    cfg.modbus = []
+    mock_modbus = MagicMock()
+    mock_modbus.scan_interval.low = 600
+    mock_modbus.scan_interval.medium = 60
+    mock_modbus.scan_interval.high = 10
+    mock_modbus.scan_interval.realtime = 5
+    cfg.modbus = [mock_modbus]
     cfg.home_assistant.enabled = False
     cfg.pvoutput.enabled = False
     cfg.pvoutput.log_level = logging.WARNING

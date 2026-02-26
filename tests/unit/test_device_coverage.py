@@ -3,17 +3,15 @@ Tests targeting uncovered lines in sigenergy2mqtt/devices/device.py.
 """
 
 import asyncio
-import types
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.common import HybridInverter, Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.device import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.sensors.base import (
-    AlarmCombinedSensor,
     DerivedSensor,
     ModbusSensorMixin,
     ObservableMixin,
@@ -218,25 +216,24 @@ class ConcreteModbusDevice(ModbusDevice):
 # ---------------------------------------------------------------------------
 
 
-from sigenergy2mqtt.config import _swap_active_config
-
-
 @pytest.fixture(autouse=True)
 def mock_config():
     cfg = Config()
-    cfg.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
-    cfg.home_assistant = types.SimpleNamespace(
-        device_name_prefix="",
-        unique_id_prefix="sigen",
-        discovery_prefix="homeassistant",
-        enabled=True,
-        republish_discovery_interval=60,
-    )
+    mock_modbus = MagicMock()
+    mock_modbus.registers = {}
+    mock_modbus.disable_chunking = False
+    mock_modbus.scan_interval.high = 60
+    cfg.modbus = [mock_modbus]
+    cfg.home_assistant.device_name_prefix = ""
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.home_assistant.enabled = True
+    cfg.home_assistant.republish_discovery_interval = 60
     cfg.origin = {}
     cfg.persistent_state_path = "."
     with _swap_active_config(cfg):
         yield cfg
-    DeviceRegistry._devices.clear()
+    DeviceRegistry.clear()
 
 
 @pytest.fixture
@@ -630,8 +627,10 @@ async def test_republish_discovery_runs_and_exits(device):
     fut = asyncio.get_event_loop().create_future()
     device._online = fut
 
+    from sigenergy2mqtt.config.settings import HomeAssistantConfig
+
     cfg = Config()
-    cfg.home_assistant = types.SimpleNamespace(republish_discovery_interval=2)
+    cfg.home_assistant = HomeAssistantConfig(republish_discovery_interval=2)
 
     with _swap_active_config(cfg):
         discovery_calls = []
@@ -659,8 +658,10 @@ async def test_republish_discovery_cancelled(device):
     fut = asyncio.get_event_loop().create_future()
     device._online = fut
 
+    from sigenergy2mqtt.config.settings import HomeAssistantConfig
+
     cfg = Config()
-    cfg.home_assistant = types.SimpleNamespace(republish_discovery_interval=100)
+    cfg.home_assistant = HomeAssistantConfig(republish_discovery_interval=100)
 
     with _swap_active_config(cfg):
 
@@ -684,9 +685,11 @@ def test_schedule_skips_non_publishable_group(device):
     s = DummyReadable("s_not_publishable", publishable=False)
     device._add_read_sensor(s)
 
+    from sigenergy2mqtt.config.settings import HomeAssistantConfig, ModbusConfig
+
     cfg = Config()
-    cfg.home_assistant = types.SimpleNamespace(enabled=False, republish_discovery_interval=0)
-    cfg.modbus = [types.SimpleNamespace(registers={}, disable_chunking=False)]
+    cfg.home_assistant = HomeAssistantConfig(enabled=False, republish_discovery_interval=0)
+    cfg.modbus = [ModbusConfig(registers={}, disable_chunking=False, host="127.0.0.1", port=502)]
     with _swap_active_config(cfg):
         tasks = device.schedule(MagicMock(), MagicMock())
 

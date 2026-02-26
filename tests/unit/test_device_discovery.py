@@ -4,7 +4,6 @@ from pathlib import Path
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.config.home_assistant_config import HomeAssistantConfiguration
 from sigenergy2mqtt.devices.device import Device
 
 
@@ -58,13 +57,10 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
 
     mqtt = DummyMQTT()
 
-    # enable debug logging so discovery file is written
-    old_level = logging.getLogger().level
-    logging.getLogger().setLevel(logging.DEBUG)
-
     cfg = Config()
     cfg.persistent_state_path = tmp_path
     cfg.home_assistant.discovery_prefix = "homeassistant"
+    cfg.log_level = logging.DEBUG
 
     with _swap_active_config(cfg):
         dev = Device("TestDevice2", 0, "uid-456", "mf", "mdl", Protocol.N_A)
@@ -87,6 +83,3 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
         assert fpath.exists()
         data = json.loads(fpath.read_text())
         assert "cmps" in data
-
-    # Clean up
-    logging.getLogger().setLevel(old_level)

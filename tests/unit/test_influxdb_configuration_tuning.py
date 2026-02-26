@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.influxdb_config import InfluxDBConfiguration
+from sigenergy2mqtt.config.settings import InfluxDbConfig
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
 def test_influxdb_config_tuning_defaults():
-    cfg = InfluxDBConfiguration()
+    cfg = InfluxDbConfig()
     assert cfg.write_timeout == 30.0
     assert cfg.read_timeout == 120.0
     assert cfg.batch_size == 100
@@ -22,7 +22,6 @@ def test_influxdb_config_tuning_defaults():
 
 
 def test_influxdb_config_tuning_parsing():
-    cfg = InfluxDBConfiguration()
     config_dict = {
         "enabled": True,
         "token": "test_token",
@@ -40,7 +39,7 @@ def test_influxdb_config_tuning_parsing():
         "default-measurement": "energy",
         "load-hass-history": True,
     }
-    cfg.configure(config_dict)
+    cfg = InfluxDbConfig(**config_dict)
 
     assert cfg.write_timeout == 10.5
     assert cfg.read_timeout == 60.0

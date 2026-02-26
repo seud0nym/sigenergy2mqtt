@@ -8,8 +8,6 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import OutputField, active_config
-from sigenergy2mqtt.config.config import active_config
-from sigenergy2mqtt.config.pvoutput_config import ConsumptionSource, StatusField, VoltageSource
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, Topic
 
