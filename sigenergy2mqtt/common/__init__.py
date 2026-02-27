@@ -9,6 +9,7 @@ __all__ = [
     "Protocol",
     "ProtocolApplies",
     "RegisterAccess",
+    "ScanIntervalDefault",
     "StatusField",
     "Tariff",
     "TariffType",
@@ -18,7 +19,7 @@ __all__ = [
     "WEEKENDS",
 ]
 
-from .const import Constants
+from .const import Constants, ScanIntervalDefault
 from .consumption_method import ConsumptionMethod
 from .consumption_source import ConsumptionSource
 from .days import WEEKDAYS, WEEKENDS

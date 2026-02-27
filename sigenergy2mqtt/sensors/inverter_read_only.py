@@ -6,7 +6,7 @@ from typing import cast
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, UnpublishResetSensorMixin
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval, UnpublishResetSensorMixin
 
 from .base import (
     Alarm1Sensor,
@@ -21,7 +21,6 @@ from .base import (
     ReadOnlySensor,
     ReservedSensor,
     RunningStateSensor,
-    ScanInterval,
     StateClass,
     TimestampSensor,
 )

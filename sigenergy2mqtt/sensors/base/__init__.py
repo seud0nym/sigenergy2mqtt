@@ -42,7 +42,6 @@ from .alarms import (  # noqa: F401
 from .constants import (  # noqa: F401
     DiscoveryKeys,
     ModbusLockFactory,
-    ScanInterval,
     SensorAttribute,
     SensorAttributeKeys,
     SensorDict,
@@ -69,6 +68,11 @@ from .readable import (  # noqa: F401
     ReadOnlySensor,
     ReservedSensor,
     UnpublishResetSensorMixin,
+)
+
+# Scan Interval
+from .scan_interval import (  # noqa: F401
+    ScanInterval,
 )
 
 # Base sensor and core mixins

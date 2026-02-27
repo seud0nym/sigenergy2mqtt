@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Final, TypeAlias
 
-from sigenergy2mqtt.config import active_config
-
 from ..const import DeviceClass, StateClass
 
 # =============================================================================
@@ -71,40 +69,6 @@ SensorValue: TypeAlias = str | int | bool | float | list[str] | list[dict[str, s
 SensorAttribute: TypeAlias = SensorValue | DeviceClass | StateClass | None
 SensorDict: TypeAlias = dict[str, SensorAttribute]
 StateHistory: TypeAlias = list[tuple[float, Any]]
-
-
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
-class ScanInterval:
-    _realtime: int = 5
-    _high: int = 10
-    _medium: int = 60
-    _low: int = 600
-
-    @staticmethod
-    def _get(plant_index: int, tier: str) -> int:
-        if 0 <= plant_index < len(active_config.modbus):
-            return getattr(active_config.modbus[plant_index].scan_interval, tier)
-        return getattr(ScanInterval, f"_{tier}")
-
-    @staticmethod
-    def low(plant_index: int) -> int:
-        return ScanInterval._get(plant_index, "low")
-
-    @staticmethod
-    def medium(plant_index: int) -> int:
-        return ScanInterval._get(plant_index, "medium")
-
-    @staticmethod
-    def high(plant_index: int) -> int:
-        return ScanInterval._get(plant_index, "high")
-
-    @staticmethod
-    def realtime(plant_index: int) -> int:
-        return ScanInterval._get(plant_index, "realtime")
 
 
 # =============================================================================

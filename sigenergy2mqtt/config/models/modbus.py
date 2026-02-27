@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from sigenergy2mqtt.common import ScanIntervalDefault
 from sigenergy2mqtt.config.models._base import _SUB
 from sigenergy2mqtt.config.models.smart_port import SmartPortConfig
 from sigenergy2mqtt.config.validators import validate_log_level
@@ -23,10 +24,10 @@ class RegisterAccess(BaseModel):
 class ScanInterval(BaseModel):
     model_config = _SUB
 
-    low: int = Field(600, ge=1)
-    medium: int = Field(60, ge=1)
-    high: int = Field(10, ge=1)
-    realtime: int = Field(5, ge=1)
+    low: int = Field(ScanIntervalDefault.LOW, ge=1)
+    medium: int = Field(ScanIntervalDefault.MEDIUM, ge=1)
+    high: int = Field(ScanIntervalDefault.HIGH, ge=1)
+    realtime: int = Field(ScanIntervalDefault.REALTIME, ge=1)
 
 
 class ModbusConfig(BaseModel):
