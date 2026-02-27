@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import Constants, InputType, Protocol
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -15,7 +15,6 @@ from sigenergy2mqtt.sensors.base import (
     ReadableSensorMixin,
     Sensor,
 )
-from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
 
 
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
@@ -101,7 +100,7 @@ class TestSensorScanGroupsEdgeCases:
         dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
 
         sensors_exact = []
-        for i in range(MAX_MODBUS_REGISTERS_PER_REQUEST):
+        for i in range(Constants.MAX_MODBUS_REGISTERS_PER_REQUEST):
             s = DummyModbusSensor(f"s_exact_{i}", address=100 + i, count=1)
             sensors_exact.append(s)
             dev._add_read_sensor(cast(Sensor, s))
@@ -111,11 +110,11 @@ class TestSensorScanGroupsEdgeCases:
 
         # Should be exactly 1 group
         assert len(modbus_groups) == 1
-        assert len(modbus_groups[0]) == MAX_MODBUS_REGISTERS_PER_REQUEST
+        assert len(modbus_groups[0]) == Constants.MAX_MODBUS_REGISTERS_PER_REQUEST
 
         # Scenario 2: MAX + 1 registers
         # Add one more contiguous sensor
-        s_extra = DummyModbusSensor("s_extra", address=100 + MAX_MODBUS_REGISTERS_PER_REQUEST, count=1)
+        s_extra = DummyModbusSensor("s_extra", address=100 + Constants.MAX_MODBUS_REGISTERS_PER_REQUEST, count=1)
         dev._add_read_sensor(cast(Sensor, s_extra))
 
         groups = dev._create_sensor_scan_groups()
@@ -124,7 +123,7 @@ class TestSensorScanGroupsEdgeCases:
         # Should now be 2 groups
         assert len(modbus_groups) == 2
         # First group should still be full
-        assert len(modbus_groups[0]) == MAX_MODBUS_REGISTERS_PER_REQUEST
+        assert len(modbus_groups[0]) == Constants.MAX_MODBUS_REGISTERS_PER_REQUEST
         # Second group has the extra one
         assert len(modbus_groups[1]) == 1
 
@@ -174,7 +173,7 @@ class TestSensorScanGroupsEdgeCases:
         # Create sensors for a named group "BigGroup" that is oversized
         # MAX = 125, so let's make it 130 registers
         start_addr = 1000
-        count = MAX_MODBUS_REGISTERS_PER_REQUEST + 5
+        count = Constants.MAX_MODBUS_REGISTERS_PER_REQUEST + 5
 
         # Just create one start and one end sensor to span the range, but put them in same named group
         # Note: In reality they need to be contiguous or bridged to be a valid *optimized* read,

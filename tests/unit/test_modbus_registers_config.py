@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol, RegisterAccess
+from sigenergy2mqtt.common import InputType, Protocol, RegisterAccess
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.config.settings import ModbusConfig
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -13,7 +13,6 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import InputType
 
 MODBUS_DATA_TYPE = ModbusClient.DATATYPE
 

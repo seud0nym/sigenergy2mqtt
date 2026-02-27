@@ -7,14 +7,13 @@ from pymodbus.exceptions import ModbusException
 from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
+from sigenergy2mqtt.common import InputType
 from sigenergy2mqtt.metrics import Metrics
-from sigenergy2mqtt.sensors.const import InputType
 
 from .read_ahead import ReadAhead
 
 
 class ModbusClient(AsyncModbusTcpClient):
-
     def _trace_packet_handler(self, is_send: bool, data: bytes) -> bytes:
         if self._trace:
             if is_send:
@@ -23,6 +22,7 @@ class ModbusClient(AsyncModbusTcpClient):
                 log_text = Log.build_msg("recv: {}", data, ":hex")
             logging.debug(log_text)
         return data
+
     def __init__(self, *args, **kwargs):
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler

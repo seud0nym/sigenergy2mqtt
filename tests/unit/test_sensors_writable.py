@@ -6,17 +6,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Imported here (no hacks needed for mqtt any more)
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import InputType, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.base import (
-    InputType,
-    NumericSensor,
-    SelectSensor,
-    Sensor,
-    SwitchSensor,
-    WriteOnlySensor,
-)
+from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor
 
 
 @pytest.fixture(autouse=True)

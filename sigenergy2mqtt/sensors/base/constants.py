@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Final, TypeAlias
 
-from ..const import DeviceClass, StateClass
+from sigenergy2mqtt.common import DeviceClass, StateClass
 
 # =============================================================================
 # Constants

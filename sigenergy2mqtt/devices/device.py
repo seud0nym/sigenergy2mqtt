@@ -11,7 +11,7 @@ from typing import Any, Awaitable, cast
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import DeviceType, Protocol, RegisterAccess
+from sigenergy2mqtt.common import Constants, DeviceType, InputType, Protocol, RegisterAccess
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusLock, ModbusLockFactory
@@ -29,7 +29,6 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
 
 # Constants for reconnection strategy
 MAX_RECONNECTION_ATTEMPTS = 10
@@ -493,7 +492,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         Groups are constructed to minimise the number of Modbus read requests:
         sensors with contiguous register addresses on the same device and of the
         same input type are batched into a single group, subject to the
-        MAX_MODBUS_REGISTERS_PER_REQUEST limit. If active_config.modbus[plant_index].
+        Constants.MAX_MODBUS_REGISTERS_PER_REQUEST limit. If active_config.modbus[plant_index].
         disable_chunking is True, each sensor gets its own group.
 
         Named groups (registered via _add_read_sensor with a group key) are always
@@ -549,7 +548,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
                 or sensor.device_address != device_address  # Device address changed
                 or sensor.input_type != input_type  # Input type changed
                 or sensor.address > next_address  # Non-contiguous addresses
-                or (next_address - first_address + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST  # Modbus request size exceeded
+                or (next_address - first_address + sensor.count) > Constants.MAX_MODBUS_REGISTERS_PER_REQUEST  # Modbus request size exceeded
             ):
                 # Don't start a group with a ReservedSensor
                 if isinstance(sensor, ReservedSensor):
@@ -565,7 +564,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
 
             next_address = sensor.address + sensor.count
             while next_address in named_group_sensors:  # Include any named group sensors that fall within the range
-                if first_address == -1 or (next_address - first_address + named_group_sensors[next_address].count) > MAX_MODBUS_REGISTERS_PER_REQUEST:
+                if first_address == -1 or (next_address - first_address + named_group_sensors[next_address].count) > Constants.MAX_MODBUS_REGISTERS_PER_REQUEST:
                     break
                 else:
                     next_address += named_group_sensors[next_address].count
@@ -1002,7 +1001,7 @@ class Device(dict[str, str | list[str]], metaclass=abc.ABCMeta):
         """
         # Setup for Modbus read-ahead optimization
         modbus_sensors: ReadableSensorGroup = ReadableSensorGroup(*[s for s in sensors if isinstance(s, ModbusSensorMixin)])
-        multiple: bool = len(modbus_sensors) > 1 and modbus_sensors.register_count != -1 and 1 <= modbus_sensors.register_count <= MAX_MODBUS_REGISTERS_PER_REQUEST
+        multiple: bool = len(modbus_sensors) > 1 and modbus_sensors.register_count != -1 and 1 <= modbus_sensors.register_count <= Constants.MAX_MODBUS_REGISTERS_PER_REQUEST
 
         # Initialize per-sensor next publish times, find any daily sensors, and determine if debug logging is needed for this group
         next_publish_times, daily_sensors, debug_logging = await self._init_next_publish_times(modbus_client, mqtt_client, *sensors)

@@ -11,19 +11,19 @@ from typing import TYPE_CHECKING, Any, Deque, cast
 
 import paho.mqtt.client as mqtt
 
+from sigenergy2mqtt.common import DeviceClass, StateClass, UnitOfEnergy
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
-if TYPE_CHECKING:
-    from sigenergy2mqtt.mqtt import MqttHandler
-
-from ..const import DeviceClass, StateClass, UnitOfEnergy
 from .constants import DiscoveryKeys, SensorAttributeKeys, _sanitize_path_component
 from .derived import DerivedSensor
 from .mixins import ObservableMixin
 from .readable import ReadOnlySensor
 from .sensor import Sensor
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.mqtt import MqttHandler
 
 # =============================================================================
 

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -16,7 +16,6 @@ from sigenergy2mqtt.sensors.base import (
     ReadableSensorMixin,
     Sensor,
 )
-from sigenergy2mqtt.sensors.const import InputType
 
 
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):

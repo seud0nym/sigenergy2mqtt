@@ -9,12 +9,11 @@ from typing import Any, cast
 
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
-from ..const import DeviceClass, InputType, StateClass
 from .constants import SensorAttributeKeys
 from .mixins import ModbusSensorMixin, ReadableSensorMixin
 from .sensor import AvailabilityMixin, Sensor, TypedSensorMixin

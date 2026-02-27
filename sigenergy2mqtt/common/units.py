@@ -1,34 +1,7 @@
 from enum import StrEnum
 from typing import Final
 
-MAX_MODBUS_REGISTERS_PER_REQUEST: Final = 124  # Protocol 6.1.1/6.1.2
-
 PERCENTAGE: Final = "%"
-
-
-class DeviceClass(StrEnum):
-    BATTERY = "battery"
-    CURRENT = "current"
-    ENERGY = "energy"
-    ENUM = "enum"
-    FREQUENCY = "frequency"
-    POWER = "power"
-    POWER_FACTOR = "power_factor"
-    TEMPERATURE = "temperature"
-    TIMESTAMP = "timestamp"
-    VOLTAGE = "voltage"
-
-
-class InputType(StrEnum):
-    HOLDING = "holding"
-    INPUT = "input"
-    NONE = "none"
-
-
-class StateClass(StrEnum):
-    MEASUREMENT = "measurement"
-    TOTAL = "total"
-    TOTAL_INCREASING = "total_increasing"
 
 
 class UnitOfApparentPower(StrEnum):

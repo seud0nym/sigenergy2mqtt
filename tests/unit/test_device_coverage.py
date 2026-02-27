@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import HybridInverter, Protocol
+from sigenergy2mqtt.common import HybridInverter, InputType, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.sensors.base import (
@@ -20,7 +20,6 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import InputType
 
 # ---------------------------------------------------------------------------
 # Helper / stub classes (mirror the style of test_device_missing.py)

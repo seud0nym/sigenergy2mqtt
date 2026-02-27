@@ -1,10 +1,9 @@
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval
 
-from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor
-from .const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from .base import AlarmCombinedSensor, AlarmSensor, ReadOnlySensor
 
 # 5.5 AC-Charger running information address definition (read-only register)
 

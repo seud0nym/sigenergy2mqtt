@@ -1,13 +1,12 @@
 """Unit tests for ReadAhead class edge cases."""
 
-import copy
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
+from sigenergy2mqtt.common import InputType
 from sigenergy2mqtt.modbus.read_ahead import ReadAhead
-from sigenergy2mqtt.sensors.const import InputType
 
 
 class TestReadAhead:

@@ -15,10 +15,6 @@ from sigenergy2mqtt.i18n import _t  # noqa: F401
 from sigenergy2mqtt.metrics import Metrics  # noqa: F401
 from sigenergy2mqtt.modbus.types import ModbusDataType  # noqa: F401
 
-# Re-export commonly used types from const and sanity_check for convenience
-from ..const import PERCENTAGE, DeviceClass, InputType, StateClass  # noqa: F401
-from ..sanity_check import SanityCheck, SanityCheckException  # noqa: F401
-
 # Accumulation sensors
 from .accumulation import (  # noqa: F401
     EnergyDailyAccumulationSensor,
@@ -69,6 +65,9 @@ from .readable import (  # noqa: F401
     ReservedSensor,
     UnpublishResetSensorMixin,
 )
+
+# Re-export commonly used types from const and sanity_check for convenience
+from .sanity_check import SanityCheck, SanityCheckException  # noqa: F401
 
 # Scan Interval
 from .scan_interval import (  # noqa: F401

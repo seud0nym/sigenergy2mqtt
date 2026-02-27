@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol, RegisterAccess
+from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -15,7 +15,6 @@ from sigenergy2mqtt.sensors.base import (
     Sensor,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfPower
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers / Fixtures
@@ -797,7 +796,7 @@ class TestCheckRegisterResponse:
     def _make_readonly_sensor(self, suffix):
         """Create a ReadOnlySensor instance for testing _check_register_response."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.const import InputType
+            from sigenergy2mqtt.common import InputType
 
             s = ReadOnlySensor(
                 name="RO Test",
@@ -901,7 +900,7 @@ class TestCheckRegisterResponse:
 class TestReadOnlySensorUpdateInternalState:
     def _make_ro(self, suffix):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.const import InputType
+            from sigenergy2mqtt.common import InputType
 
             return ReadOnlySensor(
                 name="RO",
@@ -955,7 +954,7 @@ class TestReadOnlySensorUpdateInternalState:
     async def test_update_internal_state_input_registers(self):
         """INPUT type uses read_input_registers."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.const import InputType
+            from sigenergy2mqtt.common import InputType
 
             s = ReadOnlySensor(
                 name="RO Input",
@@ -1170,8 +1169,8 @@ class TestSetLatestState:
 
 class TestReservedSensor:
     def _make_reserved(self, suffix):
+        from sigenergy2mqtt.common import InputType
         from sigenergy2mqtt.sensors.base import ReservedSensor
-        from sigenergy2mqtt.sensors.const import InputType
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
@@ -1228,7 +1227,7 @@ class TestSanityCheckFailureIncrement:
     @pytest.mark.asyncio
     async def test_sanity_check_exception_not_counted_when_config_disabled(self):
         """SanityCheckException doesn't increment failures when sanity_check_failures_increment=False."""
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+        from sigenergy2mqtt.sensors.base import SanityCheckException
 
         s = _make_sensor(uid_suffix="sc_nocount")
         s["state_topic"] = "test/state"
@@ -1253,7 +1252,7 @@ class TestSanityCheckFailureIncrement:
     @pytest.mark.asyncio
     async def test_sanity_check_exception_counted_when_config_enabled(self):
         """SanityCheckException DOES increment failures when sanity_check_failures_increment=True."""
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+        from sigenergy2mqtt.sensors.base import SanityCheckException
 
         s = _make_sensor(uid_suffix="sc_count")
         s["state_topic"] = "test/state"
@@ -1442,7 +1441,7 @@ class TestGainProperty:
 class TestReadableSensorScanIntervalOverride:
     def test_scan_interval_override_applied(self):
         """scan-interval override is applied during __init__."""
-        from sigenergy2mqtt.sensors.const import InputType
+        from sigenergy2mqtt.common import InputType
 
         with (
             patch.dict(Sensor._used_unique_ids, clear=True),

@@ -1,9 +1,7 @@
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, Protocol, PVInverter, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import DeviceClass, InputType, NumericSensor, ReservedSensor, ScanInterval, WriteOnlySensor
-
-from .const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.sensors.base import NumericSensor, ReservedSensor, ScanInterval, WriteOnlySensor
 
 # 5.4 Hybrid inverter parameter setting address definition (holding register)
 

@@ -4,23 +4,12 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import (  # noqa: E402
-    EnergyDailyAccumulationSensor,
-    EnergyLifetimeAccumulationSensor,
-    InputType,
-    ModbusSensorMixin,
-    NumericSensor,
-    ReadOnlySensor,
-    SelectSensor,
-    Sensor,
-    TimestampSensor,
-)
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfPower  # noqa: E402
+from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, ModbusSensorMixin, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
 
 
 # Fixtures for mocking to avoid background thread issues

@@ -5,12 +5,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     DerivedSensor,
-    InputType,
     ModbusLockFactory,
     ModbusSensorMixin,
     NumericSensor,
@@ -25,7 +24,6 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import UnitOfPower
 
 
 class ConcreteSensor(Sensor):
@@ -189,7 +187,7 @@ class TestBaseCoverage:
         with patch.object(NumericSensor, "_update_internal_state", new_callable=AsyncMock) as mock_update:
             mock_update.return_value = True
 
-            from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+            from sigenergy2mqtt.sensors.base import SanityCheckException
 
             with pytest.raises(SanityCheckException):
                 sensor.set_latest_state(150.0)
@@ -248,7 +246,7 @@ class TestModbusSensorMixinErrorHandling:
 class TestAccumulationSensorPersistence:
     @pytest.mark.asyncio
     async def test_resettable_persistence_load_save(self, mock_config, tmp_path):
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, StateClass
 
         mock_config.persistent_state_path = tmp_path
 
@@ -285,7 +283,7 @@ class TestAccumulationSensorPersistence:
         assert sensor2._current_total == 123.45
 
     def test_resettable_discovery_components(self, mock_config):
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, StateClass
 
         source = MagicMock(spec=ReadOnlySensor)
         source.unique_id = "src"
@@ -316,8 +314,8 @@ class TestSpecializedSensors:
 
     @pytest.mark.asyncio
     async def test_numeric_sensor_logic(self, mock_config):
+        from sigenergy2mqtt.common import DeviceClass, StateClass
         from sigenergy2mqtt.sensors.base import NumericSensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         s = NumericSensor(
             None, "Num", "sigen_n", InputType.HOLDING, 0, 1, 30006, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4, minimum=0, maximum=100
@@ -398,8 +396,8 @@ class TestPhase2CoreSensor:
             ConcreteSensor(name="T7", unique_id="sigen_id7", object_id="sigen_obj7", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version="invalid")
 
     def test_properties(self, mock_config):
+        from sigenergy2mqtt.common import DeviceClass
         from sigenergy2mqtt.sensors.base import Protocol
-        from sigenergy2mqtt.sensors.const import DeviceClass
 
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit="V", device_class=DeviceClass.VOLTAGE, state_class=None, icon=None, gain=1.5, precision=2)
 
@@ -634,7 +632,7 @@ class TestPhase4MQTT:
 
     @pytest.mark.asyncio
     async def test_publish_extended(self, mock_config):
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+        from sigenergy2mqtt.sensors.base import SanityCheckException
 
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
         s.configure_mqtt_topics("dev1")
@@ -1209,8 +1207,8 @@ class TestCoverageGap:
         # 1813-1944: ResettableAccumulationSensor
         from unittest.mock import PropertyMock
 
-        from sigenergy2mqtt.sensors.base import InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, InputType, StateClass
+        from sigenergy2mqtt.sensors.base import ReadOnlySensor, ResettableAccumulationSensor, Sensor
 
         source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
@@ -1333,8 +1331,8 @@ class TestCoverageGap:
     async def test_accumulation_sensors_edge_cases(self, mock_config):
         from unittest.mock import PropertyMock
 
-        from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, InputType, StateClass
+        from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadOnlySensor, ResettableAccumulationSensor, Sensor
 
         source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
@@ -1435,8 +1433,8 @@ class TestCoverageGap:
                 assert mock_pub.called
 
     def test_pvpower_sensor(self, mock_config):
+        from sigenergy2mqtt.common import DeviceClass, StateClass
         from sigenergy2mqtt.sensors.base import DerivedSensor, PVPowerSensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         # Define a concrete sensor for testing the PVPowerSensor mixin
         class ConcretePVPower(PVPowerSensor, DerivedSensor):

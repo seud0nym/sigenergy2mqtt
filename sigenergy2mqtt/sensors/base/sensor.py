@@ -16,17 +16,16 @@ from typing import TYPE_CHECKING, Any, Deque, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import Protocol, RegisterAccess
+from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
+from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
+from .sanity_check import SanityCheck, SanityCheckException
+
 if TYPE_CHECKING:
     from .derived import DerivedSensor
-
-from ..const import DeviceClass, StateClass
-from ..sanity_check import SanityCheck, SanityCheckException
-from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
 
 # =============================================================================
 

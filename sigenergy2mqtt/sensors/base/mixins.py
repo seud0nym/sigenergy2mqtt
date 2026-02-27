@@ -12,20 +12,19 @@ from typing import TYPE_CHECKING, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import Constants
+from sigenergy2mqtt.common import Constants, InputType
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
-if TYPE_CHECKING:
-    from sigenergy2mqtt.mqtt import MqttHandler
-
-from ..const import InputType
 from .constants import (
     DiscoveryKeys,
     ModbusLockFactory,
 )
 from .sensor import Sensor, SensorDebuggingMixin, TypedSensorMixin
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.mqtt import MqttHandler
 
 # =============================================================================
 

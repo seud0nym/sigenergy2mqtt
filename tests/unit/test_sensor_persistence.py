@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -16,7 +16,6 @@ from sigenergy2mqtt.sensors.base import (
     ResettableAccumulationSensor,
     Sensor,
 )
-from sigenergy2mqtt.sensors.const import InputType, StateClass, UnitOfPower
 
 
 class MockSource(ReadOnlySensor):

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.sensors.const import UnitOfPower
+from sigenergy2mqtt.common import UnitOfPower
 
 
 # Fixtures for mocking circular dependencies
@@ -25,9 +25,12 @@ def mock_modules():
         yield
 
 
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import (  # noqa: E402
+    DeviceClass,
+    Protocol,  # noqa: E402
+    StateClass,
+)
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 
 
 # Concrete sensor for testing

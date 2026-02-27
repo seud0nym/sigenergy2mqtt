@@ -5,12 +5,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
 from sigenergy2mqtt.sensors.plant_read_only import SystemTimeZone
 

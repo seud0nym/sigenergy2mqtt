@@ -10,12 +10,11 @@ from typing import Any, Final, cast
 
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import DeviceClass, HybridInverter, InputType, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
-from ..const import DeviceClass, InputType
 from .constants import DiscoveryKeys
 from .readable import ReadOnlySensor
 

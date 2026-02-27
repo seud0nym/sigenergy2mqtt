@@ -24,9 +24,8 @@ from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
 from tests.utils import get_sensor_instances
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
@@ -319,7 +318,7 @@ async def run_async_server(
             device_address != sensor.device_address
             or (address is None or count is None or sensor.address != address + count)
             or input_type != sensor.input_type
-            or (group_index != -1 and (sum(s.count for s in groups[group_index]) + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
+            or (group_index != -1 and (sum(s.count for s in groups[group_index]) + sensor.count) > Constants.MAX_MODBUS_REGISTERS_PER_REQUEST)
         ):
             group_index = group_index + 1
             groups[group_index] = []

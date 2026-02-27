@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import requests
 
-from sigenergy2mqtt.common import ConsumptionSource, StatusField, VoltageSource
+from sigenergy2mqtt.common import ConsumptionSource, StatusField, UnitOfEnergy, UnitOfPower, VoltageSource
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services
@@ -14,7 +14,6 @@ from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.status import PVOutputStatusService
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import UnitOfEnergy, UnitOfPower
 
 
 def make_service():

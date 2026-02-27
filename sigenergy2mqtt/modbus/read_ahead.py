@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.sensors.const import InputType
+from sigenergy2mqtt.common import InputType
 
 
 @dataclass

@@ -2,12 +2,11 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AvailabilityMixin,
-    InputType,
     NumericSensor,
     SelectSensor,
     Sensor,
@@ -15,7 +14,6 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import UnitOfPower
 from sigenergy2mqtt.sensors.plant_read_write import (
     MaxChargingLimit,
     MaxDischargingLimit,

@@ -1,17 +1,13 @@
 import asyncio
-import datetime
-import json
-import logging
 import time
-from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, InputType
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors import base
-from sigenergy2mqtt.sensors.const import PERCENTAGE, DeviceClass, InputType, StateClass, UnitOfEnergy
 
 
 @pytest.fixture(autouse=True)

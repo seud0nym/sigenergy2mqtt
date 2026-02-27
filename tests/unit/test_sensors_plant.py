@@ -5,11 +5,10 @@ import pytest
 
 from sigenergy2mqtt.common import ConsumptionMethod
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
+from sigenergy2mqtt.sensors.base import AvailabilityMixin, SanityCheckException, Sensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_only import EMSWorkMode, SystemTimeZone
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, IndependentPhasePowerControl, PCSMaxExportLimit, PCSMaxImportLimit, PlantStatus, RemoteEMSControlMode
-from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
 
 
 @pytest.fixture(autouse=True)

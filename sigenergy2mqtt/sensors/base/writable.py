@@ -16,7 +16,8 @@ from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
-from ..const import PERCENTAGE, DeviceClass, InputType, StateClass
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, InputType, StateClass
+
 from .constants import DiscoveryKeys
 from .mixins import WritableSensorMixin
 from .readable import ReadOnlySensor

@@ -3,10 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import cast
 
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-
-from . import const
 
 
 class SanityCheckException(ValueError):
@@ -37,8 +36,8 @@ class SanityCheck:
     def __init__(
         self,
         unit: str | None = None,
-        device_class: const.DeviceClass | None = None,
-        state_class: const.StateClass | None = None,
+        device_class: DeviceClass | None = None,
+        state_class: StateClass | None = None,
         data_type: ModbusDataType | None = None,
         gain: float | None = None,
         min_raw: float | int | None = None,
@@ -52,10 +51,10 @@ class SanityCheck:
         self._precision = precision
         self._unit = unit
         if delta is None:
-            if state_class == const.StateClass.TOTAL_INCREASING:
+            if state_class == StateClass.TOTAL_INCREASING:
                 self.delta = True
                 self.min_raw = 0
-            elif device_class == const.DeviceClass.ENERGY:
+            elif device_class == DeviceClass.ENERGY:
                 self.delta = True
             else:
                 self.delta = False
@@ -91,11 +90,10 @@ class SanityCheck:
             case _:
                 # Unknown data types - no default ranges
                 pass
-        match unit:
-            case const.UnitOfPower.WATT | const.UnitOfEnergy.WATT_HOUR | const.UnitOfPower.KILO_WATT | const.UnitOfEnergy.KILO_WATT_HOUR:
-                self.max_raw = active_config.sanity_check_default_kw * 1000 if not self.max_raw else min(active_config.sanity_check_default_kw * 1000, self.max_raw)
-            case const.PERCENTAGE:
-                self.max_raw = 100 * (gain if gain else 1)
+        if unit in (UnitOfPower.WATT, UnitOfEnergy.WATT_HOUR, UnitOfPower.KILO_WATT, UnitOfEnergy.KILO_WATT_HOUR):
+            self.max_raw = active_config.sanity_check_default_kw * 1000 if not self.max_raw else min(active_config.sanity_check_default_kw * 1000, self.max_raw)
+        elif unit == PERCENTAGE:
+            self.max_raw = 100 * (gain if gain else 1)
         if self.min_raw is not None and self.max_raw is not None:
             self.min_raw = max(self.max_raw * -1, self.min_raw)
 

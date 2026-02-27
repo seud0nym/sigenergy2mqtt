@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
+from sigenergy2mqtt.common import InputType
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.modbus.read_ahead import ReadAhead
-from sigenergy2mqtt.sensors.const import InputType
 
 
 class TestModbusClient:

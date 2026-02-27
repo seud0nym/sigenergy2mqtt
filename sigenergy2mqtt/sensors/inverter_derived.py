@@ -4,12 +4,11 @@ from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import HybridInverter, PVInverter
+from sigenergy2mqtt.common import DeviceClass, HybridInverter, PVInverter, StateClass, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
 
-from .base import DerivedSensor, DeviceClass, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor, StateClass
-from .const import UnitOfPower
+from .base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 
 
