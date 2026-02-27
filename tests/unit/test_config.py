@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest  # noqa: F401
@@ -284,3 +286,180 @@ class TestConfigPvOutput:
     def test_pvoutput_has_enabled(self):
         """Test pvoutput has enabled attribute."""
         assert hasattr(active_config.pvoutput, "enabled")
+
+
+class TestConfigCoverageAugmentation:
+    def test_init_persistent_state_exception(self):
+        with patch("sigenergy2mqtt.config.config._create_persistent_state_path", side_effect=Exception("mocked error")):
+            cfg = Config()
+            assert str(cfg.persistent_state_path) == "."
+
+    def test_getattr_settings_uninitialized(self):
+        cfg = Config()
+        cfg._settings = None
+        with pytest.raises(AttributeError):
+            _ = cfg.some_random_attribute
+
+    def test_get_modbus_log_level_no_settings(self):
+        cfg = Config()
+        cfg._settings = None
+        assert cfg.get_modbus_log_level() == logging.WARNING
+
+    def test_get_modbus_log_level_no_modbus_devices(self):
+        cfg = Config()
+        cfg._settings = MagicMock()
+        cfg._settings.modbus = []
+        assert cfg.get_modbus_log_level() == logging.WARNING
+
+    def test_set_modbus_log_level_no_settings(self):
+        cfg = Config()
+        cfg._settings = None
+        with pytest.raises(AttributeError):
+            cfg.set_modbus_log_level(logging.DEBUG)
+
+    @patch("sigenergy2mqtt.config.config.asyncio.run")
+    def test_run_auto_discovery_exception(self, mock_run):
+        mock_run.side_effect = Exception("Mocked Asyncio Error")
+        cfg = Config()
+        result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
+        assert result == []
+
+    @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
+    def test_run_auto_discovery_with_running_loop_success(self, mock_get_loop):
+        # We simulate that a loop is running
+        mock_loop = MagicMock()
+        mock_get_loop.return_value = mock_loop
+
+        with patch("sigenergy2mqtt.config.config.asyncio.run_coroutine_threadsafe") as mock_threadsafe:
+            mock_future = MagicMock()
+            mock_future.result.return_value = [{"host": "127.0.0.1", "port": 502}]
+            mock_threadsafe.return_value = mock_future
+
+            cfg = Config()
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
+                result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
+                assert result == [{"host": "127.0.0.1", "port": 502}]
+
+    @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
+    def test_run_auto_discovery_with_running_loop_timeout(self, mock_get_loop):
+        mock_loop = MagicMock()
+        mock_get_loop.return_value = mock_loop
+
+        with patch("sigenergy2mqtt.config.config.asyncio.run_coroutine_threadsafe") as mock_threadsafe:
+            mock_future = MagicMock()
+            mock_future.result.side_effect = TimeoutError("Timed out")
+            mock_threadsafe.return_value = mock_future
+
+            cfg = Config()
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
+                result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
+                assert result == []
+                mock_future.cancel.assert_called_once()
+
+    @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
+    def test_run_auto_discovery_with_running_loop_generic_exception(self, mock_get_loop):
+        mock_loop = MagicMock()
+        mock_get_loop.return_value = mock_loop
+
+        with patch("sigenergy2mqtt.config.config.asyncio.run_coroutine_threadsafe") as mock_threadsafe:
+            mock_future = MagicMock()
+            mock_future.result.side_effect = Exception("Generic")
+            mock_threadsafe.return_value = mock_future
+
+            cfg = Config()
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
+                result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
+                assert result == []
+
+    @patch("sigenergy2mqtt.config.config.time.time", return_value=1000000000.0)
+    def test_clean_stale_files_unlink_exception(self, mock_time, tmp_path, caplog):
+        from sigenergy2mqtt.config.config import _clean_stale_files
+
+        # 1. Setup stale file
+        stale_file = tmp_path / "stale.txt"
+        stale_file.touch()
+        os.utime(stale_file, (100.0, 100.0))
+
+        # 2. Setup subdir (to be ignored)
+        sub_dir = tmp_path / "subdir"
+        sub_dir.mkdir()
+
+        # 3. Test PermissionError handling
+        with patch.object(Path, "unlink", side_effect=PermissionError("Mock Permission Denied")):
+            _clean_stale_files(tmp_path)
+            assert "Failed to remove stale state file" in caplog.text
+            assert "Mock Permission Denied" in caplog.text
+
+        caplog.clear()  # Clear logs between checks
+
+        # 4. Test OSError handling
+        with patch.object(Path, "unlink", side_effect=OSError("Mock OS Error")):
+            _clean_stale_files(tmp_path)
+            assert "Failed to remove stale state file" in caplog.text
+            assert "Mock OS Error" in caplog.text
+
+    def test_setup_logging_tty(self):
+        from sigenergy2mqtt.config.config import _setup_logging
+
+        with patch("sigenergy2mqtt.config.config.os.isatty", return_value=True):
+            _setup_logging()
+
+    def test_config_proxy_methods(self):
+        from sigenergy2mqtt.config.config import _ConfigProxy
+
+        cfg = Config()
+        proxy = _ConfigProxy(cfg)
+
+        cfg.test_attr = "hello"
+        assert proxy.test_attr == "hello"
+
+        proxy.test_attr = "world"
+        assert proxy.test_attr == "world"
+        assert cfg.test_attr == "world"
+
+        del proxy.test_attr
+        assert not hasattr(cfg, "test_attr")
+
+        assert repr(proxy).startswith("<ConfigProxy for")
+        assert "load" in dir(proxy)
+
+    def test_swap_active_config_no_proxy(self):
+        import sigenergy2mqtt.config.config as conf_module
+        from sigenergy2mqtt.config.config import _swap_active_config
+
+        original = conf_module.active_config
+        conf_module.active_config = Config()  # Not a proxy
+
+        try:
+            new_cfg = Config()
+            with _swap_active_config(new_cfg) as yielded_cfg:
+                assert yielded_cfg is new_cfg
+                assert conf_module.active_config is new_cfg
+        finally:
+            conf_module.active_config = original
+
+    def test_load_config(self):
+        cfg = Config()
+        with patch.object(cfg, "reload") as mock_reload:
+            cfg.load("test_file.yaml")
+            assert cfg._source == "test_file.yaml"
+            mock_reload.assert_called_once()
+
+    def test_reset_config(self):
+        cfg = Config()
+        cfg._source = "test"
+        cfg.reset()
+        assert cfg._source is None
+        assert isinstance(cfg._settings, Settings)
+
+    def test_reload_with_exception_in_init(self):
+        with patch("sigenergy2mqtt.config.config.Config.reload", side_effect=Exception("mock initialization error")):
+            cfg = Config()
+            assert cfg._source is None
+
+    def test_setup_logging_level_from_env(self):
+        from sigenergy2mqtt.config.config import _setup_logging
+
+        with patch.dict("os.environ", {"SIGENERGY2MQTT_LOG_LEVEL": "DEBUG"}):
+            _setup_logging()
+            assert logging.getLogger().level == logging.DEBUG
