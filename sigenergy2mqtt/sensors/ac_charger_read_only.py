@@ -1,6 +1,7 @@
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.sensors.base import DiscoveryKeys
 
 from .base import AlarmCombinedSensor, AlarmSensor, DeviceClass, InputType, ReadOnlySensor, ScanInterval
 from .const import StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
@@ -39,7 +40,7 @@ class ACChargerRunningState(ReadOnlySensor):
             "Error",  # 7: E - Error Charger disconnected from vehicle / Charger disconnected from utility, Charger loss of utility power or control pilot short to control pilot reference
         ]
         self["enabled_by_default"] = True
-        self["options"] = options
+        self[DiscoveryKeys.OPTIONS] = options
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(options) - 1
 

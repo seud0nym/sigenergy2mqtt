@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import Constants, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
-from sigenergy2mqtt.sensors.base import ThreePhaseAdjustmentTargetValue
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, ThreePhaseAdjustmentTargetValue
 
 from .base import AvailabilityMixin, DeviceClass, InputType, NumericSensor, ReservedSensor, ScanInterval, SelectSensor, SwitchSensor, WriteOnlySensor
 from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
@@ -499,11 +499,13 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled and active_config.ems_mode_check:
             if self._charging and self._discharging:
-                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                    {"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0}
+                )
             elif self._charging:
-                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._discharging:
-                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:

@@ -1,12 +1,11 @@
 import asyncio
-import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.devices.device import Device, ModbusDevice
+from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
 
 

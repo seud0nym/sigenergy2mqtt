@@ -15,6 +15,7 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
+from sigenergy2mqtt.sensors.const import UnitOfPower
 from sigenergy2mqtt.sensors.plant_read_write import (
     MaxChargingLimit,
     MaxDischargingLimit,
@@ -64,7 +65,7 @@ class TestValueIsValidBase:
             name="Test",
             unique_id="sigen_test",
             object_id="sigen_test",
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=None,
             state_class=None,
             icon="mdi:test",
@@ -110,7 +111,7 @@ class TestValueIsValidBase:
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=60,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=None,
             state_class=None,
             icon="mdi:test",
@@ -140,7 +141,7 @@ class TestValueIsValidBase:
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=60,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=None,
             state_class=None,
             icon="mdi:test",

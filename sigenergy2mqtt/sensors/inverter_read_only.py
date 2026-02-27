@@ -6,7 +6,7 @@ from typing import cast
 from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, UnpublishResetSensorMixin
 
 from .base import (
     Alarm1Sensor,
@@ -1222,14 +1222,14 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
-        self["options"] = [
+        self[DiscoveryKeys.OPTIONS] = [
             "L/N",  # 0
             "L1/L2/L3",  # 1
             "L1/L2/L3/N",  # 2
             "L1/L2/N",  # 3
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -1237,8 +1237,8 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             return value
         elif value is None:
             return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self["options"])) - 1):
-            return cast(list[str], self["options"])[int(value)]
+        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1):
+            return cast(list[str], self[DiscoveryKeys.OPTIONS])[int(value)]
         else:
             return f"Unknown Output Type: {value}"
 
@@ -1798,7 +1798,7 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
-        self["options"] = [
+        self[DiscoveryKeys.OPTIONS] = [
             "Idle",  # 0
             "Occupied (Charging Gun plugged in but not detected)",  # 1
             "Preparing (Establishing communication)",  # 2
@@ -1807,7 +1807,7 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
             "Scheduled",  # 5
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

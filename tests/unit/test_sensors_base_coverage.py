@@ -25,6 +25,7 @@ from sigenergy2mqtt.sensors.base import (
     WritableSensorMixin,
     WriteOnlySensor,
 )
+from sigenergy2mqtt.sensors.const import UnitOfPower
 
 
 class ConcreteSensor(Sensor):
@@ -93,7 +94,7 @@ class TestBaseCoverage:
     def test_apply_sensor_overrides_regex(self, mock_config):
         mock_config.sensor_overrides = {"Concr.*": {"gain": 10.0, "precision": 3}}
         sensor = ConcreteSensor(
-            name="Test", unique_id="sigen_test", object_id="sigen_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
+            name="Test", unique_id="sigen_test", object_id="sigen_test", unit=UnitOfPower.WATT, device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
         )
         sensor.apply_sensor_overrides(None)
         assert sensor.gain == 10.0
@@ -101,7 +102,7 @@ class TestBaseCoverage:
 
     def test_get_discovery_components_basic(self, mock_config):
         sensor = ConcreteSensor(
-            name="Test", unique_id="sigen_test", object_id="sigen_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
+            name="Test", unique_id="sigen_test", object_id="sigen_test", unit=UnitOfPower.WATT, device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
         )
         components = sensor.get_discovery_components()
         assert "sigen_test" in components
@@ -597,10 +598,10 @@ class TestPhase4MQTT:
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 430-432: get_discovery_components with options
-        s["options"] = ["Off", "On", ""]
+        s[DiscoveryKeys.OPTIONS] = ["Off", "On", ""]
         comps = s.get_discovery_components()
         # translate mock: _t("ConcreteSensor.options.0", "Off") -> "Off"
-        assert comps["sigen_id"]["options"] == ["Off", "On"]
+        assert comps["sigen_id"][DiscoveryKeys.OPTIONS] == ["Off", "On"]
 
         # 529-536: _get_option
         assert s._get_option(0) == "Off"
@@ -616,7 +617,7 @@ class TestPhase4MQTT:
 
     def test_state2raw_extended(self, mock_config):
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=2.0, precision=0)
-        s["options"] = ["Off", "On"]
+        s[DiscoveryKeys.OPTIONS] = ["Off", "On"]
 
         assert s.state2raw(None) is None
 
@@ -1092,7 +1093,7 @@ class TestCoverageGap:
         assert s._raw2state(123.456) == 123.5
 
         # 929-931: options
-        s["options"] = ["Off", "On"]
+        s[DiscoveryKeys.OPTIONS] = ["Off", "On"]
         assert s._raw2state(0) == "Off"  # translates Off -> Off
 
     @pytest.mark.asyncio
@@ -1214,7 +1215,7 @@ class TestCoverageGap:
         source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
         # Mock Path for persistence
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = True
@@ -1269,7 +1270,7 @@ class TestCoverageGap:
         # 1981: EnergyDailyAccumulationSensor
         from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor
 
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = False
@@ -1278,7 +1279,7 @@ class TestCoverageGap:
 
             # 2062: set_source_values day change
             # Mock time to simulate day change
-            with patch("sigenergy2mqtt.sensors.base.time.localtime") as mock_local:
+            with patch("sigenergy2mqtt.sensors.base.accumulation.time.localtime") as mock_local:
                 # Same day
                 mock_local.side_effect = [time.struct_time((2024, 1, 1, 10, 0, 0, 0, 0, 0)), time.struct_time((2024, 1, 1, 11, 0, 0, 0, 0, 0))]
                 daily.set_source_values(source, [(time.time() - 3600, 100), (time.time(), 110)])
@@ -1338,7 +1339,7 @@ class TestCoverageGap:
         source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
         # 1857-1858: ValueError when loading state
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = True
@@ -1399,7 +1400,7 @@ class TestCoverageGap:
                     assert mock_gel.called
 
         # 2013-2032: EnergyDailyAccumulationSensor loading midnight state
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = True
@@ -1425,7 +1426,7 @@ class TestCoverageGap:
                 assert mock_file.unlink.called
 
         # 2058-2060: publish method
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = False
@@ -1445,7 +1446,7 @@ class TestCoverageGap:
             name="PV",
             unique_id="sigen_pv",
             object_id="sigen_pv",
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",

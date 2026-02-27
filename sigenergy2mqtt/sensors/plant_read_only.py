@@ -4,6 +4,7 @@ from typing import cast
 from sigenergy2mqtt.common import Constants, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.sensors.base import DiscoveryKeys
 
 from .base import (
     Alarm1Sensor,
@@ -110,7 +111,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=Protocol.V1_8,
         )
-        self["options"] = [
+        self[DiscoveryKeys.OPTIONS] = [
             "Max Self Consumption",  # 0
             "Sigen AI",  # 1
             "Time of Use",  # 2
@@ -123,7 +124,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             "Time-Based Control",  # 9
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -162,12 +163,12 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self["options"] = [
+        self[DiscoveryKeys.OPTIONS] = [
             "Not Connected",  # 0
             "Connected",  # 1
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
@@ -264,13 +265,13 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
-        self["options"] = [
+        self[DiscoveryKeys.OPTIONS] = [
             "On Grid",  # 0
             "Off Grid (auto)",  # 1
             "Off Grid (manual)",  # 2
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self["options"])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

@@ -4,8 +4,8 @@ import pytest
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, Sensor
+from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfPower
 
 
 class ConcreteSensor(Sensor):
@@ -28,7 +28,7 @@ class TestSensorBase:
                     name="Test Sensor",
                     unique_id="sigen_test_unique_id",
                     object_id="sigen_test_object_id",
-                    unit="W",
+                    unit=UnitOfPower.WATT,
                     device_class=DeviceClass.POWER,
                     state_class=StateClass.MEASUREMENT,
                     icon="mdi:solar-power",
@@ -72,11 +72,11 @@ class TestSensorBase:
             base_topic = sensor.configure_mqtt_topics(device_id="test_device")
 
             assert base_topic == "homeassistant/sensor/test_device/sigen_test_object_id"
-            assert sensor["state_topic"] == f"{base_topic}/state"
-            assert sensor["raw_state_topic"] == f"{base_topic}/raw"
-            assert sensor["json_attributes_topic"] == f"{base_topic}/attributes"
-            assert sensor["availability_mode"] == "all"
-            assert sensor["availability"] == [{"topic": "homeassistant/device/test_device/availability"}]
+            assert sensor[DiscoveryKeys.STATE_TOPIC] == f"{base_topic}/state"
+            assert sensor[DiscoveryKeys.RAW_STATE_TOPIC] == f"{base_topic}/raw"
+            assert sensor[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC] == f"{base_topic}/attributes"
+            assert sensor[DiscoveryKeys.AVAILABILITY_MODE] == "all"
+            assert sensor[DiscoveryKeys.AVAILABILITY] == [{"topic": "homeassistant/device/test_device/availability"}]
 
     def test_properties(self, sensor):
         # publishable

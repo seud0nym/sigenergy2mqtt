@@ -6,7 +6,7 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import InputType, NumericSensor, SelectSensor
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfPower
 from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
 
 
@@ -36,7 +36,7 @@ class TestSanityCheckIntegration:
             count=1,
             data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=60,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:test",
@@ -86,7 +86,7 @@ class TestSanityCheckIntegration:
             count=1,
             data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=60,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:test",
@@ -139,7 +139,7 @@ class TestSanityCheckIntegration:
             count=1,
             data_type=ModbusClient.DATATYPE.UINT16,
             scan_interval=60,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:test",

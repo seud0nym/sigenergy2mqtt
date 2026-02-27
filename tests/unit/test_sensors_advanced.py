@@ -1,11 +1,11 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+from sigenergy2mqtt.sensors.const import DeviceClass, StateClass, UnitOfPower
 
 
 @pytest.fixture(autouse=True)
@@ -34,7 +34,7 @@ class ConcreteSensor(Sensor):
                 name=f"Test Sensor {test_id}",
                 unique_id=f"sigen_{test_id}",
                 object_id=f"sigen_{test_id}",
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:power",

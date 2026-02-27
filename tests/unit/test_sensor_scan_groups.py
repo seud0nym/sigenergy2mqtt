@@ -10,7 +10,7 @@ import paho.mqtt.client as mqtt
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
 from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
@@ -147,7 +147,7 @@ class TestCreateSensorScanGroups:
 
     def test_handles_reserved_sensors(self, mock_config):
         """Reserved sensors should not start or end a group."""
-        from sigenergy2mqtt.devices.device import ReservedSensor
+        from sigenergy2mqtt.sensors.base import ReservedSensor
 
         class DummyReservedSensor(ReservedSensor):
             def __init__(self, address: int):

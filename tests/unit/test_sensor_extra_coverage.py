@@ -6,7 +6,7 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, NumericSensor, RunningStateSensor, SelectSensor, Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType
+from sigenergy2mqtt.sensors.const import DeviceClass, InputType, UnitOfPower
 
 
 @pytest.fixture(autouse=True)
@@ -86,7 +86,7 @@ class TestNumericSensor:
             protocol_version=Protocol.V1_8,
             minimum=10.0,
             maximum=20.0,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
             icon=None,
@@ -133,7 +133,7 @@ class TestNumericSensor:
             protocol_version=Protocol.V1_8,
             minimum=(-20.0, -10.0),
             maximum=(10.0, 20.0),
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
             icon=None,

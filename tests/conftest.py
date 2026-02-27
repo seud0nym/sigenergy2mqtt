@@ -77,7 +77,7 @@ def reset_config():
 
     from sigenergy2mqtt.config import active_config
     from sigenergy2mqtt.config.config import Config
-    from sigenergy2mqtt.devices.device import DeviceRegistry
+    from sigenergy2mqtt.devices import DeviceRegistry
     from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
     from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 

@@ -5,10 +5,10 @@ import pytest
 from sigenergy2mqtt import i18n
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.devices.device import Device
+from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmSensor, ReadOnlySensor, Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
+from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass, UnitOfPower
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +30,7 @@ class MockSensor(Sensor):
             name=name,
             unique_id="sigenergy_0_001_30000",
             object_id="sigenergy_test_sensor",
-            unit="kW",
+            unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:test",
@@ -149,11 +149,11 @@ def test_options_translation():
     class RunningStateSensor(MockSensor):
         def __init__(self):
             super().__init__()
-            self["options"] = ["Standby"]
+            self[DiscoveryKeys.OPTIONS] = ["Standby"]
 
     sensor = RunningStateSensor()
     discovery = sensor.get_discovery_components()
-    assert discovery[sensor.unique_id]["options"][0] == "Veille"
+    assert discovery[sensor.unique_id][DiscoveryKeys.OPTIONS][0] == "Veille"
 
 
 def test_attributes_translation():

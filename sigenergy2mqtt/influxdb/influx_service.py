@@ -7,7 +7,7 @@ from typing import Awaitable, cast
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices.device import DeviceRegistry
+from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import MqttHandler
 

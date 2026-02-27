@@ -36,7 +36,7 @@ async def test_alarm_combined_sensor_translation_bug():
             return "Aucune Alarme"
         return default
 
-    with patch("sigenergy2mqtt.sensors.base._t", side_effect=mock_translation):
+    with patch("sigenergy2mqtt.sensors.base.alarms._t", side_effect=mock_translation):
         # Both alarms have "Aucune Alarme" state (simulated by get_state returning what base.AlarmSensor would return if translated)
         # However, AlarmCombinedSensor logic previously used AlarmSensor.NO_ALARM ("No Alarm") for comparison
         # The fix ensures it uses the translated "Aucune Alarme" for comparison.

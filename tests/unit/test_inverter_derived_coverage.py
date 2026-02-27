@@ -1,13 +1,10 @@
-import asyncio
 import logging
-import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_derived import (
     InverterBatteryChargingPower,

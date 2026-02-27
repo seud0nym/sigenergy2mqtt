@@ -9,7 +9,7 @@ from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.devices.device import Device
+from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin
 
 
