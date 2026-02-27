@@ -598,10 +598,10 @@ class TestPhase4MQTT:
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
 
         # 430-432: get_discovery_components with options
-        s[DiscoveryKeys.OPTIONS] = ["Off", "On", ""]
+        s["options"] = ["Off", "On", ""]
         comps = s.get_discovery_components()
         # translate mock: _t("ConcreteSensor.options.0", "Off") -> "Off"
-        assert comps["sigen_id"][DiscoveryKeys.OPTIONS] == ["Off", "On"]
+        assert comps["sigen_id"]["options"] == ["Off", "On"]
 
         # 529-536: _get_option
         assert s._get_option(0) == "Off"
@@ -617,7 +617,7 @@ class TestPhase4MQTT:
 
     def test_state2raw_extended(self, mock_config):
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=2.0, precision=0)
-        s[DiscoveryKeys.OPTIONS] = ["Off", "On"]
+        s["options"] = ["Off", "On"]
 
         assert s.state2raw(None) is None
 
@@ -1093,7 +1093,7 @@ class TestCoverageGap:
         assert s._raw2state(123.456) == 123.5
 
         # 929-931: options
-        s[DiscoveryKeys.OPTIONS] = ["Off", "On"]
+        s["options"] = ["Off", "On"]
         assert s._raw2state(0) == "Off"  # translates Off -> Off
 
     @pytest.mark.asyncio

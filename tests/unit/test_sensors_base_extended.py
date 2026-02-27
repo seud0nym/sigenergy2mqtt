@@ -749,7 +749,7 @@ class TestState2Raw:
                 precision=None,
                 protocol_version=Protocol.V2_4,
             )
-        s[DiscoveryKeys.OPTIONS] = options
+        s["options"] = options
         return s
 
     def test_state2raw_none(self):
@@ -1398,13 +1398,13 @@ class TestGetDiscoveryComponents:
                 precision=None,
                 protocol_version=Protocol.V2_4,
             )
-        s[DiscoveryKeys.OPTIONS] = ["Option A", "Option B", ""]  # empty string should be filtered
+        s["options"] = ["Option A", "Option B", ""]  # empty string should be filtered
         components = s.get_discovery_components()
         sensor_cfg = components[s.unique_id]
         assert "options" in sensor_cfg
         # Empty option filtered out
-        assert "" not in sensor_cfg[DiscoveryKeys.OPTIONS]
-        assert len(sensor_cfg[DiscoveryKeys.OPTIONS]) == 2
+        assert "" not in sensor_cfg["options"]
+        assert len(sensor_cfg["options"]) == 2
 
 
 # ─────────────────────────────────────────────────────────────────────────────

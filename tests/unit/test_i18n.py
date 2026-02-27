@@ -149,11 +149,11 @@ def test_options_translation():
     class RunningStateSensor(MockSensor):
         def __init__(self):
             super().__init__()
-            self[DiscoveryKeys.OPTIONS] = ["Standby"]
+            self["options"] = ["Standby"]
 
     sensor = RunningStateSensor()
     discovery = sensor.get_discovery_components()
-    assert discovery[sensor.unique_id][DiscoveryKeys.OPTIONS][0] == "Veille"
+    assert discovery[sensor.unique_id]["options"][0] == "Veille"
 
 
 def test_attributes_translation():

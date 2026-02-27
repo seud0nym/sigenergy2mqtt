@@ -1,6 +1,4 @@
 import asyncio
-import os
-import time
 from unittest.mock import Mock
 
 import pytest
