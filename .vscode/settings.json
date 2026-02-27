@@ -65,7 +65,7 @@
         "modbus",
         "modbusregisterdefinitions",
         "Mosquitto",
-        "MPTT",
+        "MPPT",
         "mqtt",
         "OVGR",
         "PACKBCUCount",
@@ -125,5 +125,13 @@
         }
     },
     "python.languageServer": "None",
-    "basedpyright.analysis.diagnosticMode": "workspace"
+    "basedpyright.analysis.diagnosticMode": "workspace",
+    "basedpyright.analysis.inlayHints.callArgumentNamesMatching": true,
+    "basedpyright.analysis.typeCheckingMode": "strict",
+    "evenBetterToml.formatter.allowedBlankLines": 1,
+    "evenBetterToml.formatter.columnWidth": 80,
+    "evenBetterToml.formatter.reorderKeys": true,
+    "evenBetterToml.formatter.reorderInlineTables": true,
+    "evenBetterToml.formatter.reorderArrays": true,
+    "evenBetterToml.formatter.arrayAutoExpand": true,
 }

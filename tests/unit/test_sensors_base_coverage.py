@@ -5,12 +5,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     DerivedSensor,
-    InputType,
     ModbusLockFactory,
     ModbusSensorMixin,
     NumericSensor,
@@ -93,7 +92,7 @@ class TestBaseCoverage:
     def test_apply_sensor_overrides_regex(self, mock_config):
         mock_config.sensor_overrides = {"Concr.*": {"gain": 10.0, "precision": 3}}
         sensor = ConcreteSensor(
-            name="Test", unique_id="sigen_test", object_id="sigen_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
+            name="Test", unique_id="sigen_test", object_id="sigen_test", unit=UnitOfPower.WATT, device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
         )
         sensor.apply_sensor_overrides(None)
         assert sensor.gain == 10.0
@@ -101,7 +100,7 @@ class TestBaseCoverage:
 
     def test_get_discovery_components_basic(self, mock_config):
         sensor = ConcreteSensor(
-            name="Test", unique_id="sigen_test", object_id="sigen_test", unit="W", device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
+            name="Test", unique_id="sigen_test", object_id="sigen_test", unit=UnitOfPower.WATT, device_class=None, state_class=None, icon="mdi:test", gain=1.0, precision=2, protocol_version=Protocol.V1_8
         )
         components = sensor.get_discovery_components()
         assert "sigen_test" in components
@@ -188,7 +187,7 @@ class TestBaseCoverage:
         with patch.object(NumericSensor, "_update_internal_state", new_callable=AsyncMock) as mock_update:
             mock_update.return_value = True
 
-            from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+            from sigenergy2mqtt.sensors.base import SanityCheckException
 
             with pytest.raises(SanityCheckException):
                 sensor.set_latest_state(150.0)
@@ -247,7 +246,7 @@ class TestModbusSensorMixinErrorHandling:
 class TestAccumulationSensorPersistence:
     @pytest.mark.asyncio
     async def test_resettable_persistence_load_save(self, mock_config, tmp_path):
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, StateClass
 
         mock_config.persistent_state_path = tmp_path
 
@@ -284,7 +283,7 @@ class TestAccumulationSensorPersistence:
         assert sensor2._current_total == 123.45
 
     def test_resettable_discovery_components(self, mock_config):
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, StateClass
 
         source = MagicMock(spec=ReadOnlySensor)
         source.unique_id = "src"
@@ -315,8 +314,8 @@ class TestSpecializedSensors:
 
     @pytest.mark.asyncio
     async def test_numeric_sensor_logic(self, mock_config):
+        from sigenergy2mqtt.common import DeviceClass, StateClass
         from sigenergy2mqtt.sensors.base import NumericSensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         s = NumericSensor(
             None, "Num", "sigen_n", InputType.HOLDING, 0, 1, 30006, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4, minimum=0, maximum=100
@@ -397,8 +396,8 @@ class TestPhase2CoreSensor:
             ConcreteSensor(name="T7", unique_id="sigen_id7", object_id="sigen_obj7", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0, protocol_version="invalid")
 
     def test_properties(self, mock_config):
+        from sigenergy2mqtt.common import DeviceClass
         from sigenergy2mqtt.sensors.base import Protocol
-        from sigenergy2mqtt.sensors.const import DeviceClass
 
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit="V", device_class=DeviceClass.VOLTAGE, state_class=None, icon=None, gain=1.5, precision=2)
 
@@ -633,7 +632,7 @@ class TestPhase4MQTT:
 
     @pytest.mark.asyncio
     async def test_publish_extended(self, mock_config):
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+        from sigenergy2mqtt.sensors.base import SanityCheckException
 
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
         s.configure_mqtt_topics("dev1")
@@ -1208,13 +1207,13 @@ class TestCoverageGap:
         # 1813-1944: ResettableAccumulationSensor
         from unittest.mock import PropertyMock
 
-        from sigenergy2mqtt.sensors.base import InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, InputType, StateClass
+        from sigenergy2mqtt.sensors.base import ReadOnlySensor, ResettableAccumulationSensor, Sensor
 
         source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
         # Mock Path for persistence
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = True
@@ -1269,7 +1268,7 @@ class TestCoverageGap:
         # 1981: EnergyDailyAccumulationSensor
         from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor
 
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = False
@@ -1278,7 +1277,7 @@ class TestCoverageGap:
 
             # 2062: set_source_values day change
             # Mock time to simulate day change
-            with patch("sigenergy2mqtt.sensors.base.time.localtime") as mock_local:
+            with patch("sigenergy2mqtt.sensors.base.accumulation.time.localtime") as mock_local:
                 # Same day
                 mock_local.side_effect = [time.struct_time((2024, 1, 1, 10, 0, 0, 0, 0, 0)), time.struct_time((2024, 1, 1, 11, 0, 0, 0, 0, 0))]
                 daily.set_source_values(source, [(time.time() - 3600, 100), (time.time(), 110)])
@@ -1332,13 +1331,13 @@ class TestCoverageGap:
     async def test_accumulation_sensors_edge_cases(self, mock_config):
         from unittest.mock import PropertyMock
 
-        from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, InputType, ReadOnlySensor, ResettableAccumulationSensor, Sensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
+        from sigenergy2mqtt.common import DeviceClass, InputType, StateClass
+        from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ReadOnlySensor, ResettableAccumulationSensor, Sensor
 
         source = ReadOnlySensor("S", "sigen_s", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 60, "W", DeviceClass.POWER, None, None, 1.0, 0, Protocol.V1_8)
 
         # 1857-1858: ValueError when loading state
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = True
@@ -1399,7 +1398,7 @@ class TestCoverageGap:
                     assert mock_gel.called
 
         # 2013-2032: EnergyDailyAccumulationSensor loading midnight state
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = True
@@ -1425,7 +1424,7 @@ class TestCoverageGap:
                 assert mock_file.unlink.called
 
         # 2058-2060: publish method
-        with patch("sigenergy2mqtt.sensors.base.Path") as mock_path:
+        with patch("sigenergy2mqtt.sensors.base.accumulation.Path") as mock_path:
             mock_file = MagicMock()
             mock_path.return_value = mock_file
             mock_file.is_file.return_value = False
@@ -1434,8 +1433,8 @@ class TestCoverageGap:
                 assert mock_pub.called
 
     def test_pvpower_sensor(self, mock_config):
+        from sigenergy2mqtt.common import DeviceClass, StateClass
         from sigenergy2mqtt.sensors.base import DerivedSensor, PVPowerSensor
-        from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
         # Define a concrete sensor for testing the PVPowerSensor mixin
         class ConcretePVPower(PVPowerSensor, DerivedSensor):
@@ -1445,7 +1444,7 @@ class TestCoverageGap:
             name="PV",
             unique_id="sigen_pv",
             object_id="sigen_pv",
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",

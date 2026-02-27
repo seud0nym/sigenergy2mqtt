@@ -4,10 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.sensors.const import InputType
 
 
 @pytest.fixture

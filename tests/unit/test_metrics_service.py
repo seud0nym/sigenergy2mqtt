@@ -3,11 +3,10 @@ from unittest.mock import MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import PERCENTAGE, Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
-from sigenergy2mqtt.sensors.const import PERCENTAGE
 
 
 @pytest.fixture

@@ -1,11 +1,10 @@
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import InputType, Sensor
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_derived import InverterBatteryChargingPower, InverterBatteryDischargingPower, PVStringPower
 from sigenergy2mqtt.sensors.inverter_read_only import ChargeDischargePower, InverterFirmwareVersion, InverterModel, PVCurrentSensor, PVVoltageSensor
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterActivePowerPercentageAdjustment, InverterStatus
@@ -15,9 +14,6 @@ from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, Inverter
 def clear_sensor_registry():
     with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
         yield
-
-
-from sigenergy2mqtt.config import Config, _swap_active_config
 
 
 @pytest.fixture
@@ -104,22 +100,22 @@ class TestInverterDerived:
         v = PVVoltageSensor(0, 1, 31000, 1, Protocol.V1_8)
         c = PVCurrentSensor(0, 1, 31001, 1, Protocol.V1_8)
 
-        p = PVStringPower(0, 1, 1, Protocol.V1_8, v, c)
+        p = PVStringPower(0, 1, 1, v, c)
 
         # Set some values
         v.set_state(4000)  # 400.0V (gain=10)
         c.set_state(100)  # 1.0A (gain=100)
 
         p.set_source_values(v, v._states)
-        assert p.voltage == 400.0
-        assert p.current is None
+        assert p.volts.value == 400.0
+        assert p.amperes.value is None
 
         p.set_source_values(c, c._states)
-        assert p.current == 1.0
+        assert p.amperes.value == 1.0
         assert p._states[-1][1] == 400.0  # 400.0 * 1.0
 
         # Test publish clearing
-        with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+        with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
             await p.publish(MagicMock(), MagicMock())
-            assert p.voltage is None
-            assert p.current is None
+            assert p.volts.value is None
+            assert p.amperes.value is None

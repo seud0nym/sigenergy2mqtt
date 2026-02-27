@@ -3,25 +3,34 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Mock circular dependencies before importing sensors.base
-mock_types = MagicMock()
+from sigenergy2mqtt.common import UnitOfPower
 
 
-class MockHybridInverter:
-    pass
+# Fixtures for mocking circular dependencies
+@pytest.fixture(scope="module", autouse=True)
+def mock_modules():
+    # Mock circular dependencies before importing sensors.base
+    mock_types = MagicMock()
+
+    class MockHybridInverter:
+        pass
+
+    class MockPVInverter:
+        pass
+
+    mock_types.HybridInverter = MockHybridInverter
+    mock_types.PVInverter = MockPVInverter
+
+    with patch.dict(sys.modules, {"sigenergy2mqtt.common.types": mock_types}):
+        yield
 
 
-class MockPVInverter:
-    pass
-
-
-mock_types.HybridInverter = MockHybridInverter
-mock_types.PVInverter = MockPVInverter
-sys.modules["sigenergy2mqtt.common.types"] = mock_types
-
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import (  # noqa: E402
+    DeviceClass,
+    Protocol,  # noqa: E402
+    StateClass,
+)
 from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
 
 
 # Concrete sensor for testing
@@ -32,7 +41,7 @@ class MockSensor(Sensor):
                 name="Test MQTT Sensor",
                 unique_id="sigenergy_mqtt_test",
                 object_id="sigenergy_mqtt_test",
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:power",

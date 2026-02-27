@@ -1,14 +1,14 @@
 import json
 from typing import cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.common import InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmSensor, EnergyDailyAccumulationSensor, ReadableSensorMixin, Sensor, TimestampSensor
-from sigenergy2mqtt.sensors.const import InputType
 
 SUPPORTED_DISCOVERY_KEYS = {
     "act_t",
@@ -573,7 +573,9 @@ def assert_keys_valid(data, allowed_keys, context=""):
 
 class DummySensor(ReadableSensorMixin):
     def __init__(self, name, unique_id, address):
-        super().__init__(name=name, unique_id=unique_id, object_id=unique_id, unit="W", device_class="power", state_class="measurement", icon="mdi:flash", gain=1.0, precision=2, scan_interval=60)
+        super().__init__(
+            name=name, unique_id=unique_id, object_id=unique_id, unit=UnitOfPower.WATT, device_class="power", state_class=StateClass.MEASUREMENT, icon="mdi:flash", gain=1.0, precision=2, scan_interval=60
+        )
         self.address = address
         self.count = 1
         self.device_address = 1
@@ -591,9 +593,6 @@ class DummySensor(ReadableSensorMixin):
         self["state_topic"] = f"state/{device_id}/{self.unique_id}"
         self["json_attributes_topic"] = f"state/{device_id}/{self.unique_id}/attr"
         return self["state_topic"]
-
-
-from sigenergy2mqtt.config import Config, _swap_active_config
 
 
 @pytest.fixture

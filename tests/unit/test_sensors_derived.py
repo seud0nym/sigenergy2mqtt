@@ -4,18 +4,30 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# Mock Metrics
-mock_metrics = MagicMock()
-mock_metrics.modbus_read = AsyncMock()
-mock_metrics.modbus_write = AsyncMock()
-sys.modules["sigenergy2mqtt.metrics.metrics"] = mock_metrics
 
-# Mock DeviceRegistry
-mock_registry = MagicMock()
-sys.modules["sigenergy2mqtt.devices"] = mock_registry
+# Fixtures for mocking to avoid background thread and registry issues
+@pytest.fixture(scope="module", autouse=True)
+def mock_modules():
+    # Mock Metrics
+    mock_metrics = MagicMock()
+    mock_metrics.modbus_read = AsyncMock()
+    mock_metrics.modbus_write = AsyncMock()
+
+    # Mock DeviceRegistry
+    mock_registry = MagicMock()
+
+    with patch.dict(
+        sys.modules,
+        {
+            "sigenergy2mqtt.metrics.metrics": mock_metrics,
+            "sigenergy2mqtt.devices": mock_registry,
+        },
+    ):
+        yield
+
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol  # noqa: E402
-from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config import Config, _swap_active_config  # noqa: E402
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_derived import (  # noqa: E402
     BatteryChargingPower,

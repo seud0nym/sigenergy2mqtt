@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol, RegisterAccess
+from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -15,7 +15,6 @@ from sigenergy2mqtt.sensors.base import (
     Sensor,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers / Fixtures
@@ -43,7 +42,7 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
                 name=name,
                 unique_id=uid,
                 object_id=oid,
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:solar-power",
@@ -75,7 +74,7 @@ class TestDebugLoggingBranches:
         s = _make_sensor(uid_suffix="pub_dbg", debug=True)
         assert s.publishable is True
         # Setting same value triggers the debug branch for "unchanged"
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             s.publishable = True  # No change → debug branch
             mock_log.debug.assert_called()
 
@@ -83,21 +82,21 @@ class TestDebugLoggingBranches:
         """Setting publish_raw to same value with debug_logging=True."""
         s = _make_sensor(uid_suffix="raw_dbg", debug=True)
         assert s.publish_raw is False
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             s.publish_raw = False  # unchanged → debug branch
             mock_log.debug.assert_called()
 
     def test_publishable_setter_changed_with_debug(self):
         """Setting publishable to different value with debug_logging=True."""
         s = _make_sensor(uid_suffix="pub_chg_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             s.publishable = False
             mock_log.debug.assert_called()
 
     def test_apply_gain_and_precision_none_with_debug(self):
         """_apply_gain_and_precision with None and debug_logging=True."""
         s = _make_sensor(uid_suffix="gap_none_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             result = s._apply_gain_and_precision(None)
             assert result is None
             mock_log.debug.assert_called()
@@ -105,7 +104,7 @@ class TestDebugLoggingBranches:
     def test_apply_gain_and_precision_float_with_debug(self):
         """_apply_gain_and_precision with float and debug_logging=True."""
         s = _make_sensor(uid_suffix="gap_float_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             result = s._apply_gain_and_precision(100.0)
             assert result == 100.0
             mock_log.debug.assert_called()
@@ -125,7 +124,7 @@ class TestApplySensorOverrides:
                 name="Override Test",
                 unique_id=f"sigen_{suffix}",
                 object_id=f"sigen_{suffix}",
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",
@@ -207,7 +206,7 @@ class TestApplySensorOverrides:
                 name="ReadOnly Test",
                 unique_id="sigen_ro_reg",
                 object_id="sigen_ro_reg",
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",
@@ -232,7 +231,7 @@ class TestApplySensorOverrides:
                 name="RemoteEMS",
                 unique_id="sigen_rems",
                 object_id="sigen_rems",
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",
@@ -271,7 +270,7 @@ class TestPublishMethod:
         mqtt = _mqtt_mock()
         cfg = Config()
         with _swap_active_config(cfg):
-            with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+            with patch("sigenergy2mqtt.sensors.base.sensor.logging"):
                 published = await s.publish(mqtt, None)
         assert published is False
 
@@ -357,7 +356,7 @@ class TestPublishMethod:
         with (
             patch.object(s, "_update_internal_state", side_effect=_update),
             _swap_active_config(cfg),
-            patch("sigenergy2mqtt.sensors.base.logging") as mock_log,
+            patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log,
         ):
             await s.publish(mqtt, modbus)
             await s.publish(mqtt, modbus)
@@ -373,7 +372,7 @@ class TestPublishMethod:
         s._max_failures = 10
         s._next_retry = None
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             published = await s.publish(mqtt, None)
         assert published is False
         mock_log.debug.assert_called()  # hits the elif debug branch
@@ -463,7 +462,7 @@ class TestPublishAttributes:
         """clean=True with debug_logging=True covers debug branch."""
         s = self._sensor_with_attrs("pa_clean_dbg", debug=True)
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             s.publish_attributes(mqtt, clean=True)
         mock_log.debug.assert_called()
 
@@ -550,7 +549,7 @@ class TestConfigureMqttTopics:
         cfg.home_assistant.discovery_prefix = "homeassistant"
         cfg.home_assistant.enabled_by_default = False
         with _swap_active_config(cfg):
-            with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+            with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
                 s.configure_mqtt_topics("test_device")
         mock_log.debug.assert_called()
 
@@ -717,7 +716,7 @@ class TestGetStateRepublish:
         """republish debug branch."""
         s = _make_sensor(uid_suffix="gs_repub_dbg", debug=True)
         s._states.append((time.time(), 42.0))
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
             await s.get_state(republish=True)
         mock_log.debug.assert_called()
 
@@ -797,7 +796,7 @@ class TestCheckRegisterResponse:
     def _make_readonly_sensor(self, suffix):
         """Create a ReadOnlySensor instance for testing _check_register_response."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.const import InputType
+            from sigenergy2mqtt.common import InputType
 
             s = ReadOnlySensor(
                 name="RO Test",
@@ -809,7 +808,7 @@ class TestCheckRegisterResponse:
                 count=1,
                 data_type=ModbusDataType.UINT16,
                 scan_interval=10,
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",
@@ -888,7 +887,7 @@ class TestCheckRegisterResponse:
         rr = MagicMock()
         rr.isError.return_value = True
         rr.exception_code = 2
-        with patch("sigenergy2mqtt.sensors.base.logging") as mock_log, pytest.raises(Exception):
+        with patch("sigenergy2mqtt.sensors.base.mixins.logging") as mock_log, pytest.raises(Exception):
             s._check_register_response(rr, "read_input_registers")
         mock_log.debug.assert_called()
 
@@ -901,7 +900,7 @@ class TestCheckRegisterResponse:
 class TestReadOnlySensorUpdateInternalState:
     def _make_ro(self, suffix):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.const import InputType
+            from sigenergy2mqtt.common import InputType
 
             return ReadOnlySensor(
                 name="RO",
@@ -913,7 +912,7 @@ class TestReadOnlySensorUpdateInternalState:
                 count=1,
                 data_type=ModbusDataType.UINT16,
                 scan_interval=10,
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",
@@ -933,7 +932,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics.modbus_read = AsyncMock()
         mock_metrics.modbus_read_error = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics):
+        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics):
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is False
 
@@ -947,7 +946,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics):
+        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics):
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is False
 
@@ -955,7 +954,7 @@ class TestReadOnlySensorUpdateInternalState:
     async def test_update_internal_state_input_registers(self):
         """INPUT type uses read_input_registers."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.const import InputType
+            from sigenergy2mqtt.common import InputType
 
             s = ReadOnlySensor(
                 name="RO Input",
@@ -967,7 +966,7 @@ class TestReadOnlySensorUpdateInternalState:
                 count=1,
                 data_type=ModbusDataType.UINT16,
                 scan_interval=10,
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",
@@ -988,7 +987,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics):
+        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics):
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is True
         modbus.read_input_registers.assert_called_once()
@@ -1004,7 +1003,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics.modbus_read = AsyncMock()
         mock_metrics.modbus_read_error = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
+        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
             await s._update_internal_state(modbus_client=modbus)
 
         mock_metrics.modbus_read_error.assert_awaited_once()
@@ -1026,7 +1025,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.readable.logging") as mock_log:
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is True
         mock_log.debug.assert_called()
@@ -1170,8 +1169,8 @@ class TestSetLatestState:
 
 class TestReservedSensor:
     def _make_reserved(self, suffix):
+        from sigenergy2mqtt.common import InputType
         from sigenergy2mqtt.sensors.base import ReservedSensor
-        from sigenergy2mqtt.sensors.const import InputType
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
@@ -1228,7 +1227,7 @@ class TestSanityCheckFailureIncrement:
     @pytest.mark.asyncio
     async def test_sanity_check_exception_not_counted_when_config_disabled(self):
         """SanityCheckException doesn't increment failures when sanity_check_failures_increment=False."""
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+        from sigenergy2mqtt.sensors.base import SanityCheckException
 
         s = _make_sensor(uid_suffix="sc_nocount")
         s["state_topic"] = "test/state"
@@ -1253,7 +1252,7 @@ class TestSanityCheckFailureIncrement:
     @pytest.mark.asyncio
     async def test_sanity_check_exception_counted_when_config_enabled(self):
         """SanityCheckException DOES increment failures when sanity_check_failures_increment=True."""
-        from sigenergy2mqtt.sensors.sanity_check import SanityCheckException
+        from sigenergy2mqtt.sensors.base import SanityCheckException
 
         s = _make_sensor(uid_suffix="sc_count")
         s["state_topic"] = "test/state"
@@ -1442,7 +1441,7 @@ class TestGainProperty:
 class TestReadableSensorScanIntervalOverride:
     def test_scan_interval_override_applied(self):
         """scan-interval override is applied during __init__."""
-        from sigenergy2mqtt.sensors.const import InputType
+        from sigenergy2mqtt.common import InputType
 
         with (
             patch.dict(Sensor._used_unique_ids, clear=True),
@@ -1462,7 +1461,7 @@ class TestReadableSensorScanIntervalOverride:
                 count=1,
                 data_type=ModbusDataType.UINT16,
                 scan_interval=10,
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:flash",

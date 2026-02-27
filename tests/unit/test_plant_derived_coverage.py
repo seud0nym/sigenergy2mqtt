@@ -51,7 +51,7 @@ class TestBasicDerivedSensorsCoverage:
             bp.state_class = "measurement"
             bp.protocol_version = Protocol.V2_4
             sensor = BatteryChargingPower(0, bp)
-            assert "BatteryPower &gt; 0" in str(sensor.get_attributes()["source"])
+            assert "BatteryPower > 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -66,7 +66,7 @@ class TestBasicDerivedSensorsCoverage:
             bp.state_class = "measurement"
             bp.protocol_version = Protocol.V2_4
             sensor = BatteryDischargingPower(0, bp)
-            assert "BatteryPower &lt; 0" in str(sensor.get_attributes()["source"])
+            assert "BatteryPower < 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -82,7 +82,7 @@ class TestBasicDerivedSensorsCoverage:
             gp.precision = 2
             gp.protocol_version = Protocol.V2_4
             sensor = GridSensorExportPower(0, gp)
-            assert "GridSensorActivePower &lt; 0" in str(sensor.get_attributes()["source"])
+            assert "GridSensorActivePower < 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -98,7 +98,7 @@ class TestBasicDerivedSensorsCoverage:
             gp.precision = 2
             gp.protocol_version = Protocol.V2_4
             sensor = GridSensorImportPower(0, gp)
-            assert "GridSensorActivePower &gt; 0" in str(sensor.get_attributes()["source"])
+            assert "GridSensorActivePower > 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
             sensor.set_source_values(MagicMock(spec=Sensor), [])
@@ -375,6 +375,7 @@ class TestTotalPVPowerCoverage:
 
         sensor = TotalPVPower(0)
         sensor.debug_logging = True
+        sensor.register_mqtt_sources()
         topics = sensor.observable_topics()
         assert "smart_topic" in topics
         assert "Added Smart-Port MQTT topic smart_topic" in caplog.text

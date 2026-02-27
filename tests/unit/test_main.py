@@ -5,12 +5,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
 from sigenergy2mqtt.sensors.plant_read_only import SystemTimeZone
 
@@ -117,7 +116,9 @@ class TestGetState:
     async def test_sensor_get_state_republish(self, clean_config):
         """Test get_state with republish=True."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = ConcreteSensor(name="Test", unique_id="sigen_u1", object_id="sigen_o1", unit="W", device_class=DeviceClass.POWER, state_class=StateClass.MEASUREMENT, icon="mdi:test", gain=1.0, precision=2)
+            sensor = ConcreteSensor(
+                name="Test", unique_id="sigen_u1", object_id="sigen_o1", unit=UnitOfPower.WATT, device_class=DeviceClass.POWER, state_class=StateClass.MEASUREMENT, icon="mdi:test", gain=1.0, precision=2
+            )
             await sensor.get_state(value=10.1234)
             assert sensor.latest_raw_state == 10.1234
             assert await sensor.get_state(republish=True) == 10.12

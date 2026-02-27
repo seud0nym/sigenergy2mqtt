@@ -6,17 +6,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Imported here (no hacks needed for mqtt any more)
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import InputType, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.base import (
-    InputType,
-    NumericSensor,
-    SelectSensor,
-    Sensor,
-    SwitchSensor,
-    WriteOnlySensor,
-)
+from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor
 
 
 @pytest.fixture(autouse=True)
@@ -179,9 +172,7 @@ class TestNumericSensorWritable:
     @pytest.mark.asyncio
     async def test_numeric_sensor_set_value_with_gain(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(
-                None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30100, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 10.0, 0, Protocol.V2_4, minimum=0, maximum=1000
-            )
+            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30100, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 10.0, 0, Protocol.V2_4, minimum=0, maximum=1000)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -340,7 +331,7 @@ class TestSelectSensorWritable:
                 assert await sensor.get_state() == "Unknown Mode: 1"
 
             # Translated option matching path in _get_option_index
-            with patch("sigenergy2mqtt.sensors.base._t", side_effect=lambda key, default, debugging=False: f"T:{default}"):
+            with patch("sigenergy2mqtt.sensors.base.sensor._t", side_effect=lambda key, default, debugging=False: f"T:{default}"):
                 mock_rr = MagicMock()
                 mock_rr.isError.return_value = False
                 mock_modbus.write_register.return_value = mock_rr

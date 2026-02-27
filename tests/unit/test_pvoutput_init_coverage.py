@@ -2,11 +2,11 @@ import logging
 import os
 from unittest.mock import MagicMock, patch
 
+from sigenergy2mqtt.common import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, const
 from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services
-from sigenergy2mqtt.sensors.const import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
 from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
 from sigenergy2mqtt.sensors.plant_read_only import (

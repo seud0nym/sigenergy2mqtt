@@ -2,11 +2,10 @@ import logging
 import time
 from typing import Any, cast
 
-from sigenergy2mqtt.common import Protocol, ProtocolApplies
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, Protocol, ProtocolApplies
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
-from sigenergy2mqtt.sensors.const import PERCENTAGE, DeviceClass
 
 from .metrics import Metrics
 

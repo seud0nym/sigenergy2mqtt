@@ -1,9 +1,7 @@
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, Protocol, PVInverter, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-
-from .base import DeviceClass, InputType, NumericSensor, ReservedSensor, WriteOnlySensor
-from .const import PERCENTAGE, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.sensors.base import NumericSensor, ReservedSensor, ScanInterval, WriteOnlySensor
 
 # 5.4 Hybrid inverter parameter setting address definition (holding register)
 
@@ -36,7 +34,7 @@ class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reser
             address=40501,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -62,8 +60,8 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
             name_on="Start",
             icon_off="mdi:stop",
             icon_on="mdi:play",
-            value_off=1,
-            value_on=0,
+            value_off=1,  # Values are inverted as per protocol to map to Home Assistant buttons
+            value_on=0,  # Values are inverted as per protocol to map to Home Assistant buttons
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -75,7 +73,6 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
 class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
-            availability_control_sensor=None,
             name="Remote EMS Dispatch",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_remote_ems_dispatch",
             input_type=InputType.HOLDING,
@@ -84,7 +81,7 @@ class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Ma
             address=41500,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -107,7 +104,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             address=41501,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -116,7 +113,6 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_5,
         )
-        self.sanity_check.delta = False
 
 
 class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
@@ -131,7 +127,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             address=41503,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -140,7 +136,6 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_5,
         )
-        self.sanity_check.delta = False
 
 
 class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
@@ -155,7 +150,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             address=41505,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -166,7 +161,6 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             minimum=-100.00,
             maximum=100.00,
         )
-        self.sanity_check.delta = False
 
 
 class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
@@ -181,7 +175,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             address=41506,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -192,7 +186,6 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             minimum=-60.0,
             maximum=60.0,
         )
-        self.sanity_check.delta = False
 
 
 class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
@@ -207,7 +200,7 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             address=41507,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -218,4 +211,3 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             minimum=-1.0,
             maximum=1.0,
         )
-        self.sanity_check.delta = False

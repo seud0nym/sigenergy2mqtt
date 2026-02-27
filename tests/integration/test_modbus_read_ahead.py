@@ -3,8 +3,8 @@ import logging
 
 import pytest
 
+from sigenergy2mqtt.common import InputType
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.const import InputType
 from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
 
 

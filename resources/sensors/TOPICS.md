@@ -223,7 +223,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_0_001_31002'>Grid Frequency</a><br>
 <a href='#sigen_0_001_31037'>Insulation Resistance</a><br>
 <a href='#sigen_0_inverter_1_lifetime_pv_energy'>Lifetime Production</a><br>
-<a href='#sigen_0_001_31026'>MPTT Count</a><br>
+<a href='#sigen_0_001_31026'>MPPT Count</a><br>
 <a href='#sigen_0_001_30546'>Max Absorption Power</a><br>
 <a href='#sigen_0_001_30544'>Max Active Power</a><br>
 <a href='#sigen_0_001_30579'>Max Active Power Adjustment</a><br>
@@ -2919,13 +2919,13 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
 </table>
-<h5><a id='sigen_0_001_31026'>MPTT Count</a></h5>
+<h5><a id='sigen_0_001_31026'>MPPT Count</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>MPTTCount</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>MPPTCount</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_mptt_count</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_mptt_count/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_mptt_count/state</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_mppt_count</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_mppt_count/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_mppt_count/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 31026</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>

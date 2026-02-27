@@ -2,10 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass
 
 
 class ConcreteSensor(Sensor):
@@ -28,7 +27,7 @@ class TestSensorBase:
                     name="Test Sensor",
                     unique_id="sigen_test_unique_id",
                     object_id="sigen_test_object_id",
-                    unit="W",
+                    unit=UnitOfPower.WATT,
                     device_class=DeviceClass.POWER,
                     state_class=StateClass.MEASUREMENT,
                     icon="mdi:solar-power",
@@ -252,3 +251,47 @@ class TestSensorLogic:
                 s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, Protocol.V2_4)
                 assert s.publishable is True
                 assert s.publish_raw is False
+
+
+class TestScanInterval:
+    def test_scan_interval_defaults(self):
+        from sigenergy2mqtt.common import ScanIntervalDefault
+        from sigenergy2mqtt.config import Config, _swap_active_config
+        from sigenergy2mqtt.sensors.base.scan_interval import ScanInterval
+
+        cfg = Config()
+        cfg.modbus = []  # No plants configured
+
+        with _swap_active_config(cfg):
+            assert ScanInterval.realtime(0) == ScanIntervalDefault.REALTIME.value
+            assert ScanInterval.high(0) == ScanIntervalDefault.HIGH.value
+            assert ScanInterval.medium(0) == ScanIntervalDefault.MEDIUM.value
+            assert ScanInterval.low(0) == ScanIntervalDefault.LOW.value
+
+            # Test invalid plant index
+            assert ScanInterval.realtime(1) == ScanIntervalDefault.REALTIME.value
+
+    def test_scan_interval_from_config(self):
+        from sigenergy2mqtt.config import Config, _swap_active_config
+        from sigenergy2mqtt.config.models.modbus import ModbusConfig
+        from sigenergy2mqtt.sensors.base.scan_interval import ScanInterval
+
+        cfg = Config()
+        m1 = ModbusConfig(host="1.1.1.1", port=502)
+        m1.scan_interval.realtime = 1
+        m1.scan_interval.high = 2
+        m1.scan_interval.medium = 3
+        m1.scan_interval.low = 4
+
+        cfg.modbus = [m1]
+
+        with _swap_active_config(cfg):
+            assert ScanInterval.realtime(0) == 1
+            assert ScanInterval.high(0) == 2
+            assert ScanInterval.medium(0) == 3
+            assert ScanInterval.low(0) == 4
+
+            # Out of range plant index
+            from sigenergy2mqtt.common import ScanIntervalDefault
+
+            assert ScanInterval.realtime(1) == ScanIntervalDefault.REALTIME.value

@@ -6,10 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, call, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.common import InputType, Protocol
+from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
-from sigenergy2mqtt.sensors.const import InputType
 
 # Capture original sleep
 real_sleep = asyncio.sleep

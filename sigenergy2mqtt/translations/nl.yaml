@@ -1040,7 +1040,7 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: '{phase} Lijnspanning'
-  MPTTCount:
+  MPPTCount:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}

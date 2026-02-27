@@ -1,9 +1,8 @@
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfElectricCurrent
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 
-from .base import DeviceClass, InputType, NumericSensor, StateClass, WriteOnlySensor
-from .const import UnitOfElectricCurrent
+from .base import NumericSensor, ScanInterval, WriteOnlySensor
 
 # 5.6 AC-Charger parameter setting address definition (holding register)
 
@@ -23,8 +22,8 @@ class ACChargerStatus(WriteOnlySensor):
             name_on="Start",
             icon_off="mdi:stop",
             icon_on="mdi:play",
-            value_off=1,
-            value_on=0,
+            value_off=1,  # Values are inverted as per protocol to map to Home Assistant buttons
+            value_on=0,  # Values are inverted as per protocol to map to Home Assistant buttons
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -53,7 +52,7 @@ class ACChargerOutputCurrent(NumericSensor):
             address=42001,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
             state_class=StateClass.MEASUREMENT,

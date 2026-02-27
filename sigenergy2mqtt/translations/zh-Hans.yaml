@@ -1040,7 +1040,7 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{phase} 线电压'
-  MPTTCount:
+  MPPTCount:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}

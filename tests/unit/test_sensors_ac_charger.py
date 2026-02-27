@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import (
@@ -10,16 +9,11 @@ from sigenergy2mqtt.sensors.ac_charger_read_only import (
     ACChargerAlarm2,
     ACChargerAlarm3,
     ACChargerAlarms,
-    ACChargerChargingPower,
-    ACChargerInputBreaker,
-    ACChargerRatedCurrent,
-    ACChargerRatedPower,
-    ACChargerRatedVoltage,
     ACChargerRunningState,
     ACChargerTotalEnergyConsumed,
 )
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerOutputCurrent, ACChargerStatus
-from sigenergy2mqtt.sensors.base import InputType, Sensor
+from sigenergy2mqtt.sensors.base import Sensor
 
 
 @pytest.fixture(autouse=True)

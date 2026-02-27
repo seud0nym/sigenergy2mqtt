@@ -6,7 +6,7 @@ import pytest
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
 
 

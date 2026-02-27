@@ -1,13 +1,13 @@
 import pytest
 
+from sigenergy2mqtt.common import StateClass, UnitOfPower
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.const import StateClass
-from sigenergy2mqtt.sensors.sanity_check import SanityCheck, SanityCheckException
+from sigenergy2mqtt.sensors.base import SanityCheck, SanityCheckException
 
 
 class TestSanityCheck:
     def test_init_default(self):
-        sc = SanityCheck(unit="W", state_class=None, data_type=ModbusClient.DATATYPE.UINT16)
+        sc = SanityCheck(unit=UnitOfPower.WATT, state_class=None, data_type=ModbusClient.DATATYPE.UINT16)
         assert sc.min_raw == 0
         assert sc.max_raw is not None  # Should be set based on UINT16
         assert sc.delta is False
@@ -18,7 +18,7 @@ class TestSanityCheck:
         assert sc.min_raw == 0
 
     def test_init_energy_device_class(self):
-        from sigenergy2mqtt.sensors.const import DeviceClass
+        from sigenergy2mqtt.common import DeviceClass
 
         sc = SanityCheck(unit="kWh", state_class=None, data_type=ModbusClient.DATATYPE.UINT32, device_class=DeviceClass.ENERGY)
         assert sc.delta is True
@@ -71,13 +71,13 @@ class TestSanityCheck:
         assert sc.max_raw == 18446744073709551615
 
     def test_init_percentage(self):
-        from sigenergy2mqtt.sensors.const import PERCENTAGE
+        from sigenergy2mqtt.common import PERCENTAGE
 
         sc = SanityCheck(unit=PERCENTAGE, gain=10)
         assert sc.max_raw == 1000
 
     def test_repr(self):
-        from sigenergy2mqtt.sensors.const import PERCENTAGE
+        from sigenergy2mqtt.common import PERCENTAGE
 
         sc = SanityCheck(min_raw=0, max_raw=100, unit=PERCENTAGE)
         r = repr(sc)

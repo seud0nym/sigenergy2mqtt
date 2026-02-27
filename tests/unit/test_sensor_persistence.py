@@ -7,7 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     EnergyDailyAccumulationSensor,
@@ -15,7 +16,6 @@ from sigenergy2mqtt.sensors.base import (
     ResettableAccumulationSensor,
     Sensor,
 )
-from sigenergy2mqtt.sensors.const import InputType
 
 
 class MockSource(ReadOnlySensor):
@@ -31,9 +31,9 @@ class MockSource(ReadOnlySensor):
             data_type=ModbusDataType.UINT16,
             scan_interval=10,
             protocol_version=Protocol.V1_8,
-            unit="W",
+            unit=UnitOfPower.WATT,
             device_class="power",
-            state_class="measurement",
+            state_class=StateClass.MEASUREMENT,
             icon="mdi:flash",
             gain=1.0,
             precision=2,
@@ -43,9 +43,6 @@ class MockSource(ReadOnlySensor):
         now = time.time()
         self._states = [(now - 3600, 1000.0), (now, 1000.0)]
         self.latest_raw_state = 1000.0
-
-
-from sigenergy2mqtt.config import Config, _swap_active_config
 
 
 @pytest.fixture
@@ -81,7 +78,7 @@ async def test_accumulation_sensor_persistence(mock_config, tmp_path):
         data_type=ModbusDataType.UINT16,
         unit="Wh",
         device_class="energy",
-        state_class="total_increasing",
+        state_class=StateClass.TOTAL_INCREASING,
         icon="mdi:counter",
         gain=1.0,
         precision=2,
@@ -115,7 +112,7 @@ async def test_accumulation_sensor_persistence(mock_config, tmp_path):
         data_type=ModbusDataType.UINT16,
         unit="Wh",
         device_class="energy",
-        state_class="total_increasing",
+        state_class=StateClass.TOTAL_INCREASING,
         icon="mdi:counter",
         gain=1.0,
         precision=2,
@@ -210,7 +207,7 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
         data_type=ModbusDataType.UINT16,
         unit="Wh",
         device_class="energy",
-        state_class="total_increasing",
+        state_class=StateClass.TOTAL_INCREASING,
         icon="mdi:counter",
         gain=1.0,
         precision=2,

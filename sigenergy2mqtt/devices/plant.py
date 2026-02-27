@@ -198,7 +198,7 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(rw.ActivePowerRegulationGradient(plant_index))
 
         self._add_read_sensor(ro.CurrentControlCommandValue(plant_index))
-        self._add_read_sensor(ro.PlantAlarms(plant_index))
+        self._add_read_sensor(ro.PlantAlarms(plant_index, ro.Alarm6(plant_index), ro.Alarm7(plant_index)))
 
         plant_consumed_power = derived.PlantConsumedPower(plant_index, method=consumption_source)
         match plant_consumed_power.method:

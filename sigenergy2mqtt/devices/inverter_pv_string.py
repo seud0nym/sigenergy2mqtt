@@ -35,9 +35,9 @@ class PVString(ModbusDevice):
 
         voltage = PVVoltageSensor(plant_index, device_address, voltage_address, string_number, protocol_version)
         current = PVCurrentSensor(plant_index, device_address, current_address, string_number, protocol_version)
-        power = PVStringPower(plant_index, device_address, string_number, protocol_version, voltage, current)
-        lifetime_energy = PVStringLifetimeEnergy(plant_index, device_address, string_number, protocol_version, power)
-        daily_energy = PVStringDailyEnergy(plant_index, device_address, string_number, protocol_version, lifetime_energy)
+        power = PVStringPower(plant_index, device_address, string_number, voltage, current)
+        lifetime_energy = PVStringLifetimeEnergy(plant_index, device_address, string_number, power)
+        daily_energy = PVStringDailyEnergy(plant_index, device_address, string_number, lifetime_energy)
 
         self._add_read_sensor(voltage)
         self._add_read_sensor(current)

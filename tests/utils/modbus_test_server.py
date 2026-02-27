@@ -24,9 +24,8 @@ from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, DeviceClass
 from tests.utils import get_sensor_instances
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
@@ -184,7 +183,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         case _:
                             value = randint(0, 255)
                     value /= sensor.gain
-                if self._mqtt_client and sensor.address and source not in ("output_type", "pv_string_count", "mptt_count", "alarm_sensor", "power_factor"):
+                if self._mqtt_client and sensor.address and source not in ("output_type", "pv_string_count", "mppt_count", "alarm_sensor", "power_factor"):
                     if "state_topic" in sensor:
                         self._topics[sensor.state_topic] = sensor
                         self._mqtt_client.user_data_get().register(self._mqtt_client, sensor.state_topic, self._handle_mqtt_message)
@@ -319,7 +318,7 @@ async def run_async_server(
             device_address != sensor.device_address
             or (address is None or count is None or sensor.address != address + count)
             or input_type != sensor.input_type
-            or (group_index != -1 and (sum(s.count for s in groups[group_index]) + sensor.count) > MAX_MODBUS_REGISTERS_PER_REQUEST)
+            or (group_index != -1 and (sum(s.count for s in groups[group_index]) + sensor.count) > Constants.MAX_MODBUS_REGISTERS_PER_REQUEST)
         ):
             group_index = group_index + 1
             groups[group_index] = []
@@ -409,38 +408,36 @@ def on_message(client: mqtt.Client, userdata: CustomMqttHandler, message) -> Non
 
 
 async def async_helper() -> None:
-    _yaml = YAML(typ="safe", pure=True)
-    modbus_log_level: int = logging.INFO
-    with open("tests/utils/.modbus_test_server.yaml", "r") as f:
-        config = _yaml.load(f)
-        mqtt_log_level = logging.getLevelNamesMapping()[config.get("mqtt", {}).get("log-level", "INFO")]
-        mqtt_client = mqtt.Client(
-            CallbackAPIVersion.VERSION2,
-            client_id=f"sigenergy2mqtt_modbus_test_server_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))}",
-            userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level),
-        )
-        mqtt_client.username_pw_set(config.get("mqtt", {}).get("username"), config.get("mqtt", {}).get("password"))
-        mqtt_client.connect(config.get("mqtt", {}).get("broker", "localhost"), config.get("mqtt", {}).get("port", 1883), 60)
-        mqtt_client.on_disconnect = on_disconnect
-        mqtt_client.on_connect = on_connect
-        mqtt_client.on_message = on_message
-        mqtt_client.loop_start()
-        modbus_client = ModbusClient(config.get("modbus")[0].get("host"), port=config.get("modbus")[0].get("port", 502), timeout=1, retries=0)
-        modbus_log_level = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
-        protocol_version = config.get("modbus")[0].get("protocol-version", None)
-        registers_to_debug = config.get("modbus")[0].get("registers_to_debug", [])
-        if protocol_version:
-            protocol_version = Protocol(protocol_version)
+    kwargs = {}
+    try:
+        _yaml = YAML(typ="safe", pure=True)
+        with open(".debug_modbus_server.yaml", "r") as f:
+            config = _yaml.load(f)
+            mqtt_log_level = logging.getLevelNamesMapping()[config.get("mqtt", {}).get("log-level", "INFO")]
+            mqtt_client = mqtt.Client(
+                CallbackAPIVersion.VERSION2,
+                client_id=f"sigenergy2mqtt_modbus_test_server_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}",
+                userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level),
+            )
+            mqtt_client.username_pw_set(config.get("mqtt", {}).get("username", None), config.get("mqtt", {}).get("password", None))
+            mqtt_client.connect(config.get("mqtt", {}).get("broker", "localhost"), config.get("mqtt", {}).get("port", 1883), 60)
+            mqtt_client.on_disconnect = on_disconnect
+            mqtt_client.on_connect = on_connect
+            mqtt_client.on_message = on_message
+            mqtt_client.loop_start()
+            modbus_client = ModbusClient(config.get("modbus")[0].get("host"), port=config.get("modbus")[0].get("port", 502), timeout=1, retries=0)
+            kwargs["log_level"] = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
+            kwargs["registers_to_debug"] = config.get("modbus")[0].get("registers-to-debug", [])
+            kwargs["simulate_grid_outages"] = config.get("modbus")[0].get("simulate-grid-outages", False)
+            protocol_version = config.get("modbus")[0].get("protocol-version", None)
+            if protocol_version:
+                kwargs["protocol_version"] = Protocol(protocol_version)
+    except FileNotFoundError:
+        _logger.warning("No .debug_modbus_server.yaml file found, using default configuration...")
+        mqtt_client = None
+        modbus_client = None
 
-    await run_async_server(
-        mqtt_client,
-        modbus_client,
-        bool(config.get("home-assistant", {}).get("use-simplified-topics")),
-        protocol_version=protocol_version,
-        log_level=modbus_log_level,
-        registers_to_debug=registers_to_debug,
-        simulate_grid_outages=True,
-    )
+    await run_async_server(mqtt_client, modbus_client, bool(config.get("home-assistant", {}).get("use-simplified-topics", False)), **kwargs)
 
     mqtt_client.loop_stop()
     mqtt_client.disconnect()

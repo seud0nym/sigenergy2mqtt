@@ -23,8 +23,8 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/tests/utils/.debug.env",
-            "args": "--config=tests/utils/.debug.env.yaml",
+            "envFile": "${workspaceFolder}/.debug.env",
+            "args": "--config=.debug.env.yaml",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
@@ -38,7 +38,7 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml",
+            "args": "--config=.debug.yaml",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
@@ -66,7 +66,7 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-enabled --clean",
+            "args": "--config=.debug.yaml --log-level=DEBUG --hass-enabled --clean",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
@@ -80,8 +80,8 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/tests/utils/.debug.env",
-            "args": "--config=tests/utils/.debug.env.yaml --log-level=DEBUG --hass-enabled --clean",
+            "envFile": "${workspaceFolder}/.debug.env",
+            "args": "--config=.debug.env.yaml --log-level=DEBUG --hass-enabled --clean",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
@@ -95,7 +95,7 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-enabled --hass-discovery-only",
+            "args": "--config=.debug.yaml --log-level=DEBUG --hass-enabled --hass-discovery-only",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",

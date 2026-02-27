@@ -5,7 +5,7 @@ import threading
 from typing import Any, Awaitable
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices.device import Device
+from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.mqtt import mqtt_setup

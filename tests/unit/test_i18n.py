@@ -3,12 +3,11 @@ from unittest.mock import patch
 import pytest
 
 from sigenergy2mqtt import i18n
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.devices.device import Device
+from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmSensor, ReadOnlySensor, Sensor
-from sigenergy2mqtt.sensors.const import DeviceClass, InputType, StateClass
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +29,7 @@ class MockSensor(Sensor):
             name=name,
             unique_id="sigenergy_0_001_30000",
             object_id="sigenergy_test_sensor",
-            unit="kW",
+            unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:test",

@@ -9,11 +9,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.devices.device import Device, DeviceRegistry
+from sigenergy2mqtt.common import Constants, InputType, Protocol
+from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
-from sigenergy2mqtt.sensors.const import MAX_MODBUS_REGISTERS_PER_REQUEST, InputType
 
 
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
@@ -125,14 +124,14 @@ class TestCreateSensorScanGroups:
         assert len(modbus_groups) == 2
 
     def test_respects_max_registers(self, mock_config):
-        """Groups should be split when exceeding MAX_MODBUS_REGISTERS_PER_REQUEST."""
+        """Groups should be split when exceeding Constants.MAX_MODBUS_REGISTERS_PER_REQUEST."""
         dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
 
         # Create sensors that exceed the max register limit
         sensors = []
         address = 100
         total_count = 0
-        while total_count < MAX_MODBUS_REGISTERS_PER_REQUEST + 10:
+        while total_count < Constants.MAX_MODBUS_REGISTERS_PER_REQUEST + 10:
             s = DummyModbusSensor(f"s{address}", address=address, count=5, device_address=1, scan_interval=10)
             sensors.append(s)
             dev._add_read_sensor(cast(Sensor, s))
@@ -147,7 +146,7 @@ class TestCreateSensorScanGroups:
 
     def test_handles_reserved_sensors(self, mock_config):
         """Reserved sensors should not start or end a group."""
-        from sigenergy2mqtt.devices.device import ReservedSensor
+        from sigenergy2mqtt.sensors.base import ReservedSensor
 
         class DummyReservedSensor(ReservedSensor):
             def __init__(self, address: int):

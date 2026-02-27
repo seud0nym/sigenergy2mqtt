@@ -1040,7 +1040,7 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{phase} 線間電圧'
-  MPTTCount:
+  MPPTCount:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}

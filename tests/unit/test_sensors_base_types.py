@@ -4,32 +4,24 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient  # noqa: E402
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
-from sigenergy2mqtt.common import Protocol  # noqa: E402
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus.types import ModbusDataType
-from sigenergy2mqtt.sensors.base import (  # noqa: E402
-    EnergyDailyAccumulationSensor,
-    EnergyLifetimeAccumulationSensor,
-    InputType,
-    ModbusSensorMixin,
-    NumericSensor,
-    ReadOnlySensor,
-    SelectSensor,
-    Sensor,
-    TimestampSensor,
-)
-from sigenergy2mqtt.sensors.const import DeviceClass, StateClass  # noqa: E402
-
-# Mock Metrics and MetricsService to avoid background thread issues
-mock_metrics = MagicMock()
-mock_metrics.modbus_read = AsyncMock()
-mock_metrics.modbus_write = AsyncMock()
-sys.modules["sigenergy2mqtt.metrics.metrics"] = mock_metrics
+from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, ModbusSensorMixin, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
 
 
-from sigenergy2mqtt.config import _swap_active_config
+# Fixtures for mocking to avoid background thread issues
+@pytest.fixture(scope="module", autouse=True)
+def mock_modules():
+    # Mock Metrics and MetricsService to avoid background thread issues
+    mock_metrics = MagicMock()
+    mock_metrics.modbus_read = AsyncMock()
+    mock_metrics.modbus_write = AsyncMock()
+
+    with patch.dict(sys.modules, {"sigenergy2mqtt.metrics.metrics": mock_metrics}):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -103,7 +95,7 @@ class TestReadOnlySensor:
                 count=1,
                 data_type=ModbusClient.DATATYPE.UINT16,
                 scan_interval=10,
-                unit="W",
+                unit=UnitOfPower.WATT,
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.MEASUREMENT,
                 icon="mdi:power",

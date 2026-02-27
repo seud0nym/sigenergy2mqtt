@@ -3,12 +3,10 @@ from typing import cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, Protocol, PVInverter, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
-
-from .base import AvailabilityMixin, DeviceClass, InputType, NumericSensor, ReservedSensor, SelectSensor, SwitchSensor, WriteOnlySensor
-from .const import PERCENTAGE, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, NumericSensor, ReservedSensor, ScanInterval, SelectSensor, SwitchSensor, ThreePhaseAdjustmentTargetValue, WriteOnlySensor
 
 # 5.2 Plant parameter setting address definition (holding register)
 
@@ -19,7 +17,7 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
             name="Plant Power On/Off",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_status",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40000,
             protocol_version=Protocol.V1_8,
         )
@@ -38,11 +36,11 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40001,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -51,7 +49,6 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             precision=2,
             protocol_version=Protocol.V1_8,
         )
-        self.sanity_check.delta = False
 
 
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -62,11 +59,11 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_reactive_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40003,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -77,7 +74,6 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             minimum=-60.0,
             maximum=60.0,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -93,11 +89,11 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_percentage_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40005,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -108,7 +104,6 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             minimum=-100.00,
             maximum=100.00,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -124,11 +119,11 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_q_s_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40006,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -139,7 +134,6 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             minimum=-60.0,
             maximum=60.0,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -156,11 +150,11 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_power_factor_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40007,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -171,7 +165,6 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             minimum=(-1.0, -0.8),
             maximum=(0.8, 1.0),
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -187,12 +180,12 @@ class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInvert
             name="Independent Phase Power Control",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40030,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             protocol_version=Protocol.V1_8,
         )
-        if output_type != 2:  # L1/L2/L3/N
+        if output_type != Constants.THREE_PHASE_OUTPUT_TYPE:  # L1/L2/L3/N
             self.publishable = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -201,7 +194,7 @@ class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInvert
         return attributes
 
 
-class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
+class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
     def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
@@ -218,11 +211,11 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -231,10 +224,8 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V1_8,
             phase=phase,
+            output_type=output_type,
         )
-        self.sanity_check.delta = False
-        if output_type != 2:  # L1/L2/L3/N
-            self.publishable = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -242,7 +233,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
         return attributes
 
 
-class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter):
+class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
     def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
@@ -259,11 +250,11 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_reactive_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.INT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
             device_class=None,
             state_class=None,
@@ -272,10 +263,8 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
             precision=2,
             protocol_version=Protocol.V1_8,
             phase=phase,
+            output_type=output_type,
         )
-        self.sanity_check.delta = False
-        if output_type != 2:  # L1/L2/L3/N
-            self.publishable = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -283,7 +272,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter
         return attributes
 
 
-class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter):
+class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
     def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
@@ -300,11 +289,11 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_active_power_percentage_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -315,10 +304,8 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
             minimum=-100.00,
             maximum=100.00,
             phase=phase,
+            output_type=output_type,
         )
-        self.sanity_check.delta = False
-        if output_type != 2:  # L1/L2/L3/N
-            self.publishable = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -326,7 +313,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInver
         return attributes
 
 
-class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
+class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
     def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
@@ -343,11 +330,11 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_phase_{phase.lower()}_q_s_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=1,
             data_type=ModbusDataType.INT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -358,10 +345,8 @@ class PhaseQSAdjustmentTargetValue(NumericSensor, HybridInverter):
             minimum=-60.00,
             maximum=60.00,
             phase=phase,
+            output_type=output_type,
         )
-        self.sanity_check.delta = False
-        if output_type != 2:  # L1/L2/L3/N
-            self.publishable = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -374,13 +359,13 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
         super().__init__(
             name="Reserved",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_40026",
-            input_type=InputType.INPUT,
+            input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40026,
             count=3,
             data_type=ModbusDataType.STRING,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -398,9 +383,9 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
             name="Remote EMS",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40029,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             protocol_version=Protocol.V1_8,
         )
 
@@ -417,9 +402,9 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             name="Remote EMS Control Mode",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems_control_mode",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40031,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             options=[
                 "PCS remote control",  # 0
                 "Standby",  # 1
@@ -460,7 +445,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
         return result
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
-        if self._availability_control_sensor is not None and await self._availability_control_sensor.get_state(raw=True, republish=True, modbus_client=modbus_client) in (0, "0"):
+        if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state in (0, "0"):
             logging.error(
                 f"{self.__class__.__name__} Failed to write '{cast(list[str], self['options'])[raw_value] if isinstance(raw_value, int) else raw_value}' ({raw_value}): {self._availability_control_sensor.name} is not enabled"
             )
@@ -468,7 +453,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
         return await super().value_is_valid(modbus_client, raw_value)
 
 
-class RemoteEMSLimit(NumericSensor):
+class RemoteEMSLimit(NumericSensor, HybridInverter):
     def __init__(
         self,
         availability_control_sensor: AvailabilityMixin,
@@ -489,11 +474,11 @@ class RemoteEMSLimit(NumericSensor):
             object_id=object_id,
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=address,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -503,7 +488,6 @@ class RemoteEMSLimit(NumericSensor):
             protocol_version=protocol_version,
             maximum=maximum,
         )
-        self.sanity_check.delta = False
         self._remote_ems_mode = remote_ems_mode
         self._charging = charging
         self._discharging = discharging
@@ -512,11 +496,13 @@ class RemoteEMSLimit(NumericSensor):
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled and active_config.ems_mode_check:
             if self._charging and self._discharging:
-                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                    {"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0}
+                )
             elif self._charging:
-                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._discharging:
-                cast(list[dict[str, float | int | str]], self["availability"]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
     async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
@@ -526,7 +512,7 @@ class RemoteEMSLimit(NumericSensor):
         return await super().value_is_valid(modbus_client, raw_value)
 
 
-class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
+class MaxChargingLimit(RemoteEMSLimit):
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -541,8 +527,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_charging_power,
             protocol_version=Protocol.V1_8,
         )
-        self.sanity_check.delta = False
-        self.sanity_check.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
+        self.sanity_check.max_raw = Constants.UINT32_MAX  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -556,7 +541,7 @@ class MaxChargingLimit(RemoteEMSLimit, HybridInverter):
         return await super().value_is_valid(modbus_client, raw_value)
 
 
-class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
+class MaxDischargingLimit(RemoteEMSLimit):
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -571,8 +556,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
             maximum=rated_discharging_power,
             protocol_version=Protocol.V1_8,
         )
-        self.sanity_check.delta = False
-        self.sanity_check.max_raw = 4294967295  # This will be the default value read from Modbus if no value is set by user
+        self.sanity_check.max_raw = Constants.UINT32_MAX  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -586,7 +570,7 @@ class MaxDischargingLimit(RemoteEMSLimit, HybridInverter):
         return await super().value_is_valid(modbus_client, raw_value)
 
 
-class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
+class PVMaxPowerLimit(RemoteEMSLimit):
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -601,7 +585,6 @@ class PVMaxPowerLimit(RemoteEMSLimit, HybridInverter):
             maximum=4294967.295,
             protocol_version=Protocol.V1_8,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -624,11 +607,11 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_max_export_limit",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40038,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -638,7 +621,6 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.295,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -654,11 +636,11 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_max_import_limit",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40040,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -668,7 +650,6 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.295,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -684,11 +665,11 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcs_max_export_limit",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40042,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -696,23 +677,13 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            maximum=4294967.295,
+            maximum=4294967.294,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
         return attributes
-
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if value == 0xFFFFFFFF:
-            logging.warning(f"{self.name} register is not valid, setting publishable to False ({value=})")
-            self.publishable = False
-            return None
-        else:
-            return value
 
 
 class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
@@ -723,11 +694,11 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcs_max_import_limit",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40044,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.high if plant_index < len(active_config.modbus) else 10,
+            scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
             state_class=None,
@@ -735,9 +706,8 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V2_5,
-            maximum=4294967.295,
+            maximum=4294967.294,
         )
-        self.sanity_check.delta = False
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -753,11 +723,11 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_backup_soc",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40046,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -782,11 +752,11 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_charge_cut_off_soc",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40047,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -811,11 +781,11 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_ess_discharge_cut_off_soc",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40048,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -840,11 +810,11 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_active_power_regulation_gradient",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40049,
             count=2,
             data_type=ModbusDataType.UINT32,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit="%/s",
             device_class=None,
             state_class=None,
@@ -868,9 +838,9 @@ class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
             name="Low Voltage Ride Through",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40051,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -884,11 +854,11 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40052,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -913,11 +883,11 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_negative_sequence_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40053,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -930,7 +900,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [0,10.0]"
+        attributes["comment"] = "Documented Range: [0,10.0] but using 20.0 as maximum because live systems are returning this value"
         return attributes
 
 
@@ -941,9 +911,9 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
             name="LVRT Mode",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_mode",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40054,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
                 "",  # 1
@@ -964,9 +934,9 @@ class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
             name="LVRT Grid Voltage Protection Blocking",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_grid_voltage_protection_blocking",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40055,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
 
@@ -978,9 +948,9 @@ class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
             name="High Voltage Ride Through",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40056,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -994,11 +964,11 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40057,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -1023,11 +993,11 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_negative_sequence_reactive_power_compensation_factor",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40058,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=None,
             device_class=None,
             state_class=None,
@@ -1051,9 +1021,9 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
             name="HVRT Mode",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_mode",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40059,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
                 "",  # 1
@@ -1074,9 +1044,9 @@ class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
             name="HVRT Grid Voltage Protection Blocking",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_grid_voltage_protection_blocking",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40060,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
 
@@ -1086,11 +1056,11 @@ class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
         super().__init__(
             availability_control_sensor=None,
             name="Over Frequency Derating",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_over_frequency_derating",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40061,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -1104,11 +1074,11 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_power_ramp_rate",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40062,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -1132,11 +1102,11 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_trigger_frequency",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40063,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1162,11 +1132,11 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating_cut_off_frequency",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40064,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1191,9 +1161,9 @@ class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter)
             name="Under-Frequency Power Boost",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost",
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40065,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
         self["enabled_by_default"] = True
@@ -1207,11 +1177,11 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_power_ramp_rate",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40066,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
             device_class=None,
             state_class=None,
@@ -1235,11 +1205,11 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_trigger_frequency",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40067,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,
@@ -1265,11 +1235,11 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost_cut_off_frequency",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
-            device_address=247,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=40068,
             count=1,
             data_type=ModbusDataType.UINT16,
-            scan_interval=active_config.modbus[plant_index].scan_interval.medium if plant_index < len(active_config.modbus) else 60,
+            scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
             state_class=None,

@@ -1040,7 +1040,7 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: '{phase} Voltaje de línea'
-  MPTTCount:
+  MPPTCount:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
