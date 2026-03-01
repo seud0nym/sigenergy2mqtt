@@ -58,7 +58,6 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
             icon="mdi:solar-power",
             gain=None,
             precision=2,
-            data_type=ModbusDataType.INT32,
             scan_interval=active_config.modbus[0].scan_interval.realtime,
         )
         self["enabled_by_default"] = True
