@@ -1,6 +1,5 @@
 import logging
 import os
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest  # noqa: F401
@@ -324,6 +323,7 @@ class TestConfigCoverageAugmentation:
         result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
         assert result == []
 
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
     def test_run_auto_discovery_with_running_loop_success(self, mock_get_loop):
         # We simulate that a loop is running
@@ -355,6 +355,9 @@ class TestConfigCoverageAugmentation:
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == []
                 mock_future.cancel.assert_called_once()
+                # Close the coroutine to avoid RuntimeWarning
+                coro = mock_threadsafe.call_args[0][0]
+                coro.close()
 
     @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
     def test_run_auto_discovery_with_running_loop_generic_exception(self, mock_get_loop):
@@ -370,6 +373,9 @@ class TestConfigCoverageAugmentation:
             with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == []
+                # Close the coroutine to avoid RuntimeWarning
+                coro = mock_threadsafe.call_args[0][0]
+                coro.close()
 
     @patch("sigenergy2mqtt.config.config.time.time", return_value=1000000000.0)
     def test_clean_stale_files_unlink_exception(self, mock_time, tmp_path, caplog):
@@ -385,7 +391,7 @@ class TestConfigCoverageAugmentation:
         sub_dir.mkdir()
 
         # 3. Test PermissionError handling
-        with patch.object(Path, "unlink", side_effect=PermissionError("Mock Permission Denied")):
+        with patch("sigenergy2mqtt.config.config.Path.unlink", side_effect=PermissionError("Mock Permission Denied")):
             _clean_stale_files(tmp_path)
             assert "Failed to remove stale state file" in caplog.text
             assert "Mock Permission Denied" in caplog.text
@@ -393,7 +399,7 @@ class TestConfigCoverageAugmentation:
         caplog.clear()  # Clear logs between checks
 
         # 4. Test OSError handling
-        with patch.object(Path, "unlink", side_effect=OSError("Mock OS Error")):
+        with patch("sigenergy2mqtt.config.config.Path.unlink", side_effect=OSError("Mock OS Error")):
             _clean_stale_files(tmp_path)
             assert "Failed to remove stale state file" in caplog.text
             assert "Mock OS Error" in caplog.text
@@ -438,14 +444,16 @@ class TestConfigCoverageAugmentation:
         finally:
             conf_module.active_config = original
 
-    def test_load_config(self):
+    @patch("sigenergy2mqtt.config.config.Config.reload")
+    def test_load_config(self, mock_reload):
         cfg = Config()
-        with patch.object(cfg, "reload") as mock_reload:
-            cfg.load("test_file.yaml")
-            assert cfg._source == "test_file.yaml"
-            mock_reload.assert_called_once()
+        mock_reload.reset_mock()
+        cfg.load("test_file.yaml")
+        assert cfg._source == "test_file.yaml"
+        mock_reload.assert_called_once()
 
-    def test_reset_config(self):
+    @patch("sigenergy2mqtt.config.config.Config.reload")
+    def test_reset_config(self, mock_reload):
         cfg = Config()
         cfg._source = "test"
         cfg.reset()
