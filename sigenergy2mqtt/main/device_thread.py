@@ -12,8 +12,12 @@ from sigenergy2mqtt.mqtt import mqtt_setup
 
 from .thread_config import ThreadConfig
 
+# NOTE: This file must not be named 'threading.py' as it shadows the Python
+# stdlib 'threading' module, causing an ImportError. Rename to e.g.
+# 'device_thread.py' and update all imports accordingly.
 
-async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop, stop_event: threading.Event) -> None:
+
+async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop, stop_event: threading.Event | None = None) -> None:
     threading.current_thread().name = f"{config.description}Thread"
 
     modbus_client: ModbusClientType | None = None
@@ -94,13 +98,14 @@ async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.Ab
         await mqtt_handler.close()
 
 
-def run_modbus_event_loop(config: ThreadConfig, loop: asyncio.AbstractEventLoop, stop_event: threading.Event) -> None:
+def run_modbus_event_loop(config: ThreadConfig, loop: asyncio.AbstractEventLoop, stop_event: threading.Event | None = None) -> None:
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
     except Exception:
         logging.exception(f"{config.description} thread crashed !!!")
-        stop_event.set()  # Signal other threads to stop on any crash
+        if stop_event is not None:
+            stop_event.set()  # Signal other threads to stop on any crash
     finally:
         loop.close()
 

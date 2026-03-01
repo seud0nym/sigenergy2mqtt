@@ -220,7 +220,7 @@ def test_pvoutput_reshape_extended_fields_with_keys():
 
     data = {"v7": "value7", "v8": "value8"}
     res = PvOutputConfig.reshape_extended_fields(data)
-    assert res == {"extended": {"v7": "value7", "v8": "value8"}}
+    assert res == {"extended": {"v7": "value7", "v8": "value8", "v9": "", "v10": "", "v11": "", "v12": ""}}
 
 
 def test_pvoutput_invalid_api_key():

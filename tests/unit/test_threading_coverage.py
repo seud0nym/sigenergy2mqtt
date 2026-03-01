@@ -34,8 +34,8 @@ async def test_read_and_publish_device_sensors_ha_enabled_and_cancel():
     mqtt_handler.close = AsyncMock()
 
     with (
-        patch("sigenergy2mqtt.main.threading.ModbusClientFactory.get_client", return_value=modbus_client),
-        patch("sigenergy2mqtt.main.threading.mqtt_setup", return_value=(mqtt_client, mqtt_handler)),
+        patch("sigenergy2mqtt.main.device_thread.ModbusClientFactory.get_client", return_value=modbus_client),
+        patch("sigenergy2mqtt.main.device_thread.mqtt_setup", return_value=(mqtt_client, mqtt_handler)),
         patch.object(active_config.home_assistant, "enabled", True),
         patch.object(active_config.home_assistant, "discovery_only", False),
         patch.object(active_config, "clean", False),
@@ -76,7 +76,7 @@ async def test_read_and_publish_device_sensors_clean_and_discovery_only():
     mqtt_handler.close = AsyncMock()
 
     with (
-        patch("sigenergy2mqtt.main.threading.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),
+        patch("sigenergy2mqtt.main.device_thread.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),
         patch.object(active_config.home_assistant, "enabled", True),
         patch.object(active_config.home_assistant, "discovery_only", True),
         patch.object(active_config, "clean", True),
@@ -90,12 +90,12 @@ async def test_read_and_publish_device_sensors_clean_and_discovery_only():
 
 def test_run_modbus_event_loop():
     """Hits run_modbus_event_loop logic."""
-    from sigenergy2mqtt.main.threading import run_modbus_event_loop
+    from sigenergy2mqtt.main.device_thread import run_modbus_event_loop
 
     config = MagicMock()
     loop = MagicMock(spec=asyncio.AbstractEventLoop)
 
-    with patch("sigenergy2mqtt.main.threading.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None) as mock_read, patch("asyncio.set_event_loop") as mock_set_loop:
+    with patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None) as mock_read, patch("asyncio.set_event_loop"):
         run_modbus_event_loop(config, loop)
         mock_read.assert_called_once()
         loop.run_until_complete.assert_called_once()
@@ -104,14 +104,14 @@ def test_run_modbus_event_loop():
 
 def test_run_modbus_event_loop_exception(caplog):
     """Hits run_modbus_event_loop exception path."""
-    from sigenergy2mqtt.main.threading import run_modbus_event_loop
+    from sigenergy2mqtt.main.device_thread import run_modbus_event_loop
 
     config = MagicMock()
     config.description = "CrashedThread"
     loop = MagicMock(spec=asyncio.AbstractEventLoop)
     loop.run_until_complete.side_effect = Exception("loop crash")
 
-    with patch("sigenergy2mqtt.main.threading.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None), patch("asyncio.set_event_loop") as mock_set_loop:
+    with patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None), patch("asyncio.set_event_loop"):
         run_modbus_event_loop(config, loop)
     assert "CrashedThread thread crashed !!!" in caplog.text
     loop.close.assert_called_once()
@@ -120,7 +120,7 @@ def test_run_modbus_event_loop_exception(caplog):
 @pytest.mark.asyncio
 async def test_start_logic():
     """Hits start function logic."""
-    from sigenergy2mqtt.main.threading import start
+    from sigenergy2mqtt.main.device_thread import start
 
     config = MagicMock()
 
@@ -128,7 +128,7 @@ async def test_start_logic():
     # Also mock run_modbus_event_loop to avoid creating unawaited coroutines
     mock_loop = MagicMock()
     with (
-        patch("sigenergy2mqtt.main.threading.run_modbus_event_loop", MagicMock()),
+        patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", MagicMock()),
         patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
         patch("asyncio.new_event_loop", return_value=mock_loop),
     ):
@@ -146,14 +146,14 @@ async def test_start_logic():
 @pytest.mark.asyncio
 async def test_start_logic_with_exception(caplog):
     """Hits start function exception path."""
-    from sigenergy2mqtt.main.threading import start
+    from sigenergy2mqtt.main.device_thread import start
 
     config = MagicMock()
 
     # Also mock run_modbus_event_loop to avoid creating unawaited coroutines
     mock_loop = MagicMock()
     with (
-        patch("sigenergy2mqtt.main.threading.run_modbus_event_loop", MagicMock()),
+        patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", MagicMock()),
         patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
         patch("asyncio.new_event_loop", return_value=mock_loop),
     ):
