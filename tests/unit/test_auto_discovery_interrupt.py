@@ -56,7 +56,6 @@ class TestPingWorkerInterruption:
         for ip in ["10.0.0.1", "10.0.0.2", "10.0.0.3"]:
             ip_queue.put(ip)
 
-        found_hosts: dict[str, float] = {}
         auto_discovery._interrupted = True
 
         # async ping_scan should return immediately and not call network connect
@@ -71,7 +70,6 @@ class TestPingWorkerInterruption:
         """When _interrupted is False, ping_worker should process normally."""
         ip_queue: Queue[str] = Queue()
         ip_queue.put("1.2.3.4")
-        found_hosts: dict[str, float] = {}
 
         mock_ans = MagicMock()
         mock_ans.is_alive = True
@@ -110,7 +108,7 @@ class TestPingScanInterruption:
 
         auto_discovery._interrupted = True
 
-        with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=slow_open) as mock_open:
+        with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=slow_open):
             start = time.monotonic()
             result = asyncio.run(auto_discovery.ping_scan(["10.0.0.1", "10.0.0.2", "10.0.0.3"], concurrent=3, timeout=1))
             elapsed = time.monotonic() - start

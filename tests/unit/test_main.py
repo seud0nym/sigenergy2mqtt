@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
@@ -93,9 +93,8 @@ class TestGetState:
         mock_modbus.comm_params.host = "192.168.1.1"
         mock_modbus.comm_params.port = 502
 
-        sensor, state = await main_mod.get_state(mock_sensor, mock_modbus, "test_device")
+        state = await main_mod.get_state(mock_sensor, mock_modbus, "test_device")
 
-        assert sensor == mock_sensor
         assert state == 42.5
 
     @pytest.mark.asyncio
@@ -109,7 +108,7 @@ class TestGetState:
         mock_modbus.comm_params.host = "192.168.1.1"
         mock_modbus.comm_params.port = 502
 
-        sensor, state = await main_mod.get_state(mock_sensor, mock_modbus, "test_device", default_value=999)
+        state = await main_mod.get_state(mock_sensor, mock_modbus, "test_device", default_value=999)
         assert state == 999
 
     @pytest.mark.asyncio
@@ -175,50 +174,6 @@ class TestGetState:
 
 
 @pytest.mark.asyncio
-async def test_make_dc_charger_and_ac_charger_with_monkeypatch(monkeypatch):
-    class DummyDC:
-        def __init__(self, plant_index, device_address, protocol_version):
-            self.via_device = None
-
-    monkeypatch.setattr(main_mod, "DCCharger", DummyDC)
-    dc = await main_mod.make_dc_charger(1, 5, Protocol.N_A, "inv-id")
-    assert dc.via_device == "inv-id"
-
-    class DummyAC:
-        def __init__(self, *args, **kwargs):
-            self.via_device = None
-
-    monkeypatch.setattr(main_mod, "get_state", AsyncMock(return_value=(MagicMock(), 7.5)))
-    monkeypatch.setattr(main_mod, "ACCharger", DummyAC)
-
-    ac = await main_mod.make_ac_charger(2, None, 8, types.SimpleNamespace(unique_id="plant-uid", protocol_version=Protocol.N_A))
-    assert ac.via_device == "plant-uid"
-
-
-@pytest.mark.asyncio
-async def test_make_plant_and_inverter_with_existing_plant(monkeypatch):
-    async def fake_get_state_sequence(sensor, *args, **kwargs):
-        seq = [(sensor, "SN123"), (sensor, "ModelX"), (sensor, 5000.0), (sensor, 5000.0), (sensor, "FW1"), (sensor, 2.0), (sensor, 0), (sensor, 0)]
-        i = call_index["i"]
-        call_index["i"] += 1
-        return seq[i]
-
-    call_index = {"i": 0}
-    monkeypatch.setattr(main_mod, "get_state", fake_get_state_sequence)
-    monkeypatch.setattr(main_mod, "Inverter", MagicMock(return_value=MagicMock(unique_id="inv-uid")))
-
-    for sym in ("InverterSerialNumber", "InverterModel", "InverterFirmwareVersion", "PVStringCount", "OutputType", "PACKBCUCount"):
-        monkeypatch.setattr(main_mod, sym, lambda *a, **k: MagicMock())
-
-    mock_client = MagicMock()
-    mock_client.read_holding_registers = AsyncMock(return_value=MagicMock(isError=lambda: False))
-
-    plant = types.SimpleNamespace(protocol_version=Protocol.V2_8, unique_id="plant-uid", device_address=247)
-    inv, returned_plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, plant)
-    assert returned_plant is plant
-
-
-@pytest.mark.asyncio
 async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatch):
     device = types.SimpleNamespace(device_address=247, name="Device")
 
@@ -281,34 +236,6 @@ async def test_illegal_data_address_unknown_input_type(clean_config, monkeypatch
 
     assert mock_sensor.publishable is False
     assert mock_log.called
-
-
-@pytest.mark.asyncio
-async def test_make_plant_and_inverter_protocol_probe_sets_default(monkeypatch):
-    for sym in ("InverterSerialNumber", "InverterModel", "InverterFirmwareVersion", "PVStringCount", "OutputType", "PACKBCUCount", "PlantRatedChargingPower", "PlantRatedDischargingPower"):
-        monkeypatch.setattr(main_mod, sym, lambda *a, **k: MagicMock())
-
-    seq = [(None, "SNX"), (None, "ModelY"), (None, "FW1"), (None, 2.0), (None, 0), (None, 0)]
-    calls = {"i": 0}
-
-    async def fake_get_state(*a, **k):
-        i = calls["i"]
-        calls["i"] += 1
-        return seq[i] if i < len(seq) else (None, 0)
-
-    monkeypatch.setattr(main_mod, "get_state", fake_get_state)
-    monkeypatch.setattr(main_mod, "PowerPlant", lambda *a, **k: types.SimpleNamespace(protocol_version=a[2], unique_id="p", device_address=247))
-    monkeypatch.setattr(main_mod, "Inverter", lambda *a, **k: types.SimpleNamespace(unique_id="i", device_address=1))
-
-    class FakeModbus:
-        def __init__(self):
-            self.comm_params = types.SimpleNamespace(host="h", port=1)
-
-        async def read_holding_registers(self, *a, **k):
-            raise Exception("no")
-
-    inv, plant = await main_mod.make_plant_and_inverter(0, FakeModbus(), 1, None)
-    assert plant.protocol_version == Protocol.V1_8
 
 
 @pytest.mark.asyncio
@@ -487,36 +414,3 @@ async def test_async_main_version_upgrade_errors(clean_config, monkeypatch):
 
         await main_mod.async_main()
         assert mock_log_err.called
-
-
-@pytest.mark.asyncio
-async def test_make_plant_and_inverter_edge_cases(clean_config, monkeypatch):
-    mock_client = MagicMock()
-    mock_client.read_holding_registers = AsyncMock(return_value=MagicMock(isError=lambda: False))
-
-    # 1. Duplicate Serial
-    monkeypatch.setattr(main_mod, "serial_numbers", ["DUPE123"])
-
-    async def fake_get_state_dupe(s, *a, **k):
-        return (s, "DUPE123") if "Serial" in s.__class__.__name__ else (s, None)
-
-    monkeypatch.setattr(main_mod, "get_state", fake_get_state_dupe)
-
-    inv, plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, None)
-    assert inv is None
-
-    # 2. Consumption Method forced to CALCULATED
-    monkeypatch.setattr(main_mod, "serial_numbers", [])
-    active_config.modbus.clear()
-    monkeypatch.setattr(active_config, "consumption", ConsumptionMethod.TOTAL, raising=False)
-
-    async def fake_get_state(s, *a, **k):
-        m = {"InverterSerialNumber": "SN", "InverterModel": "M", "InverterFirmwareVersion": "F", "PVStringCount": 1.0, "OutputType": 0}
-        return s, m.get(s.__class__.__name__, k.get("default_value"))
-
-    monkeypatch.setattr(main_mod, "get_state", fake_get_state)
-    monkeypatch.setattr(main_mod, "PowerPlant", MagicMock(return_value=MagicMock(unique_id="p", device_address=247)))
-    monkeypatch.setattr(main_mod, "Inverter", MagicMock(return_value=MagicMock(unique_id="i", device_address=1)))
-
-    await main_mod.make_plant_and_inverter(0, mock_client, 1, None)
-    assert active_config.consumption == ConsumptionMethod.CALCULATED

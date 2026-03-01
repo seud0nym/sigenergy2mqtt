@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -48,18 +48,8 @@ class TestMetricsServiceCoverage:
             modbus_client = MagicMock()
             mqtt_client = MagicMock()
 
-            # Mock super().publish_updates to avoid actual execution logic if needed,
-            # but since Device.publish_updates is complex, we might just let it run if dependencies are mocked.
-            # However, super().publish_updates might try to read from modbus.
-            # Let's mock the internal _update_sensor or similar if we want deep isolation,
-            # or just mock the super call.
+            service.on_commencement(modbus_client, mqtt_client)
+            mqtt_client.publish.assert_any_call("sigenergy2mqtt/status", "online", qos=0, retain=True)
 
-            with patch("sigenergy2mqtt.metrics.metrics_service.Device.publish_updates", new_callable=AsyncMock) as mock_super_publish:
-                await service.publish_updates(modbus_client, mqtt_client, "test_name")
-
-                # Check if status messages were published
-                mqtt_client.publish.assert_any_call("sigenergy2mqtt/status", "online", qos=0, retain=True)
-                mqtt_client.publish.assert_any_call("sigenergy2mqtt/status", "offline", qos=0, retain=True)
-
-                # Check if super was called
-                mock_super_publish.assert_awaited()
+            service.on_completion(modbus_client, mqtt_client)
+            mqtt_client.publish.assert_any_call("sigenergy2mqtt/status", "offline", qos=0, retain=True)

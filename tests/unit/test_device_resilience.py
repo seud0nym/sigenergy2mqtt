@@ -7,7 +7,9 @@ import pytest
 from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import InputType, Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
+from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
 
 # Capture original sleep
@@ -63,9 +65,6 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         return True
 
 
-from sigenergy2mqtt.config import Config, _swap_active_config
-
-
 @pytest.fixture
 def mock_config():
     cfg = Config()
@@ -103,12 +102,13 @@ async def test_modbus_exception_recovery(mock_config):
     mock_lock = MagicMock()
     mock_lock.lock.return_value = async_cm
 
-    with patch("sigenergy2mqtt.devices.device.ModbusLockFactory.get", return_value=mock_lock), patch("sigenergy2mqtt.devices.device.asyncio.sleep", side_effect=fast_sleep):
+    with patch("sigenergy2mqtt.devices.base.poller.ModbusLockFactory.get", return_value=mock_lock), patch("sigenergy2mqtt.devices.base.poller.asyncio.sleep", side_effect=fast_sleep):
         dev._online = True
         sensor1.force_publish = True
         sensor2.force_publish = True
 
-        task = asyncio.create_task(dev.publish_updates(modbus_client, mqtt_client, "test", sensor1, sensor2))
+        poller = SensorGroupPoller(dev)
+        task = asyncio.create_task(poller.run(modbus_client, mqtt_client, "test", sensor1, sensor2))
 
         # Give it cycles to run:
         # 1. First scan (fails -> ModbusException)
@@ -149,10 +149,11 @@ async def test_reconnection_interruption_on_offline(mock_config):
         dev._online = False
         await real_sleep(0)
 
-    with patch("sigenergy2mqtt.devices.device.ModbusLockFactory.get", return_value=mock_lock), patch("sigenergy2mqtt.devices.device.asyncio.sleep", side_effect=mock_sleep_offline):
+    with patch("sigenergy2mqtt.devices.base.poller.ModbusLockFactory.get", return_value=mock_lock), patch("sigenergy2mqtt.devices.base.poller.asyncio.sleep", side_effect=mock_sleep_offline):
         dev._online = True
         sensor.force_publish = True
 
-        await asyncio.wait_for(dev.publish_updates(modbus_client, mqtt_client, "test", sensor), timeout=1.0)
+        poller = SensorGroupPoller(dev)
+        await asyncio.wait_for(poller.run(modbus_client, mqtt_client, "test", sensor), timeout=1.0)
 
     assert dev.online is False

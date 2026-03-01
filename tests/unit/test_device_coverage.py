@@ -11,15 +11,9 @@ from pymodbus import ModbusException
 from sigenergy2mqtt.common import HybridInverter, InputType, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
-from sigenergy2mqtt.sensors.base import (
-    DerivedSensor,
-    ModbusSensorMixin,
-    ObservableMixin,
-    ReadableSensorMixin,
-    Sensor,
-    WritableSensorMixin,
-    WriteOnlySensor,
-)
+from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
+from sigenergy2mqtt.devices.base.scan_groups import create_sensor_scan_groups
+from sigenergy2mqtt.sensors.base import DerivedSensor, ModbusSensorMixin, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
 
 # ---------------------------------------------------------------------------
 # Helper / stub classes (mirror the style of test_device_missing.py)
@@ -247,8 +241,8 @@ def device():
 
 def test_device_init_ignores_unknown_kwargs():
     """extra kwargs that are not recognised device attributes are logged and dropped."""
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
-        dev = Device("TestDev", 0, "uid_extra", "mf", "model", Protocol.V1_8, unknown_kwarg="ignored")
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+        _ = Device("TestDev", 0, "uid_extra", "mf", "model", Protocol.V1_8, unknown_kwarg="ignored")
         # 'unknown_kwarg' is not in the allowed set, so it should be logged as ignored
         mock_log.debug.assert_called()
     DeviceRegistry._devices.clear()
@@ -373,7 +367,7 @@ def test_add_derived_sensor_source_not_found(device):
     src = DummyReadable("nonexistent_src")  # never added to device
     derived = DummyDerived("derived_no_src")
 
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
         device._add_derived_sensor(derived, src)
         mock_log.warning.assert_called()
 
@@ -383,7 +377,7 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
     derived = DummyDerived("derived_none_src")
     device.protocol_version = Protocol.N_A
 
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
         device._add_derived_sensor(derived, None)  # all None
         mock_log.error.assert_called()
 
@@ -398,7 +392,7 @@ def test_create_sensor_scan_groups_non_modbus(device):
     s = DummyReadable("non_modbus_s", publishable=True)
     device._add_read_sensor(s)
 
-    groups = device._create_sensor_scan_groups()
+    groups = create_sensor_scan_groups(device)
     assert "non_modbus_sensors" in groups
     assert s in groups["non_modbus_sensors"]
 
@@ -413,8 +407,9 @@ async def test_publish_updates_exits_when_offline(device):
     """publish_updates loop exits immediately when device is offline."""
     device._online = False
     s = DummyReadable("s_offline")
+    poller = SensorGroupPoller(device)
     # Should return immediately without doing anything
-    await device.publish_updates(None, MagicMock(), "test_group", s)
+    await poller.run(None, MagicMock(), "test_group", s)
 
 
 @pytest.mark.asyncio
@@ -447,8 +442,9 @@ async def test_publish_updates_initial_republish_of_existing_state(device):
         call_count += 1
         device._online = False  # stop the loop after first sleep
 
+    poller = SensorGroupPoller(device)
     with patch("asyncio.sleep", fake_sleep):
-        await device.publish_updates(None, MagicMock(), "grp", s)
+        await poller.run(None, MagicMock(), "grp", s)
 
     # Initial republish should have been called with republish=True
     assert any(r is True for r in publish_calls)
@@ -466,7 +462,6 @@ async def test_publish_updates_force_publish(device):
     s.publish = AsyncMock()
 
     published_event = asyncio.Event()
-    original_publish = s.publish
 
     async def recording_publish(*args, **kwargs):
         published_event.set()
@@ -481,8 +476,9 @@ async def test_publish_updates_force_publish(device):
         call_count += 1
         device._online = False
 
+    poller = SensorGroupPoller(device)
     with patch("asyncio.sleep", fake_sleep):
-        await device.publish_updates(None, MagicMock(), "grp_force", s)
+        await poller.run(None, MagicMock(), "grp_force", s)
 
     assert published_event.is_set()
     fut.cancel()
@@ -525,10 +521,11 @@ async def test_publish_updates_modbus_exception_reconnects(device):
     lock_obj.lock = MagicMock(return_value=cm)
     lock_obj.waiters = 0
 
-    with patch("sigenergy2mqtt.devices.device.ModbusLockFactory") as mock_factory:
+    poller = SensorGroupPoller(device)
+    with patch("sigenergy2mqtt.devices.base.poller.ModbusLockFactory") as mock_factory:
         mock_factory.get.return_value = lock_obj
         with patch("asyncio.sleep", fake_sleep):
-            await device.publish_updates(modbus_client, MagicMock(), "grp_modbus_err", s)
+            await poller.run(modbus_client, MagicMock(), "grp_modbus_err", s)
 
     fut.cancel()
 
@@ -550,9 +547,10 @@ async def test_publish_updates_generic_exception_logged(device):
     async def fake_sleep(t):
         device._online = False
 
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    poller = SensorGroupPoller(device)
+    with patch("sigenergy2mqtt.devices.base.poller.logging") as mock_log:
         with patch("asyncio.sleep", fake_sleep):
-            await device.publish_updates(None, MagicMock(), "grp_generic_err", s)
+            await poller.run(None, MagicMock(), "grp_generic_err", s)
 
         mock_log.error.assert_called()
 
@@ -583,8 +581,9 @@ async def test_publish_updates_rediscover_triggers_discovery(device):
     async def fake_sleep(t):
         device._online = False
 
+    poller = SensorGroupPoller(device)
     with patch("asyncio.sleep", fake_sleep):
-        await device.publish_updates(None, MagicMock(), "grp_rediscover", s)
+        await poller.run(None, MagicMock(), "grp_rediscover", s)
 
     assert discovery_called
     fut.cancel()
@@ -599,7 +598,6 @@ async def test_publish_updates_sleep_interrupted_by_cancel(device):
     s = DummyReadable("s_cancel")
     s.force_publish = False
 
-    real_sleep = asyncio.sleep
     call_count = 0
 
     async def interruptible_sleep(t):
@@ -609,8 +607,9 @@ async def test_publish_updates_sleep_interrupted_by_cancel(device):
             raise asyncio.CancelledError()
         device._online = False
 
+    poller = SensorGroupPoller(device)
     with patch("asyncio.sleep", interruptible_sleep):
-        await device.publish_updates(None, MagicMock(), "grp_cancel", s)
+        await poller.run(None, MagicMock(), "grp_cancel", s)
 
     fut.cancel()
 
@@ -710,7 +709,7 @@ def test_subscribe_writable_sensor_exception_logged(device):
     # First call registers HA status (must succeed), second raises for writable sensor
     handler.register.side_effect = [MagicMock(), RuntimeError("subscribe failed")]
 
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
         device.subscribe(MagicMock(), handler)
         mock_log.error.assert_called()
 
@@ -724,7 +723,7 @@ def test_subscribe_observable_exception_logged(device):
     # First call (HA status) succeeds; second (observable topic) raises
     handler.register.side_effect = [MagicMock(), RuntimeError("obs fail")]
 
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
         device.subscribe(MagicMock(), handler)
         mock_log.error.assert_called()
 
@@ -836,7 +835,7 @@ def test_add_read_sensor_not_readable(device):
             pass
 
     nr = NotReadable("not_readable")
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
         result = device._add_read_sensor(nr)
     assert result is False
     mock_log.error.assert_called()
@@ -883,7 +882,7 @@ def test_add_to_all_sensors_debug_logging_enabled(device):
     """debug log emitted when sensor.debug_logging is True."""
     s = DummyReadable("s_debug_log")
     s.debug_logging = True
-    with patch("sigenergy2mqtt.devices.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
         device._add_to_all_sensors(s)
         mock_log.debug.assert_called()
 
@@ -922,7 +921,6 @@ def test_publish_discovery_clean(device):
     """Lines 1163-1165: clean=True clears availability and discovery."""
     mqtt_client = MagicMock()
     device.publish_discovery(mqtt_client, clean=True)
-    calls = [str(c) for c in mqtt_client.publish.call_args_list]
     # Should publish None for availability and discovery
     assert mqtt_client.publish.call_count >= 1
 

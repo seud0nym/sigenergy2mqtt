@@ -5,12 +5,17 @@ from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
+from paho.mqtt.client import Client as MqttClient
+from pymodbus import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin
+from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
+from sigenergy2mqtt.modbus.client import ModbusClient
+from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
+from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ModbusSensorMixin, ReadableSensorMixin
 
 
 class FakeLock:
@@ -142,8 +147,6 @@ async def test_publish_updates_runs_one_iteration(monkeypatch):
     dev._add_read_sensor(s2)
 
     # monkeypatch ModbusLockFactory.get to return a FakeLock
-    from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
-
     monkeypatch.setattr(ModbusLockFactory, "get", staticmethod(lambda modbus: FakeLock()))
 
     # Fake modbus and mqtt
@@ -154,11 +157,8 @@ async def test_publish_updates_runs_one_iteration(monkeypatch):
     dev._online = True
 
     # run the coroutine but limit total time so test cannot hang
-    from paho.mqtt.client import Client as MqttClient
-
-    from sigenergy2mqtt.modbus.client import ModbusClient
-
-    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, mqtt), "grp", s1, s2)
+    poller = SensorGroupPoller(dev)
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, mqtt), "grp", s1, s2)
 
     await asyncio.wait_for(coro, timeout=5)
 
@@ -197,11 +197,9 @@ async def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     s1.force_publish = True
     s2.force_publish = True
     dev._online = True
-    from paho.mqtt.client import Client as MqttClient
 
-    from sigenergy2mqtt.modbus.client import ModbusClient
-
-    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
+    poller = SensorGroupPoller(dev)
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
     await asyncio.wait_for(coro, timeout=5)
 
     assert modbus.read_ahead_called >= 1
@@ -212,7 +210,6 @@ async def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
 @pytest.mark.asyncio
 async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     """If ModbusException occurs the device attempts to reconnect via modbus.connect."""
-    from pymodbus import ModbusException
 
     dev = Device("devpub3", 0, "uidpub3", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=1, count=1, device_address=2, scan_interval=1)
@@ -264,11 +261,9 @@ async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatc
     s2.force_publish = True
 
     dev._online = True
-    from paho.mqtt.client import Client as MqttClient
 
-    from sigenergy2mqtt.modbus.client import ModbusClient
-
-    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
+    poller = SensorGroupPoller(dev)
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
     # run but allow the reconnect logic to be exercised
     await asyncio.wait_for(coro, timeout=5)
 
@@ -279,7 +274,6 @@ async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatc
 async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
     """When tm_yday changes between iterations, sensors with EnergyDailyAccumulationSensor
     derived sensors are forced to publish immediately (covers device.py lines 1017-1025)."""
-    from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor
 
     dev = Device("devpub4", 0, "uidpub4", "mf", "mdl", Protocol.V1_8)
 
@@ -341,8 +335,6 @@ async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
 
     monkeypatch.setattr(asyncio, "sleep", _fast_sleep)
 
-    from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
-
     monkeypatch.setattr(ModbusLockFactory, "get", staticmethod(lambda modbus: FakeLock()))
 
     # Clear initial states so _init_next_publish_times does not trigger initial publish
@@ -355,12 +347,9 @@ async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
 
     dev._online = True
 
-    from paho.mqtt.client import Client as MqttClient
-
-    from sigenergy2mqtt.modbus.client import ModbusClient
-
     modbus = FakeModbus()
-    coro = dev.publish_updates(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", daily, regular)
+    poller = SensorGroupPoller(dev)
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", daily, regular)
     await asyncio.wait_for(coro, timeout=5)
 
     # The daily sensor must have been published at least twice (initial + day-change forced)

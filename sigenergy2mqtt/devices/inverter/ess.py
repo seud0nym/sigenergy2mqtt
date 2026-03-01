@@ -1,9 +1,8 @@
 import sigenergy2mqtt.sensors.inverter_derived as derived
 import sigenergy2mqtt.sensors.inverter_read_only as ro
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import DeviceType, Protocol
 from sigenergy2mqtt.config import active_config
-
-from .device import DeviceType, ModbusDevice
+from sigenergy2mqtt.devices import ModbusDevice
 
 
 class ESS(ModbusDevice):

@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -233,7 +232,7 @@ def test_subscribe_comprehensive(logger):
     mock_device = MagicMock()
     mock_device.get_all_sensors.return_value = {"s1": mock_sensor}
 
-    with patch("sigenergy2mqtt.devices.device.DeviceRegistry.get", return_value=[mock_device]):
+    with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=[mock_device]):
         mqtt_handler = MagicMock()
         svc.subscribe(None, mqtt_handler)
         assert "topic1" in svc._topic_cache
@@ -268,7 +267,7 @@ def test_subscribe_edge_cases(logger):
     svc = InfluxService(logger, plant_index=0)
 
     # Case 1: No devices
-    with patch("sigenergy2mqtt.devices.device.DeviceRegistry.get", return_value=None):
+    with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=None):
         svc.subscribe(None, MagicMock())
         # Cache hit skip check
         assert svc._topic_cache == {}
@@ -278,7 +277,7 @@ def test_subscribe_edge_cases(logger):
     mock_sensor.publishable = False
     mock_device = MagicMock()
     mock_device.get_all_sensors.return_value = {"s1": mock_sensor}
-    with patch("sigenergy2mqtt.devices.device.DeviceRegistry.get", return_value=[mock_device]):
+    with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=[mock_device]):
         svc.subscribe(None, MagicMock())
         assert svc._topic_cache == {}
 
@@ -298,7 +297,7 @@ def test_subscribe_edge_cases(logger):
 
     mock_sensor.__getitem__.side_effect = raise_err
     mock_device.get_all_sensors.return_value = {"s_err": mock_sensor}
-    with patch("sigenergy2mqtt.devices.device.DeviceRegistry.get", return_value=[mock_device]):
+    with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=[mock_device]):
         svc.subscribe(None, MagicMock())
         # The exception in s["object_id"] is caught and returns None, OR loop continues
         # If loop continues, topic is not in cache

@@ -4,8 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, Sensor
 
 
@@ -35,9 +36,6 @@ class MockSensor(ReadableSensorMixin):
 
 class ConcreteDevice(Device):
     pass
-
-
-from sigenergy2mqtt.config import _swap_active_config
 
 
 @pytest.fixture
@@ -77,7 +75,8 @@ async def test_device_offline_exits_loop(mock_config):
     modbus_client = AsyncMock()
 
     # Start publish_updates loop
-    loop_task = asyncio.create_task(device.publish_updates(modbus_client, mqtt_client, "test_group_1", sensor))
+    poller = SensorGroupPoller(device)
+    loop_task = asyncio.create_task(poller.run(modbus_client, mqtt_client, "test_group_1", sensor))
 
     # Give it a moment to start
     await asyncio.sleep(0.1)
@@ -117,7 +116,8 @@ async def test_device_offline_cancels_child_sensors(mock_config):
     # Start loop in parent using child sensor
     mqtt_client = MagicMock()
     modbus_client = AsyncMock()
-    loop_task = asyncio.create_task(parent.publish_updates(modbus_client, mqtt_client, "test_group_2", child_sensor))
+    poller = SensorGroupPoller(parent)
+    loop_task = asyncio.create_task(poller.run(modbus_client, mqtt_client, "test_group_2", child_sensor))
 
     await asyncio.sleep(0.1)
     # sensor.sleeper_task should now be set
@@ -142,6 +142,7 @@ async def test_device_offline_exits_reconnect_loop(mock_config):
     device = ConcreteDevice("Test Device 3", 0, "sigen_test_3", "Sigenergy", "Model", Protocol.V2_4)
     sensor = MockSensor("sigen_test_sensor_3")
     device._add_read_sensor(sensor)
+    poller = SensorGroupPoller(device)
 
     # Set online
     device.online = asyncio.Future()
@@ -157,9 +158,9 @@ async def test_device_offline_exits_reconnect_loop(mock_config):
 
     mqtt_client = MagicMock()
 
-    with patch("sigenergy2mqtt.devices.device.isinstance", side_effect=lambda obj, cls: True if cls == ModbusSensorMixin else isinstance(obj, cls)):
+    with patch("sigenergy2mqtt.devices.base.device.isinstance", side_effect=lambda obj, cls: True if cls == ModbusSensorMixin else isinstance(obj, cls)):
         # Start loop
-        loop_task = asyncio.create_task(device.publish_updates(modbus_client, mqtt_client, "test_group_3", sensor))
+        loop_task = asyncio.create_task(poller.run(modbus_client, mqtt_client, "test_group_3", sensor))
 
         # Wait for it to hit the reconnect loop
         await asyncio.sleep(0.2)

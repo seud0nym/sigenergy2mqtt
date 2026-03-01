@@ -7,7 +7,6 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus.types import ModbusClientType
-from sigenergy2mqtt.sensors.base import Sensor
 
 
 class MetricsService(Device):
@@ -43,9 +42,10 @@ class MetricsService(Device):
             self._add_read_sensor(sensors.InfluxDBRetries())
             self._add_read_sensor(sensors.InfluxDBThroughput())
 
-    async def publish_updates(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
+    def on_commencement(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> None:
         logging.info(f"{self.name} Service Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
-        await super().publish_updates(modbus_client, mqtt_client, name, *sensors)
-        mqtt_client.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)
+
+    def on_completion(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> None:
         logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
+        mqtt_client.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)

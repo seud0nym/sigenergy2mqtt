@@ -1,8 +1,11 @@
+from typing import cast
+
 import sigenergy2mqtt.sensors.ac_charger_read_only as ro
 import sigenergy2mqtt.sensors.ac_charger_read_write as rw
 from sigenergy2mqtt.common import Protocol
-
-from .device import ModbusDevice
+from sigenergy2mqtt.common.types import NonInverter
+from sigenergy2mqtt.devices import ModbusDevice
+from sigenergy2mqtt.modbus.types import ModbusClientType
 
 
 class ACCharger(ModbusDevice):
@@ -11,16 +14,20 @@ class ACCharger(ModbusDevice):
         plant_index: int,
         device_address: int,
         protocol_version: Protocol,
-        ib_value: float | None,
-        rc_value: float | None,
-        input_breaker: ro.ACChargerInputBreaker | None,
-        rated_current: ro.ACChargerRatedCurrent | None,
     ):
-        assert ib_value is not None, "Input Breaker value cannot be None"
-        assert rc_value is not None, "Rated Current value cannot be None"
-        assert input_breaker is not None, "ACChargerInputBreaker instance cannot be None"
-        assert rated_current is not None, "ACChargerRatedCurrent instance cannot be None"
-        super().__init__(None, "Sigenergy AC Charger", plant_index, device_address, "AC Charger", protocol_version)
+        super().__init__(NonInverter(), "Sigenergy AC Charger", plant_index, device_address, "AC Charger", protocol_version)
+
+    @classmethod
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClientType) -> "ACCharger":
+        charger = cls(plant_index, device_address, protocol_version)
+        await charger._register_sensors(plant_index, device_address, modbus_client)
+        return charger
+
+    async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClientType) -> None:
+        input_breaker = ro.ACChargerInputBreaker(plant_index, device_address)
+        rated_current = ro.ACChargerRatedCurrent(plant_index, device_address)
+        ib_value = await input_breaker.get_state(modbus_client=modbus_client)
+        rc_value = await rated_current.get_state(modbus_client=modbus_client)
 
         self._add_read_sensor(ro.ACChargerRunningState(plant_index, device_address))
         self._add_read_sensor(ro.ACChargerTotalEnergyConsumed(plant_index, device_address))
@@ -38,6 +45,6 @@ class ACCharger(ModbusDevice):
                 ro.ACChargerAlarm3(plant_index, device_address),
             )
         )
-        self._add_read_sensor(rw.ACChargerOutputCurrent(plant_index, device_address, ib_value, rc_value))
+        self._add_read_sensor(rw.ACChargerOutputCurrent(plant_index, device_address, cast(float, ib_value), cast(float, rc_value)))
 
         self._add_writeonly_sensor(rw.ACChargerStatus(plant_index, device_address))

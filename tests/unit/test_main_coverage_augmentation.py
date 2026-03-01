@@ -37,82 +37,10 @@ def clean_config_augment(monkeypatch):
         yield cfg
 
 
-def test_configure_logging_level_changes(clean_config_augment, monkeypatch):
-    mock_get_logger = MagicMock()
-    loggers = {}
-
-    def get_logger(name="root"):
-        if name not in loggers:
-            loggers[name] = MagicMock(level=logging.INFO)
-            loggers[name].setLevel = MagicMock()
-        return loggers[name]
-
-    mock_get_logger.side_effect = get_logger
-    mock_get_logger.side_effect = get_logger
-    monkeypatch.setattr(main_mod.logging, "getLogger", mock_get_logger)
-    clean_config_augment.log_level = logging.DEBUG
-    # Force update active_config since clean_config_augment yielded Config (class), but attributes are on instance
-    active_config.log_level = logging.DEBUG
-    main_mod.configure_logging()
-
-    # Verify both root and other logger levels were set
-    assert "root" in loggers
-    loggers["root"].setLevel.assert_called()
-
-
 @pytest.mark.asyncio
 async def test_read_registers_none_client():
     with pytest.raises(ValueError, match="modbus_client cannot be None"):
         await main_mod.read_registers(None, 0, 1, 1, InputType.HOLDING)
-
-
-@pytest.mark.asyncio
-async def test_make_plant_and_inverter_missing_model(monkeypatch):
-    """Target line 113: Model ID cannot be None."""
-    main_mod.serial_numbers.clear()
-    mock_client = MagicMock()
-
-    async def fake_get_state(s, *a, **k):
-        if "InverterModel" in s.__class__.__name__:
-            return s, None
-        return s, "VALUE"
-
-    monkeypatch.setattr(main_mod, "get_state", fake_get_state)
-    with pytest.raises(ValueError, match="Model ID cannot be None"):
-        await main_mod.make_plant_and_inverter(0, mock_client, 1, None)
-
-
-@pytest.mark.asyncio
-async def test_make_plant_and_inverter_all_branches(monkeypatch):
-    """Target lines 129, 139, 154-157, 177, 196."""
-    main_mod.serial_numbers.clear()
-    mock_client = MagicMock()
-
-    # Mock read_registers to return errors for specific registers
-    async def mock_read_regs(r, count, device_id, input_type):
-        resp = MagicMock()
-        resp.isError = lambda: True
-        resp.exception_code = 0x02
-        return resp
-
-    monkeypatch.setattr(main_mod, "read_registers", mock_read_regs)
-
-    # Test phases mapping (ot=3 -> phases=2)
-    async def fake_get_state_3(s, *a, **k):
-        m = {"InverterSerialNumber": "SN3", "InverterModel": "M", "InverterFirmwareVersion": "F", "PVStringCount": 1.0, "OutputType": 3}
-        val = m.get(s.__class__.__name__, k.get("default_value"))
-        return s, val
-
-    monkeypatch.setattr(main_mod, "get_state", fake_get_state_3)
-
-    mock_pp = MagicMock()
-    mock_pp.return_value.unique_id = "p"
-    monkeypatch.setattr(main_mod, "PowerPlant", mock_pp)
-    monkeypatch.setattr(main_mod, "Inverter", MagicMock())
-
-    await main_mod.make_plant_and_inverter(0, mock_client, 1, None)
-    args, _ = mock_pp.call_args
-    assert args[4] == 2  # Phases for ot=3
 
 
 @pytest.mark.asyncio

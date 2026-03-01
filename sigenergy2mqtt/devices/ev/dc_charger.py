@@ -1,8 +1,8 @@
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
 from sigenergy2mqtt.common import Protocol
-
-from .device import ModbusDevice
+from sigenergy2mqtt.common.types import NonInverter
+from sigenergy2mqtt.devices import ModbusDevice
 
 
 class DCCharger(ModbusDevice):
@@ -12,8 +12,15 @@ class DCCharger(ModbusDevice):
         device_address: int,
         protocol_version: Protocol,
     ):
-        super().__init__(None, "Sigenergy DC Charger", plant_index, device_address, "DC Charger", protocol_version)
+        super().__init__(NonInverter(), "Sigenergy DC Charger", plant_index, device_address, "DC Charger", protocol_version)
 
+    @classmethod
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol) -> "DCCharger":
+        charger = cls(plant_index, device_address, protocol_version)
+        await charger._register_sensors(plant_index, device_address)
+        return charger
+
+    async def _register_sensors(self, plant_index: int, device_address: int) -> None:
         self._add_read_sensor(ro.DCChargerOutputPower(plant_index, device_address))
         self._add_read_sensor(ro.DCChargerCurrentChargingCapacity(plant_index, device_address))
         self._add_read_sensor(ro.DCChargerCurrentChargingDuration(plant_index, device_address))

@@ -32,7 +32,7 @@ class MonitorService(Device):
             return
         finally:
             self.sleeper_task = None
-        logging.info(f"{self.name} Commenced")
+
         while self.online:
             async with self._lock:
                 overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if s.is_overdue}
@@ -49,7 +49,6 @@ class MonitorService(Device):
                 break
             finally:
                 self.sleeper_task = None
-        logging.info(f"{self.name} Completed: Flagged as offline ({self.online=})")
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         return True
@@ -66,6 +65,12 @@ class MonitorService(Device):
         else:
             logging.warning(f"{self.name} updated from  topic {source}, but topic is not registered !!!")
         return False
+
+    def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+        logging.info(f"{self.name} Service Commenced")
+
+    def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+        logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
         pass
