@@ -13,84 +13,122 @@ from sigenergy2mqtt.mqtt import mqtt_setup
 from .thread_config import ThreadConfig
 
 
-async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop):
+async def read_and_publish_device_sensors(config: ThreadConfig, loop: asyncio.AbstractEventLoop, stop_event: threading.Event) -> None:
     threading.current_thread().name = f"{config.description}Thread"
 
-    device: Device
     modbus_client: ModbusClientType | None = None
     tasks: list[Awaitable[Any]] = []
+    gathered_tasks: asyncio.Future | None = None
 
-    if config.host is None or active_config.clean:
-        modbus_client = None
-    else:
+    if config.host is not None and not active_config.clean:
         modbus_client = await ModbusClientFactory.get_client(config.host, config.port if config.port else 502, config.timeout, config.retries)
 
     mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
     mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
 
-    for device in config.device_init:
-        method = device.publish_discovery if active_config.home_assistant.enabled else device.publish_attributes
-        if active_config.clean:
-            await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=True)
-        if not active_config.clean:  # Publish HA device
-            await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=False)
+    try:
+        device: Device
+        for device in config.device_init:
+            method = device.publish_discovery if active_config.home_assistant.enabled else device.publish_attributes
 
-        if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
-            logging.info(f"{device.name} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
-        else:
-            logging.debug(f"{device.name} registering MQTT subscriptions")
-            device.subscribe(mqtt_client, mqtt_handler)
+            await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=active_config.clean)
 
-            if active_config.home_assistant.enabled:
-                device.publish_availability(mqtt_client, "online")
+            if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
+                logging.info(f"{device.name} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
+            else:
+                logging.debug(f"{device.name} registering MQTT subscriptions")
+                device.subscribe(mqtt_client, mqtt_handler)
 
-            logging.debug(f"{device.name} scheduling tasks")
-            device_tasks = device.schedule(modbus_client, mqtt_client)
-            tasks.extend(device_tasks)
+                if active_config.home_assistant.enabled:
+                    device.publish_availability(mqtt_client, "online")
 
-    if len(tasks) > 0:
-        logging.info(f"{config.url} scheduled tasks commenced ({len(tasks)} asyncio {'task' if len(tasks) == 1 else 'tasks'} scheduled)")
-        result = asyncio.gather(*tasks, return_exceptions=True)
-        config.online(result)
-        try:
-            await result
-        except asyncio.CancelledError:
-            logging.info(f"{config.url} scheduled tasks interrupted")
+                logging.debug(f"{device.name} scheduling tasks")
+                device_tasks = device.schedule(modbus_client, mqtt_client)
+                tasks.extend(device_tasks)
 
-        if active_config.home_assistant.enabled:
+        if tasks:
+            url_label = config.url if config.host is not None else config.description
+            task_word = "task" if len(tasks) == 1 else "tasks"
+            logging.info(f"{url_label} scheduled tasks commenced ({len(tasks)} asyncio {task_word} scheduled)")
+
+            gathered_tasks = asyncio.gather(*tasks, return_exceptions=True)
+            config.online(gathered_tasks)
+
             for device in config.devices:
-                device.publish_availability(mqtt_client, "offline")
+                try:
+                    device.on_commencement(modbus_client, mqtt_client)
+                except Exception:
+                    logging.exception(f"{device.name} on commencement failed")
 
-    if modbus_client is not None:
-        logging.info(f"Closing Modbus connection to {config.url}")
-        modbus_client.close()
+            try:
+                results = await gathered_tasks
+            except asyncio.CancelledError:
+                logging.info(f"{url_label} scheduled tasks interrupted")
+                results = []
 
-    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
-    mqtt_client.loop_stop()
-    mqtt_client.disconnect()
-    await mqtt_handler.close()
+            # Surface any exceptions that were swallowed by return_exceptions=True
+            for result in results:
+                if isinstance(result, BaseException):
+                    logging.exception(
+                        f"{url_label} a scheduled task raised an exception",
+                        exc_info=result,
+                    )
 
-    return
+            for device in config.devices:
+                try:
+                    device.on_completion(modbus_client, mqtt_client)
+                except Exception:
+                    logging.exception(f"{device.name} on completion failed")
+                if active_config.home_assistant.enabled:
+                    device.publish_availability(mqtt_client, "offline")
+
+    finally:
+        if modbus_client is not None:
+            url_label = config.url if config.host is not None else config.description
+            logging.info(f"Closing Modbus connection to {url_label}")
+            modbus_client.close()
+
+        logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
+        await mqtt_handler.close()
 
 
-def run_modbus_event_loop(device: ThreadConfig, loop: asyncio.AbstractEventLoop):
+def run_modbus_event_loop(config: ThreadConfig, loop: asyncio.AbstractEventLoop, stop_event: threading.Event) -> None:
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(read_and_publish_device_sensors(device, loop))
+        loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
     except Exception:
-        logging.exception(f"{device.description} thread crashed !!!")
+        logging.exception(f"{config.description} thread crashed !!!")
+        stop_event.set()  # Signal other threads to stop on any crash
     finally:
         loop.close()
 
 
-async def start(configs: list[ThreadConfig]):
+async def start(configs: list[ThreadConfig]) -> None:
+    stop_event = threading.Event()
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(configs)) as executor:
-        executions: list[concurrent.futures.Future] = []
-        for config in configs:
-            executions.append(executor.submit(run_modbus_event_loop, config, asyncio.new_event_loop()))
-        done, pending = concurrent.futures.wait(executions)
+        executions: list[concurrent.futures.Future] = [executor.submit(run_modbus_event_loop, config, asyncio.new_event_loop(), stop_event) for config in configs]
+
+        # Poll with a timeout so KeyboardInterrupt and stop_event are both handled
+        while True:
+            done, pending = concurrent.futures.wait(executions, timeout=1.0)
+
+            if stop_event.is_set() and pending:
+                logging.warning("A thread crashed — cancelling remaining threads")
+                # Loops are owned by each thread; signal via the event and
+                # cancel each loop's running coroutine from within the thread.
+                for fut in pending:
+                    fut.cancel()
+                concurrent.futures.wait(pending)
+                break
+
+            if not pending:
+                break
+
         for fut in done:
             try:
-                fut.result()  # <-- exception re-raised here
+                fut.result()
             except Exception:
-                logging.exception("Unhandled exception")
+                logging.exception("Unhandled exception in device thread")
