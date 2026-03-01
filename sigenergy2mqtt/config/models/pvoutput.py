@@ -64,6 +64,8 @@ class PvOutputConfig(BaseModel):
         for key in ("v7", "v8", "v9", "v10", "v11", "v12"):
             if key in data:
                 ext[key] = data.pop(key)
+            else:
+                ext[key] = ""
         if ext:
             data["extended"] = ext
         return data
