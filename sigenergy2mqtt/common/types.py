@@ -3,11 +3,18 @@ from sigenergy2mqtt.i18n import _t
 
 class DeviceType:
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         """Independent phase power control interface (registers 40008~40025, 40030), only SigenStor, Sigen Hybrid, Sigen PV M1-HYB series support"""
-        self.has_independent_phase_power_control_interface: bool = False
+        self.has_independent_phase_power_control_interface: bool = kwargs.pop("has_independent_phase_power_control_interface", False)
         """Grid code interface (registers 40051~40068), only SigenStor, Sigen Hybrid support"""
-        self.has_grid_code_interface: bool = False
+        self.has_grid_code_interface: bool = kwargs.pop("has_grid_code_interface", False)
+        super().__init__(**kwargs)
+
+
+class NonInverter(DeviceType):
+    """Default device type"""
+
+    def __str__(self) -> str:
+        return ""
 
 
 class HybridInverter(DeviceType):
