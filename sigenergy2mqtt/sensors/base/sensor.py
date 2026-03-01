@@ -715,8 +715,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         # Compute processed state
         result = state if raw or isinstance(state, str) else self._apply_gain_and_precision(state, raw)
 
-        # Ensure integer type is returned when precision == 0
-        if not raw and not isinstance(result, str) and getattr(self, "precision", None) == 0 and isinstance(result, float) and result == int(result):
+        # Ensure integer type is returned when precision == 0 or None
+        if not raw and not isinstance(result, str) and self.precision in (0, None) and isinstance(result, float) and result == int(result):
             return int(result)
 
         return result
