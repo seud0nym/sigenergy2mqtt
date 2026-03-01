@@ -42,6 +42,8 @@ from .base import (
 
 
 class SystemTime(TimestampSensor, HybridInverter, PVInverter):
+    ADDRESS = 30000
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="System Time",
@@ -49,13 +51,15 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30000,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V1_8,
         )
 
 
 class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30002
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="System Time Zone",
@@ -63,7 +67,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30002,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.low(plant_index),
@@ -103,6 +107,8 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30003
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="EMS Work Mode",
@@ -110,7 +116,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30003,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.high(plant_index),
@@ -154,6 +160,8 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30004
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Grid Sensor Status",
@@ -161,7 +169,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30004,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.high(plant_index),
@@ -199,6 +207,8 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30005
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Active Power",
@@ -206,7 +216,7 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30005,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -229,6 +239,8 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30007
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Reactive Power",
@@ -236,7 +248,7 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30007,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.high(plant_index),
@@ -256,6 +268,8 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class GridStatus(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30009
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Grid Status",
@@ -263,7 +277,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30009,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.high(plant_index),
@@ -297,6 +311,8 @@ class GridStatus(ReadOnlySensor, HybridInverter):
 
 
 class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30010
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Max Active Power",
@@ -304,7 +320,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30010,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -325,6 +341,8 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30012
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Max Apparent Power",
@@ -332,7 +350,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30012,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -353,6 +371,8 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PlantBatterySoC(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30014
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Battery SoC",
@@ -360,7 +380,7 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30014,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -405,7 +425,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
-            phase=phase,
+            phase_label=phase_label,
         )
 
 
@@ -439,7 +459,7 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             gain=1000,
             precision=2,
             protocol_version=Protocol.V1_8,
-            phase=phase,
+            phase_label=phase_label,
         )
 
 
@@ -527,6 +547,8 @@ class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
 
 
 class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30031
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Active Power",
@@ -534,7 +556,7 @@ class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30031,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -549,6 +571,8 @@ class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30033
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Reactive Power",
@@ -556,7 +580,7 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30033,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -571,6 +595,8 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
+    ADDRESS = 30035
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="PV Power",
@@ -578,7 +604,7 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30035,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -594,6 +620,8 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
 
 
 class BatteryPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30037
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Battery Power",
@@ -601,7 +629,7 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30037,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -622,6 +650,8 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
 
 
 class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30039
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Max Active Power",
@@ -629,7 +659,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30039,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -651,6 +681,8 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30041
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Min Active Power",
@@ -658,7 +690,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30041,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -680,6 +712,8 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
 
 
 class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30043
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Max Reactive Power",
@@ -687,7 +721,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30043,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -709,6 +743,8 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30045
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Min Reactive Power",
@@ -716,7 +752,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30045,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -738,6 +774,8 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30047
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Max Charging Power",
@@ -745,7 +783,7 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30047,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -766,6 +804,8 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
 
 
 class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30049
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Max Discharging Power",
@@ -773,7 +813,7 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30049,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -880,6 +920,8 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30064
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Max Charging Capacity",
@@ -887,7 +929,7 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30064,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -908,6 +950,8 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
 
 
 class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30066
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Available Max Discharging Capacity",
@@ -915,7 +959,7 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30066,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -936,6 +980,8 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
 
 
 class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30068
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Rated Charging Power",
@@ -943,7 +989,7 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30068,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -960,6 +1006,8 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
 
 
 class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30070
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Rated Discharging Power",
@@ -967,7 +1015,7 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30070,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -1001,6 +1049,8 @@ class GeneralAlarm5(Alarm5Sensor, HybridInverter):
 
 
 class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
+    ADDRESS = 30073
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Reserved",
@@ -1008,7 +1058,7 @@ class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30073,
+            address=self.ADDRESS,
             count=10,
             data_type=ModbusDataType.STRING,
             scan_interval=ScanInterval.low(plant_index),
@@ -1023,6 +1073,8 @@ class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
 
 
 class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30083
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Rated Energy Capacity",
@@ -1030,7 +1082,7 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30083,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -1047,6 +1099,8 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
 
 
 class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30085
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Charge Cut-Off SoC",
@@ -1054,7 +1108,7 @@ class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30085,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1069,6 +1123,8 @@ class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
 
 
 class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30086
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Discharge Cut-Off SoC",
@@ -1076,7 +1132,7 @@ class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30086,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1091,6 +1147,8 @@ class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
 
 
 class PlantBatterySoH(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30087
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Battery SoH",
@@ -1098,7 +1156,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30087,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1119,6 +1177,8 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
 
 
 class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30088
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime PV Production",
@@ -1126,7 +1186,7 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30088,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1141,6 +1201,8 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30092
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Daily Consumption",
@@ -1148,7 +1210,7 @@ class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, Hybri
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30092,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1166,6 +1228,8 @@ class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, Hybri
 
 
 class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30094
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Consumption",
@@ -1173,7 +1237,7 @@ class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInve
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30094,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1238,6 +1302,8 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
+    ADDRESS = 30194
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Third-Party PV Power",
@@ -1245,7 +1311,7 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30194,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -1260,6 +1326,8 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
 
 
 class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
+    ADDRESS = 30196
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Third-Party PV Production",
@@ -1267,7 +1335,7 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30196,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1282,6 +1350,8 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
 
 
 class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30200
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Charge Energy",
@@ -1289,7 +1359,7 @@ class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInv
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30200,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1306,6 +1376,8 @@ class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInv
 
 
 class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30204
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Discharge Energy",
@@ -1313,7 +1385,7 @@ class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30204,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1330,6 +1402,8 @@ class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
 
 
 class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30208
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime DC EV Charge Energy",
@@ -1337,7 +1411,7 @@ class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30208,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1352,6 +1426,8 @@ class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30212
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime DC EV Discharge Energy",
@@ -1359,7 +1435,7 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30212,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1374,6 +1450,8 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30216
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Imported Energy",
@@ -1381,7 +1459,7 @@ class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30216,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1398,6 +1476,8 @@ class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
 
 
 class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30220
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Exported Energy",
@@ -1405,7 +1485,7 @@ class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30220,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1422,6 +1502,8 @@ class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
 
 
 class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30224
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Generator Output Energy",
@@ -1429,7 +1511,7 @@ class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30224,
+            address=self.ADDRESS,
             count=4,
             data_type=ModbusDataType.UINT64,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1482,132 +1564,154 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class SITotalCommonLoadConsumption(StatisticsInterfaceSensor):
+    ADDRESS = 30228
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Common Load Consumption",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_total_common_load_consumption",
             plant_index=plant_index,
-            address=30228,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:home-lightning-bolt-outline",
         )
 
 
 class SITotalEVACChargedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30232
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total AC EV Charge Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_si_total_ev_ac_charged_energy",
             plant_index=plant_index,
-            address=30232,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
             icon="mdi:ev-station",
         )
 
 
 class SITotalSelfPVGeneration(StatisticsInterfaceSensor):
+    ADDRESS = 30236
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total PV Production",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_si_total_self_pv_generation",
             plant_index=plant_index,
-            address=30236,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
             icon="mdi:solar-power-variant",
         )
 
 
 class SITotalThirdPartyPVGeneration(StatisticsInterfaceSensor):
+    ADDRESS = 30240
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Third-Party PV Production",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_si_total_third_party_pv_generation",
             plant_index=plant_index,
-            address=30240,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
             icon="mdi:solar-power-variant",
         )
 
 
 class SITotalChargedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30244
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Charge Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_total_charged_energy",
             plant_index=plant_index,
-            address=30244,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:battery-arrow-up",
         )
 
 
 class SITotalDischargedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30248
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Discharge Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_total_discharged_energy",
             plant_index=plant_index,
-            address=30248,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:battery-arrow-down",
         )
 
 
 class SITotalEVDCChargedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30252
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total DC EV Charge Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_evdc_total_charge_energy",
             plant_index=plant_index,
-            address=30252,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:ev-station",
         )
 
 
 class SITotalEVDCDischargedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30256
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total DC EV Discharge Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_evdc_total_discharge_energy",
             plant_index=plant_index,
-            address=30256,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:ev-station",
         )
 
 
 class SITotalImportedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30260
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Imported Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_total_imported_energy",
             plant_index=plant_index,
-            address=30260,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:transmission-tower-import",
         )
 
 
 class SITotalExportedEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30264
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Exported Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_total_exported_energy",
             plant_index=plant_index,
-            address=30264,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:transmission-tower-export",
         )
 
 
 class SITotalGeneratorOutputEnergy(StatisticsInterfaceSensor):
+    ADDRESS = 30268
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Generator Output Energy",
             object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_si_total_generator_output_energy",
             plant_index=plant_index,
-            address=30268,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             icon="mdi:generator-stationary",
         )
@@ -1617,6 +1721,8 @@ class SITotalGeneratorOutputEnergy(StatisticsInterfaceSensor):
 
 
 class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter):
+    ADDRESS = 30272
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="PV Total Generation Today",
@@ -1624,7 +1730,7 @@ class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter)
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30272,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -1639,6 +1745,8 @@ class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter)
 
 
 class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInverter):
+    ADDRESS = 30274
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="PV Total Generation Yesterday",
@@ -1646,7 +1754,7 @@ class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInver
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30274,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -1661,6 +1769,8 @@ class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInver
 
 
 class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30276
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Rated Frequency",
@@ -1668,7 +1778,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30276,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.low(plant_index),
@@ -1685,6 +1795,8 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30277
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Rated Voltage",
@@ -1692,7 +1804,7 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30277,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -1709,6 +1821,8 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30279
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Current Control Command Value",
@@ -1716,7 +1830,7 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30279,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.low(plant_index),
@@ -1736,13 +1850,15 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class Alarm6(AlarmSensor):
+    ADDRESS = 30280
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Alarm 6",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_6",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30280,
+            address=self.ADDRESS,
             alarm_type="Plant",
             protocol_version=Protocol.V2_8,
         )
@@ -1766,13 +1882,15 @@ class Alarm6(AlarmSensor):
 
 
 class Alarm7(AlarmSensor):
+    ADDRESS = 30281
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Alarm 7",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_merged_alarm_7",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30281,
+            address=self.ADDRESS,
             alarm_type="Plant",
             protocol_version=Protocol.V2_8,
         )
@@ -1798,6 +1916,8 @@ class PlantAlarms(AlarmCombinedSensor):
 
 
 class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30282
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="General Load Power",
@@ -1805,7 +1925,7 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30282,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -1820,6 +1940,8 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 30284
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Total Load Power",
@@ -1827,7 +1949,7 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=30284,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),

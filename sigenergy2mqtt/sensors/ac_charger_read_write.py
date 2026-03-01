@@ -8,13 +8,15 @@ from .base import NumericSensor, ScanInterval, WriteOnlySensor
 
 
 class ACChargerStatus(WriteOnlySensor):
+    ADDRESS = 42000
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="AC Charger Stop/Start",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}",
             plant_index=plant_index,
             device_address=device_address,
-            address=42000,
+            address=self.ADDRESS,
             protocol_version=Protocol.V2_0,
             payload_off="stop",
             payload_on="start",
@@ -33,6 +35,8 @@ class ACChargerStatus(WriteOnlySensor):
 
 
 class ACChargerOutputCurrent(NumericSensor):
+    ADDRESS = 42001
+
     # Range [6, X]
     # X is the smaller value between the rated current and the AC-Charger input breaker rated current.
     def __init__(
@@ -49,7 +53,7 @@ class ACChargerOutputCurrent(NumericSensor):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=42001,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.medium(plant_index),

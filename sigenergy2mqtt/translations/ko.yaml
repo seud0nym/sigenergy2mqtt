@@ -1302,12 +1302,12 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: 페이즈 {phase} 유효 전력
+    name: 페이즈 {phase_label} 유효 전력
   PlantPhaseReactivePower:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: 페이즈 {phase} 무효 전력
+    name: 페이즈 {phase_label} 무효 전력
   PlantRatedChargingPower:
     attributes:
       source: Modbus 레지스터 {address}

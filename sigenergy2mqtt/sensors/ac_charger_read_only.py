@@ -9,6 +9,8 @@ from .base import AlarmCombinedSensor, AlarmSensor, ReadOnlySensor
 
 
 class ACChargerRunningState(ReadOnlySensor):
+    ADDRESS = 32000
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Running State",
@@ -16,7 +18,7 @@ class ACChargerRunningState(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32000,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.high(plant_index),
@@ -60,6 +62,8 @@ class ACChargerRunningState(ReadOnlySensor):
 
 
 class ACChargerTotalEnergyConsumed(ReadOnlySensor):
+    ADDRESS = 32001
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Total Energy Consumed",
@@ -67,7 +71,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32001,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.high(plant_index),
@@ -83,6 +87,8 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
 
 
 class ACChargerChargingPower(ReadOnlySensor):
+    ADDRESS = 32003
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Charging Power",
@@ -90,7 +96,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32003,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
@@ -106,6 +112,8 @@ class ACChargerChargingPower(ReadOnlySensor):
 
 
 class ACChargerRatedPower(ReadOnlySensor):
+    ADDRESS = 32005
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Rated Power",
@@ -113,7 +121,7 @@ class ACChargerRatedPower(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32005,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -128,6 +136,8 @@ class ACChargerRatedPower(ReadOnlySensor):
 
 
 class ACChargerRatedCurrent(ReadOnlySensor):
+    ADDRESS = 32007
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Rated Current",
@@ -135,7 +145,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32007,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -150,6 +160,8 @@ class ACChargerRatedCurrent(ReadOnlySensor):
 
 
 class ACChargerRatedVoltage(ReadOnlySensor):
+    ADDRESS = 32009
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Rated Voltage",
@@ -157,7 +169,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32009,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.low(plant_index),
@@ -172,6 +184,8 @@ class ACChargerRatedVoltage(ReadOnlySensor):
 
 
 class ACChargerInputBreaker(ReadOnlySensor):
+    ADDRESS = 32010
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Input Breaker",
@@ -179,7 +193,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=device_address,
-            address=32010,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.low(plant_index),
@@ -194,13 +208,15 @@ class ACChargerInputBreaker(ReadOnlySensor):
 
 
 class ACChargerAlarm1(AlarmSensor):
+    ADDRESS = 32012
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Alarm 1",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_1",
             plant_index=plant_index,
             device_address=device_address,
-            address=32012,
+            address=self.ADDRESS,
             alarm_type="EVAC",
             protocol_version=Protocol.V2_0,
         )
@@ -230,13 +246,15 @@ class ACChargerAlarm1(AlarmSensor):
 
 
 class ACChargerAlarm2(AlarmSensor):
+    ADDRESS = 32013
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Alarm 2",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_2",
             plant_index=plant_index,
             device_address=device_address,
-            address=32013,
+            address=self.ADDRESS,
             alarm_type="EVAC",
             protocol_version=Protocol.V2_0,
         )
@@ -260,13 +278,15 @@ class ACChargerAlarm2(AlarmSensor):
 
 
 class ACChargerAlarm3(AlarmSensor):
+    ADDRESS = 32014
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Alarm 3",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ac_charger_{device_address}_alarm_3",
             plant_index=plant_index,
             device_address=device_address,
-            address=32014,
+            address=self.ADDRESS,
             alarm_type="EVAC",
             protocol_version=Protocol.V2_0,
         )

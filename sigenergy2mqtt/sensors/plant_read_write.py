@@ -12,13 +12,15 @@ from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, Numeri
 
 
 class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 40000
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Plant Power On/Off",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_status",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40000,
+            address=self.ADDRESS,
             protocol_version=Protocol.V1_8,
         )
 
@@ -29,6 +31,8 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
 
 
 class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40001
+
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -37,7 +41,7 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40001,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -52,6 +56,8 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
 
 
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40003
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -60,7 +66,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40003,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -82,6 +88,8 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
 
 
 class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40005
+
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -90,7 +98,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40005,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -112,6 +120,8 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
 
 
 class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40006
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -120,7 +130,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40006,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -142,6 +152,8 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
 
 
 class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40007
+
     # Range: (-1,-0.8]U[0.8, 1]
     def __init__(self, plant_index: int):
         super().__init__(
@@ -151,7 +163,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40007,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -173,6 +185,8 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
 
 
 class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
+    ADDRESS = 40030
+
     # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
     def __init__(self, plant_index: int, output_type: int):
         super().__init__(
@@ -181,7 +195,7 @@ class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInvert
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40030,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
             protocol_version=Protocol.V1_8,
         )
@@ -355,6 +369,8 @@ class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInvert
 
 
 class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
+    ADDRESS = 40026
+
     def __init__(self, plant_index: int):
         super().__init__(
             name="Reserved",
@@ -362,7 +378,7 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40026,
+            address=self.ADDRESS,
             count=3,
             data_type=ModbusDataType.STRING,
             scan_interval=ScanInterval.medium(plant_index),
@@ -377,6 +393,8 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
 
 
 class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
+    ADDRESS = 40029
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -384,7 +402,7 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40029,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
             protocol_version=Protocol.V1_8,
         )
@@ -396,6 +414,8 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
 
 
 class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
+    ADDRESS = 40031
+
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -403,7 +423,7 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems_control_mode",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40031,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             options=[
                 "PCS remote control",  # 0
@@ -513,6 +533,8 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 
 
 class MaxChargingLimit(RemoteEMSLimit):
+    ADDRESS = 40032
+
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -522,7 +544,7 @@ class MaxChargingLimit(RemoteEMSLimit):
             name="Max Charging Limit",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_charging_limit",
             plant_index=plant_index,
-            address=40032,
+            address=self.ADDRESS,
             icon="mdi:battery-charging-high",
             maximum=rated_charging_power,
             protocol_version=Protocol.V1_8,
@@ -542,6 +564,8 @@ class MaxChargingLimit(RemoteEMSLimit):
 
 
 class MaxDischargingLimit(RemoteEMSLimit):
+    ADDRESS = 40034
+
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -551,7 +575,7 @@ class MaxDischargingLimit(RemoteEMSLimit):
             discharging=True,
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_max_discharging_limit",
             plant_index=plant_index,
-            address=40034,
+            address=self.ADDRESS,
             icon="mdi:battery-charging-low",
             maximum=rated_discharging_power,
             protocol_version=Protocol.V1_8,
@@ -571,6 +595,8 @@ class MaxDischargingLimit(RemoteEMSLimit):
 
 
 class PVMaxPowerLimit(RemoteEMSLimit):
+    ADDRESS = 40036
+
     def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
             availability_control_sensor=remote_ems,
@@ -580,7 +606,7 @@ class PVMaxPowerLimit(RemoteEMSLimit):
             name="PV Max Power Limit",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pv_max_power_limit",
             plant_index=plant_index,
-            address=40036,
+            address=self.ADDRESS,
             icon="mdi:solar-power",
             maximum=4294967.295,
             protocol_version=Protocol.V1_8,
@@ -600,6 +626,8 @@ class PVMaxPowerLimit(RemoteEMSLimit):
 
 
 class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40038
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -608,7 +636,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40038,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.high(plant_index),
@@ -629,6 +657,8 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
 
 
 class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40040
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -637,7 +667,7 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40040,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.high(plant_index),
@@ -658,6 +688,8 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 
 
 class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40042
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -666,7 +698,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40042,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.high(plant_index),
@@ -687,6 +719,8 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
 
 
 class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40044
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -695,7 +729,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40044,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.high(plant_index),
@@ -716,6 +750,8 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 
 
 class ESSBackupSOC(NumericSensor, HybridInverter):
+    ADDRESS = 40046
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -724,7 +760,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40046,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -745,6 +781,8 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
 
 
 class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
+    ADDRESS = 40047
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -753,7 +791,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40047,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -774,6 +812,8 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
 
 
 class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
+    ADDRESS = 40048
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -782,7 +822,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40048,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -803,6 +843,8 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
 
 
 class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40049
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -811,7 +853,7 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40049,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -832,6 +874,8 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
 
 
 class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
+    ADDRESS = 40051
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -839,7 +883,7 @@ class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40051,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
@@ -847,6 +891,8 @@ class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
 
 
 class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    ADDRESS = 40052
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -855,7 +901,7 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40052,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -876,6 +922,8 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
 
 
 class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    ADDRESS = 40053
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -884,7 +932,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40053,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -905,6 +953,8 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
 
 
 class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
+    ADDRESS = 40054
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -912,7 +962,7 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_mode",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40054,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
@@ -928,6 +978,8 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
 
 
 class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
+    ADDRESS = 40055
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -935,13 +987,15 @@ class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_lvrt_grid_voltage_protection_blocking",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40055,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
 
 
 class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
+    ADDRESS = 40056
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -949,7 +1003,7 @@ class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40056,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
@@ -957,6 +1011,8 @@ class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
 
 
 class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    ADDRESS = 40057
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -965,7 +1021,7 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40057,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -986,6 +1042,8 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
 
 
 class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor, HybridInverter):
+    ADDRESS = 40058
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -994,7 +1052,7 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40058,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1015,6 +1073,8 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
 
 
 class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
+    ADDRESS = 40059
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -1022,7 +1082,7 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_mode",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40059,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             options=[
                 "Reactive power compensation current, active zero-current mode",  # 0
@@ -1038,6 +1098,8 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
 
 
 class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
+    ADDRESS = 40060
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -1045,13 +1107,15 @@ class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInve
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_hvrt_grid_voltage_protection_blocking",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40060,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
 
 
 class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
+    ADDRESS = 40061
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -1059,7 +1123,7 @@ class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_over_frequency_derating",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40061,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
@@ -1067,6 +1131,8 @@ class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
 
 
 class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
+    ADDRESS = 40062
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -1075,7 +1141,7 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40062,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1095,6 +1161,8 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
 
 
 class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverter):
+    ADDRESS = 40063
+
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
             availability_control_sensor=None,
@@ -1103,7 +1171,7 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40063,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1125,6 +1193,8 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
 
 
 class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter):
+    ADDRESS = 40064
+
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
             availability_control_sensor=None,
@@ -1133,7 +1203,7 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40064,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1155,6 +1225,8 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
 
 
 class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter):
+    ADDRESS = 40065
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -1162,7 +1234,7 @@ class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter)
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_code_under_frequency_power_boost",
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40065,
+            address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V2_8,
         )
@@ -1170,6 +1242,8 @@ class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter)
 
 
 class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverter):
+    ADDRESS = 40066
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -1178,7 +1252,7 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40066,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1198,6 +1272,8 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
 
 
 class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInverter):
+    ADDRESS = 40067
+
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
             availability_control_sensor=None,
@@ -1206,7 +1282,7 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40067,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -1228,6 +1304,8 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
 
 
 class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInverter):
+    ADDRESS = 40068
+
     def __init__(self, plant_index: int, rated_frequency: float):
         super().__init__(
             availability_control_sensor=None,
@@ -1236,7 +1314,7 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=40068,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),

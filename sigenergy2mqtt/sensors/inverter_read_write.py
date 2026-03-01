@@ -7,13 +7,15 @@ from sigenergy2mqtt.sensors.base import NumericSensor, ReservedSensor, ScanInter
 
 
 class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 40500
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Inverter Power On/Off",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_status",
             plant_index=plant_index,
             device_address=device_address,
-            address=40500,
+            address=self.ADDRESS,
             protocol_version=Protocol.V1_8,
         )
 
@@ -24,6 +26,8 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
 
 
 class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reserved in v2.7 2025-05-23
+    ADDRESS = 40501
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Grid Code",
@@ -31,7 +35,7 @@ class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reser
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=40501,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -46,13 +50,15 @@ class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reser
 
 
 class DCChargerStatus(WriteOnlySensor, HybridInverter):
+    ADDRESS = 41000
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="DC Charger Stop/Start",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}",
             plant_index=plant_index,
             device_address=device_address,
-            address=41000,
+            address=self.ADDRESS,
             protocol_version=Protocol.V1_8,
             payload_off="stop",
             payload_on="start",
@@ -71,6 +77,8 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
 
 
 class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
+    ADDRESS = 41500
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             name="Remote EMS Dispatch",
@@ -78,7 +86,7 @@ class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Ma
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=41500,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -93,6 +101,8 @@ class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Ma
 
 
 class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
+    ADDRESS = 41501
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
@@ -101,7 +111,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=41501,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -116,6 +126,8 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
 
 
 class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
+    ADDRESS = 41503
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
@@ -124,7 +136,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=41503,
+            address=self.ADDRESS,
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.medium(plant_index),
@@ -139,6 +151,8 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
 
 
 class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
+    ADDRESS = 41505
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
@@ -147,7 +161,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=41505,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -164,6 +178,8 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
 
 
 class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
+    ADDRESS = 41506
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
@@ -172,7 +188,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=41506,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
@@ -189,6 +205,8 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
 
 
 class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
+    ADDRESS = 41507
+
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
@@ -197,7 +215,7 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             input_type=InputType.HOLDING,
             plant_index=plant_index,
             device_address=device_address,
-            address=41507,
+            address=self.ADDRESS,
             count=1,
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),

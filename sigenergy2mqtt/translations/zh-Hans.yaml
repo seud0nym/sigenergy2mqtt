@@ -1302,12 +1302,12 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: 相 {phase} 有功功率
+    name: 相 {phase_label} 有功功率
   PlantPhaseReactivePower:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: 相 {phase} 无功功率
+    name: 相 {phase_label} 无功功率
   PlantRatedChargingPower:
     attributes:
       source: Modbus 寄存器 {address}

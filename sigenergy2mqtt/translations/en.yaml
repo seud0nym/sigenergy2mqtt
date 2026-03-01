@@ -1302,12 +1302,12 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase{phase} Active Power
+    name: Phase{phase_label} Active Power
   PlantPhaseReactivePower:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase{phase} Reactive Power
+    name: Phase{phase_label} Reactive Power
   PlantRatedChargingPower:
     attributes:
       source: Modbus Register {address}
