@@ -1,12 +1,11 @@
 import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import active_config
+from sigenergy2mqtt.main import device_thread as threading_mod
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.main import threading as threading_mod
 from sigenergy2mqtt.main.thread_config import ThreadConfig
 
 

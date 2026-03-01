@@ -4,8 +4,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import active_config
-from sigenergy2mqtt.main.threading import read_and_publish_device_sensors
+from sigenergy2mqtt.main.device_thread import read_and_publish_device_sensors
 
 
 @pytest.mark.asyncio
