@@ -35,6 +35,7 @@ class SmartPortConfig(BaseModel):
 
     @model_validator(mode="after")
     def check_enabled(self) -> "SmartPortConfig":
-        if self.enabled and not self.module.name and not self.mqtt:
-            raise ValueError("modbus.smart-port.enabled, but no module name or MQTT topics configured")
+        if self.enabled:
+            if not self.module.name and not self.mqtt:
+                raise ValueError("modbus.smart-port.enabled, but no module name or MQTT topics configured")
         return self
