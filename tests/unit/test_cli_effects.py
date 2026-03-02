@@ -42,11 +42,11 @@ async def test_threading_clean_effect(monkeypatch):
     monkeypatch.setattr(active_config.mqtt, "broker", "localhost")
     monkeypatch.setattr(active_config.mqtt, "port", 1883)
 
-    cfg = ThreadConfig("127.0.0.1", 502, name="Test")
+    cfg = ThreadConfig("Test", "127.0.0.1", 502)
     mock_device = MagicMock()
     mock_device.name = "TestDevice"
     mock_device.publish_discovery = MagicMock()
-    cfg.add_device(0, mock_device)
+    cfg.add_device(mock_device)
 
     mock_mqtt_client = MagicMock()
     mock_mqtt_handler = AsyncMock()
@@ -81,11 +81,11 @@ async def test_threading_discovery_only_effect(monkeypatch):
     monkeypatch.setattr(active_config.mqtt, "broker", "localhost")
     monkeypatch.setattr(active_config.mqtt, "port", 1883)
 
-    cfg = ThreadConfig("127.0.0.1", 502, name="TestHost")
+    cfg = ThreadConfig("TestHost", "127.0.0.1", 502)
     mock_device = MagicMock()
     mock_device.name = "TestDevice"
     mock_device.publish_discovery = MagicMock()
-    cfg.add_device(0, mock_device)
+    cfg.add_device(mock_device)
 
     mock_mqtt_client = MagicMock()
     mock_mqtt_handler = AsyncMock()

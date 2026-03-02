@@ -37,7 +37,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerRegulationGradient, GridCodeLVRT, IndependentPhasePowerControl
 
 from .device_thread import start
-from .thread_config import ThreadConfig, ThreadConfigFactory
+from .thread_config import ThreadConfig, thread_config_registry
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -306,7 +306,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
             continue
 
-        config: ThreadConfig = ThreadConfigFactory.get_config(device.host, device.port, device.timeout, device.retries)
+        config: ThreadConfig = thread_config_registry.get_config(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
 
         async with modbus:
@@ -325,7 +325,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 if plant is None and plant_tmp is not None:
                     plant = plant_tmp
 
-                    config.add_device(plant_index, plant)
+                    config.add_device(plant)
                     await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, CurrentControlCommandValue.ADDRESS, Alarm7.ADDRESS, ActivePowerRegulationGradient.ADDRESS)
 
                     if plant.protocol_version is not None:
@@ -343,7 +343,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
                 if inverter is not None:
                     inverters[device_address] = inverter.unique_id
-                    config.add_device(plant_index, inverter)
+                    config.add_device(inverter)
                     await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, InverterMaxCellVoltage.ADDRESS, InverterMinCellVoltage.ADDRESS)
 
             if plant is not None:
@@ -352,7 +352,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
             logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
-    return ThreadConfigFactory.get_configs(), protocol_version
+    return thread_config_registry.get_all(), protocol_version
 
 
 async def _setup_dc_chargers(
@@ -378,7 +378,7 @@ async def _setup_dc_chargers(
             logging.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
             continue
         charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
-        config.add_device(plant_index, charger)
+        config.add_device(charger)
 
 
 async def _setup_ac_chargers(
@@ -405,23 +405,23 @@ async def _setup_ac_chargers(
 
     for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
         charger = await make_ac_charger(plant_index, modbus_client, device_address, plant)
-        config.add_device(plant_index, charger)
+        config.add_device(charger)
 
 
 def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:
     """Build and return the full list of ThreadConfigs, prepending any service threads."""
-    svc_thread_cfg = ThreadConfig(None, None, name="Services")
+    svc_thread_cfg = ThreadConfig(name="Services", host=None, port=None)
 
     if active_config.metrics_enabled:
-        svc_thread_cfg.add_device(-1, MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
+        svc_thread_cfg.add_device(MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
 
     if active_config.pvoutput.enabled and not active_config.clean:
         for service in get_pvoutput_services(configs):
-            svc_thread_cfg.add_device(-1, service)
+            svc_thread_cfg.add_device(service)
 
     if active_config.influxdb.enabled and not active_config.clean:
         for service in get_influxdb_services(configs):
-            svc_thread_cfg.add_device(-1, service)
+            svc_thread_cfg.add_device(service)
 
     if svc_thread_cfg.has_devices:
         configs.insert(0, svc_thread_cfg)
@@ -429,8 +429,8 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
         logging.info("No services configured - skipping service thread")
 
     if active_config.log_level == logging.DEBUG:
-        mon_thread_cfg = ThreadConfig(None, None, name="Monitor")
-        mon_thread_cfg.add_device(-1, MonitorService([d for c in configs for d in c.devices]))
+        mon_thread_cfg = ThreadConfig(name="Monitor", host=None, port=None)
+        mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
         configs.append(mon_thread_cfg)
 
     return configs
@@ -456,7 +456,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
         active_config.reload()
         configure_logging()
         for config in configs:
-            config.reload_config()
+            config.reapply_sensor_overrides()
 
     signal.signal(signal.SIGINT, exit_on_signal)
     signal.signal(signal.SIGHUP, reload_on_signal)

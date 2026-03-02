@@ -72,8 +72,8 @@ async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
 
     with _swap_active_config(cfg_obj):
         # Prepare ThreadConfig with no host
-        cfg = ThreadConfig(None, None, name="Test")
-        cfg.add_device(0, DummyDevice("dev1"))
+        cfg = ThreadConfig(name="Test", host=None, port=None)
+        cfg.add_device(DummyDevice("dev1"))
 
         # Patch mqtt_setup to return dummy client and handler
         mqtt_client = DummyMQTTClient()
@@ -104,8 +104,8 @@ async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch
 
     with _swap_active_config(cfg_obj):
         # Create ThreadConfig with host so Modbus client is used
-        cfg = ThreadConfig("127.0.0.1", 502, name="TestHost")
-        cfg.add_device(0, DummyDevice("dev2"))
+        cfg = ThreadConfig(name="TestHost", host="127.0.0.1", port=502)
+        cfg.add_device(DummyDevice("dev2"))
 
         # Mock Modbus client
         class MockModbus:
@@ -146,7 +146,7 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
     monkeypatch.setattr(threading_mod, "read_and_publish_device_sensors", raise_corr)
 
     # Prepare a ThreadConfig
-    cfg = ThreadConfig(None, None, name="Runner")
+    cfg = ThreadConfig(name="Runner", host=None, port=None)
     # run_modbus_event_loop should catch and log the exception
     loop = asyncio.new_event_loop()
     orig_name = threading.current_thread().name
@@ -179,10 +179,10 @@ async def test_read_and_publish_device_sensors_discovery_only(monkeypatch):
     cfg_obj.mqtt.port = 1883
 
     with _swap_active_config(cfg_obj):
-        cfg = ThreadConfig("127.0.0.1", 502, name="DiscoveryOnly")
+        cfg = ThreadConfig(name="DiscoveryOnly", host="127.0.0.1", port=502)
         mock_device = DummyDevice("disc_only")
         mock_device.schedule = MagicMock(return_value=[])
-        cfg.add_device(0, mock_device)
+        cfg.add_device(mock_device)
 
         mock_mqtt_client = DummyMQTTClient()
         mock_mqtt_handler = DummyMQTTHandler()

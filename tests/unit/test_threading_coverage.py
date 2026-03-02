@@ -24,7 +24,7 @@ async def test_read_and_publish_device_sensors_ha_enabled_and_cancel():
     device.publish_availability = MagicMock()
     device.schedule.return_value = [asyncio.sleep(10)]  # Long task to be cancelled
 
-    config.device_init = [device]
+    config.devices = [device]
     config.devices = [device]
 
     modbus_client = MagicMock()
@@ -69,7 +69,7 @@ async def test_read_and_publish_device_sensors_clean_and_discovery_only():
     device = MagicMock()
     device.name = "TestDevice"
     device.publish_discovery = AsyncMock()
-    config.device_init = [device]
+    config.devices = [device]
 
     mqtt_handler = MagicMock()
     mqtt_handler.wait_for = AsyncMock()
