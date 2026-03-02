@@ -79,6 +79,7 @@
         "propagatable",
         "psutil",
         "PUBACK",
+        "PUBCOMP",
         "pvoutput",
         "pvstring",
         "pymeth",
@@ -107,6 +108,7 @@
         "typqxq",
         "uidpub",
         "Unpublishing",
+        "UNSUBACK",
         "veth",
         "wordorder",
         "writeonly"

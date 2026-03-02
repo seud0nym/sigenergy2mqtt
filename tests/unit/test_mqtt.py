@@ -572,9 +572,9 @@ class TestMqttCallbacks:
         mock_client.host = "test_broker"
         mock_client.port = 1883
 
-        with patch("os._exit") as mock_exit:
+        with patch("sigenergy2mqtt.mqtt.client._thread.interrupt_main") as mock_interrupt:
             on_connect(mock_client, handler, {}, 5, {})  # Reason code 5 = connection refused
-            mock_exit.assert_called_once_with(2)
+            mock_interrupt.assert_called_once()
 
         loop.close()
 

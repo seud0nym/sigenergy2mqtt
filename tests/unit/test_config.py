@@ -335,10 +335,13 @@ class TestConfigCoverageAugmentation:
             mock_future.result.return_value = [{"host": "127.0.0.1", "port": 502}]
             mock_threadsafe.return_value = mock_future
 
-            cfg = Config()
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock) as mock_scan:  # noqa: F841
+                cfg = Config()
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == [{"host": "127.0.0.1", "port": 502}]
+                # Close the coroutine to avoid RuntimeWarning
+                coro = mock_threadsafe.call_args[0][0]
+                coro.close()
 
     @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
     def test_run_auto_discovery_with_running_loop_timeout(self, mock_get_loop):
@@ -350,8 +353,8 @@ class TestConfigCoverageAugmentation:
             mock_future.result.side_effect = TimeoutError("Timed out")
             mock_threadsafe.return_value = mock_future
 
-            cfg = Config()
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock) as mock_scan:  # noqa: F841
+                cfg = Config()
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == []
                 mock_future.cancel.assert_called_once()
@@ -369,8 +372,8 @@ class TestConfigCoverageAugmentation:
             mock_future.result.side_effect = Exception("Generic")
             mock_threadsafe.return_value = mock_future
 
-            cfg = Config()
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock):
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock) as mock_scan:  # noqa: F841
+                cfg = Config()
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == []
                 # Close the coroutine to avoid RuntimeWarning
