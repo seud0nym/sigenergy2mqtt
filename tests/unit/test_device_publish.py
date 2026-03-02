@@ -2,7 +2,7 @@ import asyncio
 import time
 from pathlib import Path
 from typing import cast
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from paho.mqtt.client import Client as MqttClient
@@ -354,3 +354,254 @@ async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
 
     # The daily sensor must have been published at least twice (initial + day-change forced)
     assert publish_log.count("daily1") >= 2, f"Expected daily sensor to be published >=2 times, got {publish_log}"
+
+
+@pytest.mark.asyncio
+async def test_poller_skips_unpublishable_sensors(monkeypatch):
+    """Ensure _get_sensors_to_publish_now correctly skips sensors where publishable == False."""
+    dev = Device("devpub5", 0, "uidpub5", "mf", "mdl", Protocol.V1_8)
+
+    s1 = DummyModbusSensor("s1", address=1, count=1, device_address=1, scan_interval=1)
+    s2 = DummyModbusSensor("s2", address=2, count=1, device_address=1, scan_interval=1)
+
+    # Mark s1 as unpublishable
+    object.__setattr__(s1, "_publishable", False)
+
+    dev._add_read_sensor(s1)
+    dev._add_read_sensor(s2)
+
+    monkeypatch.setattr(ModbusLockFactory, "get", staticmethod(lambda modbus: FakeLock()))
+
+    # Stop the poller loop after one iteration
+    async def _mock_publish(mqtt_client, modbus_client=None, republish=False):
+        dev._online = False
+        return True
+
+    monkeypatch.setattr(s2, "publish", _mock_publish)
+
+    s1.force_publish = True
+    s2.force_publish = True
+
+    # ensure initial state has no latest_raw_state
+    s1._states = []
+    s2._states = []
+
+    dev._online = True
+    poller = SensorGroupPoller(dev)
+    modbus = FakeModbus()
+
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
+    await asyncio.wait_for(coro, timeout=5)
+
+    assert len(s1._states) == 0  # Should not be published
+    assert len(s2._states) == 0  # _mock_publish does not append states, but loop ran
+
+
+@pytest.mark.asyncio
+async def test_poller_read_ahead_exception_codes(monkeypatch, caplog):
+    """Mock read_ahead_registers to return code 1, 3, 4, -1 and ensure appropriate warning logs are hit but read_ahead stays enabled."""
+    import logging
+
+    caplog.set_level(logging.WARNING)
+    dev = Device("devpub6", 0, "uidpub6", "mf", "mdl", Protocol.V1_8)
+    s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
+    s2 = DummyModbusSensor("s2", address=12, count=1, device_address=7, scan_interval=1)
+    dev._add_read_sensor(s1)
+    dev._add_read_sensor(s2)
+
+    class ModbusExceptionCodes(FakeModbus):
+        def __init__(self):
+            super().__init__()
+            self.read_ahead_called = 0
+            self.codes_to_return = [1, 3, 4, -1, 99]
+
+        async def read_ahead_registers(self, first_address, count, device_id, input_type, trace=False):
+            if self.read_ahead_called < len(self.codes_to_return):
+                code = self.codes_to_return[self.read_ahead_called]
+            else:
+                code = 0
+            self.read_ahead_called += 1
+            return code
+
+    monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
+
+    modbus = ModbusExceptionCodes()
+    s1._states = []
+    s2._states = []
+
+    dev._online = True
+
+    poller = SensorGroupPoller(dev)
+
+    # MUST override publish because DummyModbusSensor.publish stops the loop!
+    async def _mock_publish_no_stop(mqtt_client, modbus_client=None, republish=False):
+        # We need to use 'self' here but it's a mock.
+        # Actually it's monkeypatched on s1 and s2 directly.
+        pass
+        return True
+
+    monkeypatch.setattr(s1, "publish", _mock_publish_no_stop)
+    monkeypatch.setattr(s2, "publish", _mock_publish_no_stop)
+
+    # Simulate time passing so sensors become due again
+    current_time = [time.time()]
+    monkeypatch.setattr(time, "time", lambda: current_time[0])
+
+    original_sleep = asyncio.sleep
+
+    async def _mock_sleep_no_recursion(delay, result=None):
+        if modbus.read_ahead_called >= len(modbus.codes_to_return):
+            dev._online = False
+            return None
+        current_time[0] += 60.0  # Advance time
+        s1.force_publish = True
+        s2.force_publish = True
+        await original_sleep(0)  # Yield without recursion
+        return None
+
+    monkeypatch.setattr(asyncio, "sleep", _mock_sleep_no_recursion)
+
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1, s2)
+    # The timeout here ensures it doesn't hang forever if the loop breaks
+    await asyncio.wait_for(coro, timeout=5)
+
+    assert modbus.read_ahead_called >= 5
+
+    # check that the correct logs were produced
+    log_text = caplog.text
+    assert "0x01 ILLEGAL FUNCTION" in log_text
+    assert "0x03 ILLEGAL DATA VALUE" in log_text
+    assert "0x04 SLAVE DEVICE FAILURE" in log_text
+    assert "NO RESPONSE FROM DEVICE" in log_text
+    assert "UNKNOWN PROBLEM" in log_text
+
+
+@pytest.mark.asyncio
+async def test_poller_reconnect_cancellation(monkeypatch, caplog):
+    """Mock modbus.connect to raise asyncio.CancelledError and ensure _reconnect_modbus_with_backoff returns False properly."""
+    dev = Device("devpub7", 0, "uidpub7", "mf", "mdl", Protocol.V1_8)
+    s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
+    dev._add_read_sensor(s1)
+
+    class ModbusCancelledConnect(FakeModbus):
+        def close(self):
+            pass
+
+        async def connect(self):
+            raise asyncio.CancelledError()
+
+    monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
+
+    modbus = ModbusCancelledConnect()
+    monkeypatch.setattr(modbus, "read_ahead_registers", AsyncMock(side_effect=ModbusException("boom")))
+
+    dev._online = True
+    s1.force_publish = True
+    s1._states = []
+
+    poller = SensorGroupPoller(dev)
+
+    # We expect the CancelledError from the inner _reconnect to NOT be caught
+    # normally except by cancelling the task. Actually, in _reconnect_modbus_with_backoff
+    # it caught CancelledError and returns False.
+    res = await poller._reconnect_modbus_with_backoff(modbus)
+    assert res is False
+
+    # Test the sleep cancellation too
+    class ModbusCancelledSleep(FakeModbus):
+        def close(self):
+            pass
+
+        async def connect(self):
+            pass
+
+    modbus2 = ModbusCancelledSleep()
+    modbus2.connected = False
+
+    monkeypatch.setattr(asyncio, "sleep", AsyncMock(side_effect=asyncio.CancelledError()))
+
+    res2 = await poller._reconnect_modbus_with_backoff(modbus2)
+    assert res2 is False
+
+
+@pytest.mark.asyncio
+async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
+    """Raise asyncio.CancelledError from the sleep task in run and ensure it's caught."""
+    import logging
+
+    dev = Device("devpub8", 0, "uidpub8", "mf", "mdl", Protocol.V1_8)
+    s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
+    dev._add_read_sensor(s1)
+    dev._online = True
+
+    # Mark it as debug logging so the caught cancellation logs a specific message
+    s1.debug_logging = True
+    dev.debug_logging = True
+
+    poller = SensorGroupPoller(dev)
+
+    # MUST override publish because DummyModbusSensor.publish stops the loop!
+    async def _mock_publish_no_stop(mqtt_client, modbus_client=None, republish=False):
+        pass
+        return True
+
+    monkeypatch.setattr(s1, "publish", _mock_publish_no_stop)
+
+    original_sleep = asyncio.sleep
+
+    async def _mock_sleep(delay, result=None):
+        # Stop the online flag so it exits the loop after catching
+        dev._online = False
+        # Cancel the task we are running in
+        asyncio.current_task().cancel()
+        # Yield to allow cancellation to raise
+        await original_sleep(0.1)
+        return None
+
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.asyncio.sleep", _mock_sleep)
+    monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
+
+    modbus = FakeModbus()
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1)
+
+    with caplog.at_level(logging.DEBUG):
+        try:
+            logging.debug("BEFORE RUN WAIT")
+            await asyncio.wait_for(coro, timeout=5)
+            logging.debug("AFTER RUN WAIT")
+        except asyncio.CancelledError:
+            pytest.fail("CancelledError leaked out of run loop")
+
+    # verify the sleep interrupted debug log
+    assert "BEFORE RUN WAIT" in caplog.text
+    assert "sleep interrupted" in caplog.text
+    assert "AFTER RUN WAIT" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_poller_run_handles_generic_exception(monkeypatch, caplog):
+    """Throw a generic Exception from sensor.publish and verify run catches it and logs an error without crashing."""
+    dev = Device("devpub9", 0, "uidpub9", "mf", "mdl", Protocol.V1_8)
+    s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
+    dev._add_read_sensor(s1)
+
+    s1.force_publish = True
+    s1._states = []
+    dev._online = True
+
+    async def _mock_publish(mqtt_client, modbus_client=None, republish=False):
+        dev._online = False  # Stop loop
+        raise Exception("generic error message")
+
+    monkeypatch.setattr(s1, "publish", _mock_publish)
+    monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
+
+    modbus = FakeModbus()
+    poller = SensorGroupPoller(dev)
+
+    coro = poller.run(cast(ModbusClient, modbus), cast(MqttClient, object()), "grp", s1)
+
+    # Should not throw outside
+    await asyncio.wait_for(coro, timeout=5)
+
+    assert "encountered an error: Exception('generic error message')" in caplog.text

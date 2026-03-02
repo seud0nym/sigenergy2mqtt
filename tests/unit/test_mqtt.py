@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import ssl
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -291,6 +292,200 @@ class TestMqttHandler:
 
         result = await handler.wait_for(1.0, "Test", mock_method)
         assert result is False
+
+    @pytest.mark.asyncio
+    async def test_close_waits_for_pending_tasks(self):
+        """Verify that close() waits for tasks in self._pending_tasks."""
+        loop = asyncio.get_running_loop()
+        handler = MqttHandler("test_client", None, loop)
+
+        # Create a future and add it to pending tasks
+        future = loop.create_future()
+        handler._pending_tasks.add(future)
+
+        # Call close in a separate task so we can resolve the future
+        close_task = asyncio.create_task(handler.close())
+
+        # Verify it's waiting
+        await asyncio.sleep(0.1)
+        assert not close_task.done()
+
+        # Resolve the future
+        future.set_result(True)
+        await close_task
+        assert handler._closing is True
+
+    def test_on_message_closing_discards(self):
+        """Verify that on_message discards handlers when _closing is true."""
+        loop = MagicMock()
+        handler = MqttHandler("test_client", None, loop)
+        handler._closing = True
+
+        mock_client = MagicMock()
+        mock_handler = AsyncMock()
+        handler._topics["test/topic"] = [mock_handler]
+
+        # Coroutine should be created then closed immediately
+        # Verify run_coroutine_threadsafe was NOT called.
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
+            handler.on_message(mock_client, "test/topic", "payload")
+            mock_run.assert_not_called()
+            mock_handler.assert_called_once()
+
+    def test_on_response_closing_discards(self):
+        """Verify that on_response discards handlers when _closing is true."""
+        loop = MagicMock()
+        handler = MqttHandler("test_client", None, loop)
+        handler._closing = True
+
+        mock_client = MagicMock()
+        mock_handler = AsyncMock()
+        handler._mids[123] = MagicMock(now=time.time(), handler=mock_handler)
+
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
+            handler.on_response(123, "test/topic", mock_client)
+            mock_run.assert_not_called()
+        assert 123 not in handler._mids
+
+    @pytest.mark.asyncio
+    async def test_on_message_non_coroutine_awaitable(self):
+        """Verify that on_message handles non-coroutine awaitables via _wrap."""
+        loop = MagicMock()
+        handler = MqttHandler("test_client", None, loop)
+
+        mock_client = MagicMock()
+
+        # An object that is awaitable but not a coroutine
+        class CustomAwaitable:
+            def __await__(self):
+                yield
+                return True
+
+        def mock_handler(*args):
+            return CustomAwaitable()
+
+        handler._topics["test/topic"] = [mock_handler]
+
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
+            handler.on_message(mock_client, "test/topic", "payload")
+            mock_run.assert_called_once()
+            # The argument to mock_run should be a coroutine (from _wrap)
+            coro = mock_run.call_args[0][0]
+            assert asyncio.iscoroutine(coro)
+            # Await it to cover line 21 (_wrap body)
+            await coro
+
+    @pytest.mark.asyncio
+    async def test_on_response_non_coroutine_awaitable(self):
+        """Verify that on_response handles non-coroutine awaitables via _wrap."""
+        loop = MagicMock()
+        handler = MqttHandler("test_client", None, loop)
+
+        mock_client = MagicMock()
+
+        # An object that is awaitable but not a coroutine
+        class CustomAwaitable:
+            def __await__(self):
+                yield
+                return True
+
+        def mock_handler(*args):
+            return CustomAwaitable()
+
+        handler._mids[123] = MagicMock(now=time.time(), handler=mock_handler)
+
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
+            handler.on_response(123, "test/topic", mock_client)
+            mock_run.assert_called_once()
+            # The argument to mock_run should be a coroutine (from _wrap)
+            coro = mock_run.call_args[0][0]
+            assert asyncio.iscoroutine(coro)
+            # Await it to cover line 21 (_wrap body)
+            await coro
+
+    def test_on_message_loop_closed(self):
+        """Verify error handling when the event loop is closed during dispatch."""
+        loop = MagicMock()
+        handler = MqttHandler("test_client", None, loop)
+
+        mock_client = MagicMock()
+        mock_handler = AsyncMock()
+        handler._topics["test/topic"] = [mock_handler]
+
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe", side_effect=RuntimeError("loop closed")):
+            # Should not raise
+            handler.on_message(mock_client, "test/topic", "payload")
+            mock_handler.assert_called_once()
+
+    def test_on_response_loop_closed(self):
+        """Verify error handling when the event loop is closed during response dispatch."""
+        loop = MagicMock()
+        handler = MqttHandler("test_client", None, loop)
+
+        mock_client = MagicMock()
+        mock_handler = AsyncMock()
+        handler._mids[123] = MagicMock(now=time.time(), handler=mock_handler)
+
+        with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe", side_effect=RuntimeError("loop closed")):
+            # Should not raise
+            handler.on_response(123, "test/topic", mock_client)
+            mock_handler.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_wait_for_coroutine_method(self):
+        """Verify wait_for correctly awaits when the passed method is an async coroutine function."""
+        handler = MqttHandler("test_client", None, asyncio.get_running_loop())
+
+        mock_info = MagicMock(spec=mqtt.MQTTMessageInfo)
+        mock_info.mid = 123
+
+        async def async_method(*args):
+            return mock_info
+
+        # Simulate response
+        async def delayed_response():
+            await asyncio.sleep(0.1)
+            handler.on_response(123, "topic", MagicMock())
+
+        asyncio.create_task(delayed_response())
+
+        result = await handler.wait_for(1.0, "prefix", async_method)
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_wait_for_cancelled(self, caplog):
+        """Verify wait_for handles asyncio.CancelledError during its sleep loop."""
+        handler = MqttHandler("test_client", None, asyncio.get_running_loop())
+
+        mock_info = MagicMock(spec=mqtt.MQTTMessageInfo)
+        mock_info.mid = 123
+
+        mock_method = MagicMock(return_value=mock_info)
+        mock_method.__name__ = "test_method"
+
+        # We need to cancel the wait_for task while it's sleeping
+        async def runner():
+            return await handler.wait_for(5.0, "prefix", mock_method)
+
+        caplog.set_level(logging.DEBUG)
+        task = asyncio.create_task(runner())
+        await asyncio.sleep(0.1)  # let it start sleeping
+        task.cancel()
+
+        result = await task
+        assert result is False
+        assert "sleep interrupted" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_wait_for_invalid_info_warning(self, caplog):
+        """Verify wait_for returns False and logs warning when the method doesn't return MQTTMessageInfo."""
+        handler = MqttHandler("test_client", None, asyncio.get_running_loop())
+        mock_method = MagicMock(return_value="not info")
+        mock_method.__name__ = "test_method"
+
+        result = await handler.wait_for(1.0, "prefix", mock_method)
+        assert result is False
+        assert "did not return a valid MQTTMessageInfo" in caplog.text
 
 
 class TestMqttCallbacks:
