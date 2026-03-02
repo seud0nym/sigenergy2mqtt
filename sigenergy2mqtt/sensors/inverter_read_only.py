@@ -1409,14 +1409,18 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
+    PHASE_A_ADDRESS = 31011
+    PHASE_B_ADDRESS = 31013
+    PHASE_C_ADDRESS = 31015
+
     def __init__(self, plant_index: int, device_address: int, phase: str, power_phases: int):
         match phase:
             case "A":
-                address = 31011
+                address = PhaseVoltage.PHASE_A_ADDRESS
             case "B":
-                address = 31013
+                address = PhaseVoltage.PHASE_B_ADDRESS
             case "C":
-                address = 31015
+                address = PhaseVoltage.PHASE_C_ADDRESS
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         phase = f" {phase}" if power_phases > 1 else ""
@@ -1443,14 +1447,18 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
 
 
 class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
+    PHASE_A_ADDRESS = 31017
+    PHASE_B_ADDRESS = 31019
+    PHASE_C_ADDRESS = 31021
+
     def __init__(self, plant_index: int, device_address: int, phase: str, power_phases: int):
         match phase:
             case "A":
-                address = 31017
+                address = PhaseCurrent.PHASE_A_ADDRESS
             case "B":
-                address = 31019
+                address = PhaseCurrent.PHASE_B_ADDRESS
             case "C":
-                address = 31021
+                address = PhaseCurrent.PHASE_C_ADDRESS
             case _:
                 raise ValueError("Phase must be 'A', 'B', or 'C'")
         phase = f" {phase}" if power_phases > 1 else ""
