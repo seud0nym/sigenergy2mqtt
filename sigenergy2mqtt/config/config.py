@@ -209,6 +209,7 @@ class Config:
             logging.error("Auto-discovery timed out after %.1fs", timeout)
             return []
         except Exception:
+            future.cancel()  # type: ignore
             logging.exception("Auto-discovery failed when submitting to running loop")
             return []
 
