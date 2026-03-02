@@ -1,7 +1,7 @@
 import abc
 import asyncio
 import logging
-from typing import Awaitable, cast
+from typing import Awaitable, Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -125,7 +125,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         return False
 
     @online.setter
-    def online(self, value: bool | asyncio.Future) -> None:
+    def online(self, value: Literal[False] | asyncio.Future) -> None:
         """Set the online status of the device.
 
         Setting to a Future marks the device as online and clears the shutdown
