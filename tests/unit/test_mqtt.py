@@ -27,7 +27,8 @@ class TestMqttHandler:
         assert handler._loop == loop
         assert handler.connected is False
         assert handler._topics == {}
-        assert handler._mids == {}
+        assert handler._pending_mids == {}
+        assert handler._seen_mids == set()
 
         loop.close()
 
@@ -147,12 +148,12 @@ class TestMqttHandler:
         mock_response_handler = MagicMock()
 
         # Register a response handler
-        handler._mids[123] = MagicMock(now=time.time(), handler=mock_response_handler)
+        handler._pending_mids[123] = MagicMock(now=time.time(), handler=mock_response_handler)
 
         handler.on_response(123, "publish", mock_client)
 
         mock_response_handler.assert_called_once_with(mock_client, "publish")
-        assert 123 not in handler._mids
+        assert 123 not in handler._pending_mids
 
         loop.close()
 
@@ -166,13 +167,13 @@ class TestMqttHandler:
 
         # Add an expired MID (over 60 seconds old)
         old_time = time.time() - 120
-        handler._mids[999] = MagicMock(now=old_time, handler=None)
+        handler._pending_mids[999] = MagicMock(now=old_time, handler=None)
 
         # Trigger on_response with new MID
         handler.on_response(123, "publish", mock_client)
 
         # Old MID should be cleaned up
-        assert 999 not in handler._mids
+        assert 999 not in handler._pending_mids
 
         loop.close()
 
@@ -208,7 +209,7 @@ class TestMqttHandler:
         mock_client = MagicMock()
 
         async_handler = AsyncMock()
-        handler._mids[123] = MagicMock(now=time.time(), handler=async_handler)
+        handler._pending_mids[123] = MagicMock(now=time.time(), handler=async_handler)
 
         with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_response(123, "publish", mock_client)
@@ -267,7 +268,7 @@ class TestMqttHandler:
         handler = MqttHandler("test_client", modbus_client, asyncio.get_running_loop())
 
         # Pre-populate MID as if it was already acknowledged
-        handler._mids[123] = MagicMock(now=time.time(), handler=None)
+        handler._seen_mids.add(123)
 
         mock_info = MagicMock(spec=mqtt.MQTTMessageInfo)
         mock_info.mid = 123
@@ -279,7 +280,7 @@ class TestMqttHandler:
         result = await handler.wait_for(1.0, "Test", mock_method)
         # Note: wait_for returns True because it was already acknowledged
         assert result is True
-        assert 123 not in handler._mids
+        assert 123 not in handler._seen_mids
 
     @pytest.mark.asyncio
     async def test_wait_for_invalid_return(self):
@@ -313,13 +314,13 @@ class TestMqttHandler:
         # Resolve the future
         future.set_result(True)
         await close_task
-        assert handler._closing is True
+        assert handler._closing.is_set() is True
 
     def test_on_message_closing_discards(self):
         """Verify that on_message discards handlers when _closing is true."""
         loop = MagicMock()
         handler = MqttHandler("test_client", None, loop)
-        handler._closing = True
+        handler._closing.set()
 
         mock_client = MagicMock()
         mock_handler = AsyncMock()
@@ -336,16 +337,16 @@ class TestMqttHandler:
         """Verify that on_response discards handlers when _closing is true."""
         loop = MagicMock()
         handler = MqttHandler("test_client", None, loop)
-        handler._closing = True
+        handler._closing.set()
 
         mock_client = MagicMock()
         mock_handler = AsyncMock()
-        handler._mids[123] = MagicMock(now=time.time(), handler=mock_handler)
+        handler._pending_mids[123] = MagicMock(now=time.time(), handler=mock_handler)
 
         with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_response(123, "test/topic", mock_client)
             mock_run.assert_not_called()
-        assert 123 not in handler._mids
+        assert 123 not in handler._pending_mids
 
     @pytest.mark.asyncio
     async def test_on_message_non_coroutine_awaitable(self):
@@ -392,7 +393,7 @@ class TestMqttHandler:
         def mock_handler(*args):
             return CustomAwaitable()
 
-        handler._mids[123] = MagicMock(now=time.time(), handler=mock_handler)
+        handler._pending_mids[123] = MagicMock(now=time.time(), handler=mock_handler)
 
         with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_response(123, "test/topic", mock_client)
@@ -424,7 +425,7 @@ class TestMqttHandler:
 
         mock_client = MagicMock()
         mock_handler = AsyncMock()
-        handler._mids[123] = MagicMock(now=time.time(), handler=mock_handler)
+        handler._pending_mids[123] = MagicMock(now=time.time(), handler=mock_handler)
 
         with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe", side_effect=RuntimeError("loop closed")):
             # Should not raise
@@ -558,7 +559,7 @@ class TestMqttCallbacks:
         on_publish(mock_client, handler, 123, [], {})
 
         # Should register the MID
-        assert 123 in handler._mids
+        assert 123 in handler._seen_mids
 
         loop.close()
 
@@ -586,11 +587,11 @@ class TestMqttCallbacks:
 
         # Success (reason_codes empty)
         on_subscribe(mock_client, handler, 1, [], {})
-        assert 1 in handler._mids  # Registered as received
+        assert 1 in handler._seen_mids  # Registered as received
 
         # Success with reason code 0
         on_subscribe(mock_client, handler, 2, [0], {})
-        assert 2 in handler._mids
+        assert 2 in handler._seen_mids
 
         # Failure with reason code 128
         on_subscribe(mock_client, handler, 3, [128], {})
@@ -612,11 +613,11 @@ class TestMqttCallbacks:
 
         # Success (reason_codes empty)
         on_unsubscribe(mock_client, handler, 1, [], {})
-        assert 1 in handler._mids
+        assert 1 in handler._seen_mids
 
         # Success with reason code 0
         on_unsubscribe(mock_client, handler, 2, [0], {})
-        assert 2 in handler._mids
+        assert 2 in handler._seen_mids
 
         # Failure >= 128
         on_unsubscribe(mock_client, handler, 3, [128], {})
