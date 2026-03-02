@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 
 logger = logging.getLogger("paho.mqtt")
 MqttResponse = namedtuple("MqttResponse", ["now", "handler"])
@@ -26,12 +26,12 @@ def _get_method_name(method) -> str:
 
 
 class MqttHandler:
-    def __init__(self, client_id: str, modbus_client: ModbusClientType | None, loop: asyncio.AbstractEventLoop):
+    def __init__(self, client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop):
         self._loop = loop
         self._mids: dict[Any, MqttResponse] = {}
         self._modbus = modbus_client
         self._reconnect_lock = threading.Lock()
-        self._topics: dict[str, list[Callable[[ModbusClientType | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]]] = {}
+        self._topics: dict[str, list[Callable[[ModbusClient | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]]] = {}
         self.client_id = client_id
         self.connected = False
         self._pending_tasks: set[concurrent.futures.Future] = set()
@@ -112,7 +112,7 @@ class MqttHandler:
                 logger.debug(f"Removing expired MID={mid} (client_id={self.client_id})")
                 del self._mids[mid]
 
-    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClientType | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
+    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
         with self._reconnect_lock:
             if topic not in self._topics:
                 self._topics[topic] = []

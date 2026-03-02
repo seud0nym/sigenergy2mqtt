@@ -8,8 +8,7 @@ import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import Constants
-from sigenergy2mqtt.modbus import ModbusLock, ModbusLockFactory
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ModbusSensorMixin, ReadableSensorMixin, Sensor
 
 from .scan_groups import ReadableSensorGroup
@@ -43,7 +42,7 @@ class SensorGroupPoller:
 
     async def _init_next_publish_times(
         self,
-        modbus_client: ModbusClientType | None,
+        modbus_client: ModbusClient | None,
         mqtt_client: mqtt.Client,
         *sensors: Sensor,
     ) -> tuple[dict[ReadableSensorMixin, float], list[ReadableSensorMixin], bool]:
@@ -130,7 +129,7 @@ class SensorGroupPoller:
     async def _publish_read_ahead(
         self,
         due_sensors: list[ReadableSensorMixin],
-        modbus_client: ModbusClientType,
+        modbus_client: ModbusClient,
         modbus_sensors: ReadableSensorGroup,
         modbus_lock: ModbusLock,
         name: str,
@@ -198,7 +197,7 @@ class SensorGroupPoller:
                     )
         return read_ahead_enabled
 
-    async def _reconnect_modbus_with_backoff(self, modbus_client: ModbusClientType) -> bool:
+    async def _reconnect_modbus_with_backoff(self, modbus_client: ModbusClient) -> bool:
         """Attempt to reconnect to the Modbus server using exponential backoff.
 
         Makes up to MAX_RECONNECTION_ATTEMPTS connection attempts. The delay between
@@ -253,7 +252,7 @@ class SensorGroupPoller:
 
         return False
 
-    async def run(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
+    async def run(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         """Main sensor polling loop for a single scan group.
 
         Runs continuously while the device is online and the shutdown event is not

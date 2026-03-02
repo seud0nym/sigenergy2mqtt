@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import DeviceClass, HybridInverter, PVInverter, StateClass, UnitOfPower
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
@@ -110,7 +110,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         attributes["source"] = "PVVoltageSensor × PVCurrentSensor"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.volts.value is None or self.amperes.value is None:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - string={self.string_number} current={self.amperes.value} voltage={self.volts.value}")

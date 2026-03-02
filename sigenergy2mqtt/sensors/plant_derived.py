@@ -9,7 +9,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
 from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
@@ -238,7 +238,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             attributes["source"] = "PV Power + Third-Party PV Power"
         return attributes
 
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self._sources:
             if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
                 self.fallback(source)
@@ -257,7 +257,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     def observable_topics(self) -> set[str]:
         return set(self._topics)
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if not republish:
             await self._check_smartport_timeouts()
             if any(value.state is None for value in self._sources.values() if value.enabled):
@@ -387,7 +387,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                 attributes["source"] = "TotalLoadPower"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if not republish:
             if not self._set_latest_consumption():
                 if self.debug_logging:
@@ -400,7 +400,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             value.state = None
         return True
 
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         if source in self._sources:
             self._update_source(source, value if isinstance(value, float) else float(value))
             if self.debug_logging:
@@ -507,7 +507,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         attributes["source"] = "∑ of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             if self.debug_logging:
                 logging.debug(

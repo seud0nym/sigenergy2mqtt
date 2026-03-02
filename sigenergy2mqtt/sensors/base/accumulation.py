@@ -14,7 +14,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import DeviceClass, StateClass, UnitOfEnergy
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import DiscoveryKeys, SensorAttributeKeys, _sanitize_path_component
 from .derived import DerivedSensor
@@ -162,7 +162,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             except Exception as e:
                 logging.error(f"Unexpected error persisting state: {e}")
 
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
 
         Args:
@@ -392,7 +392,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             except Exception as e:
                 logging.error(f"Unexpected error updating midnight state: {e}")
 
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command.
 
         Args:
@@ -427,7 +427,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self.force_publish = True
         return True
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         """Publish state, ensuring midnight state is persisted.
 
         Args:

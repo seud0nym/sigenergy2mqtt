@@ -13,7 +13,7 @@ from sigenergy2mqtt.common import DeviceType, Protocol  # noqa: F401
 from sigenergy2mqtt.config import active_config  # noqa: F401
 from sigenergy2mqtt.i18n import _t  # noqa: F401
 from sigenergy2mqtt.metrics import Metrics  # noqa: F401
-from sigenergy2mqtt.modbus.types import ModbusDataType  # noqa: F401
+from sigenergy2mqtt.modbus import ModbusDataType  # noqa: F401
 
 # Accumulation sensors
 from .accumulation import (  # noqa: F401

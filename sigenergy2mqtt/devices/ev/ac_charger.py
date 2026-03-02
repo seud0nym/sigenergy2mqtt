@@ -5,7 +5,7 @@ import sigenergy2mqtt.sensors.ac_charger_read_write as rw
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 
 
 class ACCharger(ModbusDevice):
@@ -18,12 +18,12 @@ class ACCharger(ModbusDevice):
         super().__init__(NonInverter(), "Sigenergy AC Charger", plant_index, device_address, "AC Charger", protocol_version)
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClientType) -> "ACCharger":
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> "ACCharger":
         charger = cls(plant_index, device_address, protocol_version)
         await charger._register_sensors(plant_index, device_address, modbus_client)
         return charger
 
-    async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClientType) -> None:
+    async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
         input_breaker = ro.ACChargerInputBreaker(plant_index, device_address)
         rated_current = ro.ACChargerRatedCurrent(plant_index, device_address)
         ib_value = await input_breaker.get_state(modbus_client=modbus_client)

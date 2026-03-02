@@ -48,7 +48,7 @@ class TestSanityCheck:
             sc.is_sane(120, [(0, 100)])
 
     def test_init_all_datatypes(self):
-        from sigenergy2mqtt.modbus.types import ModbusDataType
+        from sigenergy2mqtt.modbus import ModbusDataType
 
         # Note: SanityCheck.min_raw is capped at max_raw * -1 for signed types
         assert SanityCheck(data_type=ModbusDataType.INT16).min_raw == -32767

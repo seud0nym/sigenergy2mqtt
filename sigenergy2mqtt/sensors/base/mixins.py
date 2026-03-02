@@ -15,7 +15,7 @@ from pymodbus.pdu import ExceptionResponse, ModbusPDU
 from sigenergy2mqtt.common import Constants, InputType
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import (
     DiscoveryKeys,
@@ -208,7 +208,7 @@ class ObservableMixin(abc.ABC):
     """Mixin for sensors that can be observed/controlled via MQTT."""
 
     @abc.abstractmethod
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification of value change.
 
         Args:
@@ -336,7 +336,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         return raw_value
 
-    async def _write_registers(self, modbus_client: ModbusClientType, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
+    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
         """Write value to Modbus registers.
 
         Args:
@@ -372,7 +372,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             await Metrics.modbus_write_error()
             raise
 
-    def _convert_value_to_registers(self, modbus_client: ModbusClientType, raw_value: float | int | str) -> list[int]:
+    def _convert_value_to_registers(self, modbus_client: ModbusClient, raw_value: float | int | str) -> list[int]:
         """Convert a value to Modbus register format.
 
         Args:
@@ -393,7 +393,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         # Numeric values
         return modbus_client.convert_to_registers(int(raw_value), self.data_type)
 
-    async def _perform_modbus_write(self, modbus_client: ModbusClientType, registers: list[int], device_id: int, no_response_expected: bool, method: str) -> bool:
+    async def _perform_modbus_write(self, modbus_client: ModbusClient, registers: list[int], device_id: int, no_response_expected: bool, method: str) -> bool:
         """Perform the actual Modbus write operation.
 
         Args:
@@ -439,7 +439,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
         return base
 
-    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Set sensor value from MQTT command.
 
         Args:
@@ -468,7 +468,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             logging.error(f"{self.__class__.__name__} Attempt to set value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
             return False
 
-    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         """Validate that a value is acceptable for this sensor.
 
         Args:
@@ -494,7 +494,7 @@ class PVPowerSensor(ObservableMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def notify(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification (currently no-op).
 
         Args:

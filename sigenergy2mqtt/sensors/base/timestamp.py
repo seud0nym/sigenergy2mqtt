@@ -6,7 +6,7 @@ import datetime
 from typing import cast
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol
-from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 
 from .constants import DiscoveryKeys
 from .readable import ReadOnlySensor

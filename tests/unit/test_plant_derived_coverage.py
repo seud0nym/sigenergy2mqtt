@@ -6,7 +6,7 @@ import pytest
 
 from sigenergy2mqtt.common import ConsumptionMethod, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
 from sigenergy2mqtt.sensors.plant_derived import (
     PlantConsumedPower,

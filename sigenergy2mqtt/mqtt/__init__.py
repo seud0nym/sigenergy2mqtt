@@ -6,13 +6,13 @@ from time import sleep
 from typing import Tuple
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 
 from .client import MqttClient
 from .handler import MqttHandler
 
 
-def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClientType | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
+def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop) -> Tuple[MqttClient, MqttHandler]:
     assert mqtt_client_id and not mqtt_client_id.isspace(), "mqtt_client_id must not be None or an empty string"
 
     logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} over {active_config.mqtt.transport}")

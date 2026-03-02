@@ -6,7 +6,7 @@ from sigenergy2mqtt import i18n
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmSensor, ReadOnlySensor, Sensor
 
 

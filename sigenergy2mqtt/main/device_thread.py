@@ -14,8 +14,7 @@ from typing import Any, Awaitable
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusClientFactory
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 from .thread_config import ThreadConfig
@@ -55,7 +54,7 @@ async def read_and_publish_device_sensors(
     # when host is absent (e.g. clean/discovery-only runs).
     url_label = config.url if config.host is not None else config.description
 
-    modbus_client: ModbusClientType | None = None
+    modbus_client: ModbusClient | None = None
     tasks: list[Awaitable[Any]] = []
 
     if config.host is not None and not active_config.clean:

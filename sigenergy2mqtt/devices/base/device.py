@@ -8,7 +8,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter, RegisterAccess
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
 
@@ -437,15 +437,15 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
                         return found
         return None
 
-    def on_commencement(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> None:
+    def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Called when the device is brought online."""
         pass
 
-    def on_completion(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> None:
+    def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Called when the device is taken offline."""
         pass
 
-    def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Build the list of coroutines that drive this device's runtime behaviour.
 
         Creates one SensorGroupPoller.run() coroutine per sensor scan group that

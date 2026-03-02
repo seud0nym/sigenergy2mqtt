@@ -129,7 +129,7 @@ class TestSensorLogic:
 
     def test_resettable_accumulation_negative_increase(self, tmp_path):
 
-        from sigenergy2mqtt.modbus.types import ModbusDataType
+        from sigenergy2mqtt.modbus import ModbusDataType
         from sigenergy2mqtt.sensors.base import EnergyLifetimeAccumulationSensor, ReadOnlySensor, Sensor
 
         source = MagicMock(spec=ReadOnlySensor)

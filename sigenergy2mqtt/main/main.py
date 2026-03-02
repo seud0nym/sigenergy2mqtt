@@ -14,7 +14,6 @@ from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.modbus.types import ModbusClientType
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
@@ -86,7 +85,7 @@ def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
 # ---------------------------------------------------------------------------
 
 
-def get_modbus_url(modbus_client: ModbusClientType) -> str:
+def get_modbus_url(modbus_client: ModbusClient) -> str:
     if modbus_client and hasattr(modbus_client, "comm_params"):
         return f"modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port}"
     return "modbus://unknown"
@@ -94,7 +93,7 @@ def get_modbus_url(modbus_client: ModbusClientType) -> str:
 
 async def get_state(
     sensor: Sensor,
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     device: str,
     default_value: int | float | str | None = None,
     raw: bool = False,
@@ -109,7 +108,7 @@ async def get_state(
 
 
 async def read_registers(
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     register: int,
     count: int,
     device_id: int,
@@ -129,7 +128,7 @@ async def read_registers(
 # ---------------------------------------------------------------------------
 
 
-async def probe_protocol(modbus_client: ModbusClientType) -> Protocol:
+async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
     """Interrogate the plant to determine the highest supported Modbus protocol version.
 
     Registers are probed in descending version order; the first successful read
@@ -160,7 +159,7 @@ async def probe_protocol(modbus_client: ModbusClientType) -> Protocol:
 
 
 async def probe_optional_interface(
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     register: int,
     interface_name: str,
 ) -> bool:
@@ -184,7 +183,7 @@ async def probe_optional_interface(
 
 async def make_ac_charger(
     plant_index: int,
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     device_address: int,
     plant: PowerPlant,
 ) -> ACCharger:
@@ -206,7 +205,7 @@ async def make_dc_charger(
 
 async def make_plant_and_inverter(
     plant_index: int,
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     device_address: int,
     plant: PowerPlant | None,
     seen_serial_numbers: set[str],
@@ -263,7 +262,7 @@ async def make_plant_and_inverter(
 
 
 async def test_for_0x02_ILLEGAL_DATA_ADDRESS(
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     plant_index: int,
     device: PowerPlant | Inverter,
     *registers: int,
@@ -385,7 +384,7 @@ async def _setup_ac_chargers(
     plant_index: int,
     device,
     plant: PowerPlant,
-    modbus_client: ModbusClientType,
+    modbus_client: ModbusClient,
     config: ThreadConfig,
     protocol_version: Protocol | None,
 ) -> None:

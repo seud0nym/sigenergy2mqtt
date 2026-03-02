@@ -12,7 +12,7 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import SensorAttributeKeys
 from .mixins import ModbusSensorMixin, ReadableSensorMixin
@@ -84,7 +84,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         if "modbus_client" not in kwargs:
             raise ValueError(f"{self.__class__.__name__}: Required argument 'modbus_client' not supplied")
 
-        modbus_client: ModbusClientType = kwargs["modbus_client"]
+        modbus_client: ModbusClient = kwargs["modbus_client"]
 
         if self.debug_logging:
             self._log_read_attempt()
@@ -113,7 +113,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             f"actual={actual_interval}"
         )
 
-    async def _perform_modbus_read(self, modbus_client: ModbusClientType) -> bool:
+    async def _perform_modbus_read(self, modbus_client: ModbusClient) -> bool:
         """Perform the actual Modbus read operation.
 
         Args:

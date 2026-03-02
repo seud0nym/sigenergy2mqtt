@@ -19,7 +19,7 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
 from .sanity_check import SanityCheck, SanityCheckException
@@ -721,7 +721,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return result
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         """Publish sensor state to MQTT.
 
         Args:
@@ -758,7 +758,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return should_publish
 
-    async def _attempt_publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool) -> bool:
+    async def _attempt_publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> bool:
         """Attempt to publish sensor state.
 
         Args:
@@ -799,7 +799,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return True
 
-    async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, republish: bool) -> None:
+    async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> None:
         """Publish all derived sensors.
 
         Args:
@@ -810,7 +810,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         for sensor in self.derived_sensors.values():
             await sensor.publish(mqtt_client, modbus_client, republish=republish)
 
-    def _handle_publish_error(self, mqtt_client: mqtt.Client, modbus_client: ModbusClientType | None, error: Exception) -> bool:
+    def _handle_publish_error(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, error: Exception) -> bool:
         """Handle errors during publish.
 
         Args:

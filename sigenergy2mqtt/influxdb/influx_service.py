@@ -8,7 +8,7 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .hass_history_sync import HassHistorySync
@@ -27,7 +27,7 @@ class InfluxService(InfluxBase):
         # History sync helper (shares our session, config, and write methods)
         self._history_sync: HassHistorySync | None = None
 
-    async def _keep_running(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> None:
+    async def _keep_running(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         self.logger.info(f"{self.name} Commenced")
 
         await self.async_init()
@@ -76,7 +76,7 @@ class InfluxService(InfluxBase):
 
         self.logger.info(f"{self.name} Completed: Flagged as offline ({self.online=})")
 
-    async def handle_mqtt(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, payload: str, topic: str, mqtt_handler: MqttHandler) -> bool:
+    async def handle_mqtt(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, payload: str, topic: str, mqtt_handler: MqttHandler) -> bool:
         try:
             sensor = self._topic_cache.get(topic)
             if not sensor:
@@ -110,7 +110,7 @@ class InfluxService(InfluxBase):
     def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         pass
 
-    def schedule(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         return [self._keep_running(modbus_client, mqtt_client)]
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:

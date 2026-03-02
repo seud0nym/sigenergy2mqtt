@@ -23,7 +23,7 @@ from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, Stat
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models.smart_port import SmartPortModule
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, ReadableSensorMixin, Sensor, SubstituteMixin
 
 urllib3.disable_warnings()

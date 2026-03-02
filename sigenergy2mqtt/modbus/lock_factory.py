@@ -1,11 +1,11 @@
 import logging
 
+from .client import ModbusClient
 from .lock import ModbusLock
-from .types import ModbusClientType
 
 
 class ModbusLockFactory:
-    _locks: dict[ModbusClientType, ModbusLock] = {}
+    _locks: dict[ModbusClient, ModbusLock] = {}
     _logger = logging.getLogger("pymodbus")
 
     @classmethod
@@ -13,7 +13,7 @@ class ModbusLockFactory:
         cls._locks.clear()
 
     @classmethod
-    def get(cls, modbus: ModbusClientType | None) -> ModbusLock:
+    def get(cls, modbus: ModbusClient | None) -> ModbusLock:
         if modbus is None:
             return ModbusLock(None)
         if modbus not in cls._locks:

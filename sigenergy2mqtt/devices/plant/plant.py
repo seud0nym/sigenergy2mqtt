@@ -11,7 +11,7 @@ import sigenergy2mqtt.sensors.plant_read_write as rw
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter_read_only import OutputType
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 
@@ -40,7 +40,7 @@ class PowerPlant(ModbusDevice):
         self._smartport = None
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, output_type: int, modbus_client: ModbusClientType) -> "PowerPlant":
+    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
         await plant._register_child_devices(power_phases, modbus_client)
@@ -50,7 +50,7 @@ class PowerPlant(ModbusDevice):
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
         return plant
 
-    async def _register_child_devices(self, power_phases: int, modbus_client: ModbusClientType) -> None:
+    async def _register_child_devices(self, power_phases: int, modbus_client: ModbusClient) -> None:
         self._grid_sensor = await GridSensor.create(self.plant_index, self._device_type, self.protocol_version, power_phases, self._consumption_group, modbus_client)
         self._add_child_device(self._grid_sensor)
 
@@ -75,7 +75,7 @@ class PowerPlant(ModbusDevice):
                     except Exception:
                         logging.exception(f"{self.__class__.__name__} Failed to create SmartPort instance")
 
-    async def _register_sensors(self, output_type: int, power_phases: int, modbus_client: ModbusClientType) -> None:
+    async def _register_sensors(self, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
         rated_discharging_power = ro.PlantRatedDischargingPower(self.plant_index)
         # Fetch async values in parallel

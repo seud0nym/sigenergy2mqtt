@@ -4,7 +4,7 @@ import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
 from sigenergy2mqtt.common import DeviceType, Protocol
 from sigenergy2mqtt.devices import ModbusDevice
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 
 
 class GridCode(ModbusDevice):
@@ -18,12 +18,12 @@ class GridCode(ModbusDevice):
         super().__init__(device_type, name, plant_index, 247, "Grid Code", protocol_version)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClientType) -> "GridCode":
+    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClient) -> "GridCode":
         grid_code = GridCode(plant_index, device_type, protocol_version)
         await grid_code._register_sensors(modbus_client)
         return grid_code
 
-    async def _register_sensors(self, modbus_client: ModbusClientType) -> None:
+    async def _register_sensors(self, modbus_client: ModbusClient) -> None:
         rated_frequency = ro.GridCodeRatedFrequency(self.plant_index)
         rf_value = cast(float, await rated_frequency.get_state(modbus_client=modbus_client))
 

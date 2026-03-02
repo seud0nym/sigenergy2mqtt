@@ -7,7 +7,7 @@ import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
 from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.devices import ModbusDevice
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 
 from .ess import ESS
 from .pv_string import PVString
@@ -45,7 +45,7 @@ class Inverter(ModbusDevice):
         )
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClientType) -> "Inverter":
+    async def create(cls, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClient) -> "Inverter":
         model = ro.InverterModel(plant_index, device_address)
         pv_string_count = ro.PVStringCount(plant_index, device_address)
         firmware_version = ro.InverterFirmwareVersion(plant_index, device_address)
@@ -96,7 +96,7 @@ class Inverter(ModbusDevice):
         model: ro.InverterModel,
         serial_number: ro.InverterSerialNumber,
         pack_bcu_count: ro.PACKBCUCount,
-        modbus_client: ModbusClientType,
+        modbus_client: ModbusClient,
     ) -> None:
         output_type = ro.OutputType(plant_index, device_address)
         power_phases = ro.OutputType.to_phases(await output_type.get_state(modbus_client=modbus_client))

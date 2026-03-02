@@ -11,7 +11,7 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.common import Constants, Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus.types import ModbusClientType, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
@@ -129,7 +129,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
 
         return components
 
-    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Set value, translating payload to actual value.
 
         Args:
@@ -152,7 +152,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
 
         return await super().set_value(modbus_client, mqtt_client, actual_value, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         """Validate that value is either on or off value.
 
         Args:
@@ -484,7 +484,7 @@ class NumericSensor(ReadWriteSensor):
 
         return value
 
-    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Set numeric value with validation.
 
         Args:
@@ -511,7 +511,7 @@ class NumericSensor(ReadWriteSensor):
 
         return await super().set_value(modbus_client, mqtt_client, state, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         """Validate numeric value is within range.
 
         Args:
@@ -653,7 +653,7 @@ class SelectSensor(ReadWriteSensor):
 
         return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Set selected option by name or index.
 
         Args:
@@ -674,7 +674,7 @@ class SelectSensor(ReadWriteSensor):
 
         return await super().set_value(modbus_client, mqtt_client, index, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         """Validate that value is a valid option.
 
         Args:
@@ -745,7 +745,7 @@ class SwitchSensor(ReadWriteSensor):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = 1
 
-    async def set_value(self, modbus_client: ModbusClientType | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Set switch value.
 
         Args:
@@ -764,7 +764,7 @@ class SwitchSensor(ReadWriteSensor):
             logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
             raise
 
-    async def value_is_valid(self, modbus_client: ModbusClientType | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         """Validate switch value is 0 or 1.
 
         Args:

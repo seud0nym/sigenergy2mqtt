@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import (
     ACChargerAlarm1,
     ACChargerAlarm2,

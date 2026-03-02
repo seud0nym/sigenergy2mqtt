@@ -2,7 +2,7 @@ import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 from sigenergy2mqtt.common import DeviceType, Protocol
 from sigenergy2mqtt.devices import ModbusDevice
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 
 
 class GridSensor(ModbusDevice):
@@ -18,12 +18,12 @@ class GridSensor(ModbusDevice):
         self.grid_status = ro.GridStatus(plant_index)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, power_phases: int, consumption_group: str | None, modbus_client: ModbusClientType) -> "GridSensor":
+    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, power_phases: int, consumption_group: str | None, modbus_client: ModbusClient) -> "GridSensor":
         grid_sensor = GridSensor(plant_index, device_type, protocol_version)
         await grid_sensor._register_sensors(power_phases, consumption_group, modbus_client)
         return grid_sensor
 
-    async def _register_sensors(self, power_phases: int, consumption_group: str | None, modbus_client: ModbusClientType) -> None:
+    async def _register_sensors(self, power_phases: int, consumption_group: str | None, modbus_client: ModbusClient) -> None:
         self._add_read_sensor(ro.GridSensorStatus(self.plant_index))
         self._add_read_sensor(self.active_power, consumption_group)
         self._add_read_sensor(ro.GridSensorReactivePower(self.plant_index))

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus.types import ModbusClientType
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import Sensor
 
@@ -66,7 +66,7 @@ class HaPublisherMixin(abc.ABC):
 
     async def on_ha_state_change(
         self,
-        modbus_client: ModbusClientType | None,
+        modbus_client: ModbusClient | None,
         mqtt_client: mqtt.Client,
         ha_state: str,
         source: str,

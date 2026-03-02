@@ -8,7 +8,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.modbus.types import ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, ModbusSensorMixin, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
 
 
