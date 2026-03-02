@@ -7,9 +7,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import cast
 
-import requests
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-
 if not os.getcwd().endswith("resources"):
     os.chdir(str((Path(__file__).parent / "../resources").resolve()))
 
@@ -17,7 +14,11 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, str((Path(__file__).parent / "..").resolve()))
 sys.path.insert(0, str((Path(__file__).parent / "../resources").resolve()))
 
+import requests
+from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
@@ -58,6 +59,11 @@ def write_naming_convention(f):
 
 
 async def sensor_index():
+    with _swap_active_config(Config()):
+        hass_sensors = await get_sensor_instances(home_assistant_enabled=True)
+    with _swap_active_config(Config()):
+        mqtt_sensors = await get_sensor_instances(home_assistant_enabled=False)
+
     def extract_min_max(range_string: str, precision: int | None, gain: float):
         """
         Isolates the range content and then programmatically extracts the
@@ -265,8 +271,6 @@ async def sensor_index():
                 f.write("</table>\n")
         return count
 
-    hass_sensors = await get_sensor_instances(hass=True)
-    mqtt_sensors = await get_sensor_instances(hass=False)
     with TOPICS.open("w") as f:
         f.write("# MQTT Topics\n")
         f.write("\nTopics prefixed with `homeassistant/` are used when the `home-assistant` configuration `enabled` option in the configuration file,\n")
@@ -370,8 +374,9 @@ def invert_dict_by_field(original_dict, field):
 
 async def compare_sensor_instances():
     typqxq_instances = {}
-    sensor_instances = await get_sensor_instances(hass=True)
-    registers = invert_dict_by_field(sensor_instances, "address")
+    with _swap_active_config(Config()):
+        sensor_instances = await get_sensor_instances(home_assistant_enabled=True)
+        registers = invert_dict_by_field(sensor_instances, "address")
 
     from resources.modbusregisterdefinitions import (
         AC_CHARGER_PARAMETER_REGISTERS,

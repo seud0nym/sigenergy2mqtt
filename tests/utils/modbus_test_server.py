@@ -607,7 +607,12 @@ async def run_async_server(
     _logger.setLevel(log_level)
 
     _logger.info("Getting sensor instances...")
-    sensors: dict = await get_sensor_instances(hass=not use_simplified_topics, protocol_version=protocol_version, pv_inverter_device_address=3, concrete_sensor_check=False)
+    sensors: dict = await get_sensor_instances(
+        home_assistant_enabled=not use_simplified_topics,
+        protocol_version=protocol_version,
+        pv_inverter_device_address=3,
+        concrete_sensor_check=False,
+    )
     sorted_sensors: list = sorted(
         [s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")],
         key=lambda x: (x.device_address, x.address),
