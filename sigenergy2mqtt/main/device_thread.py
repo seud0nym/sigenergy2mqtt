@@ -66,7 +66,7 @@ async def read_and_publish_device_sensors(
         )
 
     mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
-    mqtt_client, mqtt_handler = mqtt_setup(mqtt_client_id, modbus_client, loop)
+    mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
 
     try:
         device: Device

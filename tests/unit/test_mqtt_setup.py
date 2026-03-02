@@ -6,10 +6,12 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import mqtt_setup
 
 
-def test_mqtt_setup_retries_then_succeeds(monkeypatch):
-    # Make sleep a no-op to avoid delays
-    # Ensure the `sleep` name used by `mqtt_setup` is replaced (covers different import forms)
-    monkeypatch.setitem(mqtt_setup.__globals__, "sleep", lambda s: None)
+@pytest.mark.asyncio
+async def test_mqtt_setup_retries_then_succeeds(monkeypatch):
+    async def _fake_sleep(s):
+        pass
+
+    monkeypatch.setitem(mqtt_setup.__globals__, "sleep", _fake_sleep)
 
     # Prepare Config
     active_config.mqtt.broker = "localhost"
@@ -43,7 +45,7 @@ def test_mqtt_setup_retries_then_succeeds(monkeypatch):
 
     loop = asyncio.new_event_loop()
     try:
-        client, handler = mqtt_setup("cid", None, loop)
+        client, handler = await mqtt_setup("cid", None, loop)
     finally:
         loop.close()
 
@@ -52,9 +54,12 @@ def test_mqtt_setup_retries_then_succeeds(monkeypatch):
     assert getattr(client, "_pw") == "pass"
 
 
-def test_mqtt_setup_fails_after_retries(monkeypatch):
-    # Ensure the `sleep` name used by `mqtt_setup` is replaced (covers different import forms)
-    monkeypatch.setitem(mqtt_setup.__globals__, "sleep", lambda s: None)
+@pytest.mark.asyncio
+async def test_mqtt_setup_fails_after_retries(monkeypatch):
+    async def _fake_sleep(s):
+        pass
+
+    monkeypatch.setitem(mqtt_setup.__globals__, "sleep", _fake_sleep)
 
     active_config.mqtt.broker = "localhost"
     active_config.mqtt.port = 1883
@@ -71,6 +76,6 @@ def test_mqtt_setup_fails_after_retries(monkeypatch):
     loop = asyncio.new_event_loop()
     try:
         with pytest.raises(Exception):
-            mqtt_setup("cid2", None, loop)
+            await mqtt_setup("cid2", None, loop)
     finally:
         loop.close()

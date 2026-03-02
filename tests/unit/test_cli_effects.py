@@ -50,7 +50,7 @@ async def test_threading_clean_effect(monkeypatch):
 
     mock_mqtt_client = MagicMock()
     mock_mqtt_handler = AsyncMock()
-    monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mock_mqtt_client, mock_mqtt_handler))
+    monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mock_mqtt_client, mock_mqtt_handler)))
 
     mock_modbus_factory = MagicMock()
     monkeypatch.setattr(threading_mod, "ModbusClientFactory", mock_modbus_factory)
@@ -89,7 +89,7 @@ async def test_threading_discovery_only_effect(monkeypatch):
 
     mock_mqtt_client = MagicMock()
     mock_mqtt_handler = AsyncMock()
-    monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mock_mqtt_client, mock_mqtt_handler))
+    monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mock_mqtt_client, mock_mqtt_handler)))
 
     # Mock modbus client to avoid actual connection
     mock_modbus = MagicMock()

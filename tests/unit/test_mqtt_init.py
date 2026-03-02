@@ -12,7 +12,8 @@ class TestMqttInit:
 
     @patch("sigenergy2mqtt.mqtt.MqttClient")
     @patch("sigenergy2mqtt.mqtt.MqttHandler")
-    def test_mqtt_setup_anonymous(self, mock_handler_class, mock_client_class):
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_anonymous(self, mock_handler_class, mock_client_class):
         """Test mqtt_setup with anonymous connection."""
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
@@ -24,7 +25,7 @@ class TestMqttInit:
             cfg.mqtt.anonymous = True
             cfg.mqtt.keepalive = 60
 
-            client, handler = mqtt_setup("test_client", modbus, loop)
+            client, handler = await mqtt_setup("test_client", modbus, loop)
 
             assert client == mock_client
             assert handler == mock_handler_class.return_value
@@ -36,7 +37,8 @@ class TestMqttInit:
 
     @patch("sigenergy2mqtt.mqtt.MqttClient")
     @patch("sigenergy2mqtt.mqtt.MqttHandler")
-    def test_mqtt_setup_authenticated(self, mock_handler_class, mock_client_class):
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_authenticated(self, mock_handler_class, mock_client_class):
         """Test mqtt_setup with authenticated connection."""
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
@@ -50,7 +52,7 @@ class TestMqttInit:
             cfg.mqtt.password = "pass"
             cfg.mqtt.keepalive = 60
 
-            client, handler = mqtt_setup("test_client", modbus, loop)
+            client, handler = await mqtt_setup("test_client", modbus, loop)
 
             assert client == mock_client
             mock_client.username_pw_set.assert_called_once_with("user", "pass")
@@ -61,7 +63,8 @@ class TestMqttInit:
     @patch("sigenergy2mqtt.mqtt.MqttHandler")
     @patch("sigenergy2mqtt.mqtt.sleep")
     @patch("time.sleep")
-    def test_mqtt_setup_retry_logic(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_retry_logic(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
         """Test mqtt_setup retry logic on connection failure."""
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
@@ -76,7 +79,7 @@ class TestMqttInit:
             cfg.mqtt.keepalive = 10
             cfg.mqtt.retry_delay = 1
 
-            client, handler = mqtt_setup("test_client", modbus, loop)
+            client, handler = await mqtt_setup("test_client", modbus, loop)
 
             assert client == mock_client
             assert mock_client.connect.call_count == 3
@@ -89,7 +92,8 @@ class TestMqttInit:
     @patch("sigenergy2mqtt.mqtt.MqttHandler")
     @patch("sigenergy2mqtt.mqtt.sleep")
     @patch("time.sleep")
-    def test_mqtt_setup_critical_failure(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_critical_failure(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
         """Test mqtt_setup raises exception after 3 failed attempts."""
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
@@ -103,14 +107,15 @@ class TestMqttInit:
             cfg.mqtt.port = 1883
 
             with pytest.raises(Exception, match="Permanent Fail"):
-                mqtt_setup("test_client", modbus, loop)
+                await mqtt_setup("test_client", modbus, loop)
 
             assert mock_client.connect.call_count == 3
             assert mock_sleep.call_count == 2
 
         loop.close()
 
-    def test_mqtt_setup_invalid_id(self):
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_invalid_id(self):
         """Test mqtt_setup with invalid client ID."""
-        with pytest.raises(AssertionError, match="mqtt_client_id must not be None"):
-            mqtt_setup("", MagicMock(), MagicMock())
+        with pytest.raises(ValueError, match="mqtt_client_id must not be None or an empty string"):
+            await mqtt_setup("", MagicMock(), MagicMock())

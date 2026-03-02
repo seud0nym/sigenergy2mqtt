@@ -79,7 +79,7 @@ async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
         mqtt_client = DummyMQTTClient()
         mqtt_handler = DummyMQTTHandler()
 
-        monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mqtt_client, mqtt_handler))
+        monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mqtt_client, mqtt_handler)))
         # Ensure ModbusFactory isn't called
         monkeypatch.setattr(threading_mod, "ModbusClientFactory", type("M", (), {"get_client": lambda *a, **k: asyncio.sleep(0)}))
 
@@ -122,7 +122,7 @@ async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch
 
         mqtt_client = DummyMQTTClient()
         mqtt_handler = DummyMQTTHandler()
-        monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mqtt_client, mqtt_handler))
+        monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mqtt_client, mqtt_handler)))
 
         loop = asyncio.new_event_loop()
         orig_name = threading.current_thread().name
@@ -186,7 +186,7 @@ async def test_read_and_publish_device_sensors_discovery_only(monkeypatch):
 
         mock_mqtt_client = DummyMQTTClient()
         mock_mqtt_handler = DummyMQTTHandler()
-        monkeypatch.setattr(threading_mod, "mqtt_setup", lambda cid, mb, loop: (mock_mqtt_client, mock_mqtt_handler))
+        monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mock_mqtt_client, mock_mqtt_handler)))
 
         # Mock Modbus
         mock_modbus = MagicMock()
