@@ -419,7 +419,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
             svc_thread_cfg.add_device(service)
 
     if active_config.influxdb.enabled and not active_config.clean:
-        for service in get_influxdb_services(configs):
+        for service in get_influxdb_services():
             svc_thread_cfg.add_device(service)
 
     if svc_thread_cfg.has_devices:

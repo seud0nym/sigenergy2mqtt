@@ -30,7 +30,7 @@ async def test_get_influxdb_services_coverage():
         cfg.modbus = [MagicMock(), MagicMock()]  # 2 plants
         cfg.influxdb.log_level = logging.INFO
 
-        services = get_influxdb_services([])
+        services = get_influxdb_services()
         assert len(services) == 2
         for svc in services:
             from sigenergy2mqtt.influxdb.influx_service import InfluxService
@@ -41,7 +41,7 @@ async def test_get_influxdb_services_coverage():
 def test_main_wrapper_coverage():
     with (
         patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
-        patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None) as mock_async_main,
+        patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None) as mock_async_main,  # noqa: F841
         patch("sigenergy2mqtt.__main__.initialize"),
     ):
         main_module.main()

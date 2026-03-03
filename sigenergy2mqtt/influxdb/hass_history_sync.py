@@ -1,24 +1,56 @@
 import asyncio
 import logging
-from typing import cast
+import time
+from typing import Any, cast
 
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.influxdb.influx_base import InfluxConfigValues
 
 from .influx_base import InfluxBase
 
 
 class HassHistorySync(InfluxBase):
-    """Handles synchronization of historical data from Home Assistant InfluxDB database."""
+    """Backfill helper that copies historical sensor data from a Home Assistant InfluxDB database.
 
-    def __init__(self, logger: logging.Logger, plant_index: int = -1):
+    This class is created by :class:`~.influx_service.InfluxService` and shares
+    its already-initialised HTTP session and writer state via
+    :meth:`~InfluxBase.copy_connection_from`.  It does **not** call
+    :meth:`~InfluxBase.async_init` itself.
+
+    The sync workflow is:
+
+    1. Detect whether a ``homeassistant`` database/bucket exists on the same
+       server (:meth:`detect_homeassistant_db`).
+    2. For each known sensor, find the earliest timestamp already present in the
+       target database (:meth:`get_earliest_timestamp`).
+    3. Copy all records from Home Assistant that pre-date that timestamp
+       (:meth:`copy_records_from_homeassistant`).
+    """
+
+    def __init__(self, logger: logging.Logger, plant_index: int = -1) -> None:
+        """Initialise the history sync helper.
+
+        Args:
+            logger: Pre-configured logger, typically inherited from the parent
+                :class:`~.influx_service.InfluxService`.
+            plant_index: Zero-based index of the Modbus plant being synced.
+        """
         name = f"Sigenergy InfluxDB History Sync (Plant {plant_index})"
         unique = f"influxdb_history_sync_{plant_index}"
         super().__init__(name, plant_index, unique, "sigenergy2mqtt", "InfluxDB.HistorySync", logger)
 
+    # ------------------------------------------------------------------
+    # Detection
+    # ------------------------------------------------------------------
+
     async def detect_homeassistant_db(self) -> bool:
-        """
-        Detect if a 'homeassistant' database exists on the same InfluxDB server.
-        Returns True if found, False otherwise.
+        """Check whether a ``homeassistant`` database or bucket exists on the InfluxDB server.
+
+        Tries the v2 bucket list API first (if a token is available), then
+        falls back to the v1 ``SHOW DATABASES`` query.
+
+        Returns:
+            ``True`` if a ``homeassistant`` database or bucket was found.
         """
         try:
             config = self.get_config_values()
@@ -45,7 +77,7 @@ class HassHistorySync(InfluxBase):
                 if "results" in result and result["results"]:
                     series = result["results"][0].get("series", [])
                     if series and "values" in series[0]:
-                        databases = [db[0] for db in series[0]["values"]]
+                        databases = [row[0] for row in series[0]["values"]]
                         if "homeassistant" in databases:
                             self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1")
                             return True
@@ -57,16 +89,27 @@ class HassHistorySync(InfluxBase):
             self.logger.error(f"{self.name} Error detecting homeassistant database: {e}")
             return False
 
-    async def get_earliest_timestamp(self, measurement: str, tags: dict[str, str]) -> int:
-        """
-        Get the earliest timestamp for a given measurement and tag combination in the target database.
-        Returns timestamp in seconds, or current time if no records exist.
-        """
-        import time
+    # ------------------------------------------------------------------
+    # Timestamp utilities
+    # ------------------------------------------------------------------
 
+    async def get_earliest_timestamp(self, measurement: str, tags: dict[str, str]) -> int:
+        """Find the earliest recorded timestamp for a measurement/tag combination in the target database.
+
+        Used to determine the cut-off point for backfill: only records older
+        than this timestamp need to be copied from Home Assistant.
+
+        Args:
+            measurement: InfluxDB measurement name.
+            tags: Tag key/value pairs that uniquely identify the sensor.
+
+        Returns:
+            Unix timestamp in seconds of the earliest existing record, or the
+            current time if no records exist yet (indicating a full backfill is
+            needed).
+        """
         try:
             config = self.get_config_values()
-            tag_filters = self.build_tag_filters(tags)
 
             # Try v2 API (Flux query)
             if config["token"]:
@@ -77,8 +120,7 @@ class HassHistorySync(InfluxBase):
 
                 success, response_text = await self.query_v2(config["base"], config["org"], config["token"], flux_query)
                 if success and response_text:
-                    lines = response_text.strip().split("\n")
-                    for line in lines:
+                    for line in response_text.strip().split("\n"):
                         if line.startswith("_") or not line.strip():
                             continue
                         parts = line.split(",")
@@ -91,7 +133,8 @@ class HassHistorySync(InfluxBase):
                     return int(time.time())
 
             # Try v1 API (InfluxQL)
-            where_clause = f"WHERE {tag_filters['v1']}" if tag_filters["v1"] else ""
+            v1_filter = self.build_v1_tag_filter(tags)
+            where_clause = f"WHERE {v1_filter}" if v1_filter else ""
             query = f'SELECT * FROM "{measurement}" {where_clause} ORDER BY time ASC LIMIT 1'
             success, result = await self.query_v1(config["base"], config["db"], config["auth"], query)
             if success and result:
@@ -109,76 +152,100 @@ class HassHistorySync(InfluxBase):
             self.logger.error(f"{self.name} Error getting earliest timestamp: {e}")
             return int(time.time())
 
-    async def copy_records_v2(self, config: dict, measurement: str, tags: dict[str, str], before_timestamp: int | None) -> int:
-        """Copy records using v2 API with chunking (latest to earliest)."""
+    # ------------------------------------------------------------------
+    # Record copying
+    # ------------------------------------------------------------------
+
+    async def copy_records_v2(
+        self,
+        config: InfluxConfigValues,
+        measurement: str,
+        tags: dict[str, str],
+        before_timestamp: int | None,
+    ) -> int:
+        """Copy records from the Home Assistant bucket using the v2 Flux API.
+
+        Paginates from most-recent to oldest in chunks of
+        ``influxdb.sync_chunk_size``, stopping when a chunk is smaller than
+        the page size (indicating the start of history has been reached).
+
+        Args:
+            config: Resolved config dict from :meth:`~InfluxBase.get_config_values`.
+            measurement: Measurement name to query.
+            tags: Tag filters identifying the target sensor.
+            before_timestamp: Copy records with timestamps strictly before this
+                Unix second value.  ``None`` copies all records.
+
+        Returns:
+            Total number of line-protocol records written.
+        """
         records_copied = 0
         chunk_size = active_config.influxdb.sync_chunk_size
         current_before = before_timestamp
 
         while self.online:
-            time_filter = f"stop: time(v: {current_before})" if current_before else "start: 0"
+            # Build time range: always anchor the end; always anchor the start
+            # at Unix epoch so Flux doesn't scan unbounded history on each page.
+            if current_before:
+                time_filter = f"start: 0, stop: time(v: {current_before})"
+            else:
+                time_filter = "start: 0"
+
             flux_query = f'from(bucket: "homeassistant")\n  |> range({time_filter})\n  |> filter(fn: (r) => r._measurement == "{measurement}")\n'
             for k, v in tags.items():
                 flux_query += f'  |> filter(fn: (r) => r.{k} == "{v}")\n'
             flux_query += f'  |> sort(columns: ["_time"], desc: true)\n  |> limit(n: {chunk_size})\n  |> yield(name: "records")\n'
 
-            success, response_text = await self.query_v2(config["base"], config["org"], config["token"], flux_query)
+            success, response_text = await self.query_v2(config["base"], config["org"], cast(str, config["token"]), flux_query)
             if not success or not response_text:
                 break
 
-            # Parse CSV response and convert to line protocol
+            # Parse CSV response and convert to line protocol.
             lines = response_text.strip().split("\n")
-            headers_parsed = False
-            header_indices = {}
+            header_indices: dict[str, int] = {}
             chunk_records = 0
-            earliest_timestamp = None
+            earliest_timestamp: int | None = None
 
             for line in lines:
                 if not line.strip():
                     continue
 
-                if not headers_parsed:
+                # Detect and parse the header row.
+                if not header_indices:
                     if "_time" in line and "_value" in line:
                         parts = line.split(",")
-                        for i, part in enumerate(parts):
-                            header_indices[part.strip()] = i
-                        headers_parsed = True
+                        header_indices = {part.strip(): i for i, part in enumerate(parts)}
                     continue
 
                 parts = line.split(",")
                 if len(parts) <= 1:
                     continue
 
-                # Extract timestamp
-                time_idx = header_indices.get("_time", 5)
+                # Require both _time and _value to be present in the header;
+                # skip rather than guess if either index is missing.
+                time_idx = header_indices.get("_time")
+                value_idx = header_indices.get("_value")
+                if time_idx is None or value_idx is None:
+                    continue
+
                 time_str = parts[time_idx].strip() if time_idx < len(parts) else None
-                if not time_str:
+                field_value = parts[value_idx].strip() if value_idx < len(parts) else None
+
+                if not time_str or field_value is None:
                     continue
 
                 timestamp = self.parse_timestamp(time_str)
                 earliest_timestamp = timestamp
 
-                # Extract field and value
-                value_idx = header_indices.get("_value", 7)
-                field_value = parts[value_idx].strip() if value_idx < len(parts) else None
-
-                if field_value is None:
-                    continue
-
-                # Build fields dict
                 fields: dict[str, float | str] = {}
                 try:
                     fields["value"] = float(field_value)
-                except Exception:
+                except (ValueError, TypeError):
                     fields["value_str"] = str(field_value)
 
-                # Write the record
                 line_protocol = self.to_line_protocol(measurement, tags, fields, timestamp)
                 await self.write_line(line_protocol)
                 chunk_records += 1
-
-            if chunk_records == 0:
-                break
 
             records_copied += chunk_records
             self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
@@ -190,17 +257,37 @@ class HassHistorySync(InfluxBase):
 
         return records_copied
 
-    async def copy_records_v1(self, config: dict, measurement: str, tags: dict[str, str], before_timestamp: int | None) -> int:
-        """Copy records using v1 API with chunking (latest to earliest)."""
+    async def copy_records_v1(
+        self,
+        config: InfluxConfigValues,
+        measurement: str,
+        tags: dict[str, str],
+        before_timestamp: int | None,
+    ) -> int:
+        """Copy records from the Home Assistant database using the v1 InfluxQL API.
+
+        Paginates from most-recent to oldest in chunks of
+        ``influxdb.sync_chunk_size``, stopping when a partial chunk is returned.
+
+        Args:
+            config: Resolved config dict from :meth:`~InfluxBase.get_config_values`.
+            measurement: Measurement name to query.
+            tags: Tag filters identifying the target sensor.
+            before_timestamp: Copy records with timestamps strictly before this
+                Unix second value.  ``None`` copies all records.
+
+        Returns:
+            Total number of line-protocol records written.
+        """
         records_copied = 0
-        tag_filters = self.build_tag_filters(tags)
+        v1_filter = self.build_v1_tag_filter(tags)
         chunk_size = active_config.influxdb.sync_chunk_size
         current_before = before_timestamp
 
         while self.online:
-            where_parts = []
-            if tag_filters["v1"]:
-                where_parts.append(tag_filters["v1"])
+            where_parts: list[str] = []
+            if v1_filter:
+                where_parts.append(v1_filter)
             if current_before:
                 where_parts.append(f"time < {current_before}s")
 
@@ -212,7 +299,7 @@ class HassHistorySync(InfluxBase):
                 break
 
             chunk_records = 0
-            last_timestamp = None
+            last_timestamp: int | None = None
 
             if "results" in result and result["results"]:
                 series = result["results"][0].get("series", [])
@@ -220,7 +307,7 @@ class HassHistorySync(InfluxBase):
                     if "values" not in s or "columns" not in s:
                         continue
 
-                    columns = s["columns"]
+                    columns: list[str] = s["columns"]
                     time_idx = columns.index("time") if "time" in columns else 0
 
                     for row in s["values"]:
@@ -233,7 +320,7 @@ class HassHistorySync(InfluxBase):
                             if col == "time" or col in tags:
                                 continue
                             if row[i] is not None:
-                                val = row[i]
+                                val: Any = row[i]
                                 if isinstance(val, (int, float)):
                                     fields["value"] = float(val)
                                 else:
@@ -242,7 +329,6 @@ class HassHistorySync(InfluxBase):
                         if not fields:
                             continue
 
-                        # Write the record
                         line_protocol = self.to_line_protocol(measurement, tags, fields, timestamp)
                         await self.write_line(line_protocol)
                         chunk_records += 1
@@ -260,16 +346,28 @@ class HassHistorySync(InfluxBase):
 
         return records_copied
 
-    async def copy_records_from_homeassistant(self, measurement: str, tags: dict[str, str], before_timestamp: int | None = None) -> int:
-        """
-        Copy records from 'homeassistant' database with the same measurement and tags.
-        If before_timestamp is provided, only copy records with timestamps earlier than it.
-        If before_timestamp is None, copy all records for that measurement/tag combination.
-        Returns the number of records copied.
+    async def copy_records_from_homeassistant(
+        self,
+        measurement: str,
+        tags: dict[str, str],
+        before_timestamp: int | None = None,
+    ) -> int:
+        """Copy records from the Home Assistant InfluxDB database into the target database.
+
+        Tries the v2 API first; falls back to v1 if no token is configured or
+        if v2 returns no records.
+
+        Args:
+            measurement: Measurement name to copy.
+            tags: Tag key/value pairs that identify the sensor in both databases.
+            before_timestamp: Upper bound (exclusive) on the record timestamps to
+                copy, in Unix seconds.  Pass ``None`` to copy all records.
+
+        Returns:
+            Total number of records written, or ``0`` on error.
         """
         try:
             config = self.get_config_values()
-            records_copied = 0
 
             # Try v2 API first
             if config["token"]:
@@ -278,7 +376,7 @@ class HassHistorySync(InfluxBase):
                     self.logger.info(f"{self.name} Copied {records_copied} records from homeassistant (v2) for {measurement} with tags {tags}")
                     return records_copied
 
-            # Try v1 API
+            # Fall back to v1 API
             records_copied = await self.copy_records_v1(config, measurement, tags, before_timestamp)
             if records_copied > 0:
                 self.logger.info(f"{self.name} Copied {records_copied} records from homeassistant (v1) for {measurement} with tags {tags}")
@@ -289,37 +387,50 @@ class HassHistorySync(InfluxBase):
             self.logger.error(f"{self.name} Error copying records from homeassistant: {e}")
             return 0
 
+    # ------------------------------------------------------------------
+    # Orchestration
+    # ------------------------------------------------------------------
+
     async def sync_from_homeassistant(self, topic_cache: dict) -> dict[str, int]:
-        """
-        Main method to detect homeassistant database and sync all cached measurements.
-        Returns a dict mapping measurement/tag combinations to number of records copied.
+        """Detect and backfill all cached sensor measurements from Home Assistant.
+
+        For each unique measurement/tag combination found in *topic_cache*:
+
+        1. Determine the earliest timestamp already in the target database.
+        2. Copy any older records from the Home Assistant database.
+
+        Sensors are processed in parallel, bounded by
+        ``influxdb.max_sync_workers`` concurrent coroutines.
 
         Args:
-            topic_cache: The topic cache from InfluxService containing sensor metadata.
-        """
-        results = {}
+            topic_cache: The :attr:`~InfluxBase._topic_cache` dict from the
+                parent :class:`~.influx_service.InfluxService`, mapping MQTT
+                state topics to sensor metadata dicts.
 
-        # First check if homeassistant database exists
+        Returns:
+            Mapping of ``"measurement[tag=value,...]"`` keys to the number of
+            records copied for each sensor.  Empty if the Home Assistant
+            database was not found or no sensors were cached.
+        """
+        results: dict[str, int] = {}
+
         if not await self.detect_homeassistant_db():
             self.logger.info(f"{self.name} No homeassistant database found, skipping sync")
             return results
 
         self.logger.info(f"{self.name} Starting parallel sync from homeassistant database")
 
-        # Iterate through cached topics to get unique measurement/tag combinations
-        seen_combinations = set()
+        seen_combinations: set[tuple] = set()
         sync_tasks = []
         semaphore = asyncio.Semaphore(active_config.influxdb.max_sync_workers)
 
-        async def sync_sensor(measurement: str, tags: dict[str, str]):
+        async def sync_sensor(measurement: str, tags: dict[str, str]) -> tuple[str, dict[str, str], int]:
+            """Sync a single measurement/tag combination under the shared semaphore."""
             async with semaphore:
                 if not self.online:
                     return measurement, tags, 0
                 try:
-                    # Get earliest timestamp in target database
                     earliest_ts = await self.get_earliest_timestamp(measurement, tags)
-
-                    # Copy records from homeassistant that are older than our earliest record
                     self.logger.info(f"{self.name} Starting sync for {tags.get('entity_id', 'unknown')} [{measurement}] (earliest existing: {earliest_ts})")
                     count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=earliest_ts)
                     return measurement, tags, count
@@ -327,11 +438,10 @@ class HassHistorySync(InfluxBase):
                     self.logger.error(f"{self.name} Error syncing {tags.get('entity_id', 'unknown')} [{measurement}]: {e}")
                     return measurement, tags, 0
 
-        for topic, sensor in topic_cache.items():
+        for sensor in topic_cache.values():
             measurement = cast(str, sensor.get("uom", active_config.influxdb.default_measurement)).replace("/", "_")
             tags = {"entity_id": cast(str, sensor.get("object_id"))}
 
-            # Create a hashable key for this combination
             combo_key = (measurement, tuple(sorted(tags.items())))
             if combo_key in seen_combinations:
                 continue
@@ -342,7 +452,6 @@ class HassHistorySync(InfluxBase):
         if not sync_tasks:
             return results
 
-        # Execute all tasks in parallel with semaphore limit
         sync_results = await asyncio.gather(*sync_tasks)
 
         for measurement, tags, count in sync_results:

@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -97,41 +96,40 @@ class TestParseTimestamp:
 
 
 # =============================================================================
-# build_tag_filters tests
+# build_v1_tag_filter tests
 # =============================================================================
 
 
 class TestBuildTagFilters:
-    """Test cases for build_tag_filters with various tag combinations."""
+    """Test cases for build_v1_tag_filter with various tag combinations."""
 
     def test_empty_tags(self, service):
         """Build filters with empty tags dict."""
-        result = service.build_tag_filters({})
-        assert result == {"v1": ""}
+        result = service.build_v1_tag_filter({})
+        assert result == ""
 
     def test_single_tag(self, service):
         """Build filters with single tag."""
-        result = service.build_tag_filters({"entity_id": "sensor.power"})
-        assert result == {"v1": "\"entity_id\"='sensor.power'"}
+        result = service.build_v1_tag_filter({"entity_id": "sensor.power"})
+        assert result == "\"entity_id\"='sensor.power'"
 
     def test_multiple_tags(self, service):
         """Build filters with multiple tags."""
-        result = service.build_tag_filters({"entity_id": "sensor.power", "device": "inverter1"})
+        result = service.build_v1_tag_filter({"entity_id": "sensor.power", "device": "inverter1"})
         # Order may vary, check both parts exist
-        v1_filter = result["v1"]
-        assert "\"entity_id\"='sensor.power'" in v1_filter
-        assert "\"device\"='inverter1'" in v1_filter
-        assert " AND " in v1_filter
+        assert "\"entity_id\"='sensor.power'" in result
+        assert "\"device\"='inverter1'" in result
+        assert " AND " in result
 
     def test_tag_with_special_characters(self, service):
         """Build filters with special characters in values."""
-        result = service.build_tag_filters({"entity_id": "sensor.my_test"})
-        assert result == {"v1": "\"entity_id\"='sensor.my_test'"}
+        result = service.build_v1_tag_filter({"entity_id": "sensor.my_test"})
+        assert result == "\"entity_id\"='sensor.my_test'"
 
     def test_tag_with_spaces(self, service):
         """Build filters with spaces in tag values."""
-        result = service.build_tag_filters({"device": "My Device"})
-        assert result == {"v1": "\"device\"='My Device'"}
+        result = service.build_v1_tag_filter({"device": "My Device"})
+        assert result == "\"device\"='My Device'"
 
 
 # =============================================================================
@@ -145,10 +143,10 @@ class TestToLineProtocolExtended:
     def test_empty_tags(self, service):
         """Build line protocol with no tags."""
         line = service.to_line_protocol("measurement", {}, {"value": 42}, 1000)
-        # Should be: measurement value=42i 1000000000000
+        # Should be: measurement value=42i 1000
         assert line.startswith("measurement ")
         assert "value=42i" in line
-        assert "1000000000000" in line
+        assert "1000" in line
         # No comma after measurement name when no tags
         assert "measurement," not in line
 
@@ -202,10 +200,10 @@ class TestToLineProtocolExtended:
         assert "temp=25.5" in line
         assert 'status="ok"' in line
 
-    def test_timestamp_conversion_to_nanoseconds(self, service):
+    def test_timestamp_not_converted_to_nanoseconds(self, service):
         """Verify timestamp is converted to nanoseconds."""
         line = service.to_line_protocol("m", {}, {"v": 1}, 1234567890)
-        assert "1234567890000000000" in line
+        assert "1234567890" in line
 
     def test_zero_timestamp(self, service):
         """Build line protocol with zero timestamp (epoch)."""

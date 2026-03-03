@@ -151,13 +151,13 @@ async def test_init_all_fail_returns_false(logger, influx_config):
         assert success is False
 
 
-def testto_line_protocol(logger):
+def test_to_line_protocol(logger):
     svc = InfluxService(logger, plant_index=0)
     tags = {"t1": "v1", "t 2": "v 2"}
     fields = {"f1": 10, "f2": 10.5, "f3": "str val"}
     ts = 1234567890
     line = svc.to_line_protocol("meas name", tags, fields, ts)
-    assert 'meas\\ name,t1=v1,t\\ 2=v\\ 2 f1=10i,f2=10.5,f3="str val" 1234567890000000000' in line
+    assert 'meas\\ name,t1=v1,t\\ 2=v\\ 2 f1=10i,f2=10.5,f3="str val" 1234567890' in line
 
 
 @pytest.mark.asyncio

@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-__all__ = ["get_influxdb_services", "InfluxBase", "InfluxService", "HassHistorySync"]
-
 import logging
-from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.config import active_config
 
@@ -11,18 +8,20 @@ from .hass_history_sync import HassHistorySync
 from .influx_base import InfluxBase
 from .influx_service import InfluxService
 
-if TYPE_CHECKING:
-    from sigenergy2mqtt.main.thread_config import ThreadConfig
+__all__ = ["get_influxdb_services", "InfluxBase", "InfluxService", "HassHistorySync"]
 
 
-def get_influxdb_services(configs: list[ThreadConfig]):
-    logger = logging.getLogger("influxdb")
-    logger.setLevel(active_config.influxdb.log_level)
-    services = []
-    # Create one service instance per plant index
-    for plant_index in range(len(active_config.modbus)):
-        svc_logger = logging.getLogger(f"influxdb.plant{plant_index}")
-        svc_logger.setLevel(active_config.influxdb.log_level)
-        svc = InfluxService(svc_logger, plant_index)
-        services.append(svc)
-    return services
+def get_influxdb_services() -> list[InfluxService]:
+    """Create and return one InfluxDB service instance per configured Modbus plant.
+
+    Initialises a parent ``influxdb`` logger and a child logger per plant
+    (``influxdb.plant<index>``), both set to the log level defined in the
+    active InfluxDB configuration.
+
+    Returns:
+        list[InfluxService]: Ordered list of :class:`InfluxService` instances,
+        one per entry in ``active_config.modbus``.
+    """
+    logging.getLogger("influxdb").setLevel(active_config.influxdb.log_level)
+
+    return [InfluxService(logging.getLogger(f"influxdb.plant{i}"), i) for i in range(len(active_config.modbus))]
