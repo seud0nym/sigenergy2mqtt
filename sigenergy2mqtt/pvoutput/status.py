@@ -111,7 +111,7 @@ class PVOutputStatusService(Service):
                                 self.logger.warning(
                                     f"{self.__class__.__name__} Adjusted {StatusField.CONSUMPTION_POWER.name} (payload['{StatusField.CONSUMPTION_POWER.value}']) to 0 from {payload[StatusField.CONSUMPTION_POWER]} to comply with PVOutput requirements"
                                 )
-                                payload[StatusField.CONSUMPTION_POWER] = 0  # PVOutput does not accept negative consumption power values
+                                payload[StatusField.CONSUMPTION_POWER.value] = 0  # PVOutput does not accept negative consumption power values
                             uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
                             if not uploaded:
                                 self.logger.debug(f"{self.__class__.__name__} Restoring previous state of topics due to failed upload")
