@@ -66,9 +66,10 @@ def configure_logging() -> None:
         root.handlers.clear()
     logging.basicConfig(format=fmt, level=active_config.log_level, style="{")
 
-    _configure_logger("pymodbus", active_config.get_modbus_log_level(), propagate=False)
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
     _configure_logger("pvoutput", active_config.pvoutput.log_level)
+    _configure_logger("pymodbus", active_config.get_modbus_log_level(), propagate=False)
+    _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
