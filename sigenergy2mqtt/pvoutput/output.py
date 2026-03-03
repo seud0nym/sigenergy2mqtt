@@ -143,11 +143,10 @@ class PVOutputOutputService(Service):
                         matches = False
                 if matches:
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
-                        if topic._value_key in payload and topic._value_key in result:
-                            if payload[topic._value_key] != result[topic._value_key]:
-                                self.logger.debug(
-                                    f"{self.__class__.__name__} Verification FAILED: payload['{topic._value_key}']={payload[topic._value_key]} != result['{topic._value_key}']={result[topic._value_key]}"
-                                )
+                        key = topic._value_key.value
+                        if key in payload and key in result:
+                            if payload[key] != result[key]:
+                                self.logger.debug(f"{self.__class__.__name__} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
                                 matches = False
                 if matches:
                     try:
