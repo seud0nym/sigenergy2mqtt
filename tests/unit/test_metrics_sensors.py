@@ -1,4 +1,3 @@
-from sigenergy2mqtt.config import active_config
 import time
 from unittest.mock import patch
 
@@ -220,7 +219,6 @@ class TestProtocolPublished:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
         with patch("sigenergy2mqtt.metrics.metrics_sensors.ProtocolApplies", return_value="2024-08-05"):
-            sensor = ProtocolPublished()
-            sensor.protocol_version = Protocol.V1_8
+            sensor = ProtocolPublished(Protocol.V1_8)
             await sensor._update_internal_state()
             assert sensor.latest_raw_state == "2024-08-05"

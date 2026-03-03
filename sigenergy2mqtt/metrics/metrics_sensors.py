@@ -1,3 +1,12 @@
+"""
+Home Assistant sensor entities that expose :class:`~sigenergy2mqtt.metrics.Metrics`
+values over MQTT.
+
+Each sensor reads one or more class-level attributes from :class:`Metrics` on
+every scan interval and publishes the result to its configured state topic
+under ``sigenergy2mqtt/metrics/``.
+"""
+
 import logging
 import time
 from typing import Any, cast
@@ -11,6 +20,18 @@ from .metrics import Metrics
 
 
 class MetricsSensor(ReadableSensorMixin):
+    """
+    Base class for all metrics sensors.
+
+    Subclasses implement :meth:`_update_internal_state` to pull the relevant
+    value from :class:`Metrics` and call :meth:`set_latest_state`. The default
+    scan interval is 1 second.
+
+    MQTT topics are structured as ``sigenergy2mqtt/metrics/<suffix>`` where
+    *suffix* is the ``object_id`` with the ``sigenergy2mqtt_`` prefix stripped,
+    and availability is tied to ``sigenergy2mqtt/status``.
+    """
+
     def __init__(
         self,
         name: str,
@@ -42,6 +63,13 @@ class MetricsSensor(ReadableSensorMixin):
         raise NotImplementedError
 
     def configure_mqtt_topics(self, device_id: str) -> str:
+        """
+        Override topic configuration to use the ``sigenergy2mqtt/metrics/`` namespace.
+
+        The state topic is derived from ``object_id`` by stripping the
+        ``sigenergy2mqtt_`` prefix: e.g. ``sigenergy2mqtt_modbus_locks``
+        becomes ``sigenergy2mqtt/metrics/modbus_locks``.
+        """
         # Override to match existing topic structure: sigenergy2mqtt/metrics/{id}
         base = "sigenergy2mqtt/metrics"
         object_id = cast(str, self["object_id"])
@@ -53,10 +81,13 @@ class MetricsSensor(ReadableSensorMixin):
         return base
 
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
+        """Metrics sensors do not publish extra MQTT attributes."""
         pass
 
 
 class ModbusCacheHits(MetricsSensor):
+    """Percentage of modbus reads satisfied from cache."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Cache Hits",
@@ -74,6 +105,8 @@ class ModbusCacheHits(MetricsSensor):
 
 
 class ModbusPhysicalReads(MetricsSensor):
+    """Percentage of modbus reads that resulted in a physical bus read (i.e. cache misses)."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Physical Reads",
@@ -91,6 +124,8 @@ class ModbusPhysicalReads(MetricsSensor):
 
 
 class ModbusReadsPerSecond(MetricsSensor):
+    """Modbus register reads per second since service start."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Reads/second",
@@ -101,12 +136,18 @@ class ModbusReadsPerSecond(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_register_reads / (time.monotonic() - Metrics._started)
+        elapsed = time.monotonic() - Metrics._started
+        if elapsed > 0:
+            value = Metrics.sigenergy2mqtt_modbus_register_reads / elapsed
+        else:
+            value = 0.0
         self.set_latest_state(value)
         return True
 
 
 class ModbusReadErrors(MetricsSensor):
+    """Cumulative count of modbus read errors."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Read Errors",
@@ -123,6 +164,8 @@ class ModbusReadErrors(MetricsSensor):
 
 
 class ModbusReadMax(MetricsSensor):
+    """Maximum single modbus read duration in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Read Max",
@@ -142,6 +185,8 @@ class ModbusReadMax(MetricsSensor):
 
 
 class ModbusReadMean(MetricsSensor):
+    """Mean modbus read duration per register read, in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Read Mean",
@@ -159,6 +204,8 @@ class ModbusReadMean(MetricsSensor):
 
 
 class ModbusReadMin(MetricsSensor):
+    """Minimum single modbus read duration in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Read Min",
@@ -178,6 +225,8 @@ class ModbusReadMin(MetricsSensor):
 
 
 class ModbusWriteErrors(MetricsSensor):
+    """Cumulative count of modbus write errors."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Write Errors",
@@ -194,6 +243,8 @@ class ModbusWriteErrors(MetricsSensor):
 
 
 class ModbusWriteMax(MetricsSensor):
+    """Maximum single modbus write duration in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Write Max",
@@ -213,6 +264,8 @@ class ModbusWriteMax(MetricsSensor):
 
 
 class ModbusWriteMean(MetricsSensor):
+    """Mean modbus write duration per write call, in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Write Mean",
@@ -230,6 +283,8 @@ class ModbusWriteMean(MetricsSensor):
 
 
 class ModbusWriteMin(MetricsSensor):
+    """Minimum single modbus write duration in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Write Min",
@@ -249,6 +304,8 @@ class ModbusWriteMin(MetricsSensor):
 
 
 class ModbusActiveLocks(MetricsSensor):
+    """Number of coroutines currently waiting to acquire a modbus lock."""
+
     def __init__(self):
         super().__init__(
             name="Modbus Active Locks",
@@ -265,6 +322,8 @@ class ModbusActiveLocks(MetricsSensor):
 
 
 class Started(MetricsSensor):
+    """ISO-8601 timestamp of when the service commenced, set at actual start time."""
+
     def __init__(self):
         super().__init__(
             name="Started",
@@ -282,6 +341,8 @@ class Started(MetricsSensor):
 
 
 class ProtocolVersion(MetricsSensor):
+    """The Sigenergy modbus protocol version in use."""
+
     def __init__(self, protocol_version: Protocol):
         super().__init__(
             name="Protocol Version",
@@ -299,7 +360,9 @@ class ProtocolVersion(MetricsSensor):
 
 
 class ProtocolPublished(MetricsSensor):
-    def __init__(self):
+    """The date from which the active Sigenergy modbus protocol applies."""
+
+    def __init__(self, protocol_version: Protocol):
         super().__init__(
             name="Protocol Published",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol_published",
@@ -307,6 +370,7 @@ class ProtocolPublished(MetricsSensor):
             icon="mdi:book-clock",
         )
         self["entity_category"] = "diagnostic"
+        self.protocol_version = protocol_version
 
     async def _update_internal_state(self, **kwargs) -> bool:
         value = ProtocolApplies(self.protocol_version)
@@ -318,6 +382,8 @@ class ProtocolPublished(MetricsSensor):
 
 
 class InfluxDBWrites(MetricsSensor):
+    """Cumulative count of InfluxDB write operations."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Writes",
@@ -334,6 +400,8 @@ class InfluxDBWrites(MetricsSensor):
 
 
 class InfluxDBWriteErrors(MetricsSensor):
+    """Cumulative count of InfluxDB write errors."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Write Errors",
@@ -350,6 +418,8 @@ class InfluxDBWriteErrors(MetricsSensor):
 
 
 class InfluxDBWriteMax(MetricsSensor):
+    """Maximum single InfluxDB write duration in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Write Max",
@@ -367,6 +437,8 @@ class InfluxDBWriteMax(MetricsSensor):
 
 
 class InfluxDBWriteMean(MetricsSensor):
+    """Mean InfluxDB write duration per write call, in milliseconds."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Write Mean",
@@ -384,6 +456,8 @@ class InfluxDBWriteMean(MetricsSensor):
 
 
 class InfluxDBQueries(MetricsSensor):
+    """Cumulative count of InfluxDB query operations."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Queries",
@@ -400,6 +474,8 @@ class InfluxDBQueries(MetricsSensor):
 
 
 class InfluxDBQueryErrors(MetricsSensor):
+    """Cumulative count of InfluxDB query errors."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Query Errors",
@@ -416,6 +492,8 @@ class InfluxDBQueryErrors(MetricsSensor):
 
 
 class InfluxDBRetries(MetricsSensor):
+    """Cumulative count of InfluxDB retry attempts."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Retries",
@@ -432,6 +510,8 @@ class InfluxDBRetries(MetricsSensor):
 
 
 class InfluxDBThroughput(MetricsSensor):
+    """InfluxDB data points written per second since service start."""
+
     def __init__(self):
         super().__init__(
             name="InfluxDB Throughput",
@@ -442,9 +522,6 @@ class InfluxDBThroughput(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        # Calculate writes per second based on elapsed time
-        import time
-
         elapsed = time.monotonic() - Metrics._started
         if elapsed > 0:
             value = Metrics.sigenergy2mqtt_influxdb_batch_total / elapsed

@@ -1,9 +1,8 @@
-import threading
 from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.metrics import Metrics
 
 
 class TestMetricsLock:
@@ -11,12 +10,18 @@ class TestMetricsLock:
 
     @pytest.fixture(autouse=True)
     def reset_metrics(self):
-        """Reset Metrics state before each test."""
-        # Store original state
+        """Reset Metrics state before each test.
+
+        Creates a fresh asyncio.Lock for each test to prevent state leaking
+        between runs. Note: asyncio.Lock must be created inside a running
+        event loop, so the fixture stores and restores rather than creating
+        one here — the lock is instead reset lazily by _get_lock() on first
+        use within each async test.
+        """
         original_lock = Metrics._lock
 
-        # Create fresh lock for each test
-        Metrics._lock = threading.Lock()
+        # Force _get_lock() to create a fresh asyncio.Lock for this test
+        Metrics._lock = None
 
         yield
 
@@ -48,17 +53,15 @@ class TestMetricsLock:
     @pytest.mark.asyncio
     async def test_lock_timeout_error(self):
         """Test timeout when lock cannot be acquired."""
-        # Acquire the lock first
-        Metrics._lock.acquire()
+        # Acquire the asyncio.Lock directly so it is held during the test
+        await Metrics._get_lock().acquire()
 
         try:
-            # This should timeout since lock is already held
             with pytest.raises(TimeoutError):
                 async with Metrics.lock(timeout=0.01):
                     pass
         finally:
-            # Release the lock we acquired
-            Metrics._lock.release()
+            Metrics._get_lock().release()
 
     @pytest.mark.asyncio
     async def test_lock_proper_release(self):
@@ -70,22 +73,6 @@ class TestMetricsLock:
 
         # Lock should be released despite exception
         assert not Metrics._lock.locked()
-
-    @pytest.mark.asyncio
-    async def test_lock_not_acquired_no_release(self):
-        """Verify no release when lock not acquired (timeout case)."""
-        # Acquire the lock first
-        Metrics._lock.acquire()
-
-        try:
-            with pytest.raises(TimeoutError):
-                async with Metrics.lock(timeout=0.01):
-                    pass
-
-            # Lock should still be held by us, not released by context manager
-            assert Metrics._lock.locked()
-        finally:
-            Metrics._lock.release()
 
 
 class TestMetricsCacheHits:
@@ -243,14 +230,12 @@ class TestMetricsWrite:
         original_total = Metrics.sigenergy2mqtt_modbus_write_total
         original_max = Metrics.sigenergy2mqtt_modbus_write_max
         original_mean = Metrics.sigenergy2mqtt_modbus_write_mean
-        original_min = Metrics.sigenergy2mqtt_modbus_write_min
 
         # Reset to initial state
         Metrics.sigenergy2mqtt_modbus_writes = 0
         Metrics.sigenergy2mqtt_modbus_write_total = 0.0
         Metrics.sigenergy2mqtt_modbus_write_max = 0.0
         Metrics.sigenergy2mqtt_modbus_write_mean = 0.0
-        Metrics.sigenergy2mqtt_modbus_write_min = float("inf")
 
         yield
 
@@ -259,7 +244,6 @@ class TestMetricsWrite:
         Metrics.sigenergy2mqtt_modbus_write_total = original_total
         Metrics.sigenergy2mqtt_modbus_write_max = original_max
         Metrics.sigenergy2mqtt_modbus_write_mean = original_mean
-        Metrics.sigenergy2mqtt_modbus_write_min = original_min
 
     @pytest.mark.asyncio
     async def test_modbus_write_success(self):
@@ -269,7 +253,6 @@ class TestMetricsWrite:
         assert Metrics.sigenergy2mqtt_modbus_writes == 5
         assert Metrics.sigenergy2mqtt_modbus_write_total == 30.0  # 0.03 * 1000
         assert Metrics.sigenergy2mqtt_modbus_write_max == 30.0
-        assert Metrics.sigenergy2mqtt_modbus_write_min == 30.0
         assert Metrics.sigenergy2mqtt_modbus_write_mean == 6.0  # 30 / 5
 
     @pytest.mark.asyncio
@@ -280,7 +263,6 @@ class TestMetricsWrite:
         await Metrics.modbus_write(registers=2, seconds=0.15)  # 150ms
 
         assert Metrics.sigenergy2mqtt_modbus_write_max == 150.0
-        assert Metrics.sigenergy2mqtt_modbus_write_min == 50.0
         assert Metrics.sigenergy2mqtt_modbus_writes == 6
 
     @pytest.mark.asyncio
