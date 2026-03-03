@@ -654,11 +654,9 @@ class InfluxBase(Device):
         headers = {"Authorization": f"Token {token}", "Content-Type": "application/vnd.flux"}
         url = f"{base}/api/v2/query"
         params = {"org": org} if org else {}
-        start = time.time()
         r = await asyncio.to_thread(self._session.post, url, headers=headers, params=params, data=flux_query, timeout=timeout)
-        elapsed = time.time() - start
         if r.status_code == 200:
-            await Metrics.influxdb_query(elapsed)
+            await Metrics.influxdb_query()
             return True, r.text
         raise Exception(f"HTTP {r.status_code}: {r.text}")
 
@@ -731,11 +729,9 @@ class InfluxBase(Device):
         params: dict[str, str] = {"db": db, "q": query}
         if epoch:
             params["epoch"] = epoch
-        start = time.time()
         r = await asyncio.to_thread(self._session.get, url, params=params, auth=auth, timeout=timeout)
-        elapsed = time.time() - start
         if r.status_code == 200:
-            await Metrics.influxdb_query(elapsed)
+            await Metrics.influxdb_query()
             return True, r.json()
         raise Exception(f"HTTP {r.status_code}: {r.text}")
 
