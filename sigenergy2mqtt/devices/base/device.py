@@ -110,6 +110,37 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         logging.debug(f"Created Device {self}")
         DeviceRegistry.add(self.plant_index, self)
 
+    @staticmethod
+    def _cancel_task(task: asyncio.Future) -> None:
+        """Cancel an asyncio Future or Task in a thread-safe manner.
+
+        When ``online`` is set to ``False`` from an OS signal handler (which
+        runs on the main thread), the tasks being cancelled may be running on a
+        different thread's event loop.  ``asyncio.Task.cancel()`` is **not**
+        thread-safe — calling it from a foreign thread silently fails to
+        schedule the ``CancelledError``, leaving the coroutine sleeping for its
+        full duration.
+
+        This helper detects the mismatch and dispatches the cancel through
+        ``loop.call_soon_threadsafe()`` so the cancellation is injected into
+        the correct event loop regardless of which thread is calling.
+
+        Args:
+            task: The :class:`asyncio.Future` or :class:`asyncio.Task` to cancel.
+        """
+        try:
+            loop = task.get_loop()
+            try:
+                running_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                running_loop = None
+            if running_loop is loop:
+                task.cancel()
+            else:
+                loop.call_soon_threadsafe(task.cancel)
+        except RuntimeError:
+            task.cancel()
+
     @property
     def online(self) -> bool:
         """Whether the device is currently considered online.
@@ -156,7 +187,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
                 # Cancel the online future to stop new operations
                 if isinstance(self._online, asyncio.Future):
-                    self._online.cancel()
+                    Device._cancel_task(self._online)
 
                 # Signal all running tasks to stop
                 self._shutdown_event.set()
@@ -164,7 +195,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
                 # Cancel sensor sleeper tasks
                 for sensor in self.get_all_sensors(search_children=True).values():
                     if sensor.sleeper_task is not None:
-                        sensor.sleeper_task.cancel()
+                        Device._cancel_task(sensor.sleeper_task)
 
                 # Recursively shut down children
                 for device in self.children:
@@ -172,7 +203,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
                 # Cancel own sleeper task
                 if self._sleeper_task is not None:
-                    self._sleeper_task.cancel()
+                    Device._cancel_task(self._sleeper_task)
 
                 # Mark as offline
                 self._online = False
