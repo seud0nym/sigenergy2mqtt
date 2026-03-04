@@ -39,7 +39,7 @@ class:
     name: Alarm 3
   ACChargerAlarms:
     attributes:
-      source: Modbus Registers 32012-32014
+      source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Alarms
   ACChargerChargingPower:
@@ -572,7 +572,7 @@ class:
   GeneralPCSAlarm:
     attributes:
       comment: If any hybrid inverter has alarm, then this alarm will be set accordingly
-      source: Modbus Registers 30027-30028
+      source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PCS Alarms
   GridCode:
@@ -628,7 +628,7 @@ class:
       '5': Reactive power compensation current, active constant-current mode
   GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor:
     attributes:
-      comment: 'Range: [0,10.0]'
+      comment: 'Documented Range: [0,10.0] but using 20.0 as maximum because live systems are returning this value'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: LVRT Negative Sequence Reactive Power Compensation Factor
@@ -962,7 +962,7 @@ class:
     name: Model
   InverterPCSAlarm:
     attributes:
-      source: Modbus Registers 30605-30606
+      source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PCS Alarms
   InverterPVDailyGeneration:
@@ -1079,13 +1079,13 @@ class:
     name: Max Discharge Power
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Range: [0, Rated ESS charging power]{active_config}'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Charging Limit
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{Config}'
+      comment: 'Range: [0, Rated ESS charging power]{active_config}'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Discharging Limit
@@ -1255,7 +1255,7 @@ class:
     name: Active Power
   PlantAlarms:
     attributes:
-      source: Modbus Registers 30280-30281
+      source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Plant Alarms
   PlantBatterySoC:
@@ -1455,6 +1455,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: Remote EMS Limit
   Reserved30073:
     attributes:
       source: Modbus Register {address}
@@ -1660,6 +1661,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Third-Party PV Power
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbus Register {address}
@@ -1819,7 +1824,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: A valid username for the MQTT broker
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.
+    help: Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This option is ignored for firmware SPC113 and later as these limits are globally available in those versions.
   SIGENERGY2MQTT_NO_METRICS:
     help: Do not publish any sigenergy2mqtt metrics.
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:

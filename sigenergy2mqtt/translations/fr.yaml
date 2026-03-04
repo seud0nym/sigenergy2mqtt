@@ -1455,6 +1455,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+    name: Limite de l'EMS à distance
   Reserved30073:
     attributes:
       source: Registre Modbus {address}
@@ -1695,6 +1696,10 @@ class:
   WriteOnlySensor:
     name_off: Éteindre
     name_on: Allumer
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Registre Modbus {address}
+      source_range: Registres Modbus {start}-{end}
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Le chemin vers le fichier de configuration JSON (par défaut: /etc/sigenergy2mqtt.yaml)'
@@ -1855,7 +1860,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "La source de la valeur de tension à envoyer à PVOutput. Valeurs valides: phase-a, phase-b, phase-c, l/n-avg (moyenne ligne-neutre), l/l-avg (moyenne ligne-ligne) ou pv (moyenne sur les chaînes PV). Par défaut: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
-    help:  "L'intervalle en secondes auquel les états répétés sont publiés. Si < 0, les états répétés ne sont jamais publiés. Si 0, les états répétés sont toujours publiés. Si > 0, les états répétés sont publiés à l'intervalle spécifié. La valeur par défaut est 0 (toujours publier)."
+    help: "L'intervalle en secondes auquel les états répétés sont publiés. Si < 0, les états répétés ne sont jamais publiés. Si 0, les états répétés sont toujours publiés. Si > 0, les états répétés sont publiés à l'intervalle spécifié. La valeur par défaut est 0 (toujours publier)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: La valeur par défaut en kW utilisée pour les vérifications de cohérence pour valider les valeurs maximales et minimales des capteurs de puissance et la valeur delta des capteurs d'énergie. La valeur par défaut est 500 kW par seconde, les lectures hors plage sont ignorées.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:

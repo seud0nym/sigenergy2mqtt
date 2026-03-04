@@ -1455,6 +1455,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+    name: Limiet van externe EMS
   Reserved30073:
     attributes:
       source: Modbus-register {address}
@@ -1695,6 +1696,10 @@ class:
   WriteOnlySensor:
     name_off: Uitschakelen
     name_on: Inschakelen
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Het pad naar het JSON-configuratiebestand (standaard: /etc/sigenergy2mqtt.yaml)'
@@ -1855,7 +1860,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "De bron van de spanningswaarde voor PVOutput. Standaard: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
-    help:  "Het interval in seconden waarmee herhaalde staten worden gepubliceerd. Als < 0, worden herhaalde staten nooit gepubliceerd. Als 0, worden herhaalde staten altijd gepubliceerd. Als > 0, worden herhaalde staten gepubliceerd op het opgegeven interval. De standaardwaarde is 0 (altijd publiceren)."
+    help: "Het interval in seconden waarmee herhaalde staten worden gepubliceerd. Als < 0, worden herhaalde staten nooit gepubliceerd. Als 0, worden herhaalde staten altijd gepubliceerd. Als > 0, worden herhaalde staten gepubliceerd op het opgegeven interval. De standaardwaarde is 0 (altijd publiceren)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500 kW per seconde, en metingen buiten het bereik worden genegeerd.'
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
