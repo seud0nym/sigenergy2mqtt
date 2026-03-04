@@ -3,6 +3,7 @@ from .consumption_method import ConsumptionMethod
 from .consumption_source import ConsumptionSource
 from .days import WEEKDAYS, WEEKENDS
 from .device_class import DeviceClass
+from .firmware_version import FirmwareVersion
 from .input_type import InputType
 from .output_field import OutputField
 from .protocol import Protocol, ProtocolApplies
@@ -22,6 +23,7 @@ __all__ = [
     "ConsumptionMethod",
     "ConsumptionSource",
     "DeviceClass",
+    "FirmwareVersion",
     "DeviceType",
     "HybridInverter",
     "InputType",

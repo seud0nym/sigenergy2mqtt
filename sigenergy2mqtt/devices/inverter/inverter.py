@@ -5,7 +5,8 @@ from typing import cast
 
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
-from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import DeviceType, FirmwareVersion, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
 
@@ -59,6 +60,15 @@ class Inverter(ModbusDevice):
             pv_string_count.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
         )
+
+        if active_config.ems_mode_check and isinstance(firmware, str):
+            try:
+                parsed_firmware = FirmwareVersion(firmware)
+                if parsed_firmware.service_pack >= 113:
+                    logging.info(f"Disabling Remote EMS Mode check because PV Max Power and ESS Charge/Discharge limits are globally available in firmware {firmware}")
+                    active_config.ems_mode_check = False
+            except ValueError:
+                logging.debug(f"Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
 
         inverter = cls(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
         await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), cast(int, battery_count))

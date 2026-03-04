@@ -302,11 +302,11 @@ class:
     name: Tensione Media Celle
   BatteryChargingPower:
     attributes:
-      source: BatteryPower > 0
+      source: BatteryPower > 0 #verify:ignore
     name: Potenza di Carica Batteria
   BatteryDischargingPower:
     attributes:
-      source: BatteryPower < 0 × -1
+      source: BatteryPower < 0 × -1 #verify:ignore
     name: Potenza di Scarica Batteria
   BatteryPower:
     attributes:
@@ -748,11 +748,11 @@ class:
     name_reset: Imposta Energia Importata Giornaliera
   GridSensorExportPower:
     attributes:
-      source: GridSensorActivePower < 0 × -1
+      source: GridSensorActivePower < 0 × -1 #verify:ignore
     name: Potenza di Esportazione
   GridSensorImportPower:
     attributes:
-      source: GridSensorActivePower > 0
+      source: GridSensorActivePower > 0 #verify:ignore
     name: Potenza di Importazione
   GridSensorReactivePower:
     attributes:
@@ -909,11 +909,11 @@ class:
     name: Allarmi
   InverterBatteryChargingPower:
     attributes:
-      source: ChargeDischargePower > 0
+      source: ChargeDischargePower > 0 #verify:ignore
     name: Potenza di Carica Batteria
   InverterBatteryDischargingPower:
     attributes:
-      source: ChargeDischargePower < 0 × -1
+      source: ChargeDischargePower < 0 × -1 #verify:ignore
     name: Potenza di Scarica Batteria
   InverterBatterySoC:
     attributes:
@@ -1207,7 +1207,7 @@ class:
     name_reset: Imposta Produzione Totale
   PVStringPower:
     attributes:
-      source: PVVoltageSensor × PVCurrentSensor
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
     name: Potenza
   PVVoltageSensor:
     attributes:

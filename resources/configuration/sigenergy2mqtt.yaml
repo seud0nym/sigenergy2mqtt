@@ -60,13 +60,12 @@ sanity-check-default-kw: 500.0
 sanity-check-failures-increment: false
 # no-ems-mode-check
 #   added: 2026.1.13
-#   default: false
+#   default: false for firmware SPC112 and earlier, true for SPC113 and later
 #   description:  Turn off the validation that disables ESS Max Charging
 #                 Discharging Limits and PV Max Power Limits when Remote 
 #                 EMS Control Mode is not Command Charging/Discharging.
-#                 This setting does not comply with the Sigenergy Modbus
-#                 Protocol documentation, but may be useful for some
-#                 installations.
+#                 Ignored for firmware SPC113 and later as these limits are
+#                 globally available in those versions.
 no-ems-mode-check: false
 # no-metrics
 #   default: false
