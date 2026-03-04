@@ -92,10 +92,23 @@ jobs:
       - name: Commit badges
         if: github.event_name == 'push'
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add resources/badges/*.svg
           if ! git diff --staged --quiet; then
             git commit -m "workflow: Update badges [skip ci]"
-            git push
+            branch="${GITHUB_REF_NAME:-main}"
+            for attempt in 1 2 3; do
+              if git push origin "HEAD:${branch}"; then
+                exit 0
+              fi
+
+              echo "Push failed (attempt ${attempt}); rebasing onto origin/${branch} and retrying..."
+              git fetch origin "${branch}"
+              git rebase "origin/${branch}"
+            done
+
+            echo "Failed to push badge update after 3 attempts"
+            exit 1
           fi
