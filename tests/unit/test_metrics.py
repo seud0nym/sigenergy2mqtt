@@ -1,3 +1,4 @@
+import threading
 from unittest.mock import patch
 
 import pytest
@@ -10,18 +11,12 @@ class TestMetricsLock:
 
     @pytest.fixture(autouse=True)
     def reset_metrics(self):
-        """Reset Metrics state before each test.
-
-        Creates a fresh asyncio.Lock for each test to prevent state leaking
-        between runs. Note: asyncio.Lock must be created inside a running
-        event loop, so the fixture stores and restores rather than creating
-        one here — the lock is instead reset lazily by _get_lock() on first
-        use within each async test.
-        """
+        """Reset Metrics state before each test."""
+        # Store original state
         original_lock = Metrics._lock
 
-        # Force _get_lock() to create a fresh asyncio.Lock for this test
-        Metrics._lock = None
+        # Create fresh lock for each test
+        Metrics._lock = threading.Lock()
 
         yield
 
@@ -53,15 +48,17 @@ class TestMetricsLock:
     @pytest.mark.asyncio
     async def test_lock_timeout_error(self):
         """Test timeout when lock cannot be acquired."""
-        # Acquire the asyncio.Lock directly so it is held during the test
-        await Metrics._get_lock().acquire()
+        # Acquire the lock first
+        Metrics._lock.acquire()
 
         try:
+            # This should timeout since lock is already held
             with pytest.raises(TimeoutError):
                 async with Metrics.lock(timeout=0.01):
                     pass
         finally:
-            Metrics._get_lock().release()
+            # Release the lock we acquired
+            Metrics._lock.release()
 
     @pytest.mark.asyncio
     async def test_lock_proper_release(self):

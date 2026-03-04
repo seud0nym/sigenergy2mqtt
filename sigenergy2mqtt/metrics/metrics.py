@@ -1,7 +1,7 @@
 """
 Centralised runtime metrics store for sigenergy2mqtt.
 
-All mutable state is protected by an :class:`asyncio.Lock`. Callers should
+All mutable state is protected by a :class:`threading.Lock`. Callers should
 use the async helper methods rather than mutating class attributes directly.
 Timing values are stored in milliseconds unless noted otherwise.
 
@@ -10,8 +10,8 @@ initialise the time-sensitive ``_started`` and ``sigenergy2mqtt_started``
 fields at actual service start rather than at module-import time.
 """
 
-import asyncio
 import logging
+import threading
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -23,13 +23,11 @@ class Metrics:
 
     Attributes are class variables so they can be read cheaply from anywhere
     without an instance. All writes go through the provided async helper
-    methods, which acquire the internal :class:`asyncio.Lock` before mutating
+    methods, which acquire the internal :class:`threading.Lock` before mutating
     state, preventing TOCTOU races.
     """
 
-    # asyncio.Lock must be created inside a running event loop, so it is
-    # initialised lazily by _get_lock() rather than here at class body time.
-    _lock: asyncio.Lock | None = None
+    _lock: threading.Lock = threading.Lock()
 
     _started: float = 0.0
     """Monotonic reference timestamp set by :meth:`commence`. Used for rate calculations."""
@@ -139,25 +137,16 @@ class Metrics:
     # ------------------------------------------------------------------
 
     @classmethod
-    def _get_lock(cls) -> asyncio.Lock:
-        """
-        Return the asyncio.Lock, creating it on first call.
-
-        The lock must be created inside a running event loop, so it cannot be
-        a class-level initialiser.
-        """
-        if cls._lock is None:
-            cls._lock = asyncio.Lock()
-        return cls._lock
-
-    @classmethod
     @asynccontextmanager
     async def lock(cls, timeout: float | None = 1.0):
         """
-        Async context manager that acquires the internal asyncio.Lock.
+        Async context manager that acquires the internal :class:`threading.Lock`.
 
-        Using :class:`asyncio.Lock` rather than :class:`threading.Lock` ensures
-        that contention never blocks the event loop thread.
+        ``threading.Lock`` is used deliberately: this app runs one asyncio
+        event loop per thread, so an ``asyncio.Lock`` would be loop-bound and
+        unsafe across threads (modbus and InfluxDB writers run in separate
+        threads). The GIL ensures that the non-blocking ``acquire(timeout=…)``
+        call is safe to issue from any thread without stalling the event loop.
 
         Args:
             timeout: Maximum seconds to wait for the lock. Raises
@@ -168,14 +157,18 @@ class Metrics:
             TimeoutError: When ``timeout`` is set and the lock is not acquired
                 within that period.
         """
+        acquired: bool = False
         try:
-            await asyncio.wait_for(cls._get_lock().acquire(), timeout=timeout)
-        except asyncio.TimeoutError:
-            raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
-        try:
+            if timeout is None:
+                acquired = cls._lock.acquire()
+            else:
+                acquired = cls._lock.acquire(timeout=timeout)
+                if not acquired:
+                    raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
             yield
         finally:
-            cls._get_lock().release()
+            if acquired:
+                cls._lock.release()
 
     @classmethod
     def commence(cls) -> None:
