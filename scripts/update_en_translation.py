@@ -510,7 +510,10 @@ def deep_update_commented(target, source):
 
 
 def preserve_existing_sections(new_translations: dict, old_translations: dict | None) -> None:
-    """Backfill missing extracted options/alarm entries from the previous EN snapshot."""
+    """Backfill missing extracted options/alarm entries from the previous EN snapshot.
+
+    This is a safety net for temporary extraction gaps, not a source of truth.
+    """
     if not old_translations:
         return
 
@@ -539,7 +542,6 @@ def preserve_existing_sections(new_translations: dict, old_translations: dict | 
             for key, value in old_section.items():
                 if key not in cls_data[section]:
                     cls_data[section][key] = value
-                    print(f"Backfilled missing extracted key: class.{cls}.{section}.{key}")
 
 
 def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict, old_en_translations: dict | None = None):
@@ -768,8 +770,6 @@ def propagate_to_other_translations(en_translations: dict, translations_dir: Pat
                             updated = True
 
         if updated:
-            # Sort everything before saving
-            existing = sort_dict(existing)
             with open(language_file, "w", encoding="utf-8") as f:
                 yaml_parser.dump(existing, f)
             print(f"  Saved {language_file.name}")
