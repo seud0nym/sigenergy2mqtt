@@ -8,7 +8,7 @@ from typing import Tuple, cast
 from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
-from sigenergy2mqtt.common import Constants, ConsumptionMethod, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -17,7 +17,7 @@ from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType
 from sigenergy2mqtt.sensors.plant_read_only import (
     Alarm7,
     CurrentControlCommandValue,
@@ -245,6 +245,19 @@ async def make_plant_and_inverter(
         if protocol < Protocol.V2_8 and active_config.consumption != ConsumptionMethod.CALCULATED:
             logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {active_config.consumption.name} is not supported on Modbus Protocol V{protocol.value}")
             active_config.consumption = ConsumptionMethod.CALCULATED
+
+        firmware_version = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "inverter")
+        if isinstance(firmware_version, str):
+            try:
+                parsed_firmware = FirmwareVersion(firmware_version)
+                if parsed_firmware.service_pack >= 113 and active_config.ems_mode_check:
+                    logging.warning(
+                        "Resetting ems_mode_check configuration to False because firmware "
+                        f"{firmware_version} does not support EMS mode checks"
+                    )
+                    active_config.ems_mode_check = False
+            except ValueError:
+                logging.debug(f"Unable to parse firmware version '{firmware_version}' for ems_mode_check enforcement")
 
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
         if ot is None:
