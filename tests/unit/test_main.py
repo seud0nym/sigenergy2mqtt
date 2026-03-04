@@ -70,8 +70,6 @@ class ConcreteSensor(Sensor):
         return True
 
 
-
-
 class TestFirmwareVersion:
     def test_parses_full_firmware_version(self):
         parsed = FirmwareVersion("V122R001C00SPC113B717A")
@@ -377,7 +375,7 @@ class TestFactories:
         seen = set()
         # SN, Model, RCP, RDP, OutputType
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", None, None, "V122R001C00SPC112", 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", None, None, 1]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V2_8, unique_id="p1"))),
@@ -396,16 +394,21 @@ class TestFactories:
         seen = set()
         clean_config.ems_mode_check = True
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, "V122R001C00SPC113B717A", 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V2_8, unique_id="p1"))),
-            patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
-            patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn,
+            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC113B717A")),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.main.main.logging.info") as mock_info,
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is False
-            assert mock_warn.called
+            assert any("Disabling Remote EMS Mode check" in str(call) for call in mock_info.call_args_list)
 
     @pytest.mark.asyncio
     async def test_make_plant_and_inverter_spc112_keeps_ems_mode_check_config(self, clean_config):
@@ -416,11 +419,16 @@ class TestFactories:
         seen = set()
         clean_config.ems_mode_check = True
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, "V122R001C00SPC112", 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V2_8, unique_id="p1"))),
-            patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC112B701P")),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
+            patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is True
@@ -435,7 +443,7 @@ class TestFactories:
         clean_config.consumption = ConsumptionMethod.CALCULATED
         # SN, Model, RCP, RDP, OutputType
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, "V122R001C00SPC112", 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V1_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V1_8, unique_id="p1"))),
@@ -454,7 +462,7 @@ class TestFactories:
         seen = set()
         # SN, Model, RCP, RDP, OutputType (returns None)
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, "V122R001C00SPC112", None]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, None]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
         ):
@@ -670,7 +678,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     seen = set()
     clean_config.consumption = ConsumptionMethod.TOTAL
     with (
-        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, "V122R001C00SPC112", 1]),
+        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
         patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V1_8)),
         patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V1_8, unique_id="p1"))),
@@ -684,7 +692,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     # Line 254: plant already exists branch
     mock_plant = MagicMock(protocol_version=Protocol.V2_8, unique_id="p1")
     with (
-        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN2", "MDL1", 1000, 1000, "V122R001C00SPC112", 1]),
+        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN2", "MDL1", 1000, 1000, 1]),
         patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
         patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
