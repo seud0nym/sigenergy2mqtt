@@ -1,3 +1,9 @@
+"""PVOutput addoutput service implementation.
+
+This service aggregates daily import/export/consumption/generation metrics and
+uploads them to PVOutput via ``addoutput.jsp``.
+"""
+
 import asyncio
 import logging
 import re
@@ -19,7 +25,14 @@ from .topic import Topic
 
 
 class PVOutputOutputService(Service):
+    """Upload daily PVOutput output records from aggregated MQTT topic state."""
     def __init__(self, logger: logging.Logger, topics: dict[OutputField, list[Topic]]):
+        """Build output field aggregators and register configured MQTT topics.
+
+        Args:
+            logger: Logger used by the output service.
+            topics: Mapping of PVOutput output fields to source MQTT topics.
+        """
         super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
 
         _c = ServiceTopics(self, False, logger, value_key=OutputField.CONSUMPTION)  # Disable EoD consumption update because it is updated via the status service
@@ -62,12 +75,23 @@ class PVOutputOutputService(Service):
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field}")
 
     def _create_payload(self, now_struct: time.struct_time, interval: int) -> dict[str, float | int | str]:
+        """Create a dated output payload from currently aggregated topic values.
+
+        Args:
+            now_struct: Current local timestamp.
+            interval: PVOutput interval (minutes) used for calculations.
+        """
         payload: dict[str, float | int | str] = {"d": time.strftime("%Y%m%d", now_struct)}
         for topic in [t for t in self._service_topics.values() if t.enabled]:
             topic.add_to_payload(payload, interval, now_struct)
         return payload
 
     def _is_payload_changed(self, payload: dict[str, float | int | str]) -> bool:
+        """Return ``True`` when payload differs from the last uploaded payload.
+
+        Args:
+            payload: Candidate payload to compare against cached payload.
+        """
         if payload and self._previous_payload and len(payload) == len(self._previous_payload):
             for key, value in self._previous_payload.items():
                 if key not in payload or payload[key] != value:
@@ -77,6 +101,11 @@ class PVOutputOutputService(Service):
         return True
 
     async def _next_output_upload(self, minute: int = 58) -> float:
+        """Calculate the next timestamp when output data should be uploaded.
+
+        Args:
+            minute: Minute within the configured hour for end-of-day uploads.
+        """
         t = time.localtime()
         now = time.mktime(t)
         if active_config.pvoutput.output_hour == -1:  # Update at status interval
@@ -94,6 +123,12 @@ class PVOutputOutputService(Service):
         return next
 
     async def _verify(self, payload: dict[str, float | int | str], force: bool = False) -> bool:
+        """Verify uploaded output data by reading it back from PVOutput.
+
+        Args:
+            payload: Payload that was uploaded.
+            force: Whether to retry verification aggressively.
+        """
         self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
         url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if active_config.pvoutput.exports else ''}"
         verify_retries: int = 3 if force else 1
@@ -172,6 +207,12 @@ class PVOutputOutputService(Service):
         return matches
 
     async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
+        """Upload output payload and optionally verify the final daily upload.
+
+        Args:
+            payload: Output payload to upload.
+            last_upload_of_day: Whether this is the final daily upload.
+        """
         upload_retries: int = 5 if last_upload_of_day else 2
         uploaded: bool = False
         changed: bool = self._is_payload_changed(payload)
@@ -199,6 +240,12 @@ class PVOutputOutputService(Service):
             self._previous_payload = payload
 
     def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+        """Return asyncio tasks that periodically generate and upload output.
+
+        Args:
+            modbus_client: Modbus client reference (unused).
+            mqtt_client: MQTT client reference (unused).
+        """
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
@@ -254,5 +301,11 @@ class PVOutputOutputService(Service):
         return tasks
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
+        """Subscribe all enabled output topic groups to MQTT updates.
+
+        Args:
+            mqtt_client: MQTT client used to create subscriptions.
+            mqtt_handler: MQTT handler used to register callbacks.
+        """
         for topic in [t for t in self._service_topics.values() if t.enabled]:
             topic.subscribe(mqtt_client, mqtt_handler)

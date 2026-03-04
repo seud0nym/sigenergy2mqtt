@@ -1,3 +1,11 @@
+"""PVOutput service wiring for Sigenergy sensors.
+
+This module inspects all configured devices and sensors, selects compatible
+topics, and builds the two PVOutput service devices used at runtime:
+:class:`~sigenergy2mqtt.pvoutput.status.PVOutputStatusService` and
+:class:`~sigenergy2mqtt.pvoutput.output.PVOutputOutputService`.
+"""
+
 from __future__ import annotations
 
 from sigenergy2mqtt.common.consumption_source import ConsumptionSource
@@ -37,6 +45,12 @@ if TYPE_CHECKING:
 
 
 def get_gain(sensor: Sensor, negate: bool = False) -> float:
+    """Return the topic gain that normalizes sensor values for PVOutput.
+
+    Args:
+        sensor: Source sensor whose scaling is converted into PVOutput units.
+        negate: When ``True``, return the gain as a negative multiplier.
+    """
     if sensor.gain is None:
         gain = 1.0
     elif sensor.unit in (UnitOfEnergy.KILO_WATT_HOUR, UnitOfPower.KILO_WATT) and sensor.gain == 100:
@@ -47,6 +61,20 @@ def get_gain(sensor: Sensor, negate: bool = False) -> float:
 
 
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
+    """Build and configure PVOutput status/output service devices.
+
+    The function scans all publishable sensors from all thread configs,
+    maps each sensor to the relevant PVOutput status/output field(s), and
+    enables raw publishing where required so MQTT receives numeric values that
+    can be uploaded directly.
+
+    Args:
+        configs: Thread configurations containing discovered devices.
+
+    Returns:
+        A two-item list with status and output services, or an empty list when
+        PVOutput support is disabled in configuration.
+    """
     if not active_config.pvoutput.enabled:
         return []
     logger = logging.getLogger("pvoutput")

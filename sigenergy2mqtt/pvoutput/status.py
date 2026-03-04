@@ -1,3 +1,9 @@
+"""PVOutput addstatus service implementation.
+
+The status service uploads periodic generation/consumption/voltage/battery
+metrics to PVOutput using ``addstatus.jsp``.
+"""
+
 import asyncio
 import logging
 import time
@@ -13,7 +19,15 @@ from .topic import Topic
 
 
 class PVOutputStatusService(Service):
+    """Upload interval-based PVOutput status records from MQTT topic values."""
     def __init__(self, logger: logging.Logger, topics: dict[StatusField, list[Topic]], extended_data: dict[StatusField, str | None]):
+        """Configure status field aggregators and register discovered topics.
+
+        Args:
+            logger: Logger used by the status service.
+            topics: Mapping of PVOutput status fields to source MQTT topics.
+            extended_data: Metadata describing configured extended fields.
+        """
         super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
 
         _v1 = ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY)
@@ -69,6 +83,11 @@ class PVOutputStatusService(Service):
                 self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field}")
 
     def _create_payload(self, now: time.struct_time) -> tuple[dict[str, Any], dict[str, dict[str, tuple[float | None, time.struct_time | None]]]]:
+        """Build a status payload and snapshot state for rollback on failure.
+
+        Args:
+            now: Timestamp used to stamp the payload date/time values.
+        """
         payload: dict[str, Any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
         topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or Service._donator)]
         snapshot: dict[str, dict[str, tuple[float | None, time.struct_time | None]]] = {
@@ -81,11 +100,23 @@ class PVOutputStatusService(Service):
         return payload, snapshot
 
     async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:
+        """Compute and log the next randomized status upload schedule.
+
+        Args:
+            rand_min: Minimum random offset (seconds) for next upload.
+            rand_max: Maximum random offset (seconds) for next upload.
+        """
         seconds, next_time = await super().seconds_until_status_upload(rand_min, rand_max)
         self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, next_time
 
     def schedule(self, modbus_client: Any, mqtt_client: Any) -> list[Awaitable[None]]:
+        """Return asyncio tasks that periodically upload status payloads.
+
+        Args:
+            modbus_client: Modbus client reference (unused).
+            mqtt_client: MQTT client reference (unused).
+        """
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
             self.logger.info(f"{self.__class__.__name__} Commenced")
             wait, _ = await self.seconds_until_status_upload()
@@ -147,5 +178,11 @@ class PVOutputStatusService(Service):
         return tasks
 
     def subscribe(self, mqtt_client, mqtt_handler) -> None:
+        """Subscribe all enabled status topic groups to MQTT updates.
+
+        Args:
+            mqtt_client: MQTT client used to create subscriptions.
+            mqtt_handler: MQTT handler used to register callbacks.
+        """
         for topic in [t for t in self._service_topics.values() if t.enabled]:
             topic.subscribe(mqtt_client, mqtt_handler)
