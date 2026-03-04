@@ -1,3 +1,9 @@
+"""Topic aggregation helpers used by PVOutput services.
+
+This module defines calculation modes and mutable topic collections that
+aggregate MQTT samples into PVOutput payload fields.
+"""
+
 import json
 import logging
 import math
@@ -18,6 +24,7 @@ from .topic import Topic
 
 
 class Calculation(Flag):
+    """Bitwise flags describing how topic values are aggregated."""
     SUM = auto()
     AVERAGE = auto()
     DIFFERENCE = auto()
@@ -27,6 +34,7 @@ class Calculation(Flag):
 
 
 class ServiceTopics(dict[str, Topic]):
+    """Collection of MQTT topics aggregated into one PVOutput field."""
     def __init__(
         self,
         service: Service,
@@ -41,6 +49,21 @@ class ServiceTopics(dict[str, Topic]):
         periods: list["TimePeriodServiceTopics"] | None = None,
         persist: bool = False,
     ):
+        """Initialize aggregation behavior for one PVOutput payload field.
+
+        Args:
+            service: Parent PVOutput service owning this topic group.
+            enabled: Whether this topic group is active.
+            logger: Logger used for diagnostics.
+            value_key: PVOutput payload key represented by this group.
+            datetime_key: Optional companion payload key for timestamps.
+            calc: Aggregation strategy flags.
+            decimals: Decimal precision for rounded payload values.
+            negative: Whether negative values are allowed in payload output.
+            donation: Whether this field requires PVOutput donation status.
+            periods: Optional child groups for tariff/time-period breakout.
+            persist: Whether state should always be persisted to disk.
+        """
         super().__init__()
         self._allow_negative = negative
         self._always_persist = persist
@@ -60,32 +83,69 @@ class ServiceTopics(dict[str, Topic]):
 
     @property
     def calculation(self) -> Calculation:
+        """Return active calculation flags for this topic group.
+
+        Args:
+            None.
+        """
         return self._calculation
 
     @calculation.setter
     def calculation(self, value: Calculation) -> None:
+        """Set calculation flags used to aggregate topic values.
+
+        Args:
+            value: New aggregation flags.
+        """
         assert isinstance(value, Calculation), "Calculation must be a Calculation enum value"
         self._calculation = value
 
     @property
     def decimals(self) -> int:
+        """Return configured decimal precision for payload rounding.
+
+        Args:
+            None.
+        """
         return self._decimals
 
     @decimals.setter
     def decimals(self, value: int) -> None:
+        """Set decimal precision for generated payload values.
+
+        Args:
+            value: Number of decimal places to keep.
+        """
         assert isinstance(value, int), "Decimals must be an integer value"
         self._decimals = value
 
     @property
     def enabled(self) -> bool:
+        """Return whether this topic group participates in uploads.
+
+        Args:
+            None.
+        """
         return self._enabled
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
+        """Enable or disable this topic group.
+
+        Args:
+            value: New enabled state.
+        """
         assert isinstance(value, bool), "Enabled must be a boolean value"
         self._enabled = value
 
     def _average_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
+        """Write an averaged value into *payload* when valid data exists.
+
+        Args:
+            payload: Payload being assembled.
+            value_key: Target payload field for the numeric value.
+            datetime_key: Optional payload field for the timestamp.
+        """
         total, at, count = self.aggregate(exclude_zero=True)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
             payload[value_key.value] = round(total / count, self._decimals if self._decimals > 0 else None)
@@ -107,6 +167,13 @@ class ServiceTopics(dict[str, Topic]):
             return False
 
     def _squared_root_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
+        """Write a line-to-line average voltage estimate into *payload*.
+
+        Args:
+            payload: Payload being assembled.
+            value_key: Target payload field for the numeric value.
+            datetime_key: Optional payload field for the timestamp.
+        """
         total, at, count = self.aggregate(exclude_zero=False, square=True)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
             payload[value_key.value] = round(math.sqrt(total) / math.sqrt(3), self._decimals if self._decimals > 0 else None)
@@ -128,6 +195,13 @@ class ServiceTopics(dict[str, Topic]):
             return False
 
     def _sum_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
+        """Write a summed or differential value into *payload*.
+
+        Args:
+            payload: Payload being assembled.
+            value_key: Target payload field for the numeric value.
+            datetime_key: Optional payload field for the timestamp.
+        """
         total, at, count = self.aggregate(exclude_zero=False)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
             payload[value_key.value] = round(total, self._decimals if self._decimals > 0 else None)
@@ -149,6 +223,13 @@ class ServiceTopics(dict[str, Topic]):
             return False
 
     def add_to_payload(self, payload: dict[str, float | int | str], interval_minutes: int, now: time.struct_time) -> bool:
+        """Add this field's current aggregate to the outbound payload.
+
+        Args:
+            payload: Payload being assembled.
+            interval_minutes: Expected update interval for staleness checks.
+            now: Current timestamp used for staleness checks.
+        """
         if self._value_key not in (None, "") and (self._bypass_updating_check or self.check_is_updating(interval_minutes, now)):
             if Calculation.AVERAGE in self._calculation:
                 return self._average_into(payload, self._value_key, self._datetime_key)
@@ -160,6 +241,13 @@ class ServiceTopics(dict[str, Topic]):
             return False
 
     def aggregate(self, exclude_zero: bool, square: bool = False, never_return_none: bool = False) -> tuple[float | None, str | None, int]:
+        """Aggregate topic states and return total, latest time, and count.
+
+        Args:
+            exclude_zero: Whether to ignore zero-valued states.
+            square: Whether to square each value before summing.
+            never_return_none: Whether to return ``0.0`` instead of ``None``.
+        """
         if not self.enabled:
             return 0.0 if never_return_none else None, None, 0
         if len(self) == 0:
@@ -208,6 +296,12 @@ class ServiceTopics(dict[str, Topic]):
             return 0.0 if never_return_none else None, None, count
 
     def check_is_updating(self, interval_minutes: int, now_struct: time.struct_time) -> bool:
+        """Warn when topic updates appear stale for the configured interval.
+
+        Args:
+            interval_minutes: Expected update interval for this metric.
+            now_struct: Current timestamp used for age calculations.
+        """
         if self.enabled:
             now = time.mktime(now_struct)
             if now - active_config.pvoutput.started < 120:
@@ -238,6 +332,11 @@ class ServiceTopics(dict[str, Topic]):
             return False
 
     def register(self, topic: Topic) -> None:
+        """Register a topic and immediately restore persisted state.
+
+        Args:
+            topic: Topic descriptor to track and restore.
+        """
         if self.enabled:
             if topic is None or topic.topic == "" or topic.topic.isspace():
                 self._logger.warning(f"{self._service.__class__.__name__} IGNORED subscription request for empty topic")
@@ -253,6 +352,11 @@ class ServiceTopics(dict[str, Topic]):
             self._logger.debug(f"{self._service.__class__.__name__} IGNORED subscription request for '{topic.topic}' because {self._name} uploading is disabled")
 
     def restore_state(self, topic):
+        """Restore persisted topic state from disk when available.
+
+        Args:
+            topic: Topic descriptor that determines the persistence file path.
+        """
         sid = str(self._service.unique_id)
         if sid.startswith("<MagicMock"):
             sid = "mock_service"
@@ -288,6 +392,11 @@ class ServiceTopics(dict[str, Topic]):
             self._logger.debug(f"{self._service.__class__.__name__} Persistent state file {self._persistent_state_file} not found")
 
     def reset(self) -> None:
+        """Reset all tracked topic states and clear persistence files.
+
+        Args:
+            None.
+        """
         for topic in self.values():
             topic.state = 0.0
             topic.timestamp = time.localtime()
@@ -299,6 +408,12 @@ class ServiceTopics(dict[str, Topic]):
             self._persistent_state_file.unlink(missing_ok=True)
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
+        """Subscribe each registered topic to MQTT updates.
+
+        Args:
+            mqtt_client: MQTT client used to create subscriptions.
+            mqtt_handler: MQTT handler used to register callbacks.
+        """
         for topic in self.keys():
             if self.enabled:
                 result = mqtt_handler.register(mqtt_client, topic, self.handle_update)
@@ -307,6 +422,15 @@ class ServiceTopics(dict[str, Topic]):
                 self._logger.debug(f"{self._service.__class__.__name__} Not subscribing to topic {topic} because {self._name} uploading is disabled")
 
     async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
+        """Handle a new MQTT value and update aggregate state.
+
+        Args:
+            modbus_client: Modbus client reference (unused).
+            mqtt_client: MQTT client reference (unused).
+            value: Raw value received from MQTT.
+            topic: MQTT topic that produced the value.
+            handler: MQTT handler instance (unused).
+        """
         if self.enabled:
             state = value if isinstance(value, float) else float(value)
             if Calculation.PEAK not in self._calculation or (self[topic].state is not None and state > cast(float, self[topic].state)):
@@ -346,6 +470,7 @@ class ServiceTopics(dict[str, Topic]):
 
 
 class TimePeriodServiceTopics(ServiceTopics):
+    """ServiceTopics variant used for tariff time-period subfields."""
     def __init__(
         self,
         service: Service,
@@ -357,12 +482,35 @@ class TimePeriodServiceTopics(ServiceTopics):
         decimals: int = 0,
         donation: bool = False,
     ):
+        """Initialize a persistent child topic group for one tariff period.
+
+        Args:
+            service: Parent PVOutput service owning this topic group.
+            enabled: Whether this period group is active.
+            logger: Logger used for diagnostics.
+            value_key: PVOutput payload key for this period.
+            datetime_key: Optional companion payload key for timestamps.
+            calc: Aggregation strategy flags.
+            decimals: Decimal precision for rounded payload values.
+            donation: Whether this field requires PVOutput donation status.
+        """
         super().__init__(service, enabled, logger, value_key, datetime_key, calc, decimals, donation, persist=True)
 
     def register(self, topic: Topic) -> None:
+        """Register a topic and immediately restore persisted state.
+
+        Args:
+            topic: Topic descriptor to track and restore.
+        """
         if self.enabled:
             super().register(topic)
             self.restore_state(topic)
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
+        """No-op: parent topic groups perform MQTT subscription.
+
+        Args:
+            mqtt_client: MQTT client instance (unused).
+            mqtt_handler: MQTT handler instance (unused).
+        """
         pass

@@ -1,3 +1,5 @@
+"""Base PVOutput service helpers shared by status and output uploaders."""
+
 import asyncio
 import logging
 import re
@@ -16,17 +18,31 @@ from sigenergy2mqtt.devices import Device
 
 
 class Service(Device):
+    """Common PVOutput device behavior for API timing and uploads."""
     _donator: bool = False
     _interval: int = 5  # Interval in minutes for PVOutput status updates
     _interval_updated: float | None = None
 
     def __init__(self, name: str, unique_id: str, model: str, logger: logging.Logger):
+        """Initialize the shared service wrapper and synchronization lock.
+
+        Args:
+            name: Human-readable service name exposed through the device model.
+            unique_id: Stable unique identifier for this virtual device.
+            model: Model string used for metadata/logging.
+            logger: Logger instance used by the service.
+        """
         super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, Protocol.N_A)
         self.logger = logger
         self._lock = asyncio.Lock()
 
     @property
     def request_headers(self) -> dict[str, str]:
+        """Return HTTP headers required by the PVOutput API.
+
+        Args:
+            None.
+        """
         return {
             "X-Pvoutput-Apikey": active_config.pvoutput.api_key,
             "X-Pvoutput-SystemId": active_config.pvoutput.system_id,
@@ -35,6 +51,11 @@ class Service(Device):
 
     @asynccontextmanager
     async def lock(self, timeout=None):
+        """Acquire and release the service lock with an optional timeout.
+
+        Args:
+            timeout: Optional number of seconds to wait for the lock.
+        """
         acquired: bool = False
         try:
             if timeout is None:
@@ -51,14 +72,32 @@ class Service(Device):
     # region Device overrides
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state, qos=2) -> None:
+        """No-op override: PVOutput services do not publish availability topics.
+
+        Args:
+            mqtt_client: MQTT client instance (unused).
+            ha_state: Home Assistant availability state (unused).
+            qos: MQTT QoS level (unused).
+        """
         pass
 
     def publish_discovery(self, mqtt_client: mqtt.Client, clean=False) -> mqtt.MQTTMessageInfo | None:
+        """No-op override: PVOutput services are not Home Assistant entities.
+
+        Args:
+            mqtt_client: MQTT client instance (unused).
+            clean: Cleanup mode flag (unused).
+        """
         pass
 
     # endregion
 
     def get_response_headers(self, response: requests.Response) -> tuple[int, int, float, float]:
+        """Extract PVOutput rate-limit metadata from an HTTP response.
+
+        Args:
+            response: HTTP response returned by a PVOutput endpoint.
+        """
         limit = int(response.headers["X-Rate-Limit-Limit"])
         remaining = int(response.headers["X-Rate-Limit-Remaining"])
         at = float(response.headers["X-Rate-Limit-Reset"])
@@ -66,6 +105,12 @@ class Service(Device):
         return limit, remaining, at, reset
 
     async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:
+        """Compute the next status upload slot and refresh interval metadata.
+
+        Args:
+            rand_min: Minimum random offset (seconds) added to the upload slot.
+            rand_max: Maximum random offset (seconds) added to the upload slot.
+        """
         url = "https://pvoutput.org/service/r2/getsystem.jsp?donations=1"
         current_time = time.time()  # Current time in seconds since epoch
         async with self._lock:
@@ -114,6 +159,12 @@ class Service(Device):
         return seconds, next_time
 
     async def upload_payload(self, url: str, payload: dict[str, Any]) -> bool:
+        """Upload one payload to PVOutput with retries and limit-aware backoff.
+
+        Args:
+            url: PVOutput endpoint URL.
+            payload: Form payload to submit.
+        """
         self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
         uploaded: bool = False
         response: requests.Response = requests.Response()
