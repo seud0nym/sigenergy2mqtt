@@ -50,6 +50,14 @@ def test_subscribe_registers_topics():
     assert ms.sensor_name == "sensor1"
 
 
+def test_monitored_sensor_last_seen_uses_creation_time_default():
+    first = MonitoredSensor("Dev", "S1", 5)
+    time.sleep(0.01)
+    second = MonitoredSensor("Dev", "S2", 5)
+
+    assert second.last_seen > first.last_seen
+
+
 @pytest.mark.asyncio
 async def test_on_topic_update_known_and_unknown():
     svc = MonitorService([])

@@ -1,3 +1,5 @@
+"""Monitor service for tracking expected sensor MQTT updates."""
+
 import asyncio
 import logging
 import time
@@ -15,13 +17,33 @@ from .monitored_sensor import MonitoredSensor
 
 
 class MonitorService(Device):
+    """Background service that warns when expected sensor topics go silent.
+
+    Args:
+        devices: Devices whose readable/publishable sensors should be monitored.
+    """
+
     def __init__(self, devices: list[Device]):
+        """Initialize the monitor service and internal topic registry.
+
+        Args:
+            devices: Devices that expose sensors to subscribe to.
+        """
+
         super().__init__("Sigenergy Monitor", -1, f"{active_config.home_assistant.unique_id_prefix}_monitor", "sigenergy2mqtt", "Monitor", Protocol.N_A)
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}
 
     async def _monitor(self, modbus_client: Any, mqtt_client: Any, *sensors: Any):
+        """Check for overdue topics and log warning/recovery events.
+
+        Args:
+            modbus_client: Unused; part of the shared ``Device`` scheduler signature.
+            mqtt_client: Unused; part of the shared ``Device`` scheduler signature.
+            *sensors: Unused; optional positional values from the scheduler.
+        """
+
         logging.info(f"{self.name} Sleeping for 30s before commencing...")
         try:
             task = asyncio.create_task(asyncio.sleep(30))
@@ -51,9 +73,35 @@ class MonitorService(Device):
                 self.sleeper_task = None
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
+        """Handle Home Assistant state updates.
+
+        Args:
+            modbus_client: Optional Modbus client instance.
+            mqtt_client: MQTT client instance.
+            ha_state: Home Assistant state payload.
+            source: MQTT topic source for the update.
+            mqtt_handler: MQTT handler coordinating subscriptions and dispatch.
+
+        Returns:
+            Always ``True`` for this service.
+        """
+
         return True
 
     async def on_topic_update(self, modbus_client: Any | None, mqtt_client: mqtt.Client, value: str, source: str, mqtt_handler: MqttHandler) -> bool:
+        """Update the ``last_seen`` timestamp for a monitored topic.
+
+        Args:
+            modbus_client: Optional Modbus client instance.
+            mqtt_client: MQTT client instance.
+            value: Received MQTT payload.
+            source: Topic that emitted the payload.
+            mqtt_handler: MQTT handler coordinating subscriptions and dispatch.
+
+        Returns:
+            ``True`` if the topic is known and was updated; otherwise ``False``.
+        """
+
         if source in self._topics:
             sensor = self._topics[source]
             if sensor.notified:
@@ -67,21 +115,70 @@ class MonitorService(Device):
         return False
 
     def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+        """Log when the monitor service has started.
+
+        Args:
+            modbus_client: Optional Modbus client instance.
+            mqtt_client: MQTT client instance.
+        """
+
         logging.info(f"{self.name} Service Commenced")
 
     def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+        """Log when the monitor service has stopped.
+
+        Args:
+            modbus_client: Optional Modbus client instance.
+            mqtt_client: MQTT client instance.
+        """
+
         logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
+        """No-op availability publisher for the monitor service.
+
+        Args:
+            mqtt_client: MQTT client instance.
+            ha_state: Optional Home Assistant state.
+            qos: Requested MQTT quality-of-service level.
+        """
+
         pass
 
     def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
+        """No-op discovery publisher for the monitor service.
+
+        Args:
+            mqtt_client: MQTT client instance.
+            clean: Whether discovery messages should be removed.
+
+        Returns:
+            ``None`` because discovery is not published for this service.
+        """
+
         pass
 
     def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+        """Return the monitor coroutine(s) to schedule for this service.
+
+        Args:
+            modbus_client: Modbus client instance.
+            mqtt_client: MQTT client instance.
+
+        Returns:
+            A list with a single monitor coroutine.
+        """
+
         return [self._monitor(modbus_client, mqtt_client, [])]
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
+        """Subscribe to all publishable readable sensor state topics.
+
+        Args:
+            mqtt_client: MQTT client used for subscriptions.
+            mqtt_handler: Helper used to register topic callbacks.
+        """
+
         for d in self._devices:
             device = d.name
             sensors = 0
