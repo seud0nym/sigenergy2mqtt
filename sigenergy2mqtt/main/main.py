@@ -251,10 +251,7 @@ async def make_plant_and_inverter(
             try:
                 parsed_firmware = FirmwareVersion(firmware_version)
                 if parsed_firmware.service_pack >= 113 and active_config.ems_mode_check:
-                    logging.warning(
-                        "Resetting ems_mode_check configuration to False because firmware "
-                        f"{firmware_version} does not support EMS mode checks"
-                    )
+                    logging.info(f"Disabling Remote EMS Mode check because PV Max Power and ESS Charge/Discharge limits are globally available in firmware {firmware_version}")
                     active_config.ems_mode_check = False
             except ValueError:
                 logging.debug(f"Unable to parse firmware version '{firmware_version}' for ems_mode_check enforcement")

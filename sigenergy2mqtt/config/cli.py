@@ -60,7 +60,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--no-ems-mode-check",
         action="store_true",
         dest=const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK,
-        help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging.",
+        help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This option is ignored for firmware SPC113 and later as these limits are globally available in those versions.",
     )
     parser.add_argument(
         "--no-metrics",
