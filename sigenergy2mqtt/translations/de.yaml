@@ -302,11 +302,11 @@ class:
     name: Durchschnittliche Zellenspannung
   BatteryChargingPower:
     attributes:
-      source: BatteryPower > 0
+      source: BatteryPower > 0 #verify:ignore
     name: Batterieladeleistung
   BatteryDischargingPower:
     attributes:
-      source: BatteryPower < 0 × -1
+      source: BatteryPower < 0 × -1 #verify:ignore
     name: Batterieentladeleistung
   BatteryPower:
     attributes:
@@ -748,11 +748,11 @@ class:
     name_reset: Setze Tägliche Importenergie
   GridSensorExportPower:
     attributes:
-      source: GridSensorActivePower < 0 × -1
+      source: GridSensorActivePower < 0 × -1 #verify:ignore
     name: Exportleistung
   GridSensorImportPower:
     attributes:
-      source: GridSensorActivePower > 0
+      source: GridSensorActivePower > 0 #verify:ignore
     name: Importleistung
   GridSensorReactivePower:
     attributes:
@@ -909,11 +909,11 @@ class:
     name: Alarme
   InverterBatteryChargingPower:
     attributes:
-      source: ChargeDischargePower > 0
+      source: ChargeDischargePower > 0 #verify:ignore
     name: Batterieladeleistung
   InverterBatteryDischargingPower:
     attributes:
-      source: ChargeDischargePower < 0 × -1
+      source: ChargeDischargePower < 0 × -1 #verify:ignore
     name: Batterieentladeleistung
   InverterBatterySoC:
     attributes:
@@ -1207,7 +1207,7 @@ class:
     name_reset: Setze Gesamtproduktion
   PVStringPower:
     attributes:
-      source: PVVoltageSensor × PVCurrentSensor
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
     name: Leistung
   PVVoltageSensor:
     attributes:

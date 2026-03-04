@@ -302,11 +302,11 @@ class:
     name: 平均セル電圧
   BatteryChargingPower:
     attributes:
-      source: BatteryPower > 0
+      source: BatteryPower > 0 #verify:ignore
     name: バッテリー充電電力
   BatteryDischargingPower:
     attributes:
-      source: BatteryPower < 0 × -1
+      source: BatteryPower < 0 × -1 #verify:ignore
     name: バッテリー放電電力
   BatteryPower:
     attributes:
@@ -748,11 +748,11 @@ class:
     name_reset: 日次購入電力量を設定
   GridSensorExportPower:
     attributes:
-      source: GridSensorActivePower < 0 × -1
+      source: GridSensorActivePower < 0 × -1 #verify:ignore
     name: 売電電力
   GridSensorImportPower:
     attributes:
-      source: GridSensorActivePower > 0
+      source: GridSensorActivePower > 0 #verify:ignore
     name: 購入電力
   GridSensorReactivePower:
     attributes:
@@ -909,11 +909,11 @@ class:
     name: アラーム
   InverterBatteryChargingPower:
     attributes:
-      source: ChargeDischargePower > 0
+      source: ChargeDischargePower > 0 #verify:ignore
     name: バッテリー充電電力
   InverterBatteryDischargingPower:
     attributes:
-      source: ChargeDischargePower < 0 × -1
+      source: ChargeDischargePower < 0 × -1 #verify:ignore
     name: バッテリー放電電力
   InverterBatterySoC:
     attributes:
@@ -1207,7 +1207,7 @@ class:
     name_reset: 累計発電量を設定
   PVStringPower:
     attributes:
-      source: PVVoltageSensor × PVCurrentSensor
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
     name: 電力
   PVVoltageSensor:
     attributes:

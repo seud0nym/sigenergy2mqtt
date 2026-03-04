@@ -302,11 +302,11 @@ class:
     name: 平均电芯电压
   BatteryChargingPower:
     attributes:
-      source: BatteryPower > 0
+      source: BatteryPower > 0 #verify:ignore
     name: 电池充电功率
   BatteryDischargingPower:
     attributes:
-      source: BatteryPower < 0 × -1
+      source: BatteryPower < 0 × -1 #verify:ignore
     name: 电池放电功率
   BatteryPower:
     attributes:
@@ -748,11 +748,11 @@ class:
     name_reset: 设置 日购电量
   GridSensorExportPower:
     attributes:
-      source: GridSensorActivePower < 0 × -1
+      source: GridSensorActivePower < 0 × -1 #verify:ignore
     name: 输出功率
   GridSensorImportPower:
     attributes:
-      source: GridSensorActivePower > 0
+      source: GridSensorActivePower > 0 #verify:ignore
     name: 输入功率
   GridSensorReactivePower:
     attributes:
@@ -909,11 +909,11 @@ class:
     name: 告警
   InverterBatteryChargingPower:
     attributes:
-      source: ChargeDischargePower > 0
+      source: ChargeDischargePower > 0 #verify:ignore
     name: 电池充电功率
   InverterBatteryDischargingPower:
     attributes:
-      source: ChargeDischargePower < 0 × -1
+      source: ChargeDischargePower < 0 × -1 #verify:ignore
     name: 电池放电功率
   InverterBatterySoC:
     attributes:
@@ -1207,7 +1207,7 @@ class:
     name_reset: 设置 累计发电量
   PVStringPower:
     attributes:
-      source: PVVoltageSensor × PVCurrentSensor
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
     name: 功率
   PVVoltageSensor:
     attributes:
