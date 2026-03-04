@@ -1,41 +1,103 @@
+"""Entry point for the sigenergy2mqtt application.
+
+Bootstraps configuration, installs early signal handlers for the
+initialisation phase, then hands off to the async runtime.
+"""
+
 import asyncio
 import logging
 import os
 import signal
 import sys
 
+import sigenergy2mqtt.config.auto_discovery as auto_discovery
 from sigenergy2mqtt.config import ConfigurationError, active_config, initialize
-from sigenergy2mqtt.config.auto_discovery import _interrupted as _  # noqa: F401 — ensure module is importable
 from sigenergy2mqtt.main import async_main
 
 
-def main():
-    import sigenergy2mqtt.config.auto_discovery as auto_discovery
+def _make_early_signal_handler():
+    """Return a signal handler for use during the synchronous initialisation phase.
 
-    def _early_exit(signum, frame):
-        """Handle signals during initialization (before async_main signal handlers are registered)."""
-        if auto_discovery._interrupted:
-            # Second signal — force immediate exit (os._exit bypasses blocked threads)
-            logging.warning(f"Signal {signum} received again — forcing exit")
+    The handler covers two scenarios:
+
+    * **First signal** — auto-discovery is still running.  Sets the shared
+      ``auto_discovery._interrupted`` flag so that the discovery loop can
+      exit cleanly, then returns to allow the normal shutdown path to
+      complete.
+    * **Second signal** — the process is not responding quickly enough.
+      Calls :func:`os._exit` immediately, bypassing any blocked threads or
+      cleanup code that might otherwise prevent termination.
+
+    Exit codes follow Unix convention (128 + signal number):
+    * ``130`` for SIGINT  (128 + 2)
+    * ``143`` for SIGTERM (128 + 15)
+
+    Note:
+        Only :func:`os._exit` and flag mutation are used inside the handler
+        itself.  Logging calls are intentionally kept outside the hot path
+        where possible because neither the logging framework nor most libc
+        functions are guaranteed async-signal-safe.  In CPython this is
+        benign in practice, but callers should be aware of the limitation.
+
+    Returns:
+        A signal handler callable compatible with :func:`signal.signal`.
+    """
+    interrupted = False
+
+    def _handler(signum, frame):
+        nonlocal interrupted
+        if interrupted:
+            # Second signal — force immediate exit so blocked threads cannot
+            # prevent shutdown.  os._exit is used deliberately here.
             os._exit(130 if signum == signal.SIGINT else 143)
-        logging.info(f"Signal {signum} received during initialization — interrupting auto-discovery")
-        auto_discovery._interrupted = True
+        interrupted = True
+        auto_discovery._interrupted = True  # signal the discovery loop to stop cleanly
 
-    signal.signal(signal.SIGINT, _early_exit)
-    signal.signal(signal.SIGTERM, _early_exit)
+    return _handler
+
+
+def main():
+    """Configure and run the application.
+
+    Execution is split into two phases:
+
+    1. **Synchronous initialisation** — :func:`~sigenergy2mqtt.config.initialize`
+       loads and validates configuration (including optional auto-discovery of
+       Sigenergy devices).  A lightweight signal handler is installed for this
+       phase so that Ctrl-C or SIGTERM interrupts auto-discovery gracefully
+       rather than raising an unhandled exception.
+
+    2. **Async runtime** — :func:`asyncio.run` starts the event loop and
+       delegates to :func:`~sigenergy2mqtt.main.async_main`, which installs
+       its own, more capable signal handlers for the long-running phase.
+       asyncio debug mode is enabled when the configured log level is DEBUG,
+       which activates slow-callback detection and coroutine origin tracking
+       (both useful during development but too noisy for production).
+
+    Exit codes:
+        * ``0``  — clean exit or ``--help`` / dry-run path.
+        * ``1``  — configuration error.
+        * ``130`` — interrupted by SIGINT during initialisation.
+    """
+    early_handler = _make_early_signal_handler()
+    signal.signal(signal.SIGINT, early_handler)
+    signal.signal(signal.SIGTERM, early_handler)
 
     try:
         continuing = initialize()
         if not continuing:
             sys.exit(0)
     except ConfigurationError as e:
-        logging.critical(f"Configuration error: {e}")
+        logging.critical("Configuration error: %s", e)
         sys.exit(1)
     except KeyboardInterrupt:
         logging.info("Initialization interrupted — exiting")
         sys.exit(130)
 
-    asyncio.run(async_main(), debug=True if active_config.log_level == logging.DEBUG else False)
+    # debug=True enables asyncio's slow-callback detector, ResourceWarning
+    # emission, and coroutine origin tracking — valuable during development,
+    # but adds overhead so it is gated on the DEBUG log level.
+    asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)
 
 
 if __name__ == "__main__":
