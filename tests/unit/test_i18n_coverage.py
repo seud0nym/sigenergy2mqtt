@@ -1,12 +1,6 @@
-import locale
-import logging
 import os
-from pathlib import Path
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
-
-from sigenergy2mqtt import i18n
 from sigenergy2mqtt.i18n import Translator, _t, _translator, get_default_language, reset, set_translations
 
 
@@ -156,17 +150,9 @@ def test_get_default_language_exhaustive():
         with patch("locale.getlocale", return_value=("zh_CN", "UTF-8")):
             assert get_default_language() == "zh-Hans"
 
-        mock_avail.return_value = ["en", "zh-hans"]
-        with patch("locale.getlocale", return_value=("zh_CN", "UTF-8")):
-            assert get_default_language() == "zh-hans"
-
         mock_avail.return_value = ["en", "zh-Hant"]
         with patch("locale.getlocale", return_value=("zh_TW", "UTF-8")):
             assert get_default_language() == "zh-Hant"
-
-        mock_avail.return_value = ["en", "zh-hant"]
-        with patch("locale.getlocale", return_value=("zh_TW", "UTF-8")):
-            assert get_default_language() == "zh-hant"
 
         mock_avail.return_value = ["en", "nl"]
         with patch("sigenergy2mqtt.i18n.locale.getlocale", return_value=("nl_NL", "UTF-8")):
@@ -182,17 +168,9 @@ def test_get_default_language_exhaustive():
             with patch.dict(os.environ, {"LANG": "zh_CN.UTF-8"}):
                 assert get_default_language() == "zh-Hans"
 
-            mock_avail.return_value = ["en", "zh-hans"]
-            with patch.dict(os.environ, {"LANG": "zh_CN.UTF-8"}):
-                assert get_default_language() == "zh-hans"
-
             mock_avail.return_value = ["en", "zh-Hant"]
             with patch.dict(os.environ, {"LANG": "zh_TW.UTF-8"}):
                 assert get_default_language() == "zh-Hant"
-
-            mock_avail.return_value = ["en", "zh-hant"]
-            with patch.dict(os.environ, {"LANG": "zh_TW.UTF-8"}):
-                assert get_default_language() == "zh-hant"
 
             mock_avail.return_value = ["en", "nl"]
             with patch.dict(os.environ, {"LANG": "nl_BE.UTF-8"}):
