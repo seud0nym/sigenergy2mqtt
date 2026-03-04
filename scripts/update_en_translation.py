@@ -491,9 +491,14 @@ def deep_update_commented(target, source):
     for k, v in source.items():
         if k in target:
             if isinstance(v, dict):
-                deep_update_commented(target[k], v)
+                if isinstance(target[k], dict):
+                    deep_update_commented(target[k], v)
+                else:
+                    target[k] = v
             else:
-                target[k] = v
+                # Avoid rewriting unchanged scalar values to preserve inline comments
+                if target[k] != v:
+                    target[k] = v
         else:
             # New key
             target[k] = v
@@ -502,6 +507,39 @@ def deep_update_commented(target, source):
             target.move_to_end(k) # type: ignore
 
     return target
+
+
+def preserve_existing_sections(new_translations: dict, old_translations: dict | None) -> None:
+    """Backfill missing extracted options/alarm entries from the previous EN snapshot."""
+    if not old_translations:
+        return
+
+    new_class = new_translations.get("class", {})
+    old_class = old_translations.get("class", {})
+
+    if not isinstance(new_class, dict) or not isinstance(old_class, dict):
+        return
+
+    for cls, old_cls_data in old_class.items():
+        if not isinstance(old_cls_data, dict):
+            continue
+
+        for section in ("options", "alarm"):
+            old_section = old_cls_data.get(section)
+            if not isinstance(old_section, dict):
+                continue
+
+            if cls not in new_class or not isinstance(new_class[cls], dict):
+                new_class[cls] = {}
+
+            cls_data = new_class[cls]
+            if section not in cls_data or not isinstance(cls_data[section], dict):
+                cls_data[section] = {}
+
+            for key, value in old_section.items():
+                if key not in cls_data[section]:
+                    cls_data[section][key] = value
+                    print(f"Backfilled missing extracted key: class.{cls}.{section}.{key}")
 
 
 def propagate_to_other_translations(en_translations: dict, translations_dir: Path, class_bases: dict, old_en_translations: dict | None = None):
@@ -798,6 +836,9 @@ if __name__ == "__main__":
                     return obj
 
                 old_all_translations = cast(dict, strip_comments(all_translations_commented))
+
+    preserve_existing_sections(all_translations, old_all_translations)
+    all_translations = sort_dict(all_translations)
 
     if all_translations_commented is not None:
         # Preserve comments by updating existing structure
