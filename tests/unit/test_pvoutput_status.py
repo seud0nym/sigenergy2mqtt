@@ -78,8 +78,6 @@ class TestPVOutputStatus:
         # mark extended V7 present so it's enabled and donation-flagged
         active_config.pvoutput.extended[StatusField.V7] = "energy"
         # force service donator state
-        from sigenergy2mqtt.pvoutput.service import Service
-
         with patch("sigenergy2mqtt.pvoutput.service.Service._donator", True):
             # ensure started flag so updating checks pass
             active_config.pvoutput.started = time.time() - 3600

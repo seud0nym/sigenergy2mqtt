@@ -25,6 +25,7 @@ from .topic import Topic
 
 class Calculation(Flag):
     """Bitwise flags describing how topic values are aggregated."""
+
     SUM = auto()
     AVERAGE = auto()
     DIFFERENCE = auto()
@@ -35,6 +36,7 @@ class Calculation(Flag):
 
 class ServiceTopics(dict[str, Topic]):
     """Collection of MQTT topics aggregated into one PVOutput field."""
+
     def __init__(
         self,
         service: Service,
@@ -49,7 +51,7 @@ class ServiceTopics(dict[str, Topic]):
         periods: list["TimePeriodServiceTopics"] | None = None,
         persist: bool = False,
     ):
-        """Initialize aggregation behavior for one PVOutput payload field.
+        """Initialize aggregation behaviour for one PVOutput payload field.
 
         Args:
             service: Parent PVOutput service owning this topic group.
@@ -148,7 +150,7 @@ class ServiceTopics(dict[str, Topic]):
         """
         total, at, count = self.aggregate(exclude_zero=True)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
-            payload[value_key.value] = round(total / count, self._decimals if self._decimals > 0 else None)
+            payload[value_key.value] = round(total / count, self.decimals if self.decimals > 0 else None)
             if datetime_key is not None and at is not None:
                 payload[datetime_key] = at
                 if active_config.pvoutput.calc_debug_logging:
@@ -176,7 +178,7 @@ class ServiceTopics(dict[str, Topic]):
         """
         total, at, count = self.aggregate(exclude_zero=False, square=True)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
-            payload[value_key.value] = round(math.sqrt(total) / math.sqrt(3), self._decimals if self._decimals > 0 else None)
+            payload[value_key.value] = round(math.sqrt(total) / math.sqrt(3), self.decimals if self.decimals > 0 else None)
             if datetime_key is not None and at is not None:
                 payload[datetime_key] = at
                 if active_config.pvoutput.calc_debug_logging:
@@ -204,7 +206,7 @@ class ServiceTopics(dict[str, Topic]):
         """
         total, at, count = self.aggregate(exclude_zero=False)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
-            payload[value_key.value] = round(total, self._decimals if self._decimals > 0 else None)
+            payload[value_key.value] = round(total, self.decimals if self.decimals > 0 else None)
             if datetime_key is not None and at is not None:
                 payload[datetime_key] = at
                 if active_config.pvoutput.calc_debug_logging:
@@ -231,9 +233,9 @@ class ServiceTopics(dict[str, Topic]):
             now: Current timestamp used for staleness checks.
         """
         if self._value_key not in (None, "") and (self._bypass_updating_check or self.check_is_updating(interval_minutes, now)):
-            if Calculation.AVERAGE in self._calculation:
+            if Calculation.AVERAGE in self.calculation:
                 return self._average_into(payload, self._value_key, self._datetime_key)
-            elif Calculation.L_L_AVG in self._calculation:
+            elif Calculation.L_L_AVG in self.calculation:
                 return self._squared_root_into(payload, self._value_key, self._datetime_key)
             else:  # SUM
                 return self._sum_into(payload, self._value_key, self._datetime_key)
@@ -257,11 +259,11 @@ class ServiceTopics(dict[str, Topic]):
         count: int = 0
         total: float = 0.0
         for topic in self.values():
-            if topic.timestamp is not None and (not exclude_zero or (topic.state is not None and topic.state > 0.0) or Calculation.DIFFERENCE in self._calculation):
+            if topic.timestamp is not None and (not exclude_zero or (topic.state is not None and topic.state > 0.0) or Calculation.DIFFERENCE in self.calculation):
                 state: float = topic.state if topic.state is not None and (self._allow_negative or topic.state >= 0.0) else 0.0
                 if active_config.pvoutput.calc_debug_logging and state != topic.state:
                     self._logger.debug(f"{self._service.__class__.__name__} Using {state=} for {self._value_key.name} because {topic.state=} (allow_negative={self._allow_negative})")
-                if Calculation.DIFFERENCE in self._calculation:
+                if Calculation.DIFFERENCE in self.calculation:
                     state_was: float | None = topic.previous_state if topic.previous_state is None or self._allow_negative or topic.previous_state >= 0.0 else 0.0
                     time_was: time.struct_time | None = topic.previous_timestamp
                     topic.previous_state = state
@@ -272,7 +274,7 @@ class ServiceTopics(dict[str, Topic]):
                         if active_config.pvoutput.calc_debug_logging:
                             self._logger.debug(f"{self._service.__class__.__name__} Calculated difference for {self._name}: (current-previous=state) {state}-{state_was}={state - state_was} ({topic.topic})")
                         state -= state_was
-                        if Calculation.CONVERT_TO_WATTS in self._calculation:
+                        if Calculation.CONVERT_TO_WATTS in self.calculation:
                             hours = (time.mktime(topic.timestamp) - time.mktime(time_was)) / 3600.0
                             if hours > 0:
                                 if active_config.pvoutput.calc_debug_logging:
@@ -342,8 +344,8 @@ class ServiceTopics(dict[str, Topic]):
                 self._logger.warning(f"{self._service.__class__.__name__} IGNORED subscription request for empty topic")
             else:
                 self[topic.topic] = topic
-                self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic.topic} ({self._calculation} gain={topic.gain} scan_interval={topic.scan_interval})")
-                if self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK) or len(self._time_periods) > 0:
+                self._logger.debug(f"{self._service.__class__.__name__} Registered {self._name} topic: {topic.topic} ({self.calculation} gain={topic.gain} scan_interval={topic.scan_interval})")
+                if self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK) or len(self._time_periods) > 0:
                     self.restore_state(topic)
                 if self._time_periods:
                     for child in self._time_periods:
@@ -433,17 +435,17 @@ class ServiceTopics(dict[str, Topic]):
         """
         if self.enabled:
             state = value if isinstance(value, float) else float(value)
-            if Calculation.PEAK not in self._calculation or (self[topic].state is not None and state > cast(float, self[topic].state)):
+            if Calculation.PEAK not in self.calculation or (self[topic].state is not None and state > cast(float, self[topic].state)):
                 if active_config.pvoutput.update_debug_logging:
                     self._logger.debug(f"{self._service.__class__.__name__} Updating {self._name} from topic {topic} {value=}")
                 async with self._service.lock(timeout=1):
                     state_was = self[topic].state
                     self[topic].state = state
                     self[topic].timestamp = time.localtime()
-                    if self._persistent_state_file and ((self._always_persist and state_was != state) or (self._calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
+                    if self._persistent_state_file and ((self._always_persist and state_was != state) or (self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
                         with self._persistent_state_file.open("w") as f:
                             json.dump(self, f, default=Topic.json_encoder)
-            elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self._calculation:
+            elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self.calculation:
                 ts = self[topic].timestamp
                 if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore
                     ts = self[topic].restore_timestamp
@@ -471,6 +473,7 @@ class ServiceTopics(dict[str, Topic]):
 
 class TimePeriodServiceTopics(ServiceTopics):
     """ServiceTopics variant used for tariff time-period subfields."""
+
     def __init__(
         self,
         service: Service,
