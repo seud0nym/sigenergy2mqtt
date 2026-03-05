@@ -67,3 +67,53 @@ def test_threadconfig_properties_and_methods(monkeypatch):
     dev.registers = {"r": 1}
     tc.reapply_sensor_overrides()
     assert called.get("ok") == dev.registers
+
+
+
+def test_threadconfig_requires_host_or_name() -> None:
+    try:
+        ThreadConfig(name=" ", host="", port=502)
+        assert False, "Expected ValueError"
+    except ValueError as exc:
+        assert "host or name" in str(exc)
+
+
+def test_threadconfig_invalid_port_rejected() -> None:
+    for bad_port in (-1, 65536):
+        try:
+            ThreadConfig(name="x", host="1.2.3.4", port=bad_port)
+            assert False, "Expected ValueError"
+        except ValueError as exc:
+            assert "Port" in str(exc)
+
+
+def test_threadconfig_online_true_is_rejected() -> None:
+    tc = ThreadConfig(name="x", host="1.2.3.4", port=502)
+    try:
+        tc.online(True)
+        assert False, "Expected ValueError"
+    except ValueError as exc:
+        assert "Use a Future" in str(exc)
+
+
+def test_threadconfig_registry_caches_first_timeout_and_retries() -> None:
+    thread_config_registry.clear()
+
+    first = thread_config_registry.get_config("10.0.0.1", 1502, timeout=2.5, retries=7)
+    second = thread_config_registry.get_config("10.0.0.1", 1502, timeout=9.9, retries=0)
+
+    assert first is second
+    assert second.timeout == 2.5
+    assert second.retries == 7
+
+
+def test_threadconfig_registry_get_all_returns_snapshot() -> None:
+    thread_config_registry.clear()
+
+    thread_config_registry.get_config("10.0.0.1", 502)
+    snapshot = thread_config_registry.get_all()
+
+    thread_config_registry.get_config("10.0.0.2", 502)
+
+    assert len(snapshot) == 1
+    assert len(thread_config_registry.get_all()) == 2

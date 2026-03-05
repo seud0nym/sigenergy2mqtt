@@ -1,11 +1,13 @@
 """Extended unit tests for InfluxService covering helper methods and edge cases."""
 
+import asyncio
 import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
@@ -342,3 +344,69 @@ class TestMiscEdgeCases:
         assert service._write_url is None
         assert service._write_headers is None
         assert service._write_auth is None
+
+
+class TestHassHistorySyncCoverage:
+    def _make_hass_sync(self, logger):
+        mock_config = MagicMock()
+        mock_config.enabled = False
+        mock_config.max_retries = 3
+        mock_config.pool_connections = 10
+        mock_config.pool_maxsize = 10
+        mock_config.batch_size = 100
+        mock_config.flush_interval = 1.0
+        mock_config.query_interval = 0.1
+        mock_config.default_measurement = "state"
+
+        with patch.object(active_config, "influxdb", mock_config):
+            return HassHistorySync(logger, plant_index=0)
+
+    def test_detect_homeassistant_db_v2_bucket_found(self, logger):
+        hass_sync = self._make_hass_sync(logger)
+        hass_sync.get_config_values = MagicMock(
+            return_value={"base": "http://localhost:8086", "db": "sig", "auth": None, "token": "tok", "org": "org", "bucket": "sig"}
+        )
+
+        with patch.object(hass_sync._session, "get") as mock_get, patch.object(hass_sync, "query_v1") as mock_q1:
+            mock_get.return_value = MagicMock(status_code=200)
+            mock_get.return_value.json.return_value = {"buckets": [{"name": "homeassistant"}]}
+
+            found = asyncio.run(hass_sync.detect_homeassistant_db())
+
+            assert found is True
+            mock_q1.assert_not_called()
+
+    def test_get_earliest_timestamp_v1_path_without_token(self, logger):
+        hass_sync = self._make_hass_sync(logger)
+        hass_sync.get_config_values = MagicMock(
+            return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"}
+        )
+        result = {"results": [{"series": [{"columns": ["time", "value"], "values": [["2024-01-01T00:00:11Z", 1.0]]}]}]}
+
+        async def fake_q1(*args, **kwargs):
+            return True, result
+
+        hass_sync.query_v1 = fake_q1
+
+        timestamp = asyncio.run(hass_sync.get_earliest_timestamp("power", {"entity_id": "sensor.power"}))
+
+        assert timestamp == 1704067211
+
+    def test_copy_records_from_homeassistant_falls_back_to_v1_when_v2_has_no_rows(self, logger):
+        hass_sync = self._make_hass_sync(logger)
+        hass_sync.get_config_values = MagicMock(
+            return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": "tok", "org": "org", "bucket": "sig"}
+        )
+
+        async def fake_v2(*args, **kwargs):
+            return 0
+
+        async def fake_v1(*args, **kwargs):
+            return 4
+
+        hass_sync.copy_records_v2 = fake_v2
+        hass_sync.copy_records_v1 = fake_v1
+
+        copied = asyncio.run(hass_sync.copy_records_from_homeassistant("power", {"entity_id": "sensor.power"}, before_timestamp=123))
+
+        assert copied == 4

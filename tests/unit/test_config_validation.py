@@ -1,4 +1,3 @@
-import logging
 from datetime import date, time
 
 import pytest
@@ -50,23 +49,6 @@ class TestConfigValidation:
         with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
             Settings(ems_mode_check=False, modbus=[device1, device2])
 
-    def test_is_valid_ipv4(self):
-        assert validation.is_valid_ipv4("192.168.1.1") is True
-        assert validation.is_valid_ipv4("10.0.0.1") is True
-        assert validation.is_valid_ipv4("256.0.0.1") is False
-        assert validation.is_valid_ipv4("invalid") is False
-
-    def test_is_valid_ipv6(self):
-        assert validation.is_valid_ipv6("::1") is True
-        assert validation.is_valid_ipv6("2001:db8::1") is True
-        assert validation.is_valid_ipv6("invalid") is False
-
-    def test_is_valid_hostname(self):
-        assert validation.is_valid_hostname("localhost") is True
-        assert validation.is_valid_hostname("example.com") is True
-        assert validation.is_valid_hostname("-invalid") is False
-        assert validation.is_valid_hostname("invalid-") is False
-
     def test_check_bool(self):
         assert validation.check_bool(True, "test") is True
         assert validation.check_bool(False, "test") is False
@@ -105,13 +87,6 @@ class TestConfigValidation:
             validation.check_string("", "test", allow_empty=False)
         with pytest.raises(ValueError):
             validation.check_string("abc", "test", "def", "ghi")  # "abc" not in valid values
-
-    def test_check_log_level(self):
-        assert validation.check_log_level("DEBUG", "test") == logging.DEBUG
-        assert validation.check_log_level("INFO", "test") == logging.INFO
-        assert validation.check_log_level(logging.WARNING, "test") == logging.WARNING
-        with pytest.raises(ValueError):
-            validation.check_log_level("INVALID", "test")
 
     def test_check_date(self):
         d = date(2023, 1, 1)

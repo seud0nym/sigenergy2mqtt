@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import signal
@@ -451,6 +452,41 @@ class TestFactories:
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.consumption == ConsumptionMethod.CALCULATED
+
+    def test_make_plant_and_inverter_passes_firmware_to_powerplant_create(self):
+        """Ensure firmware read from inverter is forwarded to PowerPlant.create."""
+        mock_client = AsyncMock()
+        seen = set()
+        mock_plant = MagicMock(protocol_version=Protocol.V2_8, unique_id="p1")
+
+        with (
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1, "V122R001C00SPC113B717A"]),
+            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
+            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=mock_plant)) as mock_plant_create,
+            patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
+        ):
+            asyncio.run(main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen))
+
+            assert mock_plant_create.await_count == 1
+            assert mock_plant_create.await_args.args[2] == "V122R001C00SPC113B717A"
+
+    def test_make_plant_and_inverter_existing_plant_skips_output_type_and_firmware_reads(self):
+        """When plant already exists, only inverter is created and no plant-only reads occur."""
+        mock_client = AsyncMock()
+        seen = set()
+        existing_plant = MagicMock(protocol_version=Protocol.V2_8, unique_id="p-existing")
+
+        with (
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000]) as mock_get_state,
+            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
+            patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock()) as mock_plant_create,
+        ):
+            asyncio.run(main_mod.make_plant_and_inverter(0, mock_client, 1, existing_plant, seen))
+
+            assert mock_get_state.await_count == 4
+            mock_plant_create.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_make_plant_and_inverter_missing_output_type(self, clean_config):

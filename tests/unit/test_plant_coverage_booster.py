@@ -1,4 +1,3 @@
-from sigenergy2mqtt.config import active_config
 import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -6,7 +5,8 @@ import pytest
 
 import sigenergy2mqtt.sensors.plant_read_only as pro
 import sigenergy2mqtt.sensors.plant_read_write as prw
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.devices.plant.plant import PowerPlant
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 
 
@@ -110,7 +110,7 @@ async def test_plant_read_only_coverage():
                     sensor.state2raw(10)
                     if cls.__name__ == "SystemTimeZone":
                         sensor.state2raw("UTC+10:00")
-                except:
+                except Exception:
                     pass
 
         except Exception as e:
@@ -183,3 +183,64 @@ async def test_plant_read_write_coverage():
 
         except Exception as e:
             print(f"Failed to test {cls.__name__}: {e}")
+
+
+def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by_type():
+    plant = PowerPlant(0, MagicMock(), Protocol.V2_8)
+    plant._consumption_source = ConsumptionMethod.CALCULATED
+
+    class FakeTotalPV:
+        def register_source_sensors(self, *args, **kwargs):
+            return None
+
+    plant._total_pv_power = FakeTotalPV()
+    plant._plant_3rd_party_pv_power = None
+
+    active_power = object()
+    grid_status = object()
+
+    grid_sensor = MagicMock()
+    grid_sensor.get_sensor.side_effect = [active_power, grid_status]
+    plant._grid_sensor = grid_sensor
+
+    add_derived = MagicMock()
+
+    class GenericFactory:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: MagicMock()
+
+    class DerivedFactory(GenericFactory):
+        class SourceType:
+            SMARTPORT = "SMARTPORT"
+            FAILOVER = "FAILOVER"
+            MANDATORY = "MANDATORY"
+
+        class _PlantConsumed:
+            def __init__(self, *args, **kwargs):
+                self.method = ConsumptionMethod.CALCULATED
+
+        TotalPVPower = MagicMock(SourceType=SourceType)
+
+        def PlantConsumedPower(self, *args, **kwargs):
+            return self._PlantConsumed()
+
+    with (
+        patch("sigenergy2mqtt.devices.plant.plant.ro", new=GenericFactory()),
+        patch("sigenergy2mqtt.devices.plant.plant.rw", new=GenericFactory()),
+        patch("sigenergy2mqtt.devices.plant.plant.derived", new=DerivedFactory()),
+        patch("sigenergy2mqtt.devices.plant.plant.GridSensorActivePower", new=type("GridSensorActivePower", (), {})),
+        patch("sigenergy2mqtt.devices.plant.plant.GridStatus", new=type("GridStatus", (), {})),
+        patch("sigenergy2mqtt.devices.plant.plant.asyncio.gather", new=AsyncMock(return_value=(5000.0, 5000.0))),
+        patch.object(plant, "_add_read_sensor", return_value=True),
+        patch.object(plant, "_add_writeonly_sensor", return_value=None),
+        patch.object(plant, "_add_derived_sensor", add_derived),
+    ):
+        import asyncio
+
+        asyncio.run(plant._register_sensors("V122R001C00SPC113", output_type=2, power_phases=3, modbus_client=MagicMock()))
+
+    assert grid_sensor.get_sensor.call_count >= 2
+    first_call_type = grid_sensor.get_sensor.call_args_list[0].args[0]
+    second_call_type = grid_sensor.get_sensor.call_args_list[1].args[0]
+    assert first_call_type.__name__ == "GridSensorActivePower"
+    assert second_call_type.__name__ == "GridStatus"

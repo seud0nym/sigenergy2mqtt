@@ -239,15 +239,3 @@ class Settings(BaseSettings):
             AutoDiscoveryYamlSettingsSource(settings_cls, discovery_yaml),  # 3. discovery YAML
             init_settings,  # 4. programmatic
         )
-
-
-# ---------------------------------------------------------------------------
-# Quick self-test
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    import json as _json
-    import os
-
-    os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
-    cfg = Settings()  # type: ignore[reportCallIssue]
-    print(_json.dumps(cfg.model_dump(), indent=2, default=str))
