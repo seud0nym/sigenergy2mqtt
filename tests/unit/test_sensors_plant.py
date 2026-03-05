@@ -5,10 +5,10 @@ import pytest
 
 from sigenergy2mqtt.common import ConsumptionMethod
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, SanityCheckException, Sensor
+from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, SanityCheckException, Sensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_only import EMSWorkMode, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, IndependentPhasePowerControl, PCSMaxExportLimit, PCSMaxImportLimit, PlantStatus, RemoteEMSControlMode
+from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, IndependentPhasePowerControl, MaxChargingLimit, PCSMaxExportLimit, PCSMaxImportLimit, PlantStatus, RemoteEMSControlMode
 
 
 @pytest.fixture(autouse=True)
@@ -70,6 +70,67 @@ class TestPlantReadWrite:
         availability = MagicMock(spec=AvailabilityMixin)
         sensor = ActivePowerFixedAdjustmentTargetValue(plant_index=0, remote_ems=availability)
         assert sensor["unit_of_measurement"] == "kW"
+
+
+    def test_max_charging_limit_configure_topics_without_remote_ems_mode(self, mock_config):
+        mock_config.ems_mode_check = True
+        remote_ems = MagicMock(spec=AvailabilityMixin)
+        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+
+        sensor = MaxChargingLimit(plant_index=0, remote_ems=remote_ems, remote_ems_mode=None, rated_charging_power=12.0)
+        sensor.configure_mqtt_topics("test_device")
+
+        availability = sensor[DiscoveryKeys.AVAILABILITY]
+        assert isinstance(availability, list)
+        topics = [item.get("topic") for item in availability]
+        assert remote_ems.state_topic in topics
+        assert all("is_charging" not in str(topic) for topic in topics if topic)
+
+    def test_max_charging_limit_configure_topics_with_remote_ems_mode_adds_mode_topic(self, mock_config):
+        mock_config.ems_mode_check = True
+        remote_ems = MagicMock(spec=AvailabilityMixin)
+        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems_mode = MagicMock()
+        remote_ems_mode.is_charging_mode_topic = "sigenergy2mqtt/remote_ems/mode/is_charging"
+
+        sensor = MaxChargingLimit(plant_index=0, remote_ems=remote_ems, remote_ems_mode=remote_ems_mode, rated_charging_power=12.0)
+        sensor.configure_mqtt_topics("test_device")
+
+        availability = sensor[DiscoveryKeys.AVAILABILITY]
+        assert isinstance(availability, list)
+        topics = [item["topic"] for item in availability]
+        assert remote_ems.state_topic in topics
+        assert remote_ems_mode.is_charging_mode_topic in topics
+
+
+    def test_max_charging_limit_no_mode_topic_when_ems_mode_check_disabled(self, mock_config):
+        mock_config.ems_mode_check = False
+        remote_ems = MagicMock(spec=AvailabilityMixin)
+        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems_mode = MagicMock()
+        remote_ems_mode.is_charging_mode_topic = "sigenergy2mqtt/remote_ems/mode/is_charging"
+
+        sensor = MaxChargingLimit(plant_index=0, remote_ems=remote_ems, remote_ems_mode=remote_ems_mode, rated_charging_power=12.0)
+        sensor.configure_mqtt_topics("test_device")
+
+        availability = sensor[DiscoveryKeys.AVAILABILITY]
+        topics = [item["topic"] for item in availability]
+        assert remote_ems.state_topic in topics
+        assert remote_ems_mode.is_charging_mode_topic not in topics
+
+    def test_max_charging_limit_no_mode_topic_when_home_assistant_disabled(self, mock_config):
+        mock_config.ems_mode_check = True
+        mock_config.home_assistant.enabled = False
+        remote_ems = MagicMock(spec=AvailabilityMixin)
+        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems_mode = MagicMock()
+        remote_ems_mode.is_charging_mode_topic = "sigenergy2mqtt/remote_ems/mode/is_charging"
+
+        sensor = MaxChargingLimit(plant_index=0, remote_ems=remote_ems, remote_ems_mode=remote_ems_mode, rated_charging_power=12.0)
+        sensor.configure_mqtt_topics("test_device")
+
+        with pytest.raises(KeyError):
+            _ = sensor[DiscoveryKeys.AVAILABILITY]
 
 
 class TestPlantDerived:
