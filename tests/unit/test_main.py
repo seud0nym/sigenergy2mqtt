@@ -367,7 +367,7 @@ class TestFactories:
         seen = set()
         with patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN123", None]):
             with pytest.raises(ValueError, match="Model ID cannot be None"):
-                asyncio.run(main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen))
+                await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
 
     @pytest.mark.asyncio
     async def test_make_plant_and_inverter_pv_inverter(self):
@@ -452,9 +452,6 @@ class TestFactories:
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.consumption == ConsumptionMethod.CALCULATED
-
-
-
 
     def test_make_plant_and_inverter_passes_firmware_to_powerplant_create(self):
         """Ensure firmware read from inverter is forwarded to PowerPlant.create."""

@@ -251,6 +251,40 @@ def test_device_get_sensor(device):
         assert found.unique_id == "alarm_1"
 
 
+def test_device_get_sensor_by_type_and_child_alarm(device):
+    class ParentReadable(DummyReadable):
+        pass
+
+    class ChildReadable(DummyReadable):
+        pass
+
+    s_parent = ParentReadable("parent_by_type", publishable=True)
+    device._add_read_sensor(s_parent)
+
+    child = Device("ChildType", 0, "child_uid_type", "mf", "model", Protocol.V1_8)
+    s_child = ChildReadable("child_by_type", publishable=True)
+    child._add_read_sensor(s_child)
+    device._add_child_device(child)
+
+    # Type-based lookup should return parent's matching sensor first.
+    assert device.get_sensor(DummyReadable) is s_parent
+    # Child lookup should work when parent does not have matching subclass.
+    assert device.get_sensor(ChildReadable, search_children=True) is s_child
+
+    class MockAlarmCombinedSensor(AlarmCombinedSensor):
+        def __init__(self, unique_id):
+            self.unique_id = unique_id
+            self.alarms = [types.SimpleNamespace(unique_id="child_alarm")]
+
+    with patch.object(AlarmCombinedSensor, "__init__", return_value=None):
+        child_alarm_sensor = MockAlarmCombinedSensor("child_ac")
+        child.all_sensors[child_alarm_sensor.unique_id] = child_alarm_sensor
+
+        found = device.get_sensor("child_alarm", search_children=True)
+        assert found is not None
+        assert found.unique_id == "child_alarm"
+
+
 def test_device_add_writeonly_sensor(device):
     wo = DummyWriteOnly("wo1")
     device._add_writeonly_sensor(wo)
