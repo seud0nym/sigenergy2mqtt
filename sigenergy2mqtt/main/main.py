@@ -17,7 +17,7 @@ from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType
 from sigenergy2mqtt.sensors.plant_read_only import (
     Alarm7,
     CurrentControlCommandValue,
@@ -249,7 +249,8 @@ async def make_plant_and_inverter(
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
         if ot is None:
             raise ValueError("OutputType cannot be None — cannot create PowerPlant")
-        plant = await PowerPlant.create(plant_index, device_type, protocol, int(ot), modbus_client)
+        firmware = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")
+        plant = await PowerPlant.create(plant_index, device_type, cast(str, firmware), protocol, cast(int, ot), modbus_client)
     else:
         protocol = plant.protocol_version
 

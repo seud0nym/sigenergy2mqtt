@@ -375,7 +375,7 @@ class TestFactories:
         seen = set()
         # SN, Model, RCP, RDP, OutputType
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", None, None, 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", None, None, 1, "V122R001C00SPC112B701P"]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V2_8, unique_id="p1"))),
@@ -394,7 +394,7 @@ class TestFactories:
         seen = set()
         clean_config.ems_mode_check = True
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1, "V122R001C00SPC113B717A"]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V2_8, unique_id="p1"))),
@@ -419,7 +419,7 @@ class TestFactories:
         seen = set()
         clean_config.ems_mode_check = True
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1, "V122R001C00SPC112B701P"]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V2_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V2_8, unique_id="p1"))),
@@ -443,7 +443,7 @@ class TestFactories:
         clean_config.consumption = ConsumptionMethod.CALCULATED
         # SN, Model, RCP, RDP, OutputType
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
+            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1, "V122R001C00SPC112B701P"]),
             patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V1_8)),
             patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V1_8, unique_id="p1"))),
@@ -678,7 +678,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     seen = set()
     clean_config.consumption = ConsumptionMethod.TOTAL
     with (
-        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1]),
+        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1000, 1000, 1, "V122R001C00SPC112B701P"]),
         patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=Protocol.V1_8)),
         patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V1_8, unique_id="p1"))),

@@ -8,7 +8,7 @@ import sigenergy2mqtt.devices.smartport as smartport_pkg
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, HybridInverter, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, FirmwareVersion, HybridInverter, Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
@@ -40,11 +40,11 @@ class PowerPlant(ModbusDevice):
         self._smartport = None
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
+    async def create(cls, plant_index: int, device_type: DeviceType, firmware: str, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
         await plant._register_child_devices(power_phases, modbus_client)
-        await plant._register_sensors(output_type, power_phases, modbus_client)
+        await plant._register_sensors(firmware, output_type, power_phases, modbus_client)
         availability_control_sensor = plant.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{RemoteEMS.ADDRESS}")
         if availability_control_sensor is None:
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
@@ -75,7 +75,7 @@ class PowerPlant(ModbusDevice):
                     except Exception:
                         logging.exception(f"{self.__class__.__name__} Failed to create SmartPort instance")
 
-    async def _register_sensors(self, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
+    async def _register_sensors(self, firmware: str, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
         rated_discharging_power = ro.PlantRatedDischargingPower(self.plant_index)
         # Fetch async values in parallel
@@ -124,14 +124,17 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.TotalLoadConsumption(self.plant_index))
         self._add_read_sensor(ro.TotalLoadDailyConsumption(self.plant_index))
 
+        fw = FirmwareVersion(firmware)
         remote_ems = rw.RemoteEMS(self.plant_index)
         remote_ems_mode = rw.RemoteEMSControlMode(self.plant_index, remote_ems)
+
         self._add_read_sensor(remote_ems)
         self._add_read_sensor(remote_ems_mode)
         self._add_read_sensor(rw.ActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems))
         self._add_read_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(self.plant_index))
         self._add_read_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems))
-        self._add_read_sensor(rw.PVMaxPowerLimit(self.plant_index, remote_ems, remote_ems_mode))
+
+        self._add_read_sensor(rw.PVMaxPowerLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None))
 
         self._add_read_sensor(rw.QSAdjustmentTargetValue(self.plant_index))
         self._add_read_sensor(rw.PowerFactorAdjustmentTargetValue(self.plant_index))
@@ -177,8 +180,8 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(rw.ESSBackupSOC(self.plant_index))
             self._add_read_sensor(rw.ESSChargeCutOffSOC(self.plant_index))
             self._add_read_sensor(rw.ESSDischargeCutOffSOC(self.plant_index))
-            self._add_read_sensor(rw.MaxChargingLimit(self.plant_index, remote_ems, remote_ems_mode, cast(float, rcp_value)))
-            self._add_read_sensor(rw.MaxDischargingLimit(self.plant_index, remote_ems, remote_ems_mode, cast(float, rdp_value)))
+            self._add_read_sensor(rw.MaxChargingLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None, cast(float, rcp_value)))
+            self._add_read_sensor(rw.MaxDischargingLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None, cast(float, rdp_value)))
             self._add_read_sensor(total_charge_energy)
             self._add_read_sensor(total_discharge_energy)
             self._add_derived_sensor(derived.BatteryChargingPower(self.plant_index, battery_power), battery_power)

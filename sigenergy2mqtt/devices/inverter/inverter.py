@@ -61,21 +61,30 @@ class Inverter(ModbusDevice):
             serial_number.get_state(modbus_client=modbus_client),
         )
 
-        if active_config.ems_mode_check and isinstance(firmware, str):
-            try:
-                parsed_firmware = FirmwareVersion(firmware)
-                if parsed_firmware.service_pack >= 113:
-                    logging.info(f"Disabling Remote EMS Mode check because PV Max Power and ESS Charge/Discharge limits are globally available in firmware {firmware}")
-                    active_config.ems_mode_check = False
-            except ValueError:
-                logging.debug(f"Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
+        try:
+            parsed_firmware = FirmwareVersion(cast(str, firmware))
+            if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
+                logging.info(f"Disabling Remote EMS Mode check because PV Max Power and ESS Charge/Discharge limits are globally available in firmware {firmware}")
+                active_config.ems_mode_check = False
+        except ValueError:
+            logging.debug(f"Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
 
         inverter = cls(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
         await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), cast(int, battery_count))
         await inverter._register_sensors(plant_index, device_address, pv_string_count, firmware_version, model, serial_number, pack_bcu_count, modbus_client)
         return inverter
 
-    async def _register_child_devices(self, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: Protocol, model_id: str, serial: str, strings: int, battery_count: int) -> None:
+    async def _register_child_devices(
+        self,
+        plant_index: int,
+        device_address: int,
+        device_type: DeviceType,
+        protocol_version: Protocol,
+        model_id: str,
+        serial: str,
+        strings: int,
+        battery_count: int,
+    ) -> None:
         address = 31027
         for n in range(1, min(4, strings) + 1):
             self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V1_8))

@@ -204,7 +204,7 @@ async def get_sensor_instances(
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     pv_modbus_client = DummyModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
 
-    plant = await PowerPlant.create(plant_index, hi_device_type, protocol_version, OUTPUT_TYPE, hi_modbus_client)
+    plant = await PowerPlant.create(plant_index, hi_device_type, FIRMWARE_VERSION, protocol_version, OUTPUT_TYPE, hi_modbus_client)
     hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, hi_modbus_client)
     pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, pv_modbus_client)
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)

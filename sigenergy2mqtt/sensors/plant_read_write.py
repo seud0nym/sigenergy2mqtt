@@ -476,8 +476,8 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 class RemoteEMSLimit(NumericSensor, HybridInverter):
     def __init__(
         self,
-        availability_control_sensor: AvailabilityMixin,
-        remote_ems_mode: RemoteEMSControlMode,
+        availability_control_sensor: AvailabilityMixin | None,
+        remote_ems_mode: RemoteEMSControlMode | None,
         charging: bool,
         discharging: bool,
         name: str,
@@ -514,7 +514,7 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if active_config.home_assistant.enabled and active_config.ems_mode_check:
+        if self._remote_ems_mode and active_config.home_assistant.enabled and active_config.ems_mode_check:
             if self._charging and self._discharging:
                 cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
                     {"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0}
@@ -535,7 +535,7 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 class MaxChargingLimit(RemoteEMSLimit):
     ADDRESS = 40032
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_charging_power: float):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None, rated_charging_power: float):
         super().__init__(
             availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -566,7 +566,7 @@ class MaxChargingLimit(RemoteEMSLimit):
 class MaxDischargingLimit(RemoteEMSLimit):
     ADDRESS = 40034
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode, rated_discharging_power: float):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None, rated_discharging_power: float):
         super().__init__(
             availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -597,7 +597,7 @@ class MaxDischargingLimit(RemoteEMSLimit):
 class PVMaxPowerLimit(RemoteEMSLimit):
     ADDRESS = 40036
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None):
         super().__init__(
             availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
