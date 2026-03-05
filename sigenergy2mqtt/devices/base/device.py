@@ -433,39 +433,57 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         else:
             return self.all_sensors
 
-    def get_sensor(self, unique_id: str, search_children: bool = False) -> Sensor | None:
-        """Look up a sensor by unique_id, including alarm sub-sensors.
+    def get_sensor(self, target: str | type, search_children: bool = False) -> Sensor | None:
+        """Look up a sensor by unique_id or by class type using isinstance matching.
 
         Search order:
-        1. Direct lookup in self.all_sensors.
+        1. Direct lookup in self.all_sensors (by unique_id or isinstance).
         2. If search_children, direct lookup in each child's sensors dict.
         3. Linear scan of AlarmCombinedSensor instances in self.all_sensors for
-           a matching alarm sub-sensor.
+        a matching alarm sub-sensor.
         4. If search_children, same alarm scan across each child's all_sensors.
 
         Args:
-            unique_id: The unique_id of the sensor to find.
+            target: Either the unique_id string of the sensor to find, or a
+                    sensor class to match via isinstance. When a class is given,
+                    the first matching sensor is returned.
             search_children: Whether to extend the search to child devices.
 
         Returns:
             The matching Sensor, or None if not found.
         """
-        if unique_id in self.all_sensors:
-            return self.all_sensors[unique_id]
-        elif search_children:
-            for child in self.children:
-                if unique_id in child.sensors:
-                    return child.sensors[unique_id]
-        for alarm in [s for s in self.all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
-            found = next((a for a in alarm.alarms if a.unique_id == unique_id), None)
-            if found:
-                return found
+
+        def _matches(sensor: Sensor) -> bool:
+            if isinstance(target, str):
+                return sensor.unique_id == target
+            return isinstance(sensor, target)
+
+        # 1. Search own sensors
+        match = next((s for s in self.all_sensors.values() if _matches(s)), None)
+        if match:
+            return match
+
+        # 2. Search children's direct sensors
         if search_children:
             for child in self.children:
-                for alarm in [s for s in child.all_sensors.values() if isinstance(s, AlarmCombinedSensor)]:
-                    found = next((a for a in alarm.alarms if a.unique_id == unique_id), None)
-                    if found:
-                        return found
+                match = next((s for s in child.sensors.values() if _matches(s)), None)
+                if match:
+                    return match
+
+        # 3. Search alarm sub-sensors in own sensors
+        for alarm in (s for s in self.all_sensors.values() if isinstance(s, AlarmCombinedSensor)):
+            match = next((a for a in alarm.alarms if _matches(a)), None)
+            if match:
+                return match
+
+        # 4. Search alarm sub-sensors in children
+        if search_children:
+            for child in self.children:
+                for alarm in (s for s in child.all_sensors.values() if isinstance(s, AlarmCombinedSensor)):
+                    match = next((a for a in alarm.alarms if _matches(a)), None)
+                    if match:
+                        return match
+
         return None
 
     def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
