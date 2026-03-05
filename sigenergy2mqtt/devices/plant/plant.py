@@ -13,6 +13,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter_read_only import OutputType
+from sigenergy2mqtt.sensors.plant_read_only import GridSensorActivePower, GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 
 from .grid_code import GridCode
@@ -229,8 +230,14 @@ class PowerPlant(ModbusDevice):
         match plant_consumed_power.method:
             case ConsumptionMethod.CALCULATED:
                 if not self._grid_sensor:  # Should not be possible: unconditional registration in _register_child_devices
-                    raise RuntimeError(f"{self.__class__.__name__} GridSensor not registered???")
-                self._add_derived_sensor(plant_consumed_power, self._total_pv_power, battery_power, self._grid_sensor.active_power, self._grid_sensor.grid_status, search_children=True)
+                    raise RuntimeError(f"{self.__class__.__name__} GridSensor device not registered???")
+                active_power = self._grid_sensor.get_sensor(GridSensorActivePower)
+                if not active_power:
+                    raise RuntimeError(f"{self.__class__.__name__} GridSensorActivePower not registered in GridSensor device???")
+                grid_status = self._grid_sensor.get_sensor(GridStatus)
+                if not grid_status:
+                    raise RuntimeError(f"{self.__class__.__name__} GridStatus not registered in GridSensor device???")
+                self._add_derived_sensor(plant_consumed_power, self._total_pv_power, battery_power, active_power, grid_status, search_children=True)
             case ConsumptionMethod.GENERAL:
                 self._add_derived_sensor(plant_consumed_power, general_load_power)
             case ConsumptionMethod.TOTAL:
