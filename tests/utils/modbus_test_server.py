@@ -49,7 +49,7 @@ from ruamel.yaml import YAML
 from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
-from sigenergy2mqtt.sensors.inverter_read_only import OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from tests.utils import get_sensor_instances
 
@@ -281,6 +281,9 @@ class CustomDataBlock(ModbusSparseDataBlock):
             A ``(value, source)`` tuple where *value* is the initial state and
             *source* is a short label used in debug log messages.
         """
+        if sensor.address == InverterFirmwareVersion.ADDRESS:
+            return ("V100R001C00SPC112B107G", "inverter_firmware_version")
+
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             return ("string value" if not sensor.latest_raw_state else sensor.latest_raw_state, "string")
 
@@ -485,6 +488,24 @@ class CustomDataBlock(ModbusSparseDataBlock):
         return result
 
 
+async def simulate_firmware_version_upgrade(data_block: CustomDataBlock, wait_for_seconds: int) -> None:
+    """Simulate inverter firmware version upgrade on *data_block*.
+
+    Args:
+        data_block: The plant device's data block (unit ID
+            ``Constants.PLANT_DEVICE_ADDRESS``).
+        wait_for_seconds: Idle time before simulating firmware
+            update, in seconds.
+    """
+    try:
+        _logger.info(f"Waiting for {wait_for_seconds} seconds before simulating inverter firmware update for device address {data_block.device_address}...")
+        await asyncio.sleep(wait_for_seconds)
+        _logger.info(f"Simulating inverter firmware update for device address {data_block.device_address}")
+        await data_block.async_setValues(0x06, InverterFirmwareVersion.ADDRESS, ModbusClientMixin.convert_to_registers("V100R001C00SPC113", ModbusClientMixin.DATATYPE.STRING))
+    except asyncio.CancelledError:
+        pass
+
+
 async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: int, duration_seconds: int) -> None:
     """Repeatedly simulate grid outages on *data_block*.
 
@@ -563,6 +584,7 @@ async def run_async_server(
     log_level: int = logging.INFO,
     registers_to_debug: list[int] = [],
     simulate_grid_outages: bool = False,
+    simulate_firmware_upgrade: bool = False,
 ) -> None:
     """Build and run the async Modbus TCP test server.
 
@@ -576,6 +598,8 @@ async def run_async_server(
     5. Starts the pymodbus ``StartAsyncTcpServer``.
     6. Optionally co-schedules :func:`simulate_grid_outage` for the plant
        device.
+    7. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
+       inverter device.
 
     Args:
         mqtt_client: A started Paho MQTT client, or ``None`` to disable MQTT
@@ -595,6 +619,8 @@ async def run_async_server(
         simulate_grid_outages: When ``True``, periodically toggles the
             ``GridStatus`` register on the plant device to simulate grid
             outages.
+        simulate_firmware_upgrade: When ``True``, updates the
+            ``InverterFirmwareVersion.
     """
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
@@ -607,10 +633,11 @@ async def run_async_server(
     _logger.setLevel(log_level)
 
     _logger.info("Getting sensor instances...")
+    inverter_device_address = 3
     sensors: dict = await get_sensor_instances(
         home_assistant_enabled=not use_simplified_topics,
         protocol_version=protocol_version,
-        pv_inverter_device_address=3,
+        pv_inverter_device_address=inverter_device_address,
         concrete_sensor_check=False,
     )
     sorted_sensors: list = sorted(
@@ -672,6 +699,8 @@ async def run_async_server(
         )
         if simulate_grid_outages:
             tasks.append(simulate_grid_outage(context[Constants.PLANT_DEVICE_ADDRESS], wait_for_seconds=30, duration_seconds=30) if Constants.PLANT_DEVICE_ADDRESS in context else asyncio.sleep(0))
+        if simulate_firmware_upgrade:
+            tasks.append(simulate_firmware_version_upgrade(context[1], wait_for_seconds=20))
         await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
@@ -800,6 +829,7 @@ async def async_helper() -> None:
             kwargs["log_level"] = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
             kwargs["registers_to_debug"] = config.get("modbus")[0].get("registers-to-debug", [])
             kwargs["simulate_grid_outages"] = config.get("modbus")[0].get("simulate-grid-outages", False)
+            kwargs["simulate_firmware_upgrade"] = config.get("modbus")[0].get("simulate-firmware-upgrade", False)
             protocol_version = config.get("modbus")[0].get("protocol-version", None)
             if protocol_version:
                 kwargs["protocol_version"] = Protocol(protocol_version)
