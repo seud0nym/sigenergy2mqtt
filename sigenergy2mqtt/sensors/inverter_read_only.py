@@ -125,7 +125,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
                 logging.info(f"{device.name} firmware change detected: {device['hw']} -> {value} (device_address={device.device_address})")
                 try:
                     previous_version = FirmwareVersion(device["hw"])
-                    current_version = FirmwareVersion(value)
+                    current_version = FirmwareVersion(cast(str, value))
                     if previous_version.service_pack != current_version.service_pack:
                         from sigenergy2mqtt.main import restart_controller
 

@@ -891,7 +891,7 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     active_config.modbus.extend([mock_device])
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.thread_config_registry, "get_config", lambda *a: mock_thread_config)
+    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a: mock_thread_config)
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
     mock_plant = MagicMock(protocol_version=Protocol.V2_8, has_battery=True, unique_id="p_uid", device_address=247)
@@ -934,7 +934,7 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     mock_plant.get_sensor.return_value = mock_si_sensor
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.thread_config_registry, "get_config", lambda *a: mock_thread_config)
+    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a: mock_thread_config)
 
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
@@ -946,8 +946,6 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
 
     await main_mod.async_main()
     assert mock_si_sensor.publishable is False
-
-
 
 
 @pytest.mark.asyncio
@@ -964,8 +962,11 @@ async def test_async_main_restarts_when_requested(clean_config, monkeypatch):
 
     monkeypatch.setattr(signal, "signal", lambda *a: None)
 
+    calls = {"start": 0}
+
     async def _start(_):
-        if not restart_controller.requested:
+        calls["start"] += 1
+        if calls["start"] == 1:
             restart_controller.request("test")
 
     start_mock = AsyncMock(side_effect=_start)

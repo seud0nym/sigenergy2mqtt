@@ -1,7 +1,8 @@
 import asyncio
 import ipaddress
+import logging
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from sigenergy2mqtt.devices import Device
 
@@ -38,14 +39,33 @@ class ThreadConfig:
     retries: int = 3
 
     _devices: list[Device] = field(default_factory=list)
+    _token: Any = None
+
+    # A private object only accessible within this module
+    __INTERNAL_TOKEN = object()
 
     def __post_init__(self) -> None:
+        if self._token is not self.__INTERNAL_TOKEN:
+            raise PermissionError("Use ThreadConfig.create() to instantiate this class.")
         host_missing = not self.host or self.host.isspace()
         name_missing = not self.name or self.name.isspace()
         if host_missing and name_missing:
             raise ValueError("At least one of host or name must be provided")
         if self.port is not None and not (0 <= self.port <= 65535):
             raise ValueError("Port must be between 0 and 65535")
+
+    @classmethod
+    def create(cls, host: str | None, port: int | None, timeout: float = 1.0, retries: int = 3, name: str | None = None):
+        if host is None or port is None:
+            if name is None:
+                raise ValueError("Name must be provided when host or port are None")
+        instance = thread_config_registry.get_config(host, port, name)
+        if instance is None:
+            if name is None:
+                name = cls._make_name(host, port)  # type: ignore
+            instance = cls(name=name, host=host, port=port, timeout=timeout, retries=retries, _token=cls.__INTERNAL_TOKEN)
+            thread_config_registry.add_config(instance)
+        return instance
 
     @property
     def description(self) -> str:
@@ -113,6 +133,10 @@ class ThreadConfig:
         """
         if value is True:
             raise ValueError("Use a Future to bring devices online, not True")
+        elif value is False:
+            logging.debug(f"{self.url if self.host is not None else self.description} going offline")
+        else:
+            logging.debug(f"{self.url if self.host is not None else self.description} coming online")
         for device in self._devices:
             device.online = value
 
@@ -134,72 +158,6 @@ class ThreadConfig:
         for device in self._devices:
             for sensor in device.sensors.values():
                 sensor.apply_sensor_overrides(device.registers)
-
-
-class ThreadConfigRegistry:
-    """Registry of :class:`ThreadConfig` instances keyed by ``(host, port)``.
-
-    Provides a find-or-create interface so that the rest of the application
-    can request a config for a given Modbus endpoint without worrying about
-    duplicates. Configs are cached for the lifetime of the registry.
-
-    A module-level default instance is provided as :data:`thread_config_registry`.
-    """
-
-    def __init__(self) -> None:
-        self._configs: dict[tuple[str, int], ThreadConfig] = {}
-
-    def get_config(
-        self,
-        host: str,
-        port: int,
-        timeout: float = 1.0,
-        retries: int = 3,
-    ) -> ThreadConfig:
-        """Return the config for ``(host, port)``, creating it if necessary.
-
-        ``timeout`` and ``retries`` are applied only when a new config is
-        created. Subsequent calls with the same ``(host, port)`` return the
-        cached instance unchanged, regardless of the values passed.
-
-        Args:
-            host: IP address or hostname of the Modbus TCP target.
-            port: TCP port of the Modbus target.
-            timeout: Per-request timeout in seconds. Only used on first call
-                for this ``(host, port)`` pair.
-            retries: Number of retry attempts on failure. Only used on first
-                call for this ``(host, port)`` pair.
-
-        Returns:
-            The :class:`ThreadConfig` for the given endpoint.
-        """
-        key = (host, port)
-        if key not in self._configs:
-            self._configs[key] = ThreadConfig(
-                name=self._make_name(host, port),
-                host=host,
-                port=port,
-                timeout=timeout,
-                retries=retries,
-            )
-        return self._configs[key]
-
-    def get_all(self) -> list[ThreadConfig]:
-        """Return a snapshot of all registered configs.
-
-        The returned list reflects the state of the registry at the time of
-        the call; it will not update if new configs are added afterwards.
-        """
-        return list(self._configs.values())
-
-    def clear(self) -> None:
-        """Remove all configs from the registry.
-
-        Primarily useful between tests or when reinitialising the application.
-        Does not affect any :class:`ThreadConfig` instances already held by
-        callers.
-        """
-        self._configs.clear()
 
     @staticmethod
     def _make_name(host: str, port: int) -> str:
@@ -224,6 +182,67 @@ class ThreadConfigRegistry:
         except ipaddress.AddressValueError:
             hostname = host
         return f"Modbus@{hostname}" if port == 502 else f"Modbus@{hostname}:{port:02X}"
+
+
+class ThreadConfigRegistry:
+    """Registry of :class:`ThreadConfig` instances.
+
+    A module-level default instance is provided as :data:`thread_config_registry`.
+    """
+
+    def __init__(self) -> None:
+        self._configs: list[ThreadConfig] = []
+
+    def add_config(self, config: ThreadConfig) -> None:
+        """Add a new config to the registry.
+
+        Args:
+            config: The :class:`ThreadConfig` to add.
+        """
+        if isinstance(config, ThreadConfig):
+            if self.get_config(config.host, config.port, config.name) is not None:
+                raise ValueError(f"Attempt to add existing config {config}")
+            self._configs.append(config)
+        else:
+            raise ValueError("config must be an instance of ThreadConfig")
+
+    def get_config(self, host: str | None, port: int | None, name: str | None = None) -> ThreadConfig | None:
+        """Return the config for ``(host, port, name)``.
+
+        Args:
+            host: IP address or hostname of the Modbus TCP target.
+            port: TCP port of the Modbus target.
+            name: Name of the thread configuration.
+
+        Returns:
+            The :class:`ThreadConfig` for the given endpoint, or None if no
+            such config exists.
+        """
+        return next(
+            (
+                config
+                for config in self._configs
+                if (config.host is None and config.port is None and config.name == name) or (host is not None and port is not None and config.host == host and config.port == port)
+            ),
+            None,
+        )
+
+    def get_all(self) -> list[ThreadConfig]:
+        """Return a snapshot of all registered configs.
+
+        The returned list reflects the state of the registry at the time of
+        the call; it will not update if new configs are added afterwards.
+        """
+        return list(self._configs)
+
+    def clear(self) -> None:
+        """Remove all configs from the registry.
+
+        Primarily useful between tests or when reinitialising the application.
+        Does not affect any :class:`ThreadConfig` instances already held by
+        callers.
+        """
+        self._configs.clear()
 
 
 #: Global default registry. Most application code should use this instance

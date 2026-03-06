@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,6 +21,12 @@ class MockMqttClient:
         return (0, 1)
 
 
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
 @pytest.fixture(scope="module")
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -31,7 +38,7 @@ def event_loop():
 async def mock_modbus_server():
     # Use a dynamic port to avoid binding conflicts if tests run close together
     # But Modbus defaults to 502, we need to tell auto_discovery to search this port.
-    port = 5502
+    port = get_free_port()
 
     # Configure logging to show all debug output
     logging.basicConfig(level=logging.DEBUG)

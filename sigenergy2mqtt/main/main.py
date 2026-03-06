@@ -308,7 +308,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
             continue
 
-        config: ThreadConfig = thread_config_registry.get_config(device.host, device.port, device.timeout, device.retries)
+        config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
 
         async with modbus:
@@ -412,7 +412,7 @@ async def _setup_ac_chargers(
 
 def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:
     """Build and return the full list of ThreadConfigs, prepending any service threads."""
-    svc_thread_cfg = ThreadConfig(name="Services", host=None, port=None)
+    svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 
     if active_config.metrics_enabled:
         svc_thread_cfg.add_device(MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
@@ -431,7 +431,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
         logging.info("No services configured - skipping service thread")
 
     if active_config.log_level == logging.DEBUG:
-        mon_thread_cfg = ThreadConfig(name="Monitor", host=None, port=None)
+        mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
         mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
         configs.append(mon_thread_cfg)
 

@@ -127,7 +127,7 @@ async def read_and_publish_device_sensors(
     finally:
         if modbus_client is not None:
             logging.info(f"Closing Modbus connection to {url_label}")
-            modbus_client.close()
+            ModbusClientFactory.remove(modbus_client)
 
         logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
         mqtt_client.loop_stop()

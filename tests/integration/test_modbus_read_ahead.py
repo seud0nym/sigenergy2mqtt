@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import socket
 
 import pytest
 
@@ -20,6 +21,12 @@ class MockMqttClient:
         return (0, 1)
 
 
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
 @pytest.fixture(scope="module")
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -29,7 +36,7 @@ def event_loop():
 
 @pytest.fixture(scope="module")
 async def mock_modbus_server():
-    port = 5503  # Use a different port to avoid conflicts
+    port = get_free_port()
 
     # Configure logging
     # logging.basicConfig(level=logging.DEBUG)

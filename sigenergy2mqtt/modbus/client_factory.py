@@ -35,3 +35,13 @@ class ModbusClientFactory:
                 pass
         cls._clients.clear()
         cls._hosts.clear()
+
+    @classmethod
+    def remove(cls, client: ModbusClient):
+        key = (client.comm_params.host, client.comm_params.port)
+        if key in cls._clients:
+            del cls._clients[key]
+            del cls._hosts[client]
+            client.close()
+        else:
+            raise RuntimeError(f"Modbus client for {client.comm_params.host}:{client.comm_params.port} not found in factory cache")
