@@ -36,6 +36,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerRegulationGradient, GridCodeLVRT, IndependentPhasePowerControl
 
 from .device_thread import start
+from .restart import restart_controller
 from .thread_config import ThreadConfig, thread_config_registry
 
 # ---------------------------------------------------------------------------
@@ -441,23 +442,25 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     """Register OS signal handlers for graceful shutdown, reload, and restart."""
 
     def configure_for_restart(caught, frame):
+        """Handle SIGUSR1 by suppressing HA and initiating a graceful shutdown."""
         logging.info(f"Signal {caught} received - reconfiguring for restart")
         # Suppress the HA offline availability message since we intend to restart.
         active_config.home_assistant.enabled = False
         exit_on_signal(caught, frame)
 
     def exit_on_signal(caught, frame):
+        """Handle termination signals by offlining all active thread configs."""
         logging.info(f"Signal {caught} received - Shutdown commenced")
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
             config.offline()
 
     def reload_on_signal(caught, frame):
+        """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info(f"Signal {caught} received - Reloading configuration")
         active_config.reload()
         configure_logging()
-        for config in configs:
-            config.reapply_sensor_overrides()
+        restart_controller.request(f"signal {caught}")
 
     signal.signal(signal.SIGINT, exit_on_signal)
     signal.signal(signal.SIGHUP, reload_on_signal)
@@ -505,16 +508,25 @@ def check_upgrade() -> bool:
 
 
 async def async_main() -> None:
-    # Configure logging before pymodbus so basicConfig wins the handler race.
-    configure_logging()
-    pymodbus_apply_logging_config(active_config.get_modbus_log_level())
+    while True:
+        # Configure logging before pymodbus so basicConfig wins the handler race.
+        configure_logging()
+        pymodbus_apply_logging_config(active_config.get_modbus_log_level())
 
-    seen_serial_numbers: set[str] = set()
-    configs, protocol_version = await setup_devices(seen_serial_numbers)
-    configs = setup_services(configs, protocol_version)
+        restart_controller.reset()
+        thread_config_registry.clear()
 
-    setup_signals(configs)
-    check_upgrade()
+        seen_serial_numbers: set[str] = set()
+        configs, protocol_version = await setup_devices(seen_serial_numbers)
+        configs = setup_services(configs, protocol_version)
 
-    await start(configs)
-    logging.info("Shutdown completed")
+        setup_signals(configs)
+        check_upgrade()
+
+        await start(configs)
+
+        if not restart_controller.requested:
+            logging.info("Shutdown completed")
+            return
+
+        logging.info("Restarting runtime")
