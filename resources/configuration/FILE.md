@@ -98,10 +98,14 @@ If plans or time periods overlap, the first match will be used.
 
 ## Configuring Smart-Port Production
 
-Prior to the V100R001C00SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port were included in the Plant `PV Power` reported by the Modbus interface. In firmware V100R001C00SPC108, the `PV Power` register only reports production from panels connected directly to Sigenergy. Firmware V100R001C00SPC109 adds a new sensor for `Third-Party PV Power`. This register, however, only appears to be updated every 8-10 seconds in my testing with my Enphase micro-inverters, so if you want more frequent updates of `Total PV Power` and `Consumed Power`, then you should enable smart-port in the configuration and configure either the [Enphase Envoy](#enphase-envoy) and/or the [MQTT](#any-system-already-integrated-with-home-assistant) smart-port integrations.
+**NOTE**: _This feature is under consideration for removal in a future release. Have your say in the [discussion](https://github.com/seud0nym/sigenergy2mqtt/discussions/124)._
+
+Prior to the SPC108 firmware update, production systems connected to the Sigenergy Gateway Smart-Port were included in the Plant `PV Power` reported by the Modbus interface. In firmware SPC108, the `PV Power` register only reported production from panels connected directly to the Sigenergy inverter. 
+
+Firmware SPC109 added a new sensor for `Third-Party PV Power`. This register, however, only appears to be updated every 8-10 seconds in my testing with my Enphase micro-inverters, so if you wanted more frequent updates of `Total PV Power` and `Consumed Power`, then you could enable smart-port in the configuration and configure either the [Enphase Envoy](https://github.com/seud0nym/sigenergy2mqtt/blob/main/resources/configuration/FILE.md#enphase-envoy) and/or the [MQTT](https://github.com/seud0nym/sigenergy2mqtt/blob/main/resources/configuration/FILE.md#any-system-already-integrated-with-home-assistant) smart-port integrations.
 
 - When smart-port is _not_ enabled in the configuration, the Plant `Total PV Power` sensor will be the sum of Plant `PV Power` and `Third-Party PV Power`. 
-- When smart-port _is_ enabled in the configuration, the Plant `Total PV Power` sensor will be the sum of `PV Power` and all configured Smart-Port PV Power sensors ([Enphase Envoy](#enphase-envoy) and/or [MQTT](#any-system-already-integrated-with-home-assistant)). Also, if the Smart-Port PV Power sensor fails to provide updates, `sigenergy2mqtt` will automatically fail-over to using the `Third-Party PV Power` sensor, and fail-back when it becomes available again.
+- When smart-port _is_ enabled in the configuration, the Plant `Total PV Power` sensor will be the sum of `PV Power` and all configured Smart-Port PV Power sensors ([Enphase Envoy](#enphase-envoy) and/or [MQTT](#any-system-already-integrated-with-home-assistant)). Also, if the Smart-Port PV Power sensor fails to provide updates, `sigenergy2mqtt` will automatically fail-over to using the `Third-Party PV Power` sensor, and fall-back when it becomes available again.
 
 ### Enphase Envoy
 
