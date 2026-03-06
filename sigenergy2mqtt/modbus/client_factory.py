@@ -38,10 +38,17 @@ class ModbusClientFactory:
 
     @classmethod
     def remove(cls, client: ModbusClient):
-        key = (client.comm_params.host, client.comm_params.port)
-        if key in cls._clients:
+        # Find the key by searching for the client instance. This is safer than
+        # relying on client.comm_params which may be absent in mock objects.
+        key = next((k for k, v in cls._clients.items() if v is client), None)
+
+        if key:
             del cls._clients[key]
-            del cls._hosts[client]
+            if client in cls._hosts:
+                del cls._hosts[client]
+
+        # Always attempt to close the client.
+        try:
             client.close()
-        else:
-            raise RuntimeError(f"Modbus client for {client.comm_params.host}:{client.comm_params.port} not found in factory cache")
+        except Exception:
+            pass

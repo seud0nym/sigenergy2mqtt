@@ -695,6 +695,7 @@ async def test_setup_devices_ignored_host(clean_config):
     clean_config.modbus[0].registers.read_write = False
     clean_config.modbus[0].registers.write_only = False
     seen = set()
+    main_mod.thread_config_registry.clear()
     configs, proto = await main_mod.setup_devices(seen)
     assert len(configs) == 0
 
@@ -769,7 +770,7 @@ async def test_setup_services_comprehensive(clean_config):
     clean_config.log_level = logging.DEBUG
     clean_config.clean = False
 
-    configs = [ThreadConfig("Test", "host", 502)]
+    configs = [ThreadConfig.create(name="Test", host="host", port=502)]
 
     with (
         patch("sigenergy2mqtt.main.main.get_pvoutput_services", return_value=[MagicMock()]),
@@ -891,7 +892,7 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     active_config.modbus.extend([mock_device])
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a: mock_thread_config)
+    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a, **kw: mock_thread_config)
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
     mock_plant = MagicMock(protocol_version=Protocol.V2_8, has_battery=True, unique_id="p_uid", device_address=247)
@@ -934,7 +935,7 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     mock_plant.get_sensor.return_value = mock_si_sensor
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a: mock_thread_config)
+    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a, **kw: mock_thread_config)
 
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)

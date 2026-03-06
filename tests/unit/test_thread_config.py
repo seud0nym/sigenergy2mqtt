@@ -9,18 +9,18 @@ def test_threadconfigfactory_get_config_ipv4_and_hostname(monkeypatch):
     # Reset factory cache
     thread_config_registry.clear()
 
-    ThreadConfig.create("1.2.3.4", 502)
+    ThreadConfig.create(host="1.2.3.4", port=502)
     cfg = thread_config_registry.get_config("1.2.3.4", 502)
     assert isinstance(cfg, ThreadConfig)
     assert cfg.name == "Modbus@01020304"
 
     # Non-standard port includes hex port
-    ThreadConfig.create("1.2.3.4", 1500)
+    ThreadConfig.create(host="1.2.3.4", port=1500)
     cfg2 = thread_config_registry.get_config("1.2.3.4", 1500)
     assert cfg2.name.endswith(":5DC")
 
     # Non-IP hostname preserved
-    ThreadConfig.create("my-host", 502)
+    ThreadConfig.create(host="my-host", port=502)
     cfg3 = thread_config_registry.get_config("my-host", 502)
     assert "my-host" in cfg3.name
 
@@ -101,7 +101,7 @@ def test_threadconfig_online_true_is_rejected() -> None:
 def test_threadconfig_registry_caches_first_timeout_and_retries() -> None:
     thread_config_registry.clear()
 
-    ThreadConfig.create("10.0.0.1", 1502, timeout=2.5, retries=7)
+    ThreadConfig.create(host="10.0.0.1", port=1502, timeout=2.5, retries=7)
     first = thread_config_registry.get_config("10.0.0.1", 1502)
     assert first.timeout == 2.5
     assert first.retries == 7
@@ -119,10 +119,10 @@ def test_threadconfig_registry_caches_first_timeout_and_retries() -> None:
 def test_threadconfig_registry_get_all_returns_snapshot() -> None:
     thread_config_registry.clear()
 
-    ThreadConfig.create("10.0.0.1", 502)
+    ThreadConfig.create(host="10.0.0.1", port=502)
     snapshot = thread_config_registry.get_all()
 
-    ThreadConfig.create("10.0.0.2", 502)
+    ThreadConfig.create(host="10.0.0.2", port=502)
 
     assert len(snapshot) == 1
     assert len(thread_config_registry.get_all()) == 2
