@@ -11,6 +11,7 @@ import pytest
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
+from sigenergy2mqtt.main.restart import restart_controller
 from sigenergy2mqtt.main.thread_config import ThreadConfig
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
@@ -222,8 +223,8 @@ class TestGetState:
             assert await sensor.get_state() == "UTC-05:00"
 
     @pytest.mark.asyncio
-    async def test_inverter_firmware_version_trigger_rediscovery(self):
-        """Test that firmware version change triggers rediscovery."""
+    async def test_inverter_firmware_version_triggers_restart_on_service_pack_change(self):
+        """Test that firmware service-pack change triggers full restart."""
         with (
             patch.dict(Sensor._used_unique_ids, clear=True),
             patch.dict(Sensor._used_object_ids, clear=True),
@@ -231,16 +232,31 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            mock_device.__getitem__.side_effect = lambda key: "v1.0" if key == "hw" else None
+            hw = {"value": "V1R1C1SPC1"}
+
+            def _getitem(key):
+                if key == "hw":
+                    return hw["value"]
+                return None
+
+            def _setitem(key, value):
+                if key == "hw":
+                    hw["value"] = value
+
+            mock_device.__getitem__.side_effect = _getitem
+            mock_device.__setitem__.side_effect = _setitem
+            mock_device.device_address = 1
             sensor.parent_device = mock_device
 
-            mock_super.return_value = "v1.0"
+            restart_controller.reset()
+            mock_super.return_value = "V1R1C1SPC1"
             await sensor.get_state()
             assert not hasattr(mock_device, "rediscover") or mock_device.rediscover is not True
+            assert restart_controller.requested is False
 
-            mock_super.return_value = "v2.0"
+            mock_super.return_value = "V1R1C1SPC2"
             await sensor.get_state()
-            assert mock_device.rediscover is True
+            assert restart_controller.requested is True
 
 
 class TestModbusHelpers:
@@ -679,6 +695,7 @@ async def test_setup_devices_ignored_host(clean_config):
     clean_config.modbus[0].registers.read_write = False
     clean_config.modbus[0].registers.write_only = False
     seen = set()
+    main_mod.thread_config_registry.clear()
     configs, proto = await main_mod.setup_devices(seen)
     assert len(configs) == 0
 
@@ -753,7 +770,7 @@ async def test_setup_services_comprehensive(clean_config):
     clean_config.log_level = logging.DEBUG
     clean_config.clean = False
 
-    configs = [ThreadConfig("Test", "host", 502)]
+    configs = [ThreadConfig.create(name="Test", host="host", port=502)]
 
     with (
         patch("sigenergy2mqtt.main.main.get_pvoutput_services", return_value=[MagicMock()]),
@@ -807,24 +824,38 @@ class TestSignals:
 
     def test_configure_for_restart(self, clean_config):
         """Test configure_for_restart signal handler."""
-        configs = [MagicMock()]
-        main_mod.setup_signals(configs)
-        # Find the USR1 handler (it should be the one calling configure_for_restart)
+        clean_config.home_assistant.enabled = True
         with patch("signal.signal") as mock_sig:
-            main_mod.setup_signals(configs)
-            # Find the handler for SIGUSR1
+            mock_config = MagicMock()
+            main_mod.setup_signals([mock_config])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGUSR1][0]
             handler(signal.SIGUSR1, None)
             assert active_config.home_assistant.enabled is False
+            mock_config.offline.assert_called_once()
 
     def test_reload_on_signal(self, clean_config):
         """Test reload_on_signal signal handler."""
-        configs = [MagicMock()]
-        with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload:
-            main_mod.setup_signals(configs)
+        with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
+            main_mod.setup_signals([MagicMock()])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
             handler(signal.SIGHUP, None)
             assert mock_reload.called
+            mock_request.assert_called_once()
+
+    def test_reload_on_signal_keeps_reloaded_ha_state(self, clean_config):
+        """Test reload_on_signal honors HA enabled state from reloaded config."""
+        clean_config.home_assistant.enabled = True
+
+        def _reload():
+            active_config.home_assistant.enabled = False
+
+        with patch("signal.signal") as mock_sig:
+            main_mod.setup_signals([MagicMock()])
+            handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
+            with patch.object(active_config, "reload", side_effect=_reload):
+                handler(signal.SIGHUP, None)
+
+        assert active_config.home_assistant.enabled is False
 
 
 class TestUpgrade:
@@ -861,7 +892,7 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     active_config.modbus.extend([mock_device])
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.thread_config_registry, "get_config", lambda *a: mock_thread_config)
+    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a, **kw: mock_thread_config)
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
     mock_plant = MagicMock(protocol_version=Protocol.V2_8, has_battery=True, unique_id="p_uid", device_address=247)
@@ -904,7 +935,7 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     mock_plant.get_sensor.return_value = mock_si_sensor
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.thread_config_registry, "get_config", lambda *a: mock_thread_config)
+    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a, **kw: mock_thread_config)
 
     monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
@@ -916,6 +947,93 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
 
     await main_mod.async_main()
     assert mock_si_sensor.publishable is False
+
+
+@pytest.mark.asyncio
+async def test_async_main_restarts_when_requested(clean_config, monkeypatch):
+    mock_device = MagicMock()
+    mock_device.host = "1.2.3.4"
+    mock_device.port = 502
+    mock_device.inverters = [1]
+    mock_device.dc_chargers = []
+    mock_device.ac_chargers = []
+    mock_device.registers.read_only = True
+    active_config.modbus.clear()
+    active_config.modbus.extend([mock_device])
+
+    monkeypatch.setattr(signal, "signal", lambda *a: None)
+
+    calls = {"start": 0}
+
+    async def _start(_):
+        calls["start"] += 1
+        if calls["start"] == 1:
+            restart_controller.request("test")
+
+    start_mock = AsyncMock(side_effect=_start)
+    monkeypatch.setattr(main_mod, "start", start_mock)
+
+    clear_mock = MagicMock()
+    monkeypatch.setattr(main_mod.thread_config_registry, "clear", clear_mock)
+
+    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+    mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
+    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+    mock_inverter = MagicMock(unique_id="i_uid", device_address=1, name="Inverter")
+    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+
+    active_config.home_assistant.enabled = True
+    await main_mod.async_main()
+
+    assert start_mock.await_count == 2
+    assert clear_mock.call_count == 2
+    assert active_config.home_assistant.enabled is False
+
+
+@pytest.mark.asyncio
+async def test_async_main_sighup_reload_suppresses_ha_during_restart(clean_config, monkeypatch):
+    """Test SIGHUP restart keeps HA suppressed during restart cycle shutdown."""
+    mock_device = MagicMock()
+    mock_device.host = "1.2.3.4"
+    mock_device.port = 502
+    mock_device.inverters = [1]
+    mock_device.dc_chargers = []
+    mock_device.ac_chargers = []
+    mock_device.registers.read_only = True
+    active_config.modbus.clear()
+    active_config.modbus.extend([mock_device])
+
+    handlers = {}
+    monkeypatch.setattr(signal, "signal", lambda sig, h: handlers.update({sig: h}))
+
+    calls = {"count": 0}
+
+    async def _start(_):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            active_config.home_assistant.enabled = False
+
+            def _reload():
+                active_config.home_assistant.enabled = True
+
+            with patch.object(active_config, "reload", side_effect=_reload):
+                handlers[signal.SIGHUP](signal.SIGHUP, None)
+
+            assert active_config.home_assistant.enabled is False
+
+    monkeypatch.setattr(main_mod, "start", AsyncMock(side_effect=_start))
+    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+
+    mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
+    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
+    mock_inverter = MagicMock(unique_id="i_uid", device_address=1, name="Inverter")
+    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+
+    active_config.home_assistant.enabled = True
+    await main_mod.async_main()
+
+    assert calls["count"] == 2
+    assert active_config.home_assistant.enabled is False
 
 
 @pytest.mark.asyncio

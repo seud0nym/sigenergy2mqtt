@@ -21,6 +21,7 @@ from sigenergy2mqtt.common import (
     UnitOfTemperature,
     UnitOfTime,
 )
+from sigenergy2mqtt.common.firmware_version import FirmwareVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval, UnpublishResetSensorMixin
@@ -122,8 +123,16 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
             device = getattr(self, "parent_device", None)
             if device and device["hw"] != value:
                 logging.info(f"{device.name} firmware change detected: {device['hw']} -> {value} (device_address={device.device_address})")
+                try:
+                    previous_version = FirmwareVersion(device["hw"])
+                    current_version = FirmwareVersion(cast(str, value))
+                    if previous_version.service_pack != current_version.service_pack:
+                        from sigenergy2mqtt.main import restart_controller
+
+                        restart_controller.request(f"firmware service pack change on inverter {device.device_address}")
+                except ValueError:
+                    logging.debug(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
                 device["hw"] = value
-                device.rediscover = True
         return value
 
 

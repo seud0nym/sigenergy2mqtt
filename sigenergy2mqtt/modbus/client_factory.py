@@ -35,3 +35,20 @@ class ModbusClientFactory:
                 pass
         cls._clients.clear()
         cls._hosts.clear()
+
+    @classmethod
+    def remove(cls, client: ModbusClient):
+        # Find the key by searching for the client instance. This is safer than
+        # relying on client.comm_params which may be absent in mock objects.
+        key = next((k for k, v in cls._clients.items() if v is client), None)
+
+        if key:
+            del cls._clients[key]
+            if client in cls._hosts:
+                del cls._hosts[client]
+
+        # Always attempt to close the client.
+        try:
+            client.close()
+        except Exception:
+            pass

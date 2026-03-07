@@ -9,21 +9,24 @@ def test_threadconfigfactory_get_config_ipv4_and_hostname(monkeypatch):
     # Reset factory cache
     thread_config_registry.clear()
 
+    ThreadConfig.create(host="1.2.3.4", port=502)
     cfg = thread_config_registry.get_config("1.2.3.4", 502)
     assert isinstance(cfg, ThreadConfig)
     assert cfg.name == "Modbus@01020304"
 
     # Non-standard port includes hex port
+    ThreadConfig.create(host="1.2.3.4", port=1500)
     cfg2 = thread_config_registry.get_config("1.2.3.4", 1500)
     assert cfg2.name.endswith(":5DC")
 
     # Non-IP hostname preserved
+    ThreadConfig.create(host="my-host", port=502)
     cfg3 = thread_config_registry.get_config("my-host", 502)
     assert "my-host" in cfg3.name
 
 
 def test_threadconfig_properties_and_methods(monkeypatch):
-    tc = ThreadConfig(name="", host="1.1.1.1", port=502)
+    tc = ThreadConfig.create(name="", host="1.1.1.1", port=502)
     # description should fall back to url when name empty
     assert tc.description == tc.url
     assert tc.url == "modbus://1.1.1.1:502"
@@ -69,10 +72,9 @@ def test_threadconfig_properties_and_methods(monkeypatch):
     assert called.get("ok") == dev.registers
 
 
-
 def test_threadconfig_requires_host_or_name() -> None:
     try:
-        ThreadConfig(name=" ", host="", port=502)
+        ThreadConfig.create(name=" ", host="", port=502)
         assert False, "Expected ValueError"
     except ValueError as exc:
         assert "host or name" in str(exc)
@@ -81,14 +83,14 @@ def test_threadconfig_requires_host_or_name() -> None:
 def test_threadconfig_invalid_port_rejected() -> None:
     for bad_port in (-1, 65536):
         try:
-            ThreadConfig(name="x", host="1.2.3.4", port=bad_port)
+            ThreadConfig.create(name="x", host="1.2.3.4", port=bad_port)
             assert False, "Expected ValueError"
         except ValueError as exc:
             assert "Port" in str(exc)
 
 
 def test_threadconfig_online_true_is_rejected() -> None:
-    tc = ThreadConfig(name="x", host="1.2.3.4", port=502)
+    tc = ThreadConfig.create(name="x", host="1.2.3.4", port=502)
     try:
         tc.online(True)
         assert False, "Expected ValueError"
@@ -99,21 +101,28 @@ def test_threadconfig_online_true_is_rejected() -> None:
 def test_threadconfig_registry_caches_first_timeout_and_retries() -> None:
     thread_config_registry.clear()
 
-    first = thread_config_registry.get_config("10.0.0.1", 1502, timeout=2.5, retries=7)
-    second = thread_config_registry.get_config("10.0.0.1", 1502, timeout=9.9, retries=0)
+    ThreadConfig.create(host="10.0.0.1", port=1502, timeout=2.5, retries=7)
+    first = thread_config_registry.get_config("10.0.0.1", 1502)
+    assert first.timeout == 2.5
+    assert first.retries == 7
+
+    first.timeout = 9.9
+    first.retries = 0
+
+    second = thread_config_registry.get_config("10.0.0.1", 1502)
 
     assert first is second
-    assert second.timeout == 2.5
-    assert second.retries == 7
+    assert second.timeout == 9.9
+    assert second.retries == 0
 
 
 def test_threadconfig_registry_get_all_returns_snapshot() -> None:
     thread_config_registry.clear()
 
-    thread_config_registry.get_config("10.0.0.1", 502)
+    ThreadConfig.create(host="10.0.0.1", port=502)
     snapshot = thread_config_registry.get_all()
 
-    thread_config_registry.get_config("10.0.0.2", 502)
+    ThreadConfig.create(host="10.0.0.2", port=502)
 
     assert len(snapshot) == 1
     assert len(thread_config_registry.get_all()) == 2

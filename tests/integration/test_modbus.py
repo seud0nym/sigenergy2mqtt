@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import socket
 
 import pytest
 
@@ -19,6 +20,12 @@ class MockMqttClient:
         return (0, 1)
 
 
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
 @pytest.fixture(scope="module")
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -31,9 +38,8 @@ async def mock_modbus_server():
     # Start the server in a way that we can connect to it
     mqtt_client = MockMqttClient()
 
-    # Use a non-privileged port for tests to avoid permission errors
-    # Using 5504 to avoid conflicts with other integration tests
-    test_port = 5504
+    # Use a dynamic port to avoid conflicts
+    test_port = get_free_port()
     server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=test_port, log_level=logging.DEBUG))
 
     # Give server time to start
@@ -47,7 +53,7 @@ async def mock_modbus_server():
                 raise RuntimeError(f"Mock Modbus server crashed: {e}") from e
         raise RuntimeError("Mock Modbus server failed to start (timeout)")
 
-    yield
+    yield test_port
 
     server_task.cancel()
     try:
@@ -61,7 +67,8 @@ async def mock_modbus_server():
 @pytest.mark.asyncio(loop_scope="module")
 async def test_modbus_read(mock_modbus_server):
     """Test reading from the mock Modbus server using the application ModbusClient."""
-    client = ModbusClient("127.0.0.1", port=5504)
+    port = mock_modbus_server
+    client = ModbusClient("127.0.0.1", port=port)
     await client.connect()
     assert client.connected
 

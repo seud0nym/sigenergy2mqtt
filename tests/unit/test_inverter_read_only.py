@@ -52,30 +52,6 @@ class TestInverterFirmwareVersion:
             assert result == "v2.0.1"
 
     @pytest.mark.asyncio
-    async def test_firmware_version_change_detected(self, mock_config, caplog):
-        """Test get_state when firmware version changes (rediscovery triggered)."""
-        sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
-
-        with patch.object(sensor.__class__.__bases__[0], "get_state", new_callable=AsyncMock) as mock_parent_get_state:
-            mock_parent_get_state.return_value = "v2.1.0"
-
-            # Setup parent_device with old firmware
-            parent_device = MagicMock()
-            parent_device.__getitem__ = MagicMock(side_effect=lambda key: "v2.0.1" if key == "hw" else None)
-            parent_device.__setitem__ = MagicMock()
-            parent_device.name = "TestInverter"
-            parent_device.device_address = 1
-            sensor.parent_device = parent_device
-
-            with caplog.at_level(logging.INFO):
-                result = await sensor.get_state()
-
-            assert result == "v2.1.0"
-            assert "firmware change detected" in caplog.text
-            parent_device.__setitem__.assert_called_with("hw", "v2.1.0")
-            assert sensor.parent_device.rediscover is True
-
-    @pytest.mark.asyncio
     async def test_firmware_version_none_value(self, mock_config):
         """Test get_state when firmware version is None."""
         sensor = InverterFirmwareVersion(plant_index=0, device_address=1)

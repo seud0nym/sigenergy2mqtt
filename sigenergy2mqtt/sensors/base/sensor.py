@@ -650,7 +650,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         # Clear retained attributes
         if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
-            mqtt_client.publish(cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=0, retain=False)
+            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=0, retain=False)
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
@@ -789,15 +789,54 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Publishing state={state} to topic {self[DiscoveryKeys.STATE_TOPIC]}")
 
-        mqtt_client.publish(cast(str, self[DiscoveryKeys.STATE_TOPIC]), f"{state}", self._qos, self._retain)
+        # Don't catch exceptions here - they will be handled by the caller
+        published = self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.STATE_TOPIC]), f"{state}", self._qos, self._retain)
 
         # Publish raw state if configured
         if self.publish_raw:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]}")
-            mqtt_client.publish(cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), f"{self.latest_raw_state}", self._qos, self._retain)
+            try:
+                self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), f"{self.latest_raw_state}", self._qos, self._retain, timeout=0.1)
+            except ValueError:
+                logging.warning(f"{self.__class__.__name__} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full")
+            except RuntimeError:
+                logging.warning(f"{self.__class__.__name__} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Other error")
 
-        return True
+        return published
+
+    def _publish_message(self, mqtt_client: mqtt.Client, topic: str, payload: str | None, qos: int = 0, retain: bool = False, timeout: float | None = 0.5) -> bool:
+        """Publish a message to MQTT.
+
+        Args:
+            mqtt_client: MQTT client for publishing
+            topic: The topic that the message should be published on.
+            payload: The payload to publish
+            qos: The quality of service level to use.
+            retain: If set to true, the message will be set as the "last
+                    known good"/retained message for the topic.
+            timeout: The timeout in seconds to wait for the message to be
+                     published. If None, it will never timeout. If negative,
+                     it will not wait for the message to be published.
+        Returns:
+            True if successfully published
+
+
+        :raises ValueError: if the message was not queued due to the outgoing
+            queue being full.
+
+        :raises RuntimeError: if the message was not published for another
+            reason.
+        """
+        message = mqtt_client.publish(topic, payload, qos, retain)
+        if timeout is None or timeout >= 0:
+            message.wait_for_publish(timeout=timeout)
+        if message.is_published():
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} Published  state={payload} to topic {topic} result={message.rc}")
+        else:
+            logging.warning(f"{self.__class__.__name__} Failed to publish state={payload} to topic {topic} result={message.rc}")
+        return message.is_published()
 
     async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> None:
         """Publish all derived sensors.
@@ -887,7 +926,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logging.debug(f"{self.name} cleaning attributes")
 
-        mqtt_client.publish(cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=1, retain=True)
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=1, retain=True)
 
     def _publish_current_attributes(self, mqtt_client: mqtt.Client, **kwargs) -> None:
         """Publish current sensor attributes.
@@ -905,7 +944,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Publishing attributes={attributes}")
 
-        mqtt_client.publish(cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), json.dumps(attributes, indent=4), qos=2, retain=True)
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), json.dumps(attributes, indent=4), qos=2, retain=True)
 
         self._attributes_published = True
         self.force_publish = False

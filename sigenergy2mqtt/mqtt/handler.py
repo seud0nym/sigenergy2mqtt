@@ -335,6 +335,22 @@ class MqttHandler:
         logger.debug(f"Registered handler {handler_name} for topic {topic} (client_id={self.client_id})")
         return client.subscribe(topic)
 
+    def deregister_all(self, client: mqtt.Client) -> None:
+        """Deregister all handlers and unsubscribe from all topics on the broker.
+
+        Parameters
+        ----------
+        client:
+            The paho client used to issue the ``UNSUBSCRIBE`` packet.
+        """
+        with self._state_lock:
+            for topic in self._topics:
+                logger.debug(f"Deregistering {len(self._topics[topic])} handlers for topic {topic} (client_id={self.client_id})")
+                self._topics[topic].clear()
+                result = client.unsubscribe(topic)
+                logger.debug(f"Unsubscribed from topic {topic} (client_id={self.client_id}) -> {result}")
+            self._topics.clear()
+
     async def close(self) -> None:
         """Signal shutdown and wait for all in-flight handler coroutines.
 

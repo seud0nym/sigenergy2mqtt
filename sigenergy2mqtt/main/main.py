@@ -36,6 +36,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerRegulationGradient, GridCodeLVRT, IndependentPhasePowerControl
 
 from .device_thread import start
+from .restart import restart_controller
 from .thread_config import ThreadConfig, thread_config_registry
 
 # ---------------------------------------------------------------------------
@@ -307,7 +308,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
             continue
 
-        config: ThreadConfig = thread_config_registry.get_config(device.host, device.port, device.timeout, device.retries)
+        config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
 
         async with modbus:
@@ -411,7 +412,7 @@ async def _setup_ac_chargers(
 
 def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:
     """Build and return the full list of ThreadConfigs, prepending any service threads."""
-    svc_thread_cfg = ThreadConfig(name="Services", host=None, port=None)
+    svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 
     if active_config.metrics_enabled:
         svc_thread_cfg.add_device(MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
@@ -430,7 +431,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
         logging.info("No services configured - skipping service thread")
 
     if active_config.log_level == logging.DEBUG:
-        mon_thread_cfg = ThreadConfig(name="Monitor", host=None, port=None)
+        mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
         mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
         configs.append(mon_thread_cfg)
 
@@ -441,23 +442,23 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     """Register OS signal handlers for graceful shutdown, reload, and restart."""
 
     def configure_for_restart(caught, frame):
+        """Handle SIGUSR1 by suppressing HA and initiating a graceful shutdown."""
         logging.info(f"Signal {caught} received - reconfiguring for restart")
         # Suppress the HA offline availability message since we intend to restart.
         active_config.home_assistant.enabled = False
         exit_on_signal(caught, frame)
 
     def exit_on_signal(caught, frame):
+        """Handle termination signals by offlining all active thread configs."""
         logging.info(f"Signal {caught} received - Shutdown commenced")
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
             config.offline()
 
     def reload_on_signal(caught, frame):
+        """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info(f"Signal {caught} received - Reloading configuration")
-        active_config.reload()
-        configure_logging()
-        for config in configs:
-            config.reapply_sensor_overrides()
+        restart_controller.request(f"signal {caught}")
 
     signal.signal(signal.SIGINT, exit_on_signal)
     signal.signal(signal.SIGHUP, reload_on_signal)
@@ -505,16 +506,27 @@ def check_upgrade() -> bool:
 
 
 async def async_main() -> None:
-    # Configure logging before pymodbus so basicConfig wins the handler race.
-    configure_logging()
-    pymodbus_apply_logging_config(active_config.get_modbus_log_level())
+    while True:
+        # Configure logging before pymodbus so basicConfig wins the handler race.
+        configure_logging()
+        pymodbus_apply_logging_config(active_config.get_modbus_log_level())
 
-    seen_serial_numbers: set[str] = set()
-    configs, protocol_version = await setup_devices(seen_serial_numbers)
-    configs = setup_services(configs, protocol_version)
+        restart_controller.reset()
+        thread_config_registry.clear()
 
-    setup_signals(configs)
-    check_upgrade()
+        seen_serial_numbers: set[str] = set()
+        configs, protocol_version = await setup_devices(seen_serial_numbers)
+        configs = setup_services(configs, protocol_version)
 
-    await start(configs)
-    logging.info("Shutdown completed")
+        setup_signals(configs)
+        check_upgrade()
+
+        await start(configs)
+
+        if not restart_controller.requested:
+            logging.info("Shutdown completed")
+            return
+        else:
+            active_config.reload()
+
+        logging.info("Restarting runtime")
