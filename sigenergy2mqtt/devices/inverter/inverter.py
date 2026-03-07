@@ -85,24 +85,69 @@ class Inverter(ModbusDevice):
         strings: int,
         battery_count: int,
     ) -> None:
-        address = 31027
+        address = 31027  # PV String 1 Voltage register
         for n in range(1, min(4, strings) + 1):
-            self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V1_8))
-            address += 2
+            self._add_child_device(
+                PVString(
+                    plant_index=plant_index,
+                    device_address=device_address,
+                    device_type=device_type,
+                    model_id=model_id,
+                    serial_number=serial,
+                    string_number=n,
+                    voltage_address=address,
+                    current_address=address + 1,
+                    protocol_version=Protocol.V1_8,
+                )
+            )
+            address += 2  # voltage is in the first register, current in the second
         if protocol_version >= Protocol.V2_4:
-            address = 31042
+            address = 31042  # PV String 5 Voltage register
             for n in range(5, min(16, strings) + 1):
-                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_4))
-                address += 2
+                self._add_child_device(
+                    PVString(
+                        plant_index=plant_index,
+                        device_address=device_address,
+                        device_type=device_type,
+                        model_id=model_id,
+                        serial_number=serial,
+                        string_number=n,
+                        voltage_address=address,
+                        current_address=address + 1,
+                        protocol_version=Protocol.V2_4,
+                    )
+                )
+                address += 2  # voltage is in the first register, current in the second
         if protocol_version >= Protocol.V2_8 and isinstance(device_type, PVInverter):
-            address = 31066
+            address = 31066  # PV String 17 Voltage register
             for n in range(17, min(36, strings) + 1):
-                self._add_child_device(PVString(plant_index, device_address, device_type, model_id, serial, n, address, address + 1, Protocol.V2_8))
-                address += 2
+                self._add_child_device(
+                    PVString(
+                        plant_index=plant_index,
+                        device_address=device_address,
+                        device_type=device_type,
+                        model_id=model_id,
+                        serial_number=serial,
+                        string_number=n,
+                        voltage_address=address,
+                        current_address=address + 1,
+                        protocol_version=Protocol.V2_8,
+                    )
+                )
+                address += 2  # voltage is in the first register, current in the second
 
         if isinstance(device_type, HybridInverter):
             if battery_count > 0:
-                self._add_child_device(ESS(plant_index, device_address, device_type, protocol_version, model_id, serial))
+                self._add_child_device(
+                    ESS(
+                        plant_index=plant_index,
+                        device_address=device_address,
+                        device_type=device_type,
+                        protocol_version=protocol_version,
+                        model_id=model_id,
+                        serial_number=serial,
+                    )
+                )
             else:
                 logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {battery_count=}")
 
