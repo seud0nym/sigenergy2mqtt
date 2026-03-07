@@ -458,8 +458,6 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     def reload_on_signal(caught, frame):
         """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info(f"Signal {caught} received - Reloading configuration")
-        active_config.reload()
-        configure_logging()
         restart_controller.request(f"signal {caught}")
 
     signal.signal(signal.SIGINT, exit_on_signal)
@@ -528,5 +526,7 @@ async def async_main() -> None:
         if not restart_controller.requested:
             logging.info("Shutdown completed")
             return
+        else:
+            active_config.reload()
 
         logging.info("Restarting runtime")
