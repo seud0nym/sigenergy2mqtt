@@ -73,12 +73,12 @@ def _pvoutput_current_time_period(self: "PvOutputConfig") -> tuple[OutputField |
                 for period in tariff.periods:
                     if "All" in period.days or dow in period.days or ("Weekdays" in period.days and dow in WEEKDAYS) or ("Weekends" in period.days and dow in WEEKENDS):
                         if period.start <= now < period.end:
-                            if self.calc_debug_logging:
+                            if self.log_level <= logging.DEBUG and self.calc_debug_logging:
                                 logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}")
                             export_type, import_type = _pvoutput_type_to_output_fields(self, period.type)
                             break
                 else:
-                    if self.calc_debug_logging:
+                    if self.log_level <= logging.DEBUG and self.calc_debug_logging:
                         logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) but no time matched so using default '{tariff.default}'")
                     export_type, import_type = _pvoutput_type_to_output_fields(self, tariff.default)
     return (export_type, import_type)
