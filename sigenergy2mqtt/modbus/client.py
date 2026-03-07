@@ -14,7 +14,30 @@ from .read_ahead import ReadAhead
 
 
 class ModbusClient(AsyncModbusTcpClient):
+    """Async Modbus TCP client with optional read-ahead caching and metrics hooks.
+
+    This class wraps :class:`pymodbus.client.AsyncModbusTcpClient` to provide:
+
+    * Standardized socket framing and packet tracing support.
+    * Per-device register read-ahead cache that can satisfy future reads without
+      additional network calls.
+    * Metrics tracking for latency, read volume, cache fill/hit rates, and errors.
+
+    The cache stores one :class:`~sigenergy2mqtt.modbus.read_ahead.ReadAhead`
+    object per register address and device. Cache entries are invalidated for
+    specific ranges when :meth:`bypass_read_ahead` is called.
+    """
+
     def _trace_packet_handler(self, is_send: bool, data: bytes) -> bytes:
+        """Format and emit raw packet debug logs when tracing is enabled.
+
+        Args:
+            is_send: ``True`` when the packet is outbound, ``False`` for inbound.
+            data: Raw Modbus payload bytes.
+
+        Returns:
+            The unmodified ``data`` payload, as required by pymodbus trace hooks.
+        """
         if self._trace:
             if is_send:
                 log_text = Log.build_msg("send: {}", data, ":hex")
@@ -24,6 +47,12 @@ class ModbusClient(AsyncModbusTcpClient):
         return data
 
     def __init__(self, *args, **kwargs):
+        """Initialize the client with socket framing, tracing, and cache state.
+
+        The constructor enforces socket framer mode and installs this instance's
+        packet trace handler. It also initializes the read-ahead cache and cache
+        counters used by :meth:`_read_registers`.
+        """
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler
         super().__init__(*args, **kwargs)
@@ -35,6 +64,25 @@ class ModbusClient(AsyncModbusTcpClient):
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
     ) -> ModbusPDU:
+        """Read Modbus registers, optionally serving from read-ahead cache first.
+
+        Args:
+            address: Start register address.
+            count: Number of consecutive registers to read.
+            device_id: Modbus unit/device id.
+            input_type: Register space to read (holding or input).
+            no_response_expected: Forwarded pymodbus option for write-like flows.
+            use_pre_read: Whether to attempt serving from read-ahead cache.
+            trace: Enable packet-level trace logging for this call only.
+
+        Returns:
+            A Modbus PDU response. If the backend returns ``None``, this method
+            converts it into an :class:`ExceptionResponse`.
+
+        Raises:
+            ModbusException: Re-raised after updating error metrics.
+            Exception: Any unexpected exception from transport or parsing logic.
+        """
         if use_pre_read:
             self._read_count += 1
             if device_id in self._read_ahead_pdu and address in self._read_ahead_pdu[device_id]:
@@ -75,10 +123,34 @@ class ModbusClient(AsyncModbusTcpClient):
             self._trace = False
 
     def bypass_read_ahead(self, address: int, count: int = 1, device_id: int = 1) -> None:
+        """Invalidate read-ahead cache entries for a register range.
+
+        This marks the addressed range as ``None`` for the specified device to
+        prevent stale cached reads after writes or other out-of-band changes.
+
+        Args:
+            address: Start register address to invalidate.
+            count: Number of registers to invalidate.
+            device_id: Modbus unit/device id.
+        """
         if device_id in self._read_ahead_pdu:
             self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
+        """Pre-fetch a register range and populate the read-ahead cache.
+
+        Args:
+            address: Start register address for prefetch.
+            count: Number of consecutive registers to prefetch.
+            device_id: Modbus unit/device id.
+            input_type: Register space to prefetch from.
+            no_response_expected: Forwarded pymodbus option.
+            trace: Enable packet-level trace logging for this call only.
+
+        Returns:
+            Modbus exception code from the response. ``0`` indicates success,
+            ``-1`` indicates no response object was available.
+        """
         result: int = -1
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
         if rr:
@@ -96,7 +168,31 @@ class ModbusClient(AsyncModbusTcpClient):
         return result
 
     async def read_holding_registers(self, address, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
+        """Read holding registers, using read-ahead cache when available.
+
+        Args:
+            address: Start register address.
+            count: Number of consecutive registers to read.
+            device_id: Modbus unit/device id.
+            no_response_expected: Forwarded pymodbus option.
+            trace: Enable packet-level trace logging for this call only.
+
+        Returns:
+            A Modbus PDU response.
+        """
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.HOLDING, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)
 
     async def read_input_registers(self, address, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
+        """Read input registers, using read-ahead cache when available.
+
+        Args:
+            address: Start register address.
+            count: Number of consecutive registers to read.
+            device_id: Modbus unit/device id.
+            no_response_expected: Forwarded pymodbus option.
+            trace: Enable packet-level trace logging for this call only.
+
+        Returns:
+            A Modbus PDU response.
+        """
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.INPUT, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)
