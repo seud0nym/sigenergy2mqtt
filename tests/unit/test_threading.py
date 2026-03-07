@@ -35,6 +35,9 @@ class DummyMQTTHandler:
     async def close(self):
         pass
 
+    def deregister_all(self, mqtt_client):
+        pass
+
 
 class DummyDevice:
     def __init__(self, name="dev"):
@@ -61,6 +64,12 @@ class DummyDevice:
             await asyncio.sleep(0)
 
         return [_coro()]
+
+    def on_commencement(self, modbus_client, mqtt_client):
+        pass
+
+    def on_completion(self, modbus_client, mqtt_client):
+        pass
 
 
 @pytest.mark.asyncio

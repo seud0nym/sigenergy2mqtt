@@ -69,8 +69,13 @@ async def test_sensor_publish_basic():
     mqtt_client = MagicMock()
     published_messages = []
 
-    def capture_publish(topic, payload, qos, retain):
+    def capture_publish(topic, payload, qos=0, retain=False):
         published_messages.append({"topic": topic, "payload": payload, "qos": qos, "retain": retain})
+        msg = MagicMock()
+        msg.wait_for_publish.return_value = None
+        msg.is_published.return_value = True
+        msg.rc = 0
+        return msg
 
     mqtt_client.publish = capture_publish
 
@@ -108,8 +113,13 @@ async def test_sensor_publish_raw():
     mqtt_client = MagicMock()
     published_messages = []
 
-    def capture_publish(topic, payload, qos, retain):
+    def capture_publish(topic, payload, qos=0, retain=False):
         published_messages.append({"topic": topic, "payload": payload, "qos": qos, "retain": retain})
+        msg = MagicMock()
+        msg.wait_for_publish.return_value = None
+        msg.is_published.return_value = True
+        msg.rc = 0
+        return msg
 
     mqtt_client.publish = capture_publish
 
@@ -150,13 +160,13 @@ async def test_sensor_publish_unpublishable():
     mqtt_client = MagicMock()
     published_messages = []
 
-    def capture_publish(topic, payload, qos, retain):
-        published_messages.append(
-            {
-                "topic": topic,
-                "payload": payload,
-            }
-        )
+    def capture_publish(topic, payload, qos=0, retain=False):
+        published_messages.append({"topic": topic, "payload": payload, "qos": qos, "retain": retain})
+        msg = MagicMock()
+        msg.wait_for_publish.return_value = None
+        msg.is_published.return_value = True
+        msg.rc = 0
+        return msg
 
     mqtt_client.publish = capture_publish
 

@@ -828,7 +828,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         :raises RuntimeError: if the message was not published for another
             reason.
         """
-        message = mqtt_client.publish(topic, payload, qos, retain)
+        message = mqtt_client.publish(topic, payload, qos=qos, retain=retain)
         if timeout is None or timeout >= 0:
             message.wait_for_publish(timeout=timeout)
         if message.is_published():
@@ -836,7 +836,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 logging.debug(f"{self.__class__.__name__} Published  state={payload} to topic {topic} result={message.rc}")
         else:
             logging.warning(f"{self.__class__.__name__} Failed to publish state={payload} to topic {topic} result={message.rc}")
-        return message.is_published()
+        return bool(message.is_published())
 
     async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> None:
         """Publish all derived sensors.

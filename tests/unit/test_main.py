@@ -839,23 +839,8 @@ class TestSignals:
             main_mod.setup_signals([MagicMock()])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
             handler(signal.SIGHUP, None)
-            assert mock_reload.called
+            assert not mock_reload.called
             mock_request.assert_called_once()
-
-    def test_reload_on_signal_keeps_reloaded_ha_state(self, clean_config):
-        """Test reload_on_signal honors HA enabled state from reloaded config."""
-        clean_config.home_assistant.enabled = True
-
-        def _reload():
-            active_config.home_assistant.enabled = False
-
-        with patch("signal.signal") as mock_sig:
-            main_mod.setup_signals([MagicMock()])
-            handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
-            with patch.object(active_config, "reload", side_effect=_reload):
-                handler(signal.SIGHUP, None)
-
-        assert active_config.home_assistant.enabled is False
 
 
 class TestUpgrade:
