@@ -129,6 +129,8 @@ async def read_and_publish_device_sensors(
             logging.info(f"Closing Modbus connection to {url_label}")
             ModbusClientFactory.remove(modbus_client)
 
+        logging.info(f"Deregistering and unsubscribing MQTT handlers for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
+        mqtt_handler.deregister_all(mqtt_client)
         logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
