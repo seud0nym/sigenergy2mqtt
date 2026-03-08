@@ -1,6 +1,6 @@
 import logging
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest  # noqa: F401
 
@@ -213,15 +213,14 @@ class TestConfigReload:
                             assert cfg.language == "en"
                             assert "Invalid language 'de'" in caplog.text
 
-    @patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock)
+    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "1.2.3.4", "port": 502}])
     @patch("sigenergy2mqtt.config.config.os.getenv")
-    def test_reload_with_auto_discovery_force(self, mock_getenv, mock_scan):
+    def test_reload_with_auto_discovery_force(self, mock_getenv, mock_run_auto_discovery):
         """Test reload with auto-discovery forced."""
         from sigenergy2mqtt.config.const import SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY
 
         with _swap_active_config(Config()) as cfg:
             mock_getenv.side_effect = lambda k, default=None: "force" if k == SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY else default
-            mock_scan.return_value = [{"host": "1.2.3.4", "port": 502}]
 
             # We need to mock open properly to avoid infinite loops in ruamel.yaml
             from unittest.mock import mock_open
@@ -230,8 +229,7 @@ class TestConfigReload:
             with patch("builtins.open", m):
                 with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
                     cfg.reload()
-
-            mock_scan.assert_called_once()
+            mock_run_auto_discovery.assert_called_once()
 
     def test_devices_list_exists(self):
         """Test devices list exists and is a list."""
@@ -318,12 +316,21 @@ class TestConfigCoverageAugmentation:
 
     @patch("sigenergy2mqtt.config.config.asyncio.run")
     def test_run_auto_discovery_exception(self, mock_run):
-        mock_run.side_effect = Exception("Mocked Asyncio Error")
+        def side_effect(coro, **kwargs):
+            if hasattr(coro, "close"):
+                coro.close()
+            raise Exception("Mocked Asyncio Error")
+
+        mock_run.side_effect = side_effect
         cfg = Config()
         result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
         assert result == []
+        # Ensure all captured coroutines are closed in case side_effect wasn't called (unlikely)
+        for call in mock_run.call_args_list:
+            c = call[0][0]
+            if hasattr(c, "close"):
+                c.close()
 
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
     def test_run_auto_discovery_with_running_loop_success(self, mock_get_loop):
         # We simulate that a loop is running
@@ -335,13 +342,18 @@ class TestConfigCoverageAugmentation:
             mock_future.result.return_value = [{"host": "127.0.0.1", "port": 502}]
             mock_threadsafe.return_value = mock_future
 
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock) as mock_scan:  # noqa: F841
+            async def mock_scan_side_effect(*args, **kwargs):
+                return []
+
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", side_effect=mock_scan_side_effect) as mock_scan:  # noqa: F841
                 cfg = Config()
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == [{"host": "127.0.0.1", "port": 502}]
-                # Close the coroutine to avoid RuntimeWarning
-                coro = mock_threadsafe.call_args[0][0]
-                coro.close()
+                # Close all coroutines to avoid RuntimeWarning
+                for call in mock_threadsafe.call_args_list:
+                    coro = call[0][0]
+                    if hasattr(coro, "close"):
+                        coro.close()
 
     @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
     def test_run_auto_discovery_with_running_loop_timeout(self, mock_get_loop):
@@ -353,14 +365,19 @@ class TestConfigCoverageAugmentation:
             mock_future.result.side_effect = TimeoutError("Timed out")
             mock_threadsafe.return_value = mock_future
 
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock) as mock_scan:  # noqa: F841
+            async def mock_scan_side_effect(*args, **kwargs):
+                return []
+
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", side_effect=mock_scan_side_effect) as mock_scan:  # noqa: F841
                 cfg = Config()
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == []
                 mock_future.cancel.assert_called_once()
-                # Close the coroutine to avoid RuntimeWarning
-                coro = mock_threadsafe.call_args[0][0]
-                coro.close()
+                # Close all coroutines to avoid RuntimeWarning
+                for call in mock_threadsafe.call_args_list:
+                    coro = call[0][0]
+                    if hasattr(coro, "close"):
+                        coro.close()
 
     @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
     def test_run_auto_discovery_with_running_loop_generic_exception(self, mock_get_loop):
@@ -372,13 +389,18 @@ class TestConfigCoverageAugmentation:
             mock_future.result.side_effect = Exception("Generic")
             mock_threadsafe.return_value = mock_future
 
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock) as mock_scan:  # noqa: F841
+            async def mock_scan_side_effect(*args, **kwargs):
+                return []
+
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", side_effect=mock_scan_side_effect) as mock_scan:  # noqa: F841
                 cfg = Config()
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                 assert result == []
-                # Close the coroutine to avoid RuntimeWarning
-                coro = mock_threadsafe.call_args[0][0]
-                coro.close()
+                # Close all coroutines to avoid RuntimeWarning
+                for call in mock_threadsafe.call_args_list:
+                    coro = call[0][0]
+                    if hasattr(coro, "close"):
+                        coro.close()
 
     @patch("sigenergy2mqtt.config.config.time.time", return_value=1000000000.0)
     def test_clean_stale_files_unlink_exception(self, mock_time, tmp_path, caplog):

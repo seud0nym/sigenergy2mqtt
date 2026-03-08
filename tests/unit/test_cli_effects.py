@@ -49,7 +49,11 @@ async def test_threading_clean_effect(monkeypatch):
     cfg.add_device(mock_device)
 
     mock_mqtt_client = MagicMock()
-    mock_mqtt_handler = AsyncMock()
+    mock_mqtt_handler = MagicMock()
+    mock_mqtt_handler.close = AsyncMock()
+    mock_mqtt_handler.wait_for = AsyncMock()
+    mock_mqtt_handler.deregister_all = MagicMock()
+
     monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mock_mqtt_client, mock_mqtt_handler)))
 
     mock_modbus_factory = MagicMock()
@@ -88,7 +92,11 @@ async def test_threading_discovery_only_effect(monkeypatch):
     cfg.add_device(mock_device)
 
     mock_mqtt_client = MagicMock()
-    mock_mqtt_handler = AsyncMock()
+    mock_mqtt_handler = MagicMock()
+    mock_mqtt_handler.close = AsyncMock()
+    mock_mqtt_handler.wait_for = AsyncMock()
+    mock_mqtt_handler.deregister_all = MagicMock()
+
     monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(return_value=(mock_mqtt_client, mock_mqtt_handler)))
 
     # Mock modbus client to avoid actual connection

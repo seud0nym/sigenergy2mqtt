@@ -1,6 +1,6 @@
 import os
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from sigenergy2mqtt.config import _promote_cli_to_env, const
 
@@ -30,7 +30,7 @@ def test_apply_cli_overrides_boolean_flags():
     # 3. Non-boolean flags (should always be applied if not None)
     setattr(args, "some_other_arg", "some_value")
 
-    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
+    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[]):
         _promote_cli_to_env(args)
 
         # Verify ignored flags were NOT set in os.environ
@@ -51,6 +51,6 @@ def test_apply_cli_overrides_repeated_interval():
     setattr(args, const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, 10)
     setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
 
-    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=AsyncMock, return_value=[]):
+    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[]):
         _promote_cli_to_env(args)
         assert os.environ[const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL] == "10"

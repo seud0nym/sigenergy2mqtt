@@ -190,10 +190,11 @@ class Config:
         except RuntimeError:
             loop = None
 
+        coro = auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
             # Normal case: no event loop running, asyncio.run() is safe.
             try:
-                return asyncio.run(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries))
+                return asyncio.run(coro)
             except Exception:
                 logging.exception("Auto-discovery failed")
                 return []
@@ -201,15 +202,19 @@ class Config:
         # A loop is already running (e.g. called from a signal handler or sync
         # code invoked from async context). Submit to the running loop from this
         # thread and wait with a finite timeout to avoid hanging indefinitely.
+        future = None
         try:
-            future = asyncio.run_coroutine_threadsafe(auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries), loop)
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
             return future.result(timeout=timeout)
         except TimeoutError:
-            future.cancel()  # type: ignore - future is always bound before .result() raises.
+            if future:
+                future.cancel()
             logging.error("Auto-discovery timed out after %.1fs", timeout)
             return []
         except Exception:
-            future.cancel()  # type: ignore
+            if future:
+                future.cancel()
+            coro.close()
             logging.exception("Auto-discovery failed when submitting to running loop")
             return []
 
