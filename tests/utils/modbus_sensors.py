@@ -135,8 +135,10 @@ async def get_sensor_instances(
     pv_inverter_device_address: int = 1,
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
+    firmware_version: str = FIRMWARE_VERSION,
     protocol_version: Protocol | None = None,
-    concrete_sensor_check: bool = True,
+    output_type: OutputType = OUTPUT_TYPE,
+    concrete_sensor_check: bool = False,
 ) -> dict[str, Sensor]:
     """Instantiate the full sensor graph and return all sensors keyed by unique ID.
 
@@ -175,8 +177,12 @@ async def get_sensor_instances(
             Defaults to ``1``.
         ac_charger_device_address: Modbus device address for the AC charger.
             Defaults to ``2``.
+        firmware_version: The firmware version to use when creating inverters.
+            Defaults to ``FIRMWARE_VERSION``.
         protocol_version: The :class:`Protocol` version to use when creating devices.
             Defaults to ``max(Protocol)`` (the latest known protocol version).
+        output_type: The :class:`OutputType` to use when creating devices.
+            Defaults to ``OutputType.THREE_PHASE``.
         concrete_sensor_check: When ``True``, performs register gap, overlap, and
             unused-class validation and logs warnings for any issues found.
             Defaults to ``True``.
@@ -204,7 +210,7 @@ async def get_sensor_instances(
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     pv_modbus_client = DummyModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
 
-    plant = await PowerPlant.create(plant_index, hi_device_type, FIRMWARE_VERSION, protocol_version, OUTPUT_TYPE, hi_modbus_client)
+    plant = await PowerPlant.create(plant_index, hi_device_type, firmware_version, protocol_version, output_type, hi_modbus_client)
     hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, hi_modbus_client)
     pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, pv_modbus_client)
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)

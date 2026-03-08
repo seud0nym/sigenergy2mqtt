@@ -60,9 +60,9 @@ def write_naming_convention(f):
 
 async def sensor_index():
     with _swap_active_config(Config()):
-        hass_sensors = await get_sensor_instances(home_assistant_enabled=True)
+        hass_sensors = await get_sensor_instances(home_assistant_enabled=True, concrete_sensor_check=True)
     with _swap_active_config(Config()):
-        mqtt_sensors = await get_sensor_instances(home_assistant_enabled=False)
+        mqtt_sensors = await get_sensor_instances(home_assistant_enabled=False, concrete_sensor_check=True)
 
     def extract_min_max(range_string: str, precision: int | None, gain: float):
         """
