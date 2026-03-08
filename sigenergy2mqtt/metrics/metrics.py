@@ -11,10 +11,16 @@ fields at actual service start rather than at module-import time.
 """
 
 import logging
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 import threading
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import Callable
+
+import asyncio
+
+from sigenergy2mqtt.config import active_config
 
 
 class Metrics:
@@ -28,6 +34,9 @@ class Metrics:
     """
 
     _lock: threading.Lock = threading.Lock()
+    _pending_lock: threading.Lock = threading.Lock()
+    _executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
+    _pending_updates: list[Future] = []
 
     _started: float = 0.0
     """Monotonic reference timestamp set by :meth:`commence`. Used for rate calculations."""
@@ -190,13 +199,66 @@ class Metrics:
         cls.sigenergy2mqtt_started = datetime.now().astimezone().isoformat()
 
     @classmethod
+    def _metrics_enabled(cls) -> bool:
+        """Return True when metrics recording is enabled in configuration."""
+        return bool(getattr(active_config, "metrics_enabled", True))
+
+    @classmethod
+    def _submit(cls, operation: Callable[[], None]) -> None:
+        """Queue a metric update to the internal worker and return immediately."""
+        if not cls._metrics_enabled():
+            return
+
+        future = cls._executor.submit(operation)
+        with cls._pending_lock:
+            cls._pending_updates.append(future)
+
+        def _cleanup(completed: Future) -> None:
+            with cls._pending_lock:
+                if completed in cls._pending_updates:
+                    cls._pending_updates.remove(completed)
+
+        future.add_done_callback(_cleanup)
+
+    @classmethod
+    def _update_with_lock(cls, operation: Callable[[], None], warning: str) -> None:
+        """Run a metric update while holding the class lock."""
+        acquired = False
+        try:
+            if not cls._metrics_enabled():
+                return
+
+            acquired = cls._lock.acquire(timeout=1)
+            if not acquired:
+                raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
+            operation()
+        except Exception as exc:
+            logging.warning(f"Error during {warning}: {repr(exc)}")
+        finally:
+            if acquired:
+                cls._lock.release()
+
+    @classmethod
+    async def drain(cls, timeout: float | None = 1.0) -> None:
+        """Await completion of queued metrics updates. Primarily intended for tests."""
+        with cls._pending_lock:
+            pending = list(cls._pending_updates)
+        if not pending:
+            return
+        done, not_done = await asyncio.to_thread(wait, pending, timeout=timeout)
+        if not_done:
+            raise TimeoutError(f"Timed out waiting for {len(not_done)} metrics updates to finish.")
+
+    @classmethod
     async def modbus_cache_fill(cls) -> None:
         """Increment the cache-fill read counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_modbus_cache_fill_reads += 1
-        except Exception as exc:
-            logging.warning(f"Error during modbus cache metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "modbus cache metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def modbus_cache_hits(cls, reads: int, hits: int) -> None:
@@ -207,12 +269,14 @@ class Metrics:
             reads: Total reads attempted in the cycle.
             hits:  Reads satisfied from cache in the cycle.
         """
-        try:
-            percentage = round(hits / reads * 100.0, 2)
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
+                percentage = round(hits / reads * 100.0, 2)
                 cls.sigenergy2mqtt_modbus_cache_hit_percentage = percentage
-        except Exception as exc:
-            logging.warning(f"Error during modbus cache metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "modbus cache metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def modbus_read(cls, registers: int, seconds: float) -> None:
@@ -223,9 +287,9 @@ class Metrics:
             registers: Number of registers read in this operation.
             seconds:   Wall-clock duration of the operation in seconds.
         """
-        try:
-            elapsed = seconds * 1000.0
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
                 cls.sigenergy2mqtt_modbus_reads += 1
                 cls.sigenergy2mqtt_modbus_physical_read_percentage = round(cls.sigenergy2mqtt_modbus_cache_fill_reads / cls.sigenergy2mqtt_modbus_reads * 100.0, 2)
                 cls.sigenergy2mqtt_modbus_register_reads += registers
@@ -234,17 +298,21 @@ class Metrics:
                 cls.sigenergy2mqtt_modbus_read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
                 cls.sigenergy2mqtt_modbus_read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
                 cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_register_reads if cls.sigenergy2mqtt_modbus_register_reads > 0 else 0.0
-        except Exception as exc:
-            logging.warning(f"Error during modbus read metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "modbus read metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def modbus_read_error(cls) -> None:
         """Increment the modbus read error counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_modbus_read_errors += 1
-        except Exception as exc:
-            logging.warning(f"Error during modbus read error metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "modbus read error metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def modbus_write(cls, registers: int, seconds: float) -> None:
@@ -255,26 +323,30 @@ class Metrics:
             registers: Number of registers written in this operation.
             seconds:   Wall-clock duration of the operation in seconds.
         """
-        try:
-            elapsed = seconds * 1000.0
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
                 cls.sigenergy2mqtt_modbus_writes += registers
                 cls.sigenergy2mqtt_modbus_write_total += elapsed
                 # min/max computed inside the lock to prevent TOCTOU races
                 cls.sigenergy2mqtt_modbus_write_max = max(cls.sigenergy2mqtt_modbus_write_max, elapsed)
                 cls.sigenergy2mqtt_modbus_write_min = min(cls.sigenergy2mqtt_modbus_write_min, elapsed)
                 cls.sigenergy2mqtt_modbus_write_mean = cls.sigenergy2mqtt_modbus_write_total / cls.sigenergy2mqtt_modbus_writes if cls.sigenergy2mqtt_modbus_writes > 0 else 0.0
-        except Exception as exc:
-            logging.warning(f"Error during modbus write metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "modbus write metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def modbus_write_error(cls) -> None:
         """Increment the modbus write error counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_modbus_write_errors += 1
-        except Exception as exc:
-            logging.warning(f"Error during modbus write error metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "modbus write error metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def influxdb_write(cls, batch_size: int, seconds: float) -> None:
@@ -285,9 +357,9 @@ class Metrics:
             batch_size: Number of data points in the written batch.
             seconds:    Wall-clock duration of the operation in seconds.
         """
-        try:
-            elapsed = seconds * 1000.0
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
                 cls.sigenergy2mqtt_influxdb_writes += 1
                 cls.sigenergy2mqtt_influxdb_batch_total += batch_size
                 cls.sigenergy2mqtt_influxdb_write_total += elapsed
@@ -295,50 +367,62 @@ class Metrics:
                 cls.sigenergy2mqtt_influxdb_write_max = max(cls.sigenergy2mqtt_influxdb_write_max, elapsed)
                 cls.sigenergy2mqtt_influxdb_write_min = min(cls.sigenergy2mqtt_influxdb_write_min, elapsed)
                 cls.sigenergy2mqtt_influxdb_write_mean = cls.sigenergy2mqtt_influxdb_write_total / cls.sigenergy2mqtt_influxdb_writes if cls.sigenergy2mqtt_influxdb_writes > 0 else 0.0
-        except Exception as exc:
-            logging.warning(f"Error during influxdb write metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "influxdb write metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def influxdb_write_error(cls) -> None:
         """Increment the InfluxDB write error counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_write_errors += 1
-        except Exception as exc:
-            logging.warning(f"Error during influxdb write error metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "influxdb write error metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def influxdb_query(cls) -> None:
         """Record a completed InfluxDB query operation."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_queries += 1
-        except Exception as exc:
-            logging.warning(f"Error during influxdb query metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "influxdb query metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def influxdb_query_error(cls) -> None:
         """Increment the InfluxDB query error counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_query_errors += 1
-        except Exception as exc:
-            logging.warning(f"Error during influxdb query error metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "influxdb query error metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def influxdb_retry(cls) -> None:
         """Increment the InfluxDB retry counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_retries += 1
-        except Exception as exc:
-            logging.warning(f"Error during influxdb retry metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "influxdb retry metrics collection")
+
+        cls._submit(_update)
 
     @classmethod
     async def influxdb_rate_limit_wait(cls) -> None:
         """Increment the InfluxDB rate-limit wait counter."""
-        try:
-            async with cls.lock(timeout=1):
+        def _update() -> None:
+            def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_rate_limit_waits += 1
-        except Exception as exc:
-            logging.warning(f"Error during influxdb rate limit metrics collection: {repr(exc)}")
+
+            cls._update_with_lock(_operation, "influxdb rate limit metrics collection")
+
+        cls._submit(_update)
