@@ -121,7 +121,7 @@ options:
                         Set the method of calculating the Plant Consumed Power
                         sensor. Valid values are: 'calculated', 'total' (Total
                         Load Power register), or 'general' (V2.8 General Load
-                        Power register). The default is 'calculated'. This
+                        Power register). The default is 'total'. This
                         option is ignored on firmware earlier than that
                         supporting Modbus Protocol V2.8.
   --hass-enabled        Enable auto-discovery in Home Assistant.
