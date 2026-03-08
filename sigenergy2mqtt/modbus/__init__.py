@@ -1,3 +1,5 @@
+"""Modbus client, locking, and factory primitives used by the application."""
+
 from typing import TypeAlias
 
 from .client import ModbusClient
