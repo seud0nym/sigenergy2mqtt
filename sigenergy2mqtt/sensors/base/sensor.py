@@ -1100,7 +1100,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             index = int(float(value))
             if DiscoveryKeys.OPTIONS in self:
                 options = cast(list[str], self[DiscoveryKeys.OPTIONS])
-                if 0 <= index < len(options):
+                if 0 <= index < len(options) and options[index] not in ("", None):
                     return index
         except (ValueError, TypeError):
             pass
@@ -1117,7 +1117,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
             # Try raw English strings
             for i, option in enumerate(options):
-                if option == str(value):
+                if option not in ("", None) and option == str(value):
                     return i
 
         raise ValueError(f"'{value}' is not a valid option")

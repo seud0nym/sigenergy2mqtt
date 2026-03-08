@@ -669,6 +669,7 @@ class SelectSensor(ReadWriteSensor):
         try:
             index = self._get_option_index(value)
         except ValueError:
+            self.force_publish = True
             logging.error(f"{self.name} invalid value '{value}': Not a valid option or index")
             return False
 
