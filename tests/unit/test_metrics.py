@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
 
 
@@ -89,6 +90,7 @@ class TestMetricsCacheHits:
     async def test_modbus_cache_hits_success(self):
         """Test successful cache hit percentage calculation."""
         await Metrics.modbus_cache_hits(reads=100, hits=75)
+        await Metrics.drain()
         assert Metrics.sigenergy2mqtt_modbus_cache_hit_percentage == 75.0
 
     @pytest.mark.asyncio
@@ -96,6 +98,7 @@ class TestMetricsCacheHits:
         """Test handling of zero reads (ZeroDivisionError)."""
         with patch("logging.warning") as mock_warning:
             await Metrics.modbus_cache_hits(reads=0, hits=0)
+            await Metrics.drain()
             # Should log warning about exception
             assert mock_warning.called
             assert "ZeroDivisionError" in str(mock_warning.call_args)
@@ -106,6 +109,7 @@ class TestMetricsCacheHits:
         with patch("logging.warning") as mock_warning:
             # Force an exception by passing invalid types
             await Metrics.modbus_cache_hits(reads=None, hits=75)
+            await Metrics.drain()
             assert mock_warning.called
             assert "modbus cache metrics collection" in mock_warning.call_args[0][0]
 
@@ -142,6 +146,7 @@ class TestMetricsRead:
     async def test_modbus_read_success(self):
         """Test successful read metrics collection."""
         await Metrics.modbus_read(registers=10, seconds=0.05)
+        await Metrics.drain()
 
         assert Metrics.sigenergy2mqtt_modbus_register_reads == 10
         assert Metrics.sigenergy2mqtt_modbus_read_total == 50.0  # 0.05 * 1000
@@ -153,8 +158,11 @@ class TestMetricsRead:
     async def test_modbus_read_updates_min_max(self):
         """Verify min/max tracking logic."""
         await Metrics.modbus_read(registers=5, seconds=0.1)  # 100ms
+        await Metrics.drain()
         await Metrics.modbus_read(registers=5, seconds=0.05)  # 50ms
+        await Metrics.drain()
         await Metrics.modbus_read(registers=5, seconds=0.15)  # 150ms
+        await Metrics.drain()
 
         assert Metrics.sigenergy2mqtt_modbus_read_max == 150.0
         assert Metrics.sigenergy2mqtt_modbus_read_min == 50.0
@@ -164,7 +172,9 @@ class TestMetricsRead:
     async def test_modbus_read_mean_calculation(self):
         """Verify mean calculation."""
         await Metrics.modbus_read(registers=10, seconds=0.1)  # 100ms
+        await Metrics.drain()
         await Metrics.modbus_read(registers=10, seconds=0.2)  # 200ms
+        await Metrics.drain()
 
         # Total = 300ms, reads = 20, mean = 15ms
         assert Metrics.sigenergy2mqtt_modbus_read_mean == 15.0
@@ -175,6 +185,7 @@ class TestMetricsRead:
         with patch("logging.warning") as mock_warning:
             # Force an exception
             await Metrics.modbus_read(registers=None, seconds=0.1)
+            await Metrics.drain()
             assert mock_warning.called
             assert "modbus read metrics collection" in mock_warning.call_args[0][0]
 
@@ -198,9 +209,11 @@ class TestMetricsReadError:
         assert Metrics.sigenergy2mqtt_modbus_read_errors == 0
 
         await Metrics.modbus_read_error()
+        await Metrics.drain()
         assert Metrics.sigenergy2mqtt_modbus_read_errors == 1
 
         await Metrics.modbus_read_error()
+        await Metrics.drain()
         assert Metrics.sigenergy2mqtt_modbus_read_errors == 2
 
     @pytest.mark.asyncio
@@ -211,6 +224,7 @@ class TestMetricsReadError:
 
             with patch("logging.warning") as mock_warning:
                 await Metrics.modbus_read_error()
+                await Metrics.drain()
                 assert mock_warning.called
                 assert "modbus read error metrics collection" in mock_warning.call_args[0][0]
                 # Ensure Mock object was used (since it failed it shouldn't have released usually but here we just check it was called)
@@ -246,6 +260,7 @@ class TestMetricsWrite:
     async def test_modbus_write_success(self):
         """Test successful write metrics collection."""
         await Metrics.modbus_write(registers=5, seconds=0.03)
+        await Metrics.drain()
 
         assert Metrics.sigenergy2mqtt_modbus_writes == 5
         assert Metrics.sigenergy2mqtt_modbus_write_total == 30.0  # 0.03 * 1000
@@ -256,8 +271,11 @@ class TestMetricsWrite:
     async def test_modbus_write_updates_min_max(self):
         """Verify min/max tracking logic."""
         await Metrics.modbus_write(registers=2, seconds=0.1)  # 100ms
+        await Metrics.drain()
         await Metrics.modbus_write(registers=2, seconds=0.05)  # 50ms
+        await Metrics.drain()
         await Metrics.modbus_write(registers=2, seconds=0.15)  # 150ms
+        await Metrics.drain()
 
         assert Metrics.sigenergy2mqtt_modbus_write_max == 150.0
         assert Metrics.sigenergy2mqtt_modbus_writes == 6
@@ -266,7 +284,9 @@ class TestMetricsWrite:
     async def test_modbus_write_mean_calculation(self):
         """Verify mean calculation."""
         await Metrics.modbus_write(registers=5, seconds=0.1)  # 100ms
+        await Metrics.drain()
         await Metrics.modbus_write(registers=5, seconds=0.2)  # 200ms
+        await Metrics.drain()
 
         # Total = 300ms, writes = 10, mean = 30ms
         assert Metrics.sigenergy2mqtt_modbus_write_mean == 30.0
@@ -277,6 +297,7 @@ class TestMetricsWrite:
         with patch("logging.warning") as mock_warning:
             # Force an exception
             await Metrics.modbus_write(registers=None, seconds=0.1)
+            await Metrics.drain()
             assert mock_warning.called
             assert "modbus write metrics collection" in mock_warning.call_args[0][0]
 
@@ -300,9 +321,11 @@ class TestMetricsWriteError:
         assert Metrics.sigenergy2mqtt_modbus_write_errors == 0
 
         await Metrics.modbus_write_error()
+        await Metrics.drain()
         assert Metrics.sigenergy2mqtt_modbus_write_errors == 1
 
         await Metrics.modbus_write_error()
+        await Metrics.drain()
         assert Metrics.sigenergy2mqtt_modbus_write_errors == 2
 
     @pytest.mark.asyncio
@@ -313,6 +336,48 @@ class TestMetricsWriteError:
 
             with patch("logging.warning") as mock_warning:
                 await Metrics.modbus_write_error()
+                await Metrics.drain()
                 assert mock_warning.called
                 assert "modbus write error metrics collection" in mock_warning.call_args[0][0]
                 mock_lock.acquire.assert_called()
+
+
+class TestMetricsEnabledGate:
+    """Tests that metric collection honours active_config.metrics_enabled."""
+
+    @pytest.fixture(autouse=True)
+    def reset_metrics(self):
+        original_enabled = getattr(active_config, "metrics_enabled", True)
+        original_reads = Metrics.sigenergy2mqtt_modbus_register_reads
+        original_errors = Metrics.sigenergy2mqtt_modbus_read_errors
+
+        Metrics.sigenergy2mqtt_modbus_register_reads = 0
+        Metrics.sigenergy2mqtt_modbus_read_errors = 0
+
+        yield
+
+        active_config.metrics_enabled = original_enabled
+        Metrics.sigenergy2mqtt_modbus_register_reads = original_reads
+        Metrics.sigenergy2mqtt_modbus_read_errors = original_errors
+
+    @pytest.mark.asyncio
+    async def test_recording_skipped_when_metrics_disabled(self):
+        active_config.metrics_enabled = False
+
+        await Metrics.modbus_read(registers=10, seconds=0.05)
+        await Metrics.modbus_read_error()
+        await Metrics.drain()
+
+        assert Metrics.sigenergy2mqtt_modbus_register_reads == 0
+        assert Metrics.sigenergy2mqtt_modbus_read_errors == 0
+
+    @pytest.mark.asyncio
+    async def test_recording_resumes_when_metrics_enabled(self):
+        active_config.metrics_enabled = True
+
+        await Metrics.modbus_read(registers=5, seconds=0.05)
+        await Metrics.modbus_read_error()
+        await Metrics.drain()
+
+        assert Metrics.sigenergy2mqtt_modbus_register_reads == 5
+        assert Metrics.sigenergy2mqtt_modbus_read_errors == 1
