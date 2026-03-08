@@ -557,7 +557,7 @@ class MaxChargingLimit(RemoteEMSLimit):
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4) and active_config.ems_mode_check:
+        if self._availability_control_sensor is not None and self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4) and active_config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
@@ -588,7 +588,7 @@ class MaxDischargingLimit(RemoteEMSLimit):
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6) and active_config.ems_mode_check:
+        if self._availability_control_sensor is not None and self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6) and active_config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Discharging")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
@@ -619,7 +619,7 @@ class PVMaxPowerLimit(RemoteEMSLimit):
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
-        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6) and active_config.ems_mode_check:
+        if self._availability_control_sensor is not None and self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6) and active_config.ems_mode_check:
             logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging/Discharging")
             return False
         return await super().value_is_valid(modbus_client, raw_value)

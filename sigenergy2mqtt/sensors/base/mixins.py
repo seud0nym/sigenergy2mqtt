@@ -452,6 +452,8 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         Returns:
             True if value was set successfully
         """
+        self.force_publish = True
+
         if modbus_client is None:
             raise ValueError(f"{self.__class__.__name__}: ModbusClient cannot be None")
 
