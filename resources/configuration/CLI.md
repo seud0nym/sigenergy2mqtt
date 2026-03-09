@@ -85,8 +85,9 @@ will be published to MQTT in the Home Assistant MQTT Discovery format.
 options:
   -h, --help            show this help message and exit
   -c, --config [SIGENERGY2MQTT_CONFIG]
-                        The path to the JSON configuration file (default:
-                        /etc/sigenergy2mqtt.yaml)
+                        The path to the YAML configuration file (default:
+                        SIGENERGY2MQTT_CONFIG env var, otherwise
+                        ./sigenergy2mqtt.yaml)
   -l, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the log level. Valid values are: DEBUG, INFO,
                         WARNING, ERROR or CRITICAL. Default is WARNING

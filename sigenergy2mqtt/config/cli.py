@@ -21,7 +21,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_CONFIG,
         default=os.getenv(const.SIGENERGY2MQTT_CONFIG, None),
-        help="The path to the JSON configuration file (default: /etc/sigenergy2mqtt.yaml)",
+        help="The path to the YAML configuration file (default: SIGENERGY2MQTT_CONFIG env var, otherwise ./sigenergy2mqtt.yaml)",
     )
     parser.add_argument(
         "-l",
