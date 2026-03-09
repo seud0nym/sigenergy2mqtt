@@ -3,6 +3,9 @@ name: Test & Badges
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "*.py"
+      - "**/*.py"
   workflow_dispatch:
 
 permissions:
