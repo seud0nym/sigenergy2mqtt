@@ -76,6 +76,22 @@ class Metrics:
     """Percentage of modbus reads that resulted in a physical bus read."""
 
     # ------------------------------------------------------------------
+    # MQTT publish metrics
+    # ------------------------------------------------------------------
+
+    sigenergy2mqtt_mqtt_publish_attempts: int = 0
+    """Total number of logical MQTT state publish attempts."""
+
+    sigenergy2mqtt_mqtt_publish_failures: int = 0
+    """Number of MQTT state publish attempts that failed."""
+
+    sigenergy2mqtt_mqtt_physical_publishes: int = 0
+    """Number of attempts that resulted in an actual MQTT state publish."""
+
+    sigenergy2mqtt_mqtt_physical_publish_percentage: float = 0.0
+    """Percentage of publish attempts that resulted in physical publishes."""
+
+    # ------------------------------------------------------------------
     # Modbus write metrics
     # ------------------------------------------------------------------
 
@@ -334,6 +350,42 @@ class Metrics:
                 cls.sigenergy2mqtt_modbus_write_mean = cls.sigenergy2mqtt_modbus_write_total / cls.sigenergy2mqtt_modbus_writes if cls.sigenergy2mqtt_modbus_writes > 0 else 0.0
 
             cls._update_with_lock(_operation, "modbus write metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def mqtt_publish_attempt(cls, physical_publish: bool) -> None:
+        """Record an MQTT state publish attempt.
+
+        Args:
+            physical_publish: ``True`` when the state message was physically
+                published to MQTT; ``False`` when it was suppressed or failed.
+        """
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_mqtt_publish_attempts += 1
+                if physical_publish:
+                    cls.sigenergy2mqtt_mqtt_physical_publishes += 1
+                cls.sigenergy2mqtt_mqtt_physical_publish_percentage = (
+                    round(cls.sigenergy2mqtt_mqtt_physical_publishes / cls.sigenergy2mqtt_mqtt_publish_attempts * 100.0, 2)
+                    if cls.sigenergy2mqtt_mqtt_publish_attempts > 0
+                    else 0.0
+                )
+
+            cls._update_with_lock(_operation, "mqtt publish attempt metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def mqtt_publish_failure(cls) -> None:
+        """Increment the MQTT state publish failure counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_mqtt_publish_failures += 1
+
+            cls._update_with_lock(_operation, "mqtt publish failure metrics collection")
 
         cls._submit(_update)
 

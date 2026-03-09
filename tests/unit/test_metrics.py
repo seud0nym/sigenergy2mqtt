@@ -381,3 +381,46 @@ class TestMetricsEnabledGate:
 
         assert Metrics.sigenergy2mqtt_modbus_register_reads == 5
         assert Metrics.sigenergy2mqtt_modbus_read_errors == 1
+
+
+class TestMetricsMqttPublish:
+    """Tests for MQTT publish metrics."""
+
+    @pytest.fixture(autouse=True)
+    def reset_metrics(self):
+        original_attempts = Metrics.sigenergy2mqtt_mqtt_publish_attempts
+        original_failures = Metrics.sigenergy2mqtt_mqtt_publish_failures
+        original_physical = Metrics.sigenergy2mqtt_mqtt_physical_publishes
+        original_percentage = Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage
+
+        Metrics.sigenergy2mqtt_mqtt_publish_attempts = 0
+        Metrics.sigenergy2mqtt_mqtt_publish_failures = 0
+        Metrics.sigenergy2mqtt_mqtt_physical_publishes = 0
+        Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage = 0.0
+
+        yield
+
+        Metrics.sigenergy2mqtt_mqtt_publish_attempts = original_attempts
+        Metrics.sigenergy2mqtt_mqtt_publish_failures = original_failures
+        Metrics.sigenergy2mqtt_mqtt_physical_publishes = original_physical
+        Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage = original_percentage
+
+    @pytest.mark.asyncio
+    async def test_mqtt_publish_attempt_physical_percentage(self):
+        await Metrics.mqtt_publish_attempt(physical_publish=False)
+        await Metrics.drain()
+        await Metrics.mqtt_publish_attempt(physical_publish=True)
+        await Metrics.drain()
+
+        assert Metrics.sigenergy2mqtt_mqtt_publish_attempts == 2
+        assert Metrics.sigenergy2mqtt_mqtt_physical_publishes == 1
+        assert Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage == 50.0
+
+    @pytest.mark.asyncio
+    async def test_mqtt_publish_failure_counter(self):
+        await Metrics.mqtt_publish_failure()
+        await Metrics.drain()
+        await Metrics.mqtt_publish_failure()
+        await Metrics.drain()
+
+        assert Metrics.sigenergy2mqtt_mqtt_publish_failures == 2

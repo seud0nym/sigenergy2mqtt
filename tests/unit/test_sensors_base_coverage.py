@@ -691,6 +691,38 @@ class TestPhase4MQTT:
             await s.publish(mqtt_client, modbus_client)
             # Should log disabling
 
+
+    @pytest.mark.asyncio
+    async def test_publish_records_mqtt_metrics(self, mock_config):
+        s = ConcreteSensor(name="T", unique_id="sigen_id_m", object_id="sigen_obj_m", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
+        s.configure_mqtt_topics("dev1")
+
+        mqtt_client = MagicMock()
+        modbus_client = MagicMock()
+        modbus_client.connected = True
+
+        with patch("sigenergy2mqtt.sensors.base.sensor.Metrics.mqtt_publish_attempt", new_callable=AsyncMock) as mock_attempt, patch(
+            "sigenergy2mqtt.sensors.base.sensor.Metrics.mqtt_publish_failure", new_callable=AsyncMock
+        ) as mock_failure:
+            # Suppressed repeat / no-state path still counts as an attempt, but not a failure.
+            with patch.object(ConcreteSensor, "get_state", new_callable=AsyncMock) as mock_get_state:
+                mock_get_state.return_value = None
+                await s.publish(mqtt_client, modbus_client)
+                mock_attempt.assert_awaited_with(physical_publish=False)
+                mock_failure.assert_not_awaited()
+
+            mock_attempt.reset_mock()
+            mock_failure.reset_mock()
+
+            # Failed physical publish counts both attempt and failure.
+            with patch.object(ConcreteSensor, "get_state", new_callable=AsyncMock) as mock_get_state, patch.object(
+                ConcreteSensor, "_publish_message", return_value=False
+            ):
+                mock_get_state.return_value = 123
+                await s.publish(mqtt_client, modbus_client)
+                mock_attempt.assert_awaited_with(physical_publish=False)
+                mock_failure.assert_awaited_once()
+
     @pytest.mark.asyncio
     async def test_publish_attributes_persistence(self, mock_config):
         s = ConcreteSensor(name="T", unique_id="sigen_id", object_id="sigen_obj", unit=None, device_class=None, state_class=None, icon=None, gain=1.0, precision=0)
