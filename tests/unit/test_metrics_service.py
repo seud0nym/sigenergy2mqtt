@@ -56,6 +56,8 @@ class TestMetricsService:
         # Verify key sensors are present
         assert "test_prefix_modbus_cache_hit_percentage" in sensors
         assert "test_prefix_modbus_reads_sec" in sensors
+        assert "test_prefix_mqtt_publish_failures" in sensors
+        assert "test_prefix_mqtt_physical_publish_percentage" in sensors
         assert "test_prefix_modbus_read_errors" in sensors
         assert "test_prefix_modbus_locks" in sensors
         assert "test_prefix_started" in sensors
@@ -115,3 +117,6 @@ class TestMetricsService:
 
         proto_sensor = service.read_sensors["test_prefix_modbus_protocol"]
         assert proto_sensor.state_topic == "sigenergy2mqtt/metrics/modbus_protocol"
+
+        mqtt_failures_sensor = service.read_sensors["test_prefix_mqtt_publish_failures"]
+        assert mqtt_failures_sensor.state_topic == "sigenergy2mqtt/metrics/mqtt_publish_failures"

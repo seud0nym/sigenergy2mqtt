@@ -85,6 +85,41 @@ class MetricsSensor(ReadableSensorMixin):
         pass
 
 
+class MQTTPublishFailures(MetricsSensor):
+    """Cumulative count of MQTT state publish failures."""
+
+    def __init__(self):
+        super().__init__(
+            name="MQTT Publish Failures",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_publish_failures",
+            object_id="sigenergy2mqtt_mqtt_publish_failures",
+            icon="mdi:counter",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_mqtt_publish_failures)
+        return True
+
+
+class MQTTPhysicalPublishes(MetricsSensor):
+    """Percentage of MQTT publish attempts that were physically published."""
+
+    def __init__(self):
+        super().__init__(
+            name="MQTT Physical Publishes",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_physical_publish_percentage",
+            object_id="sigenergy2mqtt_mqtt_physical_publish_percentage",
+            unit=PERCENTAGE,
+            icon="mdi:percent",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage)
+        return True
+
+
 class ModbusCacheHits(MetricsSensor):
     """Percentage of modbus reads satisfied from cache."""
 

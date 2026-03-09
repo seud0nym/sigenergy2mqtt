@@ -19,6 +19,7 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
+from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
@@ -740,6 +741,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             await self._publish_derived_sensors(mqtt_client, modbus_client, republish)
             return published
         except Exception as e:
+            await Metrics.mqtt_publish_attempt(physical_publish=False)
+            await Metrics.mqtt_publish_failure()
             return self._handle_publish_error(mqtt_client, modbus_client, e)
         finally:
             self.force_publish = False
@@ -777,6 +780,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if state is None and not self.force_publish:
             if self.debug_logging:
                 logging.debug(f"{self.__class__.__name__} Publishing SKIPPED: State is None")
+            await Metrics.mqtt_publish_attempt(physical_publish=False)
             return False
 
         # Reset failure count on successful state acquisition
@@ -791,6 +795,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         # Don't catch exceptions here - they will be handled by the caller
         published = self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.STATE_TOPIC]), f"{state}", self._qos, self._retain)
+        await Metrics.mqtt_publish_attempt(physical_publish=published)
+        if not published:
+            await Metrics.mqtt_publish_failure()
 
         # Publish raw state if configured
         if self.publish_raw:
