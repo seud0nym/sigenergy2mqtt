@@ -74,6 +74,14 @@ def configure_logging() -> None:
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
+    """Set an individual logger level/propagation and emit transition diagnostics.
+
+    Side effects:
+
+    - Mutates the named logger's effective level.
+    - Optionally changes ``logger.propagate`` to control record bubbling.
+    - Emits a log entry at the previous level when changing from a non-default level.
+    """
     logger = logging.getLogger(name)
     if logger.level != level:
         if logger.level not in (logging.NOTSET, level):
@@ -88,6 +96,11 @@ def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
 
 
 def get_modbus_url(modbus_client: ModbusClient) -> str:
+    """Return a stable ``modbus://host:port`` identifier for logs.
+
+    Falls back to ``modbus://unknown`` if the client does not expose connection
+    parameters yet.
+    """
     if modbus_client and hasattr(modbus_client, "comm_params"):
         return f"modbus://{modbus_client.comm_params.host}:{modbus_client.comm_params.port}"
     return "modbus://unknown"
@@ -100,6 +113,15 @@ async def get_state(
     default_value: int | float | str | None = None,
     raw: bool = False,
 ) -> int | float | str | None:
+    """Read a sensor state for bootstrap/probing while tolerating read failures.
+
+    Returns the sensor value when successful, otherwise ``default_value``.
+
+    Side effects:
+
+    - Performs a Modbus network read through ``sensor.get_state``.
+    - Emits debug logs for successful reads and caught failures.
+    """
     try:
         state = await sensor.get_state(raw=raw, modbus_client=modbus_client)
         logging.debug(f"READING {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device}")
@@ -116,6 +138,11 @@ async def read_registers(
     device_id: int,
     input_type: InputType,
 ) -> ModbusPDU:
+    """Read holding or input registers from a target device.
+
+    ``input_type`` selects the Modbus function code. Raises ``ValueError`` if
+    ``modbus_client`` is missing or the input type is unsupported.
+    """
     if modbus_client is None:
         raise ValueError("modbus_client cannot be None")
     if input_type == InputType.HOLDING:
@@ -189,6 +216,11 @@ async def make_ac_charger(
     device_address: int,
     plant: PowerPlant,
 ) -> ACCharger:
+    """Create an AC charger device and link it to the parent plant.
+
+    Side effects: performs async device initialisation reads and sets
+    ``via_device`` to the plant unique ID for topology/discovery metadata.
+    """
     charger = await ACCharger.create(plant_index, device_address, plant.protocol_version, modbus_client)
     charger.via_device = plant.unique_id
     return charger
@@ -200,6 +232,11 @@ async def make_dc_charger(
     protocol_version: Protocol,
     inverter_unique_id: str,
 ) -> DCCharger:
+    """Create a DC charger device and associate it with its inverter.
+
+    Side effects: performs async device initialisation and sets ``via_device``
+    to the owning inverter unique ID.
+    """
     charger = await DCCharger.create(plant_index, device_address, protocol_version)
     charger.via_device = inverter_unique_id
     return charger
@@ -411,7 +448,15 @@ async def _setup_ac_chargers(
 
 
 def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:
-    """Build and return the full list of ThreadConfigs, prepending any service threads."""
+    """Attach optional service/monitor threads to the discovered device configs.
+
+    Side effects:
+
+    - Mutates ``configs`` in-place by inserting a ``Services`` thread at index 0
+      and/or appending a debug ``Monitor`` thread.
+    - Instantiates integration services that may later make outbound API/network
+      calls (PVOutput/InfluxDB/Metrics) once started.
+    """
     svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 
     if active_config.metrics_enabled:
@@ -439,7 +484,14 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
 
 
 def setup_signals(configs: list[ThreadConfig]) -> None:
-    """Register OS signal handlers for graceful shutdown, reload, and restart."""
+    """Register process-level handlers for shutdown, reload, and restart signals.
+
+    Side effects:
+
+    - Installs handlers for ``SIGINT``, ``SIGTERM``, ``SIGHUP``, and ``SIGUSR1``.
+    - On termination paths, marks all thread configs offline.
+    - On restart path, suppresses Home Assistant availability-offline publication.
+    """
 
     def configure_for_restart(caught, frame):
         """Handle SIGUSR1 by suppressing HA and initiating a graceful shutdown."""
@@ -467,7 +519,15 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
 
 
 def check_upgrade() -> bool:
-    """Return True if a version change is detected, writing the new version to disk."""
+    """Detect version upgrades and persist the running version marker.
+
+    Returns ``True`` when the stored version differs from ``active_config``.
+
+    Side effects:
+
+    - Reads/writes ``<persistent_state_path>/.current-version``.
+    - Emits upgrade/info/error logging for file I/O and version transitions.
+    """
     if not active_config.home_assistant.enabled:
         return False
 
@@ -506,6 +566,15 @@ def check_upgrade() -> bool:
 
 
 async def async_main() -> None:
+    """Run the main lifecycle loop, supporting clean shutdown and controlled restart.
+
+    Side effects:
+
+    - Reconfigures global logging (including pymodbus integration).
+    - Rebuilds thread registry/config state and registers signal handlers.
+    - Probes Modbus devices/services (network I/O) and starts worker threads.
+    - Reloads runtime configuration after restart requests.
+    """
     while True:
         # Configure logging before pymodbus so basicConfig wins the handler race.
         configure_logging()
