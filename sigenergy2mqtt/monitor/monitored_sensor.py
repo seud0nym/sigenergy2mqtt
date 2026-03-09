@@ -3,6 +3,8 @@
 import time
 from dataclasses import dataclass, field
 
+from sigenergy2mqtt.config import active_config
+
 
 @dataclass
 class MonitoredSensor:
@@ -26,7 +28,17 @@ class MonitoredSensor:
     def is_overdue(self) -> bool:
         """Return whether the sensor is overdue for an update."""
 
-        return not self.notified and self.last_seen + (self.scan_interval * 3) < time.time()
+        repeated_interval = active_config.repeated_state_publish_interval
+        if repeated_interval < 0:
+            # Repeated states are never republished when unchanged, so the
+            # monitor cannot infer staleness from missing messages.
+            return False
+
+        expected_publish_interval = self.scan_interval
+        if repeated_interval > 0:
+            expected_publish_interval = max(expected_publish_interval, repeated_interval)
+
+        return not self.notified and self.last_seen + (expected_publish_interval * 3) < time.time()
 
     @property
     def name(self) -> str:

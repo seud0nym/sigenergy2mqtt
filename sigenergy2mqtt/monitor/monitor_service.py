@@ -166,8 +166,13 @@ class MonitorService(Device):
             mqtt_client: MQTT client instance.
 
         Returns:
-            A list with a single monitor coroutine.
+            A list with a single monitor coroutine, unless repeated-state
+            publishing is disabled for unchanged values.
         """
+
+        if active_config.repeated_state_publish_interval < 0:
+            logging.info(f"{self.name} Monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
+            return []
 
         return [self._monitor(modbus_client, mqtt_client, [])]
 
@@ -178,6 +183,10 @@ class MonitorService(Device):
             mqtt_client: MQTT client used for subscriptions.
             mqtt_handler: Helper used to register topic callbacks.
         """
+
+        if active_config.repeated_state_publish_interval < 0:
+            logging.info(f"{self.name} Monitoring subscriptions disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
+            return
 
         for d in self._devices:
             device = d.name
