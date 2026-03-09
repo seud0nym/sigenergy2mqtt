@@ -137,6 +137,13 @@ class TestConfigSettings:
         s = Settings(consumption="total", modbus=[ModbusConfig(host="localhost")])
         assert s.consumption == ConsumptionMethod.TOTAL
 
+    def test_settings_consumption_default_when_omitted(self):
+        """Test default consumption method when omitted from Settings."""
+        from sigenergy2mqtt.common import ConsumptionMethod
+
+        s = Settings(modbus=[ModbusConfig(host="localhost")])
+        assert s.consumption == ConsumptionMethod.TOTAL
+
     def test_settings_sanity_check_kw(self):
         """Test configuring sanity check kW via Settings."""
         s = Settings(sanity_check_default_kw=100.0, modbus=[ModbusConfig(host="localhost")])
