@@ -1700,6 +1700,10 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+  MQTTPhysicalPublishes:
+    name: Publications Physiques MQTT
+  MQTTPublishFailures:
+    name: Échecs de Publication MQTT
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Le chemin vers le fichier de configuration JSON (par défaut: /etc/sigenergy2mqtt.yaml)'

@@ -1700,6 +1700,10 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+  MQTTPhysicalPublishes:
+    name: MQTT Fysieke Publicaties
+  MQTTPublishFailures:
+    name: MQTT Publicatiefouten
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Het pad naar het JSON-configuratiebestand (standaard: /etc/sigenergy2mqtt.yaml)'

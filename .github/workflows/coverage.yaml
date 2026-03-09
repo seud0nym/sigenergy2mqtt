@@ -6,6 +6,7 @@ on:
     paths:
       - "*.py"
       - "**/*.py"
+      - "**/translations/*.yaml"
   workflow_dispatch:
 
 permissions:

@@ -1700,6 +1700,10 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+  MQTTPhysicalPublishes:
+    name: MQTT 物理パブリッシュ
+  MQTTPublishFailures:
+    name: MQTT パブリッシュ失敗
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'JSON設定ファイルへのパス（デフォルト: /etc/sigenergy2mqtt.yaml）'

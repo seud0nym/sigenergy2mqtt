@@ -1700,6 +1700,10 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  MQTTPhysicalPublishes:
+    name: MQTT 物理发布
+  MQTTPublishFailures:
+    name: MQTT 发布失败
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: JSON配置文件路径（默认：/etc/sigenergy2mqtt.yaml）
