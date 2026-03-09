@@ -18,9 +18,9 @@ class TestMetricsServiceCoverage:
 
             service = MetricsService(protocol)
 
-            # Check if InfluxDB sensors are NOT present
+            # Check if InfluxDB sensors are NOT publishable
             sensor_keys = list(service.sensors.keys())
-            assert not any("influxdb_writes" in k for k in sensor_keys)
+            assert not any("influxdb_" in k for k in sensor_keys if service.sensors[k].publishable)
             assert any("modbus_write_errors" in k for k in sensor_keys)
 
     @pytest.mark.asyncio
