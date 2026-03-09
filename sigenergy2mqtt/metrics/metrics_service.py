@@ -34,11 +34,18 @@ class MetricsService(Device):
         unique_id = f"{active_config.home_assistant.unique_id_prefix}_metrics"
         super().__init__("Sigenergy Metrics", -1, unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
 
+        self._add_read_sensor(sensors.InfluxDBWrites())
+        self._add_read_sensor(sensors.InfluxDBWriteErrors())
+        self._add_read_sensor(sensors.InfluxDBWriteMax())
+        self._add_read_sensor(sensors.InfluxDBWriteMean())
+        self._add_read_sensor(sensors.InfluxDBQueries())
+        self._add_read_sensor(sensors.InfluxDBQueryErrors())
+        self._add_read_sensor(sensors.InfluxDBRetries())
+        self._add_read_sensor(sensors.InfluxDBThroughput())
+
         self._add_read_sensor(sensors.ModbusActiveLocks())
         self._add_read_sensor(sensors.ModbusCacheHits())
         self._add_read_sensor(sensors.ModbusPhysicalReads())
-        self._add_read_sensor(sensors.MQTTPublishFailures())
-        self._add_read_sensor(sensors.MQTTPhysicalPublishes())
         self._add_read_sensor(sensors.ModbusReadsPerSecond())
         self._add_read_sensor(sensors.ModbusReadErrors())
         self._add_read_sensor(sensors.ModbusReadMax())
@@ -49,20 +56,12 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ModbusWriteMean())
         self._add_read_sensor(sensors.ModbusWriteMin())
 
+        self._add_read_sensor(sensors.MQTTPublishFailures())
+        self._add_read_sensor(sensors.MQTTPhysicalPublishes())
+
         self._add_read_sensor(sensors.Started())
         self._add_read_sensor(sensors.ProtocolVersion(protocol_version))
         self._add_read_sensor(sensors.ProtocolPublished(protocol_version))
-
-        # Conditionally add InfluxDB sensors when InfluxDB is enabled
-        if active_config.influxdb.enabled:
-            self._add_read_sensor(sensors.InfluxDBWrites())
-            self._add_read_sensor(sensors.InfluxDBWriteErrors())
-            self._add_read_sensor(sensors.InfluxDBWriteMax())
-            self._add_read_sensor(sensors.InfluxDBWriteMean())
-            self._add_read_sensor(sensors.InfluxDBQueries())
-            self._add_read_sensor(sensors.InfluxDBQueryErrors())
-            self._add_read_sensor(sensors.InfluxDBRetries())
-            self._add_read_sensor(sensors.InfluxDBThroughput())
 
     def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """

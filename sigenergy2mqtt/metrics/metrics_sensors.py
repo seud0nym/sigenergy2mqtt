@@ -427,6 +427,7 @@ class InfluxDBWrites(MetricsSensor):
             icon="mdi:database-arrow-up",
             precision=0,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_influxdb_writes
@@ -445,6 +446,7 @@ class InfluxDBWriteErrors(MetricsSensor):
             icon="mdi:database-alert",
             precision=0,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_influxdb_write_errors
@@ -464,6 +466,7 @@ class InfluxDBWriteMax(MetricsSensor):
             icon="mdi:timer-plus-outline",
             precision=2,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         value = Metrics.sigenergy2mqtt_influxdb_write_max
@@ -483,6 +486,7 @@ class InfluxDBWriteMean(MetricsSensor):
             icon="mdi:timer-outline",
             precision=2,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         value = Metrics.sigenergy2mqtt_influxdb_write_mean
@@ -501,6 +505,7 @@ class InfluxDBQueries(MetricsSensor):
             icon="mdi:database-search",
             precision=0,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_influxdb_queries
@@ -519,6 +524,7 @@ class InfluxDBQueryErrors(MetricsSensor):
             icon="mdi:database-alert-outline",
             precision=0,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_influxdb_query_errors
@@ -537,6 +543,7 @@ class InfluxDBRetries(MetricsSensor):
             icon="mdi:reload",
             precision=0,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_influxdb_retries
@@ -555,6 +562,7 @@ class InfluxDBThroughput(MetricsSensor):
             icon="mdi:speedometer",
             precision=2,
         )
+        self.publishable = active_config.influxdb.enabled
 
     async def _update_internal_state(self, **kwargs) -> bool:
         elapsed = time.monotonic() - Metrics._started
