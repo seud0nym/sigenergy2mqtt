@@ -63,6 +63,8 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.ProtocolVersion(protocol_version))
         self._add_read_sensor(sensors.ProtocolPublished(protocol_version))
 
+        self._add_writeonly_sensor(sensors.ResetMetrics())
+
     def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """
         Initialise metrics timestamps and mark the service online.

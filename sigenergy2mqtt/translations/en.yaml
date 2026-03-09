@@ -1529,6 +1529,10 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  ResetMetrics:
+    name: Reset Metrics
+    name_off: Reset Metrics
+    name_on: Reset Metrics
   ResettableAccumulationSensor:
     name_reset: Set {self.name}
   RunningStateSensor:

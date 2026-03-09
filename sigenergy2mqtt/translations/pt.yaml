@@ -1704,6 +1704,10 @@ class:
     name: Publicações Físicas MQTT
   MQTTPublishFailures:
     name: Falhas de Publicação MQTT
+  ResetMetrics:
+    name: Reiniciar Métricas
+    name_off: Reiniciar Métricas
+    name_on: Reiniciar Métricas
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'O caminho para o arquivo de configuração JSON (padrão: /etc/sigenergy2mqtt.yaml)'

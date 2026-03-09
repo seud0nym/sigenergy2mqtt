@@ -14,7 +14,7 @@ from typing import Any, cast
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, Protocol, ProtocolApplies
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusLockFactory
-from sigenergy2mqtt.sensors.base import ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensor
 
 from .metrics import Metrics
 
@@ -85,6 +85,11 @@ class MetricsSensor(ReadableSensorMixin):
         pass
 
 
+# =============================================================================
+# MQTT Metrics Sensors
+# =============================================================================
+
+
 class MQTTPublishFailures(MetricsSensor):
     """Cumulative count of MQTT state publish failures."""
 
@@ -118,6 +123,11 @@ class MQTTPhysicalPublishes(MetricsSensor):
     async def _update_internal_state(self, **kwargs) -> bool:
         self.set_latest_state(Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage)
         return True
+
+
+# =============================================================================
+# Modbus Metrics Sensors
+# =============================================================================
 
 
 class ModbusCacheHits(MetricsSensor):
@@ -356,6 +366,11 @@ class ModbusActiveLocks(MetricsSensor):
         return True
 
 
+# =============================================================================
+# Diagnostic Sensors
+# =============================================================================
+
+
 class Started(MetricsSensor):
     """ISO-8601 timestamp of when the service commenced, set at actual start time."""
 
@@ -413,7 +428,9 @@ class ProtocolPublished(MetricsSensor):
         return True
 
 
+# =============================================================================
 # InfluxDB Metrics Sensors
+# =============================================================================
 
 
 class InfluxDBWrites(MetricsSensor):
@@ -572,3 +589,95 @@ class InfluxDBThroughput(MetricsSensor):
             value = 0.0
         self.set_latest_state(value)
         return True
+
+
+# =============================================================================
+# Reset control
+# =============================================================================
+
+
+class ResetMetrics(WriteOnlySensor):
+    """Button that resets all metrics counters to their default values.
+
+    Unlike typical :class:`WriteOnlySensor` subclasses this sensor:
+
+    * does **not** write to a Modbus register,
+    * creates a **single** button (not an On/Off pair), and
+    * publishes its topics under the ``sigenergy2mqtt/metrics/`` namespace.
+    """
+
+    _PAYLOAD_PRESS = "reset"
+
+    def __init__(self):
+        super().__init__(
+            name="Reset Metrics",
+            object_id="sigenergy2mqtt_metrics_reset",
+            plant_index=0,
+            device_address=1,
+            address=30000,
+            protocol_version=Protocol.N_A,
+            icon_off="mdi:reload",
+            icon_on="mdi:reload",
+            name_off="Reset Metrics",
+            name_on="Reset Metrics",
+            payload_off=self._PAYLOAD_PRESS,
+            payload_on=self._PAYLOAD_PRESS,
+            value_off=1,
+            value_on=1,
+            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_metrics_reset",
+        )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        """Place command and availability topics inside the metrics namespace."""
+        base = "sigenergy2mqtt/metrics"
+        suffix = cast(str, self["object_id"]).replace("sigenergy2mqtt_", "")
+        self["state_topic"] = f"{base}/{suffix}"
+        self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/{suffix}/set"
+        self["availability_topic"] = "sigenergy2mqtt/status"
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> state_topic={self['state_topic']})")
+        return base
+
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        """Return a single button component instead of the default On/Off pair."""
+        config: dict[str, Any] = {}
+
+        for k, v in self.items():
+            if v is None:
+                continue
+            if k == DiscoveryKeys.NAME:
+                config[k] = self._names["on"]
+            elif k in (DiscoveryKeys.OBJECT_ID, DiscoveryKeys.UNIQUE_ID):
+                # Keep the ids as-is — single button, no suffix needed
+                config[k] = v
+            else:
+                config[k] = v
+
+        config[DiscoveryKeys.ICON] = self._icons["on"]
+        config["payload_press"] = self._PAYLOAD_PRESS
+
+        components: dict[str, dict[str, Any]] = {self.unique_id: config}
+
+        if self.debug_logging:
+            logging.debug(f"{self.__class__.__name__} Discovered components={components}")
+
+        return components
+
+    def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
+        """Metrics sensors do not publish extra MQTT attributes."""
+        pass
+
+    async def set_value(self, modbus_client: Any | None, mqtt_client: Any, value: float | int | str, source: str, handler: Any) -> bool:
+        """Reset metrics without touching Modbus."""
+        self.force_publish = True
+        if str(value) == self._PAYLOAD_PRESS:
+            logging.info("ResetMetrics: Resetting all metrics counters")
+            await Metrics.reset()
+            return True
+        logging.warning(f"ResetMetrics: Ignored unexpected payload '{value}'")
+        return False
+
+    async def value_is_valid(self, modbus_client: Any | None, raw_value: float | int | str) -> bool:
+        """Accept the reset payload."""
+        return str(raw_value) == self._PAYLOAD_PRESS

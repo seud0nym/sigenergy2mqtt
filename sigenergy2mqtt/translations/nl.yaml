@@ -1704,6 +1704,10 @@ class:
     name: MQTT Fysieke Publicaties
   MQTTPublishFailures:
     name: MQTT Publicatiefouten
+  ResetMetrics:
+    name: Statistieken Resetten
+    name_off: Statistieken Resetten
+    name_on: Statistieken Resetten
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Het pad naar het JSON-configuratiebestand (standaard: /etc/sigenergy2mqtt.yaml)'

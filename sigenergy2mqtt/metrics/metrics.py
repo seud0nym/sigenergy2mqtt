@@ -10,15 +10,14 @@ initialise the time-sensitive ``_started`` and ``sigenergy2mqtt_started``
 fields at actual service start rather than at module-import time.
 """
 
+import asyncio
 import logging
-from concurrent.futures import Future, ThreadPoolExecutor, wait
 import threading
 import time
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Callable
-
-import asyncio
 
 from sigenergy2mqtt.config import active_config
 
@@ -158,6 +157,25 @@ class Metrics:
     """ISO-8601 wall-clock timestamp of service commencement, set by :meth:`commence`."""
 
     # ------------------------------------------------------------------
+    # Class-level defaults for int/float metrics (used by :meth:`reset`)
+    # ------------------------------------------------------------------
+
+    _defaults: dict[str, int | float] = {}
+
+    @classmethod
+    async def reset(cls) -> None:
+        """Reset all public int and float metrics class fields to their default values."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                for name, default in cls._defaults.items():
+                    setattr(cls, name, default)
+
+            cls._update_with_lock(_operation, "metrics reset")
+
+        cls._submit(_update)
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
@@ -268,6 +286,7 @@ class Metrics:
     @classmethod
     async def modbus_cache_fill(cls) -> None:
         """Increment the cache-fill read counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_modbus_cache_fill_reads += 1
@@ -285,6 +304,7 @@ class Metrics:
             reads: Total reads attempted in the cycle.
             hits:  Reads satisfied from cache in the cycle.
         """
+
         def _update() -> None:
             def _operation() -> None:
                 percentage = round(hits / reads * 100.0, 2)
@@ -303,6 +323,7 @@ class Metrics:
             registers: Number of registers read in this operation.
             seconds:   Wall-clock duration of the operation in seconds.
         """
+
         def _update() -> None:
             def _operation() -> None:
                 elapsed = seconds * 1000.0
@@ -322,6 +343,7 @@ class Metrics:
     @classmethod
     async def modbus_read_error(cls) -> None:
         """Increment the modbus read error counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_modbus_read_errors += 1
@@ -339,6 +361,7 @@ class Metrics:
             registers: Number of registers written in this operation.
             seconds:   Wall-clock duration of the operation in seconds.
         """
+
         def _update() -> None:
             def _operation() -> None:
                 elapsed = seconds * 1000.0
@@ -368,9 +391,7 @@ class Metrics:
                 if physical_publish:
                     cls.sigenergy2mqtt_mqtt_physical_publishes += 1
                 cls.sigenergy2mqtt_mqtt_physical_publish_percentage = (
-                    round(cls.sigenergy2mqtt_mqtt_physical_publishes / cls.sigenergy2mqtt_mqtt_publish_attempts * 100.0, 2)
-                    if cls.sigenergy2mqtt_mqtt_publish_attempts > 0
-                    else 0.0
+                    round(cls.sigenergy2mqtt_mqtt_physical_publishes / cls.sigenergy2mqtt_mqtt_publish_attempts * 100.0, 2) if cls.sigenergy2mqtt_mqtt_publish_attempts > 0 else 0.0
                 )
 
             cls._update_with_lock(_operation, "mqtt publish attempt metrics collection")
@@ -392,6 +413,7 @@ class Metrics:
     @classmethod
     async def modbus_write_error(cls) -> None:
         """Increment the modbus write error counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_modbus_write_errors += 1
@@ -409,6 +431,7 @@ class Metrics:
             batch_size: Number of data points in the written batch.
             seconds:    Wall-clock duration of the operation in seconds.
         """
+
         def _update() -> None:
             def _operation() -> None:
                 elapsed = seconds * 1000.0
@@ -427,6 +450,7 @@ class Metrics:
     @classmethod
     async def influxdb_write_error(cls) -> None:
         """Increment the InfluxDB write error counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_write_errors += 1
@@ -438,6 +462,7 @@ class Metrics:
     @classmethod
     async def influxdb_query(cls) -> None:
         """Record a completed InfluxDB query operation."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_queries += 1
@@ -449,6 +474,7 @@ class Metrics:
     @classmethod
     async def influxdb_query_error(cls) -> None:
         """Increment the InfluxDB query error counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_query_errors += 1
@@ -460,6 +486,7 @@ class Metrics:
     @classmethod
     async def influxdb_retry(cls) -> None:
         """Increment the InfluxDB retry counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_retries += 1
@@ -471,6 +498,7 @@ class Metrics:
     @classmethod
     async def influxdb_rate_limit_wait(cls) -> None:
         """Increment the InfluxDB rate-limit wait counter."""
+
         def _update() -> None:
             def _operation() -> None:
                 cls.sigenergy2mqtt_influxdb_rate_limit_waits += 1
@@ -478,3 +506,11 @@ class Metrics:
             cls._update_with_lock(_operation, "influxdb rate limit metrics collection")
 
         cls._submit(_update)
+
+
+# Snapshot the pristine default values at class-definition time, before any
+# metrics have been mutated, so that :meth:`Metrics.reset` restores them
+# faithfully.
+for _name, _value in vars(Metrics).items():
+    if not _name.startswith("_") and isinstance(_value, (int, float)):
+        Metrics._defaults[_name] = _value

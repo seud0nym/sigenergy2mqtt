@@ -1704,6 +1704,10 @@ class:
     name: MQTT 物理发布
   MQTTPublishFailures:
     name: MQTT 发布失败
+  ResetMetrics:
+    name: 重置指标
+    name_off: 重置指标
+    name_on: 重置指标
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: JSON配置文件路径（默认：/etc/sigenergy2mqtt.yaml）
