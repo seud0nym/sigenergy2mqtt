@@ -38,6 +38,7 @@
         "enphase",
         "EVAC",
         "EVDC",
+        "fillvalue",
         "forcelist",
         "Gcal",
         "GIGA",
