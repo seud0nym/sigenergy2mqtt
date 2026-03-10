@@ -345,7 +345,7 @@ def test_pvoutput_check_required_when_enabled():
     from sigenergy2mqtt.config.models.pvoutput import PvOutputConfig
 
     with pytest.raises(ValueError, match="pvoutput.api-key must be provided when enabled"):
-        PvOutputConfig(enabled=True, **{"system-id": "sys123"})
+        PvOutputConfig(enabled=True, **{"system-id": "123"})
 
     with pytest.raises(ValueError, match="pvoutput.system-id must be provided when enabled"):
         PvOutputConfig(enabled=True, **{"api-key": "1234abcd"})
@@ -353,7 +353,7 @@ def test_pvoutput_check_required_when_enabled():
     with pytest.raises(ValueError, match="end time"):
         # We need an invalid periods config. parse_time_periods doesn't actually parse string times as easily to produce invalid ones directly out of box if the strings are valid
         # Let's bypass pydantic parsing for the specific test by mutating post init
-        cfg = PvOutputConfig(enabled=True, **{"api-key": "1234abcd", "system-id": "sys123"})
+        cfg = PvOutputConfig(enabled=True, **{"api-key": "1234abcd", "system-id": "123"})
         from datetime import time
 
         from sigenergy2mqtt.common import Tariff, TariffType, TimePeriod

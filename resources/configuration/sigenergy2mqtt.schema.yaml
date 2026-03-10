@@ -1,0 +1,498 @@
+---
+$schema: "http://json-schema.org/draft-07/schema#"
+title: sigenergy2mqtt Configuration
+type: object
+additionalProperties: false
+properties:
+  log-level:
+    description: "The sigenergy2mqtt default logging level."
+    oneOf:
+      - type: string
+        enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+      - type: integer
+    default: WARNING
+  language:
+    description: "The language to use for translations."
+    type: string
+    default: en
+  consumption:
+    description: "Set the method of calculating the Plant Consumed Power sensor."
+    oneOf:
+      - type: string
+        enum: [calculated, total, general]
+      - type: object # For Pydantic Enum serialization
+    default: total
+  repeated-state-publish-interval:
+    description: "The interval in seconds at which repeated states are published."
+    type: integer
+    default: 0
+  sanity-check-default-kw:
+    description: "The default value used for sanity checks."
+    type: number
+    default: 500.0
+  sanity-check-failures-increment:
+    description: "Increment sensor read failures when a sanity check fails."
+    type: boolean
+    default: false
+  no-ems-mode-check:
+    description: "Turn off validation that disables ESS limits when EMS control mode is not Command Charging/Discharging."
+    type: boolean
+    default: false
+  ems-mode-check:
+    description: "Internal pydantic field for EMS mode check"
+    type: boolean
+  no-metrics:
+    description: "If true, sigenergy2mqtt will not publish any metrics to MQTT."
+    type: boolean
+    default: false
+  metrics-enabled:
+    description: "Internal pydantic field for metrics enabled"
+    type: boolean
+
+  home-assistant:
+    type: object
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        default: false
+      device-name-prefix:
+        type: string
+        default: ""
+      discovery-prefix:
+        type: string
+        default: homeassistant
+      entity-id-prefix:
+        type: string
+        default: sigen
+      republish-discovery-interval:
+        type: integer
+        default: 0
+      sensors-enabled-by-default:
+        type: boolean
+        default: false
+      unique-id-prefix:
+        type: string
+        default: sigen
+      use-simplified-topics:
+        type: boolean
+        default: false
+      edit-pct-box:
+        type: boolean
+        default: false
+      discovery-only:
+        type: boolean
+        default: false
+
+  mqtt:
+    type: object
+    additionalProperties: false
+    properties:
+      broker:
+        type: string
+        default: 127.0.0.1
+      port:
+        type: integer
+        default: 1883
+      keepalive:
+        type: integer
+        default: 60
+        minimum: 1
+      tls:
+        type: boolean
+        default: false
+      tls-insecure:
+        type: boolean
+        default: false
+      transport:
+        type: string
+        enum: [tcp, websockets]
+        default: tcp
+      anonymous:
+        type: boolean
+        default: false
+      username:
+        type: [string, "null"]
+        default: not_required_for_anonymous
+      password:
+        type: [string, "null"]
+        default: not_required_for_anonymous
+      log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+        default: WARNING
+      retry_delay:
+        type: integer
+      client_id_prefix:
+        type: string
+
+  modbus:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - host
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+          default: 502
+        timeout:
+          type: number
+          default: 1.0
+        retries:
+          type: integer
+          default: 3
+        disable-chunking:
+          type: boolean
+          default: false
+        inverters:
+          type: array
+          items:
+            type: integer
+          default: [ 1 ]
+        ac-chargers:
+          type: array
+          items:
+            type: integer
+          default: []
+        dc-chargers:
+          type: array
+          items:
+            type: integer
+          default: []
+        log-level:
+          oneOf:
+            - type: string
+              enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+            - type: integer
+          default: WARNING
+        read-only:
+          type: boolean
+          default: true
+        read-write:
+          type: boolean
+          default: true
+        write-only:
+          type: boolean
+          default: true
+        no-remote-ems:
+          type: boolean
+          default: false
+        scan-interval-low:
+          type: integer
+          minimum: 1
+          default: 600
+        scan-interval-medium:
+          type: integer
+          minimum: 1
+          default: 60
+        scan-interval-high:
+          type: integer
+          minimum: 1
+          default: 10
+        scan-interval-realtime:
+          type: integer
+          minimum: 1
+          default: 5
+        registers:
+          type: object
+          properties:
+            no-remote-ems: {type: boolean}
+            read-only: {type: boolean}
+            read-write: {type: boolean}
+            write-only: {type: boolean}
+        scan-interval:
+          type: object
+          properties:
+            low: {type: integer}
+            medium: {type: integer}
+            high: {type: integer}
+            realtime: {type: integer}
+        smart-port:
+          type: object
+          additionalProperties: false
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            module:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  oneOf:
+                    - type: string
+                      enum: [enphase, ""]
+                    - type: object
+                host:
+                  type: string
+                port:
+                  type: [integer, "null"]
+                  default: 502
+                username:
+                  type: string
+                password:
+                  type: string
+                pv-power:
+                  type: string
+                testing:
+                  type: boolean
+            mqtt:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  topic:
+                    type: [string, "null"]
+                  gain:
+                    type: number
+                    default: 1
+
+  sensor-debug-logging:
+    type: boolean
+    default: true
+  
+  sensor-overrides:
+    type: object
+    patternProperties:
+      ".*":
+        type: object
+        additionalProperties: false
+        properties:
+          debug-logging:
+            type: boolean
+          gain:
+            type: number
+            default: 1
+          icon:
+            type: string
+          max-failures:
+            type: integer
+            default: 10
+          max-failures-retry-interval:
+            type: integer
+            default: 60
+          precision:
+            type: integer
+          publishable:
+            type: boolean
+          publish-raw:
+            type: boolean
+          sanity-check-max-value:
+            type: number
+          sanity-check-min-value:
+            type: number
+          sanity-check-delta:
+            type: boolean
+            default: false
+          scan-interval:
+            type: integer
+          unit-of-measurement:
+            type: string
+
+  pvoutput:
+    type: object
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        default: false
+      api-key:
+        type: string
+      system-id:
+        type: ["string", "integer"]
+      testing:
+        type: boolean
+      consumption:
+        oneOf:
+          - type: ["boolean", "null"]
+          - type: string
+            enum: ["true", "false", "consumption", "imported"]
+      exports:
+        type: boolean
+        default: true
+      imports:
+        type: boolean
+        default: true
+      output-hour:
+        type: integer
+        minimum: -1
+        maximum: 24
+        default: 23
+      temperature-topic:
+        type: string
+      v7:
+        type: string
+      v8:
+        type: string
+      v9:
+        type: string
+      v10:
+        type: string
+      v11:
+        type: string
+      v12:
+        type: string
+      voltage:
+        oneOf:
+          - type: string
+          - type: object
+      extended:
+        type: object
+        properties:
+          v7: {type: string}
+          v8: {type: string}
+          v9: {type: string}
+          v10: {type: string}
+          v11: {type: string}
+          v12: {type: string}
+      log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+        default: CRITICAL
+      calc-debug-logging:
+        type: boolean
+        default: false
+      update-debug-logging:
+        type: boolean
+        default: false
+      time-periods:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            plan:
+              type: string
+            from-date:
+              oneOf:
+                - type: string
+                  pattern: '^\d{4}-\d{2}-\d{2}$'
+                - type: object # For datetime.date
+            to-date:
+              oneOf:
+                - type: string
+                  pattern: '^\d{4}-\d{2}-\d{2}$'
+                - type: object
+            default:
+              oneOf:
+                - type: string
+                  enum: [off-peak, peak, shoulder, high-shoulder]
+                - type: object # Pydantic Enum
+            periods:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  type:
+                    oneOf:
+                      - type: string
+                        enum: [off-peak, peak, shoulder, high-shoulder]
+                      - type: object
+                  start:
+                    oneOf:
+                      - type: string
+                        pattern: '^(24:00|2[0-3]:[0-5][0-9]|[01]?[0-9]:[0-5][0-9])$'
+                      - type: object # datetime.time
+                  end:
+                    oneOf:
+                      - type: string
+                        pattern: '^(24:00|2[0-3]:[0-5][0-9]|[01]?[0-9]:[0-5][0-9])$'
+                      - type: object
+                  days:
+                    type: array
+                    items:
+                      type: string
+                      enum: [Mon, Tue, Wed, Thu, Fri, Sat, Sun, Weekdays, Weekends, All]
+
+  influxdb:
+    type: object
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        default: false
+      host:
+        type: string
+        default: 127.0.0.1
+      port:
+        type: integer
+        default: 8086
+      username:
+        type: string
+      password:
+        type: string
+      database:
+        type: string
+        default: sigenergy
+      org:
+        type: string
+      token:
+        type: string
+      bucket:
+        type: string
+      default-measurement:
+        type: string
+        default: "state"
+      load-hass-history:
+        type: boolean
+        default: false
+      include:
+        type: array
+        items:
+          type: string
+      exclude:
+        type: array
+        items:
+          type: string
+      log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+        default: CRITICAL
+      write-timeout:
+        type: number
+        default: 30.0
+      read-timeout:
+        type: number
+        default: 120.0
+      batch-size:
+        type: integer
+        default: 100
+      flush-interval:
+        type: number
+        default: 1.0
+      query-interval:
+        type: number
+        default: 0.5
+      max-retries:
+        type: integer
+        default: 3
+      pool-connections:
+        type: integer
+        default: 100
+      pool-maxsize:
+        type: integer
+        default: 100
+      sync-chunk-size:
+        type: integer
+        default: 1000
+      max-sync-workers:
+        type: integer
+        default: 4
+
+  # Pydantic internal
+  modbus-auto-discovery: {type: [string, "null"]}
+  modbus-auto-discovery-timeout: {type: [number, "null"]}
+  modbus-auto-discovery-ping-timeout: {type: [number, "null"]}
+  modbus-auto-discovery-retries: {type: [integer, "null"]}

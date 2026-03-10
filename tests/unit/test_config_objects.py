@@ -194,7 +194,7 @@ class TestPvOutputConfig:
         config = PvOutputConfig(
             enabled=True,
             api_key="1a2b3c",
-            system_id="abc",
+            system_id="123",
             **{"time-periods": [tariff_dict]},
         )
         assert len(config.tariffs) == 1

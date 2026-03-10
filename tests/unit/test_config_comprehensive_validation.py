@@ -58,7 +58,7 @@ class TestConfigComprehensiveValidation:
 
     def test_pvoutput_validation_enabled_empty_api_key(self):
         with pytest.raises(ValidationError, match="pvoutput.api-key must be provided"):
-            PvOutputConfig(enabled=True, api_key="", system_id="abc")
+            PvOutputConfig(enabled=True, api_key="", system_id="123")
 
     def test_pvoutput_validation_enabled_empty_system_id(self):
         with pytest.raises(ValidationError, match="pvoutput.system-id must be provided"):
@@ -68,12 +68,12 @@ class TestConfigComprehensiveValidation:
         period_dict = {"type": "peak", "start": "12:00", "end": "11:00"}
         tariff_dict = {"plan": "test", "periods": [period_dict]}
         with pytest.raises(ValidationError, match="pvoutput time period end time .* must be after start time"):
-            PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="abc", **{"time-periods": [tariff_dict]})
+            PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="123", **{"time-periods": [tariff_dict]})
 
     def test_pvoutput_validation_passes(self):
         period_dict = {"type": "peak", "start": "12:00", "end": "13:00"}
         tariff_dict = {"plan": "test", "periods": [period_dict]}
-        config = PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="abc", **{"time-periods": [tariff_dict]})
+        config = PvOutputConfig(enabled=True, api_key="1a2b3c", system_id="123", **{"time-periods": [tariff_dict]})
         assert config.enabled is True
         assert len(config.tariffs) == 1
 

@@ -29,6 +29,7 @@ for spec in \
     "pytest-asyncio" \
     "pytest-cov" \
     "pytest-xdist" \
+    "jsonschema" \
 ; do
   check_pkg "$spec"
 done
