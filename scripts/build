@@ -16,12 +16,7 @@ if echo "$*" | grep -vqe "-f" && [[ $changed_files = n ]]; then
     exit
 fi
 
-echo -e "${GREEN}>>> Updating English translations...${NC}"
-python3 scripts/update_en_translations.py || exit
-
-echo -e "${GREEN}>>> Checking translations...${NC}"
-python3 scripts/verify_translations.py || exit
-
+source scripts/translations
 
 echo -e "${GREEN}>>> Calculating version...${NC}"
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
