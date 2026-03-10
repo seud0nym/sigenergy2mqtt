@@ -39,6 +39,17 @@ from .device_thread import start
 from .restart import restart_controller
 from .thread_config import ThreadConfig, thread_config_registry
 
+INVERTER_ILLEGAL_DATA_ADDRESSES: list[int] = [
+    InverterMaxCellVoltage.ADDRESS,
+    InverterMinCellVoltage.ADDRESS,
+]
+
+PLANT_ILLEGAL_DATA_ADDRESSES: list[int] = [
+    CurrentControlCommandValue.ADDRESS,
+    Alarm7.ADDRESS,
+    ActivePowerRegulationGradient.ADDRESS,
+]
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -365,7 +376,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     plant = plant_tmp
 
                     config.add_device(plant)
-                    await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, CurrentControlCommandValue.ADDRESS, Alarm7.ADDRESS, ActivePowerRegulationGradient.ADDRESS)
+                    await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, *PLANT_ILLEGAL_DATA_ADDRESSES)
 
                     if plant.protocol_version is not None:
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
@@ -383,7 +394,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 if inverter is not None:
                     inverters[device_address] = inverter.unique_id
                     config.add_device(inverter)
-                    await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, InverterMaxCellVoltage.ADDRESS, InverterMinCellVoltage.ADDRESS)
+                    await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, *INVERTER_ILLEGAL_DATA_ADDRESSES)
 
             if plant is not None:
                 await _setup_dc_chargers(plant_index, device, plant, inverters, config)
