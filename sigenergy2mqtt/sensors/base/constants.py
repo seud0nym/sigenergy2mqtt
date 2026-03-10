@@ -33,6 +33,7 @@ class DiscoveryKeys:
     JSON_ATTRIBUTES_TOPIC = "json_attributes_topic"
     AVAILABILITY_MODE = "availability_mode"
     AVAILABILITY = "availability"
+    AVAILABILITY_TOPIC = "availability_topic"
     COMMAND_TOPIC = "command_topic"
     OPTIONS = "options"
     PAYLOAD_OFF = "payload_off"

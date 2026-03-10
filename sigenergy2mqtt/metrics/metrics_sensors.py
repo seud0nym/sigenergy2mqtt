@@ -72,12 +72,12 @@ class MetricsSensor(ReadableSensorMixin):
         """
         # Override to match existing topic structure: sigenergy2mqtt/metrics/{id}
         base = "sigenergy2mqtt/metrics"
-        object_id = cast(str, self["object_id"])
+        object_id = cast(str, self[DiscoveryKeys.OBJECT_ID])
         suffix = object_id.replace("sigenergy2mqtt_", "")
-        self["state_topic"] = f"{base}/{suffix}"
-        self["availability_topic"] = "sigenergy2mqtt/status"
+        self[DiscoveryKeys.STATE_TOPIC] = f"{base}/{suffix}"
+        self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> state_topic={self['state_topic']})")
+            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> state_topic={self[DiscoveryKeys.STATE_TOPIC]})")
         return base
 
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
@@ -631,12 +631,12 @@ class ResetMetrics(WriteOnlySensor):
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Place command and availability topics inside the metrics namespace."""
         base = "sigenergy2mqtt/metrics"
-        suffix = cast(str, self["object_id"]).replace("sigenergy2mqtt_", "")
-        self["state_topic"] = f"{base}/{suffix}"
+        suffix = cast(str, self[DiscoveryKeys.OBJECT_ID]).replace("sigenergy2mqtt_", "")
+        self[DiscoveryKeys.STATE_TOPIC] = f"{base}/{suffix}"
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/{suffix}/set"
-        self["availability_topic"] = "sigenergy2mqtt/status"
+        self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> state_topic={self['state_topic']})")
+            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> command_topic={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
