@@ -44,12 +44,12 @@ scripts.cov = "pytest -n auto --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 path = "sigenergy2mqtt/config/version.py"
 
 [tool.pyrefly]
-project-excludes = [".git", "tests"]
+project-excludes = [".git", ".venv", "tests"]
 
 [tool.pyright]
-exclude = [".git", "tests"]
+exclude = [".git", ".venv", "tests"]
 extraPaths = ["./sigenergy2mqtt"]
-ignore = [".git", "tests"]
+ignore = [".git", ".venv", "tests"]
 typeCheckingMode = "standard"
 
 [tool.pytest.ini_options]
