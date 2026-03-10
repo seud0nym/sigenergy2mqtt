@@ -53,15 +53,12 @@ if [[ $new_version != $old_version ]]; then
     echo -e "${GREEN}>>> Checking sensors...${NC}"
     python3 - <<EOF || exit
 import asyncio, logging
-from tests.utils import get_sensor_instances, cancel_sensor_futures
+from tests.utils import get_sensor_instances
 logging.basicConfig(level=logging.WARNING)
 async def check():
-    await get_sensor_instances(hass=True)
-    await get_sensor_instances(hass=False)
-try:
-    asyncio.run(check())
-finally:
-    cancel_sensor_futures()
+    await get_sensor_instances(home_assistant_enabled=True)
+    await get_sensor_instances(home_assistant_enabled=False)
+asyncio.run(check())
 EOF
     echo -e "${GREEN}>>> Updating documentation...${NC}"
     scripts/update_md "$new_version"
