@@ -1,4 +1,14 @@
 {
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        },
+        "editor.formatOnSave": true
+    },
+    "basedpyright.analysis.diagnosticMode": "workspace",
+    "basedpyright.analysis.inlayHints.callArgumentNamesMatching": true,
+    "basedpyright.analysis.typeCheckingMode": "strict",
     "cSpell.ignorePaths": [
         ".git/{index,*refs,*HEAD}",
         ".git/{info,lfs,logs,refs,objects}/**",
@@ -116,31 +126,22 @@
         "wordorder",
         "writeonly"
     ],
+    "evenBetterToml.formatter.allowedBlankLines": 1,
+    "evenBetterToml.formatter.arrayAutoExpand": true,
+    "evenBetterToml.formatter.columnWidth": 80,
+    "evenBetterToml.formatter.reorderArrays": true,
+    "evenBetterToml.formatter.reorderInlineTables": true,
+    "evenBetterToml.formatter.reorderKeys": true,
     "python.analysis.diagnosticMode": "workspace",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.languageServer": "None",
     "python.pyrefly.displayTypeErrors": "force-on",
-    "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "tests",
         "-n",
         "logical"
     ],
+    "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
-    "ruff.lineLength": 210,
-    "[python]": {
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit",
-            "source.organizeImports": "explicit"
-        }
-    },
-    "python.languageServer": "None",
-    "basedpyright.analysis.diagnosticMode": "workspace",
-    "basedpyright.analysis.inlayHints.callArgumentNamesMatching": true,
-    "basedpyright.analysis.typeCheckingMode": "strict",
-    "evenBetterToml.formatter.allowedBlankLines": 1,
-    "evenBetterToml.formatter.columnWidth": 80,
-    "evenBetterToml.formatter.reorderKeys": true,
-    "evenBetterToml.formatter.reorderInlineTables": true,
-    "evenBetterToml.formatter.reorderArrays": true,
-    "evenBetterToml.formatter.arrayAutoExpand": true,
+    "ruff.lineLength": 210
 }
