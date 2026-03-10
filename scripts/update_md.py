@@ -22,6 +22,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
+from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
 from tests.utils import get_sensor_instances
 
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
@@ -199,7 +200,10 @@ async def sensor_index():
                             f.write(f"<li value='{i}'>{options[i]}</li>")
                     f.write("</ol></td></tr>\n")
                 if "comment" in attributes:
-                    f.write(f"<tr><td>Comment</td><td>{attributes['comment']}</td></tr>\n")
+                    f.write(f"<tr><td>Comment</td><td>{attributes['comment']}")
+                    if isinstance(sensor, RemoteEMSLimit):
+                        f.write("<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i>")
+                    f.write("</td></tr>\n")
                 if sensor_parent in ("Inverter", "ESS", "PVString"):
                     f.write("<tr><td>Applicable To</td><td>")
                     if isinstance(sensor, HybridInverter) and isinstance(sensor, PVInverter):
