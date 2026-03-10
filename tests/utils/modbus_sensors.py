@@ -295,7 +295,7 @@ async def get_sensor_instances(
                     logging.warning(f"Register {i} in {sensor.__class__.__name__} overlaps {registers[i].__class__.__name__}")
             previous = (address, count)
         for classname, count in classes.items():
-            if count == 0:
+            if count == 0 and classname != "ResetMetrics":  # ResetMetrics is a sigenergy2mqtt internal sensor, and we are only checking Sigenergy Modbus sensors
                 logging.warning(f"Class {classname} has not been used?")
 
     return sensors
