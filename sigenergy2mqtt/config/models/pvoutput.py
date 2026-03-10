@@ -80,6 +80,16 @@ class PvOutputConfig(BaseModel):
                 raise ValueError("pvoutput.api-key must only contain hexadecimal characters")
         return v or ""
 
+    @field_validator("system_id", mode="before")
+    @classmethod
+    def validate_system_id(cls, v: Any) -> str:
+        if not v:
+            return ""
+        v = str(v)
+        if v != "testing" and not v.isnumeric():
+            raise ValueError("pvoutput.system-id must be numeric or 'testing'")
+        return v
+
     @field_validator("consumption", mode="before")
     @classmethod
     def validate_consumption(cls, v: Any) -> Optional[str]:

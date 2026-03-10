@@ -139,6 +139,22 @@ class TestPvOutputConfig:
         # Should pass
         PvOutputConfig(enabled=True, api_key="abc", system_id="123")
 
+    def test_validate_system_id(self):
+        from pydantic import ValidationError
+
+        # Should allow numeric strings or ints
+        config = PvOutputConfig(enabled=True, api_key="abc", system_id="12345")
+        assert config.system_id == "12345"
+
+        config = PvOutputConfig(enabled=True, api_key="abc", system_id=12345)
+        assert config.system_id == "12345"
+
+        config = PvOutputConfig(enabled=True, api_key="abc", system_id="testing")
+        assert config.system_id == "testing"
+
+        with pytest.raises(ValidationError, match="numeric or 'testing'"):
+            PvOutputConfig(enabled=True, api_key="abc", system_id="non-numeric")
+
     # --- _type_to_output_fields ---
 
     def test_type_to_output_fields_shoulder(self):
