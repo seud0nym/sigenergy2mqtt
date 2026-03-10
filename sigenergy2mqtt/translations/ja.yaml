@@ -1710,7 +1710,7 @@ class:
     name_on: メトリクスリセット
 cli:
   SIGENERGY2MQTT_CONFIG:
-    help: 'JSON設定ファイルへのパス（デフォルト: /etc/sigenergy2mqtt.yaml）'
+    help: 'YAML設定ファイルのパス（デフォルト: SIGENERGY2MQTT_CONFIG環境変数、それ以外の場合は/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
     help: "「発電所消費電力」センサーの計算方法を設定します。有効な値は、「calculated」、「total」（合計負荷電力レジスタ）、または「general」（V2.8一般負荷電力レジスタ）です。デフォルトは「calculated」です。このオプションは、ModbusプロトコルV2.8をサポートする前のファームウェアでは無視されます。"
   SIGENERGY2MQTT_DEBUG_SENSOR:

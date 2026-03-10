@@ -1710,7 +1710,7 @@ class:
     name_on: Reimposta Metriche
 cli:
   SIGENERGY2MQTT_CONFIG:
-    help: 'Il percorso del file di configurazione JSON (predefinito: /etc/sigenergy2mqtt.yaml)'
+    help: 'Il percorso al file di configurazione YAML (predefinito: variabile di ambiente SIGENERGY2MQTT_CONFIG, altrimenti /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
     help: "Imposta il metodo di calcolo del sensore di Potenza Consumata dell'Impianto. Valori validi: 'calculated', 'total' (registro Potenza di Carico Totale), o 'general' (registro Potenza di Carico Generale V2.8). Predefinito: 'calculated'. Questa opzione viene ignorata su firmware precedenti al Protocollo Modbus V2.8."
   SIGENERGY2MQTT_DEBUG_SENSOR:

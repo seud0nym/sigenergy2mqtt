@@ -1710,7 +1710,7 @@ class:
     name_on: 重置指标
 cli:
   SIGENERGY2MQTT_CONFIG:
-    help: JSON配置文件路径（默认：/etc/sigenergy2mqtt.yaml）
+    help: 'YAML配置文件的路径（默认：SIGENERGY2MQTT_CONFIG环境变量，否则为/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
     help: "设置电站消耗功率传感器的计算方法。有效值为：'calculated'、'total'（总负载功率寄存器）或 'general'（V2.8 通用负载功率寄存器）。默认值为 'calculated'。在低于支持 Modbus 协议 V2.8 的固件上，此选项将被忽略。"
   SIGENERGY2MQTT_DEBUG_SENSOR:

@@ -1710,7 +1710,7 @@ class:
     name_on: Metriken zurücksetzen
 cli:
   SIGENERGY2MQTT_CONFIG:
-    help: 'Der Pfad zur JSON-Konfigurationsdatei (Standard: /etc/sigenergy2mqtt.yaml)'
+    help: 'Der Pfad zur YAML-Konfigurationsdatei (Standard: SIGENERGY2MQTT_CONFIG-Umgebungsvariable, andernfalls /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
     help: "Methode zur Berechnung des Anlagenverbrauchsleistungssensors festlegen. Gültige Werte sind: 'calculated', 'total' (Gesamtlastleistungsregister) oder 'general' (V2.8 Allgemeine Lastleistungsregister). Standard ist 'calculated'. Diese Option wird bei Firmware vor Modbus-Protokoll V2.8 ignoriert."
   SIGENERGY2MQTT_DEBUG_SENSOR:

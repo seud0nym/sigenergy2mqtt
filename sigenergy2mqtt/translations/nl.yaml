@@ -1710,7 +1710,7 @@ class:
     name_on: Statistieken Resetten
 cli:
   SIGENERGY2MQTT_CONFIG:
-    help: 'Het pad naar het JSON-configuratiebestand (standaard: /etc/sigenergy2mqtt.yaml)'
+    help: 'De pad naar het YAML-configuratiebestand (standaard: SIGENERGY2MQTT_CONFIG-omgevingsvariabele, anders /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
     help: "Stel de methode in voor het berekenen van de Plant Verbruikt Vermogen sensor. Geldige waarden zijn: 'calculated', 'total' (Totaal Belastingsvermogen register), of 'general' (V2.8 Algemeen Belastingsvermogen register). De standaardwaarde is 'calculated'. Deze optie wordt genegeerd op firmware die ouder is dan de firmware die Modbus Protocol V2.8 ondersteunt."
   SIGENERGY2MQTT_DEBUG_SENSOR:
