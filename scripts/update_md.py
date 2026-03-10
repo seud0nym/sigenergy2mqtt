@@ -10,7 +10,6 @@ from typing import cast
 if not os.getcwd().endswith("resources"):
     os.chdir(str((Path(__file__).parent / "../resources").resolve()))
 
-os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 sys.path.insert(0, str((Path(__file__).parent / "..").resolve()))
 sys.path.insert(0, str((Path(__file__).parent / "../resources").resolve()))
 
@@ -19,25 +18,22 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.main.main import INVERTER_ILLEGAL_DATA_ADDRESSES, PLANT_ILLEGAL_DATA_ADDRESSES
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
 from tests.utils import get_sensor_instances
 
+HTTP_TIMEOUT = 15  # Default timeout (seconds) for all outbound GitHub API requests.
+ILLEGAL_DATA_ADDRESSES: list[int] = INVERTER_ILLEGAL_DATA_ADDRESSES + PLANT_ILLEGAL_DATA_ADDRESSES
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
-REGISTER_PATTERN = r"[3-4][0-9]+"
 SENSORS: Path = Path("sensors/SENSORS.md")
 TOPICS: Path = Path("sensors/TOPICS.md")
-ILLEGAL_DATA_ADDRESSES: list[int] = []
-with open("../sigenergy2mqtt/main/main.py", "r") as file:
-    for line_number, line in enumerate(file, start=1):
-        if "await test_for_0x02_ILLEGAL_DATA_ADDRESS" in line:
-            for register in re.findall(REGISTER_PATTERN, line):
-                ILLEGAL_DATA_ADDRESSES.append(int(register))
 
 
-def write_naming_convention(f):
+def write_naming_convention(f) -> None:
+    """Write the sensor naming convention section to the given file handle."""
     f.write("\n#### Naming Convention for Sensors in `sigenergy2mqtt`\n\n")
     f.write("\n- Sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.")
     f.write("\n- _ separator")
@@ -59,16 +55,27 @@ def write_naming_convention(f):
     f.write("\n- The sensor description.\n\n")
 
 
-async def sensor_index():
+async def sensor_index() -> None:
+    """Generate TOPICS.md by iterating over all sensor instances.
+
+    Builds an index table followed by detailed per-sensor sections covering
+    published (state) topics and subscribed (command) topics for every device
+    category, plus the metrics service.
+    """
     with _swap_active_config(Config()):
         hass_sensors = await get_sensor_instances(home_assistant_enabled=True, concrete_sensor_check=True)
     with _swap_active_config(Config()):
         mqtt_sensors = await get_sensor_instances(home_assistant_enabled=False, concrete_sensor_check=True)
 
     def extract_min_max(range_string: str, precision: int | None, gain: float):
-        """
-        Isolates the range content and then programmatically extracts the
-        first (min) and last (max) potential values, including hex and formulas.
+        """Parse a 'Range: [...]' annotation and return (min, max) as floats where possible.
+
+        Values are rounded to *precision* decimal places. Returns ``(None, None)``
+        when the pattern is absent or the content cannot be parsed.
+
+        The sentinel value ``0xFFFFFFFE`` is a reserved Modbus indicator meaning
+        "no upper limit defined"; it is mapped to 4294967.295 (i.e. 0xFFFFFFFE / 1000,
+        the maximum representable kW value for a U32 register with gain 0.001).
         """
         match = re.search(RANGE_PATTERN, range_string, re.DOTALL)
         if match:
@@ -107,6 +114,8 @@ async def sensor_index():
                     min_val = cleaned_components[0]
                 try:
                     if cleaned_components[-1] == "0xFFFFFFFE":
+                        # Reserved sentinel: "no upper limit". Mapped to the maximum
+                        # representable value for a U32 register with gain 0.001.
                         max_val = 4294967.295
                     else:
                         max_val = round(float(cleaned_components[-1]), precision)
@@ -117,21 +126,33 @@ async def sensor_index():
                 logging.error(f"Could not parse min/max values from {range_string}")
         return None, None
 
-    def metrics_topics(index_only: bool = False) -> int:
+    def metrics_topics(f, index_only: bool = False) -> int:
+        """Write metrics sensor rows to *f* and return the number of sensors written.
+
+        When *index_only* is True, only anchor links are emitted (for the index
+        table); otherwise a full Markdown table is written.
+        """
         count = 0
         if not index_only:
-            f.write("| Metric | Interval | Unit | State Topic|\n")
-            f.write("|--------|---------:|------|------------|\n")
+            f.write("| Metric | Interval | Unit | State Topic| Command Topic |\n")
+            f.write("|--------|---------:|------|------------|---------------|\n")
         metrics = MetricsService(Protocol.N_A)
         for metric in [s for s in sorted(metrics.all_sensors.values(), key=lambda x: x.name)]:
             count += 1
             if index_only:
                 f.write(f"<a href='#{metric.unique_id}'>{metric['name']}</a><br>\n")
+            elif metric.__class__.__name__ == "ResetMetrics":
+                f.write(f"| <a id='{metric.unique_id}'>{metric['name']}</a> |||| {metric['command_topic']} |\n")
             else:
-                f.write(f"| <a id='{metric.unique_id}'>{metric['name']}</a> | 1 | {metric['unit_of_measurement'] if metric['unit_of_measurement'] else ''} | {metric['state_topic']} |\n")
+                f.write(f"| <a id='{metric.unique_id}'>{metric['name']}</a> | 1 | {metric['unit_of_measurement'] if metric['unit_of_measurement'] else ''} | {metric['state_topic']} ||\n")
         return count
 
-    def published_topics(device: str, index_only: bool = False) -> int:
+    def published_topics(f, device: str, index_only: bool = False) -> int:
+        """Write published-topic entries for all sensors belonging to *device* to *f*.
+
+        When *index_only* is True, only anchor links are emitted; otherwise full
+        HTML tables are written for each sensor. Returns the number of sensors written.
+        """
         count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1].name) if "state_topic" in value and not isinstance(value, WriteOnlySensor)]:
             sensor: Sensor = mqtt_sensors[key]
@@ -219,7 +240,12 @@ async def sensor_index():
                 f.write("</table>\n")
         return count
 
-    def subscribed_topics(device, index_only: bool = False) -> int:
+    def subscribed_topics(f, device, index_only: bool = False) -> int:
+        """Write subscribed-topic entries for all writable sensors belonging to *device* to *f*.
+
+        When *index_only* is True, only anchor links are emitted; otherwise full
+        HTML tables are written for each sensor. Returns the number of sensors written.
+        """
         count = 0
         for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1].name) if "command_topic" in value]:
             if isinstance(mqtt_sensors[key], ReservedSensor):
@@ -291,34 +317,34 @@ async def sensor_index():
         f.write("<tr><th>Published Topics</th><th>Subscribed Topics</th></tr>\n")
         f.write("<tr><td>\n")
         f.write("\n<h6>Plant</h6>\n")
-        published += 2 + published_topics("PowerPlant", index_only=True)
+        published += 2 + published_topics(f, "PowerPlant", index_only=True)
         f.write("\n<h6>Grid Sensor</h6>\n")
-        published += 2 + published_topics("GridSensor", index_only=True)
+        published += 2 + published_topics(f, "GridSensor", index_only=True)
         f.write("\n<h6>Statistics</h6>\n")
-        published += 2 + published_topics("PlantStatistics", index_only=True)
+        published += 2 + published_topics(f, "PlantStatistics", index_only=True)
         f.write("\n<h6>Inverter</h6>\n")
-        published += 2 + published_topics("Inverter", index_only=True)
+        published += 2 + published_topics(f, "Inverter", index_only=True)
         f.write("\n<h6>Energy Storage System</h6>\n")
-        published += 2 + published_topics("ESS", index_only=True)
+        published += 2 + published_topics(f, "ESS", index_only=True)
         f.write("\n<h6>PV String</h6>\n")
-        published += 2 + published_topics("PVString", index_only=True)
+        published += 2 + published_topics(f, "PVString", index_only=True)
         f.write("\n<h6>AC Charger</h6>\n")
-        published += 2 + published_topics("ACCharger", index_only=True)
+        published += 2 + published_topics(f, "ACCharger", index_only=True)
         f.write("\n<h6>DC Charger</h6>\n")
-        published += 2 + published_topics("DCCharger", index_only=True)
+        published += 2 + published_topics(f, "DCCharger", index_only=True)
         f.write("\n<h6>Smart-Port (Enphase Envoy only)</h6>\n")
-        published += 2 + published_topics("SmartPort", index_only=True)
+        published += 2 + published_topics(f, "SmartPort", index_only=True)
         f.write("\n<h6>Metrics</h6>\n")
-        published += metrics_topics(index_only=True)
+        published += metrics_topics(f, index_only=True)
         f.write("</td><td>\n")
         f.write("\n<h6>Plant</h6>\n")
-        subscribed += 2 + subscribed_topics("PowerPlant", index_only=True)
+        subscribed += 2 + subscribed_topics(f, "PowerPlant", index_only=True)
         f.write("\n<h6>Inverter</h6>\n")
-        subscribed += 1 + subscribed_topics("Inverter", index_only=True)
+        subscribed += 1 + subscribed_topics(f, "Inverter", index_only=True)
         f.write("\n<h6>AC Charger</h6>\n")
-        subscribed += 1 + subscribed_topics("ACCharger", index_only=True)
+        subscribed += 1 + subscribed_topics(f, "ACCharger", index_only=True)
         f.write("\n<h6>DC Charger</h6>\n")
-        subscribed += 1 + subscribed_topics("DCCharger", index_only=True)
+        subscribed += 1 + subscribed_topics(f, "DCCharger", index_only=True)
         for _ in range(subscribed, published):
             f.write("<br>")
         f.write("</td></tr>\n")
@@ -326,62 +352,88 @@ async def sensor_index():
         # Details
         f.write("\n## Published Topics\n")
         f.write("\n### Plant\n")
-        published_topics("PowerPlant")
+        published_topics(f, "PowerPlant")
         f.write("\n#### Grid Sensor\n")
-        published_topics("GridSensor")
+        published_topics(f, "GridSensor")
         f.write("\n#### Statistics\n")
-        published_topics("PlantStatistics")
+        published_topics(f, "PlantStatistics")
         f.write("\n### Inverter\n")
-        published_topics("Inverter")
+        published_topics(f, "Inverter")
         f.write("\n#### Energy Storage System\n")
-        published_topics("ESS")
+        published_topics(f, "ESS")
         f.write("\n#### PV String\n")
         f.write("\nThe actual number of PV Strings is determined from `PV String Count` in the Inverter.\n")
-        published_topics("PVString")
+        published_topics(f, "PVString")
         f.write("\n### AC Charger\n")
-        published_topics("ACCharger")
+        published_topics(f, "ACCharger")
         f.write("\n### DC Charger\n")
-        published_topics("DCCharger")
+        published_topics(f, "DCCharger")
         f.write("\n#### Smart-Port (Enphase Envoy only)\n")
-        published_topics("SmartPort")
+        published_topics(f, "SmartPort")
         f.write("\n### Metrics\n")
         f.write("\nMetrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.\n")
         f.write("\nInfluxDB Metrics are only published when the InfluxDB integration is enabled.\n\n")
-        metrics_topics()
+        metrics_topics(f)
         f.write("\n## Subscribed Topics\n")
         f.write("\n### Plant\n")
-        subscribed_topics("PowerPlant")
+        subscribed_topics(f, "PowerPlant")
         f.write("\n### Inverter\n")
-        subscribed_topics("Inverter")
+        subscribed_topics(f, "Inverter")
         f.write("\n### AC Charger\n")
-        subscribed_topics("ACCharger")
+        subscribed_topics(f, "ACCharger")
         f.write("\n### DC Charger\n")
-        subscribed_topics("DCCharger")
+        subscribed_topics(f, "DCCharger")
         logging.info(f"{TOPICS} successfully updated")
 
 
-def invert_dict_by_field(original_dict, field):
+def invert_dict_by_attr(original_dict: dict, attr: str) -> dict:
+    """Invert *original_dict* by grouping keys under the attribute value of their values.
+
+    For each ``(key, value)`` pair in *original_dict*, the attribute named *attr*
+    is read from *value* via ``getattr``. Entries where the attribute is ``None``
+    (or absent) are skipped. The result maps each distinct attribute value to the
+    list of original keys that shared it.
+
+    Args:
+        original_dict: A mapping whose values are objects exposing *attr*.
+        attr: The attribute name to read from each value object.
+
+    Returns:
+        A dict mapping ``attr`` values → lists of original keys.
+
+    Raises:
+        TypeError: If *original_dict* is not a dict.
+    """
     if not isinstance(original_dict, dict):
         raise TypeError("original_dict must be a dictionary")
-    new_dict = {}
+    new_dict: dict = {}
     for orig_key, value in original_dict.items():
-        if not isinstance(value, dict):
-            raise ValueError(f"Value for key '{orig_key}' is not a dictionary")
-        field_value = getattr(value, field, None)
+        field_value = getattr(value, attr, None)
         if field_value is None:
             continue
-        if field_value not in new_dict:
-            new_dict[field_value] = []
-        new_dict[field_value].append(orig_key)
+        new_dict.setdefault(field_value, []).append(orig_key)
     return new_dict
 
 
-async def compare_sensor_instances():
+async def compare_sensor_instances() -> None:
+    """Compare sigenergy2mqtt sensor instances against the TypQxQ register definitions.
+
+    Downloads (or reuses a cached copy of) the TypQxQ Modbus register definition
+    module, then cross-checks every register address for data-type, count, unit,
+    and gain mismatches, logging warnings for any discrepancies found.
+    Writes the result to SENSORS.md.
+
+    Note: The import of ``resources.modbusregisterdefinitions`` is intentionally
+    deferred to this function because the module is fetched at runtime by
+    ``download_latest`` and may not exist when the script is first loaded.
+    """
     typqxq_instances = {}
     with _swap_active_config(Config()):
         sensor_instances = await get_sensor_instances(home_assistant_enabled=True)
-        registers = invert_dict_by_field(sensor_instances, "address")
+        registers = invert_dict_by_attr(sensor_instances, "address")
 
+    # Deferred import: modbusregisterdefinitions.py is downloaded at runtime
+    # by download_latest() and cannot be imported at module load time.
     from resources.modbusregisterdefinitions import (
         AC_CHARGER_PARAMETER_REGISTERS,
         AC_CHARGER_RUNNING_INFO_REGISTERS,
@@ -483,6 +535,20 @@ async def compare_sensor_instances():
 
 
 def download_latest(path: str) -> None:
+    """Download the most recently committed version of *path* from the TypQxQ GitHub repo.
+
+    Checks every branch for the latest commit that touched *path* and downloads
+    the file at that commit SHA. Skips the download if the local copy is already
+    up to date (mtime >= commit date), and skips altogether if the local file was
+    modified within the last 24 hours (to avoid repeated API calls).
+
+    Args:
+        path: Repository-relative path to the file to download
+              (e.g. ``"custom_components/sigen/modbusregisterdefinitions.py"``).
+
+    Raises:
+        requests.exceptions.HTTPError: If any GitHub API request fails.
+    """
     OWNER = "TypQxQ"
     REPO = "Sigenergy-Local-Modbus"
     BASE = f"https://api.github.com/repos/{OWNER}/{REPO}"
@@ -493,15 +559,15 @@ def download_latest(path: str) -> None:
         logging.info(f"{file} was updated less than a day ago.")
         return
 
-    def get_branches():
-        r = requests.get(f"{BASE}/branches")
+    def get_branches() -> list:
+        r = requests.get(f"{BASE}/branches", timeout=HTTP_TIMEOUT)
         r.raise_for_status()
         return r.json()
 
-    def get_latest_commit_for_file(branch, path):
+    def get_latest_commit_for_file(branch: str, path: str) -> dict | None:
         url = f"{BASE}/commits"
         params = {"sha": branch, "path": path, "per_page": 1}
-        r = requests.get(url, params=params)
+        r = requests.get(url, params=params, timeout=HTTP_TIMEOUT)
         r.raise_for_status()
         commits = r.json()
         return commits[0] if commits else None
@@ -537,32 +603,35 @@ def download_latest(path: str) -> None:
             file.touch()
             return
 
-        # 2. Download the file contents at that commit
         contents_url = f"https://api.github.com/repos/TypQxQ/Sigenergy-Local-Modbus/contents/{path}"
         params = {"ref": commit_sha}
-        file_response = requests.get(contents_url, headers={"Accept": "application/vnd.github.v3.raw"}, params=params)
+        file_response = requests.get(contents_url, headers={"Accept": "application/vnd.github.v3.raw"}, params=params, timeout=HTTP_TIMEOUT)
         file_response.raise_for_status()
 
-        # Save to local file
         with file.open("wb") as f:
             f.write(file_response.content)
 
         logging.info(f"{file} downloaded from commit {commit_sha}")
 
 
-if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
+async def main() -> None:
+    """Entry point: download latest TypQxQ definitions then regenerate both MD files."""
     try:
         download_latest("custom_components/sigen/modbusregisterdefinitions.py")
-    except requests.exceptions.HTTPError:
-        if not os.path.exists("modbusregisterdefinitions.py"):
-            with open("modbusregisterdefinitions.py", "a"):
-                os.utime("modbusregisterdefinitions.py", None)  # Set to now
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else "unknown"
+        if status == 429:
+            logging.warning("GitHub rate limit hit (HTTP 429); proceeding with cached definitions file.")
         else:
-            # Set both access and modification times to now
-            os.utime("modbusregisterdefinitions.py", None)
-        pass  # Probably rate limited
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(sensor_index())
-    loop.run_until_complete(compare_sensor_instances())
-    loop.close()
+            logging.error(f"HTTP {status} error downloading definitions: {e}")
+        # Ensure the file exists so the deferred import in compare_sensor_instances() doesn't fail.
+        Path("modbusregisterdefinitions.py").touch()
+
+    await sensor_index()
+    await compare_sensor_instances()
+
+
+if __name__ == "__main__":
+    os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
+    logging.getLogger().setLevel(logging.INFO)
+    asyncio.run(main())
