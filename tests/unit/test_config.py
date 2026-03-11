@@ -503,3 +503,30 @@ class TestConfigCoverageAugmentation:
         with patch.dict("os.environ", {"SIGENERGY2MQTT_LOG_LEVEL": "DEBUG"}):
             _setup_logging()
             assert logging.getLogger().level == logging.DEBUG
+
+
+class TestSampleConfig:
+    """Tests for the sample configuration file."""
+
+    def test_sample_yaml_validates(self):
+        """Test that the sample configuration file validates against the Settings model."""
+        sample_path = os.path.join("resources", "configuration", "sigenergy2mqtt.yaml")
+        # Ensure the file exists
+        assert os.path.exists(sample_path)
+
+        # Loading the sample file should NOT raise a ValidationError
+        # We use a swap to avoid affecting global state.
+        s = Settings(yaml_file_arg=sample_path)
+
+        # Verify specific fields from the sample (based on recent user edits)
+        assert s.pvoutput.api_key == "cafefacefeeddeadbeef01234567890abcdeface"
+        assert s.pvoutput.system_id == "testing"
+        assert s.influxdb.enabled is True
+        assert s.influxdb.username == "homeassistant"
+
+        # Verify the negated flags were handled
+        # The sample has 'no-ems-mode-check: false' and 'no-metrics: false'
+        # These should be removed from the dict and ems_mode_check / metrics_enabled
+        # should be set to True (since not val is True).
+        assert s.ems_mode_check is True
+        assert s.metrics_enabled is True

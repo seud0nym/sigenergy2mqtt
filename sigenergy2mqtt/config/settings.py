@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
 
 from sigenergy2mqtt import i18n
@@ -134,6 +134,43 @@ class Settings(BaseSettings):
     # ── Private side-channels (set by custom sources, consumed in post_init) ─
     modbus_env_override: dict[str, Any] = Field(default_factory=dict, exclude=True)
     discovery_modbus: list[dict[str, Any]] = Field(default_factory=list, exclude=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_negated_flags(cls, data: Any) -> Any:
+        """
+        Merge negated flags and kebab-case aliases into primary fields
+        to avoid 'extra_forbidden' errors.
+        """
+        if not isinstance(data, dict):
+            return data
+
+        # 1. Merge negated YAML/kebab keys to their positive snake_case field names
+        negated_mapping = {
+            "no-ems-mode-check": "ems_mode_check",
+            "no_ems_mode_check": "ems_mode_check",
+            "no-metrics": "metrics_enabled",
+            "no_metrics": "metrics_enabled",
+        }
+        for negated_key, positive_field in negated_mapping.items():
+            if negated_key in data:
+                val = data.pop(negated_key)
+                if val is not None:
+                    if positive_field not in data:
+                        bool_val = _bool(str(val)) if isinstance(val, str) else bool(val)
+                        data[positive_field] = not bool_val
+
+        # 2. Merge YAML/kebab keys into their snake_case field names
+        for field_name, field_info in cls.model_fields.items():
+            alias = field_info.alias
+            if alias and alias != field_name and alias in data:
+                val_alias = data.pop(alias)
+                if field_name not in data:
+                    data[field_name] = val_alias
+                elif isinstance(val_alias, dict) and isinstance(data[field_name], dict):
+                    data[field_name] = {**data[field_name], **val_alias}
+
+        return data
 
     # ── Field validators ─────────────────────────────────────────────────────
 
