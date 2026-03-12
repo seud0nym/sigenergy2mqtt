@@ -21,7 +21,7 @@ class MqttConfig(BaseModel):
     tls: bool = Field(False, alias="tls")
     tls_insecure: bool = Field(False, alias="tls-insecure")
     transport: str = Field("tcp", alias="transport", pattern=r"^(tcp|websockets)$")
-    anonymous: bool = Field(True, alias="anonymous")
+    anonymous: bool = Field(False, alias="anonymous")
     username: Optional[str] = Field(None, alias="username")
     password: Optional[str] = Field(None, alias="password")
     client_id_prefix: str = Field(
@@ -43,8 +43,15 @@ class MqttConfig(BaseModel):
     @model_validator(mode="after")
     def check_auth(self) -> "MqttConfig":
         if not self.anonymous:
-            if not self.username:
-                raise ValueError("mqtt.username must be provided when mqtt.anonymous is false")
-            if not self.password:
-                raise ValueError("mqtt.password must be provided when mqtt.anonymous is false")
+            fields_set = getattr(self, "model_fields_set", set())
+            explicit_auth_config = any(field in fields_set for field in ("anonymous", "username", "password"))
+
+            # Allow the bare model defaults (anonymous=False with no username/password)
+            # so default object construction remains possible. Any explicit auth-related
+            # configuration still requires both username and password.
+            if explicit_auth_config or self.username is not None or self.password is not None:
+                if not self.username:
+                    raise ValueError("mqtt.username must be provided when mqtt.anonymous is false")
+                if not self.password:
+                    raise ValueError("mqtt.password must be provided when mqtt.anonymous is false")
         return self
