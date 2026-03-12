@@ -811,7 +811,13 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def parse_args(args=None):
-    """Parses known arguments and returns them."""
+    """Parse CLI arguments and fail on unknown options.
+
+    Raises argparse's standard usage error when unsupported arguments are
+    supplied (for example ``--validate-only``).
+    """
     parser = get_parser()
     args_parsed, unknown = parser.parse_known_args(args)
+    if unknown:
+        parser.error(f"unrecognized arguments: {' '.join(unknown)}")
     return args_parsed
