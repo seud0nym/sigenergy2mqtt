@@ -1902,4 +1902,4 @@ cli:
   show_version:
     help: Shows the version number, then exits immediately.
   validate_only:
-    help: Validates the configuration, then exits immediately.
+    help: 'Validates the configuration and tests configured connections/authentication, then exits immediately. Optional mode: --validate=show_credentials logs the raw credentials used for connection tests.'

@@ -5,6 +5,9 @@ import sys
 from pathlib import Path
 from typing import Tuple, cast
 
+import paho.mqtt.client as paho_mqtt
+import requests
+
 from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
@@ -527,6 +530,214 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     signal.signal(signal.SIGHUP, reload_on_signal)
     signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGUSR1, configure_for_restart)
+
+
+# ---------------------------------------------------------------------------
+# Validation helpers
+# ---------------------------------------------------------------------------
+
+
+async def _validate_modbus_connections() -> None:
+    """Verify that each configured Modbus endpoint accepts a TCP connection.
+
+    Opens a short-lived client for every configured host/port, attempts to
+    connect, validates the connected state, logs success, and then closes the
+    socket. No register reads or writes are performed.
+    """
+    for index, modbus in enumerate(active_config.modbus):
+        client = ModbusClient(modbus.host, port=modbus.port, timeout=modbus.timeout, retries=modbus.retries)
+        try:
+            await client.connect()
+            if not client.connected:
+                raise ConnectionError(f"Unable to connect to modbus://{modbus.host}:{modbus.port}")
+            logging.info(f"Validated Modbus connection to modbus://{modbus.host}:{modbus.port} (device #{index})")
+        finally:
+            client.close()
+
+
+def _validate_smartport_connections(show_credentials: bool) -> None:
+    """Validate supported Smart-Port module access/authentication settings.
+
+    Currently validates Enphase modules by initialising the Smart-Port device,
+    obtaining an Enphase token with configured credentials, and reading the
+    Envoy meter endpoint to confirm authenticated access. No write endpoints
+    are called.
+
+    Args:
+        show_credentials: When ``True``, include raw configured credentials in
+            log output for troubleshooting.
+    """
+    from sigenergy2mqtt.devices.smartport.enphase import EnphasePVPower, SmartPort
+
+    for plant_index, modbus in enumerate(active_config.modbus):
+        smartport = modbus.smartport
+        if not smartport.enabled:
+            continue
+        if smartport.module.name.lower() != "enphase":
+            continue
+
+        host = smartport.module.host
+        username = smartport.module.username
+        password = smartport.module.password
+
+        if show_credentials:
+            logging.info(f"Validating Smart-Port Enphase access for plant #{plant_index}: host={host!r} username={username!r} password={password!r}")
+        else:
+            logging.info(f"Validating Smart-Port Enphase access for plant #{plant_index}: host={host!r} username={username!r} password='[REDACTED]'")
+
+        device = SmartPort(plant_index, smartport.module)
+        pv_sensors = [s for s in device.get_all_sensors().values() if isinstance(s, EnphasePVPower)]
+        if not pv_sensors:
+            raise RuntimeError(f"Unable to locate EnphasePVPower sensor for plant #{plant_index}")
+
+        sensor = pv_sensors[0]
+        token = sensor.get_token()
+
+        url = f"https://{host}/ivp/meters/readings"
+        response = requests.get(url, timeout=sensor.scan_interval, verify=False, headers={"Authorization": f"Bearer {token}"})
+        if response.status_code == 401:
+            token = sensor.get_token(reauthenticate=True)
+            response = requests.get(url, timeout=sensor.scan_interval, verify=False, headers={"Authorization": f"Bearer {token}"})
+
+        response.raise_for_status()
+        logging.info(f"Validated Smart-Port Enphase access/authentication for plant #{plant_index} ({url})")
+
+
+def _validate_mqtt_connection(show_credentials: bool) -> None:
+    """Validate MQTT broker reachability and authentication only.
+
+    Establishes a temporary MQTT session using the configured transport/TLS and
+    optional credentials, waits for a successful CONNACK, then disconnects.
+
+    Args:
+        show_credentials: When ``True``, include raw configured credentials in
+            log output for troubleshooting.
+    """
+    client_id = f"{active_config.mqtt.client_id_prefix}_validate"
+    client = paho_mqtt.Client(paho_mqtt.CallbackAPIVersion.VERSION2, client_id=client_id, protocol=paho_mqtt.MQTTv311, transport=active_config.mqtt.transport)
+
+    if active_config.mqtt.tls:
+        import ssl
+
+        ssl_context = ssl.create_default_context()
+        if active_config.mqtt.tls_insecure:
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+        client.tls_set_context(ssl_context)
+
+    try:
+        if active_config.mqtt.anonymous:
+            logging.info(f"Validating MQTT connection to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} anonymously")
+        else:
+            if show_credentials:
+                logging.info(f"Validating MQTT connection to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} with username={active_config.mqtt.username!r} password={active_config.mqtt.password!r}")
+            else:
+                logging.info(f"Validating MQTT connection to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} with username={active_config.mqtt.username!r} password='[REDACTED]'")
+            client.username_pw_set(active_config.mqtt.username, active_config.mqtt.password)
+
+        client.connect(active_config.mqtt.broker, port=active_config.mqtt.port, keepalive=active_config.mqtt.keepalive)
+
+        connected = False
+        for _ in range(10):
+            rc = client.loop(timeout=1.0)
+            if client.is_connected():
+                connected = True
+                break
+            if rc not in (paho_mqtt.MQTT_ERR_SUCCESS, paho_mqtt.MQTT_ERR_NO_CONN):
+                raise ConnectionError(f"MQTT broker connection failed with rc={rc}")
+
+        if not connected:
+            raise TimeoutError("Timed out waiting for MQTT CONNACK")
+
+        logging.info(f"Validated MQTT connection/authentication to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
+    finally:
+        try:
+            client.disconnect()
+            client.loop(timeout=0.1)
+        except Exception:
+            pass
+
+
+def _validate_influxdb_connection(show_credentials: bool) -> None:
+    """Validate InfluxDB connectivity/authentication via read-only HTTP calls.
+
+    For v2 config (token+org), performs a GET against the buckets endpoint.
+    For v1 config (username+password), performs a read-only query endpoint
+    request. No write endpoint is called.
+
+    Args:
+        show_credentials: When ``True``, include raw configured credentials in
+            log output for troubleshooting.
+    """
+    if not active_config.influxdb.enabled:
+        return
+
+    base = f"http://{active_config.influxdb.host}:{active_config.influxdb.port}"
+    timeout = max(active_config.influxdb.write_timeout, 5.0)
+
+    if active_config.influxdb.token and active_config.influxdb.org:
+        headers = {"Authorization": f"Token {active_config.influxdb.token}"}
+        if show_credentials:
+            logging.info(f"Validating InfluxDB v2 credentials for {base}: token={active_config.influxdb.token!r} org={active_config.influxdb.org!r}")
+        else:
+            logging.info(f"Validating InfluxDB v2 credentials for {base}: token='[REDACTED]' org={active_config.influxdb.org!r}")
+        response = requests.get(f"{base}/api/v2/buckets", params={"org": active_config.influxdb.org, "limit": 1}, headers=headers, timeout=timeout)
+    else:
+        auth = (active_config.influxdb.username, active_config.influxdb.password)
+        if show_credentials:
+            logging.info(f"Validating InfluxDB v1 credentials for {base}: username={active_config.influxdb.username!r} password={active_config.influxdb.password!r}")
+        else:
+            logging.info(f"Validating InfluxDB v1 credentials for {base}: username={active_config.influxdb.username!r} password='[REDACTED]'")
+        response = requests.get(f"{base}/query", params={"q": "SHOW DATABASES"}, auth=auth, timeout=timeout)
+
+    response.raise_for_status()
+    logging.info(f"Validated InfluxDB connection/authentication to {base}")
+
+
+def _validate_pvoutput_connection(show_credentials: bool) -> None:
+    """Validate PVOutput endpoint reachability and API authentication.
+
+    Calls PVOutput's system-info API with configured API key/system ID and
+    requires a successful HTTP response. No upload API endpoint is used.
+
+    Args:
+        show_credentials: When ``True``, include raw configured credentials in
+            log output for troubleshooting.
+    """
+    if not active_config.pvoutput.enabled:
+        return
+
+    headers = {
+        "X-Pvoutput-Apikey": active_config.pvoutput.api_key,
+        "X-Pvoutput-SystemId": active_config.pvoutput.system_id,
+        "X-Rate-Limit": "1",
+    }
+    if show_credentials:
+        logging.info(f"Validating PVOutput credentials with api_key={active_config.pvoutput.api_key!r} system_id={active_config.pvoutput.system_id!r}")
+    else:
+        logging.info(f"Validating PVOutput credentials with api_key='[REDACTED]' system_id={active_config.pvoutput.system_id!r}")
+
+    response = requests.get("https://pvoutput.org/service/r2/getsystem.jsp?donations=1", headers=headers, timeout=10)
+    response.raise_for_status()
+    logging.info("Validated PVOutput connection/authentication")
+
+
+async def validate_connections(show_credentials: bool = False) -> None:
+    """Run all configured connection/authentication checks for ``--validate``.
+
+    Executes Modbus, MQTT, InfluxDB, and PVOutput validation checks in
+    sequence. Intended for one-shot startup validation mode, not steady-state
+    runtime.
+
+    Args:
+        show_credentials: When ``True``, validation logs include raw
+            credentials where applicable.
+    """
+    await _validate_modbus_connections()
+    _validate_smartport_connections(show_credentials)
+    _validate_mqtt_connection(show_credentials)
+    _validate_influxdb_connection(show_credentials)
+    _validate_pvoutput_connection(show_credentials)
 
 
 # ---------------------------------------------------------------------------

@@ -1902,4 +1902,4 @@ cli:
   show_version:
     help: Toon het versienummer en sluit dan af.
   validate_only:
-    help: Valideer de configuratie en sluit dan af.
+    help: 'Valideert de configuratie en test de geconfigureerde verbindings-/authenticatie-instellingen, en sluit daarna direct af. Optionele modus: --validate=show_credentials logt de daadwerkelijk gebruikte inloggegevens voor verbindingstests.'

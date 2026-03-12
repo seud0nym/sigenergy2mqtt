@@ -793,9 +793,11 @@ def get_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--validate",
-        action="store_true",
+        nargs="?",
+        const="standard",
+        choices=["standard", "show_credentials"],
         dest="validate_only",
-        help="Validates the configuration, then exits immediately.",
+        help="Validates the configuration and tests configured connections/authentication, then exits immediately. Optional mode: --validate=show_credentials logs the raw credentials used for connection tests.",
     )
     parser.add_argument(
         "-v",

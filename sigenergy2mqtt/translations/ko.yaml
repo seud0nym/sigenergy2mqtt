@@ -1902,4 +1902,4 @@ cli:
   show_version:
     help: 버전 번호 표시 후 종료.
   validate_only:
-    help: 설정 검증 후 종료.
+    help: '구성을 검증하고 설정된 연결/인증 설정을 테스트한 뒤 즉시 종료합니다. 선택 모드: --validate=show_credentials 를 지정하면 연결 대상 테스트에 실제로 사용되는 자격 증명을 로그에 출력합니다.'

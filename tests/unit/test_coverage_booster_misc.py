@@ -46,3 +46,50 @@ def test_main_wrapper_coverage():
     ):
         main_module.main()
         mock_run.assert_called_once()
+
+
+def test_main_validate_path_coverage(monkeypatch):
+    monkeypatch.setattr(main_module, "initialize", lambda: True)
+    main_module.active_config.validate_only_mode = "standard"
+    main_module.active_config.validate_show_credentials = True
+
+    with (
+        patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+        patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock, return_value=None),
+        patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None),
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            main_module.main()
+        assert exc_info.value.code == 0
+        mock_run.assert_called_once()
+
+
+def test_validate_connections_invokes_smartport_validation(monkeypatch):
+    calls: list[str] = []
+
+    async def _modbus():
+        calls.append("modbus")
+
+    def _smartport(show_credentials: bool):
+        calls.append(f"smartport:{show_credentials}")
+
+    def _mqtt(show_credentials: bool):
+        calls.append(f"mqtt:{show_credentials}")
+
+    def _influx(show_credentials: bool):
+        calls.append(f"influx:{show_credentials}")
+
+    def _pvoutput(show_credentials: bool):
+        calls.append(f"pvoutput:{show_credentials}")
+
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_modbus_connections", _modbus)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_smartport_connections", _smartport)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_mqtt_connection", _mqtt)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_influxdb_connection", _influx)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_pvoutput_connection", _pvoutput)
+
+    import asyncio
+
+    asyncio.run(main_module.validate_connections(show_credentials=True))
+
+    assert calls == ["modbus", "smartport:True", "mqtt:True", "influx:True", "pvoutput:True"]

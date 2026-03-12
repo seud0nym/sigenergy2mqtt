@@ -57,3 +57,13 @@ def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
             config_mod.initialize(args)
 
             assert active_config.home_assistant.discovery_only is True
+
+
+def test_cli_parsing_validate_modes(clean_argv):
+    import sigenergy2mqtt.config.cli as cli_mod
+
+    args = cli_mod.parse_args(["--validate"])
+    assert args.validate_only == "standard"
+
+    args = cli_mod.parse_args(["--validate=show_credentials"])
+    assert args.validate_only == "show_credentials"

@@ -1902,4 +1902,4 @@ cli:
   show_version:
     help: 显示版本号后退出。
   validate_only:
-    help: 验证配置后退出。
+    help: '验证配置并测试已配置的连接/身份验证设置，然后立即退出。可选模式：--validate=show_credentials 会记录用于连接目标测试的实际凭据。'
