@@ -93,3 +93,20 @@ def test_validate_connections_invokes_smartport_validation(monkeypatch):
     asyncio.run(main_module.validate_connections(show_credentials=True))
 
     assert calls == ["modbus", "smartport:True", "mqtt:True", "influx:True", "pvoutput:True"]
+
+
+def test_main_validate_reinstalls_default_sigint(monkeypatch):
+    monkeypatch.setattr(main_module, "initialize", lambda: True)
+    main_module.active_config.validate_only_mode = "standard"
+    main_module.active_config.validate_show_credentials = False
+
+    with (
+        patch("sigenergy2mqtt.__main__.signal.signal") as mock_signal,
+        patch("sigenergy2mqtt.__main__.asyncio.run"),
+        patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            main_module.main()
+
+    assert exc_info.value.code == 0
+    assert (main_module.signal.SIGINT, main_module.signal.default_int_handler) in [c.args for c in mock_signal.call_args_list]

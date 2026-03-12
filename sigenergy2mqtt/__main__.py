@@ -89,6 +89,9 @@ def main():
             sys.exit(0)
 
         if getattr(active_config, "validate_only_mode", None):
+            # Restore default Ctrl-C behaviour for validation mode so a single
+            # SIGINT raises KeyboardInterrupt during network checks.
+            signal.signal(signal.SIGINT, signal.default_int_handler)
             logging.info("Configuration is valid; testing configured connection and authentication settings")
             asyncio.run(validate_connections(show_credentials=getattr(active_config, "validate_show_credentials", False)))
             logging.info("Validation checks completed successfully")
