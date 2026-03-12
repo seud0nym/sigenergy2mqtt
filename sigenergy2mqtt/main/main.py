@@ -700,11 +700,19 @@ def _validate_pvoutput_connection(show_credentials: bool) -> None:
     Calls PVOutput's system-info API with configured API key/system ID and
     requires a successful HTTP response. No upload API endpoint is used.
 
+    When ``pvoutput.testing`` is enabled, this probe is skipped to match
+    runtime behaviour, which intentionally avoids outbound PVOutput requests
+    in testing mode.
+
     Args:
         show_credentials: When ``True``, include raw configured credentials in
             log output for troubleshooting.
     """
     if not active_config.pvoutput.enabled:
+        return
+
+    if active_config.pvoutput.testing:
+        logging.info("Skipping PVOutput connection/authentication probe because pvoutput.testing is enabled")
         return
 
     headers = {

@@ -110,3 +110,15 @@ def test_main_validate_reinstalls_default_sigint(monkeypatch):
 
     assert exc_info.value.code == 0
     assert (main_module.signal.SIGINT, main_module.signal.default_int_handler) in [c.args for c in mock_signal.call_args_list]
+
+
+def test_validate_pvoutput_connection_skips_when_testing(monkeypatch):
+    from sigenergy2mqtt.main import main as main_mod
+
+    monkeypatch.setattr(main_mod.active_config.pvoutput, "enabled", True, raising=False)
+    monkeypatch.setattr(main_mod.active_config.pvoutput, "testing", True, raising=False)
+
+    with patch("sigenergy2mqtt.main.main.requests.get") as mock_get:
+        main_mod._validate_pvoutput_connection(show_credentials=False)
+
+    mock_get.assert_not_called()
