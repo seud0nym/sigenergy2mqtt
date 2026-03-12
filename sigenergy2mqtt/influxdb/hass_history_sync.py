@@ -71,16 +71,41 @@ class HassHistorySync(InfluxBase):
                 except Exception as e:
                     self.logger.debug(f"{self.name} v2 bucket detection failed: {e}")
 
-            # Try v1 API
-            success, result = await self.query_v1(config["base"], config["db"], config["auth"], "SHOW DATABASES", timeout=5)
-            if success and result:
-                if "results" in result and result["results"]:
-                    series = result["results"][0].get("series", [])
-                    if series and "values" in series[0]:
-                        databases = [row[0] for row in series[0]["values"]]
-                        if "homeassistant" in databases:
-                            self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1")
-                            return True
+            # Try v1 API.  Prefer generic /query call (without db=...) for
+            # SHOW DATABASES because requiring a specific database parameter can
+            # fail on startup when that target DB has not been created yet.
+            async def check_v1_databases(db_name: str | None) -> bool:
+                if db_name:
+                    success, result = await self.query_v1(config["base"], db_name, config["auth"], "SHOW DATABASES", timeout=5)
+                else:
+                    url = f"{config['base']}/query"
+                    params = {"q": "SHOW DATABASES"}
+                    r = await asyncio.to_thread(self._session.get, url, params=params, auth=config["auth"], timeout=5)
+                    success = r.status_code == 200
+                    result = r.json() if success else None
+
+                if not success or not result:
+                    return False
+
+                if "results" not in result or not result["results"]:
+                    return False
+
+                series = result["results"][0].get("series", [])
+                if not series or "values" not in series[0]:
+                    return False
+
+                databases = [row[0] for row in series[0]["values"]]
+                if "homeassistant" in databases:
+                    self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1")
+                    return True
+
+                return False
+
+            if await check_v1_databases(None):
+                return True
+
+            if config["db"] and await check_v1_databases(config["db"]):
+                return True
 
             self.logger.info(f"{self.name} 'homeassistant' database/bucket not found")
             return False

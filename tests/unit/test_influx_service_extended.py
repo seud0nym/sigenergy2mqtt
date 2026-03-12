@@ -376,6 +376,25 @@ class TestHassHistorySyncCoverage:
             assert found is True
             mock_q1.assert_not_called()
 
+    def test_detect_homeassistant_db_v1_detects_homeassistant_without_db_param(self, logger):
+        hass_sync = self._make_hass_sync(logger)
+        hass_sync.get_config_values = MagicMock(
+            return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"}
+        )
+
+        with patch.object(hass_sync._session, "get") as mock_get:
+            mock_get.return_value = MagicMock(status_code=200)
+            mock_get.return_value.json.return_value = {
+                "results": [{"series": [{"name": "databases", "values": [["_internal"], ["homeassistant"], ["sig"]]}]}]
+            }
+
+            found = asyncio.run(hass_sync.detect_homeassistant_db())
+
+            assert found is True
+            # Ensure the first call checks SHOW DATABASES without forcing db=...
+            _, kwargs = mock_get.call_args
+            assert kwargs["params"] == {"q": "SHOW DATABASES"}
+
     def test_get_earliest_timestamp_v1_path_without_token(self, logger):
         hass_sync = self._make_hass_sync(logger)
         hass_sync.get_config_values = MagicMock(
