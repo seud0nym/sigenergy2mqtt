@@ -193,22 +193,34 @@ async def start(configs: list[ThreadConfig]) -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(configs)) as executor:
         executions: list[concurrent.futures.Future] = [executor.submit(run_modbus_event_loop, config, asyncio.new_event_loop(), stop_event) for config in configs]
+        done: set[concurrent.futures.Future] = set()
 
-        # Poll with a short timeout so KeyboardInterrupt and stop_event are
-        # both handled promptly rather than blocking until all threads finish.
-        while True:
-            done, pending = concurrent.futures.wait(executions, timeout=1.0)
+        try:
+            # Poll with a short timeout so KeyboardInterrupt and stop_event are
+            # both handled promptly rather than blocking until all threads finish.
+            while True:
+                done_raw, pending_raw = concurrent.futures.wait(executions, timeout=1.0)
+                done = set(done_raw)
+                pending = set(pending_raw)
 
-            if stop_event.is_set() and pending:
-                logging.warning("A thread crashed — cancelling remaining threads")
-                for config in configs:
-                    config.offline()
-                concurrent.futures.wait(pending)
-                done = done | pending  # Ensure pending results are also inspected below
-                break
+                if stop_event.is_set() and pending:
+                    logging.warning("A thread crashed — cancelling remaining threads")
+                    for config in configs:
+                        config.offline()
+                    concurrent.futures.wait(pending)
+                    done = done | pending  # Ensure pending results are also inspected below
+                    break
 
-            if not pending:
-                break
+                if not pending:
+                    break
+        except KeyboardInterrupt:
+            logging.info("Keyboard interrupt received — requesting cooperative shutdown")
+            stop_event.set()
+            for config in configs:
+                config.offline()
+            done_raw, _ = concurrent.futures.wait(executions)
+            done = set(done_raw)
+            raise
 
         for fut in done:
             try:
