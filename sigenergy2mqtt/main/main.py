@@ -529,48 +529,6 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     signal.signal(signal.SIGUSR1, configure_for_restart)
 
 
-def check_upgrade() -> bool:
-    """Detect version upgrades and persist the running version marker.
-
-    Returns ``True`` when the stored version differs from ``active_config``.
-
-    Side effects:
-
-    - Reads/writes ``<persistent_state_path>/.current-version``.
-    - Emits upgrade/info/error logging for file I/O and version transitions.
-    """
-    if not active_config.home_assistant.enabled:
-        return False
-
-    current_version_file = Path(active_config.persistent_state_path, ".current-version")
-    current_version: str | None = None
-
-    if current_version_file.exists():
-        try:
-            with current_version_file.open("r") as f:
-                current_version = f.read()
-            logging.debug(f"Loaded '{current_version}' from {current_version_file}")
-        except Exception as error:
-            logging.error(f"Failed to read {current_version_file}: {error}")
-
-    if current_version == active_config.version():
-        return False
-
-    if current_version:
-        logging.info(f"Upgrade to '{active_config.version()}' from '{current_version}' detected")
-    else:
-        logging.info(f"Upgrade to '{active_config.version()}' detected")
-
-    logging.debug(f"Writing '{active_config.version()}' to {current_version_file}")
-    try:
-        with current_version_file.open("w") as f:
-            f.write(active_config.version())
-    except Exception as error:
-        logging.error(f"Failed to write to {current_version_file}: {error}")
-
-    return True
-
-
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -599,7 +557,6 @@ async def async_main() -> None:
         configs = setup_services(configs, protocol_version)
 
         setup_signals(configs)
-        check_upgrade()
 
         await start(configs)
 

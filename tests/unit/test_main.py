@@ -843,23 +843,6 @@ class TestSignals:
             mock_request.assert_called_once()
 
 
-class TestUpgrade:
-    """Tests for upgrade version check."""
-
-    def test_check_upgrade_no_ha(self, clean_config):
-        """Test check_upgrade returns False if HA not enabled."""
-        clean_config.home_assistant.enabled = False
-        assert main_mod.check_upgrade() is False
-
-    def test_check_upgrade_version_match(self, clean_config, tmp_path):
-        """Test check_upgrade returns False if versions match."""
-        clean_config.home_assistant.enabled = True
-        clean_config.persistent_state_path = str(tmp_path)
-        ver_file = tmp_path / ".current-version"
-        ver_file.write_text(active_config.version())
-        assert main_mod.check_upgrade() is False
-
-
 @pytest.mark.asyncio
 async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     mock_device = MagicMock()
@@ -1052,74 +1035,3 @@ async def test_async_main_registers_signal_handlers(clean_config, monkeypatch):
     assert signal.SIGTERM in handlers
     assert signal.SIGHUP in handlers
     assert signal.SIGUSR1 in handlers
-
-
-@pytest.mark.asyncio
-async def test_async_main_version_upgrade_flow(clean_config, tmp_path, monkeypatch):
-    """Test that version upgrade flow writes the new version to file."""
-    # Ensure at least one Modbus device is configured to pass validation
-    mock_device = MagicMock()
-    mock_device.host = "1.2.3.4"
-    mock_device.port = 502
-    mock_device.inverters = [1]
-    mock_device.dc_chargers = []
-    mock_device.ac_chargers = []
-    mock_device.registers.read_only = True
-    mock_device.device_address = 247
-    active_config.modbus.clear()
-    active_config.modbus.extend([mock_device])
-
-    active_config.home_assistant.enabled = True
-    active_config.persistent_state_path = str(tmp_path)
-    monkeypatch.setattr(active_config, "version", lambda: "2.0.0")
-
-    ver_file = tmp_path / ".current-version"
-    ver_file.write_text("1.0.0")
-
-    monkeypatch.setattr(main_mod, "start", AsyncMock())
-    monkeypatch.setattr(signal, "signal", lambda *a: None)
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
-
-    mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
-    mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
-    mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
-    mock_inverter.name = "Inverter"
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-
-    await main_mod.async_main()
-    # Path in main.py is constructed from persistent_state_path
-    assert ver_file.read_text() == "2.0.0"
-
-
-@pytest.mark.asyncio
-async def test_async_main_version_upgrade_errors(clean_config, monkeypatch):
-    """Test error handling when reading/writing version file."""
-    # Ensure at least one Modbus device is configured to pass validation
-    mock_device = MagicMock()
-    mock_device.host = "1.2.3.4"
-    mock_device.port = 502
-    mock_device.inverters = [1]
-    mock_device.dc_chargers = []
-    mock_device.ac_chargers = []
-    mock_device.registers.read_only = True
-    mock_device.device_address = 247
-    active_config.modbus.clear()
-    active_config.modbus.extend([mock_device])
-
-    active_config.home_assistant.enabled = True
-    with patch("sigenergy2mqtt.main.main.Path") as mock_path_cls, patch("sigenergy2mqtt.main.main.logging.error") as mock_log_err:
-        mock_file = MagicMock(exists=lambda: True)
-        mock_file.open.side_effect = Exception("IO Error")
-        mock_path_cls.return_value = mock_file
-        monkeypatch.setattr(main_mod, "start", AsyncMock())
-        monkeypatch.setattr(signal, "signal", lambda *a: None)
-        monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
-
-        mock_plant = MagicMock(protocol_version=Protocol.V1_8, device_address=247, name="Plant")
-        mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
-        mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
-        mock_inverter.name = "Inverter"
-        monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-
-        await main_mod.async_main()
-        assert mock_log_err.called

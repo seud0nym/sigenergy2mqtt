@@ -228,7 +228,6 @@ def _clean_stale_files(path: Path) -> None:
 
     The following files are always retained regardless of age:
 
-    - ``".current-version"``
     - Files with the suffix ``.yaml``, ``.publishable``, or ``.token``
 
     Args:
@@ -237,12 +236,11 @@ def _clean_stale_files(path: Path) -> None:
     """
     threshold_time = time.time() - (7 * 86400)
     _keep_suffixes = {".yaml", ".publishable", ".token"}
-    _keep_names = {".current-version"}
     for file in path.iterdir():
         if not file.is_file():
             continue
         stat = file.stat()
-        if stat.st_mtime < threshold_time and file.name not in _keep_names and file.suffix not in _keep_suffixes:
+        if stat.st_mtime < threshold_time and file.suffix not in _keep_suffixes:
             try:
                 file.unlink()
                 logging.info(f"Removed stale state file: {file} (last modified: {time.ctime(stat.st_mtime)})")
