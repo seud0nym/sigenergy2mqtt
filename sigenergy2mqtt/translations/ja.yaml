@@ -1902,4 +1902,4 @@ cli:
   show_version:
     help: バージョン番号を表示して終了。
   validate_only:
-    help: 設定を検証して終了。
+    help: '設定を検証し、構成された接続/認証設定をテストしてから直ちに終了します。オプションモード: --validate=show_credentials を指定すると、接続先へのテストで実際に使用する認証情報をログに出力します。'

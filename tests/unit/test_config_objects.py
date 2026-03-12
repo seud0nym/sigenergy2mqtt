@@ -91,6 +91,7 @@ class TestMqttConfig:
         assert config.broker == "127.0.0.1"
         assert config.port == 1883
         assert config.tls is False
+        assert config.anonymous is False
 
     def test_broker_port(self):
         config = MqttConfig(broker="192.168.1.100", port=1884)
@@ -124,9 +125,9 @@ class TestMqttConfig:
         assert config.tls_insecure is True
 
     def test_false_values(self):
-        config = MqttConfig(tls=False, anonymous=True, tls_insecure=False)
+        config = MqttConfig(tls=False, anonymous=False, username="user", password="pass", tls_insecure=False)
         assert config.tls is False
-        assert config.anonymous is True
+        assert config.anonymous is False
         assert config.tls_insecure is False
 
 

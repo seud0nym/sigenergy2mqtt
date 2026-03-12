@@ -46,3 +46,95 @@ def test_main_wrapper_coverage():
     ):
         main_module.main()
         mock_run.assert_called_once()
+
+
+def test_main_validate_path_coverage(monkeypatch):
+    monkeypatch.setattr(main_module, "initialize", lambda: True)
+    main_module.active_config.validate_only_mode = "standard"
+    main_module.active_config.validate_show_credentials = True
+
+    with (
+        patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+        patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock, return_value=None),
+        patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None),
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            main_module.main()
+        assert exc_info.value.code == 0
+        mock_run.assert_called_once()
+
+
+def test_validate_connections_invokes_smartport_validation(monkeypatch):
+    calls: list[str] = []
+
+    async def _modbus():
+        calls.append("modbus")
+
+    def _smartport(show_credentials: bool):
+        calls.append(f"smartport:{show_credentials}")
+
+    def _mqtt(show_credentials: bool):
+        calls.append(f"mqtt:{show_credentials}")
+
+    def _influx(show_credentials: bool):
+        calls.append(f"influx:{show_credentials}")
+
+    def _pvoutput(show_credentials: bool):
+        calls.append(f"pvoutput:{show_credentials}")
+
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_modbus_connections", _modbus)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_smartport_connections", _smartport)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_mqtt_connection", _mqtt)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_influxdb_connection", _influx)
+    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_pvoutput_connection", _pvoutput)
+
+    import asyncio
+
+    asyncio.run(main_module.validate_connections(show_credentials=True))
+
+    assert calls == ["modbus", "smartport:True", "mqtt:True", "influx:True", "pvoutput:True"]
+
+
+def test_main_validate_reinstalls_default_sigint(monkeypatch):
+    monkeypatch.setattr(main_module, "initialize", lambda: True)
+    main_module.active_config.validate_only_mode = "standard"
+    main_module.active_config.validate_show_credentials = False
+
+    with (
+        patch("sigenergy2mqtt.__main__.signal.signal") as mock_signal,
+        patch("sigenergy2mqtt.__main__.asyncio.run"),
+        patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            main_module.main()
+
+    assert exc_info.value.code == 0
+    assert (main_module.signal.SIGINT, main_module.signal.default_int_handler) in [c.args for c in mock_signal.call_args_list]
+
+
+def test_validate_pvoutput_connection_skips_when_testing(monkeypatch):
+    from sigenergy2mqtt.main import main as main_mod
+
+    monkeypatch.setattr(main_mod.active_config.pvoutput, "enabled", True, raising=False)
+    monkeypatch.setattr(main_mod.active_config.pvoutput, "testing", True, raising=False)
+
+    with patch("sigenergy2mqtt.main.main.requests.get") as mock_get:
+        main_mod._validate_pvoutput_connection(show_credentials=False)
+
+    mock_get.assert_not_called()
+
+
+def test_main_validate_logs_config_yaml(monkeypatch):
+    monkeypatch.setattr(main_module, "initialize", lambda: True)
+    main_module.active_config.validate_only_mode = "standard"
+    main_module.active_config.validate_show_credentials = False
+
+    with (
+        patch("sigenergy2mqtt.__main__.logging.info") as mock_info,
+        patch("sigenergy2mqtt.__main__.asyncio.run"),
+        patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
+    ):
+        with pytest.raises(SystemExit):
+            main_module.main()
+
+    assert any(call.args and call.args[0] == "Validation configuration:\n%s" for call in mock_info.call_args_list)

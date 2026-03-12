@@ -148,8 +148,12 @@ def initialize(args=None) -> bool:
     if getattr(parsed_args, "clean", False):
         active_config.clean = True
 
-    if getattr(parsed_args, "validate_only", False):
-        return False
+    validate_mode = getattr(parsed_args, "validate_only", None)
+    active_config.validate_only_mode = validate_mode
+    active_config.validate_show_credentials = validate_mode == "show_credentials"
+
+    if validate_mode:
+        return True
 
     if getattr(parsed_args, "discovery_only", False):
         active_config.home_assistant.discovery_only = True

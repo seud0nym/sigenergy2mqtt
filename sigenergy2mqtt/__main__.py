@@ -12,7 +12,7 @@ import sys
 
 import sigenergy2mqtt.config.auto_discovery as auto_discovery
 from sigenergy2mqtt.config import ConfigurationError, active_config, initialize
-from sigenergy2mqtt.main import async_main
+from sigenergy2mqtt.main import async_main, validate_connections
 
 
 def _make_early_signal_handler():
@@ -86,6 +86,16 @@ def main():
     try:
         continuing = initialize()
         if not continuing:
+            sys.exit(0)
+
+        if getattr(active_config, "validate_only_mode", None):
+            # Restore default Ctrl-C behaviour for validation mode so a single
+            # SIGINT raises KeyboardInterrupt during network checks.
+            signal.signal(signal.SIGINT, signal.default_int_handler)
+            logging.info("Configuration is valid; testing configured connection and authentication settings")
+            logging.info("Validation configuration:\n%s", active_config)
+            asyncio.run(validate_connections(show_credentials=getattr(active_config, "validate_show_credentials", False)))
+            logging.info("Validation checks completed successfully")
             sys.exit(0)
     except ConfigurationError as e:
         logging.critical("Configuration error: %s", e)

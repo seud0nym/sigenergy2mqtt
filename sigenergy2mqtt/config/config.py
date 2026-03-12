@@ -24,6 +24,8 @@ import logging
 import os
 import sys
 import time
+from copy import deepcopy
+from io import StringIO
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator
@@ -217,6 +219,51 @@ class Config:
             coro.close()
             logging.exception("Auto-discovery failed when submitting to running loop")
             return []
+
+
+
+    @staticmethod
+    def _redact_sensitive(data: Any) -> Any:
+        """Return a deep-copied structure with sensitive values redacted."""
+        redacted_keys = ("password", "api-key", "api_key", "apikey")
+
+        if isinstance(data, dict):
+            result: dict[str, Any] = {}
+            for key, value in data.items():
+                key_lower = str(key).lower()
+                if any(s in key_lower for s in redacted_keys):
+                    result[key] = "[REDACTED]"
+                else:
+                    result[key] = Config._redact_sensitive(value)
+            return result
+
+        if isinstance(data, list):
+            return [Config._redact_sensitive(item) for item in data]
+
+        return data
+
+    def __str__(self) -> str:
+        """Return the current configuration as nicely formatted YAML.
+
+        Password and API-key style fields are redacted unless
+        ``validate_show_credentials`` is explicitly enabled.
+        """
+        payload: dict[str, Any] = {}
+        if self._settings is not None:
+            payload = self._settings.model_dump(mode="json", by_alias=True, exclude_none=False)
+
+        if not getattr(self, "validate_show_credentials", False):
+            payload = self._redact_sensitive(deepcopy(payload))
+
+        yaml = YAML(typ="safe", pure=True)
+        yaml.default_flow_style = False
+        stream = StringIO()
+        yaml.dump(payload, stream)
+        return stream.getvalue()
+
+    def __repr__(self) -> str:
+        """Return the YAML string representation used by :meth:`__str__`."""
+        return self.__str__()
 
     def version(self) -> str:
         """Return the current sigenergy2mqtt version string."""
