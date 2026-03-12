@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 
 from sigenergy2mqtt.common.consumption_source import ConsumptionSource
 from sigenergy2mqtt.common.output_field import OutputField
@@ -128,6 +129,12 @@ def initialize(args=None) -> bool:
         False if early exit required, otherwise True
     """
     # 1. Parse CLI
+    # When imported inside pytest, sys.argv contains pytest's own flags
+    # (e.g. --collect-only) which are unrelated to sigenergy2mqtt and would
+    # otherwise raise a parser error during test discovery.
+    if args is None and "pytest" in sys.modules:
+        args = []
+
     parsed_args = cli.parse_args(args)
 
     if parsed_args.show_version:
