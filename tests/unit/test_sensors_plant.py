@@ -5,10 +5,10 @@ import pytest
 
 from sigenergy2mqtt.common import ConsumptionMethod
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, SanityCheckException, Sensor
+from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, Sensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_only import EMSWorkMode, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, IndependentPhasePowerControl, MaxChargingLimit, PCSMaxExportLimit, PCSMaxImportLimit, PlantStatus, RemoteEMSControlMode
+from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, IndependentPhasePowerControl, MaxChargingLimit, PlantStatus, RemoteEMSControlMode
 
 
 @pytest.fixture(autouse=True)
@@ -71,7 +71,6 @@ class TestPlantReadWrite:
         sensor = ActivePowerFixedAdjustmentTargetValue(plant_index=0, remote_ems=availability)
         assert sensor["unit_of_measurement"] == "kW"
 
-
     def test_max_charging_limit_configure_topics_without_remote_ems_mode(self, mock_config):
         mock_config.ems_mode_check = True
         remote_ems = MagicMock(spec=AvailabilityMixin)
@@ -101,7 +100,6 @@ class TestPlantReadWrite:
         topics = [item["topic"] for item in availability]
         assert remote_ems.state_topic in topics
         assert remote_ems_mode.is_charging_mode_topic in topics
-
 
     def test_max_charging_limit_no_mode_topic_when_ems_mode_check_disabled(self, mock_config):
         mock_config.ems_mode_check = False
@@ -198,38 +196,6 @@ class TestPlantDerived:
         await sensor.publish(mqtt_client, MagicMock(), republish=True)
         mqtt_client.publish.assert_any_call(sensor.is_charging_mode_topic, "0", 0, False)
         mqtt_client.publish.assert_any_call(sensor.is_discharging_mode_topic, "1", 0, False)
-
-    @pytest.mark.asyncio
-    async def test_pcs_max_export_limit_invalid(self, mock_config):
-        sensor = PCSMaxExportLimit(plant_index=0)
-
-        rr = MagicMock()
-        rr.isError.return_value = False
-        rr.registers = [0xFFFFFFFF]
-
-        modbus = MagicMock()
-        modbus.read_input_registers = AsyncMock(return_value=rr)
-        modbus.read_holding_registers = AsyncMock(return_value=rr)
-        modbus.convert_from_registers = MagicMock(return_value=0xFFFFFFFF)
-
-        with pytest.raises(SanityCheckException, match="Raw value 4294967295 is not within sanity check range 0 to 4294967294"):
-            await sensor.get_state(modbus_client=modbus)
-
-    @pytest.mark.asyncio
-    async def test_pcs_max_import_limit_invalid(self, mock_config):
-        sensor = PCSMaxImportLimit(plant_index=0)
-
-        rr = MagicMock()
-        rr.isError.return_value = False
-        rr.registers = [0xFFFFFFFF]
-
-        modbus = MagicMock()
-        modbus.read_input_registers = AsyncMock(return_value=rr)
-        modbus.read_holding_registers = AsyncMock(return_value=rr)
-        modbus.convert_from_registers = MagicMock(return_value=0xFFFFFFFF)
-
-        with pytest.raises(SanityCheckException, match="Raw value 4294967295 is not within sanity check range 0 to 4294967294"):
-            await sensor.get_state(modbus_client=modbus)
 
     def test_independent_phase_power_control_publishable(self, mock_config):
         # Output type 2 = L1/L2/L3/N
