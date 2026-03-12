@@ -530,3 +530,32 @@ class TestSampleConfig:
         # should be set to True (since not val is True).
         assert s.ems_mode_check is True
         assert s.metrics_enabled is True
+
+
+class TestConfigYamlString:
+    def test_config_str_redacts_sensitive_by_default(self):
+        with _swap_active_config(Config()) as cfg:
+            cfg._settings = Settings(
+                modbus=[ModbusConfig(host="localhost")],
+                mqtt={"anonymous": False, "username": "user1", "password": "secretpwd"},
+                pvoutput={"enabled": True, "api-key": "ABC123", "system-id": "12345"},
+            )
+            cfg.validate_show_credentials = False
+
+            text = str(cfg)
+            assert "[REDACTED]" in text
+            assert "secretpwd" not in text
+            assert "ABC123" not in text
+
+    def test_config_str_shows_sensitive_when_enabled(self):
+        with _swap_active_config(Config()) as cfg:
+            cfg._settings = Settings(
+                modbus=[ModbusConfig(host="localhost")],
+                mqtt={"anonymous": False, "username": "user1", "password": "secretpwd"},
+                pvoutput={"enabled": True, "api-key": "ABC123", "system-id": "12345"},
+            )
+            cfg.validate_show_credentials = True
+
+            text = str(cfg)
+            assert "secretpwd" in text
+            assert "ABC123" in text

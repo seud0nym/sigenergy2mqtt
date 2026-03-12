@@ -93,6 +93,7 @@ def main():
             # SIGINT raises KeyboardInterrupt during network checks.
             signal.signal(signal.SIGINT, signal.default_int_handler)
             logging.info("Configuration is valid; testing configured connection and authentication settings")
+            logging.info("Validation configuration:\n%s", active_config)
             asyncio.run(validate_connections(show_credentials=getattr(active_config, "validate_show_credentials", False)))
             logging.info("Validation checks completed successfully")
             sys.exit(0)
