@@ -68,7 +68,7 @@ class TestConfigStaticMethods:
 
     def test_version(self):
         """Test version method returns version string."""
-        version = active_config.version()
+        version = active_config.version
 
         assert isinstance(version, str)
         assert len(version) > 0

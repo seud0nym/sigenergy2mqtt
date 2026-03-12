@@ -24,9 +24,9 @@ import logging
 import os
 import sys
 import time
+from contextlib import contextmanager
 from copy import deepcopy
 from io import StringIO
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator
 
@@ -77,11 +77,10 @@ class Config:
         except Exception:
             pass
 
-    def __getattr__(self, name: str) -> Any:
-        if name == "_settings":
-            raise AttributeError("_settings not initialised")
-        # Fall through to settings for all data attributes
-        return getattr(self._settings, name)
+    @property
+    def version(self) -> str:
+        """Return the current sigenergy2mqtt version string."""
+        return version.__version__
 
     def get_modbus_log_level(self) -> int:
         """Return the minimum log level across all configured Modbus devices.
@@ -220,27 +219,11 @@ class Config:
             logging.exception("Auto-discovery failed when submitting to running loop")
             return []
 
-
-
-    @staticmethod
-    def _redact_sensitive(data: Any) -> Any:
-        """Return a deep-copied structure with sensitive values redacted."""
-        redacted_keys = ("password", "api-key", "api_key", "apikey")
-
-        if isinstance(data, dict):
-            result: dict[str, Any] = {}
-            for key, value in data.items():
-                key_lower = str(key).lower()
-                if any(s in key_lower for s in redacted_keys):
-                    result[key] = "[REDACTED]"
-                else:
-                    result[key] = Config._redact_sensitive(value)
-            return result
-
-        if isinstance(data, list):
-            return [Config._redact_sensitive(item) for item in data]
-
-        return data
+    def __getattr__(self, name: str) -> Any:
+        if name == "_settings":
+            raise AttributeError("_settings not initialised")
+        # Fall through to settings for all data attributes
+        return getattr(self._settings, name)
 
     def __str__(self) -> str:
         """Return the current configuration as nicely formatted YAML.
@@ -265,9 +248,25 @@ class Config:
         """Return the YAML string representation used by :meth:`__str__`."""
         return self.__str__()
 
-    def version(self) -> str:
-        """Return the current sigenergy2mqtt version string."""
-        return version.__version__
+    @staticmethod
+    def _redact_sensitive(data: Any) -> Any:
+        """Return a deep-copied structure with sensitive values redacted."""
+        redacted_keys = ("password", "api-key", "api_key", "apikey")
+
+        if isinstance(data, dict):
+            result: dict[str, Any] = {}
+            for key, value in data.items():
+                key_lower = str(key).lower()
+                if any(s in key_lower for s in redacted_keys):
+                    result[key] = "[REDACTED]"
+                else:
+                    result[key] = Config._redact_sensitive(value)
+            return result
+
+        if isinstance(data, list):
+            return [Config._redact_sensitive(item) for item in data]
+
+        return data
 
 
 def _clean_stale_files(path: Path) -> None:

@@ -7,7 +7,7 @@ from typing import Tuple, cast
 
 import paho.mqtt.client as paho_mqtt
 import requests
-
+from paho.mqtt.enums import CallbackAPIVersion
 from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
@@ -515,7 +515,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
         exit_on_signal(caught, frame)
 
     def exit_on_signal(caught, frame):
-        """Handle termination signals by offlining all active thread configs."""
+        """Handle termination signals by setting all active thread configs to offline."""
         logging.info(f"Signal {caught} received - Shutdown commenced")
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
@@ -614,7 +614,7 @@ def _validate_mqtt_connection(show_credentials: bool) -> None:
             log output for troubleshooting.
     """
     client_id = f"{active_config.mqtt.client_id_prefix}_validate"
-    client = paho_mqtt.Client(paho_mqtt.CallbackAPIVersion.VERSION2, client_id=client_id, protocol=paho_mqtt.MQTTv311, transport=active_config.mqtt.transport)
+    client = paho_mqtt.Client(CallbackAPIVersion.VERSION2, client_id=client_id, protocol=paho_mqtt.MQTTv311, transport=active_config.mqtt.transport)
 
     if active_config.mqtt.tls:
         import ssl
@@ -625,14 +625,15 @@ def _validate_mqtt_connection(show_credentials: bool) -> None:
             ssl_context.verify_mode = ssl.CERT_NONE
         client.tls_set_context(ssl_context)
 
+    url = f"mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}"
     try:
         if active_config.mqtt.anonymous:
-            logging.info(f"Validating MQTT connection to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} anonymously")
+            logging.info(f"Validating MQTT connection to {url} anonymously")
         else:
             if show_credentials:
-                logging.info(f"Validating MQTT connection to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} with username={active_config.mqtt.username!r} password={active_config.mqtt.password!r}")
+                logging.info(f"Validating MQTT connection to {url} with username={active_config.mqtt.username!r} password={active_config.mqtt.password!r}")
             else:
-                logging.info(f"Validating MQTT connection to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} with username={active_config.mqtt.username!r} password='[REDACTED]'")
+                logging.info(f"Validating MQTT connection to {url} with username={active_config.mqtt.username!r} password='[REDACTED]'")
             client.username_pw_set(active_config.mqtt.username, active_config.mqtt.password)
 
         client.connect(active_config.mqtt.broker, port=active_config.mqtt.port, keepalive=active_config.mqtt.keepalive)
@@ -649,7 +650,7 @@ def _validate_mqtt_connection(show_credentials: bool) -> None:
         if not connected:
             raise TimeoutError("Timed out waiting for MQTT CONNACK")
 
-        logging.info(f"Validated MQTT connection/authentication to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
+        logging.info(f"Validated MQTT connection/authentication to {url}")
     finally:
         try:
             client.disconnect()
@@ -780,7 +781,7 @@ async def async_main() -> None:
         await start(configs)
 
         if not restart_controller.requested:
-            logging.info("Shutdown completed")
+            logging.info(f"Shutdown of Release {active_config.version} completed")
             return
         else:
             active_config.reload()
