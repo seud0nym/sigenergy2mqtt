@@ -216,12 +216,14 @@ class PowerPlant(ModbusDevice):
                         break
             if self._plant_3rd_party_pv_power:
                 self._add_read_sensor(self._plant_3rd_party_pv_power)
+                self._add_derived_sensor(self._total_pv_power, self._plant_3rd_party_pv_power, search_children=False)
                 self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
             else:
                 logging.warning(f"{self.__class__.__name__} Unable to register ThirdPartyPVPower sensor for SmartPort failover - protocol version {self.protocol_version} does not support it")
         else:
             if self._plant_3rd_party_pv_power:
                 self._add_read_sensor(self._plant_3rd_party_pv_power, self._consumption_group)
+                self._add_derived_sensor(self._total_pv_power, self._plant_3rd_party_pv_power, search_children=False)
                 self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
             else:
                 logging.warning(f"{self.__class__.__name__} Unable to register ThirdPartyPVPower sensor as TotalPVPower source - protocol version {self.protocol_version} does not support it")

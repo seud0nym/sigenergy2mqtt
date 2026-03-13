@@ -1001,6 +1001,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         # Always pass the current state to derived sensors regardless of suppression,
         # so they can make their own publishing decisions.
         for sensor in self.derived_sensors.values():
+            if self.debug_logging:
+                logging.debug(f"{self.__class__.__name__} Setting derived sensor {sensor.unique_id} source values (states={self._states})")
             sensor.set_source_values(self, self._states)
 
         return updated
