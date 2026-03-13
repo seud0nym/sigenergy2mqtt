@@ -5,12 +5,15 @@ services:
     environment:
       # Set your time zone (especially important for PVOutput uploads)
       - TZ=Australia/Melbourne 
-      # Configure the environment variables for sigenergy2mqtt e.g.
-      - SIGENERGY2MQTT_LOG_LEVEL=DEBUG
-      - SIGENERGY2MQTT_MODBUS_HOST=sigenergy.local
+      # Configure the sigenergy2mqtt environment variables e.g.
+      - SIGENERGY2MQTT_LOG_LEVEL=INFO
+      - SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY=once
       - SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1
       - SIGENERGY2MQTT_MQTT_USERNAME=user
       - SIGENERGY2MQTT_MQTT_PASSWORD=password
+    # Host network mode is required for auto-discovery
+    network_mode: host
+    restart: always
     volumes:
       # Mount the data directory to persist data
       - ./data:/data
