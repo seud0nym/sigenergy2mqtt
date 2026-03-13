@@ -2,7 +2,6 @@
 .*.yaml
 .debug.*
 data/
-protocol/
 resources/modbusregisterdefinitions.py
 
 # Python
