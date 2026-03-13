@@ -165,3 +165,32 @@ async def test_start_logic_with_exception(caplog):
         with patch_wait:
             await start([config])
             assert "Unhandled exception" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_start_logic_keyboard_interrupt_sets_offline_and_reraises():
+    """Ensures Ctrl-C in main thread triggers cooperative shutdown then re-raises."""
+    from sigenergy2mqtt.main.device_thread import start
+
+    config = MagicMock()
+    mock_loop = MagicMock()
+
+    with (
+        patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", MagicMock()),
+        patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
+        patch("asyncio.new_event_loop", return_value=mock_loop),
+        patch(
+            "concurrent.futures.wait",
+            side_effect=[KeyboardInterrupt(), ([MagicMock()], [])],
+        ) as mock_wait,
+    ):
+        mock_fut = MagicMock()
+        mock_fut.result.return_value = None
+        mock_executor.return_value.__enter__.return_value.submit.return_value = mock_fut
+
+        with pytest.raises(KeyboardInterrupt):
+            await start([config])
+
+        # First wait raises KeyboardInterrupt, second wait is the graceful drain.
+        assert mock_wait.call_count == 2
+        config.offline.assert_called_once()
