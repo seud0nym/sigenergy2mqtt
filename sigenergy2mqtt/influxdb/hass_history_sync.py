@@ -146,6 +146,27 @@ class HassHistorySync(InfluxBase):
                         return False
                     self.logger.debug(f"{self.name} homeassistant v1 probe returned error but DB appears reachable: {first_result['error']}")
 
+                # Accept as positive when response shape matches SHOW
+                # MEASUREMENTS output (series named "measurements") or when
+                # query executed with an empty result (statement_id only).
+                if isinstance(first_result, dict) and "series" in first_result:
+                    series = first_result.get("series")
+                    if not isinstance(series, list) or not series:
+                        self.logger.debug(f"{self.name} v1 direct probe series is empty payload={str(first_result)[:300]}")
+                        return False
+                    first_series = series[0] if isinstance(series[0], dict) else {}
+                    series_name = first_series.get("name")
+                    if series_name != "measurements":
+                        self.logger.debug(
+                            f"{self.name} v1 direct probe series name mismatch expected=measurements actual={series_name} payload={str(first_result)[:300]}"
+                        )
+                        return False
+                elif isinstance(first_result, dict) and "statement_id" in first_result:
+                    pass
+                else:
+                    self.logger.debug(f"{self.name} v1 direct probe unrecognised payload={str(first_result)[:300]}")
+                    return False
+
                 self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1 (direct probe)")
                 return True
 

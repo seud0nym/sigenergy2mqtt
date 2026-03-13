@@ -420,6 +420,31 @@ class TestHassHistorySyncCoverage:
 
             assert found is True
 
+    def test_detect_homeassistant_db_v1_direct_probe_ignores_non_measurements_series(self, logger):
+        hass_sync = self._make_hass_sync(logger)
+        hass_sync.get_config_values = MagicMock(
+            return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"}
+        )
+
+        with patch.object(hass_sync._session, "get") as mock_get, patch.object(hass_sync, "query_v1") as mock_q1:
+            # Generic SHOW DATABASES call does not include homeassistant
+            mock_get.return_value = MagicMock(status_code=200)
+            mock_get.return_value.json.return_value = {"results": [{"series": [{"values": [["mydb"], ["other"]]}]}]}
+
+            async def fake_q1(base, db, auth, query, **kwargs):
+                if db == "sig" and query == "SHOW DATABASES":
+                    return True, {"results": [{"series": [{"values": [["mydb"], ["other"]]}]}]}
+                if db == "homeassistant" and query == "SHOW MEASUREMENTS LIMIT 1":
+                    # Response shape belongs to SHOW DATABASES, not SHOW MEASUREMENTS
+                    return True, {"results": [{"series": [{"values": [["mydb"], ["other"]]}]}]}
+                return False, None
+
+            mock_q1.side_effect = fake_q1
+
+            found = asyncio.run(hass_sync.detect_homeassistant_db())
+
+            assert found is False
+
     def test_get_earliest_timestamp_v1_path_without_token(self, logger):
         hass_sync = self._make_hass_sync(logger)
         hass_sync.get_config_values = MagicMock(
