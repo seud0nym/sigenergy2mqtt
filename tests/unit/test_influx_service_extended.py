@@ -395,6 +395,31 @@ class TestHassHistorySyncCoverage:
             _, kwargs = mock_get.call_args
             assert kwargs["params"] == {"q": "SHOW DATABASES"}
 
+    def test_detect_homeassistant_db_v1_falls_back_to_direct_probe_when_show_databases_unavailable(self, logger):
+        hass_sync = self._make_hass_sync(logger)
+        hass_sync.get_config_values = MagicMock(
+            return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"}
+        )
+
+        with patch.object(hass_sync._session, "get") as mock_get, patch.object(hass_sync, "query_v1") as mock_q1:
+            # Generic SHOW DATABASES call returns no usable DB listing
+            mock_get.return_value = MagicMock(status_code=200)
+            mock_get.return_value.json.return_value = {"results": [{"error": "error authorizing query: requires admin privilege"}]}
+
+            # db-scoped SHOW DATABASES fails, but direct probe on homeassistant succeeds
+            async def fake_q1(base, db, auth, query, **kwargs):
+                if db == "sig" and query == "SHOW DATABASES":
+                    return False, None
+                if db == "homeassistant" and query == "SHOW MEASUREMENTS LIMIT 1":
+                    return True, {"results": [{"statement_id": 0}]}
+                return False, None
+
+            mock_q1.side_effect = fake_q1
+
+            found = asyncio.run(hass_sync.detect_homeassistant_db())
+
+            assert found is True
+
     def test_get_earliest_timestamp_v1_path_without_token(self, logger):
         hass_sync = self._make_hass_sync(logger)
         hass_sync.get_config_values = MagicMock(

@@ -101,10 +101,40 @@ class HassHistorySync(InfluxBase):
 
                 return False
 
+            async def probe_homeassistant_v1() -> bool:
+                """Probe direct access to the homeassistant DB when SHOW DATABASES is unavailable.
+
+                Some InfluxDB v1 setups use non-admin users that can read/write
+                specific databases but cannot execute SHOW DATABASES. In that
+                case, a direct query against the target DB is a better signal.
+                """
+                success, result = await self.query_v1(config["base"], "homeassistant", config["auth"], "SHOW MEASUREMENTS LIMIT 1", timeout=5)
+                if not success or not isinstance(result, dict):
+                    return False
+                query_results = result.get("results")
+                if not isinstance(query_results, list) or not query_results:
+                    return False
+
+                first_result = query_results[0]
+                if isinstance(first_result, dict) and "error" in first_result:
+                    # Distinguish between "db missing" and query/permission
+                    # responses. If query executed without "database not found",
+                    # we consider the DB present.
+                    error_text = str(first_result["error"]).lower()
+                    if "database not found" in error_text:
+                        return False
+                    self.logger.debug(f"{self.name} homeassistant v1 probe returned error but DB appears reachable: {first_result['error']}")
+
+                self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1 (direct probe)")
+                return True
+
             if await check_v1_databases(None):
                 return True
 
             if config["db"] and await check_v1_databases(config["db"]):
+                return True
+
+            if await probe_homeassistant_v1():
                 return True
 
             self.logger.info(f"{self.name} 'homeassistant' database/bucket not found")
