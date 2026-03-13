@@ -62,11 +62,11 @@ Sigenergy Plant
 
 For Sigenergy systems, with no requirement to integrate with PVOutput, the [Sigenergy Local Modbus HACS integration](https://github.com/TypQxQ/Sigenergy-Local-Modbus) may be a better alternative for integration with Home Assistant.
 
-| Feature | Sigenergy Local Modbus | sigenergy2mqtt  (Linux) | sigenergy2mqtt  (HA App) | Comments |
-|:--------|:----------------------:|:-----------------------:|:---------------------------:|:---------|
-| Pre-requisites | None | Python, MQTT broker | MQTT broker | |
-| Installation | GUI | Manual | GUI | |
-| Configuration| GUI | Edit configuration file | GUI and/or config file | |
-| Home Assistant | HACS Integration | Optional MQTT Auto-discovery | MQTT Auto-discovery |
-| PVOutput | No | Optional | Optional | |
+| Feature | Sigenergy Local Modbus | sigenergy2mqtt  (HA App) | 
+|:--------|:----------------------:|:------------------------:|
+| Pre-requisites | HACS | MQTT broker |
+| Installation | HACS Integration | HA App |
+| Configuration| GUI | GUI and/or config file |
+| Sigenergy Auto-discovery | Yes | Yes |
+| PVOutput | No | Optional |
 
