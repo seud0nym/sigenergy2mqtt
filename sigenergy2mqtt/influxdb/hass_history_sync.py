@@ -54,6 +54,10 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
+            self.logger.debug(
+                f"{self.name} detect_homeassistant_db: base={config['base']} db={config['db']} "
+                f"token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
+            )
 
             # Try v2 API first (if token available)
             if config["token"]:
@@ -61,8 +65,12 @@ class HassHistorySync(InfluxBase):
                     headers = {"Authorization": f"Token {config['token']}"}
                     url = f"{config['base']}/api/v2/buckets"
                     r = await asyncio.to_thread(self._session.get, url, headers=headers, timeout=5)
+                    self.logger.debug(f"{self.name} v2 bucket probe status={r.status_code} url={url}")
                     if r.status_code == 200:
                         buckets = r.json()
+                        self.logger.debug(
+                            f"{self.name} v2 bucket probe payload keys={list(buckets.keys()) if isinstance(buckets, dict) else type(buckets).__name__}"
+                        )
                         if isinstance(buckets, dict) and "buckets" in buckets:
                             for bucket in buckets["buckets"]:
                                 if bucket.get("name") == "homeassistant":
@@ -76,25 +84,33 @@ class HassHistorySync(InfluxBase):
             # fail on startup when that target DB has not been created yet.
             async def check_v1_databases(db_name: str | None) -> bool:
                 if db_name:
+                    self.logger.debug(f"{self.name} v1 SHOW DATABASES via query_v1 db={db_name}")
                     success, result = await self.query_v1(config["base"], db_name, config["auth"], "SHOW DATABASES", timeout=5)
                 else:
                     url = f"{config['base']}/query"
                     params = {"q": "SHOW DATABASES"}
                     r = await asyncio.to_thread(self._session.get, url, params=params, auth=config["auth"], timeout=5)
+                    self.logger.debug(f"{self.name} v1 SHOW DATABASES generic probe status={r.status_code} url={url} params={params}")
                     success = r.status_code == 200
                     result = r.json() if success else None
+                    if not success:
+                        self.logger.debug(f"{self.name} v1 generic SHOW DATABASES non-200 body={r.text[:300]}")
 
                 if not success or not result:
+                    self.logger.debug(f"{self.name} v1 SHOW DATABASES probe returned success={success} has_result={bool(result)} db_name={db_name}")
                     return False
 
                 if "results" not in result or not result["results"]:
+                    self.logger.debug(f"{self.name} v1 SHOW DATABASES payload missing results db_name={db_name} payload={str(result)[:300]}")
                     return False
 
                 series = result["results"][0].get("series", [])
                 if not series or "values" not in series[0]:
+                    self.logger.debug(f"{self.name} v1 SHOW DATABASES payload missing series/values db_name={db_name} payload={str(result)[:300]}")
                     return False
 
                 databases = [row[0] for row in series[0]["values"]]
+                self.logger.debug(f"{self.name} v1 SHOW DATABASES db_name={db_name} databases={databases}")
                 if "homeassistant" in databases:
                     self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1")
                     return True
@@ -108,11 +124,16 @@ class HassHistorySync(InfluxBase):
                 specific databases but cannot execute SHOW DATABASES. In that
                 case, a direct query against the target DB is a better signal.
                 """
+                self.logger.debug(f"{self.name} v1 direct probe db=homeassistant query=SHOW MEASUREMENTS LIMIT 1")
                 success, result = await self.query_v1(config["base"], "homeassistant", config["auth"], "SHOW MEASUREMENTS LIMIT 1", timeout=5)
                 if not success or not isinstance(result, dict):
+                    self.logger.debug(
+                        f"{self.name} v1 direct probe failed success={success} result_type={type(result).__name__}"
+                    )
                     return False
                 query_results = result.get("results")
                 if not isinstance(query_results, list) or not query_results:
+                    self.logger.debug(f"{self.name} v1 direct probe payload missing results payload={str(result)[:300]}")
                     return False
 
                 first_result = query_results[0]
@@ -138,6 +159,7 @@ class HassHistorySync(InfluxBase):
                 return True
 
             self.logger.info(f"{self.name} 'homeassistant' database/bucket not found")
+            self.logger.debug(f"{self.name} detect_homeassistant_db exhausted all probes")
             return False
 
         except Exception as e:
@@ -165,6 +187,10 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
+            self.logger.debug(
+                f"{self.name} detect_homeassistant_db: base={config['base']} db={config['db']} "
+                f"token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
+            )
 
             # Try v2 API (Flux query)
             if config["token"]:
@@ -423,6 +449,10 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
+            self.logger.debug(
+                f"{self.name} detect_homeassistant_db: base={config['base']} db={config['db']} "
+                f"token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
+            )
 
             # Try v2 API first
             if config["token"]:
