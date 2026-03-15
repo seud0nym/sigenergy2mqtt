@@ -36,6 +36,11 @@ if [[ $force_build = n && $changed_files = n ]]; then
     exit
 fi
 
+# `--force` means: continue even without source changes and recalculate version.
+if [[ $force_build = y ]]; then
+    changed_files=y
+fi
+
 source scripts/translations
 
 echo -e "${GREEN}>>> Calculating version...${NC}"
