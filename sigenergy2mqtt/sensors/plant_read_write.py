@@ -711,7 +711,7 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.294,
         )
-        self.sanity_check.max_raw = 4294967295
+        self.sanity_check.max_raw = Constants.UINT32_MAX
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -743,7 +743,7 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V2_5,
             maximum=4294967.294,
         )
-        self.sanity_check.max_raw = 4294967295
+        self.sanity_check.max_raw = Constants.UINT32_MAX
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
