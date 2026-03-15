@@ -58,14 +58,6 @@ jobs:
           path: dist/
 
       - name: Publish release distributions to PyPI
-        if: ${{ !github.event.release.prerelease }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: dist/
-
-      - name: Publish release distributions to TestPyPI
-        if: ${{ github.event.release.prerelease }}
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
           packages-dir: dist/
