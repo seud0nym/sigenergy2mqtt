@@ -43,6 +43,12 @@ jobs:
           images: |
             seud0nym/sigenergy2mqtt
             ghcr.io/seud0nym/sigenergy2mqtt
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
+            type=raw,value=beta,enable=${{ github.event.release.prerelease }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4

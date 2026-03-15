@@ -6,7 +6,7 @@ git restore sigenergy2mqtt/config/version.py
 echo -e "${GREEN}>>> Checking dependencies...${NC}"
 scripts/dependencies
 
-. $(dirname $0)/build
+. $(dirname $0)/build --stable
 
 read -p "Confirm version bump? (y/n): " confirm
 if [[ "$confirm" != "y" ]]; then

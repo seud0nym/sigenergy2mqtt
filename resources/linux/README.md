@@ -60,3 +60,24 @@ To upgrade to a new release, use `pipx upgrade`:
 sudo -u sigenergy pipx upgrade sigenergy2mqtt
 systemctl restart sigenergy2mqtt.service
 ```
+
+
+## Pre-release (beta) installs
+
+Pre-release versions are published to PyPI using normal Python pre-release versioning. They are not selected by default.
+
+To install or upgrade to the latest pre-release:
+
+```bash
+sudo -u sigenergy pipx install --pip-args="--pre" sigenergy2mqtt
+# or, if already installed:
+sudo -u sigenergy pipx upgrade --pip-args="--pre" sigenergy2mqtt
+systemctl restart sigenergy2mqtt.service
+```
+
+To return to the latest stable release:
+
+```bash
+sudo -u sigenergy pipx upgrade sigenergy2mqtt
+systemctl restart sigenergy2mqtt.service
+```

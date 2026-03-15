@@ -2,6 +2,9 @@ name: Publish Python Package to PyPI
 
 on:
   release:
+    # `published` fires for both stable releases and prereleases once they are published.
+    # Keeping this to `published` avoids duplicate runs that can happen when combining
+    # `published` and `prereleased` for the same prerelease publication.
     types: [published]
 
 permissions:
@@ -61,3 +64,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          skip-existing: true
