@@ -2,7 +2,7 @@ name: Publish Docker Images
 
 on:
   release:
-    types: [published, prereleased]
+    types: [published]
 
   workflow_call:
     secrets:
