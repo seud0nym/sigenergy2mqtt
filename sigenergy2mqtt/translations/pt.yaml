@@ -1729,6 +1729,8 @@ cli:
     help: 'O prefixo a ser usado para IDs exclusivos do Home Assistant. Exemplo: Um prefixo ''prefix'' anexará ''prefix_'' aos IDs exclusivos (padrão: sigen). Depois de definir isso, você NUNCA deve alterá-lo, pois isso quebrará as entidades existentes no Home Assistant.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Usar estrutura de tópicos simplificada'
+  SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: 'Use os mapeamentos de entity_id, ganho e unidade do Sigenergy-Local-Modbus para sensores compatíveis.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'Tamanho do lote InfluxDB (padrão: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:

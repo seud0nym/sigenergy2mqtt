@@ -13,6 +13,7 @@ class HomeAssistantConfig(BaseModel):
     discovery_prefix: str = Field("homeassistant", alias="discovery-prefix")
     entity_id_prefix: str = Field("sigen", alias="entity-id-prefix")
     unique_id_prefix: str = Field("sigen", alias="unique-id-prefix")
+    use_sigenergy_local_modbus_naming: bool = Field(False, alias="use-sigenergy-local-modbus-naming")
     use_simplified_topics: bool = Field(False, alias="use-simplified-topics")
     edit_percentage_with_box: bool = Field(False, alias="edit-pct-box")
     discovery_only: bool = Field(False, alias="discovery-only")

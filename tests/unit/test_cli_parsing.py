@@ -74,3 +74,11 @@ def test_cli_parsing_invalid_validate_option_raises(clean_argv):
 
     with pytest.raises(SystemExit):
         cli_mod.parse_args(["--validate-only"])
+
+
+def test_cli_parsing_use_sigenergy_local_modbus_naming(clean_argv):
+    import sigenergy2mqtt.config.cli as cli_mod
+    from sigenergy2mqtt.config import const
+
+    args = cli_mod.parse_args(["--use-sigenergy-local-modbus-naming"])
+    assert getattr(args, const.SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING) is True

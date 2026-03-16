@@ -114,6 +114,12 @@ home-assistant:
   #                 Assistant MQTT unique id. This should NEVER be changed 
   #                 after initial discovery has been published.
   unique-id-prefix: sigen
+  # use-sigenergy-local-modbus-naming
+  #   added: 2026.3.13
+  #   default: false
+  #   description:  If true, apply Sigenergy-Local-Modbus entity_id, gain and
+  #                 unit mappings where available to help migration.
+  use-sigenergy-local-modbus-naming: false
   # use-simplified-topics
   #   added: 2025.7.26
   #   default: false

@@ -17,6 +17,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
+from ._sigenergy_local_modbus_registers import SIGENERGY_LOCAL_MODBUS_REGISTERS
 from .constants import (
     DiscoveryKeys,
     ModbusLockFactory,
@@ -103,6 +104,14 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
         if count <= 0:
             raise AssertionError(f"{self.__class__.__name__}: Invalid count {count}")
+
+        use_slm_naming = active_config.home_assistant.enabled and active_config.home_assistant.use_sigenergy_local_modbus_naming
+        slm_map = SIGENERGY_LOCAL_MODBUS_REGISTERS.get(address) if use_slm_naming else None
+
+        if slm_map:
+            kwargs[DiscoveryKeys.OBJECT_ID] = str(slm_map["object_id"])
+            kwargs[DiscoveryKeys.UNIT_OF_MEASUREMENT] = cast(str | None, slm_map.get("unit"))
+            kwargs["gain"] = cast(float | None, slm_map.get("gain"))
 
         # Set unique_id
         if unique_id_override is not None:

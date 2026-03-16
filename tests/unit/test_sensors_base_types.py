@@ -81,6 +81,72 @@ class TestModbusSensor:
                 )
 
 
+
+    def test_modbus_sensor_uses_sigenergy_local_modbus_mapping_when_enabled(self, mock_config_all):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
+            with patch.dict(
+                "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
+                {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
+                clear=True,
+            ):
+                sensor = ModbusSensorMixin(
+                    InputType.HOLDING,
+                    0,
+                    1,
+                    30001,
+                    1,
+                    unique_id_override="override_uid",
+                    name="N",
+                    unique_id="sigen_o",
+                    object_id="sigen_original",
+                    unit="W",
+                    device_class=None,
+                    state_class=None,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=0,
+                    protocol_version=Protocol.V2_4,
+                )
+
+            assert sensor.object_id == "sigen_local_name"
+            assert sensor.unique_id == "override_uid"
+            assert sensor.unit == "kW"
+            assert sensor.gain == 0.1
+
+
+    def test_modbus_sensor_keeps_override_unique_id_when_mapping_disabled(self, mock_config_all):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = False
+            with patch.dict(
+                "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
+                {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
+                clear=True,
+            ):
+                sensor = ModbusSensorMixin(
+                    InputType.HOLDING,
+                    0,
+                    1,
+                    30001,
+                    1,
+                    unique_id_override="override_uid",
+                    name="N",
+                    unique_id="sigen_o",
+                    object_id="sigen_original",
+                    unit="W",
+                    device_class=None,
+                    state_class=None,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=0,
+                    protocol_version=Protocol.V2_4,
+                )
+
+            assert sensor.object_id == "sigen_original"
+            assert sensor.unique_id == "override_uid"
+            assert sensor.unit == "W"
+            assert sensor.gain == 1.0
+
 class TestReadOnlySensor:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
