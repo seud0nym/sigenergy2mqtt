@@ -21,7 +21,7 @@ In addition, `sigenergy2mqtt` has several optional features:
 1. It can auto-discover Sigenergy devices and their device IDs without having to specify the host IP address.
 1. It can publish the appropriate messages to allow Home Assistant to automatically discover the Sigenergy devices, simplifying Home Assistant configuration. 
 1. Production and consumption data can automatically be uploaded to PVOutput. 
-1. It can publish the Modbus data to the InfluxDB (v1/2) time series database for long-term storage and analysis.
+1. It can directly publish the Modbus data to an InfluxDB (v1/2) time series database for long-term storage and analysis.
 
 
 ## Pre-requisites
@@ -43,20 +43,14 @@ When parsing configuration options, `sigenergy2mqtt` looks at the configuration 
 
 1. [Configuration File](resources/configuration/FILE.md)
 2. [Environment Variables](resources/configuration/ENV.md)
-3. [Command Line Options](resources/configuration/CLI.md)<sup>*</sup>
+3. [Command Line Options](resources/configuration/CLI.md)<sup>1</sup>
 4. [Home Assistant App Configuration](https://github.com/seud0nym/home-assistant-addons/blob/main/sigenergy2mqtt/DOCS.md#configuration-tab)
 
 This means, for example, that the options specified in the configuration file can be overridden by environment variables and command line options.
 
 Click on the links above to see the configuration options available.
 
-<span style='font-size:x-small'><sup>*</sup> Not applicable to the Home Assistant App</span>
-
-### Modbus Auto-Discovery
-
-You can automatically discover Sigenergy devices on your network. Auto-discovery is triggered when you do not configure a Modbus host, or if you specify the command line option `--modbus-auto-discovery`, the  environment variable `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`, or you can force it through the Home Assistant App Configuration. The command line option and the environment variables take a value of either `once` or `force`:  If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs.
-
-Auto-discovery is a lengthy process because your local network has to be scanned for potential Modbus hosts, and once detected there are 247 potential device IDs to be scanned on each host.
+<sup>1</sup> <sub>Not applicable to the Home Assistant App</sub>
 
 ## MQTT Publish and Subscribe Topics
 
