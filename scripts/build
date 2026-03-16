@@ -114,6 +114,11 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    if [[ $build_stable = y ]]; then
+        sed -e "s/^stage: .*/stage: stable/" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    else
+        sed -e "s/^stage: .*/stage: experimental/" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    fi
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
     grep -Eoe '"--[^"]+' sigenergy2mqtt/config/cli.py | cut -c4- | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.cli.options
     grep -Eoe '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.env.vars
