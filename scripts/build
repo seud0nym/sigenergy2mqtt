@@ -7,13 +7,38 @@ NC='\033[0m' # No Colour
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
+force_build=n
+build_stable=n
+
+for arg in "$@"; do
+    case "$arg" in
+        -f|--force)
+            force_build=y
+            ;;
+        -s|--stable)
+            build_stable=y
+            ;;
+        -h|--help)
+            echo "Usage: scripts/build [-f|--force] [-s|--stable]"
+            echo "  -f, --force   Build even when no source files changed"
+            echo "  -s, --stable  Produce a stable release version (default is prerelease)"
+            exit 0
+            ;;
+    esac
+done
+
 changed_files=y
-if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f  | grep -cE '\.(py|yaml)$') = 0 ]]; then
+if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | grep -cE '\.(py|yaml)$') = 0 ]]; then
     changed_files=n
 fi
-if echo "$*" | grep -vqe "-f" && [[ $changed_files = n ]]; then
+if [[ $force_build = n && $changed_files = n ]]; then
     echo -e "${RED}>>> Build CANCELLED: ${ORANGE}No changed files found${NC}"
     exit
+fi
+
+# `--force` means: continue even without source changes and recalculate version.
+if [[ $force_build = y ]]; then
+    changed_files=y
 fi
 
 source scripts/translations
@@ -30,18 +55,31 @@ if [[ $changed_files = n ]]; then
     fi
     date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0029 Version unchanged ($new_version PyPi=$pypi_version)"
 else
-    new_version=$(date +"%Y.%-m.%-d")
-    pypi_version=$new_version
-    if [[ $old_version =~ ^"$new_version" ]]; then
-        post=$(echo $old_version | cut -d'-' -f2)
-        if [[ $post =~ ^[0-9]+$ ]]; then
-            pypi_version="${new_version}.post$((post + 1))"
-            new_version="${new_version}-$((post + 1))"
-        else
-            pypi_version="${new_version}.post1"
-            new_version="${new_version}-1"
+    base_version=$(date +"%Y.%-m.%-d")
+
+    if [[ $build_stable = y ]]; then
+        new_version=$base_version
+        pypi_version=$new_version
+        if [[ $old_version =~ ^"$base_version" ]]; then
+            post=$(echo $old_version | cut -d'-' -f2)
+            if [[ $post =~ ^[0-9]+$ ]]; then
+                pypi_version="${base_version}.post$((post + 1))"
+                new_version="${base_version}-$((post + 1))"
+            elif [[ $old_version = "$base_version" ]]; then
+                pypi_version="${base_version}.post1"
+                new_version="${base_version}-1"
+            fi
         fi
+    else
+        if [[ $old_version =~ ^${base_version}b([0-9]+)$ ]]; then
+            beta=$((BASH_REMATCH[1] + 1))
+        else
+            beta=1
+        fi
+        new_version="${base_version}b${beta}"
+        pypi_version=$new_version
     fi
+
     sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
     date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0044 Updated version from $old_version to $new_version (PyPi=$pypi_version)"
 fi
@@ -51,7 +89,7 @@ if [[ $new_version != $old_version ]]; then
     pytest -n logical -q --disable-warnings || exit
 
     echo -e "${GREEN}>>> Checking sensors...${NC}"
-    python3 - <<EOF || exit
+    python3 - <<EOF2 || exit
 import asyncio, logging
 from tests.utils import get_sensor_instances
 logging.basicConfig(level=logging.WARNING)
@@ -59,7 +97,7 @@ async def check():
     await get_sensor_instances(home_assistant_enabled=True)
     await get_sensor_instances(home_assistant_enabled=False)
 asyncio.run(check())
-EOF
+EOF2
     echo -e "${GREEN}>>> Updating documentation...${NC}"
     scripts/update_md "$new_version"
 fi
@@ -76,6 +114,11 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    if [[ $build_stable = y ]]; then
+        sed -e "s/^stage: .*/stage: stable/" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    else
+        sed -e "s/^stage: .*/stage: experimental/" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
+    fi
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
     grep -Eoe '"--[^"]+' sigenergy2mqtt/config/cli.py | cut -c4- | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.cli.options
     grep -Eoe '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.env.vars

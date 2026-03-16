@@ -42,6 +42,23 @@ docker run -it \
 ```
 
 
+
+## Pre-release (beta) images
+
+If you want to test pre-release builds, use the `beta` tag explicitly:
+
+```bash
+docker run -it \
+    -e TZ=Australia/Melbourne \
+    -e SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1 \
+    -e SIGENERGY2MQTT_MQTT_USERNAME=user \
+    -e SIGENERGY2MQTT_MQTT_PASSWORD=password \
+    -v /data:/data \
+    seud0nym/sigenergy2mqtt:beta
+```
+
+`latest` remains reserved for stable releases.
+
 ## Docker Compose
 
 `docker-compose` users can find an example configuration file at [`docker-compose.yaml`](docker-compose.yaml).
