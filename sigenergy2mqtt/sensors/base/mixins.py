@@ -110,7 +110,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
         if slm_map:
             kwargs[DiscoveryKeys.OBJECT_ID] = str(slm_map["object_id"])
-            kwargs[DiscoveryKeys.UNIT_OF_MEASUREMENT] = cast(str | None, slm_map.get("unit"))
+            kwargs["unit"] = cast(str | None, slm_map.get("unit"))
             kwargs["gain"] = cast(float | None, slm_map.get("gain"))
 
         # Set unique_id

@@ -147,6 +147,37 @@ class TestModbusSensor:
             assert sensor.unit == "W"
             assert sensor.gain == 1.0
 
+    def test_read_only_sensor_applies_mapped_unit_when_mapping_enabled(self, mock_config_all):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
+            with patch.dict(
+                "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
+                {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
+                clear=True,
+            ):
+                sensor = ReadOnlySensor(
+                    name="Test RO",
+                    object_id="sigen_test_ro",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=1,
+                    address=30001,
+                    count=1,
+                    data_type=ModbusClient.DATATYPE.UINT16,
+                    scan_interval=10,
+                    unit=UnitOfPower.WATT,
+                    device_class=DeviceClass.POWER,
+                    state_class=StateClass.MEASUREMENT,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=2,
+                    protocol_version=Protocol.V2_4,
+                )
+
+            assert sensor.object_id == "sigen_local_name"
+            assert sensor.unit == "kW"
+            assert sensor.gain == 0.1
+
 class TestReadOnlySensor:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
