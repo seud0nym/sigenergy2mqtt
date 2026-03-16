@@ -3,7 +3,10 @@ name: Publish Docker Images
 on:
   release:
     types: [published]
-
+  workflow_dispatch:
+  # NOTE: When triggered via workflow_call, secrets must be passed explicitly
+  # by the caller. When triggered by release/workflow_dispatch, the job uses
+  # repository-level secrets with the same names.
   workflow_call:
     secrets:
       DOCKER_HUB_TOKEN:
@@ -11,16 +14,18 @@ on:
       DOCKER_HUB_USERNAME:
         required: true
 
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false  # Queue rather than cancel in-flight publishes
+
 jobs:
   publish:
     name: Publish Docker Images
-
     runs-on: ubuntu-latest
-
     permissions:
       packages: write
       contents: read
-      id-token: write
+      id-token: write  # Required for provenance attestation
 
     steps:
       - name: Check out the repo
@@ -29,20 +34,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
       - name: Build release distribution
         run: |
+          python -m pip install --upgrade pip
           python -m pip install build
           python -m build
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: |
-            seud0nym/sigenergy2mqtt
-            ghcr.io/seud0nym/sigenergy2mqtt
+            ${{ secrets.DOCKER_HUB_USERNAME }}/sigenergy2mqtt
+            ghcr.io/${{ github.repository_owner }}/sigenergy2mqtt
           flavor: |
             latest=false
           tags: |
@@ -54,8 +60,7 @@ jobs:
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
@@ -63,22 +68,34 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Log in to the Container registry
+      - name: Log in to GHCR
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push images
+      - name: Build and push multi-arch image
         id: docker_build
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           context: .
           file: ./Dockerfile
-          platforms: >-
-            linux/amd64,
-            linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: true   # Attaches SLSA Build L2 provenance to the image manifest
+          sbom: true         # Attaches a Syft SBOM to the image manifest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/sigenergy2mqtt
+          subject-digest: ${{ steps.docker_build.outputs.digest }}
+          push-to-registry: true  # Stores attestation in GHCR alongside the image
+
+      - name: Print image digest
+        run: echo "Pushed digest: ${{ steps.docker_build.outputs.digest }}"

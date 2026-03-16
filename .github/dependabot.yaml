@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
       time: "06:00"
+      timezone: "Australia/Melbourne"
+    groups:
+      artifact-actions:
+        patterns:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
   - package-ecosystem: pip
     directory: "/"
     schedule:

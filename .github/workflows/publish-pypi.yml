@@ -6,13 +6,17 @@ on:
     # Keeping this to `published` avoids duplicate runs that can happen when combining
     # `published` and `prereleased` for the same prerelease publication.
     types: [published]
+  workflow_dispatch:
 
-permissions:
-  contents: read
+concurrency:
+  group: pypi-publish
+  cancel-in-progress: false
 
 jobs:
   release-build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Check out the repo
@@ -21,12 +25,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
       - name: Build release distributions
         run: |
+          python -m pip install --upgrade pip
           python -m pip install build
           python -m build
+
+      - name: Check distributions
+        run: |
+          python -m pip install twine
+          twine check dist/*
 
       - name: Upload distributions
         uses: actions/upload-artifact@v7
@@ -38,24 +48,18 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - release-build
+
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
 
-    # Dedicated environments with protections for publishing are strongly recommended.
-    # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
     environment:
       name: pypi
-      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/YOURPROJECT
-      #
-      # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
-      # ALTERNATIVE: exactly, uncomment the following line instead:
-      # url: https://pypi.org/project/YOURPROJECT/${{ github.event.release.name }}
+      url: https://pypi.org/project/sigenergy2mqtt/
 
     steps:
       - name: Retrieve release distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v7
         with:
           name: release-dists
           path: dist/
@@ -64,4 +68,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          skip-existing: true
