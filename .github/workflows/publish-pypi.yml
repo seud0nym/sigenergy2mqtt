@@ -27,6 +27,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Fix README links for PyPI
+        run: |
+          REPO="https://github.com/seud0nym/sigenergy2mqtt/blob/${{ github.ref_name }}"
+          sed -i "s|(\.\/|(${REPO}/|g" README.md
+          sed -i "s|(\.\./|(${REPO}/|g" README.md
+
       - name: Build release distributions
         run: |
           python -m pip install --upgrade pip
