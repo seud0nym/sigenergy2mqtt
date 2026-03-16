@@ -110,6 +110,9 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
         if slm_map:
             kwargs[DiscoveryKeys.OBJECT_ID] = str(slm_map["object_id"])
+            # `Sensor.__init__` consumes the constructor argument `unit`, not
+            # the discovery attribute key `unit_of_measurement`.
+            kwargs.pop(DiscoveryKeys.UNIT_OF_MEASUREMENT, None)
             kwargs["unit"] = cast(str | None, slm_map.get("unit"))
             kwargs["gain"] = cast(float | None, slm_map.get("gain"))
 

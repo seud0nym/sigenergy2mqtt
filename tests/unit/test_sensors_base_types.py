@@ -9,7 +9,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, ModbusSensorMixin, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
+from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
 
 
 # Fixtures for mocking to avoid background thread issues
@@ -43,15 +43,16 @@ class TestModbusSensor:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # Invalid device address
             with pytest.raises(AssertionError, match="Invalid device address"):
-                ModbusSensorMixin(
-                    InputType.HOLDING,
-                    0,
-                    0,
-                    30000,
-                    1,
+                ReadOnlySensor(
                     name="N",
-                    unique_id="sigen_o",
                     object_id="sigen_o",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=0,
+                    address=30000,
+                    count=1,
+                    data_type=ModbusDataType.UINT16,
+                    scan_interval=10,
                     unit="U",
                     device_class=None,
                     state_class=None,
@@ -62,15 +63,16 @@ class TestModbusSensor:
                 )
             # Invalid address
             with pytest.raises(AssertionError, match="Invalid address"):
-                ModbusSensorMixin(
-                    InputType.HOLDING,
-                    0,
-                    1,
-                    29999,
-                    1,
+                ReadOnlySensor(
                     name="N",
-                    unique_id="sigen_o",
                     object_id="sigen_o",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=1,
+                    address=29999,
+                    count=1,
+                    data_type=ModbusDataType.UINT16,
+                    scan_interval=10,
                     unit="U",
                     device_class=None,
                     state_class=None,
@@ -80,8 +82,6 @@ class TestModbusSensor:
                     protocol_version=Protocol.V2_4,
                 )
 
-
-
     def test_modbus_sensor_uses_sigenergy_local_modbus_mapping_when_enabled(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
@@ -90,16 +90,16 @@ class TestModbusSensor:
                 {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
                 clear=True,
             ):
-                sensor = ModbusSensorMixin(
-                    InputType.HOLDING,
-                    0,
-                    1,
-                    30001,
-                    1,
-                    unique_id_override="override_uid",
+                sensor = ReadOnlySensor(
                     name="N",
-                    unique_id="sigen_o",
                     object_id="sigen_original",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=1,
+                    address=30001,
+                    count=1,
+                    data_type=ModbusDataType.UINT16,
+                    scan_interval=10,
                     unit="W",
                     device_class=None,
                     state_class=None,
@@ -107,13 +107,13 @@ class TestModbusSensor:
                     gain=1.0,
                     precision=0,
                     protocol_version=Protocol.V2_4,
+                    unique_id_override="sigen_override_uid",
                 )
 
             assert sensor.object_id == "sigen_local_name"
-            assert sensor.unique_id == "override_uid"
+            assert sensor.unique_id == "sigen_override_uid"
             assert sensor.unit == "kW"
             assert sensor.gain == 0.1
-
 
     def test_modbus_sensor_keeps_override_unique_id_when_mapping_disabled(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -123,16 +123,16 @@ class TestModbusSensor:
                 {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
                 clear=True,
             ):
-                sensor = ModbusSensorMixin(
-                    InputType.HOLDING,
-                    0,
-                    1,
-                    30001,
-                    1,
-                    unique_id_override="override_uid",
+                sensor = ReadOnlySensor(
                     name="N",
-                    unique_id="sigen_o",
                     object_id="sigen_original",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=1,
+                    address=30001,
+                    count=1,
+                    data_type=ModbusDataType.UINT16,
+                    scan_interval=10,
                     unit="W",
                     device_class=None,
                     state_class=None,
@@ -140,12 +140,46 @@ class TestModbusSensor:
                     gain=1.0,
                     precision=0,
                     protocol_version=Protocol.V2_4,
+                    unique_id_override="sigen_override_uid",
                 )
 
             assert sensor.object_id == "sigen_original"
-            assert sensor.unique_id == "override_uid"
+            assert sensor.unique_id == "sigen_override_uid"
             assert sensor.unit == "W"
             assert sensor.gain == 1.0
+
+    def test_read_only_sensor_ignores_discovery_unit_key_and_uses_constructor_unit_mapping(self, mock_config_all):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
+            with patch.dict(
+                "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
+                {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
+                clear=True,
+            ):
+                sensor = ReadOnlySensor(
+                    name="Test RO",
+                    object_id="sigen_test_ro",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=1,
+                    address=30001,
+                    count=1,
+                    data_type=ModbusClient.DATATYPE.UINT16,
+                    scan_interval=10,
+                    unit=UnitOfPower.WATT,
+                    unit_of_measurement="Wh",
+                    device_class=DeviceClass.POWER,
+                    state_class=StateClass.MEASUREMENT,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=2,
+                    protocol_version=Protocol.V2_4,
+                )
+
+            assert sensor.object_id == "sigen_local_name"
+            assert sensor.unit == "kW"
+            assert sensor["unit_of_measurement"] == "kW"
+            assert sensor.gain == 0.1
 
     def test_read_only_sensor_applies_mapped_unit_when_mapping_enabled(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -177,6 +211,7 @@ class TestModbusSensor:
             assert sensor.object_id == "sigen_local_name"
             assert sensor.unit == "kW"
             assert sensor.gain == 0.1
+
 
 class TestReadOnlySensor:
     @pytest.mark.asyncio
