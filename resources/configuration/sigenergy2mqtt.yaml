@@ -118,7 +118,8 @@ home-assistant:
   #   added: 2026.3.13
   #   default: false
   #   description:  If true, apply Sigenergy-Local-Modbus entity_id, gain and
-  #                 unit mappings where available to help migration.
+  #                 unit mappings where available to help migration. If enabled,
+  #                 entity-id-prefix must be 'sigen' (default).
   use-sigenergy-local-modbus-naming: false
   # use-simplified-topics
   #   added: 2025.7.26

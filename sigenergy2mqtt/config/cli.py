@@ -128,7 +128,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest=const.SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING,
         default=os.getenv(const.SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING, None),
-        help="Use Sigenergy-Local-Modbus entity_id, gain and unit naming conventions for mapped Modbus sensors.",
+        help="Use Sigenergy-Local-Modbus entity_id, gain and unit naming conventions for mapped Modbus sensors. If enabled, --hass-entity-id-prefix must be 'sigen' (default).",
     )
     parser.add_argument(
         "--hass-device-name-prefix",

@@ -31,7 +31,7 @@ class TestHomeAssistantConfig:
             device_name_prefix="MyHome",
             discovery_prefix="ha",
             edit_percentage_with_box=True,
-            entity_id_prefix="test_sigen",
+            entity_id_prefix="sigen",
             republish_discovery_interval=300,
             enabled_by_default=True,
             unique_id_prefix="test_unique",
@@ -42,7 +42,7 @@ class TestHomeAssistantConfig:
         assert config.discovery_only is False
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
-        assert config.entity_id_prefix == "test_sigen"
+        assert config.entity_id_prefix == "sigen"
         assert config.republish_discovery_interval == 300
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
@@ -57,7 +57,7 @@ class TestHomeAssistantConfig:
                 "device-name-prefix": "MyHome",
                 "discovery-prefix": "ha",
                 "edit-pct-box": True,
-                "entity-id-prefix": "test_sigen",
+                "entity-id-prefix": "sigen",
                 "republish-discovery-interval": 300,
                 "sensors-enabled-by-default": True,
                 "unique-id-prefix": "test_unique",
@@ -68,7 +68,7 @@ class TestHomeAssistantConfig:
         assert config.device_name_prefix == "MyHome"
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
-        assert config.entity_id_prefix == "test_sigen"
+        assert config.entity_id_prefix == "sigen"
         assert config.republish_discovery_interval == 300
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"

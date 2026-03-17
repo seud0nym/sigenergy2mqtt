@@ -28,7 +28,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` | The prefix to use for Home Assistant entity IDs. Example: A prefix of `prefix` will prepend 'prefix_' to entity IDs (default: `sigen`) | 2025.5.12 |
 | `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX` | The prefix to use for Home Assistant unique IDs. Example: A prefix of `prefix` will prepend 'prefix_' to unique IDs (default: `sigen`). Once you have set this, you should **NEVER** change it, as it will break existing entities in Home Assistant. | 2025.5.12 |
 | `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` | Set to `true` to enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state) | 2025.7.26 |
-| `SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING` | Set to `true` to apply Sigenergy-Local-Modbus entity_id, gain and unit mappings (where available) to ease migration. | 2026.3.13 |
+| `SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING` | Set to `true` to apply Sigenergy-Local-Modbus entity_id, gain and unit mappings (where available) to ease migration. If enabled, `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` must be 'sigen' (default). | 2026.3.13 |
 | `SIGENERGY2MQTT_HASS_EDIT_PCT_BOX` | Set to `true` to use a numeric entry box to change the value of percentage sensors or `false` to use a slider to change the value (default: `false`) | 2025.5.12 |
 
 ## Modbus Configuration Variables

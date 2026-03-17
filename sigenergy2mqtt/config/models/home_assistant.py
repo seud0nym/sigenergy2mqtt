@@ -30,3 +30,10 @@ class HomeAssistantConfig(BaseModel):
             if not self.unique_id_prefix:
                 raise ValueError("home-assistant.unique-id-prefix must be provided")
         return self
+
+    @model_validator(mode="after")
+    def check_use_sigenergy_local_modbus_naming(self) -> "HomeAssistantConfig":
+        if self.use_sigenergy_local_modbus_naming and self.entity_id_prefix != "sigen":
+            from sigenergy2mqtt.config.config import ConfigurationError
+            raise ConfigurationError("home-assistant.entity-id-prefix must be 'sigen' (default) when use-sigenergy-local-modbus-naming is true")
+        return self
