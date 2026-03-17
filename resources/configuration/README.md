@@ -2,16 +2,8 @@
 
 Combined reference for CLI flags, environment variables, and YAML configuration keys.
 
-Index:
-- [General](#general)
-- [Home Assistant](#home-assistant)
-- [Modbus](#modbus)
-    - [Scan Intervals](#scan-intervals)
-    - [Third-Party PV Production](#third-party-pv-production)
-- [MQTT](#mqtt)
-- [Sensor Overrides](#sensor-overrides)
-- [PVOutput](#pvoutput)
-- [InfluxDB](#influxdb)
+> [!TIP]
+> Click the Outline button (top-right) to easily filter and navigate this document.
 
 ## General
 
