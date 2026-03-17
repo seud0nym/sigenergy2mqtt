@@ -6,11 +6,13 @@
 # release number are only applicable to future releases and should be ignored.  #
 #################################################################################
 # log-level
+#   [More…](README.md#opt_log_level)
 #   default: WARNING
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
 # language
+#   [More…](README.md#opt_language)
 #   added: 2026.1.25
 #   default:      Determined from system (e.g. LANG environment variable) or 
 #                 English if no alternative is found
@@ -19,6 +21,7 @@ log-level: WARNING
 #                 'translations' directory.
 language: en
 # consumption
+#   [More…](README.md#opt_consumption)
 #   added: 2025.12.20
 #   default: total
 #   description:  Set the method of calculating the Plant Consumed Power sensor.
@@ -28,6 +31,7 @@ language: en
 #                 than that supporting Modbus Protocol V2.8.
 consumption: total
 # repeated-state-publish-interval
+#   [More…](README.md#opt_repeated_state_publish_interval)
 #   added: 2026.2.19
 #   default: 0
 #   description:  The interval in seconds at which repeated states are published.
@@ -38,6 +42,7 @@ consumption: total
 #                 interval. The default is 0 (always publish).
 repeated-state-publish-interval: 0
 # sanity-check-default-kw
+#   [More…](README.md#opt_sanity_check_default_kw)
 #   added: 2025.7.9
 #   default: 500.0
 #   description:  The default value used for sanity checks to validate the
@@ -52,6 +57,7 @@ repeated-state-publish-interval: 0
 #                 ignored.    
 sanity-check-default-kw: 500.0
 # sanity-check-failures-increment
+#   [More…](README.md#opt_sanity_check_failures_increment)
 #   added: 2026.1.21
 #   default: false
 #   description:  If true, the number of sensor read failures will be
@@ -59,6 +65,7 @@ sanity-check-default-kw: 500.0
 #                 number of sensor read failures will not be incremented.
 sanity-check-failures-increment: false
 # no-ems-mode-check
+#   [More…](README.md#opt_no_ems_mode_check)
 #   added: 2026.1.13
 #   default: false for firmware SPC112 and earlier, true for SPC113 and later
 #   description:  Turn off the validation that disables ESS Max Charging
@@ -68,37 +75,44 @@ sanity-check-failures-increment: false
 #                 globally available in those versions.
 no-ems-mode-check: false
 # no-metrics
+#   [More…](README.md#opt_no_metrics)
 #   default: false
 #   description:  If true, sigenergy2mqtt will not publish any metrics to
 #                 MQTT.
 no-metrics: false
 home-assistant:
   # enabled
+  #   [More…](README.md#opt_home_assistant_enabled)
   #   default: false
   #   description:  If true, sigenergy2mqtt will publish auto-discovery 
   #                 messages for Home Assistant to automatically configure
   #                 the devices and entities.
   enabled: true
   # device-name-prefix
+  #   [More…](README.md#opt_home_assistant_device_name_prefix)
   #   default: ""
   #   description:  An optional prefix to be prepended to MQTT device names.
   device-name-prefix: homeassistant
   # discovery-prefix
+  #   [More…](README.md#opt_home_assistant_discovery_prefix)
   #   default: homeassistant
   #   description:  The Home Assistant discovery prefix. Only specify if you
   #                 have changed the prefix in Home Assistant.
   discovery-prefix: homeassistant
   # entity-id-prefix
+  #   [More…](README.md#opt_home_assistant_entity_id_prefix)
   #   default: sigen
   #   description:  The prefix that will be applied to all unique ids and 
   #                 entity ids.
   entity-id-prefix: sigen
   # republish-discovery-interval
+  #   [More…](README.md#opt_home_assistant_republish_discovery_interval)
   #   default: 0
   #   description:  The interval (in seconds) at which the Home Assistant
   #                 discovery will be automatically republished.
   republish-discovery-interval: 0
   # sensors-enabled-by-default
+  #   [More…](README.md#opt_home_assistant_sensors_enabled_by_default)
   #   default: false
   #   description:  When sensors are initially discovered by Home Assistant,
   #                 the majority will be disabled in the UI. If you want all 
@@ -109,12 +123,14 @@ home-assistant:
   #                 Home Assistant (unless you make the sensor unpublishable).
   sensors-enabled-by-default: false
   # unique-id-prefix
+  #   [More…](README.md#opt_home_assistant_unique_id_prefix)
   #   default: sigen
   #   description:  The prefix string that will be prepended to the Home 
   #                 Assistant MQTT unique id. This should NEVER be changed 
   #                 after initial discovery has been published.
   unique-id-prefix: sigen
   # use-sigenergy-local-modbus-naming
+  #   [More…](README.md#opt_home_assistant_use_sigenergy_local_modbus_naming)
   #   added: 2026.3.13
   #   default: false
   #   description:  If true, apply Sigenergy-Local-Modbus entity_id, gain and
@@ -122,6 +138,7 @@ home-assistant:
   #                 entity-id-prefix must be 'sigen' (default).
   use-sigenergy-local-modbus-naming: false
   # use-simplified-topics
+  #   [More…](README.md#opt_home_assistant_use_simplified_topics)
   #   added: 2025.7.26
   #   default: false
   #   description:  If true, sigenergy2mqtt will use a simplified topic
@@ -131,6 +148,7 @@ home-assistant:
   #                 homeassistant/platform/device_id/object_id/state.
   use-simplified-topics: false
   # edit-pct-box
+  #   [More…](README.md#opt_home_assistant_edit_pct_box)
   #   added: 2025.12.23
   #   default: false
   #   description:  When editing percentage sensors, use a numeric entry box 
@@ -139,14 +157,17 @@ home-assistant:
   edit-pct-box: false
 mqtt:
   # broker
+  #   [More…](README.md#opt_mqtt_broker)
   #   default: 127.0.0.1
   #   description:  The host name or IP address of the MQTT broker.
   broker: 127.0.0.1
   # port
+  #   [More…](README.md#opt_mqtt_port)
   #   default: 1883 unless tls:true then 8883
   #   description:  The port number used by the MQTT broker.
   port: 1883
   # keepalive
+  #   [More…](README.md#opt_mqtt_keepalive)
   #   added: 2025.10.15
   #   default: 60
   #   description:  The maximum period in seconds between communications with
@@ -155,12 +176,14 @@ mqtt:
   #                 messages to the broker. Default is 60 and minimum is 1.
   keepalive: 60
   # tls
+  #   [More…](README.md#opt_mqtt_tls)
   #   added: 2025.8.11
   #   default: false
   #   description: If true, secure communication to the broker over TLS/SSL
   #                is enabled.
   tls: false
   # tls-insecure
+  #   [More…](README.md#opt_mqtt_tls_insecure)
   #   added: 2025.8.12
   #   default: false
   #   description: If true, allows insecure communication over TLS. If your 
@@ -169,32 +192,38 @@ mqtt:
   #                this to false. Ignored unless tls is also true. 
   tls-insecure: false
   # transport
+  #   [More…](README.md#opt_mqtt_transport)
   #   add: 2026.1.4
   #   default: tcp
   #   description: Sets the MQTT transport mechanism. Must be one of 
   #                websockets or tcp.
   transport: tcp
   # anonymous
+  #   [More…](README.md#opt_mqtt_anonymous)
   #   default: false
   #   description:  If true, the MQTT broker does not require authentication.
   #                 If false, username and password must be supplied.
   anonymous: false
   # username
+  #   [More…](README.md#opt_mqtt_username)
   #   default: ""
   #   description:  The username for authenticating to the MQTT broker. Not
   #                 required if anonymous: true
   username: not_required_for_anonymous
   # password
+  #   [More…](README.md#opt_mqtt_password)
   #   default: ""
   #   description:  The password for authenticating to the MQTT broker. Not
   #                 required if anonymous: true
   password: not_required_for_anonymous
   # log-level
+  #   [More…](README.md#opt_mqtt_log_level)
   #   default: WARNING
   #   description:  The MQTT interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: WARNING
 # modbus
+#   [More…](README.md#opt_modbus)
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device
 #                 configuration must contain a host, and may optionally
@@ -209,16 +238,19 @@ mqtt:
 #                 environment variable SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY=once.
 modbus:
     # host
+    #   [More…](README.md#opt_modbus_host)
     #   default: ""
     #   description:  The host name or IP address of a Sigenergy Modbus 
     #                 interface. There may be multiple hosts defined if 
     #                 there are multiple Sigenergy devices.
   - host: sigenergy.local
     # port
+    #   [More…](README.md#opt_modbus_host_port)
     #   default: 502
     #   description:  The port number used by the Sigenergy Modbus interface.
     port: 502
     # timeout
+    #   [More…](README.md#opt_modbus_host_timeout)
     #   added: 2025.10.14
     #   default: 1
     #   description:  The timeout for connecting and receiving Modbus data, 
@@ -226,12 +258,14 @@ modbus:
     #                 The default is 1.0.
     timeout: 1.0
     # retries
+    #   [More…](README.md#opt_modbus_host_retries)
     #   added: 2025.10.14
     #   default: 3
     #   description:  The maximum number of times to retry a Modbus operation
     #                 if it fails. The default is 3.
     retries: 3
     # disable-chunking
+    #   [More…](README.md#opt_modbus_host_disable_chunking)
     #   added: 2025.9.19
     #   default: false
     #   description:  If true, chunking of Modbus reads will be disabled and 
@@ -239,6 +273,7 @@ modbus:
     #                 recommended for production use.
     disable-chunking: false
     # inverters
+    #   [More…](README.md#opt_modbus_host_inverters)
     #   default: [ ]
     #   description:  The array of device ids to access the inverter
     #                 registers. If you have multiple inverters, specify
@@ -247,11 +282,13 @@ modbus:
     #                 (unless the host is an AC Charger).
     inverters: [ 1 ]
     # ac-chargers
+    #   [More…](README.md#opt_modbus_host_ac_chargers)
     #   default: [ ]
     #   description:  The array of device ids to access the AC Charger
     #                 registers. If do not have an AC Charger, use [ ].
     ac-chargers: [ ]
     # dc-chargers
+    #   [More…](README.md#opt_modbus_host_dc_chargers)
     #   default: [ ]
     #   description:  The array of device ids to access the DC Charger 
     #                 registers. This is normally the same as the inverter
@@ -259,27 +296,32 @@ modbus:
     #                 use [ ].
     dc-chargers: [ ]
     # log-level
+    #   [More…](README.md#opt_modbus_host_log_level)
     #   default: WARNING
     #   description:  The Modbus interface logging level. Must be one of:
     #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
     log-level: WARNING
     # read-only
+    #   [More…](README.md#opt_modbus_host_read_only)
     #   default: true
     #   description:  If true, all read-only entities will be published to
     #                 MQTT.
     read-only: true
     # read-write
+    #   [More…](README.md#opt_modbus_host_read_write)
     #   default: true
     #   description:  If true, all read-write entities will be published to
     #                 MQTT. Specify false to disable read-write entities.
     read-write: false
     # write-only
+    #   [More…](README.md#opt_modbus_host_write_only)
     #   default: true
     #   description:  If true, all write-only entities (usually power on/off
     #                 buttons) will be published to MQTT. Specify false to 
     #                 disable write-only entities.
     write-only: true
     # no-remote-ems
+    #   [More…](README.md#opt_modbus_host_no_remote_ems)
     #   added: 2025.5.31
     #   default: false
     #   description:  If true, read-write entities related to remote Energy
@@ -287,6 +329,7 @@ modbus:
     #                 to MQTT. Ignored if read-write option is false.
     no-remote-ems: false
     # scan-interval-low
+    #   [More…](README.md#opt_modbus_host_scan_interval_low)
     #   added: 2025.6.11
     #   default: 600
     #   description:  The scan interval in seconds for Modbus registers that
@@ -294,6 +337,7 @@ modbus:
     #                 (seconds), and the minimum value is 1.
     scan-interval-low: 600
     # scan-interval-medium
+    #   [More…](README.md#opt_modbus_host_scan_interval_medium)
     #   added: 2025.6.11
     #   default: 60
     #   description:  The scan interval in seconds for Modbus registers that
@@ -301,6 +345,7 @@ modbus:
     #                 (seconds), and the minimum value is 1.
     scan-interval-medium: 60
     # scan-interval-high
+    #   [More…](README.md#opt_modbus_host_scan_interval_high)
     #   added: 2025.6.11
     #   default: 10
     #   description:  The scan interval in seconds for Modbus registers that
@@ -308,6 +353,7 @@ modbus:
     #                 (seconds), and the minimum value is 1.
     scan-interval-high: 10
     # scan-interval-realtime
+    #   [More…](README.md#opt_modbus_host_scan_interval_realtime)
     #   added: 2025.6.11
     #   default: 5
     #   description:  The scan interval in seconds for Modbus registers that
@@ -316,34 +362,41 @@ modbus:
     scan-interval-realtime: 5
     smart-port:
       # enabled
+      #   [More…](README.md#opt_modbus_host_smart_port_enabled)
       #   default: false
       #   description:  If true, sigenergy2mqtt will interrogate a third-party
       #                 device for production data.
       enabled: true
       module:
         # name
+        #   [More…](README.md#opt_modbus_host_smart_port_module_name)
         #   default: ""
         #   description:  The name of the module to be loaded to interrogate a
         #                 third-party device. At this time, the only valid value
         #                 is enphase.
         name: enphase
         # host
+        #   [More…](README.md#opt_modbus_host_smart_port_module_host)
         #   default: ""
         #   description:  The host name or IP address for the third-party API.
         host: envoy.local
         # port
+        #   [More…](README.md#opt_modbus_host_smart_port_module_port)
         #   default: null
         #   description:  The port number used by the third-party API.
         port: 502
         # username
+        #   [More…](README.md#opt_modbus_host_smart_port_module_username)
         #   default: ""
         #   description:  The username for authenticating to the third-party API.
         username: enlighten_login@email.address
         # password
+        #   [More…](README.md#opt_modbus_host_smart_port_module_password)
         #   default: ""
         #   description:  The password for authenticating to the third-party API.
         password: your_enlighten_password
         # pv-power
+        #   [More…](README.md#opt_modbus_host_smart_port_module_pv_power)
         #   default: ""
         #   description:  The Python sensor class used to report PV generation
         #                 through the third-party API. If specified, the Sigenergy
@@ -354,18 +407,21 @@ modbus:
         pv-power: EnphasePVPower
       mqtt:
           # topic
+          #   [More…](README.md#opt_modbus_host_smart_port_mqtt_topic)
           #   default: There is no default
           #   description:  The MQTT to subscribe to for updates to third-party
           #                 PV production to be included in the Total PV Power.
           #                 Multiple topic/gain configurations may be specified.
         - topic:  null
           # gain
+          #   [More…](README.md#opt_modbus_host_smart_port_mqtt_topic_gain)
           #   default: 1
           #   description:  The gain to be applied to the PV production published
           #                 on the topic. For example, if the production is
           #                 published in kWh, then the gain should be 1000.
           gain: 1
 # sensor-debug-logging
+#   [More…](README.md#opt_sensor_debug_logging)
 #   default: false
 #   description:  When log-level is DEBUG, controls whether individual
 #                 individual sensors debugging messages are displayed.
@@ -382,11 +438,13 @@ sensor-overrides:
   # but not InverterPowerFactorAdjustmentFeedback.
   partial_or_full_entity_id_or_sensor_class_name:
     # debug-logging
+    #   [More…](README.md#opt_sensor_overrides_debug_logging)
     #   default: There is no default
     #   description:  If true, then debug messages will be logged when
     #                 log-level is set to DEBUG.
     debug-logging: true
     # gain
+    #   [More…](README.md#opt_sensor_overrides_gain)
     #   default: There is no default
     #   description:  The Sigenergy Modbus Protocol defines a gain to be
     #                 applied to the raw value read from the interface.
@@ -396,15 +454,18 @@ sensor-overrides:
     #                 correct, corresponding unit.
     gain: 1
     # icon
+    #   [More…](README.md#opt_sensor_overrides_icon)
     #   default: There is no default
     #   description:  Specify a different icon for the sensor.
     icon: "mdi:emoticon-happy"
     # max-failures
+    #   [More…](README.md#opt_sensor_overrides_max_failures)
     #   default: 10
     #   description:  The maximum number of failures before attempts to
     #                 read the state are tapered off.
     max-failures: 10
     # max-failures-retry-interval
+    #   [More…](README.md#opt_sensor_overrides_max_failures_retry_interval)
     #   default: There is no default
     #   description:  After max-failures are reached, this option specifies
     #                 how long (in seconds) to wait before retrying. The
@@ -413,16 +474,19 @@ sensor-overrides:
     #                 failure above max-failures.
     max-failures-retry-interval: 60
     # precision
+    #   [More…](README.md#opt_sensor_overrides_precision)
     #   default: There is no default
     #   description:  Specify the display precision (number of decimal 
     #                 places) for this sensor.
     precision: 2
     # publishable
+    #   [More…](README.md#opt_sensor_overrides_publishable)
     #   default: There is no default
     #   description:  If false, the sensor will not be published to MQTT
     #                 and will not appear in Home Assistant at all.
     publishable: false
     # publish-raw
+    #   [More…](README.md#opt_sensor_overrides_publish_raw)
     #   added: 2025.10.18
     #   default: There is no default
     #   description:  If true, the raw state will be published in addition
@@ -431,6 +495,7 @@ sensor-overrides:
     #                 discovery. Ignored if the sensor is not publishable.
     publish-raw: false
     # sanity-check-max-value
+    #   [More…](README.md#opt_sensor_overrides_sanity_check_max_value)
     #   added: 2025.5.29
     #   default: There is no default
     #   description:  Sets a maximum allowable value for this sensor to
@@ -439,6 +504,7 @@ sensor-overrides:
     #                 Modbus interface, BEFORE the gain is applied.
     sanity-check-max-value: 100000
     # sanity-check-min-value
+    #   [More…](README.md#opt_sensor_overrides_sanity_check_min_value)
     #   added: 2025.5.29
     #   default: There is no default
     #   description:  Sets a minimum allowable value for this sensor to
@@ -447,6 +513,7 @@ sensor-overrides:
     #                 Modbus interface, BEFORE the gain is applied.
     sanity-check-min-value: -100000
     # sanity-check-delta
+    #   [More…](README.md#opt_sensor_overrides_sanity_check_delta)
     #   added: 2025.7.9
     #   default: false
     #   description:  If true, the sanity check will be applied to the
@@ -455,11 +522,13 @@ sensor-overrides:
     #                 are expected to change rapidly, such as power sensors.
     sanity-check-delta: false
     # scan-interval
+    #   [More…](README.md#opt_sensor_overrides_scan_interval)
     #   default: There is no default
     #   description:  Change the default scan interval in seconds at which
     #                 the state of this sensor is read.
     scan-interval: 10
     # unit-of-measurement
+    #   [More…](README.md#opt_sensor_overrides_unit_of_measurement)
     #   default: There is no default
     #   description:  Change the unit of this sensor. Used in conjunction
     #                 with gain.
@@ -478,21 +547,25 @@ sensor-overrides:
     scan-interval: 2
 pvoutput:
   # enabled
+  #   [More…](README.md#opt_pvoutput_enabled)
   #   default: false
   #   description:  If true, sigenergy2mqtt will update the system status
   #                 in PVOutput.
   enabled: true
   # api-key
+  #   [More…](README.md#opt_pvoutput_api_key)
   #   default: ""
   #   description:  The PVOutput API key (create/find your key under 
   #                 https://pvoutput.org/account.jsp)
   api-key: cafefacefeeddeadbeef01234567890abcdeface
   # system-id
+  #   [More…](README.md#opt_pvoutput_system_id)
   #   default: ""
   #   description:  The PVOutput System ID (create/find your System id 
   #                 under https://pvoutput.org/account.jsp)
   system-id: testing
   # consumption
+  #   [More…](README.md#opt_pvoutput_consumption)
   #   default: false
   #   description:  If specified with a value of 'true' or 'consumption', 
   #                 consumption data will be sent to PVOutput. 
@@ -502,6 +575,7 @@ pvoutput:
   #                 consumption data will be sent.
   consumption: false
   # exports
+  #   [More…](README.md#opt_pvoutput_exports)
   #   added: 2025.10.1
   #   default: true
   #   description:  If true, the energy exported to the grid will be sent
@@ -510,6 +584,7 @@ pvoutput:
   #                 uploaded exports.
   exports: true
   # imports
+  #   [More…](README.md#opt_pvoutput_imports)
   #   added: 2025.10.1
   #   default: true
   #   description:  If true, the energy imported from the grid will be
@@ -518,6 +593,7 @@ pvoutput:
   #                 will ignore uploaded imports.
   imports: true
   # output-hour
+  #   [More…](README.md#opt_pvoutput_output_hour)
   #   default: 23
   #   description:  The hour of the day (20-23) at which the daily totals
   #                 are sent to PVOutput. The default is 23 (11pm). Valid
@@ -530,6 +606,7 @@ pvoutput:
   #                 day. If this occurs, it will be fixed at end of day.
   output-hour: 23
   # temperature-topic
+  #   [More…](README.md#opt_pvoutput_temperature_topic)
   #   added: 2025.7.19
   #   default: ""
   #   description:  An MQTT topic from which the current temperature can be
@@ -538,6 +615,7 @@ pvoutput:
   #                 PVOutput.
   temperature-topic: "homeassistant/weather/temperature"
   # v7
+  #   [More…](README.md#opt_pvoutput_v7)
   #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
@@ -549,6 +627,7 @@ pvoutput:
   #                 determine a single value.
   v7: "InverterTemperature"
   # v8
+  #   [More…](README.md#opt_pvoutput_v8)
   #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
@@ -560,6 +639,7 @@ pvoutput:
   #                 determine a single value.
   v8: ""
   # v9
+  #   [More…](README.md#opt_pvoutput_v9)
   #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
@@ -571,6 +651,7 @@ pvoutput:
   #                 determine a single value.
   v9: ""
   # v10
+  #   [More…](README.md#opt_pvoutput_v10)
   #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
@@ -582,6 +663,7 @@ pvoutput:
   #                 determine a single value.
   v10: ""
   # v11
+  #   [More…](README.md#opt_pvoutput_v11)
   #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
@@ -593,6 +675,7 @@ pvoutput:
   #                 determine a single value.
   v11: ""
   # v12
+  #   [More…](README.md#opt_pvoutput_v12)
   #   added: 2025.9.16
   #   default: ""
   #   description:  A sensor class name that will be used to populate the
@@ -604,11 +687,13 @@ pvoutput:
   #                 determine a single value.
   v12: ""
   # log-level
+  #   [More…](README.md#opt_pvoutput_log_level)
   #   default: CRITICAL
   #   description:  The PVOutput interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: CRITICAL
   # calc-debug-logging
+  #   [More…](README.md#opt_pvoutput_calc_debug_logging)
   #   added: 2025.11.11
   #   default: false
   #   description:  If true, the aggregation of values for uploading to
@@ -616,6 +701,7 @@ pvoutput:
   #                 applicable if PVOUTPUT log-level is set to DEBUG. 
   calc-debug-logging: false
   # update-debug-logging
+  #   [More…](README.md#opt_pvoutput_update_debug_logging)
   #   added: 2025.11.11
   #   default: false
   #   description:  If true, the updating of values for uploading to
@@ -623,6 +709,7 @@ pvoutput:
   #                 applicable if PVOUTPUT log-level is set to DEBUG. 
   update-debug-logging: false
   # time-periods
+  #   [More…](README.md#opt_pvoutput_time_periods)
   #   added: 2025.11.17
   #   default: [ ]
   #   description:  An array of time periods that describe the peak,
@@ -681,6 +768,7 @@ pvoutput:
         days: 
           - All
 # influxdb
+#   [More…](README.md#opt_influxdb)
 #   added: 2026.1.30
 #   default: false
 #   description:  Configuration for sending the sensor data to InfluxDB. Both
@@ -689,51 +777,62 @@ pvoutput:
 #                 `token` is supplied the v2 API will be used.
 influxdb:
   # enabled
+  #   [More…](README.md#opt_influxdb_enabled)
   #   default: false
   #   description: If true, sigenergy2mqtt will publish the sensor data to InfluxDB.
   enabled: true
   # host
+  #   [More…](README.md#opt_influxdb_host)
   #   default: 127.0.0.1
   #   description: The hostname or IP address of your InfluxDB database.
   host: 127.0.0.1
   # port
+  #   [More…](README.md#opt_influxdb_port)
   #   default: 8086
   #   description: The listening port of the InfluxDB database. The default is 8086.
   port: 8086
   # username
+  #   [More…](README.md#opt_influxdb_username)
   #   default: ""
   #   description: The username for your InfluxDB database.
   username: homeassistant
   # password
+  #   [More…](README.md#opt_influxdb_password)
   #   default: ""
   #   description: The password for your InfluxDB database.
   password: your_influxdb_password
   # database
+  #   [More…](README.md#opt_influxdb_database)
   #   default: sigenergy
   #   description: The name of the database to use. The default is sigenergy.
   database: sigenergy
   # org
+  #   [More…](README.md#opt_influxdb_org)
   #   default: ""
   #   description: The InfluxDB v2 organization name or ID. If not specified,
   #                the v1 API will be used.
   org: ""
   # token
+  #   [More…](README.md#opt_influxdb_token)
   #   default: ""
   #   description: The InfluxDB v2 authentication token. If supplied, v2 APIs
   #                (client or HTTP) will be used in preference to v1.
   token: ""
   # bucket
+  #   [More…](README.md#opt_influxdb_bucket)
   #   default: ""
   #   description: The InfluxDB v2 bucket name. If not specified, the value of
   #                'database' will be used as the v2 bucket name.
   bucket: ""
   # default-measurement
+  #   [More…](README.md#opt_influxdb_default_measurement)
   #   default: "state"
   #   description: The default measurement name to use for InfluxDB updates if 
   #                a sensor does not have a Unit of Measurement defined.
   #                The default value is "state".
   default-measurement: state
   # load-hass-history
+  #   [More…](README.md#opt_influxdb_load_hass_history)
   #   default: false
   #   description: If true, sigenergy2mqtt will attempt to load historical data 
   #                from the Home Assistant InfluxDB database. This will only 
@@ -741,6 +840,7 @@ influxdb:
   #                server as Home Assistant with the same credentials.
   load-hass-history: false
   # include
+  #   [More…](README.md#opt_influxdb_include)
   #   default: [ ]
   #   description: A list of sensors to include when publishing to InfluxDB, 
   #                using either the full or partial entity id or sensor class 
@@ -749,6 +849,7 @@ influxdb:
   #                If not specified, all sensors will be included.
   include: []
   # exclude
+  #   [More…](README.md#opt_influxdb_exclude)
   #   default: [ ]
   #   description: A list of sensors to include when publishing to InfluxDB, 
   #                using either the full or partial entity id or sensor class 
@@ -757,56 +858,67 @@ influxdb:
   #                If not specified, no sensors will be excluded.
   exclude: []
   # log-level
+  #   [More…](README.md#opt_influxdb_log_level)
   #   default: WARNING  
   #   description:  The InfluxDB interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: CRITICAL
   # write-timeout
+  #   [More…](README.md#opt_influxdb_write_timeout)
   #   added: 2026.1.31
   #   default: 30.0
   #   description: The timeout for write operations to InfluxDB, in seconds.
   write-timeout: 30.0
   # read-timeout
+  #   [More…](README.md#opt_influxdb_read_timeout)
   #   added: 2026.1.31
   #   default: 120.0
   #   description: The timeout for query and sync operations, in seconds.
   read-timeout: 120.0
   # batch-size
+  #   [More…](README.md#opt_influxdb_batch_size)
   #   added: 2026.1.31
   #   default: 100
   #   description: The maximum number of records to buffer before flushing to InfluxDB.
   batch-size: 100
   # flush-interval
+  #   [More…](README.md#opt_influxdb_flush_interval)
   #   added: 2026.1.31
   #   default: 1.0
   #   description: The maximum interval (in seconds) between buffer flushes.
   flush-interval: 1.0
   # query-interval
+  #   [More…](README.md#opt_influxdb_query_interval)
   #   added: 2026.1.31
   #   default: 0.5
   #   description: The minimum interval (in seconds) between subsequent queries (rate limiting).
   query-interval: 0.5
   # max-retries
+  #   [More…](README.md#opt_influxdb_max_retries)
   #   added: 2026.1.31
   #   default: 3
   #   description: The maximum number of retry attempts for failed operations.
   max-retries: 3
   # pool-connections
+  #   [More…](README.md#opt_influxdb_pool_connections)
   #   added: 2026.1.31
   #   default: 100
   #   description: The number of connections to cache in the pool.
   pool-connections: 100
   # pool-maxsize
+  #   [More…](README.md#opt_influxdb_pool_maxsize)
   #   added: 2026.1.31
   #   default: 100
   #   description: The maximum number of connections to allow in the pool.
   pool-maxsize: 100
   # sync-chunk-size
+  #   [More…](README.md#opt_influxdb_sync_chunk_size)
   #   added: 2026.1.31
   #   default: 1000
   #   description: The maximum number of records to buffer before flushing to InfluxDB.
   sync-chunk-size: 1000
   # max-sync-workers
+  #   [More…](README.md#opt_influxdb_max_sync_workers)
   #   added: 2026.1.31
   #   default: 4
   #   description: The maximum number of parallel sync operations.
