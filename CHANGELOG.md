@@ -25,6 +25,7 @@
 - Migrated Metrics to `threading.Lock`, resolving stalls caused by cross-event-loop lock sharing
 - Metrics are now updated in a worker thread to remove potential delays
 - Improved readability of alarm messages by removing the numeric prefix
+- Trigger Modbus auto-discovery by default when no hosts are explicitly configured via command line, environment variables or YAML
 - Improved operating system signal handling
 - Upgraded `psutil` from 7.2.1 to 7.2.2
 - Upgraded `pymodbus` from 3.11.4 to 3.12.1

@@ -161,9 +161,8 @@ def test_initialize_log_level_from_env():
     )
     with (
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
-        #        patch("sigenergy2mqtt.config._promote_cli_to_env"),
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "DEBUG"}),
-        #       patch("sigenergy2mqtt.config._load_config"),
+        patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]),
     ):
         _system_initialize()
         assert logger.level == logging.DEBUG
@@ -182,6 +181,7 @@ def test_initialize_log_level_invalid_raises():
     with (
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "BOGUS_LEVEL"}),
+        patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]),
     ):
         with pytest.raises(ConfigurationError, match="invalid log level"):
             initialize()
@@ -197,9 +197,11 @@ def test_initialize_validate_only_returns_false():
     with (
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch.dict(os.environ, {}, clear=True),
+        patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]),
     ):
-        with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
-            initialize()
+        with patch.object(active_config, "persistent_state_path", Path("/tmp/nonexistent_test_path")):
+            with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
+                initialize()
 
 
 def test_coerce_bool_none():

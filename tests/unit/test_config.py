@@ -3,6 +3,7 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest  # noqa: F401
+from pydantic import ValidationError
 
 from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.config.config import _swap_active_config
@@ -236,6 +237,28 @@ class TestConfigReload:
             with patch("builtins.open", m):
                 with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
                     cfg.reload()
+            mock_run_auto_discovery.assert_called_once()
+
+    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
+    def test_reload_triggers_auto_discovery_when_no_hosts_configured(self, mock_run_auto_discovery):
+        """Test reload triggers auto-discovery if neither env nor YAML have modbus configured."""
+        with _swap_active_config(Config()) as cfg:
+            with patch.dict("os.environ", {}, clear=True):
+                cfg.reload()
+            mock_run_auto_discovery.assert_called_once()
+
+    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
+    @patch("sigenergy2mqtt.config.sources.RuamelYamlSettingsSource.__call__", return_value={"modbus": [{"port": 502}]})
+    def test_reload_triggers_auto_discovery_yaml_no_host(self, mock_yaml, mock_run_auto_discovery):
+        """Test reload triggers auto-discovery if YAML possesses modbus array without a host."""
+        with _swap_active_config(Config()) as cfg:
+            with patch.dict("os.environ", {}, clear=True):
+                with patch("sigenergy2mqtt.config.config.Path.exists", return_value=True):
+                    cfg._source = "dummy.yaml"
+                    try:
+                        cfg.reload()
+                    except ValidationError:
+                        pass
             mock_run_auto_discovery.assert_called_once()
 
     def test_devices_list_exists(self):

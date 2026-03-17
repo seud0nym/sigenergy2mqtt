@@ -46,8 +46,7 @@ class ConfigurationError(Exception):
 class Config:
     """Holds the complete runtime configuration for sigenergy2mqtt.
 
-    Instances are initialised with sensible defaults via :meth:`_apply_defaults`.
-    Configuration is then layered in two passes:
+    Configuration is layered in two passes:
 
     1. A YAML file loaded by :meth:`load` / :meth:`reload`.
     2. Environment variable overrides applied on top.
@@ -122,13 +121,12 @@ class Config:
 
         The full load sequence on every call:
 
-        1. Reset all attributes to defaults via :meth:`_apply_defaults`.
-        2. If a source file was set by :meth:`load`, parse and apply it.
-        3. Run Modbus auto-discovery if requested (``force``) or not yet cached
+        1. If a source file was set by :meth:`load`, parse and apply it.
+        2. Run Modbus auto-discovery if requested (``force``) or not yet cached
            (``once``), writing results to a YAML cache file for subsequent runs.
-        4. Apply environment variable overrides on top.
-        5. Load the i18n translation for the resolved language.
-        6. Merge auto-discovered devices into :attr:`modbus`.
+        3. Apply environment variable overrides on top.
+        4. Load the i18n translation for the resolved language.
+        5. Merge auto-discovered devices into :attr:`modbus`.
 
         Raises:
             ConfigurationError: If an environment variable override cannot be processed.
@@ -138,6 +136,25 @@ class Config:
 
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
+
+        if not auto_discovery:
+            # Check if any modbus host is configured via env
+            has_env_modbus = bool(os.getenv(const.SIGENERGY2MQTT_MODBUS_HOST))
+            # Check if any modbus host is configured via YAML
+            has_yaml_modbus = False
+            yaml_path = os.environ.get(const.SIGENERGY2MQTT_CONFIG) or self._source or "sigenergy2mqtt.yaml"
+            if Path(yaml_path).exists():
+                from .sources import RuamelYamlSettingsSource
+                try:
+                    yaml_data = RuamelYamlSettingsSource(Settings, self._source)()
+                    modbus_list = yaml_data.get("modbus", [])
+                    if isinstance(modbus_list, list):
+                        has_yaml_modbus = any(entry.get("host") for entry in modbus_list if isinstance(entry, dict))
+                except Exception:
+                    pass
+
+            if not has_env_modbus and not has_yaml_modbus:
+                auto_discovery = "once"
 
         if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
