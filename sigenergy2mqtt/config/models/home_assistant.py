@@ -13,6 +13,7 @@ class HomeAssistantConfig(BaseModel):
     discovery_prefix: str = Field("homeassistant", alias="discovery-prefix")
     entity_id_prefix: str = Field("sigen", alias="entity-id-prefix")
     unique_id_prefix: str = Field("sigen", alias="unique-id-prefix")
+    use_sigenergy_local_modbus_naming: bool = Field(False, alias="use-sigenergy-local-modbus-naming")
     use_simplified_topics: bool = Field(False, alias="use-simplified-topics")
     edit_percentage_with_box: bool = Field(False, alias="edit-pct-box")
     discovery_only: bool = Field(False, alias="discovery-only")
@@ -28,4 +29,11 @@ class HomeAssistantConfig(BaseModel):
                 raise ValueError("home-assistant.entity-id-prefix must be provided")
             if not self.unique_id_prefix:
                 raise ValueError("home-assistant.unique-id-prefix must be provided")
+        return self
+
+    @model_validator(mode="after")
+    def check_use_sigenergy_local_modbus_naming(self) -> "HomeAssistantConfig":
+        if self.use_sigenergy_local_modbus_naming and self.entity_id_prefix != "sigen":
+            from sigenergy2mqtt.config.config import ConfigurationError
+            raise ConfigurationError("home-assistant.entity-id-prefix must be 'sigen' (default) when use-sigenergy-local-modbus-naming is true")
         return self

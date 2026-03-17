@@ -124,6 +124,13 @@ def get_parser() -> argparse.ArgumentParser:
         help="Enable the simplified topic structure (sigenergy2mqtt/object_id/state) instead of the full Home Assistant topic structure (homeassistant/platform/device_id/object_id/state)",
     )
     parser.add_argument(
+        "--use-sigenergy-local-modbus-naming",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING,
+        default=os.getenv(const.SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING, None),
+        help="Use Sigenergy-Local-Modbus entity_id, gain and unit naming conventions for mapped Modbus sensors. If enabled, --hass-entity-id-prefix must be 'sigen' (default).",
+    )
+    parser.add_argument(
         "--hass-device-name-prefix",
         nargs="?",
         action="store",

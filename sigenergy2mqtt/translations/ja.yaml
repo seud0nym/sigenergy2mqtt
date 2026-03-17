@@ -1729,6 +1729,8 @@ cli:
     help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
+  SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: '互換性のあるセンサーで Sigenergy-Local-Modbus の entity_id、ゲイン、単位のマッピングを使用します。'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDBバッチサイズ（デフォルト: 100）'
   SIGENERGY2MQTT_INFLUX_BUCKET:

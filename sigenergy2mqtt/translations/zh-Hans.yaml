@@ -1729,6 +1729,8 @@ cli:
     help: '用于 Home Assistant 唯一 ID 的前缀。例如：前缀 ''prefix'' 将在唯一 ID 前加上 ''prefix_''（默认：sigen）。一旦设置，请永远不要更改它，因为它会破坏 Home Assistant 中的现有实体。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '使用简化的主题结构'
+  SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: '对兼容传感器使用 Sigenergy-Local-Modbus 的 entity_id、增益和单位映射。'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB 批处理大小（默认：100）'
   SIGENERGY2MQTT_INFLUX_BUCKET:

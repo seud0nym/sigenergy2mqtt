@@ -19,6 +19,7 @@ class TestHomeAssistantConfig:
         assert config.discovery_prefix == "homeassistant"
         assert config.entity_id_prefix == "sigen"
         assert config.unique_id_prefix == "sigen"
+        assert config.use_sigenergy_local_modbus_naming is False
 
     def test_enabled(self):
         config = HomeAssistantConfig(enabled=True)
@@ -30,21 +31,23 @@ class TestHomeAssistantConfig:
             device_name_prefix="MyHome",
             discovery_prefix="ha",
             edit_percentage_with_box=True,
-            entity_id_prefix="test_sigen",
+            entity_id_prefix="sigen",
             republish_discovery_interval=300,
             enabled_by_default=True,
             unique_id_prefix="test_unique",
             use_simplified_topics=True,
+            use_sigenergy_local_modbus_naming=True,
         )
         assert config.device_name_prefix == "MyHome"
         assert config.discovery_only is False
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
-        assert config.entity_id_prefix == "test_sigen"
+        assert config.entity_id_prefix == "sigen"
         assert config.republish_discovery_interval == 300
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is True
+        assert config.use_sigenergy_local_modbus_naming is True
 
     def test_alias_keys(self):
         """Fields can also be set via their YAML alias names."""
@@ -54,21 +57,23 @@ class TestHomeAssistantConfig:
                 "device-name-prefix": "MyHome",
                 "discovery-prefix": "ha",
                 "edit-pct-box": True,
-                "entity-id-prefix": "test_sigen",
+                "entity-id-prefix": "sigen",
                 "republish-discovery-interval": 300,
                 "sensors-enabled-by-default": True,
                 "unique-id-prefix": "test_unique",
                 "use-simplified-topics": True,
+                "use-sigenergy-local-modbus-naming": True,
             }
         )
         assert config.device_name_prefix == "MyHome"
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
-        assert config.entity_id_prefix == "test_sigen"
+        assert config.entity_id_prefix == "sigen"
         assert config.republish_discovery_interval == 300
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is True
+        assert config.use_sigenergy_local_modbus_naming is True
 
     def test_false_values(self):
         """Test that False values are properly set."""

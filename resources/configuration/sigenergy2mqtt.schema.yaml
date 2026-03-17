@@ -74,6 +74,9 @@ properties:
       unique-id-prefix:
         type: string
         default: sigen
+      use-sigenergy-local-modbus-naming:
+        type: boolean
+        default: false
       use-simplified-topics:
         type: boolean
         default: false

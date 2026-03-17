@@ -1729,6 +1729,8 @@ cli:
     help: 'Het voorvoegsel voor Home Assistant unieke IDs. Voorbeeld: Een voorvoegsel van ''prefix'' zal ''prefix_'' voorafgaan aan unieke IDs (standaard: sigen). Zodra u dit heeft ingesteld, mag u dit NOOIT meer wijzigen, omdat dit bestaande entiteiten in Home Assistant zal verbreken.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Gebruik vereenvoudigde topic-structuur (sigenergy2mqtt/object_id/state)'
+  SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: 'Gebruik Sigenergy-Local-Modbus entity_id-, gain- en eenheidskoppelingen voor compatibele sensoren.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB-batchgrootte (standaard: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
