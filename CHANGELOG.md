@@ -14,6 +14,7 @@
 - New metrics for InfluxDB activity (when enabled)
 - Ability to reset metrics counters
 - Automatic effective restart when a firmware upgrade is detected, to ensure firmware and protocol version dependent configuration is correctly applied
+- New option to use Sigenergy-Local-Modbus naming, gain and unit conventions for mapped Modbus sensors
 - New `--validate` option to validate the configuration (including configuration file, command line options and environment variables) then exit
 
 ### Changed
