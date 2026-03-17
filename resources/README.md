@@ -6,9 +6,15 @@
 
 # Configuration
 
-* [Configuration File](configuration/FILE.md)
-* [Environment Variables](configuration/ENV.md)
-* [Command Line Options](configuration/CLI.md)
+* [Combined reference for CLI flags, environment variables, and YAML configuration keys.](configuration/README.md)
+
+When parsing configuration options, `sigenergy2mqtt` looks at the configuration sources in the following order:
+
+1. [Configuration File](configuration/FILE.md)
+1. [Environment Variables](configuration/ENV.md)
+1. [Command Line Options](configuration/CLI.md)
+
+This means, for example, that the options specified in the configuration file can be overridden by environment variables and command line options.
 
 # MQTT Publish and Subscribe Topics
 
