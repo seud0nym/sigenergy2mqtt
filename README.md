@@ -48,7 +48,7 @@ When parsing configuration options, `sigenergy2mqtt` looks at the configuration 
 
 This means, for example, that the options specified in the configuration file can be overridden by environment variables and command line options.
 
-Click on the links above to see the configuration options available.
+The combined reference for CLI flags, environment variables, and YAML configuration keys can be found [here](resources/configuration/README.md).
 
 <sup>1</sup> <sub>Not applicable to the Home Assistant App</sub>
 
