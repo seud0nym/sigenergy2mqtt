@@ -57,16 +57,17 @@ Sigenergy Plant
         └─ Sigenergy DC Charger
 ```
 
+## Beta Channel
 
-## Alternatives
+A beta channel is available for testing new features and bug fixes before stable releases. Beta apps require **Advanced Mode** enabled in your Home Assistant profile.
 
-For Sigenergy systems, with no requirement to integrate with PVOutput, the [Sigenergy Local Modbus HACS integration](https://github.com/TypQxQ/Sigenergy-Local-Modbus) may be a better alternative for integration with Home Assistant.
+### Automatic
 
-| Feature | Sigenergy Local Modbus | sigenergy2mqtt  (HA App) | 
-|:--------|:----------------------:|:------------------------:|
-| Pre-requisites | HACS | MQTT broker |
-| Installation | HACS Integration | HA App |
-| Configuration| GUI | GUI and/or config file |
-| Sigenergy Auto-discovery | Yes | Yes |
-| PVOutput | No | Optional |
+[![Open your Home Assistant instance and show the add app repository dialogue with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fseud0nym%2Fhome-assistant-addons%23beta)
 
+### Manual
+
+1. Navigate in your Home Assistant frontend to **Settings** -> **Apps** -> **App store**.
+1. Click the three vertical dots in the top-right corner and select **Repositories**.
+1. Enter https://github.com/seud0nym/home-assistant-addons#beta and click the **ADD** button.
+1. Close the Repositories window and refresh.
