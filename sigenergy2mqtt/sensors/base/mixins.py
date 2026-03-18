@@ -17,12 +17,16 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
-from ._sigenergy_local_modbus_registers import SIGENERGY_LOCAL_MODBUS_REGISTERS
 from .constants import (
     DiscoveryKeys,
     ModbusLockFactory,
 )
 from .sensor import Sensor, SensorDebuggingMixin, TypedSensorMixin
+
+try:
+    from ._sigenergy_local_modbus_registers import SIGENERGY_LOCAL_MODBUS_REGISTERS
+except ImportError:
+    SIGENERGY_LOCAL_MODBUS_REGISTERS = {}
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
@@ -105,13 +109,13 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         if count <= 0:
             raise AssertionError(f"{self.__class__.__name__}: Invalid count {count}")
 
-        use_slm_naming = active_config.home_assistant.enabled and active_config.home_assistant.use_sigenergy_local_modbus_naming
+        use_slm_naming = (  # Exclude combined alarm sensors from SLM naming otherwise will cause duplicate entity_id error
+            not getattr(self, "alarms", None) and active_config.home_assistant.enabled and active_config.home_assistant.use_sigenergy_local_modbus_naming
+        )
         slm_map = SIGENERGY_LOCAL_MODBUS_REGISTERS.get(address) if use_slm_naming else None
 
         if slm_map:
             kwargs[DiscoveryKeys.OBJECT_ID] = str(slm_map["object_id"])
-            # `Sensor.__init__` consumes the constructor argument `unit`, not
-            # the discovery attribute key `unit_of_measurement`.
             kwargs.pop(DiscoveryKeys.UNIT_OF_MEASUREMENT, None)
             kwargs["unit"] = cast(str | None, slm_map.get("unit"))
             kwargs["gain"] = cast(float | None, slm_map.get("gain"))

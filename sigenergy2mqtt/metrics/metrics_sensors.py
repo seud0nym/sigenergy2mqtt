@@ -612,9 +612,9 @@ class ResetMetrics(WriteOnlySensor):
         super().__init__(
             name="Reset Metrics",
             object_id="sigenergy2mqtt_metrics_reset",
-            plant_index=0,
-            device_address=1,
-            address=30000,
+            plant_index=0,  # Required for assertions, but not used
+            device_address=1,  # Required for assertions, but not used
+            address=99999,  # Required for assertions, but not used
             protocol_version=Protocol.N_A,
             icon_off="mdi:reload",
             icon_on="mdi:reload",
