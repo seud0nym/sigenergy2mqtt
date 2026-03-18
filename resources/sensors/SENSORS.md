@@ -19,6 +19,7 @@ and the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenerg
 >- Index
 >- `_` separator
 >- The sensor description
+> 
 > **NOTE:**
 >  - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity
 >  - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`)

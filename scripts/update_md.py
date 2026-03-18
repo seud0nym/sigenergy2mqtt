@@ -48,6 +48,7 @@ def write_naming_convention(f) -> None:
     f.write("\n>- Index")
     f.write("\n>- `_` separator")
     f.write("\n>- The sensor description")
+    f.write("\n> ")
     f.write("\n> **NOTE:**")
     f.write("\n>  - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity")
     f.write("\n>  - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`)")
