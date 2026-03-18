@@ -7,30 +7,31 @@ and the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenerg
 
 
 > [!IMPORTANT]
-- All sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.
+> All `sigenergy2mqtt` sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.
+> This is always followed by `_`, then the index of the Modbus host from the configuration file (or auto-discovery), starting from `0`. (This is to prevent clashes with the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ/Sigenergy-Local-Modbus</a> HACS integration.)
 
 > [!NOTE]
 > **Naming Convention for Plant Sensors in `sigenergy2mqtt`**
->- Prefix `sigen` (default) or user-defined prefix.
+>- Prefix
 >- `_` separator
->- The index of the Modbus host from the configuration file (or auto-discovery), starting from `0`. (This is to prevent clashes with the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ/Sigenergy-Local-Modbus</a> HACS integration.)
+>- Index
 >- `_` separator
->- The sensor description.
->  - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity.
->  - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`).
->  - The description for Statistics Interface sensors will be prefixed by `si_` (not `plant_`).
+>- The sensor description:
+>  - Plant sensors have no device type or device ID, but the description _may_ be prefixed with `plant_` for clarity
+>  - The description for Smart Load sensors will be prefixed by `smart_load_` (not `plant_`)
+>  - The description for Statistics Interface sensors will be prefixed by `si_` (not `plant_`)
 
 > [!NOTE]
 > **Naming Convention for Device Sensors in `sigenergy2mqtt`**
->- Prefix `sigen` (default) or user-defined prefix.
+>- Prefix
 >- `_` separator
->- The index of the Modbus host from the configuration file (or auto-discovery), starting from `0`. (This is to prevent clashes with the <a href='https://github.com/TypQxQ/Sigenergy-Local-Modbus'>TypQxQ/Sigenergy-Local-Modbus</a> HACS integration.)
+>- Index
 >- `_` separator
->- The device type (inverter, ac_charger, or dc_charger).
+>- The device type (inverter, ac_charger, or dc_charger)
 >- `_` separator
->- The Modbus device ID. Normally **1** for the Inverter and DC Charger and **2** for an AC Charger, but depends on how the installer configured the Modbus interface.
+>- The Modbus device ID (normally **1** for the Inverter and DC Charger and **2** for an AC Charger, but depends on how the installer configured the Modbus interface)
 >- `_` separator
->- The sensor description.
+>- The sensor description
 
 | Sigenergy-Local-Modbus | `sigenergy2mqtt` |
 |------------------------|------------------|
