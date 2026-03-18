@@ -223,7 +223,10 @@ If true, apply Sigenergy-Local-Modbus entity id, gain and unit mappings where av
 
 If enabled, [Entity Id Prefix](#opt_home_assistant_entity_id_prefix) must be `sigen` (the default).
 
-Note that this _only_ affects the naming of the entity id. The underlying unique id is unchanged and will be different from the unique id used by Sigenergy-Local-Modbus, so you will need to remove the old entities from Home Assistant before enabling this option. This also means that it is not possible to migrate historical data from Sigenergy-Local-Modbus to sigenergy2mqtt. 
+> [!IMPORTANT]
+> Note that this _only_ affects the **naming** of the entity id. The underlying unique id is unchanged and will be different from the unique id used by Sigenergy-Local-Modbus, so you will need to **remove** the old entities from Home Assistant before enabling this option. This also means that it is not possible to migrate historical data from Sigenergy-Local-Modbus to sigenergy2mqtt. 
+>
+> In addition, if you have previously run `sigenergy2mqtt` without this option enabled, then you will need to remove the old MQTT devices from Home Assistant before enabling this option.
 
 <a id="opt_home_assistant_use_simplified_topics"></a>
 ### Use Simplified Topics
