@@ -84,7 +84,7 @@ class TestModbusSensor:
 
     def test_modbus_sensor_uses_sigenergy_local_modbus_mapping_when_enabled(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
+            mock_config_all.home_assistant.sigenergy_local_modbus_naming = True
             with patch.dict(
                 "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
                 {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
@@ -117,7 +117,7 @@ class TestModbusSensor:
 
     def test_modbus_sensor_keeps_override_unique_id_when_mapping_disabled(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = False
+            mock_config_all.home_assistant.sigenergy_local_modbus_naming = False
             with patch.dict(
                 "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
                 {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
@@ -150,7 +150,7 @@ class TestModbusSensor:
 
     def test_read_only_sensor_ignores_discovery_unit_key_and_uses_constructor_unit_mapping(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
+            mock_config_all.home_assistant.sigenergy_local_modbus_naming = True
             with patch.dict(
                 "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
                 {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},
@@ -183,7 +183,7 @@ class TestModbusSensor:
 
     def test_read_only_sensor_applies_mapped_unit_when_mapping_enabled(self, mock_config_all):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            mock_config_all.home_assistant.use_sigenergy_local_modbus_naming = True
+            mock_config_all.home_assistant.sigenergy_local_modbus_naming = True
             with patch.dict(
                 "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
                 {30001: {"object_id": "sigen_local_name", "gain": 0.1, "unit": "kW"}},

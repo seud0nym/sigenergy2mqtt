@@ -141,7 +141,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(hass, "discovery_prefix", g(const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX))
         _set(hass, "entity_id_prefix", g(const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX))
         _set(hass, "unique_id_prefix", g(const.SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX))
-        _set(hass, "use_sigenergy_local_modbus_naming", _bool(g(const.SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING)))
+        _set(hass, "sigenergy_local_modbus_naming", _bool(g(const.SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING)))
         _set(hass, "use_simplified_topics", _bool(g(const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS)))
         _set(hass, "edit_percentage_with_box", _bool(g(const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX)))
         if hass:

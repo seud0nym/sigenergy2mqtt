@@ -110,7 +110,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
             raise AssertionError(f"{self.__class__.__name__}: Invalid count {count}")
 
         use_slm_naming = (  # Exclude combined alarm sensors from SLM naming otherwise will cause duplicate entity_id error
-            not getattr(self, "alarms", None) and active_config.home_assistant.enabled and active_config.home_assistant.use_sigenergy_local_modbus_naming
+            not getattr(self, "alarms", None) and active_config.home_assistant.enabled and active_config.home_assistant.sigenergy_local_modbus_naming
         )
         slm_map = SIGENERGY_LOCAL_MODBUS_REGISTERS.get(address) if use_slm_naming else None
 

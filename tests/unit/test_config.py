@@ -287,13 +287,11 @@ class TestConfigHomeAssistant:
         assert hasattr(active_config.home_assistant, "entity_id_prefix")
 
     def test_home_assistant_local_modbus_naming_validation(self):
-        """Test validation fails when use_sigenergy_local_modbus_naming=True and entity_id_prefix is not 'sigen'."""
+        """Test validation fails when sigenergy_local_modbus_naming=True and entity_id_prefix is not 'sigen'."""
         from sigenergy2mqtt.config.config import ConfigurationError
+
         with pytest.raises(ConfigurationError, match="home-assistant.entity-id-prefix must be 'sigen'"):
-            Settings(
-                home_assistant={"use-sigenergy-local-modbus-naming": True, "entity-id-prefix": "other"},
-                modbus=[{"host": "localhost"}]
-            )
+            Settings(home_assistant={"sigenergy-local-modbus-naming": True, "entity-id-prefix": "other"}, modbus=[{"host": "localhost"}])
 
 
 class TestConfigMqtt:

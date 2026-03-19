@@ -1729,7 +1729,7 @@ cli:
     help: "El prefijo para IDs únicos de Home Assistant. Ejemplo: Un prefijo 'prefix' antepondrá 'prefix_' a los IDs únicos (predeterminado: sigen). Una vez establecido, NUNCA debe cambiarse, ya que romperá las entidades existentes en Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Habilitar la estructura de temas simplificada (sigenergy2mqtt/object_id/state) en lugar de la estructura completa de Home Assistant (homeassistant/platform/device_id/object_id/state)
-  SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING:
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
     help: Usar las asignaciones de entity_id, ganancia y unidad de Sigenergy-Local-Modbus para sensores compatibles.
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'Tamaño del lote de InfluxDB (por defecto: 100)'

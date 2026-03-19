@@ -215,9 +215,9 @@ The prefix string that will be prepended to the Home Assistant MQTT unique id. T
 
 <a id="opt_home_assistant_use_sigenergy_local_modbus_naming"></a>
 ### Use Sigenergy Local Modbus Naming
-- CLI: `--use-sigenergy-local-modbus-naming`
-- ENV: `SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING`
-- Config key: `home-assistant.use-sigenergy-local-modbus-naming`
+- CLI: `--hass-sigenergy-local-modbus-naming`
+- ENV: `SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING`
+- Config key: `home-assistant.sigenergy-local-modbus-naming`
 
 If true, apply Sigenergy-Local-Modbus entity id, gain and unit mappings where available to help migration. 
 

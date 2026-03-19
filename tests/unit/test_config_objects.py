@@ -19,7 +19,7 @@ class TestHomeAssistantConfig:
         assert config.discovery_prefix == "homeassistant"
         assert config.entity_id_prefix == "sigen"
         assert config.unique_id_prefix == "sigen"
-        assert config.use_sigenergy_local_modbus_naming is False
+        assert config.sigenergy_local_modbus_naming is False
 
     def test_enabled(self):
         config = HomeAssistantConfig(enabled=True)
@@ -36,7 +36,7 @@ class TestHomeAssistantConfig:
             enabled_by_default=True,
             unique_id_prefix="test_unique",
             use_simplified_topics=True,
-            use_sigenergy_local_modbus_naming=True,
+            sigenergy_local_modbus_naming=True,
         )
         assert config.device_name_prefix == "MyHome"
         assert config.discovery_only is False
@@ -47,7 +47,7 @@ class TestHomeAssistantConfig:
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is True
-        assert config.use_sigenergy_local_modbus_naming is True
+        assert config.sigenergy_local_modbus_naming is True
 
     def test_alias_keys(self):
         """Fields can also be set via their YAML alias names."""
@@ -62,7 +62,7 @@ class TestHomeAssistantConfig:
                 "sensors-enabled-by-default": True,
                 "unique-id-prefix": "test_unique",
                 "use-simplified-topics": True,
-                "use-sigenergy-local-modbus-naming": True,
+                "sigenergy-local-modbus-naming": True,
             }
         )
         assert config.device_name_prefix == "MyHome"
@@ -73,7 +73,7 @@ class TestHomeAssistantConfig:
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is True
-        assert config.use_sigenergy_local_modbus_naming is True
+        assert config.sigenergy_local_modbus_naming is True
 
     def test_false_values(self):
         """Test that False values are properly set."""

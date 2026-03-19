@@ -1729,7 +1729,7 @@ cli:
     help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지 마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
-  SIGENERGY2MQTT_USE_SIGENERGY_LOCAL_MODBUS_NAMING:
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
     help: '호환되는 센서에 대해 Sigenergy-Local-Modbus entity_id, 게인 및 단위 매핑을 사용합니다.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB 배치 크기 (기본값: 100)'
