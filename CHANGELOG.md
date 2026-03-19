@@ -31,6 +31,10 @@
 - Upgraded `psutil` from 7.2.1 to 7.2.2
 - Upgraded `pymodbus` from 3.11.4 to 3.12.1
 
+### Deprecated
+
+- Sensors which are sourced by direct access to third-party PV generation devices (e.g. Enphase) will be removed in a future release
+
 ### Removed
 
 - HA discovery-only option from config file and ENV (only makes sense as a CLI option)

@@ -109,7 +109,6 @@ def _load_config() -> None:
     """Load active_config from a discovered file, or fall back to env-var / defaults."""
     path = _discover_config_file()
     if path:
-        logging.debug("Loading configuration from %s", path)
         active_config.load(path)
     else:
         logging.debug("No config file found; using environment variables and defaults.")

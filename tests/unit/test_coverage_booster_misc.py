@@ -138,3 +138,37 @@ def test_main_validate_logs_config_yaml(monkeypatch):
             main_module.main()
 
     assert any(call.args and call.args[0] == "Validation configuration:\n%s" for call in mock_info.call_args_list)
+
+
+def test_main_smartport_warning_coverage(monkeypatch, caplog):
+    from sigenergy2mqtt.config import Config, _swap_active_config
+
+    with _swap_active_config(Config()) as cfg:
+        # Setup - mock initialize to return True and modbus to have smartport enabled
+        monkeypatch.setattr(main_module, "initialize", lambda: True)
+
+        mock_modbus = MagicMock()
+        mock_modbus.smartport.enabled = True
+        cfg.modbus = [mock_modbus]
+        cfg.validate_only_mode = None
+
+        with (
+            patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+            patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None),
+        ):
+            main_module.main()
+            assert mock_run.called
+
+        assert "Third-Party PV generation support (smartport) is enabled but has been DEPRECATED" in caplog.text
+
+        # Case 2: Disabled
+        caplog.clear()
+        mock_modbus.smartport.enabled = False
+        with (
+            patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+            patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None),
+        ):
+            main_module.main()
+            assert mock_run.called
+
+        assert "Third-Party PV generation support (smartport) is enabled but has been DEPRECATED" not in caplog.text
