@@ -65,18 +65,16 @@ def _promote_cli_to_env(args) -> None:
         if arg in skip:
             continue
 
-        if not _is_arg_explicitly_set(value):
-            logging.debug(f"CLI arg {arg!r} not explicitly set, skipping")
+        if not _is_arg_explicitly_set(value):  # not explicitly set, skipping
             continue
 
-        if os.getenv(arg):
-            logging.debug(f"CLI arg {arg!r} superseded by environment variable, skipping")
+        if os.getenv(arg):  # superseded by environment variable, skipping
             continue
 
-        if arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and value in (True, 1, "true", "True"):
-            _apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_ONLY, "true")
-            _apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_WRITE, "false")
-            _apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY, "false")
+        if arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and value in (True, 1, "true", "True"):  # special case for read-only flag
+            _apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_ONLY, "true")  # publish read-only sensors
+            _apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_READ_WRITE, "false")  # unpublish read-write sensors
+            _apply_cli_to_env(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY, "false")  # unpublish write-only sensors
             continue
 
         _apply_cli_to_env(arg, value)
