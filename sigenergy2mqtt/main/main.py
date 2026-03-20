@@ -3,7 +3,7 @@ import os
 import signal
 import sys
 from pathlib import Path
-from typing import Tuple, cast
+from typing import Any, Tuple, cast
 
 import paho.mqtt.client as paho_mqtt
 import requests
@@ -20,13 +20,11 @@ from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
 from sigenergy2mqtt.sensors.plant_read_only import (
     Alarm7,
     CurrentControlCommandValue,
     PlantBatterySoH,
-    PlantRatedChargingPower,
-    PlantRatedDischargingPower,
     SITotalChargedEnergy,
     SITotalDischargedEnergy,
     SITotalEVACChargedEnergy,
@@ -121,7 +119,7 @@ def get_modbus_url(modbus_client: ModbusClient) -> str:
 
 
 async def get_state(
-    sensor: Sensor,
+    sensor: Any,
     modbus_client: ModbusClient,
     device: str,
     default_value: int | float | str | None = None,
@@ -138,10 +136,14 @@ async def get_state(
     """
     try:
         state = await sensor.get_state(raw=raw, modbus_client=modbus_client)
-        logging.debug(f"READING {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device}")
+        logging.debug(
+            f"READING {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
+        )
     except Exception as e:
         state = default_value
-        logging.debug(f"FAILURE {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} to initialise {device} -> {e} (returning {default_value=})")
+        logging.debug(
+            f"FAILURE {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address}) -> {e} (returning {default_value=})"
+        )
     return state
 
 
@@ -270,22 +272,20 @@ async def make_plant_and_inverter(
     """
     sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus_client, "inverter")
     if sn in seen_serial_numbers:
-        logging.info(f"Inverter {sn} has already been detected - ignoring")
+        logging.info(f"Inverter {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
         return None, None
 
     mdl = await get_state(InverterModel(plant_index, device_address), modbus_client, "inverter")
     if mdl is None:
-        raise ValueError("Model ID cannot be None")
+        raise ValueError(f"Inverter {sn} Model ID cannot be None (idx={plant_index} id={device_address})")
 
-    rcp = await get_state(PlantRatedChargingPower(plant_index), modbus_client, "plant")
-    rdp = await get_state(PlantRatedDischargingPower(plant_index), modbus_client, "plant")
-    if rcp is None or rdp is None:
-        logging.debug(f"Inverter {sn} does not support charging or discharging - assuming PVInverter")
+    batteries = cast(int, await get_state(PACKBCUCount(plant_index, device_address), modbus_client, "plant", default_value=0))
+    if batteries == 0:
         device_type = PVInverter()
-        rcp = rdp = 0.0
+        logging.debug(f"Inverter {sn} has no batteries - assuming PVInverter (idx={plant_index} id={device_address})")
     else:
-        logging.debug(f"Inverter {sn} supports charging and discharging - assuming HybridInverter")
         device_type = HybridInverter()
+        logging.debug(f"Inverter {sn} has {batteries} batter{'y' if batteries == 1 else 'ies'} - assuming HybridInverter (idx={plant_index} id={device_address})")
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
@@ -300,7 +300,7 @@ async def make_plant_and_inverter(
 
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
         if ot is None:
-            raise ValueError("OutputType cannot be None — cannot create PowerPlant")
+            raise ValueError(f"Inverter {sn} OutputType cannot be None — cannot create PowerPlant (idx={plant_index} id={device_address})")
         firmware = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")
         plant = await PowerPlant.create(plant_index, device_type, cast(str, firmware), protocol, cast(int, ot), modbus_client)
     else:

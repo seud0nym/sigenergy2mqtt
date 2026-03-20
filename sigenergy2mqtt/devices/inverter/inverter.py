@@ -52,25 +52,32 @@ class Inverter(ModbusDevice):
         firmware_version = ro.InverterFirmwareVersion(plant_index, device_address)
         serial_number = ro.InverterSerialNumber(plant_index, device_address)
         pack_bcu_count = ro.PACKBCUCount(plant_index, device_address)
-        # Fetch async values in parallel
-        firmware, model_id, battery_count, strings, serial = await asyncio.gather(
+
+        # Fetch async values in parallel for common inverter sensors
+        firmware, model_id, strings, serial = await asyncio.gather(
             firmware_version.get_state(modbus_client=modbus_client),
             model.get_state(modbus_client=modbus_client),
-            pack_bcu_count.get_state(modbus_client=modbus_client),
             pv_string_count.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
         )
 
+        if isinstance(device_type, HybridInverter):
+            battery_count = cast(int, await pack_bcu_count.get_state(modbus_client=modbus_client))
+        else:
+            battery_count = 0
+
         try:
             parsed_firmware = FirmwareVersion(cast(str, firmware))
             if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
-                logging.info(f"Disabling Remote EMS Mode check because PV Max Power and ESS Charge/Discharge limits are globally available in firmware {firmware}")
+                logging.info(
+                    f"Inverter {serial}: Disabling Remote EMS Mode check because PV Max Power {'and ESS Charge/Discharge limits are' if battery_count > 0 else 'is'} globally available in firmware {firmware}"
+                )
                 active_config.ems_mode_check = False
         except ValueError:
-            logging.debug(f"Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
+            logging.warning(f"Inverter {serial}: Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
 
         inverter = cls(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
-        await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), cast(int, battery_count))
+        await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), battery_count)
         await inverter._register_sensors(plant_index, device_address, pv_string_count, firmware_version, model, serial_number, pack_bcu_count, modbus_client)
         return inverter
 
@@ -136,20 +143,19 @@ class Inverter(ModbusDevice):
                 )
                 address += 2  # voltage is in the first register, current in the second
 
-        if isinstance(device_type, HybridInverter):
-            if battery_count > 0:
-                self._add_child_device(
-                    ESS(
-                        plant_index=plant_index,
-                        device_address=device_address,
-                        device_type=device_type,
-                        protocol_version=protocol_version,
-                        model_id=model_id,
-                        serial_number=serial,
-                    )
+        if battery_count > 0:
+            self._add_child_device(
+                ESS(
+                    plant_index=plant_index,
+                    device_address=device_address,
+                    device_type=device_type,
+                    protocol_version=protocol_version,
+                    model_id=model_id,
+                    serial_number=serial,
                 )
-            else:
-                logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {battery_count=}")
+            )
+        else:
+            logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {battery_count=}")
 
     async def _register_sensors(
         self,
