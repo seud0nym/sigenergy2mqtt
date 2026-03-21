@@ -81,3 +81,7 @@ To return to the latest stable release:
 sudo -u sigenergy pipx upgrade sigenergy2mqtt
 systemctl restart sigenergy2mqtt.service
 ```
+
+> [!WARNING]
+> Running both stable and beta versions simultaneously is not recommended. The app can _not_ detect or prevent this.
+> It is up to _you_ to ensure that you do not run both the stable and beta releases simultaneously!

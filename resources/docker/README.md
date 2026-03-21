@@ -41,8 +41,6 @@ docker run -it \
     seud0nym/sigenergy2mqtt:latest
 ```
 
-
-
 ## Pre-release (beta) images
 
 If you want to test pre-release builds, use the `beta` tag explicitly:
@@ -58,6 +56,10 @@ docker run -it \
 ```
 
 `latest` remains reserved for stable releases.
+
+> [!WARNING]
+> Running both stable and beta versions simultaneously is not recommended. The container can _not_ detect or prevent this.
+> It is up to _you_ to ensure that you do not run both the stable and beta releases simultaneously!
 
 ## Docker Compose
 
