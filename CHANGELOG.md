@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.3.21b2] - 2026-03-21
+
+### Fixed
+
+- Dockerfile fixed to build from Python 3.12/Alpine with pre-built wheels for pydantic-core
+
 ## [2026.3.21b1] - 2026-03-21
 
 ### Added
