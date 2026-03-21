@@ -6,6 +6,9 @@ RED='\033[0;31m'
 NC='\033[0m' # No Colour
 
 cd "$(cd $(dirname $0)/..; pwd)"
+if [[ -z "$VIRTUAL_ENV" ]]; then
+   source .venv/bin/activate
+fi
 
 force_build=n
 build_stable=n
