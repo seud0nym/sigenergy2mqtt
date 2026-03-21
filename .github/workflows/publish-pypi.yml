@@ -30,8 +30,11 @@ jobs:
       - name: Fix README links for PyPI
         run: |
           REPO="https://github.com/seud0nym/sigenergy2mqtt/blob/${{ github.ref_name }}"
+          REPO_RAW="https://github.com/seud0nym/sigenergy2mqtt/raw/${{ github.ref_name }}"
           sed -i "s|(\.\/|(${REPO}/|g" README.md
           sed -i "s|(\.\./|(${REPO}/|g" README.md
+          sed -i "s|(resources/badges/|(${REPO_RAW}/resources/badges/|g" README.md
+          sed -i "s|(resources/|(${REPO}/resources/|g" README.md
 
       - name: Build release distributions
         run: |
