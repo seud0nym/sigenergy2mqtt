@@ -933,7 +933,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logging.debug(f"{self.name} cleaning attributes")
 
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=1, retain=True)
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=0, retain=True)
 
     def _publish_current_attributes(self, mqtt_client: mqtt.Client, **kwargs) -> None:
         """Publish current sensor attributes.
@@ -951,7 +951,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logging.debug(f"{self.__class__.__name__} Publishing attributes={attributes}")
 
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), json.dumps(attributes, indent=4), qos=2, retain=True)
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), json.dumps(attributes, indent=4), qos=1, retain=True)
 
         self._attributes_published = True
         self.force_publish = False
