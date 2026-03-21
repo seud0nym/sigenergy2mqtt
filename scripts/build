@@ -105,11 +105,13 @@ EOF2
     scripts/update_md "$new_version"
 fi
 
-rm -f dist/*
-
 echo -e "${GREEN}>>> Building distribution...${NC}"
+rm -f dist/*
 python3 -m build || exit
 python3 -m twine check dist/* || exit
+
+echo -e "${GREEN}>>> Testing Docker build...${NC}"
+docker buildx build . || exit
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     echo -e "${GREEN}>>> Updating add-on...${NC}"
