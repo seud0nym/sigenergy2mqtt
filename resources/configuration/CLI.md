@@ -1,5 +1,5 @@
 # Command Line Options
-(Since Release 2026.2.3)
+(Since Release 2026.3.21b1)
 ```text
 usage: sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                    [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
@@ -7,11 +7,14 @@ usage: sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                    [-d SIGENERGY2MQTT_DEBUG_SENSOR]
                    [--sanity-check-default-kw SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW]
                    [--no-ems-mode-check] [--no-metrics]
-                   [--consumption {calculated,total,general}] [--hass-enabled]
+                   [--consumption {calculated,total,general}]
+                   [--repeated-state-publish-interval SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL]
+                   [--hass-enabled]
                    [--hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]]
                    [--hass-entity-id-prefix [SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX]]
                    [--hass-unique-id-prefix [SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX]]
                    [--hass-use-simplified-topics]
+                   [--hass-sigenergy-local-modbus-naming]
                    [--hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]]
                    [--hass-edit-pct-box] [--hass-discovery-only]
                    [-b [SIGENERGY2MQTT_MQTT_BROKER]]
@@ -77,7 +80,17 @@ usage: sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                    [--influxdb-include [SIGENERGY2MQTT_INFLUX_INCLUDE ...]]
                    [--influxdb-exclude [SIGENERGY2MQTT_INFLUX_EXCLUDE ...]]
                    [--influxdb-log-level [{DEBUG,INFO,WARNING,ERROR,CRITICAL}]]
-                   [--clean] [--validate] [-v]
+                   [--influxdb-write-timeout [SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT]]
+                   [--influxdb-read-timeout [SIGENERGY2MQTT_INFLUX_READ_TIMEOUT]]
+                   [--influxdb-batch-size [SIGENERGY2MQTT_INFLUX_BATCH_SIZE]]
+                   [--influxdb-flush-interval [SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL]]
+                   [--influxdb-query-interval [SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL]]
+                   [--influxdb-max-retries [SIGENERGY2MQTT_INFLUX_MAX_RETRIES]]
+                   [--influxdb-pool-connections [SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS]]
+                   [--influxdb-pool-maxsize [SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE]]
+                   [--influxdb-sync-chunk-size [SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE]]
+                   [--influxdb-max-sync-workers [SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS]]
+                   [--clean] [--validate [{standard,show_credentials}]] [-v]
 
 Reads the Sigenergy modbus interface and publishes the data to MQTT. The data
 will be published to MQTT in the Home Assistant MQTT Discovery format.
@@ -87,7 +100,7 @@ options:
   -c, --config [SIGENERGY2MQTT_CONFIG]
                         The path to the YAML configuration file (default:
                         SIGENERGY2MQTT_CONFIG env var, otherwise
-                        ./sigenergy2mqtt.yaml)
+                        /etc/sigenergy2mqtt.yaml)
   -l, --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the log level. Valid values are: DEBUG, INFO,
                         WARNING, ERROR or CRITICAL. Default is WARNING
@@ -116,15 +129,23 @@ options:
   --no-ems-mode-check   Turn off validation that disables ESS Max
                         Charging/Discharging and PV Max Power limits when
                         Remote EMS Control Mode is not Command
-                        Charging/Discharging.
+                        Charging/Discharging. This option is ignored for
+                        firmware SPC113 and later as these limits are globally
+                        available in those versions.
   --no-metrics          Do not publish any sigenergy2mqtt metrics.
   --consumption {calculated,total,general}
                         Set the method of calculating the Plant Consumed Power
                         sensor. Valid values are: 'calculated', 'total' (Total
                         Load Power register), or 'general' (V2.8 General Load
-                        Power register). The default is 'total'. This
-                        option is ignored on firmware earlier than that
-                        supporting Modbus Protocol V2.8.
+                        Power register). The default is 'total'. This option
+                        is ignored on firmware earlier than that supporting
+                        Modbus Protocol V2.8.
+  --repeated-state-publish-interval SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL
+                        The interval in seconds at which repeated states are
+                        published. If < 0, repeated states are never
+                        published. If 0, repeated states are always published.
+                        If > 0, repeated states are published at the specified
+                        interval. The default is 0 (always publish).
   --hass-enabled        Enable auto-discovery in Home Assistant.
   --hass-discovery-prefix [SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX]
                         The Home Assistant MQTT Discovery topic prefix to use
@@ -144,6 +165,11 @@ options:
                         (sigenergy2mqtt/object_id/state) instead of the full
                         Home Assistant topic structure
                         (homeassistant/platform/device_id/object_id/state)
+  --hass-sigenergy-local-modbus-naming
+                        Use Sigenergy-Local-Modbus entity_id, gain and unit
+                        naming conventions for mapped Modbus sensors. If
+                        enabled, --hass-entity-id-prefix must be 'sigen'
+                        (default).
   --hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]
                         The prefix to use for Home Assistant entity names.
                         Example: A prefix of 'prefix' will prepend 'prefix '
@@ -405,9 +431,33 @@ options:
                         InfluxDB subsystem log level. Valid values are: DEBUG,
                         INFO, WARNING, ERROR or CRITICAL. Default is WARNING
                         (warnings, errors and critical failures)
+  --influxdb-write-timeout [SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT]
+                        InfluxDB write timeout in seconds (default: 30.0)
+  --influxdb-read-timeout [SIGENERGY2MQTT_INFLUX_READ_TIMEOUT]
+                        InfluxDB read timeout in seconds (default: 120.0)
+  --influxdb-batch-size [SIGENERGY2MQTT_INFLUX_BATCH_SIZE]
+                        InfluxDB batch size (default: 100)
+  --influxdb-flush-interval [SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL]
+                        InfluxDB flush interval in seconds (default: 1.0)
+  --influxdb-query-interval [SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL]
+                        InfluxDB query interval in seconds (default: 0.5)
+  --influxdb-max-retries [SIGENERGY2MQTT_INFLUX_MAX_RETRIES]
+                        InfluxDB maximum retries (default: 3)
+  --influxdb-pool-connections [SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS]
+                        InfluxDB connection pool size (default: 100)
+  --influxdb-pool-maxsize [SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE]
+                        InfluxDB connection pool max size (default: 100)
+  --influxdb-sync-chunk-size [SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE]
+                        InfluxDB sync chunk size (default: 1000)
+  --influxdb-max-sync-workers [SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS]
+                        InfluxDB maximum sync workers (default: 4)
   --clean               Publish empty discovery to delete existing devices,
                         then exits immediately.
-  --validate            Validates the configuration, then exits immediately.
+  --validate [{standard,show_credentials}]
+                        Validates the configuration and tests configured
+                        connections/authentication, then exits immediately.
+                        Optional mode: --validate=show_credentials logs the
+                        raw credentials used for connection tests.
   -v, --version         Shows the version number, then exits immediately.
 
 Command line options over-ride values in the configuration file and
