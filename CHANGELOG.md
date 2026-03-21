@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Dockerfile updated to use Python 3.14.3-slim and no-cache pip install
+- Docker build test added to build script
+
 ## [2026.3.21b2] - 2026-03-21
 
 ### Fixed
