@@ -361,7 +361,7 @@ The maximum number of parallel sync operations.
 <a id="opt_influxdb_org"></a>
 ### Org
 - CLI: `--influxdb-org`
-- ENV: `SIGENERGY2MQTT_INFLUX_ORGANIZATION`
+- ENV: `SIGENERGY2MQTT_INFLUX_ORG`
 - Config key: `influxdb.org`
 
 The InfluxDB v2 organization name or ID. If not specified, the v1 API will be used.
@@ -577,7 +577,7 @@ Defaults to `502`.
 <a id="opt_modbus_read_only"></a>
 ### Read Only
 - CLI: `--modbus-readonly`
-- ENV: `SIGENERGY2MQTT_MODBUS_READONLY`
+- ENV: `SIGENERGY2MQTT_MODBUS_READ_ONLY`
 - Config key: `modbus[].host.read-only`
 
 If the `--modbus-readonly` command line option is specified, then **ONLY** read-only entities will be published to MQTT.
@@ -587,7 +587,7 @@ For the environment variable and configuration file entry, if true, all read-onl
 <a id="opt_modbus_read_write"></a>
 ### Read Write
 - CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_MODBUS_READWRITE`
+- ENV: `SIGENERGY2MQTT_MODBUS_READ_WRITE`
 - Config key: `modbus[].host.read-write`
 
 If true, all read-write entities will be published to MQTT. Specify false to disable read-write entities.
@@ -603,7 +603,7 @@ The maximum number of times to retry a Modbus operation if it fails. The default
 <a id="opt_modbus_timeout"></a>
 ### Timeout
 - CLI: `--modbus-timeout`
-- ENV: `n/a`
+- ENV: `SIGENERGY2MQTT_MODBUS_TIMEOUT`
 - Config key: `modbus[].host.timeout`
 
 The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0.
@@ -926,7 +926,7 @@ The PVOutput API key (create/find your key under https://pvoutput.org/account.js
 <a id="opt_pvoutput_calc_debug_logging"></a>
 ### Calc Debug Logging
 - CLI: `n/a`
-- ENV: `n/a`
+- ENV: `SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING`
 - Config key: `pvoutput.calc-debug-logging`
 
 If true, the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level. 
@@ -1101,7 +1101,7 @@ SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON=[{"plan":"Zero Hero","to-date":"2026-05-31"
 <a id="opt_pvoutput_update_debug_logging"></a>
 ### Update Debug Logging
 - CLI: `n/a`
-- ENV: `n/a`
+- ENV: `SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING`
 - Config key: `pvoutput.update-debug-logging`
 
 If true, the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOUTPUT log-level is set to DEBUG.
