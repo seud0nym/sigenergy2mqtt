@@ -21,6 +21,11 @@ Follow these steps to get the app repository installed on your Home Assistant sy
 1. Enter https://github.com/seud0nym/home-assistant-addons and click the **ADD** button.
 1. Close the Repositories window and refresh.
 
+## Minimum Requirements
+
+- A Sigenergy ESS or PV Inverter, with the Modbus-TCP server enabled by your installer
+- The Home Assistant [Mosquitto broker app](https://github.com/home-assistant/addons/blob/master/mosquitto/DOCS.md) or an existing MQTT broker that you have already integrated with Home Assistant.
+
 ## Installation
 
 1. Select the `sigenergy2mqtt` app in the Home Assistant Apps Store
@@ -31,9 +36,11 @@ Follow these steps to get the app repository installed on your Home Assistant sy
 
 You can set the current values for daily accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values.
 
-## Home Assistant Auto-Discovery
+## MQTT Devices
 
-For each host defined in the `modbus` section of the configuration file, an MQTT device will be created in Home Assistant. The first device will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related devices, such as `Sigenergy Plant Grid Sensor` and `Sigenergy Plant Statistics` and if applicable, `Sigenergy Plant Smart-Port`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
+For each Sigenergy host, an MQTT device will be created in Home Assistant. A host can be configured in the app Configuration tab, or it can be discovered automatically.
+
+The first host will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related MQTT devices, such as `Sigenergy Plant Grid Sensor` and `Sigenergy Plant Statistics`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
 
 Example:
 ```
