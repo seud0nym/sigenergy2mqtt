@@ -13,25 +13,10 @@ check_pkg () {
     pip install "$spec" --upgrade --root-user-action=ignore --quiet
   fi
   if [[ -n "$add_after" ]]; then
-    local pinned="$(pip freeze | grep "^${pkg}==")"
-    local pkg_regex="${pkg//./\\.}"
-    local add_after_regex="${add_after//./\\.}"
     if grep -Eq "$pkg[=(]" pyproject.toml; then
-      sed -e "s/$pkg[=(][^\"]*/${pinned}/" -i pyproject.toml
+      sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
     else
-      sed -e "/${add_after}/a\    \"${pinned}\"," -i pyproject.toml
-    fi
-
-    if [[ -f tests/utils/Dockerfile ]]; then
-      if grep -Eq "^[[:space:]]+${pkg_regex}==" tests/utils/Dockerfile; then
-        sed -E -i "s|^([[:space:]]*)${pkg_regex}==[^[:space:]\\\\]+(.*)$|\\1${pinned}\\2|" tests/utils/Dockerfile
-      elif [[ "$add_after" == "dependencies" ]] || ! grep -Eq "^[[:space:]]+${add_after_regex}==" tests/utils/Dockerfile; then
-        sed -i "/^RUN pip install --no-cache-dir/a\\
-    ${pinned} \\\\" tests/utils/Dockerfile
-      else
-        sed -i "/^[[:space:]]*${add_after_regex}==/a\\
-    ${pinned} \\\\" tests/utils/Dockerfile
-      fi
+      sed -e "/${add_after}/a\    \"$(pip freeze | grep "^${pkg}==")\"," -i pyproject.toml
     fi
   fi
 }
@@ -64,26 +49,5 @@ for spec in \
 done
 for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
   pkg="${spec%%[=(]*}"
-  if ! echo "$pkgs" | grep -Eq "$pkg[=(]"; then
-    sed -e "/$pkg[=(]/d" -i pyproject.toml
-    sed -E -i "/^[[:space:]]+${pkg//./\\.}==/d" tests/utils/Dockerfile
-    echo ">>> Removing $pkg"
-    pip-autoremove $pkg
-  fi
+  echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
 done
-
-awk '
-  /^RUN pip install --no-cache-dir/ { print; in_deps = 1; dep_count = 0; next }
-  in_deps && /^[[:space:]]+[A-Za-z0-9_.-]+==/ { deps[++dep_count] = $0; next }
-  in_deps {
-    for (i = 1; i <= dep_count; i++) {
-      line = deps[i]
-      sub(/[[:space:]]*\\[[:space:]]*$/, "", line)
-      if (i < dep_count) print line " \\"
-      else print line
-    }
-    in_deps = 0
-    dep_count = 0
-  }
-  { print }
-' tests/utils/Dockerfile > tests/utils/Dockerfile.tmp && mv tests/utils/Dockerfile.tmp tests/utils/Dockerfile
