@@ -18,3 +18,7 @@ dist/
 htmlcov/
 .coverage
 .coverage.*
+
+resources/
+tests/integration/
+tests/unit/
