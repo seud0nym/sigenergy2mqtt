@@ -12,9 +12,8 @@ RUN pip install --no-cache-dir \
     requests==2.32.5 \
     ruamel.yaml==0.19.1
 
-RUN pip install --no-cache-dir --no-deps sigenergy2mqtt
-
-COPY . /app/tests/utils
+COPY sigenergy2mqtt /app/sigenergy2mqtt
+COPY tests/utils /app/tests/utils
 
 EXPOSE 502
 
