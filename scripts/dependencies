@@ -2,35 +2,6 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
-sync_test_utils_dockerfile () {
-  local dockerfile="tests/utils/Dockerfile"
-  if [[ ! -f "$dockerfile" ]] || [[ ! -f pyproject.toml ]]; then
-    return
-  fi
-
-  mapfile -t deps < <(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs -n1)
-  if [[ ${#deps[@]} -eq 0 ]]; then
-    return
-  fi
-
-  local run_block="RUN pip install --no-cache-dir"
-  for i in "${!deps[@]}"; do
-    if [[ $i -lt $((${#deps[@]} - 1)) ]]; then
-      run_block+=$'\n'"    ${deps[$i]} \\"
-    else
-      run_block+=$'\n'"    ${deps[$i]}"
-    fi
-  done
-
-  awk -v block="$run_block" '
-    /^RUN pip install --no-cache-dir/ { print block; in_deps = 1; replaced = 1; next }
-    in_deps && /^[[:space:]]+[A-Za-z0-9_.-]+==/ { next }
-    in_deps && /^$/ { print; in_deps = 0; next }
-    { print }
-    END { if (!replaced) print block }
-  ' "$dockerfile" > "${dockerfile}.tmp" && mv "${dockerfile}.tmp" "$dockerfile"
-}
-
 check_pkg () {
   local spec="$1"
   local add_after="$2"
@@ -43,10 +14,24 @@ check_pkg () {
   fi
   if [[ -n "$add_after" ]]; then
     local pinned="$(pip freeze | grep "^${pkg}==")"
+    local pkg_regex="${pkg//./\\.}"
+    local add_after_regex="${add_after//./\\.}"
     if grep -Eq "$pkg[=(]" pyproject.toml; then
       sed -e "s/$pkg[=(][^\"]*/${pinned}/" -i pyproject.toml
     else
       sed -e "/${add_after}/a\    \"${pinned}\"," -i pyproject.toml
+    fi
+
+    if [[ -f tests/utils/Dockerfile ]]; then
+      if grep -Eq "^[[:space:]]+${pkg_regex}==" tests/utils/Dockerfile; then
+        sed -E -i "s|^([[:space:]]*)${pkg_regex}==[^[:space:]\\\\]+(.*)$|\\1${pinned}\\2|" tests/utils/Dockerfile
+      elif [[ "$add_after" == "dependencies" ]] || ! grep -Eq "^[[:space:]]+${add_after_regex}==" tests/utils/Dockerfile; then
+        sed -i "/^RUN pip install --no-cache-dir/a\\
+    ${pinned} \\\\" tests/utils/Dockerfile
+      else
+        sed -i "/^[[:space:]]*${add_after_regex}==/a\\
+    ${pinned} \\\\" tests/utils/Dockerfile
+      fi
     fi
   fi
 }
@@ -79,7 +64,26 @@ for spec in \
 done
 for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
   pkg="${spec%%[=(]*}"
-  echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
+  if ! echo "$pkgs" | grep -Eq "$pkg[=(]"; then
+    sed -e "/$pkg[=(]/d" -i pyproject.toml
+    sed -E -i "/^[[:space:]]+${pkg//./\\.}==/d" tests/utils/Dockerfile
+    echo ">>> Removing $pkg"
+    pip-autoremove $pkg
+  fi
 done
 
-sync_test_utils_dockerfile
+awk '
+  /^RUN pip install --no-cache-dir/ { print; in_deps = 1; dep_count = 0; next }
+  in_deps && /^[[:space:]]+[A-Za-z0-9_.-]+==/ { deps[++dep_count] = $0; next }
+  in_deps {
+    for (i = 1; i <= dep_count; i++) {
+      line = deps[i]
+      sub(/[[:space:]]*\\[[:space:]]*$/, "", line)
+      if (i < dep_count) print line " \\"
+      else print line
+    }
+    in_deps = 0
+    dep_count = 0
+  }
+  { print }
+' tests/utils/Dockerfile > tests/utils/Dockerfile.tmp && mv tests/utils/Dockerfile.tmp tests/utils/Dockerfile
