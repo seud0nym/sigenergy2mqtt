@@ -2,6 +2,16 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
+update_test_utils_dockerfile () {
+  local pkg="$1"
+  local pinned="$2"
+  local dockerfile="tests/utils/Dockerfile"
+  local pkg_regex="${pkg//./\\.}"
+  if [[ -f "$dockerfile" ]] && grep -Eq "^[[:space:]]+${pkg_regex}==" "$dockerfile"; then
+    sed -E -i "s|^([[:space:]]*)${pkg_regex}==[^[:space:]\\\\]+(.*)$|\\1${pinned}\\2|" "$dockerfile"
+  fi
+}
+
 check_pkg () {
   local spec="$1"
   local add_after="$2"
@@ -13,11 +23,13 @@ check_pkg () {
     pip install "$spec" --upgrade --root-user-action=ignore --quiet
   fi
   if [[ -n "$add_after" ]]; then
+    local pinned="$(pip freeze | grep "^${pkg}==")"
     if grep -Eq "$pkg[=(]" pyproject.toml; then
-      sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
+      sed -e "s/$pkg[=(][^\"]*/${pinned}/" -i pyproject.toml
     else
-      sed -e "/${add_after}/a\    \"$(pip freeze | grep "^${pkg}==")\"," -i pyproject.toml
+      sed -e "/${add_after}/a\    \"${pinned}\"," -i pyproject.toml
     fi
+    update_test_utils_dockerfile "$pkg" "$pinned"
   fi
 }
 
