@@ -10,8 +10,7 @@ RUN pip install --no-cache-dir \
     pydantic-settings==2.13.1 \
     pymodbus==3.12.1 \
     requests==2.32.5 \
-    ruamel.yaml==0.19.1 \
-    sigenergy2mqtt
+    ruamel.yaml==0.19.1
 
 COPY . /app/tests/utils
 RUN mkdir -p /app/tests && touch /app/tests/__init__.py
