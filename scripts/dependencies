@@ -5,10 +5,71 @@ cd "$(cd $(dirname $0)/..; pwd)"
 update_test_utils_dockerfile () {
   local pkg="$1"
   local pinned="$2"
+  local add_after="$3"
   local dockerfile="tests/utils/Dockerfile"
-  local pkg_regex="${pkg//./\\.}"
-  if [[ -f "$dockerfile" ]] && grep -Eq "^[[:space:]]+${pkg_regex}==" "$dockerfile"; then
-    sed -E -i "s|^([[:space:]]*)${pkg_regex}==[^[:space:]\\\\]+(.*)$|\\1${pinned}\\2|" "$dockerfile"
+  if [[ -f "$dockerfile" ]]; then
+    python - "$dockerfile" "$pkg" "$pinned" "$add_after" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+dockerfile = Path(sys.argv[1])
+pkg = sys.argv[2]
+pinned = sys.argv[3]
+add_after = sys.argv[4]
+
+lines = dockerfile.read_text().splitlines()
+
+run_start = next((i for i, line in enumerate(lines) if line.startswith("RUN pip install --no-cache-dir")), None)
+if run_start is None:
+    sys.exit(0)
+
+dep_pattern = re.compile(r"^(\s+)([A-Za-z0-9_.-]+)==([^\s\\]+)\s*(\\?)$")
+dep_indices: list[int] = []
+for idx in range(run_start + 1, len(lines)):
+    if dep_pattern.match(lines[idx]):
+        dep_indices.append(idx)
+    else:
+        break
+
+if not dep_indices:
+    sys.exit(0)
+
+pkg_index = None
+after_index = None
+for idx in dep_indices:
+    match = dep_pattern.match(lines[idx])
+    if match is None:
+        continue
+    dep_name = match.group(2)
+    if dep_name == pkg:
+        pkg_index = idx
+    if dep_name == add_after:
+        after_index = idx
+
+if pkg_index is not None:
+    match = dep_pattern.match(lines[pkg_index])
+    indent = match.group(1) if match else "    "
+    suffix = " \\" if lines[pkg_index].rstrip().endswith("\\") else ""
+    lines[pkg_index] = f"{indent}{pinned}{suffix}"
+else:
+    insert_at = dep_indices[0] if add_after == "dependencies" or after_index is None else after_index + 1
+    lines.insert(insert_at, f"    {pinned}")
+
+    # Refresh dependency indices after insertion for continuation normalization.
+    dep_indices = []
+    for idx in range(run_start + 1, len(lines)):
+        if dep_pattern.match(lines[idx]):
+            dep_indices.append(idx)
+        else:
+            break
+
+for idx in dep_indices[:-1]:
+    lines[idx] = lines[idx].rstrip().rstrip("\\").rstrip() + " \\"
+lines[dep_indices[-1]] = lines[dep_indices[-1]].rstrip().rstrip("\\").rstrip()
+
+dockerfile.write_text("\n".join(lines) + "\n")
+PY
   fi
 }
 
@@ -29,7 +90,7 @@ check_pkg () {
     else
       sed -e "/${add_after}/a\    \"${pinned}\"," -i pyproject.toml
     fi
-    update_test_utils_dockerfile "$pkg" "$pinned"
+    update_test_utils_dockerfile "$pkg" "$pinned" "$add_after"
   fi
 }
 
