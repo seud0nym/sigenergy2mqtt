@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN bash scripts/dependencies
+RUN bash scripts/dependencies --install-only --skip-build-deps
 
 EXPOSE 502
 
