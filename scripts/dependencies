@@ -2,68 +2,33 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
-update_test_utils_dockerfile () {
-  local pkg="$1"
-  local pinned="$2"
-  local add_after="$3"
+sync_test_utils_dockerfile () {
   local dockerfile="tests/utils/Dockerfile"
-  local pkg_regex="${pkg//./\\.}"
-  local add_after_regex="${add_after//./\\.}"
-  if [[ ! -f "$dockerfile" ]]; then
+  if [[ ! -f "$dockerfile" ]] || [[ ! -f pyproject.toml ]]; then
     return
   fi
 
-  if grep -Eq "^[[:space:]]+${pkg_regex}==" "$dockerfile"; then
-    sed -E -i "s|^([[:space:]]*)${pkg_regex}==[^[:space:]\\\\]+(.*)$|\\1${pinned}\\2|" "$dockerfile"
-  elif [[ "$add_after" == "dependencies" ]] || ! grep -Eq "^[[:space:]]+${add_after_regex}==" "$dockerfile"; then
-    sed -i "/^RUN pip install --no-cache-dir/a\\
-    ${pinned}" "$dockerfile"
-  else
-    sed -i "/^[[:space:]]*${add_after_regex}==/a\\
-    ${pinned}" "$dockerfile"
+  mapfile -t deps < <(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs -n1)
+  if [[ ${#deps[@]} -eq 0 ]]; then
+    return
   fi
 
-  normalize_test_utils_dockerfile_dependencies
-}
+  local run_block="RUN pip install --no-cache-dir"
+  for i in "${!deps[@]}"; do
+    if [[ $i -lt $((${#deps[@]} - 1)) ]]; then
+      run_block+=$'\n'"    ${deps[$i]} \\"
+    else
+      run_block+=$'\n'"    ${deps[$i]}"
+    fi
+  done
 
-normalize_test_utils_dockerfile_dependencies () {
-  local dockerfile="tests/utils/Dockerfile"
-  awk '
-    /^RUN pip install --no-cache-dir/ {
-      print
-      in_deps = 1
-      dep_count = 0
-      next
-    }
-    in_deps && /^[[:space:]]+[A-Za-z0-9_.-]+==/ {
-      deps[++dep_count] = $0
-      next
-    }
-    in_deps {
-      for (i = 1; i <= dep_count; i++) {
-        line = deps[i]
-        sub(/[[:space:]]*\\[[:space:]]*$/, "", line)
-        if (i < dep_count) {
-          print line " \\"
-        } else {
-          print line
-        }
-      }
-      in_deps = 0
-      dep_count = 0
-    }
+  awk -v block="$run_block" '
+    /^RUN pip install --no-cache-dir/ { print block; in_deps = 1; replaced = 1; next }
+    in_deps && /^[[:space:]]+[A-Za-z0-9_.-]+==/ { next }
+    in_deps && /^$/ { print; in_deps = 0; next }
     { print }
+    END { if (!replaced) print block }
   ' "$dockerfile" > "${dockerfile}.tmp" && mv "${dockerfile}.tmp" "$dockerfile"
-}
-
-remove_from_test_utils_dockerfile () {
-  local pkg="$1"
-  local dockerfile="tests/utils/Dockerfile"
-  local pkg_regex="${pkg//./\\.}"
-  if [[ -f "$dockerfile" ]]; then
-    sed -E -i "/^[[:space:]]+${pkg_regex}==/d" "$dockerfile"
-    normalize_test_utils_dockerfile_dependencies
-  fi
 }
 
 check_pkg () {
@@ -83,7 +48,6 @@ check_pkg () {
     else
       sed -e "/${add_after}/a\    \"${pinned}\"," -i pyproject.toml
     fi
-    update_test_utils_dockerfile "$pkg" "$pinned" "$add_after"
   fi
 }
 
@@ -115,5 +79,7 @@ for spec in \
 done
 for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
   pkg="${spec%%[=(]*}"
-  echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; remove_from_test_utils_dockerfile "$pkg"; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
+  echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
 done
+
+sync_test_utils_dockerfile
