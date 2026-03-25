@@ -44,7 +44,6 @@ from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.constants import ExcCodes
 from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
 from pymodbus.server import StartAsyncTcpServer
-from ruamel.yaml import YAML
 
 from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -798,51 +797,92 @@ def on_message(client: mqtt.Client, userdata: CustomMqttHandler, message) -> Non
 async def async_helper() -> None:
     """Entry point for running the server from the command line.
 
-    Loads ``.debug_modbus_server.yaml`` from the current working directory if
-    present and uses it to configure an MQTT client and a live Modbus client
-    for register pre-population.  Falls back to a fully synthetic server
-    (no MQTT, no live Modbus source) if the file is absent.
+    Reads configuration from environment variables and uses it to optionally
+    configure an MQTT client and a live Modbus client for register
+    pre-population. Falls back to a fully synthetic server (no MQTT, no live
+    Modbus source) when no data-source values are provided.
 
     The MQTT client is always cleanly shut down in a ``finally`` block,
     regardless of how the server exits.
     """
-    # Initialise all variables before the try block so that they are always
-    # bound, even when the config file is absent or raises an error.
-    try:
-        _yaml = YAML(typ="safe", pure=True)
-        with open(".debug_modbus_server.yaml", "r") as f:
-            config: dict = _yaml.load(f)
-            mqtt_log_level = logging.getLevelNamesMapping()[config.get("mqtt", {}).get("log-level", "INFO")]
+    def _env(name: str) -> str | None:
+        value = os.getenv(name)
+        return value.strip() if value else None
 
-            mqtt_client = mqtt.Client(
-                CallbackAPIVersion.VERSION2,
-                client_id=f"sigenergy2mqtt_modbus_test_server_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}",
-                userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level),
-            )
-            mqtt_client.username_pw_set(config.get("mqtt", {}).get("username", None), config.get("mqtt", {}).get("password", None))
-            mqtt_broker = config.get("mqtt", {}).get("broker", "localhost")
-            mqtt_port = config.get("mqtt", {}).get("port", 1883)
-            mqtt_client.connect(mqtt_broker, mqtt_port, 60)
-            _logger.info(f"Connected to MQTT broker mqtt://{mqtt_broker}:{mqtt_port} as data source")
-            mqtt_client.on_disconnect = on_disconnect
-            mqtt_client.on_connect = on_connect
-            mqtt_client.on_message = on_message
-            mqtt_client.loop_start()
+    def _env_bool(name: str, default: bool) -> bool:
+        value = _env(name)
+        if value is None:
+            return default
+        return value.lower() in ("1", "true", "yes", "on")
 
-            modbus_host = config.get("modbus")[0].get("host")
-            modbus_client = ModbusClient(modbus_host, port=config.get("modbus")[0].get("port", 502), timeout=1, retries=0) if modbus_host else None
+    def _env_int(name: str, default: int) -> int:
+        value = _env(name)
+        if value is None:
+            return default
+        return int(value)
 
-            TestConfig.log_level = logging.getLevelNamesMapping()[config.get("modbus")[0].get("log-level", "INFO")]
-            TestConfig.initial_firmware = config.get("modbus")[0].get("initial-firmware", "V100R001C00SPC112B107G")
-            TestConfig.upgrade_firmware = config.get("modbus")[0].get("upgrade-firmware", "V100R001C00SPC113")
-            TestConfig.protocol_version = config.get("protocol-version", None)
-            TestConfig.registers_to_debug = config.get("registers-to-debug", [])
-            TestConfig.use_simplified_topics = config.get("home-assistant", {}).get("use-simplified-topics", True)
-            TestConfig.simulate_grid_outages = config.get("simulate-grid-outages", False)
-            TestConfig.simulate_firmware_upgrade = config.get("simulate-firmware-upgrade", False)
-            TestConfig.simulate_power_factor_errors = config.get("simulate-power-factor-errors", False)
-    except FileNotFoundError:
-        _logger.warning("No .debug_modbus_server.yaml file found, using default configuration...")
+    def _env_log_level(name: str, default: int) -> int:
+        value = _env(name)
+        if value is None:
+            return default
+        return logging.getLevelNamesMapping()[value.upper()]
+
+    def _env_protocol(name: str) -> Protocol | None:
+        value = _env(name)
+        if value is None:
+            return None
+        normalized = value.upper()
+        if not normalized.startswith("V"):
+            normalized = f"V{normalized.replace('.', '_')}"
+        return Protocol[normalized]
+
+    def _env_registers(name: str) -> list[int]:
+        value = _env(name)
+        if value is None:
+            return []
+        return [int(register.strip()) for register in value.split(",") if register.strip()]
+
+    mqtt_client = None
+    modbus_client = None
+
+    mqtt_broker = _env("MODBUS_TEST_SERVER_MQTT_BROKER")
+    if mqtt_broker:
+        mqtt_port = _env_int("MODBUS_TEST_SERVER_MQTT_PORT", 1883)
+        mqtt_username = _env("MODBUS_TEST_SERVER_MQTT_USERNAME")
+        mqtt_password = _env("MODBUS_TEST_SERVER_MQTT_PASSWORD")
+        mqtt_log_level = _env_log_level("MODBUS_TEST_SERVER_MQTT_LOG_LEVEL", logging.INFO)
+
+        mqtt_client = mqtt.Client(
+            CallbackAPIVersion.VERSION2,
+            client_id=f"sigenergy2mqtt_modbus_test_server_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}",
+            userdata=CustomMqttHandler(asyncio.get_running_loop(), log_level=mqtt_log_level),
+        )
+        mqtt_client.username_pw_set(mqtt_username, mqtt_password)
+        mqtt_client.connect(mqtt_broker, mqtt_port, 60)
+        _logger.info(f"Connected to MQTT broker mqtt://{mqtt_broker}:{mqtt_port} as data source")
+        mqtt_client.on_disconnect = on_disconnect
+        mqtt_client.on_connect = on_connect
+        mqtt_client.on_message = on_message
+        mqtt_client.loop_start()
+
+    modbus_host = _env("MODBUS_TEST_SERVER_MODBUS_HOST")
+    if modbus_host:
+        modbus_port = _env_int("MODBUS_TEST_SERVER_MODBUS_PORT", 502)
+        modbus_client = ModbusClient(modbus_host, port=modbus_port, timeout=1, retries=0)
+        _logger.info(f"Using Modbus source modbus://{modbus_host}:{modbus_port}")
+
+    TestConfig.log_level = _env_log_level("MODBUS_TEST_SERVER_LOG_LEVEL", logging.INFO)
+    TestConfig.initial_firmware = _env("MODBUS_TEST_SERVER_INITIAL_FIRMWARE") or "V100R001C00SPC112B107G"
+    TestConfig.upgrade_firmware = _env("MODBUS_TEST_SERVER_UPGRADE_FIRMWARE") or "V100R001C00SPC113"
+    TestConfig.protocol_version = _env_protocol("MODBUS_TEST_SERVER_PROTOCOL_VERSION")
+    TestConfig.registers_to_debug = _env_registers("MODBUS_TEST_SERVER_REGISTERS_TO_DEBUG")
+    TestConfig.use_simplified_topics = _env_bool("MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS", True)
+    TestConfig.simulate_grid_outages = _env_bool("MODBUS_TEST_SERVER_SIMULATE_GRID_OUTAGES", False)
+    TestConfig.simulate_firmware_upgrade = _env_bool("MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE", False)
+    TestConfig.simulate_power_factor_errors = _env_bool("MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS", False)
+
+    server_host = _env("MODBUS_TEST_SERVER_HOST") or "0.0.0.0"
+    server_port = _env_int("MODBUS_TEST_SERVER_PORT", 502)
 
     try:
         await run_async_server(
@@ -851,6 +891,8 @@ async def async_helper() -> None:
             use_simplified_topics=TestConfig.use_simplified_topics,
             protocol_version=TestConfig.protocol_version,
             log_level=TestConfig.log_level,
+            host=server_host,
+            port=server_port,
         )
     finally:
         if mqtt_client is not None:
