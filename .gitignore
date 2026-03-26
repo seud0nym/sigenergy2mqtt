@@ -1,6 +1,6 @@
 # Project
 .*.yaml
-.debug.*
+.debug*
 data/
 resources/modbusregisterdefinitions.py
 

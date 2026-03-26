@@ -37,12 +37,13 @@ check_pkg () {
   local spec="$1"
   local add_after="$2"
   local pkg="${spec%%[=(]*}"
-  echo ">>> Checking $pkg..."
 
   if [[ "$install_only" -eq 1 ]]; then
-    pip install "$spec" --root-user-action=ignore --quiet
+    pip install "$spec" --root-user-action=ignore --no-cache-dir
     return
   fi
+
+  echo ">>> Checking $pkg..."
 
   if ! pip freeze | grep -q "^${pkg}=="; then
     pip install "$spec" --root-user-action=ignore

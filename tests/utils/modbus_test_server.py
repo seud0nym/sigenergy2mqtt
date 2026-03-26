@@ -28,6 +28,8 @@ import threading
 import time
 from typing import Any
 
+# Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
+os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 # sys.path manipulation must precede all project-relative imports so that
 # running the file directly (python modbus_test_server.py) resolves them correctly.
 if __name__ == "__main__":
@@ -214,8 +216,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
         # of the server so that MQTT updates from the real data source never
         # overwrite a value that was explicitly set through the test interface.
         self._written_addresses: set[int] = set()
-        if mqtt_client:
-            self._mqtt_client = mqtt_client
+        self._mqtt_client = mqtt_client
         self._total_sleep_time: int = 0
         self._read_count: int = 0
 
@@ -239,8 +240,6 @@ class CustomDataBlock(ModbusSparseDataBlock):
             debug: When ``True``, emit a debug log entry even if the sensor's
                 own ``debug_logging`` flag is not set.
         """
-        if debug or sensor.debug_logging:
-            _logger.debug(f"_set_value({sensor['name']}, {value}) [address={sensor.address} device_address={self.device_address} {source=}]")
         address = sensor.address
         if address in self._written_addresses:  # Ignore MQTT messages from the real data source for addresses that were just written to, so that we can test reading back what we wrote
             return
@@ -253,6 +252,8 @@ class CustomDataBlock(ModbusSparseDataBlock):
         else:
             raw = sensor.state2raw(value)
             registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
+        if debug or sensor.debug_logging:
+            _logger.debug(f"_set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} device_address={self.device_address} {source=}]")
         super().setValues(address, registers)
         if address == PhaseVoltage.PHASE_A_ADDRESS:  # Use the Phase A Voltage for all three phases, because the real data source does not provide separate values for the three phases
             super().setValues(PhaseVoltage.PHASE_B_ADDRESS, registers)
@@ -260,6 +261,12 @@ class CustomDataBlock(ModbusSparseDataBlock):
         elif address == PhaseCurrent.PHASE_A_ADDRESS:  # Use the Phase A Current for all three phases, because the real data source does not provide separate values for the three phases
             super().setValues(PhaseCurrent.PHASE_B_ADDRESS, registers)
             super().setValues(PhaseCurrent.PHASE_C_ADDRESS, registers)
+        if address == 31027:  # Use the PV String 1 Voltage register for all 36 PV strings, because the real data source only has one string
+            for n in range(0, 36):
+                super().setValues(31027 + (n * 2), registers)
+        if address == 31028:  # Use the PV String 1 Current register for all 36 PV strings, because the real data source only has one string
+            for n in range(0, 36):
+                super().setValues(31028 + (n * 2), registers)
 
     def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
         """Update the register for *topic*'s sensor from an incoming MQTT message.
@@ -681,7 +688,13 @@ async def run_async_server(
                 context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client)
             context[sensor.device_address].add_sensor(sensor)
 
-    _logger.info("Starting ASYNC Modbus TCP Testing Server...")
+    try:
+        with open("/app/build_date.txt", "r") as f:
+            BUILD_DATE = f.read().strip()
+    except FileNotFoundError:
+        BUILD_DATE = datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
+
+    _logger.info(f"Starting ASYNC Modbus TCP Testing Server (build date: {BUILD_DATE})...")
     if log_level <= logging.INFO:
         logging.getLogger("pymodbus").setLevel(logging.INFO)
     try:
@@ -805,6 +818,7 @@ async def async_helper() -> None:
     The MQTT client is always cleanly shut down in a ``finally`` block,
     regardless of how the server exits.
     """
+
     def _env(name: str) -> str | None:
         value = os.getenv(name)
         return value.strip() if value else None
@@ -840,7 +854,7 @@ async def async_helper() -> None:
         value = _env(name)
         if value is None:
             return []
-        return [int(register.strip()) for register in value.split(",") if register.strip()]
+        return [int(r) for segment in value.split(",") if segment.strip() for r in (range(int(segment.split("-")[0]), int(segment.split("-")[1]) + 1) if "-" in segment.strip() else [segment.strip()])]
 
     mqtt_client = None
     modbus_client = None
