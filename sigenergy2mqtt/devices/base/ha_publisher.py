@@ -34,7 +34,6 @@ class HaPublisherMixin(abc.ABC):
 
     # Plain attributes provided by the concrete class.
     name: str
-    log_identity: str
     children: list["Device"]
     _shutdown_event: asyncio.Event
 
@@ -58,6 +57,12 @@ class HaPublisherMixin(abc.ABC):
     @abc.abstractmethod
     def unique_id(self) -> str:
         """The primary unique identifier for this device."""
+        ...
+
+    @property
+    @abc.abstractmethod
+    def log_identity(self) -> str:
+        """Stable identity used as log prefix."""
         ...
 
     @abc.abstractmethod
