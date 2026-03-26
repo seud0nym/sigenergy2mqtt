@@ -6,6 +6,7 @@
 
 - Dockerfile updated to use Python 3.14.3-slim and no-cache pip install
 - Docker build test added to build script
+- Upgraded `requests` from 2.32.5 to 2.33.0
 
 ### Fixed
 
