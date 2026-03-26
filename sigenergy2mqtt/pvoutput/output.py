@@ -72,7 +72,7 @@ class PVOutputOutputService(Service):
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
             else:
-                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field}")
+                self.logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
 
     def _create_payload(self, now_struct: time.struct_time, interval: int) -> dict[str, float | int | str]:
         """Create a dated output payload from currently aggregated topic values.
@@ -129,7 +129,7 @@ class PVOutputOutputService(Service):
             payload: Payload that was uploaded.
             force: Whether to retry verification aggressively.
         """
-        self.logger.debug(f"{self.__class__.__name__} Verifying uploaded {payload=}")
+        self.logger.debug(f"{self.log_identity} Verifying uploaded {payload=}")
         url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if active_config.pvoutput.exports else ''}"
         verify_retries: int = 3 if force else 1
         initial_wait: float = 0.1 if not force or active_config.pvoutput.testing else 120.0
@@ -137,12 +137,12 @@ class PVOutputOutputService(Service):
         matches: bool = False
         for validate in range(1, verify_retries + 1, 1):
             wait: float = initial_wait if validate == 1 else subsequent_wait
-            self.logger.debug(f"{self.__class__.__name__} Waiting for {wait}s before checking that the upload has been processed successfully...")
+            self.logger.debug(f"{self.log_identity} Waiting for {wait}s before checking that the upload has been processed successfully...")
             await asyncio.sleep(wait)
             result = {}
             try:
                 if active_config.pvoutput.testing:
-                    self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
+                    self.logger.debug(f"{self.log_identity} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
                     if validate > 1:
                         v = re.split(
                             r"[,]",
@@ -150,15 +150,15 @@ class PVOutputOutputService(Service):
                         )
                         matches = True
                     else:
-                        self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} simulation FAILED")
+                        self.logger.debug(f"{self.log_identity} Verification attempt #{validate} simulation FAILED")
                         matches = False
                 else:
-                    self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} to {url=}...")
+                    self.logger.debug(f"{self.log_identity} Verification attempt #{validate} to {url=}...")
                     response = await asyncio.to_thread(requests.get, url, headers=self.request_headers, timeout=10)
                     limit, remaining, at, reset = self.get_response_headers(response)
                     if response.status_code == 200:
                         self.logger.debug(
-                            f"{self.__class__.__name__} Verification attempt #{validate} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s) response={response.text}"
+                            f"{self.log_identity} Verification attempt #{validate} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s) response={response.text}"
                         )
                         v = re.split(r"[,]", response.text)
                         result["d"] = v[0]
@@ -174,36 +174,36 @@ class PVOutputOutputService(Service):
                         result["eh"] = int(v[17]) if active_config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
                         matches = True
                     else:
-                        self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
+                        self.logger.debug(f"{self.log_identity} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
                         matches = False
                 if matches:
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                         key = topic._value_key.value
                         if key in payload and key in result:
                             if payload[key] != result[key]:
-                                self.logger.debug(f"{self.__class__.__name__} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
+                                self.logger.debug(f"{self.log_identity} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
                                 matches = False
                 if matches:
                     try:
-                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore
+                        self.logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore
                     except NameError:
-                        self.logger.info(f"{self.__class__.__name__} Verification SUCCESS {payload=} downloaded={result}")
+                        self.logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result}")
                     break
                 elif validate < verify_retries:
-                    self.logger.debug(f"{self.__class__.__name__} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
+                    self.logger.debug(f"{self.log_identity} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
                 else:
                     try:
-                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # type: ignore # pyrefly: ignore
+                        self.logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # type: ignore # pyrefly: ignore
                     except NameError:
-                        self.logger.error(f"{self.__class__.__name__} Verification FAILED after {validate} attempts for uploaded {payload=}")
+                        self.logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=}")
             except requests.exceptions.HTTPError as exc:
-                self.logger.error(f"{self.__class__.__name__} HTTP Error: {exc}")
+                self.logger.error(f"{self.log_identity} HTTP Error: {exc}")
             except requests.exceptions.ConnectionError as exc:
-                self.logger.error(f"{self.__class__.__name__} Error Connecting: {exc}")
+                self.logger.error(f"{self.log_identity} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
-                self.logger.error(f"{self.__class__.__name__} Timeout Error: {exc}")
+                self.logger.error(f"{self.log_identity} Timeout Error: {exc}")
             except Exception as exc:
-                self.logger.error(f"{self.__class__.__name__} {exc}")
+                self.logger.error(f"{self.log_identity} {exc}")
         return matches
 
     async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
@@ -224,7 +224,7 @@ class PVOutputOutputService(Service):
                 uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             else:
                 uploaded = False
-                self.logger.info(f"{self.__class__.__name__} Skipped uploading unchanged {payload=}")
+                self.logger.info(f"{self.log_identity} Skipped uploading unchanged {payload=}")
             if last_upload_of_day:
                 matches = await self._verify(payload, force=last_upload_of_day)
                 if matches:
@@ -235,7 +235,7 @@ class PVOutputOutputService(Service):
                         break
             elif uploaded:
                 break
-        self.logger.debug(f"{self.__class__.__name__} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
+        self.logger.debug(f"{self.log_identity} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
         if changed and active_config.pvoutput.output_hour == -1:
             self._previous_payload = payload
 
@@ -250,7 +250,7 @@ class PVOutputOutputService(Service):
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
             last: float | None = None
-            self.logger.info(f"{self.__class__.__name__} Commenced (Updating at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))})")
+            self.logger.info(f"{self.log_identity} Commenced (Updating at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))})")
             while self.online:
                 try:
                     now_struct: time.struct_time = time.localtime()
@@ -262,18 +262,18 @@ class PVOutputOutputService(Service):
                         last_update_of_day: bool = time.localtime(tomorrow).tm_yday != now_struct.tm_yday  # Bypass verification except on last upload of the day
                         await self._upload(payload, last_update_of_day)
                         next = tomorrow
-                        self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({next - now:.2f}s)")
+                        self.logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({next - now:.2f}s)")
                     elif int(now) % (30 if active_config.pvoutput.testing else 900) == 0:
                         for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.PEAK_POWER]:
                             topic.check_is_updating(5, now_struct)
                         total, at, _ = self._service_topics[OutputField.PEAK_POWER].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
-                            self.logger.info(f"{self.__class__.__name__} Peak Power {total:.0f}W recorded at {at}")
+                            self.logger.info(f"{self.log_identity} Peak Power {total:.0f}W recorded at {at}")
                     if last:
                         was = time.localtime(last)
                         if was.tm_yday != now_struct.tm_yday:
-                            self.logger.info(f"{self.__class__.__name__} Resetting service topic states to 0.0 because the day has changed ({was.tm_yday} -> {now_struct.tm_yday})")
+                            self.logger.info(f"{self.log_identity} Resetting service topic states to 0.0 because the day has changed ({was.tm_yday} -> {now_struct.tm_yday})")
                             self._previous_payload = None
                             async with self.lock(timeout=5):
                                 for topic in self._service_topics.values():
@@ -288,13 +288,13 @@ class PVOutputOutputService(Service):
                         finally:
                             self.sleeper_task = None
                 except asyncio.CancelledError:
-                    self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
+                    self.logger.info(f"{self.log_identity} Sleep interrupted")
                 except asyncio.TimeoutError:
-                    self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
+                    self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
                 except Exception as e:
-                    self.logger.error(f"{self.__class__.__name__}  Sleeping for 60s after exception: {e}")
+                    self.logger.error(f"{self.log_identity}  Sleeping for 60s after exception: {e}")
                     await asyncio.sleep(60)
-            self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
+            self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
             return
 
         tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]

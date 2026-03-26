@@ -65,7 +65,7 @@ class HassHistorySync(InfluxBase):
                     headers = {"Authorization": f"Token {config['token']}"}
                     url = f"{config['base']}/api/v2/buckets"
                     r = await asyncio.to_thread(self._session.get, url, headers=headers, timeout=5)
-                    self.logger.debug(f"{self.name} v2 bucket probe status={r.status_code} url={url}")
+                    self.logger.debug(f"{self.log_identity} v2 bucket probe status={r.status_code} url={url}")
                     if r.status_code == 200:
                         buckets = r.json()
                         self.logger.debug(
@@ -74,45 +74,45 @@ class HassHistorySync(InfluxBase):
                         if isinstance(buckets, dict) and "buckets" in buckets:
                             for bucket in buckets["buckets"]:
                                 if bucket.get("name") == "homeassistant":
-                                    self.logger.info(f"{self.name} Found 'homeassistant' bucket in InfluxDB v2")
+                                    self.logger.info(f"{self.log_identity} Found 'homeassistant' bucket in InfluxDB v2")
                                     return True
                 except Exception as e:
-                    self.logger.debug(f"{self.name} v2 bucket detection failed: {e}")
+                    self.logger.debug(f"{self.log_identity} v2 bucket detection failed: {e}")
 
             # Try v1 API.  Prefer generic /query call (without db=...) for
             # SHOW DATABASES because requiring a specific database parameter can
             # fail on startup when that target DB has not been created yet.
             async def check_v1_databases(db_name: str | None) -> bool:
                 if db_name:
-                    self.logger.debug(f"{self.name} v1 SHOW DATABASES via query_v1 db={db_name}")
+                    self.logger.debug(f"{self.log_identity} v1 SHOW DATABASES via query_v1 db={db_name}")
                     success, result = await self.query_v1(config["base"], db_name, config["auth"], "SHOW DATABASES", timeout=5)
                 else:
                     url = f"{config['base']}/query"
                     params = {"q": "SHOW DATABASES"}
                     r = await asyncio.to_thread(self._session.get, url, params=params, auth=config["auth"], timeout=5)
-                    self.logger.debug(f"{self.name} v1 SHOW DATABASES generic probe status={r.status_code} url={url} params={params}")
+                    self.logger.debug(f"{self.log_identity} v1 SHOW DATABASES generic probe status={r.status_code} url={url} params={params}")
                     success = r.status_code == 200
                     result = r.json() if success else None
                     if not success:
-                        self.logger.debug(f"{self.name} v1 generic SHOW DATABASES non-200 body={r.text[:300]}")
+                        self.logger.debug(f"{self.log_identity} v1 generic SHOW DATABASES non-200 body={r.text[:300]}")
 
                 if not success or not result:
-                    self.logger.debug(f"{self.name} v1 SHOW DATABASES probe returned success={success} has_result={bool(result)} db_name={db_name}")
+                    self.logger.debug(f"{self.log_identity} v1 SHOW DATABASES probe returned success={success} has_result={bool(result)} db_name={db_name}")
                     return False
 
                 if "results" not in result or not result["results"]:
-                    self.logger.debug(f"{self.name} v1 SHOW DATABASES payload missing results db_name={db_name} payload={str(result)[:300]}")
+                    self.logger.debug(f"{self.log_identity} v1 SHOW DATABASES payload missing results db_name={db_name} payload={str(result)[:300]}")
                     return False
 
                 series = result["results"][0].get("series", [])
                 if not series or "values" not in series[0]:
-                    self.logger.debug(f"{self.name} v1 SHOW DATABASES payload missing series/values db_name={db_name} payload={str(result)[:300]}")
+                    self.logger.debug(f"{self.log_identity} v1 SHOW DATABASES payload missing series/values db_name={db_name} payload={str(result)[:300]}")
                     return False
 
                 databases = [row[0] for row in series[0]["values"]]
-                self.logger.debug(f"{self.name} v1 SHOW DATABASES db_name={db_name} databases={databases}")
+                self.logger.debug(f"{self.log_identity} v1 SHOW DATABASES db_name={db_name} databases={databases}")
                 if "homeassistant" in databases:
-                    self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1")
+                    self.logger.info(f"{self.log_identity} Found 'homeassistant' database in InfluxDB v1")
                     return True
 
                 return False
@@ -124,7 +124,7 @@ class HassHistorySync(InfluxBase):
                 specific databases but cannot execute SHOW DATABASES. In that
                 case, a direct query against the target DB is a better signal.
                 """
-                self.logger.debug(f"{self.name} v1 direct probe db=homeassistant query=SHOW MEASUREMENTS LIMIT 1")
+                self.logger.debug(f"{self.log_identity} v1 direct probe db=homeassistant query=SHOW MEASUREMENTS LIMIT 1")
                 success, result = await self.query_v1(config["base"], "homeassistant", config["auth"], "SHOW MEASUREMENTS LIMIT 1", timeout=5)
                 if not success or not isinstance(result, dict):
                     self.logger.debug(
@@ -133,7 +133,7 @@ class HassHistorySync(InfluxBase):
                     return False
                 query_results = result.get("results")
                 if not isinstance(query_results, list) or not query_results:
-                    self.logger.debug(f"{self.name} v1 direct probe payload missing results payload={str(result)[:300]}")
+                    self.logger.debug(f"{self.log_identity} v1 direct probe payload missing results payload={str(result)[:300]}")
                     return False
 
                 first_result = query_results[0]
@@ -144,7 +144,7 @@ class HassHistorySync(InfluxBase):
                     error_text = str(first_result["error"]).lower()
                     if "database not found" in error_text:
                         return False
-                    self.logger.debug(f"{self.name} homeassistant v1 probe returned error but DB appears reachable: {first_result['error']}")
+                    self.logger.debug(f"{self.log_identity} homeassistant v1 probe returned error but DB appears reachable: {first_result['error']}")
 
                 # Accept as positive when response shape matches SHOW
                 # MEASUREMENTS output (series named "measurements") or when
@@ -152,7 +152,7 @@ class HassHistorySync(InfluxBase):
                 if isinstance(first_result, dict) and "series" in first_result:
                     series = first_result.get("series")
                     if not isinstance(series, list) or not series:
-                        self.logger.debug(f"{self.name} v1 direct probe series is empty payload={str(first_result)[:300]}")
+                        self.logger.debug(f"{self.log_identity} v1 direct probe series is empty payload={str(first_result)[:300]}")
                         return False
                     first_series = series[0] if isinstance(series[0], dict) else {}
                     series_name = first_series.get("name")
@@ -164,10 +164,10 @@ class HassHistorySync(InfluxBase):
                 elif isinstance(first_result, dict) and "statement_id" in first_result:
                     pass
                 else:
-                    self.logger.debug(f"{self.name} v1 direct probe unrecognised payload={str(first_result)[:300]}")
+                    self.logger.debug(f"{self.log_identity} v1 direct probe unrecognised payload={str(first_result)[:300]}")
                     return False
 
-                self.logger.info(f"{self.name} Found 'homeassistant' database in InfluxDB v1 (direct probe)")
+                self.logger.info(f"{self.log_identity} Found 'homeassistant' database in InfluxDB v1 (direct probe)")
                 return True
 
             if await check_v1_databases(None):
@@ -179,12 +179,12 @@ class HassHistorySync(InfluxBase):
             if await probe_homeassistant_v1():
                 return True
 
-            self.logger.info(f"{self.name} 'homeassistant' database/bucket not found")
-            self.logger.debug(f"{self.name} detect_homeassistant_db exhausted all probes")
+            self.logger.info(f"{self.log_identity} 'homeassistant' database/bucket not found")
+            self.logger.debug(f"{self.log_identity} detect_homeassistant_db exhausted all probes")
             return False
 
         except Exception as e:
-            self.logger.error(f"{self.name} Error detecting homeassistant database: {e}")
+            self.logger.error(f"{self.log_identity} Error detecting homeassistant database: {e}")
             return False
 
     # ------------------------------------------------------------------
@@ -230,7 +230,7 @@ class HassHistorySync(InfluxBase):
                             time_str = parts[5].strip()
                             if time_str and time_str != "_time":
                                 timestamp = self.parse_timestamp(time_str)
-                                self.logger.debug(f"{self.name} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
+                                self.logger.debug(f"{self.log_identity} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
                                 return timestamp
                     return int(time.time())
 
@@ -245,13 +245,13 @@ class HassHistorySync(InfluxBase):
                     if series and "values" in series[0] and series[0]["values"]:
                         time_str = series[0]["values"][0][0]
                         timestamp = self.parse_timestamp(time_str)
-                        self.logger.debug(f"{self.name} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
+                        self.logger.debug(f"{self.log_identity} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
                         return timestamp
 
             return int(time.time())
 
         except Exception as e:
-            self.logger.error(f"{self.name} Error getting earliest timestamp: {e}")
+            self.logger.error(f"{self.log_identity} Error getting earliest timestamp: {e}")
             return int(time.time())
 
     # ------------------------------------------------------------------
@@ -350,7 +350,7 @@ class HassHistorySync(InfluxBase):
                 chunk_records += 1
 
             records_copied += chunk_records
-            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
+            self.logger.debug(f"{self.log_identity} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
 
             if earliest_timestamp is None or chunk_records < chunk_size:
                 break
@@ -439,7 +439,7 @@ class HassHistorySync(InfluxBase):
                 break
 
             records_copied += chunk_records
-            self.logger.debug(f"{self.name} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
+            self.logger.debug(f"{self.log_identity} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
 
             if last_timestamp is None or chunk_records < chunk_size:
                 break
@@ -479,18 +479,18 @@ class HassHistorySync(InfluxBase):
             if config["token"]:
                 records_copied = await self.copy_records_v2(config, measurement, tags, before_timestamp)
                 if records_copied > 0:
-                    self.logger.info(f"{self.name} Copied {records_copied} records from homeassistant (v2) for {measurement} with tags {tags}")
+                    self.logger.info(f"{self.log_identity} Copied {records_copied} records from homeassistant (v2) for {measurement} with tags {tags}")
                     return records_copied
 
             # Fall back to v1 API
             records_copied = await self.copy_records_v1(config, measurement, tags, before_timestamp)
             if records_copied > 0:
-                self.logger.info(f"{self.name} Copied {records_copied} records from homeassistant (v1) for {measurement} with tags {tags}")
+                self.logger.info(f"{self.log_identity} Copied {records_copied} records from homeassistant (v1) for {measurement} with tags {tags}")
 
             return records_copied
 
         except Exception as e:
-            self.logger.error(f"{self.name} Error copying records from homeassistant: {e}")
+            self.logger.error(f"{self.log_identity} Error copying records from homeassistant: {e}")
             return 0
 
     # ------------------------------------------------------------------
@@ -521,10 +521,10 @@ class HassHistorySync(InfluxBase):
         results: dict[str, int] = {}
 
         if not await self.detect_homeassistant_db():
-            self.logger.info(f"{self.name} No homeassistant database found, skipping sync")
+            self.logger.info(f"{self.log_identity} No homeassistant database found, skipping sync")
             return results
 
-        self.logger.info(f"{self.name} Starting parallel sync from homeassistant database")
+        self.logger.info(f"{self.log_identity} Starting parallel sync from homeassistant database")
 
         seen_combinations: set[tuple] = set()
         sync_tasks = []
@@ -537,11 +537,11 @@ class HassHistorySync(InfluxBase):
                     return measurement, tags, 0
                 try:
                     earliest_ts = await self.get_earliest_timestamp(measurement, tags)
-                    self.logger.info(f"{self.name} Starting sync for {tags.get('entity_id', 'unknown')} [{measurement}] (earliest existing: {earliest_ts})")
+                    self.logger.info(f"{self.log_identity} Starting sync for {tags.get('entity_id', 'unknown')} [{measurement}] (earliest existing: {earliest_ts})")
                     count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=earliest_ts)
                     return measurement, tags, count
                 except Exception as e:
-                    self.logger.error(f"{self.name} Error syncing {tags.get('entity_id', 'unknown')} [{measurement}]: {e}")
+                    self.logger.error(f"{self.log_identity} Error syncing {tags.get('entity_id', 'unknown')} [{measurement}]: {e}")
                     return measurement, tags, 0
 
         for sensor in topic_cache.values():
@@ -565,6 +565,6 @@ class HassHistorySync(InfluxBase):
             results[result_key] = count
 
         total_copied = sum(results.values())
-        self.logger.info(f"{self.name} Parallel sync complete: copied {total_copied} total records across {len(results)} entities")
+        self.logger.info(f"{self.log_identity} Parallel sync complete: copied {total_copied} total records across {len(results)} entities")
 
         return results

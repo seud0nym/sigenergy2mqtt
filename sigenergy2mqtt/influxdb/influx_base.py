@@ -145,7 +145,7 @@ class InfluxBase(Device):
                     )
                     return r2.status_code in (201, 200)
         except Exception as e:
-            self.logger.debug(f"{self.name} v2 bucket creation failed: {e}")
+            self.logger.debug(f"{self.log_identity} v2 bucket creation failed: {e}")
         return False
 
     def _try_v2_write(
@@ -184,7 +184,7 @@ class InfluxBase(Device):
                 self._writer_type = "v2_http"
                 self._write_url = url_v2
                 self._write_headers = headers or {}
-                self.logger.info(f"{self.name} Using v2 HTTP write endpoint to {url_v2}")
+                self.logger.info(f"{self.log_identity} Using v2 HTTP write endpoint to {url_v2}")
                 return True
 
             # If bucket not found and token provided, attempt to create it
@@ -195,10 +195,10 @@ class InfluxBase(Device):
                         self._writer_type = "v2_http"
                         self._write_url = url_v2
                         self._write_headers = headers or {}
-                        self.logger.info(f"{self.name} Created v2 bucket and will use v2 HTTP write to {url_v2}")
+                        self.logger.info(f"{self.log_identity} Created v2 bucket and will use v2 HTTP write to {url_v2}")
                         return True
         except Exception as e:
-            self.logger.debug(f"{self.name} v2 HTTP detection failed: {e}")
+            self.logger.debug(f"{self.log_identity} v2 HTTP detection failed: {e}")
 
         return False
 
@@ -219,7 +219,7 @@ class InfluxBase(Device):
             r2 = self._session.post(create_url, params=q, auth=auth, timeout=5)
             return r2.status_code == 200
         except Exception as e:
-            self.logger.debug(f"{self.name} v1 database creation failed: {e}")
+            self.logger.debug(f"{self.log_identity} v1 database creation failed: {e}")
         return False
 
     def _try_v1_write(
@@ -251,7 +251,7 @@ class InfluxBase(Device):
                 self._writer_type = "v1_http"
                 self._write_url = url_v1
                 self._write_auth = auth
-                self.logger.info(f"{self.name} Using v1 HTTP write endpoint to {url_v1}")
+                self.logger.info(f"{self.log_identity} Using v1 HTTP write endpoint to {url_v1}")
                 return True
 
             # Attempt to create database and retry
@@ -262,10 +262,10 @@ class InfluxBase(Device):
                         self._writer_type = "v1_http"
                         self._write_url = url_v1
                         self._write_auth = auth
-                        self.logger.info(f"{self.name} Created v1 database and will use v1 HTTP write to {url_v1}")
+                        self.logger.info(f"{self.log_identity} Created v1 database and will use v1 HTTP write to {url_v1}")
                         return True
         except Exception as e:
-            self.logger.debug(f"{self.name} v1 HTTP detection failed: {e}")
+            self.logger.debug(f"{self.log_identity} v1 HTTP detection failed: {e}")
 
         return False
 
@@ -320,7 +320,7 @@ class InfluxBase(Device):
                 await asyncio.to_thread(self._init_connection)
                 return True
             except Exception as e:
-                self.logger.error(f"{self.name} Initialization failed: {e}")
+                self.logger.error(f"{self.log_identity} Initialization failed: {e}")
                 return False
         return True
 
@@ -579,11 +579,11 @@ class InfluxBase(Device):
                     return await query_func()
                 except Exception as e:
                     if attempt == max_retries:
-                        self.logger.debug(f"{self.name} {operation_name} failed after {max_retries + 1} attempts: {e}")
+                        self.logger.debug(f"{self.log_identity} {operation_name} failed after {max_retries + 1} attempts: {e}")
                         await Metrics.influxdb_query_error()
                         return False, None
                     delay = base_delay * (2**attempt)
-                    self.logger.debug(f"{self.name} {operation_name} attempt {attempt + 1} failed, retrying in {delay}s: {e}")
+                    self.logger.debug(f"{self.log_identity} {operation_name} attempt {attempt + 1} failed, retrying in {delay}s: {e}")
                     await Metrics.influxdb_retry()
                     await asyncio.sleep(delay)
 

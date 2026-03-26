@@ -92,10 +92,10 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         try:
             return await self._perform_modbus_read(modbus_client)
         except asyncio.CancelledError:
-            logging.warning(f"{self.__class__.__name__} Modbus read interrupted")
+            logging.warning(f"{self.log_identity} Modbus read interrupted")
             return False
         except asyncio.TimeoutError:
-            logging.warning(f"{self.__class__.__name__} Modbus read failed to acquire lock within {self.scan_interval}s")
+            logging.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
             return False
         except Exception:
             # Record error in metrics
@@ -107,7 +107,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         actual_interval = None if len(self._states) == 0 else f"{round(time.time() - self._states[-1][0], 2)}s"
 
         logging.debug(
-            f"{self.__class__.__name__} read_{self.input_type}_registers("
+            f"{self.log_identity} read_{self.input_type}_registers("
             f"{self.address}, count={self.count}, device_id={self.device_address}) "
             f"plant_index={self.plant_index} interval={self.scan_interval}s "
             f"actual={actual_interval}"
@@ -165,7 +165,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         actual_interval = None if len(self._states) == 0 else f"{round(time.time() - self._states[-1][0], 2)}s"
 
         logging.debug(
-            f"{self.__class__.__name__} read_{self.input_type}_registers("
+            f"{self.log_identity} read_{self.input_type}_registers("
             f"{self.address}, count={self.count}, device_id={self.device_address}) "
             f"plant_index={self.plant_index} interval={self.scan_interval}s "
             f"actual={actual_interval} elapsed={(elapsed / 1000):.2f}ms result={result}"

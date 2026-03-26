@@ -1415,6 +1415,8 @@ class LineVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
             phase=phase,
         )
+        self.phase = phase
+        self.refresh_log_identity()
 
 
 class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1453,6 +1455,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             phase=phase,  # Used for i18n processing
         )
         self.phase = phase
+        self.refresh_log_identity()
 
 
 class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1490,6 +1493,8 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
             phase=phase,
         )
+        self.phase = phase
+        self.refresh_log_identity()
 
 
 class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1533,10 +1538,10 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                     active_power_time = cast(float, self._active_power.latest_time)  # pyrefly: ignore
                     reactive_power_time = cast(float, self._reactive_power.latest_time)  # pyrefly: ignore
                     logging.debug(
-                        f"{self.__class__.__name__} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
+                        f"{self.log_identity} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
                     )
                 logging.info(
-                    f"{self.__class__.__name__} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
+                    f"{self.log_identity} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
                 )
                 super().set_state(power_factor)
             else:
@@ -1646,6 +1651,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=protocol_version,
         )
         self.string_number = string_number
+        self.refresh_log_identity()
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1672,6 +1678,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=protocol_version,
         )
         self.string_number = string_number
+        self.refresh_log_identity()
 
 
 class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):

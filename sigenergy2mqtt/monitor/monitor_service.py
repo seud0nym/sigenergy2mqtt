@@ -44,13 +44,13 @@ class MonitorService(Device):
             *sensors: Unused; optional positional values from the scheduler.
         """
 
-        logging.info(f"{self.name} Sleeping for 30s before commencing...")
+        logging.info(f"{self.log_identity} Sleeping for 30s before commencing...")
         try:
             task = asyncio.create_task(asyncio.sleep(30))
             self.sleeper_task = task
             await task
         except asyncio.CancelledError:
-            logging.debug(f"{self.name} sleep interrupted")
+            logging.debug(f"{self.log_identity} sleep interrupted")
             return
         finally:
             self.sleeper_task = None
@@ -61,13 +61,13 @@ class MonitorService(Device):
             if any(overdue):
                 for topic, sensor in overdue.items():
                     sensor.notified = True
-                    logging.warning(f"{self.name} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
+                    logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
             try:
                 task = asyncio.create_task(asyncio.sleep(1))
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
-                logging.debug(f"{self.name} sleep interrupted")
+                logging.debug(f"{self.log_identity} sleep interrupted")
                 break
             finally:
                 self.sleeper_task = None
@@ -105,13 +105,13 @@ class MonitorService(Device):
         if source in self._topics:
             sensor = self._topics[source]
             if sensor.notified:
-                logging.info(f"{self.name} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
+                logging.info(f"{self.log_identity} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
             async with self._lock:
                 sensor.last_seen = time.time()
                 sensor.notified = False
             return True
         else:
-            logging.warning(f"{self.name} updated from  topic {source}, but topic is not registered !!!")
+            logging.warning(f"{self.log_identity} updated from  topic {source}, but topic is not registered !!!")
         return False
 
     def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
@@ -122,7 +122,7 @@ class MonitorService(Device):
             mqtt_client: MQTT client instance.
         """
 
-        logging.info(f"{self.name} Service Commenced")
+        logging.info(f"{self.log_identity} Service Commenced")
 
     def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has stopped.
@@ -132,7 +132,7 @@ class MonitorService(Device):
             mqtt_client: MQTT client instance.
         """
 
-        logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
+        logging.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
         """No-op availability publisher for the monitor service.
@@ -171,7 +171,7 @@ class MonitorService(Device):
         """
 
         if active_config.repeated_state_publish_interval < 0:
-            logging.info(f"{self.name} Monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
+            logging.info(f"{self.log_identity} Monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
             return []
 
         return [self._monitor(modbus_client, mqtt_client, [])]
@@ -185,7 +185,7 @@ class MonitorService(Device):
         """
 
         if active_config.repeated_state_publish_interval < 0:
-            logging.info(f"{self.name} Monitoring subscriptions disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
+            logging.info(f"{self.log_identity} Monitoring subscriptions disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
             return
 
         for d in self._devices:
@@ -196,11 +196,11 @@ class MonitorService(Device):
                 scan_interval = s.scan_interval
                 topic = s.state_topic
                 if topic in self._topics:
-                    logging.error(f"{self.name} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
+                    logging.error(f"{self.log_identity} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
                 else:
                     self._topics[topic] = MonitoredSensor(device, sensor, scan_interval)
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:
-                logging.info(f"{self.name} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for '{d.name}'")
-        logging.info(f"{self.name} Monitoring {len(self._topics)} topics")
+                logging.info(f"{self.log_identity} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for '{d.name}'")
+        logging.info(f"{self.log_identity} Monitoring {len(self._topics)} topics")

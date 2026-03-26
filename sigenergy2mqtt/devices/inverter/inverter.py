@@ -155,7 +155,7 @@ class Inverter(ModbusDevice):
                 )
             )
         else:
-            logging.debug(f"{self.__class__.__name__} Skipped creating ESS device: {battery_count=}")
+            logging.debug(f"{self.log_identity} Skipped creating ESS device: {battery_count=}")
 
     async def _register_sensors(
         self,

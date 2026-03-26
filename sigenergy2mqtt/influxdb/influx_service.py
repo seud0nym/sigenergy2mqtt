@@ -79,10 +79,10 @@ class InfluxService(InfluxBase):
                 for interface compatibility).
             mqtt_client: Active MQTT client used for unsubscription on shutdown.
         """
-        self.logger.info(f"{self.name} Commenced")
+        self.logger.info(f"{self.log_identity} Commenced")
 
         if not await self.async_init():
-            self.logger.error(f"{self.name} Initialisation failed — service will not write to InfluxDB")
+            self.logger.error(f"{self.log_identity} Initialisation failed — service will not write to InfluxDB")
             return
 
         sync_task: asyncio.Task | None = None
@@ -93,7 +93,7 @@ class InfluxService(InfluxBase):
                 self._history_sync.copy_connection_from(self)
                 sync_task = asyncio.create_task(self._history_sync.sync_from_homeassistant(self._topic_cache))
             else:
-                self.logger.info(f"{self.name} Loading history from Home Assistant is disabled")
+                self.logger.info(f"{self.log_identity} Loading history from Home Assistant is disabled")
 
         while self.online:
             try:
@@ -101,28 +101,28 @@ class InfluxService(InfluxBase):
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
-                self.logger.debug(f"{self.name} sleep interrupted")
+                self.logger.debug(f"{self.log_identity} sleep interrupted")
                 break
             finally:
                 self.sleeper_task = None
 
         for topic in self._topic_cache.keys():
             mqtt_client.unsubscribe(topic)
-        self.logger.info(f"{self.name} Unsubscribed from {len(self._topic_cache)} topics")
+        self.logger.info(f"{self.log_identity} Unsubscribed from {len(self._topic_cache)} topics")
         self._topic_cache.clear()
 
         if sync_task:
             if not sync_task.done():
-                self.logger.info(f"{self.name} Cancelling background sync task")
+                self.logger.info(f"{self.log_identity} Cancelling background sync task")
                 sync_task.cancel()
                 try:
                     await sync_task
                 except asyncio.CancelledError:
                     pass
             elif sync_task.exception():
-                self.logger.error(f"{self.name} Sync task failed: {sync_task.exception()}")
+                self.logger.error(f"{self.log_identity} Sync task failed: {sync_task.exception()}")
 
-        self.logger.info(f"{self.name} Completed: Flagged as offline ({self.online=})")
+        self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
     # ------------------------------------------------------------------
     # MQTT handling
@@ -157,7 +157,7 @@ class InfluxService(InfluxBase):
         try:
             sensor = self._topic_cache.get(topic)
             if not sensor:
-                self.logger.warning(f"{self.name} Received update for unknown topic '{topic}' (no cache entry)")
+                self.logger.warning(f"{self.log_identity} Received update for unknown topic '{topic}' (no cache entry)")
                 return False
 
             timestamp = int(time.time())
@@ -177,11 +177,11 @@ class InfluxService(InfluxBase):
 
             line = self.to_line_protocol(measurement, tags, fields, timestamp)
             if sensor.get("debug_logging"):
-                self.logger.debug(f"{self.name} [{topic}] Writing line protocol: {line}")
+                self.logger.debug(f"{self.log_identity} [{topic}] Writing line protocol: {line}")
             await self.write_line(line)
 
         except Exception as e:
-            self.logger.error(f"{self.name} Failed to handle MQTT message from {topic}: {e}")
+            self.logger.error(f"{self.log_identity} Failed to handle MQTT message from {topic}: {e}")
             return False
         return True
 
@@ -239,19 +239,19 @@ class InfluxService(InfluxBase):
                     tpc: str = cast(str, getattr(s, "state_topic", None))
 
                     if not tpc:
-                        self.logger.debug(f"{self.name} Skipping sensor '{obj}': no state_topic")
+                        self.logger.debug(f"{self.log_identity} Skipping sensor '{obj}': no state_topic")
                         continue
 
                     if not getattr(s, "publishable", False):
-                        self.logger.debug(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not publishable")
+                        self.logger.debug(f"{self.log_identity} [{tpc}] Skipping because object_id '{obj}' is not publishable")
                         continue
 
                     if active_config.influxdb.include and not self._matches_filter(s, obj, uid, active_config.influxdb.include):  # type: ignore[reportGeneralTypeIssues]
-                        self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is not in include list")
+                        self.logger.info(f"{self.log_identity} [{tpc}] Skipping because object_id '{obj}' is not in include list")
                         continue
 
                     if active_config.influxdb.exclude and self._matches_filter(s, obj, uid, active_config.influxdb.exclude):  # type: ignore[reportGeneralTypeIssues]
-                        self.logger.info(f"{self.name} [{tpc}] Skipping because object_id '{obj}' is excluded")
+                        self.logger.info(f"{self.log_identity} [{tpc}] Skipping because object_id '{obj}' is excluded")
                         continue
 
                     self._topic_cache[tpc] = {
@@ -263,7 +263,7 @@ class InfluxService(InfluxBase):
                     mqtt_handler.register(mqtt_client, tpc, self.handle_mqtt)
 
             except Exception as e:
-                self.logger.warning(f"{self.name} Failed to subscribe sensors for device '{device}': {e}")
+                self.logger.warning(f"{self.log_identity} Failed to subscribe sensors for device '{device}': {e}")
                 continue
 
-        self.logger.info(f"{self.name} Subscribed to {len(self._topic_cache)} topics")
+        self.logger.info(f"{self.log_identity} Subscribed to {len(self._topic_cache)} topics")

@@ -80,7 +80,7 @@ class PVOutputStatusService(Service):
                     if topic.precision is not None:
                         self._service_topics[field].decimals = topic.precision
             else:
-                self.logger.debug(f"{self.__class__.__name__} IGNORED unrecognized {field}")
+                self.logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
 
     def _create_payload(self, now: time.struct_time) -> tuple[dict[str, Any], dict[str, dict[str, tuple[float | None, time.struct_time | None]]]]:
         """Build a status payload and snapshot state for rollback on failure.
@@ -107,7 +107,7 @@ class PVOutputStatusService(Service):
             rand_max: Maximum random offset (seconds) for next upload.
         """
         seconds, next_time = await super().seconds_until_status_upload(rand_min, rand_max)
-        self.logger.debug(f"{self.__class__.__name__} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
+        self.logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, next_time
 
     def schedule(self, modbus_client: Any, mqtt_client: Any) -> list[Awaitable[None]]:
@@ -118,7 +118,7 @@ class PVOutputStatusService(Service):
             mqtt_client: MQTT client reference (unused).
         """
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
-            self.logger.info(f"{self.__class__.__name__} Commenced")
+            self.logger.info(f"{self.log_identity} Commenced")
             wait, _ = await self.seconds_until_status_upload()
             while self.online:
                 try:
@@ -140,19 +140,19 @@ class PVOutputStatusService(Service):
                                 payload["c1"] = 3
                             if payload.get(StatusField.CONSUMPTION_POWER.value, 0) < 0:
                                 self.logger.warning(
-                                    f"{self.__class__.__name__} Adjusted {StatusField.CONSUMPTION_POWER.name} (payload['{StatusField.CONSUMPTION_POWER.value}']) to 0 from {payload[StatusField.CONSUMPTION_POWER]} to comply with PVOutput requirements"
+                                    f"{self.log_identity} Adjusted {StatusField.CONSUMPTION_POWER.name} (payload['{StatusField.CONSUMPTION_POWER.value}']) to 0 from {payload[StatusField.CONSUMPTION_POWER]} to comply with PVOutput requirements"
                                 )
                                 payload[StatusField.CONSUMPTION_POWER.value] = 0  # PVOutput does not accept negative consumption power values
                             uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
                             if not uploaded:
-                                self.logger.debug(f"{self.__class__.__name__} Restoring previous state of topics due to failed upload")
+                                self.logger.debug(f"{self.log_identity} Restoring previous state of topics due to failed upload")
                                 async with self.lock(timeout=5):
                                     for st, topics_dict in self._service_topics.items():
                                         for topic in topics_dict.values():
                                             if st in snapshot and topic.topic in snapshot[st]:
                                                 topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic]
                         else:
-                            self.logger.warning(f"{self.__class__.__name__} No generation{' or consumption data' if active_config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
+                            self.logger.warning(f"{self.log_identity} No generation{' or consumption data' if active_config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
                     sleep = min(wait, 1)
                     wait -= sleep
@@ -164,14 +164,14 @@ class PVOutputStatusService(Service):
                         finally:
                             self.sleeper_task = None
                 except asyncio.CancelledError:
-                    self.logger.info(f"{self.__class__.__name__} Sleep interrupted")
+                    self.logger.info(f"{self.log_identity} Sleep interrupted")
                 except asyncio.TimeoutError:
-                    self.logger.warning(f"{self.__class__.__name__} Failed to acquire lock within timeout")
+                    self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
                 except Exception as e:
-                    self.logger.error(f"{self.__class__.__name__} {e}")
+                    self.logger.error(f"{self.log_identity} {e}")
                     if wait <= 0:
                         wait = 60
-            self.logger.info(f"{self.__class__.__name__} Completed: Flagged as offline ({self.online=})")
+            self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
             return
 
         tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]

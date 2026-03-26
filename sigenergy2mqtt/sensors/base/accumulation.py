@@ -91,11 +91,11 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
                 content = f.read().strip()
                 if content and content != "None":
                     self._current_total = float(content)
-                    logging.debug(f"{self.__class__.__name__} Loaded current state from {self._persistent_state_file} ({self._current_total})")
+                    logging.debug(f"{self.log_identity} Loaded current state from {self._persistent_state_file} ({self._current_total})")
         except (OSError, ValueError, PermissionError) as e:
-            logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {e}")
+            logging.warning(f"{self.log_identity} Failed to read {self._persistent_state_file}: {e}")
         except Exception as e:
-            logging.error(f"{self.__class__.__name__} Unexpected error reading {self._persistent_state_file}: {e}")
+            logging.error(f"{self.log_identity} Unexpected error reading {self._persistent_state_file}: {e}")
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Get discovery components including reset control.
@@ -180,7 +180,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
 
         new_total = (value if isinstance(value, float) else float(value)) * self.gain
 
-        logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} (raw={new_total})")
+        logging.info(f"{self.log_identity} reset to {value} {self.unit} (raw={new_total})")
 
         if new_total != self._current_total:
             await self._persist_current_total(new_total)
@@ -202,7 +202,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             True if accumulation was updated
         """
         if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
 
         if len(values) < 2:
@@ -212,7 +212,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         interval_hours = sensor.latest_interval / 3600 if sensor.latest_interval else 0
 
         if interval_hours < 0:
-            logging.warning(f"{self.__class__.__name__} negative interval IGNORED (interval={sensor.latest_interval})")
+            logging.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
             return False
 
         # Convert negative power to zero
@@ -226,7 +226,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         # Check for decreasing total
         if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
             logging.debug(
-                f"{self.__class__.__name__} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={sensor.latest_interval:.2f}s)"
+                f"{self.log_identity} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={sensor.latest_interval:.2f}s)"
             )
             return False
 
@@ -353,7 +353,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             # Check if file is from today
             if not (file_time.tm_year == now.tm_year and file_time.tm_mon == now.tm_mon and file_time.tm_mday == now.tm_mday):
-                logging.debug(f"{self.__class__.__name__} Ignored stale midnight state file {self._persistent_state_file} (from {file_time})")
+                logging.debug(f"{self.log_identity} Ignored stale midnight state file {self._persistent_state_file} (from {file_time})")
                 self._persistent_state_file.unlink(missing_ok=True)
                 return
 
@@ -362,16 +362,16 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 if content and content != "None":
                     value = float(content)
                     if value <= 0.0:
-                        logging.debug(f"{self.__class__.__name__} Ignored negative midnight state from {self._persistent_state_file} ({value})")
+                        logging.debug(f"{self.log_identity} Ignored negative midnight state from {self._persistent_state_file} ({value})")
                         self._persistent_state_file.unlink()
                     else:
                         self._state_at_midnight = value
-                        logging.debug(f"{self.__class__.__name__} Loaded midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
+                        logging.debug(f"{self.log_identity} Loaded midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
         except (OSError, ValueError, PermissionError) as e:
-            logging.warning(f"{self.__class__.__name__} Failed to read {self._persistent_state_file}: {e}")
+            logging.warning(f"{self.log_identity} Failed to read {self._persistent_state_file}: {e}")
             self._persistent_state_file.unlink(missing_ok=True)
         except Exception as e:
-            logging.error(f"{self.__class__.__name__} Unexpected error reading {self._persistent_state_file}: {e}")
+            logging.error(f"{self.log_identity} Unexpected error reading {self._persistent_state_file}: {e}")
 
     async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
         """Persist state at midnight.
@@ -409,7 +409,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             return False
 
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} notified of updated state {value} {self.unit}")
+            logging.debug(f"{self.log_identity} notified of updated state {value} {self.unit}")
 
         self._state_now = (value if isinstance(value, float) else float(value)) * self.gain
 
@@ -417,12 +417,12 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         updated_midnight_state = self._source.latest_raw_state - self._state_now if isinstance(self._source.latest_raw_state, (float, int)) and self._source.latest_raw_state else self._state_now
 
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} source_raw={self._source.latest_raw_state} (from {self._source.unique_id}) state_now={self._state_now} midnight_state={updated_midnight_state}")
+            logging.debug(f"{self.log_identity} source_raw={self._source.latest_raw_state} (from {self._source.unique_id}) state_now={self._state_now} midnight_state={updated_midnight_state}")
 
         await self._update_state_at_midnight(updated_midnight_state)
         self.set_latest_state(self._state_now)
 
-        logging.info(f"{self.__class__.__name__} reset to {value} {self.unit} (raw={self._state_now})")
+        logging.info(f"{self.log_identity} reset to {value} {self.unit} (raw={self._state_now})")
 
         self.force_publish = True
         return True
@@ -454,7 +454,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
 
         now_state = values[-1][1]

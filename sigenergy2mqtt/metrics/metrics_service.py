@@ -74,10 +74,10 @@ class MetricsService(Device):
         service start rather than the earlier module-load time.
         """
         Metrics.commence()
-        logging.info(f"{self.name} Service Commenced")
+        logging.info(f"{self.log_identity} Service Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
 
     def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Mark the service offline on shutdown."""
-        logging.info(f"{self.name} Service Completed: Flagged as offline ({self.online=})")
+        logging.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
         mqtt_client.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)

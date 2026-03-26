@@ -116,17 +116,17 @@ class Service(Device):
         async with self._lock:
             if Service._interval_updated is None or (Service._interval_updated + 3600) < current_time:
                 self.logger.debug(
-                    f"{self.__class__.__name__} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None else current_time}"
+                    f"{self.log_identity} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None else current_time}"
                 )
                 if active_config.pvoutput.testing:
                     Service._interval = 5
                     Service._interval_updated = current_time
                     Service._donator = True
                     self.logger.info(
-                        f"{self.__class__.__name__} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
+                        f"{self.log_identity} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
                     )
                 else:
-                    self.logger.debug(f"{self.__class__.__name__} Acquiring System Information from PVOutput ({url=})")
+                    self.logger.debug(f"{self.log_identity} Acquiring System Information from PVOutput ({url=})")
                     try:
                         response = await asyncio.to_thread(requests.get, url, headers=self.request_headers, timeout=10)
                         limit, remaining, at, reset = self.get_response_headers(response)
@@ -135,22 +135,22 @@ class Service(Device):
                             interval = int(re.split(r"[,]", section[0])[15])
                             donations = int(section[2])
                             self.logger.debug(
-                                f"{self.__class__.__name__} Acquired {interval=} {donations=} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                                f"{self.log_identity} Acquired {interval=} {donations=} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                             )
                             Service._interval_updated = current_time
                             if Service._interval != interval:
-                                self.logger.info(f"{self.__class__.__name__} Status Interval changed from {Service._interval} to {interval} minutes")
+                                self.logger.info(f"{self.log_identity} Status Interval changed from {Service._interval} to {interval} minutes")
                                 Service._interval = interval
                             if Service._donator != (donations != 0):
-                                self.logger.info(f"{self.__class__.__name__} Donation Status changed from {Service._donator} to {donations != 0}")
+                                self.logger.info(f"{self.log_identity} Donation Status changed from {Service._donator} to {donations != 0}")
                                 Service._donator = donations != 0
                         else:
-                            self.logger.warning(f"{self.__class__.__name__} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
+                            self.logger.warning(f"{self.log_identity} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
                     except Exception as exc:
                         Service._interval = 5  # Default interval in minutes if not set
                         Service._donator = False  # Default donator status if not set
                         self.logger.warning(
-                            f"{self.__class__.__name__} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
+                            f"{self.log_identity} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
                         )
         minutes = int(current_time // 60)  # Total minutes since epoch
         next_boundary = (minutes // Service._interval + 1) * Service._interval  # Next interval boundary
@@ -165,7 +165,7 @@ class Service(Device):
             url: PVOutput endpoint URL.
             payload: Form payload to submit.
         """
-        self.logger.info(f"{self.__class__.__name__} Uploading {payload=}")
+        self.logger.info(f"{self.log_identity} Uploading {payload=}")
         uploaded: bool = False
         response: requests.Response = requests.Response()
         attempts: int = 0
@@ -174,20 +174,20 @@ class Service(Device):
             try:
                 if active_config.pvoutput.testing:
                     uploaded = True
-                    self.logger.info(f"{self.__class__.__name__} Testing mode, not sending upload to {url=}")
+                    self.logger.info(f"{self.log_identity} Testing mode, not sending upload to {url=}")
                     cid = CaseInsensitiveDict()
                     cid["X-Rate-Limit-Remaining"] = "60"
                     response.status_code = 200
                     response.headers = cid
                     break
                 else:
-                    self.logger.debug(f"{self.__class__.__name__} Attempt #{i} to {url=}...")
+                    self.logger.debug(f"{self.log_identity} Attempt #{i} to {url=}...")
                     response = await asyncio.to_thread(requests.post, url, headers=self.request_headers, data=payload, timeout=10)
                     limit, remaining, at, reset = self.get_response_headers(response)
                     if response.status_code == 200:
                         uploaded = True
                         self.logger.debug(
-                            f"{self.__class__.__name__} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
+                            f"{self.log_identity} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                         )
                         break
                     else:
@@ -197,16 +197,16 @@ class Service(Device):
                 response = exc.response
                 limit, remaining, at, reset = self.get_response_headers(response)
                 if response.status_code == 400:
-                    self.logger.error(f"{self.__class__.__name__} Attempt #{i} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                    self.logger.error(f"{self.log_identity} Attempt #{i} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
                     break
                 else:
-                    self.logger.error(f"{self.__class__.__name__} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                    self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
             except requests.exceptions.ConnectionError as exc:
-                self.logger.error(f"{self.__class__.__name__} Attempt #{i} Error Connecting: {exc}")
+                self.logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
-                self.logger.error(f"{self.__class__.__name__} Attempt #{i} Timeout Error: {exc}")
+                self.logger.error(f"{self.log_identity} Attempt #{i} Timeout Error: {exc}")
             except Exception as exc:
-                self.logger.error(f"{self.__class__.__name__} {exc}")
+                self.logger.error(f"{self.log_identity} {exc}")
             if (
                 response.status_code is not None
                 and response.status_code != 200
@@ -214,19 +214,19 @@ class Service(Device):
                 and "X-Rate-Limit-Remaining" in response.headers
                 and int(response.headers["X-Rate-Limit-Remaining"]) < 10
             ):
-                self.logger.warning(f"{self.__class__.__name__} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable] # pyrefly: ignore
+                self.logger.warning(f"{self.log_identity} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable] # pyrefly: ignore
                 try:
                     await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]  # pyrefly: ignore
                 except asyncio.CancelledError:
-                    logging.debug(f"{self.__class__.__name__} reset sleep interrupted")
+                    logging.debug(f"{self.log_identity} reset sleep interrupted")
                     break
             else:
-                self.logger.info(f"{self.__class__.__name__} Retrying in 10 seconds")
+                self.logger.info(f"{self.log_identity} Retrying in 10 seconds")
                 try:
                     await asyncio.sleep(10)
                 except asyncio.CancelledError:
-                    logging.debug(f"{self.__class__.__name__} retry sleep interrupted")
+                    logging.debug(f"{self.log_identity} retry sleep interrupted")
                     break
         else:
-            self.logger.error(f"{self.__class__.__name__} Failed to upload to {url} after {attempts} attempts")
+            self.logger.error(f"{self.log_identity} Failed to upload to {url} after {attempts} attempts")
         return uploaded
