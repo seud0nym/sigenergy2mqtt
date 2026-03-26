@@ -305,7 +305,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         """
         topic = cast(str, self.get(DiscoveryKeys.COMMAND_TOPIC))
         if not topic or topic.isspace():
-            raise RuntimeError(f"{self.__class__.__name__} command topic is not defined")
+            raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
 
     def _raw2state(self, raw_value: float | int | str) -> float | int | str:
@@ -472,7 +472,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         self.force_publish = True
 
         if modbus_client is None:
-            raise ValueError(f"{self.__class__.__name__}: ModbusClient cannot be None")
+            raise ValueError(f"{self.log_identity}: ModbusClient cannot be None")
 
         try:
             if not await self.value_is_valid(modbus_client, value):

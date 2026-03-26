@@ -203,7 +203,7 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
         # Validate availability control sensor
         if availability_control_sensor is not None:
             if not isinstance(availability_control_sensor, AvailabilityMixin):
-                raise ValueError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
+                raise ValueError(f"{self.log_identity}: availability_control_sensor must be an instance of AvailabilityMixin")
 
         super().__init__(
             name,
@@ -351,22 +351,22 @@ class NumericSensor(ReadWriteSensor):
         # Both are simple numbers
         if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
             if minimum >= maximum:
-                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
+                raise AssertionError(f"{self.log_identity}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
             return
 
         # Both are tuples
         if isinstance(minimum, tuple) and isinstance(maximum, tuple):
             if len(minimum) != len(maximum):
-                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max tuples: different lengths {len(minimum)}/{len(maximum)}")
+                raise AssertionError(f"{self.log_identity}: Invalid min/max tuples: different lengths {len(minimum)}/{len(maximum)}")
 
             for mn, mx in zip(minimum, maximum):
                 if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
-                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
+                    raise ValueError(f"{self.log_identity}: Invalid tuple values: {mn}/{mx} (must be numeric)")
                 if mn >= mx:
-                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
+                    raise ValueError(f"{self.log_identity}: Invalid tuple values: {mn}/{mx} (min must be < max)")
             return
 
-        raise ValueError(f"{self.__class__.__name__}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
+        raise ValueError(f"{self.log_identity}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
 
     def _format_range_value(self, value: float | tuple[float, float]) -> float | tuple[float, ...]:
         """Format a range value for MQTT.
@@ -566,7 +566,7 @@ class ThreePhaseAdjustmentTargetValue(NumericSensor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if "output_type" not in kwargs:
-            raise ValueError(f"{self.__class__.__name__}: output_type parameter is required")
+            raise ValueError(f"{self.log_identity}: output_type parameter is required")
         if kwargs["output_type"] != Constants.THREE_PHASE_OUTPUT_TYPE:  # L1/L2/L3/N
             self.publishable = False
 
@@ -597,10 +597,10 @@ class SelectSensor(ReadWriteSensor):
     ):
         # Validate options
         if not options or not isinstance(options, list):
-            raise ValueError(f"{self.__class__.__name__}: options must be a non-empty list")
+            raise ValueError(f"{self.log_identity}: options must be a non-empty list")
 
         if not all(isinstance(o, str) for o in options):
-            raise ValueError(f"{self.__class__.__name__}: all options must be strings")
+            raise ValueError(f"{self.log_identity}: all options must be strings")
 
         super().__init__(
             availability_control_sensor=availability_control_sensor,

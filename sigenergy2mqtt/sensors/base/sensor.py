@@ -289,13 +289,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             self._protocol_version = protocol_version
         elif isinstance(protocol_version, float):
             if protocol_version not in [p.value for p in Protocol]:
-                raise AssertionError(f"{self.__class__.__name__}: Invalid protocol_version '{protocol_version}'")
+                raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
             protocol = {p.value: p for p in Protocol}.get(protocol_version)
             if protocol is None:
-                raise AssertionError(f"{self.__class__.__name__}: Invalid protocol_version '{protocol_version}'")
+                raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
             self._protocol_version = protocol
         else:
-            raise AssertionError(f"{self.__class__.__name__}: protocol_version must be Protocol or float, got {type(protocol_version)}")
+            raise AssertionError(f"{self.log_identity}: protocol_version must be Protocol or float, got {type(protocol_version)}")
 
     @property
     def publishable(self) -> bool:
@@ -306,7 +306,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def publishable(self, value: bool):
         """Set whether this sensor should be published to MQTT."""
         if not isinstance(value, bool):
-            raise ValueError(f"{self.__class__.__name__}.publishable must be a bool")
+            raise ValueError(f"{self.log_identity}.publishable must be a bool")
 
         if self._publishable == value:
             if self.debug_logging:
@@ -324,7 +324,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def publish_raw(self, value: bool):
         """Set whether raw values should be published."""
         if not isinstance(value, bool):
-            raise ValueError(f"{self.__class__.__name__}.publish_raw must be a bool")
+            raise ValueError(f"{self.log_identity}.publish_raw must be a bool")
 
         if self._publish_raw == value:
             if self.debug_logging:
@@ -640,7 +640,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             Dictionary of discovery configurations by unique_id
         """
         if DiscoveryKeys.STATE_TOPIC not in self:
-            raise RuntimeError(f"{self.__class__.__name__} MQTT topics are not configured")
+            raise RuntimeError(f"{self.log_identity} MQTT topics are not configured")
 
         if self.debug_logging:
             logging.debug(f"{self.log_identity} Getting discovery")

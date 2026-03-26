@@ -82,7 +82,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             Various exceptions for Modbus errors
         """
         if "modbus_client" not in kwargs:
-            raise ValueError(f"{self.__class__.__name__}: Required argument 'modbus_client' not supplied")
+            raise ValueError(f"{self.log_identity}: Required argument 'modbus_client' not supplied")
 
         modbus_client: ModbusClient = kwargs["modbus_client"]
 
@@ -130,7 +130,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         elif self.input_type == InputType.INPUT:
             rr = await modbus_client.read_input_registers(self.address, count=self.count, device_id=self.device_address, trace=self.debug_logging)
         else:
-            raise ValueError(f"{self.__class__.__name__}: Unknown input type '{self.input_type}'")
+            raise ValueError(f"{self.log_identity}: Unknown input type '{self.input_type}'")
 
         elapsed = time.monotonic() - start
 
@@ -271,7 +271,7 @@ class ReservedSensor(ReadOnlySensor):
 
         # Validate class name
         if not self.__class__.__name__.startswith("Reserved"):
-            raise ValueError(f"{self.__class__.__name__}: class name must start with 'Reserved'")
+            raise ValueError(f"{self.log_identity}: class name must start with 'Reserved'")
 
         # Reserved sensors are never published
         self._publishable = False
