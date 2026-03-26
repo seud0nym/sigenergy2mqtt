@@ -100,6 +100,8 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             gain=None,
             precision=0,  # Intentional rounding to nearest watt
         )
+        self.plant_index = plant_index
+        self.device_address = device_address
         self.string_number = string_number
         self.refresh_log_identity()
         self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity} Amperes", PVCurrentSensor.raw2amps)
