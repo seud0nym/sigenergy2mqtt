@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "tests/utils/modbus_test_server.py",
             "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.debug_modbus_server.env",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",

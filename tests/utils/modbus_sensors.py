@@ -20,7 +20,10 @@ import os
 import sys
 from typing import cast
 
+# Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
+# sys.path manipulation must precede all project-relative imports so that
+# running the file directly (python modbus_sensors.py) resolves them correctly.
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 

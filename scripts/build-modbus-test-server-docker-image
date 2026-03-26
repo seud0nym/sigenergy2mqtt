@@ -1,0 +1,14 @@
+#!/bin/bash
+
+GREEN='\033[1;32m'
+ORANGE='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Colour
+
+cd "$(cd $(dirname $0)/..; pwd)"
+
+rm -f /tmp/sigenergy2mqtt-modbus-test-server.tar
+
+docker buildx build . -f tests/utils/Dockerfile -t sigenergy2mqtt-modbus-test-server:latest && \
+docker save -o /tmp/sigenergy2mqtt-modbus-test-server.tar sigenergy2mqtt-modbus-test-server:latest && \
+echo -e ">>> Docker Image ${GREEN}sigenergy2mqtt-modbus-test-server:latest${NC} exported to ${ORANGE}/tmp/sigenergy2mqtt-modbus-test-server.tar${NC}"

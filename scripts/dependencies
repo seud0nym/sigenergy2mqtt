@@ -2,16 +2,55 @@
 
 cd "$(cd $(dirname $0)/..; pwd)"
 
+install_only=0
+install_build_deps=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --install-only)
+      install_only=1
+      ;;
+    --skip-build-deps)
+      install_build_deps=0
+      ;;
+    -h|--help)
+      cat <<'USAGE'
+Usage: scripts/dependencies [--install-only] [--skip-build-deps]
+
+Options:
+  --install-only      Install dependency specs only; do not update pyproject.toml
+                      and do not run removal/autoremove logic.
+  --skip-build-deps   Do not install build/test helper dependencies.
+  -h, --help          Show this help text.
+USAGE
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
 check_pkg () {
   local spec="$1"
   local add_after="$2"
   local pkg="${spec%%[=(]*}"
-  echo ">>> Checking $pkg..."
-  if ! pip freeze | grep -q "^${pkg}=="; then
-    pip install $spec --root-user-action=ignore
-  else
-    pip install "$spec" --upgrade --root-user-action=ignore --quiet
+
+  if [[ "$install_only" -eq 1 ]]; then
+    pip install "$spec" --root-user-action=ignore --no-cache-dir || exit 1
+    return
   fi
+
+  echo ">>> Checking $pkg..."
+
+  if ! pip freeze | grep -q "^${pkg}=="; then
+    pip install "$spec" --root-user-action=ignore || exit 1
+  else
+    pip install "$spec" --upgrade --root-user-action=ignore --quiet || exit 1
+  fi
+
   if [[ -n "$add_after" ]]; then
     if grep -Eq "$pkg[=(]" pyproject.toml; then
       sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
@@ -21,18 +60,20 @@ check_pkg () {
   fi
 }
 
-for spec in \
-    "build(>=1.3.0,<2.0.0)" \
-    "twine(>=6.2.0,<7.0.0)" \
-    "pip-autoremove(>=0.10.0,<1.0.0)" \
-    "pytest" \
-    "pytest-asyncio" \
-    "pytest-cov" \
-    "pytest-xdist" \
-    "jsonschema" \
-; do
-  check_pkg "$spec"
-done
+if [[ "$install_build_deps" -eq 1 ]]; then
+  for spec in \
+      "build(>=1.3.0,<2.0.0)" \
+      "twine(>=6.2.0,<7.0.0)" \
+      "pip-autoremove(>=0.10.0,<1.0.0)" \
+      "pytest" \
+      "pytest-asyncio" \
+      "pytest-cov" \
+      "pytest-xdist" \
+      "jsonschema" \
+  ; do
+    check_pkg "$spec"
+  done
+fi
 
 after="dependencies"
 for spec in \
@@ -47,7 +88,10 @@ for spec in \
   pkgs="$pkgs $spec"
   after="${spec%%[=(]*}"
 done
-for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
-  pkg="${spec%%[=(]*}"
-  echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
-done
+
+if [[ "$install_only" -eq 0 ]]; then
+  for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
+    pkg="${spec%%[=(]*}"
+    echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
+  done
+fi
