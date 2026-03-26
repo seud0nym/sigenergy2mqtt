@@ -101,8 +101,9 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             precision=0,  # Intentional rounding to nearest watt
         )
         self.string_number = string_number
-        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.__class__.__name__} [{self.string_number}] Amperes", PVCurrentSensor.raw2amps)
-        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.__class__.__name__} [{self.string_number}] Volts", PVVoltageSensor.raw2volts)
+        self.refresh_log_identity()
+        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity} Amperes", PVCurrentSensor.raw2amps)
+        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity} Volts", PVVoltageSensor.raw2volts)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
     def get_attributes(self) -> dict[str, float | int | str]:
