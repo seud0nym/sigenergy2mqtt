@@ -98,6 +98,12 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         ILLEGAL_DATA_VALUE = 3
         SLAVE_DEVICE_FAILURE = 4
 
+    if TYPE_CHECKING:
+        @property
+        def log_identity(self) -> str: ...
+
+        def refresh_log_identity(self) -> None: ...
+
     def __init__(self, input_type: InputType, plant_index: int, device_address: int, address: int, count: int, unique_id_override: str | None = None, **kwargs):
         # Validate parameters
         if not (1 <= device_address <= Constants.PLANT_DEVICE_ADDRESS):

@@ -34,6 +34,7 @@ class HaPublisherMixin(abc.ABC):
 
     # Plain attributes provided by the concrete class.
     name: str
+    log_identity: str
     children: list["Device"]
     _shutdown_event: asyncio.Event
 
