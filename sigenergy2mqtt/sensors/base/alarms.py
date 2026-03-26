@@ -350,11 +350,11 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, name: str, unique_id: str, object_id: str, *alarms: AlarmSensor, **kwargs):
         # Validate alarm sensors
         if not alarms:
-            raise ValueError(f"{self.log_identity}: At least one alarm sensor required")
+            raise ValueError(f"{self.__class__.__name__}: At least one alarm sensor required")
 
         device_addresses = set(a.device_address for a in alarms)
         if len(device_addresses) != 1:
-            raise ValueError(f"{self.log_identity}: All alarms must have same device address (found {device_addresses})")
+            raise ValueError(f"{self.__class__.__name__}: All alarms must have same device address (found {device_addresses})")
 
         # Calculate address range
         first_address = min(a.address for a in alarms)
@@ -362,7 +362,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         count = sum(a.count for a in alarms)
 
         if (last_address - first_address + 1) != count:
-            raise ValueError(f"{self.log_identity}: Alarms must have contiguous address ranges (addresses: {[a.address for a in alarms]})")
+            raise ValueError(f"{self.__class__.__name__}: Alarms must have contiguous address ranges (addresses: {[a.address for a in alarms]})")
 
         self.alarms = list(alarms)
         plant_index: int = kwargs.pop("plant_index", self.alarms[0].plant_index)
