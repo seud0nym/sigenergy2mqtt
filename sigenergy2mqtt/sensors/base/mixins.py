@@ -99,6 +99,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         SLAVE_DEVICE_FAILURE = 4
 
     if TYPE_CHECKING:
+
         @property
         def log_identity(self) -> str: ...
 
@@ -159,6 +160,9 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         if rr is None:
             logging.error(f"{self.log_identity} Modbus {source} failed to read registers (None response)")
             return False
+
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} Modbus {source} response: {rr}")
 
         if not (rr.isError() or isinstance(rr, ExceptionResponse)):
             return True

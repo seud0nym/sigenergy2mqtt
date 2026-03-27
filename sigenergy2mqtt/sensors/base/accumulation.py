@@ -216,7 +216,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             True if accumulation was updated
         """
         if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
 
         if len(values) < 2:
@@ -468,7 +468,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
 
         now_state = values[-1][1]

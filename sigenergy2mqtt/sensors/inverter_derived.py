@@ -38,7 +38,7 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(0 if values[-1][1] <= 0 else values[-1][1])
         return True
@@ -70,7 +70,7 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(0 if values[-1][1] >= 0 else values[-1][1] * -1)
         return True
@@ -142,11 +142,14 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVCurrentSensor):
             self.amperes.apply(values)
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values (string={self.string_number}) from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
         if self.volts.value is None or self.amperes.value is None:
             return False  # until all values populated, can't do calculation
-        self.set_latest_state(self.volts.value * self.amperes.value)
+        state = self.volts.value * self.amperes.value
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} source values populated - setting latest state ({self.amperes.value}A * {self.volts.value}V = {state}W)")
+        self.set_latest_state(state)
         return True
 
 

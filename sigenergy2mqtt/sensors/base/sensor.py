@@ -53,7 +53,7 @@ class TypedSensorMixin:
         if kwargs["data_type"] not in ModbusDataType:
             raise AssertionError(f"Invalid data type {kwargs['data_type']}")
 
-        self.data_type = kwargs.pop("data_type")
+        self.data_type: ModbusDataType = kwargs.pop("data_type")
         super().__init__(**kwargs)
 
 
@@ -1035,7 +1035,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         # so they can make their own publishing decisions.
         for sensor in self.derived_sensors.values():
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Setting derived sensor {sensor.unique_id} source values (states={self._states})")
+                logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (states={self._states})")
             sensor.set_source_values(self, self._states)
 
         return updated
