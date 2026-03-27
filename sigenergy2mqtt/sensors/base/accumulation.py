@@ -35,6 +35,12 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
     to reset the accumulated value via MQTT.
     """
 
+    if TYPE_CHECKING:
+        @property
+        def log_identity(self) -> str: ...
+
+        def refresh_log_identity(self) -> None: ...
+
     def __init__(
         self,
         name: str,
