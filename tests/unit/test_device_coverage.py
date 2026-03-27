@@ -248,6 +248,22 @@ def test_device_init_ignores_unknown_kwargs():
     DeviceRegistry._devices.clear()
 
 
+def test_device_log_identity_format_excludes_name():
+    """Device log_identity should include plant/dev and not include name."""
+    dev = Device("TestDev", 0, "uid_logid", "mf", "model", Protocol.V1_8)
+    assert "plant=0,dev=n/a" in dev.log_identity
+    assert "name=" not in dev.log_identity
+    DeviceRegistry._devices.clear()
+
+
+def test_modbus_device_log_identity_refreshes_device_address():
+    """ModbusDevice should refresh log_identity after setting device_address."""
+    dev = ConcreteModbusDevice(None, "TestModbusDev", 0, 7, "model", Protocol.V1_8)
+    assert "plant=0,dev=7" in dev.log_identity
+    assert "name=" not in dev.log_identity
+    DeviceRegistry._devices.clear()
+
+
 # ===========================================================================
 # online property / setter branches
 # ===========================================================================

@@ -18,6 +18,7 @@ class PVString(ModbusDevice):
         current_address: int,
         protocol_version: Protocol,
     ):
+        self.string_number = string_number
         name = f"{model_id.split()[0]} {serial_number} PV String {string_number}"
         super().__init__(
             device_type,
@@ -43,3 +44,7 @@ class PVString(ModbusDevice):
         self._add_derived_sensor(power, voltage, current)
         self._add_derived_sensor(lifetime_energy, power)
         self._add_derived_sensor(daily_energy, lifetime_energy)
+
+    def _build_log_identity(self) -> str:
+        base_identity = super()._build_log_identity()
+        return f"{base_identity[:-1]},string={self.string_number}]"

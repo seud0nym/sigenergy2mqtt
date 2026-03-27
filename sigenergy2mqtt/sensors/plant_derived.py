@@ -56,7 +56,7 @@ class BatteryChargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, BatteryPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
@@ -88,7 +88,7 @@ class BatteryDischargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, BatteryPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
@@ -119,7 +119,7 @@ class GridSensorExportPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
@@ -150,7 +150,7 @@ class GridSensorImportPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
@@ -200,15 +200,15 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         for source_id, value in self._sources.items():
             if value.enabled and value.type == TotalPVPower.SourceType.SMARTPORT:
                 if value.last_update and (now - value.last_update > timeout):
-                    logging.warning(f"{self.__class__.__name__} Failover triggered: Source '{source_id}' timed out (last_update={now - value.last_update:.1f}s ago, timeout={timeout}s)")
+                    logging.warning(f"{self.log_identity} Failover triggered: Source '{source_id}' timed out (last_update={now - value.last_update:.1f}s ago, timeout={timeout}s)")
                     self.failover(source_id)
 
     def fallback(self, source: str):
-        logging.info(f"{self.__class__.__name__} Re-enabling '{source}' as source because state updated (state={self._sources[source].state})")
+        logging.info(f"{self.log_identity} Re-enabling '{source}' as source because state updated (state={self._sources[source].state})")
         self._sources[source].enabled = True
         for id, value in self._sources.items():
             if value.type == TotalPVPower.SourceType.FAILOVER:
-                logging.info(f"{self.__class__.__name__} Disabling '{id}' as failover source because state updated from SmartPort sensor '{source}'")
+                logging.info(f"{self.log_identity} Disabling '{id}' as failover source because state updated from SmartPort sensor '{source}'")
                 value.enabled = False
 
     def failover(self, smartport_sensor: Sensor | str) -> bool:
@@ -218,14 +218,14 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             if value.type == TotalPVPower.SourceType.FAILOVER:
                 if value.enabled:
                     return True
-                logging.info(f"{self.__class__.__name__} Enabling '{id}' as failover source because SmartPort sensor '{source_id}' failed")
+                logging.info(f"{self.log_identity} Enabling '{id}' as failover source because SmartPort sensor '{source_id}' failed")
                 value.enabled = True
                 failed_over = True
         if failed_over and source_id in self._sources:
-            logging.info(f"{self.__class__.__name__} Disabling '{source_id}' as SmartPort source because failover sources enabled")
+            logging.info(f"{self.log_identity} Disabling '{source_id}' as SmartPort source because failover sources enabled")
             self._sources[source_id].enabled = False
         if failed_over:
-            logging.info(f"{self.__class__.__name__} Resetting failure count from {self._failures} to 0 because failover source enabled")
+            logging.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because failover source enabled")
             self._failures = 0
             self._next_retry = None
         return failed_over
@@ -245,13 +245,13 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
             self._sources[source].last_update = time.time()
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from ({'enabled' if self._sources[source].enabled else 'disabled'}) topic {source} - {self._sources=}")
+                logging.debug(f"{self.log_identity} Updated from ({'enabled' if self._sources[source].enabled else 'disabled'}) topic {source} - {self._sources=}")
             if self._sources[source].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
                 self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None and value.enabled]))
                 await self.publish(mqtt_client, modbus_client, republish=True)
             return True
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {source}, but topic is not registered")
+            logging.warning(f"Attempt to call {self.log_identity}.notify with topic {source}, but topic is not registered")
             return False
 
     def observable_topics(self) -> set[str]:
@@ -262,10 +262,10 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             await self._check_smartport_timeouts()
             if any(value.state is None for value in self._sources.values() if value.enabled):
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources=}")
+                    logging.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources=}")
                 return False  # until all values populated, can't do calculation
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources=}")
+                logging.debug(f"{self.log_identity} Publishing READY   - {self._sources=}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
         if not republish:
             # reset internal values to missing for next calculation
@@ -280,31 +280,31 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
                     self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
                     self._topics.add(topic.topic)
                     if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Added Smart-Port MQTT topic {topic.topic} as source")
+                        logging.debug(f"{self.log_identity} Added Smart-Port MQTT topic {topic.topic} as source")
                 else:
-                    logging.warning(f"{self.__class__.__name__} Empty Smart-Port MQTT topic ignored")
+                    logging.warning(f"{self.log_identity} Empty Smart-Port MQTT topic ignored")
 
     def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
         for sensor in sensors:
             assert isinstance(sensor, PVPowerSensor), f"Contributing sensors to TotalPVPower must be instances of PVPowerSensor ({sensor.__class__.__name__})"
             self._sources[sensor.unique_id] = TotalPVPower.Value(sensor.gain, type=type, enabled=enabled)
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
+                logging.debug(f"{self.log_identity} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
-            logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from {sensor.__class__.__name__} - not PVPower instance")
+            logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from {sensor.__class__.__name__} - not PVPower instance")
             return False
         elif source not in self._sources:
-            logging.warning(f"{self.__class__.__name__} IGNORED attempt to call set_source_values from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
+            logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
             return False
         if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
             self.fallback(source)
         self._sources[source].state = values[-1][1]
         self._sources[source].last_update = time.time()
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
+            logging.debug(f"{self.log_identity} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
         if not self._sources[source].enabled or any(value.state is None for value in self._sources.values() if value.enabled):
             return False  # until all enabled values populated, can't do calculation
         self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None and value.enabled]))
@@ -365,10 +365,10 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             return False
         consumed_power = sum([value.state for value in self._sources.values() if value.state is not None and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
         if consumed_power < 0:
-            logging.debug(f"{self.__class__.__name__} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
+            logging.debug(f"{self.log_identity} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
             consumed_power = 0
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY   - {self._sources}")
+            logging.debug(f"{self.log_identity} Publishing READY   - {self._sources}")
         self.set_latest_state(consumed_power)
         return True
 
@@ -391,7 +391,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         if not republish:
             if not self._set_latest_consumption():
                 if self.debug_logging:
-                    logging.debug(f"{self.__class__.__name__} Publishing SKIPPED - {self._sources}")
+                    logging.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources}")
                 return False  # until all values populated, can't do calculation
             republish = True  # if we got here, we have a valid value to publish
         await super().publish(mqtt_client, modbus_client, republish=republish)
@@ -404,12 +404,12 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         if source in self._sources:
             self._update_source(source, value if isinstance(value, float) else float(value))
             if self.debug_logging:
-                logging.debug(f"{self.__class__.__name__} Updated from topic {source} - {self._sources}")
+                logging.debug(f"{self.log_identity} Updated from topic {source} - {self._sources}")
             if self._set_latest_consumption():
                 await self.publish(mqtt_client, modbus_client, republish=True)
             return True
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.notify with topic {source}, but topic is not registered")
+            logging.warning(f"Attempt to call {self.log_identity}.notify with topic {source}, but topic is not registered")
         return False
 
     def observable_topics(self) -> set[str]:
@@ -421,7 +421,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                         self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
                         self._topics.add(sensor.state_topic)
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Added MQTT topic {sensor.state_topic} as source")
+                            logging.debug(f"{self.log_identity} Added MQTT topic {sensor.state_topic} as source")
         return set(self._topics)
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
@@ -441,12 +441,12 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                 if grid != self._grid_status:
                     if self._grid_status is not None:
                         if grid == 0:
-                            logging.info(f"{self.__class__.__name__} Grid restored - including AC/DC charger power in consumption calculations")
+                            logging.info(f"{self.log_identity} Grid restored - including AC/DC charger power in consumption calculations")
                         else:
-                            logging.warning(f"{self.__class__.__name__} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
+                            logging.warning(f"{self.log_identity} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
                     self._grid_status = grid
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         return self._set_latest_consumption()
 
@@ -511,11 +511,11 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             if self.debug_logging:
                 logging.debug(
-                    f"{self.__class__.__name__} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
+                    f"{self.log_identity} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}"
                 )
             return False  # until all values populated, can't do calculation
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
+            logging.debug(f"{self.log_identity} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         self.plant_lifetime_pv_energy = None
@@ -528,7 +528,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
             self.plant_3rd_party_lifetime_pv_energy = values[-1][1]
         else:
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             return False  # until all values populated, can't do calculation

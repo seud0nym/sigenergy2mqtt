@@ -65,7 +65,7 @@ class PowerPlant(ModbusDevice):
             if smartport_config.module.name:
                 module_config = smartport_config.module
                 if module_config.name not in _VALID_SMARTPORT_MODULES:
-                    logging.error(f"{self.__class__.__name__} Unknown SmartPort module '{module_config.name}' - ignoring")
+                    logging.error(f"{self.log_identity} Unknown SmartPort module '{module_config.name}' - ignoring")
                 else:
                     module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{module_config.name}")
                     try:
@@ -74,7 +74,7 @@ class PowerPlant(ModbusDevice):
                         self._smartport.via_device = self.unique_id
                         self._add_child_device(self._smartport)
                     except Exception:
-                        logging.exception(f"{self.__class__.__name__} Failed to create SmartPort instance")
+                        logging.exception(f"{self.log_identity} Failed to create SmartPort instance")
 
     async def _register_sensors(self, firmware: str, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
@@ -219,26 +219,26 @@ class PowerPlant(ModbusDevice):
                 self._add_derived_sensor(self._total_pv_power, self._plant_3rd_party_pv_power, search_children=False)
                 self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
             else:
-                logging.warning(f"{self.__class__.__name__} Unable to register ThirdPartyPVPower sensor for SmartPort failover - protocol version {self.protocol_version} does not support it")
+                logging.warning(f"{self.log_identity} Unable to register ThirdPartyPVPower sensor for SmartPort failover - protocol version {self.protocol_version} does not support it")
         else:
             if self._plant_3rd_party_pv_power:
                 self._add_read_sensor(self._plant_3rd_party_pv_power, self._consumption_group)
                 self._add_derived_sensor(self._total_pv_power, self._plant_3rd_party_pv_power, search_children=False)
                 self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
             else:
-                logging.warning(f"{self.__class__.__name__} Unable to register ThirdPartyPVPower sensor as TotalPVPower source - protocol version {self.protocol_version} does not support it")
+                logging.warning(f"{self.log_identity} Unable to register ThirdPartyPVPower sensor as TotalPVPower source - protocol version {self.protocol_version} does not support it")
 
         plant_consumed_power = derived.PlantConsumedPower(self.plant_index, method=self._consumption_source)
         match plant_consumed_power.method:
             case ConsumptionMethod.CALCULATED:
                 if not self._grid_sensor:  # Should not be possible: unconditional registration in _register_child_devices
-                    raise RuntimeError(f"{self.__class__.__name__} GridSensor device not registered???")
+                    raise RuntimeError(f"{self.log_identity} GridSensor device not registered???")
                 active_power = self._grid_sensor.get_sensor(GridSensorActivePower)
                 if not active_power:
-                    raise RuntimeError(f"{self.__class__.__name__} GridSensorActivePower not registered in GridSensor device???")
+                    raise RuntimeError(f"{self.log_identity} GridSensorActivePower not registered in GridSensor device???")
                 grid_status = self._grid_sensor.get_sensor(GridStatus)
                 if not grid_status:
-                    raise RuntimeError(f"{self.__class__.__name__} GridStatus not registered in GridSensor device???")
+                    raise RuntimeError(f"{self.log_identity} GridStatus not registered in GridSensor device???")
                 self._add_derived_sensor(plant_consumed_power, self._total_pv_power, battery_power, active_power, grid_status, search_children=True)
             case ConsumptionMethod.GENERAL:
                 self._add_derived_sensor(plant_consumed_power, general_load_power)

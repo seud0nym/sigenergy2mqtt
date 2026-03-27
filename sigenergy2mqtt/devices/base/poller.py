@@ -120,7 +120,7 @@ class SensorGroupPoller:
                 continue
             if sensor.force_publish:
                 if debug_logging:
-                    logging.debug(f"{self._device.name} Sensor Scan Group [{name}] force_publish set on {sensor.__class__.__name__}")
+                    logging.debug(f"{self._device.log_identity} Sensor Scan Group [{name}] force_publish set on {sensor.__class__.__name__}")
                 due_sensors.append(sensor)
             elif next_time <= now:
                 due_sensors.append(sensor)
@@ -175,7 +175,7 @@ class SensorGroupPoller:
                 if exception_code == 0:
                     if debug_read_ahead:
                         logging.debug(
-                            f"{self._device.name} Sensor Scan Group [{name}] pre-read {modbus_sensors.first_address} to {modbus_sensors.last_address} ({modbus_sensors.register_count} registers) took {time.time() - read_ahead_start:.2f}s"
+                            f"{self._device.log_identity} Sensor Scan Group [{name}] pre-read {modbus_sensors.first_address} to {modbus_sensors.last_address} ({modbus_sensors.register_count} registers) took {time.time() - read_ahead_start:.2f}s"
                         )
                 else:
                     match exception_code:
@@ -193,7 +193,7 @@ class SensorGroupPoller:
                         case _:
                             reason = f"UNKNOWN PROBLEM ({exception_code=})"
                     logging.warning(
-                        f"{self._device.name} Sensor Scan Group [{name}] failed to pre-read {modbus_sensors.first_address} to {modbus_sensors.last_address} ({modbus_sensors.register_count} registers) - {reason}"
+                        f"{self._device.log_identity} Sensor Scan Group [{name}] failed to pre-read {modbus_sensors.first_address} to {modbus_sensors.last_address} ({modbus_sensors.register_count} registers) - {reason}"
                     )
         return read_ahead_enabled
 
@@ -219,36 +219,36 @@ class SensorGroupPoller:
         attempt = 0
         delay = INITIAL_RECONNECT_DELAY
 
-        logging.info(f"{self._device.name} attempting to reconnect to Modbus...")
+        logging.info(f"{self._device.log_identity} attempting to reconnect to Modbus...")
 
         while attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
             attempt += 1
             try:
                 modbus_client.close()
-                logging.debug(f"{self._device.name} Modbus reconnection attempt {attempt}/{MAX_RECONNECTION_ATTEMPTS}")
+                logging.debug(f"{self._device.log_identity} Modbus reconnection attempt {attempt}/{MAX_RECONNECTION_ATTEMPTS}")
                 await modbus_client.connect()
                 if modbus_client.connected:
-                    logging.info(f"{self._device.name} successfully reconnected to Modbus on attempt {attempt}")
+                    logging.info(f"{self._device.log_identity} successfully reconnected to Modbus on attempt {attempt}")
                     return True
             except asyncio.CancelledError:
-                logging.debug(f"{self._device.name} Modbus reconnection cancelled")
+                logging.debug(f"{self._device.log_identity} Modbus reconnection cancelled")
                 return False
             except Exception as e:
-                logging.warning(f"{self._device.name} Modbus reconnection attempt {attempt} failed: {repr(e)}")
+                logging.warning(f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {repr(e)}")
 
             # Exponential backoff with cap
             if attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
                 sleep_time = min(delay, MAX_RECONNECT_DELAY)
-                logging.debug(f"{self._device.name} waiting {sleep_time:.1f}s before next reconnection attempt")
+                logging.debug(f"{self._device.log_identity} waiting {sleep_time:.1f}s before next reconnection attempt")
                 try:
                     await asyncio.sleep(sleep_time)
                 except asyncio.CancelledError:
-                    logging.debug(f"{self._device.name} Modbus reconnection backoff cancelled")
+                    logging.debug(f"{self._device.log_identity} Modbus reconnection backoff cancelled")
                     return False
                 delay *= RECONNECT_BACKOFF_MULTIPLIER
 
         if attempt >= MAX_RECONNECTION_ATTEMPTS:
-            logging.error(f"{self._device.name} failed to reconnect to Modbus after {MAX_RECONNECTION_ATTEMPTS} attempts")
+            logging.error(f"{self._device.log_identity} failed to reconnect to Modbus after {MAX_RECONNECTION_ATTEMPTS} attempts")
 
         return False
 
@@ -289,7 +289,7 @@ class SensorGroupPoller:
 
         if debug_logging:
             logging.debug(
-                f"{device.name} Sensor Scan Group [{name}] instantiated (multiple={multiple} first_address={modbus_sensors.first_address} last_address={modbus_sensors.last_address} count={modbus_sensors.register_count} sensors={len(sensors)} daily_sensors={len(daily_sensors)})"
+                f"{device.log_identity} Sensor Scan Group [{name}] instantiated (multiple={multiple} first_address={modbus_sensors.first_address} last_address={modbus_sensors.last_address} count={modbus_sensors.register_count} sensors={len(sensors)} daily_sensors={len(daily_sensors)})"
             )
 
         lock = ModbusLockFactory.get(modbus_client)
@@ -308,7 +308,7 @@ class SensorGroupPoller:
                     if sensor.publishable:
                         next_publish_times[sensor] = now  # Force immediate publish
                         if debug_logging:
-                            logging.debug(f"{device.name} Sensor Scan Group [{name}] day changed, forcing {sensor.__class__.__name__} to publish")
+                            logging.debug(f"{device.log_identity} Sensor Scan Group [{name}] day changed, forcing {sensor.__class__.__name__} to publish")
 
             # Determine which sensors are due for publishing
             due_sensors: list[ReadableSensorMixin] = self._get_sensors_to_publish_now(next_publish_times, now, name, debug_logging)
@@ -330,15 +330,15 @@ class SensorGroupPoller:
 
                 except ModbusException as e:
                     if modbus_client:
-                        logging.debug(f"{device.name} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
+                        logging.debug(f"{device.log_identity} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
                         async with lock.lock(timeout=None):
                             if not modbus_client.connected and device.online:
                                 # Retain lock while attempting to reconnect to prevent multiple concurrent reconnection attempts from other tasks
                                 reconnected = await self._reconnect_modbus_with_backoff(modbus_client)
                                 if not reconnected and device.online:
-                                    logging.error(f"{device.name} failed to reconnect to Modbus, sensor updates paused")
+                                    logging.error(f"{device.log_identity} failed to reconnect to Modbus, sensor updates paused")
                 except Exception as e:
-                    logging.error(f"{device.name} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
+                    logging.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
 
             # Sleep until the next sensor is due (max 1 second to stay responsive to shutdown)
             if next_publish_times:
@@ -355,10 +355,10 @@ class SensorGroupPoller:
                     await task
                 except asyncio.CancelledError:
                     if debug_logging:
-                        logging.debug(f"{device.name} Sensor Scan Group [{name}] sleep interrupted")
+                        logging.debug(f"{device.log_identity} Sensor Scan Group [{name}] sleep interrupted")
                 finally:
                     for sensor in sensors:
                         sensor.sleeper_task = None
 
         if debug_logging:
-            logging.debug(f"{device.name} Sensor Scan Group [{name}] completed - {device.name} flagged as offline ({device.online=})")
+            logging.debug(f"{device.log_identity} Sensor Scan Group [{name}] completed - {device.log_identity} completed - flagged as offline ({device.online=})")

@@ -109,6 +109,25 @@ class TestDebugLoggingBranches:
             assert result == 100.0
             mock_log.debug.assert_called()
 
+    def test_log_identity_discriminator_order_and_members(self):
+        """log_identity should include plant/dev (in that order) and exclude addr."""
+        s = _make_sensor(uid_suffix="log_id_order", debug=False)
+        object.__setattr__(s, "plant_index", 2)
+        object.__setattr__(s, "device_address", 5)
+        s.refresh_log_identity()
+        assert "plant=2,dev=5" in s.log_identity
+        assert "addr=" not in s.log_identity
+
+    def test_log_identity_includes_optional_string_and_phase(self):
+        """log_identity should include optional string/phase discriminators when present."""
+        s = _make_sensor(uid_suffix="log_id_optional", debug=False)
+        object.__setattr__(s, "plant_index", 1)
+        object.__setattr__(s, "device_address", 9)
+        object.__setattr__(s, "string_number", 3)
+        object.__setattr__(s, "phase", "B")
+        s.refresh_log_identity()
+        assert "plant=1,dev=9,string=3,phase=B" in s.log_identity
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. apply_sensor_overrides branches

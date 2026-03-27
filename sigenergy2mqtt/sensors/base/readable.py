@@ -82,7 +82,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             Various exceptions for Modbus errors
         """
         if "modbus_client" not in kwargs:
-            raise ValueError(f"{self.__class__.__name__}: Required argument 'modbus_client' not supplied")
+            raise ValueError(f"{self.log_identity}: Required argument 'modbus_client' not supplied")
 
         modbus_client: ModbusClient = kwargs["modbus_client"]
 
@@ -92,10 +92,10 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         try:
             return await self._perform_modbus_read(modbus_client)
         except asyncio.CancelledError:
-            logging.warning(f"{self.__class__.__name__} Modbus read interrupted")
+            logging.warning(f"{self.log_identity} Modbus read interrupted")
             return False
         except asyncio.TimeoutError:
-            logging.warning(f"{self.__class__.__name__} Modbus read failed to acquire lock within {self.scan_interval}s")
+            logging.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
             return False
         except Exception:
             # Record error in metrics
@@ -107,7 +107,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         actual_interval = None if len(self._states) == 0 else f"{round(time.time() - self._states[-1][0], 2)}s"
 
         logging.debug(
-            f"{self.__class__.__name__} read_{self.input_type}_registers("
+            f"{self.log_identity} read_{self.input_type}_registers("
             f"{self.address}, count={self.count}, device_id={self.device_address}) "
             f"plant_index={self.plant_index} interval={self.scan_interval}s "
             f"actual={actual_interval}"
@@ -130,7 +130,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         elif self.input_type == InputType.INPUT:
             rr = await modbus_client.read_input_registers(self.address, count=self.count, device_id=self.device_address, trace=self.debug_logging)
         else:
-            raise ValueError(f"{self.__class__.__name__}: Unknown input type '{self.input_type}'")
+            raise ValueError(f"{self.log_identity}: Unknown input type '{self.input_type}'")
 
         elapsed = time.monotonic() - start
 
@@ -165,7 +165,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         actual_interval = None if len(self._states) == 0 else f"{round(time.time() - self._states[-1][0], 2)}s"
 
         logging.debug(
-            f"{self.__class__.__name__} read_{self.input_type}_registers("
+            f"{self.log_identity} read_{self.input_type}_registers("
             f"{self.address}, count={self.count}, device_id={self.device_address}) "
             f"plant_index={self.plant_index} interval={self.scan_interval}s "
             f"actual={actual_interval} elapsed={(elapsed / 1000):.2f}ms result={result}"
@@ -271,7 +271,7 @@ class ReservedSensor(ReadOnlySensor):
 
         # Validate class name
         if not self.__class__.__name__.startswith("Reserved"):
-            raise ValueError(f"{self.__class__.__name__}: class name must start with 'Reserved'")
+            raise ValueError(f"{self.log_identity}: class name must start with 'Reserved'")
 
         # Reserved sensors are never published
         self._publishable = False

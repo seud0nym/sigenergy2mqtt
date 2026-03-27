@@ -59,6 +59,12 @@ class HaPublisherMixin(abc.ABC):
         """The primary unique identifier for this device."""
         ...
 
+    @property
+    @abc.abstractmethod
+    def log_identity(self) -> str:
+        """Stable identity used as log prefix."""
+        ...
+
     @abc.abstractmethod
     def get_all_sensors(self, search_children: bool = True) -> dict[str, Sensor]:
         """Return all sensors owned by this device, optionally including child devices."""
@@ -97,7 +103,7 @@ class HaPublisherMixin(abc.ABC):
         """
         if ha_state == "online":
             seconds = uniform(HA_REPUBLISH_MIN_JITTER, HA_REPUBLISH_MAX_JITTER)
-            logging.info(f"{self.name} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
+            logging.info(f"{self.log_identity} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
             try:
                 await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
                 await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
@@ -105,7 +111,7 @@ class HaPublisherMixin(abc.ABC):
                     await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
                 return True
             except asyncio.CancelledError:
-                logging.debug(f"{self.__class__.__name__} on_ha_state_change sleep interrupted")
+                logging.debug(f"{self.log_identity} on_ha_state_change sleep interrupted")
                 return False
         else:
             return False
@@ -138,7 +144,7 @@ class HaPublisherMixin(abc.ABC):
                          or None to clear the retained message).
             qos:         MQTT QoS level. Defaults to 2.
         """
-        logging.info(f"{self.name} publishing {ha_state} availability")
+        logging.info(f"{self.log_identity} publishing {ha_state} availability")
         mqtt_client.publish(f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
         for device in self.children:
             device.publish_availability(mqtt_client, ha_state)
@@ -172,9 +178,9 @@ class HaPublisherMixin(abc.ABC):
         """
         topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean:
-            logging.debug(f"{self.name} cleaning availability")
+            logging.debug(f"{self.log_identity} cleaning availability")
             self.publish_availability(mqtt_client, None, qos=0)  # Availability is always retained
-            logging.debug(f"{self.name} cleaning discovery")
+            logging.debug(f"{self.log_identity} cleaning discovery")
             info = mqtt_client.publish(topic, None, qos=0, retain=True)  # Clear retained messages
         else:
             components: dict[str, Any] = {}
@@ -186,17 +192,17 @@ class HaPublisherMixin(abc.ABC):
                 discovery["o"] = active_config.origin
                 discovery["cmps"] = components
                 discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
-                logging.debug(f"{self.name} publishing discovery")
+                logging.debug(f"{self.log_identity} publishing discovery")
                 if active_config.log_level == logging.DEBUG:
                     discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
                     with discovery_dump.open("w") as f:
                         f.write(discovery_json)
-                    logging.debug(f"{self.name} discovery JSON dumped to {discovery_dump.resolve()}")
+                    logging.debug(f"{self.log_identity} discovery JSON dumped to {discovery_dump.resolve()}")
                 info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
             else:
-                logging.debug(f"{self.name} publishing empty availability (No components found)")
+                logging.debug(f"{self.log_identity} publishing empty availability (No components found)")
                 self.publish_availability(mqtt_client, None, qos=0)
-                logging.debug(f"{self.name} publishing empty discovery (No components found)")
+                logging.debug(f"{self.log_identity} publishing empty discovery (No components found)")
                 info = mqtt_client.publish(topic, None, qos=0, retain=True)  # Clear retained messages
         self.publish_attributes(mqtt_client, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
         for device in self.children:
@@ -220,9 +226,9 @@ class HaPublisherMixin(abc.ABC):
                 await asyncio.sleep(1)
                 wait -= 1
                 if wait <= 0:
-                    logging.info(f"{self.name} re-publishing discovery")
+                    logging.info(f"{self.log_identity} re-publishing discovery")
                     self.publish_discovery(mqtt_client, clean=False)
                     wait = active_config.home_assistant.republish_discovery_interval
             except asyncio.CancelledError:
-                logging.debug(f"{self.__class__.__name__} republish_discovery sleep interrupted")
+                logging.debug(f"{self.log_identity} republish_discovery sleep interrupted")
                 break

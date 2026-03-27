@@ -35,12 +35,12 @@ class EnphaseSensor(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.__class__.__name__}.set_source_values from {sensor.__class__.__name__}")
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.__class__.__name__}")
             return False
         value = values[-1][1]
         if value < 0:
             if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} value is negative ({value}), setting to 0.0")
+                logging.info(f"{self.log_identity} value is negative ({value}), setting to 0.0")
             value = 0.0
         self.set_latest_state(value)
         return True
@@ -92,7 +92,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
         state_is = float(solar["activePower"])
         if state_is < 0:
             if self.debug_logging:
-                logging.info(f"{self.__class__.__name__} activePower negative ({state_is}), setting to 0.0")
+                logging.info(f"{self.log_identity} activePower negative ({state_is}), setting to 0.0")
             state_is = 0.0
         self.set_state(state_is)
         for sensor in self.derived_sensors.values():
@@ -124,38 +124,38 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
         url = f"https://{self._host}/ivp/meters/readings"
         headers = {"Authorization": f"Bearer {token}"}
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Fetching data for Envoy device {self._serial_number} from {url}")
+            logging.debug(f"{self.log_identity} Fetching data for Envoy device {self._serial_number} from {url}")
         try:
             with requests.get(url, timeout=self.scan_interval, verify=False, headers=headers) as response:
                 if response.status_code == 401:
-                    logging.warning(f"{self.__class__.__name__} Authentication failed: Generating new token")
+                    logging.warning(f"{self.log_identity} Authentication failed: Generating new token")
                     return await self._update_internal_state(reauthenticate=True)
                 elif response.status_code != 200:
-                    logging.error(f"{self.__class__.__name__} Failed to connect to {url}: Response={response}")
-                    raise Exception(f"{self.__class__.__name__} Failed to connect to {url}: Response={response}")
+                    logging.error(f"{self.log_identity} Failed to connect to {url}: Response={response}")
+                    raise Exception(f"{self.log_identity} Failed to connect to {url}: Response={response}")
                 else:
                     elapsed_time = response.elapsed.total_seconds()
                     if self.debug_logging:
-                        logging.debug(f"{self.__class__.__name__} Response from {url} took {elapsed_time:.2f} seconds")
+                        logging.debug(f"{self.log_identity} Response from {url} took {elapsed_time:.2f} seconds")
                     try:
                         reading = response.json()
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Response from {url}: JSON={json.dumps(reading)}")
+                            logging.debug(f"{self.log_identity} Response from {url}: JSON={json.dumps(reading)}")
                         return self._process_meter_reading(reading)
                     except Exception as e:
                         if self.debug_logging:
-                            logging.debug(f"{self.__class__.__name__} Unhandled error when processing JSON from {url}: {e}")
+                            logging.debug(f"{self.log_identity} Unhandled error when processing JSON from {url}: {e}")
                         raise
         except requests.exceptions.RequestException as e:
-            logging.error(f"{self.__class__.__name__} Unhandled exception fetching data from {url} : {e}")
+            logging.error(f"{self.log_identity} Unhandled exception fetching data from {url} : {e}")
             if self._failover_initiated or (self._failures + 1) < self._max_failures:
                 raise
             else:
                 if "TotalPVPower" in self.derived_sensors:
-                    logging.info(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
+                    logging.info(f"{self.log_identity} Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
                     self._failover_initiated = cast(SubstituteMixin, self.derived_sensors["TotalPVPower"]).failover(self)
                 else:
-                    logging.warning(f"{self.__class__.__name__} Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
+                    logging.warning(f"{self.log_identity} Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
                     return True
         return False
 

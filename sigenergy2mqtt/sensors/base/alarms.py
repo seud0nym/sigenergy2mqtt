@@ -135,7 +135,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             Normalized alarm code
         """
         if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
-            logging.warning(f"{self.__class__.__name__} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
+            logging.warning(f"{self.log_identity} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
             return int(value[1])
 
         return int(value)
@@ -163,9 +163,9 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                     else:
                         unknown = _t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value})", self.debug_logging).format(bit=bit_position, value=original_value)
                         active_alarms.append(unknown)
-                        logging.warning(f"{self.__class__.__name__} Unknown {self.alarm_type} alarm bit {bit_position} set in value {original_value}")
+                        logging.warning(f"{self.log_identity} Unknown {self.alarm_type} alarm bit {bit_position} set in value {original_value}")
         except TypeError as e:
-            logging.warning(f"{self.__class__.__name__} Failed to decode {self.alarm_type} alarm bits from '{original_value}': {e}")
+            logging.warning(f"{self.log_identity} Failed to decode {self.alarm_type} alarm bits from '{original_value}': {e}")
 
         return active_alarms
 

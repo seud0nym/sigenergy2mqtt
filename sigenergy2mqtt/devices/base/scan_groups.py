@@ -193,6 +193,6 @@ def create_sensor_scan_groups(device: "Device") -> dict[str, list[ReadableSensor
 
     sensors_count = len([s.unique_id for lst in combined_groups.values() for s in lst])
     groups_count = len(combined_groups)
-    logging.info(f"{device.name} created {groups_count} Sensor Scan Group{'s' if groups_count != 1 else ''} containing {sensors_count} sensor{'s' if sensors_count != 1 else ''}")
+    logging.info(f"{device.log_identity} created {groups_count} Sensor Scan Group{'s' if groups_count != 1 else ''} containing {sensors_count} sensor{'s' if sensors_count != 1 else ''}")
 
     return combined_groups

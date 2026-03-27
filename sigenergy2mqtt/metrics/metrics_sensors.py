@@ -77,7 +77,7 @@ class MetricsSensor(ReadableSensorMixin):
         self[DiscoveryKeys.STATE_TOPIC] = f"{base}/{suffix}"
         self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> state_topic={self[DiscoveryKeys.STATE_TOPIC]})")
+            logging.debug(f"{self.log_identity} Configured MQTT topics >>> state_topic={self[DiscoveryKeys.STATE_TOPIC]})")
         return base
 
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
@@ -636,7 +636,7 @@ class ResetMetrics(WriteOnlySensor):
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/{suffix}/set"
         self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Configured MQTT topics >>> command_topic={self[DiscoveryKeys.COMMAND_TOPIC]})")
+            logging.debug(f"{self.log_identity} Configured MQTT topics >>> command_topic={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
@@ -660,7 +660,7 @@ class ResetMetrics(WriteOnlySensor):
         components: dict[str, dict[str, Any]] = {self.unique_id: config}
 
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Discovered components={components}")
+            logging.debug(f"{self.log_identity} Discovered components={components}")
 
         return components
 

@@ -101,6 +101,10 @@ class TestInverterDerived:
         c = PVCurrentSensor(0, 1, 31001, 1, Protocol.V1_8)
 
         p = PVStringPower(0, 1, 1, v, c)
+        assert "plant=0,dev=1,string=1" in p.log_identity
+        assert "plant=n/a" not in p.log_identity
+        assert p.amperes.name.startswith(p.log_identity)
+        assert p.volts.name.startswith(p.log_identity)
 
         # Set some values
         v.set_state(4000)  # 400.0V (gain=10)

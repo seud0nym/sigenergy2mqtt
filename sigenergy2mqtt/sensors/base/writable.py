@@ -125,7 +125,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             components[f"{self.unique_id}_{action}"] = config
 
         if self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} Discovered components={components}")
+            logging.debug(f"{self.log_identity} Discovered components={components}")
 
         return components
 
@@ -163,7 +163,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             True if valid
         """
         if raw_value not in (self._values["off"], self._values["on"]):
-            logging.error(f"{self.__class__.__name__} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
+            logging.error(f"{self.log_identity} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
             return False
         return True
 
@@ -476,7 +476,7 @@ class NumericSensor(ReadWriteSensor):
                 value = max(max_range) if not raw else max(max_range)
 
         if value != processed and self.debug_logging:
-            logging.debug(f"{self.__class__.__name__} value={state} adjusted to {value}")
+            logging.debug(f"{self.log_identity} value={state} adjusted to {value}")
 
         # Re-apply gain to revert to back to raw value if necessary
         if raw and self.gain and self.gain != 1:
@@ -498,7 +498,7 @@ class NumericSensor(ReadWriteSensor):
             True if successfully set
         """
         if value is None:
-            logging.warning(f"{self.__class__.__name__} Ignored attempt to set value to *None*")
+            logging.warning(f"{self.log_identity} Ignored attempt to set value to *None*")
             return False
 
         try:
@@ -506,7 +506,7 @@ class NumericSensor(ReadWriteSensor):
             if self.gain != 1:
                 state = state * self.gain  # Convert to raw value
         except Exception as e:
-            logging.warning(f"{self.__class__.__name__} Attempt to set value to '{value}' FAILED: {repr(e)}")
+            logging.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {repr(e)}")
             return False
 
         return await super().set_value(modbus_client, mqtt_client, state, source, handler)
@@ -566,7 +566,7 @@ class ThreePhaseAdjustmentTargetValue(NumericSensor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if "output_type" not in kwargs:
-            raise ValueError(f"{self.__class__.__name__}: output_type parameter is required")
+            raise ValueError(f"{self.log_identity}: output_type parameter is required")
         if kwargs["output_type"] != Constants.THREE_PHASE_OUTPUT_TYPE:  # L1/L2/L3/N
             self.publishable = False
 
@@ -762,7 +762,7 @@ class SwitchSensor(ReadWriteSensor):
         try:
             return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
         except ValueError as e:
-            logging.error(f"{self.__class__.__name__} value_is_valid check of value '{value}' FAILED: {repr(e)}")
+            logging.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {repr(e)}")
             raise
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
@@ -776,7 +776,7 @@ class SwitchSensor(ReadWriteSensor):
             True if 0 or 1
         """
         if raw_value not in (self[DiscoveryKeys.PAYLOAD_OFF], self[DiscoveryKeys.PAYLOAD_ON]):
-            logging.error(f"{self.__class__.__name__} Failed to write value '{raw_value}': Must be either '{self[DiscoveryKeys.PAYLOAD_OFF]}' or '{self[DiscoveryKeys.PAYLOAD_ON]}'")
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': Must be either '{self[DiscoveryKeys.PAYLOAD_OFF]}' or '{self[DiscoveryKeys.PAYLOAD_ON]}'")
             return False
         return True
 
