@@ -161,7 +161,7 @@
 ### Changed
 - LVRT Negative Sequence Reactive Power Compensation Factor max updated (#80).  
 - Upgraded psutil 7.1.3→7.2.0.  
-- Removed deprecated CLI options/env vars.
+- Removed deprecated CLI options/env variables.
 
 ---
 
