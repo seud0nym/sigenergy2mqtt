@@ -42,10 +42,10 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             **kwargs: Additional arguments (ignored)
 
         Returns:
-            Current state value or 0 if no state available
+            Current state value or None if no state available
         """
         if len(self._states) == 0:
-            return 0
+            return None
 
         state = self._states[-1][1]
         return state if isinstance(state, str) else self._apply_gain_and_precision(state, raw)
