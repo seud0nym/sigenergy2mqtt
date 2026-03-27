@@ -584,6 +584,7 @@ async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatc
     device = MagicMock()
     device.device_address = 247
     device.name = "Device"
+    device.log_identity = "Device"
     device.__format__ = lambda s, f: "Device"
 
     class SensorObj(dict):
@@ -593,6 +594,7 @@ async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatc
             self.input_type = InputType.HOLDING
             self.count = 1
             self.name = "Sensor"
+            self.log_identity = "Sensor"
             self.state_topic = "topic"
             self["platform"] = "sensor"
             self["object_id"] = "obj"
@@ -644,6 +646,7 @@ async def test_illegal_data_address_unknown_input_type(clean_config, monkeypatch
     mock_device = MagicMock()
     mock_device.device_address = 247
     mock_device.name = "Device"
+    mock_device.log_identity = "Device"
     mock_device.__format__ = lambda x, f: "Device"
 
     class MockSensor(dict):
@@ -653,6 +656,7 @@ async def test_illegal_data_address_unknown_input_type(clean_config, monkeypatch
             self.input_type = "INVALID_TYPE"
             self.count = 1
             self.name = "BadSensor"
+            self.log_identity = "BadSensor"
             self.state_topic = "topic"
             self["platform"] = "sensor"
             self["object_id"] = "obj"

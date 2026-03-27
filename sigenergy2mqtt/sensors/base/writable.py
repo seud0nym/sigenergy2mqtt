@@ -528,33 +528,33 @@ class NumericSensor(ReadWriteSensor):
             if isinstance(self.get(DiscoveryKeys.MIN), float):
                 min_val = cast(float, self[DiscoveryKeys.MIN])
                 if value < min_val:
-                    logging.error(f"{self.name} invalid value '{value}' (raw={raw_value}): Less than minimum of {min_val}")
+                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Less than minimum of {min_val}")
                     return False
 
             # Check simple maximum
             if isinstance(self.get(DiscoveryKeys.MAX), float):
                 max_val = cast(float, self[DiscoveryKeys.MAX])
                 if value > max_val:
-                    logging.error(f"{self.name} invalid value '{value}' (raw={raw_value}): Greater than maximum of {max_val}")
+                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Greater than maximum of {max_val}")
                     return False
 
             # Check negative range
             if isinstance(self.get(DiscoveryKeys.MIN), tuple) and value < 0:
                 min_range = cast(tuple[float, ...], self[DiscoveryKeys.MIN])
                 if not (min(min_range) <= value <= max(min_range)):
-                    logging.error(f"{self.name} invalid value '{value}' (raw={raw_value}): Not in range {min_range}")
+                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {min_range}")
                     return False
 
             # Check positive range
             if isinstance(self.get(DiscoveryKeys.MAX), tuple) and value > 0:
                 max_range = cast(tuple[float, ...], self[DiscoveryKeys.MAX])
                 if not (min(max_range) <= value <= max(max_range)):
-                    logging.error(f"{self.name} invalid value '{value}' (raw={raw_value}): Not in range {max_range}")
+                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {max_range}")
                     return False
 
             return True
         except ValueError:
-            logging.error(f"{self.name} invalid value '{raw_value}': Not a number")
+            logging.error(f"{self.log_identity} invalid value '{raw_value}': Not a number")
             return False
 
 
@@ -670,7 +670,7 @@ class SelectSensor(ReadWriteSensor):
             index = self._get_option_index(value)
         except ValueError:
             self.force_publish = True
-            logging.error(f"{self.name} invalid value '{value}': Not a valid option or index")
+            logging.error(f"{self.log_identity} invalid value '{value}': Not a valid option or index")
             return False
 
         return await super().set_value(modbus_client, mqtt_client, index, source, handler)
@@ -689,7 +689,7 @@ class SelectSensor(ReadWriteSensor):
             self._get_option_index(raw_value)
             return True
         except ValueError:
-            logging.error(f"{self.name} invalid value '{raw_value}': Not a valid option or index")
+            logging.error(f"{self.log_identity} invalid value '{raw_value}': Not a valid option or index")
             return False
 
 

@@ -54,10 +54,7 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
-            self.logger.debug(
-                f"{self.name} detect_homeassistant_db: base={config['base']} db={config['db']} "
-                f"token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
-            )
+            self.logger.debug(f"{self.log_identity} detect_homeassistant_db: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}")
 
             # Try v2 API first (if token available)
             if config["token"]:
@@ -68,9 +65,7 @@ class HassHistorySync(InfluxBase):
                     self.logger.debug(f"{self.log_identity} v2 bucket probe status={r.status_code} url={url}")
                     if r.status_code == 200:
                         buckets = r.json()
-                        self.logger.debug(
-                            f"{self.name} v2 bucket probe payload keys={list(buckets.keys()) if isinstance(buckets, dict) else type(buckets).__name__}"
-                        )
+                        self.logger.debug(f"{self.log_identity} v2 bucket probe payload keys={list(buckets.keys()) if isinstance(buckets, dict) else type(buckets).__name__}")
                         if isinstance(buckets, dict) and "buckets" in buckets:
                             for bucket in buckets["buckets"]:
                                 if bucket.get("name") == "homeassistant":
@@ -127,9 +122,7 @@ class HassHistorySync(InfluxBase):
                 self.logger.debug(f"{self.log_identity} v1 direct probe db=homeassistant query=SHOW MEASUREMENTS LIMIT 1")
                 success, result = await self.query_v1(config["base"], "homeassistant", config["auth"], "SHOW MEASUREMENTS LIMIT 1", timeout=5)
                 if not success or not isinstance(result, dict):
-                    self.logger.debug(
-                        f"{self.name} v1 direct probe failed success={success} result_type={type(result).__name__}"
-                    )
+                    self.logger.debug(f"{self.log_identity} v1 direct probe failed success={success} result_type={type(result).__name__}")
                     return False
                 query_results = result.get("results")
                 if not isinstance(query_results, list) or not query_results:
@@ -157,9 +150,7 @@ class HassHistorySync(InfluxBase):
                     first_series = series[0] if isinstance(series[0], dict) else {}
                     series_name = first_series.get("name")
                     if series_name != "measurements":
-                        self.logger.debug(
-                            f"{self.name} v1 direct probe series name mismatch expected=measurements actual={series_name} payload={str(first_result)[:300]}"
-                        )
+                        self.logger.debug(f"{self.log_identity} v1 direct probe series name mismatch expected=measurements actual={series_name} payload={str(first_result)[:300]}")
                         return False
                 elif isinstance(first_result, dict) and "statement_id" in first_result:
                     pass
@@ -208,10 +199,7 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
-            self.logger.debug(
-                f"{self.name} detect_homeassistant_db: base={config['base']} db={config['db']} "
-                f"token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
-            )
+            self.logger.debug(f"{self.log_identity} detect_homeassistant_db: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}")
 
             # Try v2 API (Flux query)
             if config["token"]:
@@ -470,10 +458,7 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
-            self.logger.debug(
-                f"{self.name} detect_homeassistant_db: base={config['base']} db={config['db']} "
-                f"token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
-            )
+            self.logger.debug(f"{self.log_identity} detect_homeassistant_db: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}")
 
             # Try v2 API first
             if config["token"]:

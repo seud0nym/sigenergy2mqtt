@@ -303,7 +303,7 @@ class InfluxBase(Device):
             if self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
                 return
 
-        raise RuntimeError(f"{self.name} Initialization failed: could not determine writable endpoint or create database/bucket")
+        raise RuntimeError(f"{self.log_identity} Initialization failed: could not determine writable endpoint or create database/bucket")
 
     async def async_init(self) -> bool:
         """Asynchronously initialise the InfluxDB connection.

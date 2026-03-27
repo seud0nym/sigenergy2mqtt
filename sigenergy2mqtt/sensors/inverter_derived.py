@@ -14,6 +14,9 @@ from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltage
 
 class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        self.device_address = device_address
         super().__init__(
             name="Battery Charging Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_charging_power",
@@ -43,6 +46,9 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
 
 class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        self.device_address = device_address
         super().__init__(
             name="Battery Discharging Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_battery_discharging_power",
@@ -88,6 +94,10 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             self.timestamp = values[-1][0]
 
     def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        self.device_address = device_address
+        self.string_number = string_number
         super().__init__(
             name="Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_power",
@@ -100,12 +110,8 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             gain=None,
             precision=0,  # Intentional rounding to nearest watt
         )
-        self.plant_index = plant_index
-        self.device_address = device_address
-        self.string_number = string_number
-        self.refresh_log_identity()
-        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity} Amperes", PVCurrentSensor.raw2amps)
-        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity} Volts", PVVoltageSensor.raw2volts)
+        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=amperes]", PVCurrentSensor.raw2amps)
+        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=volts]", PVVoltageSensor.raw2volts)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -146,13 +152,16 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
 
 class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, string_number: int, source: PVStringPower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        self.device_address = device_address
+        self.string_number = string_number
         super().__init__(
             name="Lifetime Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_lifetime_energy",
             source=source,
         )
-        self.string_number = string_number
         self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -163,13 +172,16 @@ class PVStringLifetimeEnergy(EnergyLifetimeAccumulationSensor, HybridInverter, P
 
 class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, device_address: int, string_number: int, source: PVStringLifetimeEnergy):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        self.device_address = device_address
+        self.string_number = string_number
         super().__init__(
             name="Daily Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_pv{string_number}_daily_energy",
             source=source,
         )
-        self.string_number = string_number
         self.protocol_version = source.protocol_version
 
     def get_attributes(self) -> dict[str, float | int | str]:

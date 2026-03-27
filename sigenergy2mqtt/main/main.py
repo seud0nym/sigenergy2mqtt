@@ -332,7 +332,11 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(
         )
         if not (sensor and sensor.publishable):
             continue
-        id = f"{device.name} - {sensor.name} [{sensor['platform']}.{sensor['object_id']}]" if active_config.home_assistant.enabled else f"{device.name} - {sensor.name} [{sensor.state_topic}]"
+        id = (
+            f"{device.log_identity} - {sensor.log_identity} [{sensor['platform']}.{sensor['object_id']}]"
+            if active_config.home_assistant.enabled
+            else f"{device.log_identity} - {sensor.log_identity} [{sensor.state_topic}]"
+        )
         if isinstance(sensor, ModbusSensorMixin):
             try:
                 rr = await read_registers(modbus_client, register, sensor.count, device_id, sensor.input_type)

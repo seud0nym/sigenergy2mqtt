@@ -13,6 +13,7 @@ class DummyReadable(ReadableSensorMixin):
     def __init__(self, *, name: str, scan_interval: int, state_topic: str, publishable: bool = True):
         # Do not call base class __init__ to avoid heavy Sensor setup
         self.name = name
+        self._log_identity = name
         self.scan_interval = scan_interval
         self["state_topic"] = state_topic
         self._publishable = publishable
@@ -21,6 +22,7 @@ class DummyReadable(ReadableSensorMixin):
 class DummyDevice:
     def __init__(self, name: str, sensors: dict):
         self.name = name
+        self.log_identity = name
         self._sensors = sensors
 
     def get_all_sensors(self):

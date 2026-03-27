@@ -73,6 +73,7 @@ class DummyReadable(ReadableSensorMixin, Sensor):
 class DummyWritable(WritableSensorMixin, Sensor):
     def __init__(self, unique_id, command_topic="cmd"):
         self.unique_id = unique_id
+        self._log_identity = unique_id
         self["unique_id"] = unique_id
         self["command_topic"] = command_topic
         object.__setattr__(self, "unique_id", unique_id)
@@ -131,6 +132,7 @@ class DummyWriteOnly(WriteOnlySensor):
 class DummyObservable(ObservableMixin, ReadableSensorMixin, Sensor):
     def __init__(self, unique_id, topic):
         self.unique_id = unique_id
+        self._log_identity = unique_id
         self["unique_id"] = unique_id
         self.topic = topic
         object.__setattr__(self, "unique_id", unique_id)

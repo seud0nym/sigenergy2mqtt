@@ -76,15 +76,15 @@ async def read_and_publish_device_sensors(
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=active_config.clean)
 
             if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
-                logging.info(f"{device.name} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
+                logging.info(f"{device.log_identity} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
             else:
-                logging.debug(f"{device.name} registering MQTT subscriptions")
+                logging.debug(f"{device.log_identity} registering MQTT subscriptions")
                 device.subscribe(mqtt_client, mqtt_handler)
 
                 if active_config.home_assistant.enabled:
                     device.publish_availability(mqtt_client, "online")
 
-                logging.debug(f"{device.name} scheduling tasks")
+                logging.debug(f"{device.log_identity} scheduling tasks")
                 tasks.extend(device.schedule(modbus_client, mqtt_client))
 
         if tasks:
@@ -98,7 +98,7 @@ async def read_and_publish_device_sensors(
                 try:
                     device.on_commencement(modbus_client, mqtt_client)
                 except Exception:
-                    logging.exception(f"{device.name} on commencement failed")
+                    logging.exception(f"{device.log_identity} on commencement failed")
 
             try:
                 results = await gathered_tasks
@@ -120,7 +120,7 @@ async def read_and_publish_device_sensors(
                 try:
                     device.on_completion(modbus_client, mqtt_client)
                 except Exception:
-                    logging.exception(f"{device.name} on completion failed")
+                    logging.exception(f"{device.log_identity} on completion failed")
                 if active_config.home_assistant.enabled:
                     device.publish_availability(mqtt_client, "offline")
 

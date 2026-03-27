@@ -189,10 +189,10 @@ class MonitorService(Device):
             return
 
         for d in self._devices:
-            device = d.name
+            device = d.log_identity
             sensors = 0
             for s in [sensor for sensor in d.get_all_sensors().values() if isinstance(sensor, ReadableSensorMixin) and sensor.publishable]:
-                sensor = s.name
+                sensor = s.log_identity
                 scan_interval = s.scan_interval
                 topic = s.state_topic
                 if topic in self._topics:
@@ -202,5 +202,5 @@ class MonitorService(Device):
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:
-                logging.info(f"{self.log_identity} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for '{d.name}'")
+                logging.info(f"{self.log_identity} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for {d.log_identity}")
         logging.info(f"{self.log_identity} Monitoring {len(self._topics)} topics")

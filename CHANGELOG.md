@@ -7,6 +7,7 @@
 - Dockerfile updated to use Python 3.14.3-slim and no-cache pip install
 - Docker build test added to build script
 - Upgraded `requests` from 2.32.5 to 2.33.0
+- Standardised logging prefixes across devices and sensors using new log_identity field
 
 ### Fixed
 

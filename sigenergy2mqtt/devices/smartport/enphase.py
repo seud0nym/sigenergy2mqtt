@@ -439,9 +439,9 @@ if __name__ == "__main__":
         sensor = smartport.get_sensor(pv_power_unique_id)
         if sensor:
             sensor.debug_logging = True
-            print(f"{sensor.name} =  {await sensor.get_state()}")
+            print(f"{sensor.log_identity} =  {await sensor.get_state()}")
             for derived in sensor.derived_sensors.values():
-                print(f"{derived.name} =  {await derived.get_state()}")
+                print(f"{derived.log_identity} =  {await derived.get_state()}")
         else:
             print(f"Sensor '{pv_power_unique_id}' not found!!!")
 

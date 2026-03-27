@@ -964,7 +964,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             mqtt_client: MQTT client for publishing
         """
         if self.debug_logging:
-            logging.debug(f"{self.name} cleaning attributes")
+            logging.debug(f"{self.log_identity} cleaning attributes")
 
         self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=0, retain=True)
 

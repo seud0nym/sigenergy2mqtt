@@ -42,6 +42,7 @@ class DummyMQTTHandler:
 class DummyDevice:
     def __init__(self, name="dev"):
         self.name = name
+        self.log_identity = name
         self.sensors = {}
         self._subscribed = False
         self._availability = []

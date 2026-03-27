@@ -320,7 +320,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             device.via_device = self.unique_id
             self.children.append(device)
         else:
-            logging.debug(f"{self.log_identity} cannot add child device {device.name} - No publishable sensors defined")
+            logging.debug(f"{self.log_identity} cannot add child device {device.log_identity} - No publishable sensors defined")
 
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         """Register a sensor in all_sensors after applying configuration and MQTT setup.
@@ -562,17 +562,17 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
                 try:
                     result = mqtt_handler.register(mqtt_client, sensor.command_topic, sensor.set_value)
                     if sensor.debug_logging:
-                        logging.debug(f"Sensor {sensor.name} subscribed to topic {sensor.command_topic} for writing ({result=})")
+                        logging.debug(f"{sensor.log_identity} subscribed to topic {sensor.command_topic} for writing ({result=})")
                 except Exception as e:
-                    logging.error(f"Sensor {sensor.name} failed to subscribe to topic {sensor.command_topic}: {repr(e)}")
+                    logging.error(f"{sensor.log_identity} failed to subscribe to topic {sensor.command_topic}: {repr(e)}")
             if isinstance(sensor, ObservableMixin):
                 for topic in sensor.observable_topics():
                     try:
                         result = mqtt_handler.register(mqtt_client, topic, sensor.notify)
                         if sensor.debug_logging:
-                            logging.debug(f"Sensor {sensor.name} subscribed to topic {topic} for notification ({result=})")
+                            logging.debug(f"{sensor.log_identity} subscribed to topic {topic} for notification ({result=})")
                     except Exception as e:
-                        logging.error(f"Sensor {sensor.name} failed to subscribe to topic {topic}: {repr(e)}")
+                        logging.error(f"{sensor.log_identity} failed to subscribe to topic {topic}: {repr(e)}")
         for device in self.children:
             device.subscribe(mqtt_client, mqtt_handler)
 

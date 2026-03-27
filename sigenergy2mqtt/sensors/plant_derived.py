@@ -34,6 +34,8 @@ from .plant_read_only import (
 
 class BatteryChargingPower(DerivedSensor):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Battery Charging Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_charging_power",
@@ -66,6 +68,8 @@ class BatteryChargingPower(DerivedSensor):
 
 class BatteryDischargingPower(DerivedSensor):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Battery Discharging Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_discharging_power",
@@ -98,6 +102,8 @@ class BatteryDischargingPower(DerivedSensor):
 
 class GridSensorExportPower(DerivedSensor):
     def __init__(self, plant_index: int, active_power: GridSensorActivePower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Export Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_export_power",
@@ -129,6 +135,8 @@ class GridSensorExportPower(DerivedSensor):
 
 class GridSensorImportPower(DerivedSensor):
     def __init__(self, plant_index: int, active_power: GridSensorActivePower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Import Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_import_power",
@@ -176,6 +184,8 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             return f"{self.state} ({self.type}/{'enabled' if self.enabled else 'disabled'})"
 
     def __init__(self, plant_index: int, *sensors: Sensor):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Total PV Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_total_pv_power",
@@ -188,7 +198,6 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             gain=None,
             precision=2,
         )
-        self.plant_index = plant_index
         self._sources: dict[str, TotalPVPower.Value] = dict()
         self._topics: set[str] = set()
         self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)  # Register sensor sources
@@ -331,6 +340,8 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                 return "Never"
 
     def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Consumed Power",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_consumed_power",
@@ -343,7 +354,6 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
             gain=None,
             precision=2,
         )
-        self.plant_index = plant_index
         self.method = method
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
@@ -453,6 +463,8 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
 
 class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantTotalExportedEnergy):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Daily Exported Energy",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_export_energy",
@@ -469,6 +481,8 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
 
 class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantTotalImportedEnergy):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Daily Imported Energy",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_daily_import_energy",
@@ -485,6 +499,8 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
 
 class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
     def __init__(self, plant_index: int):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Lifetime Total PV Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
@@ -539,6 +555,8 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
 
 class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: TotalLifetimePVEnergy):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Daily Total PV Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_total_daily_pv_energy",
@@ -555,6 +573,8 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
 
 class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: PlantPVTotalGeneration):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Daily PV Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_pv_energy",
@@ -571,6 +591,8 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
 
 class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: ESSTotalChargedEnergy):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Daily Charge Energy",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_charge_energy",
@@ -587,6 +609,8 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
 
 class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
     def __init__(self, plant_index: int, source: ESSTotalDischargedEnergy):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
         super().__init__(
             name="Daily Discharge Energy",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_discharge_energy",

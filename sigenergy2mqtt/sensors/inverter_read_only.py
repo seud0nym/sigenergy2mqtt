@@ -122,7 +122,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
         if value is not None:
             device = getattr(self, "parent_device", None)
             if device and device["hw"] != value:
-                logging.info(f"{device.name} firmware change detected: {device['hw']} -> {value} (device_address={device.device_address})")
+                logging.info(f"{device.log_identity} firmware change detected: {device['hw']} -> {value}")
                 try:
                     previous_version = FirmwareVersion(device["hw"])
                     current_version = FirmwareVersion(cast(str, value))
