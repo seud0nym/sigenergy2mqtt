@@ -1653,6 +1653,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
         self.string_number = string_number
         self.refresh_log_identity()
         self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = 50 * self.raw2amps
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1681,6 +1682,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
         self.string_number = string_number
         self.refresh_log_identity()
         self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = 1000 * self.raw2volts
 
 
 class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):

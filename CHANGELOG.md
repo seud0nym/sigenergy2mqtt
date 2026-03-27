@@ -8,6 +8,7 @@
 - Docker build test added to build script
 - Upgraded `requests` from 2.32.5 to 2.33.0
 - Standardised logging prefixes across devices and sensors using new log_identity field
+- Set sanity check min/max values for PV string current (0-50A) and voltage (0-1000V) sensors
 
 ### Fixed
 
