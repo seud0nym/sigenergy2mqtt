@@ -412,7 +412,7 @@ class TestTotalPVPowerCoverage:
         ms = MagicMock(spec=Sensor)
         ms.unique_id = "ms_uid"
         assert sensor.set_source_values(ms, []) is False
-        assert "not PVPower instance" in caplog.text
+        assert "not PVPowerSensor instance" in caplog.text
 
         # Not registered
         s1 = MagicMock(spec=PVPowerSensor)

@@ -741,7 +741,9 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
         sensor = EnphaseCurrent(0, "SN123")
 
         class WrongSensor:
-            pass
+            @property
+            def log_identity(self):
+                return "WrongSensor"
 
         result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"current": 10}))
         assert result is False
@@ -751,7 +753,9 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
         sensor = EnphaseFrequency(0, "SN123")
 
         class WrongSensor:
-            pass
+            @property
+            def log_identity(self):
+                return "WrongSensor"
 
         result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"freq": 50}))
         assert result is False
@@ -761,7 +765,9 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
         sensor = EnphasePowerFactor(0, "SN123")
 
         class WrongSensor:
-            pass
+            @property
+            def log_identity(self):
+                return "WrongSensor"
 
         result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"pwrFactor": 0.9}))
         assert result is False
@@ -771,7 +777,9 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
         sensor = EnphaseReactivePower(0, "SN123")
 
         class WrongSensor:
-            pass
+            @property
+            def log_identity(self):
+                return "WrongSensor"
 
         result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"reactivePower": 100}))
         assert result is False
@@ -781,7 +789,9 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
         sensor = EnphaseVoltage(0, "SN123")
 
         class WrongSensor:
-            pass
+            @property
+            def log_identity(self):
+                return "WrongSensor"
 
         result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"voltage": 240}))
         assert result is False

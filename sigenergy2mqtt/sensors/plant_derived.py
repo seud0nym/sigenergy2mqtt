@@ -303,7 +303,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
-            logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from {sensor.log_identity} - not PVPower instance")
+            logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from {sensor.log_identity} - not PVPowerSensor instance")
             return False
         elif source not in self._sources:
             logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")

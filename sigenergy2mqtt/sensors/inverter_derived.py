@@ -113,6 +113,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=amperes]", PVCurrentSensor.raw2amps)
         self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=volts]", PVVoltageSensor.raw2volts)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
+        self.sanity_check.min_raw = 0
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()

@@ -1652,6 +1652,7 @@ class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self.string_number = string_number
         self.refresh_log_identity()
+        self.sanity_check.min_raw = 0
 
 
 class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1679,6 +1680,7 @@ class PVVoltageSensor(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self.string_number = string_number
         self.refresh_log_identity()
+        self.sanity_check.min_raw = 0
 
 
 class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1704,6 +1706,7 @@ class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
+        self.sanity_check.min_raw = 0
 
 
 class InsulationResistance(ReadOnlySensor, HybridInverter, PVInverter):

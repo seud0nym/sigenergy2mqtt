@@ -617,6 +617,7 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["enabled_by_default"] = True
+        self.sanity_check.min_raw = 0
 
 
 class BatteryPower(ReadOnlySensor, HybridInverter):
@@ -1323,6 +1324,7 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
             precision=2,
             protocol_version=Protocol.V2_7,
         )
+        self.sanity_check.min_raw = 0
 
 
 class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):

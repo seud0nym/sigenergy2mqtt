@@ -35,7 +35,8 @@ class EnphaseSensor(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, EnphasePVPower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            source_id = getattr(sensor, "log_identity", str(sensor))
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {source_id}")
             return False
         value = values[-1][1]
         if value < 0:
