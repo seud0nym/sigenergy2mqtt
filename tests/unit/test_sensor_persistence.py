@@ -120,6 +120,29 @@ async def test_accumulation_sensor_persistence(mock_config, tmp_path):
     assert new_sensor._current_total == 1000.0
 
 
+def test_accumulation_sensor_init_load_logs_with_source_identity(mock_config, tmp_path, caplog):
+    source = MockSource("sigen_source_log_identity")
+    Path(tmp_path, "sigen_accum_log_identity.state").write_text("42.0")
+
+    with caplog.at_level(logging.DEBUG):
+        sensor = ResettableAccumulationSensor(
+            name="Accumulated",
+            unique_id="sigen_accum_log_identity",
+            object_id="sigen_accum_log_identity",
+            source=source,
+            data_type=ModbusDataType.UINT16,
+            unit="Wh",
+            device_class="energy",
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:counter",
+            gain=1.0,
+            precision=2,
+        )
+
+    assert sensor._current_total == 42.0
+    assert "ResettableAccumulationSensor[plant=0,dev=1] Loaded current state" in caplog.text
+
+
 @pytest.mark.asyncio
 async def test_energy_daily_accumulation_reset(mock_config, tmp_path):
     source = MockSource("sigen_source_2")

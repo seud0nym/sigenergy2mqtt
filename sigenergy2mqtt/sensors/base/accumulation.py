@@ -69,6 +69,13 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         self._current_total_lock = asyncio.Lock()
         self._current_total: float = 0.0
 
+        # Inherit discriminator fields from source early so init-time persistence
+        # logs use the real identity rather than plant/dev=n/a.
+        for discriminator in ("plant_index", "device_address", "string_number", "phase"):
+            if hasattr(source, discriminator):
+                setattr(self, discriminator, getattr(source, discriminator))
+        self.refresh_log_identity()
+
         # Use sanitized unique_id for file paths
         uid = str(self.unique_id)
         if uid.startswith("<MagicMock"):  # For testing
