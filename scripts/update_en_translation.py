@@ -305,7 +305,10 @@ def get_ast_string_values(node: ast.expr | None) -> list[str]:
                 if isinstance(inner, ast.Name):
                     parts.append(f"{{{inner.id}}}")
                 elif isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name):
-                    parts.append(f"{{{inner.value.id}.{inner.attr}}}")
+                    attr = inner.attr
+                    if attr == "log_identity" and inner.value.id == "self":
+                        attr = "name"
+                    parts.append(f"{{{inner.value.id}.{attr}}}")
                 elif isinstance(inner, ast.Call) and isinstance(inner.func, ast.Attribute) and inner.func.attr == "lower" and isinstance(inner.func.value, ast.Name):
                     parts.append(f"{{{inner.func.value.id}}}")
                 elif isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Attribute) and inner.attr == "__name__" and inner.value.attr == "__class__":

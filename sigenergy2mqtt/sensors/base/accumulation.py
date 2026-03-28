@@ -120,7 +120,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         # Create reset number input
         updater: dict[str, Any] = {
             DiscoveryKeys.PLATFORM: "number",
-            DiscoveryKeys.NAME: _t(f"{self.__class__.__name__}.name_reset", f"Set {self.log_identity}", self.debug_logging),
+            DiscoveryKeys.NAME: _t(f"{self.__class__.__name__}.name_reset", f"Set {self.name}", self.debug_logging),
             DiscoveryKeys.OBJECT_ID: f"{self[DiscoveryKeys.OBJECT_ID]}_reset",
             DiscoveryKeys.UNIQUE_ID: f"{self.unique_id}_reset",
             DiscoveryKeys.ICON: "mdi:numeric",
