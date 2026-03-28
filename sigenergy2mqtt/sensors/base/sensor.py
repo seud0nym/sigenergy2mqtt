@@ -250,7 +250,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _build_log_identity(self) -> str:
         """Build a stable sensor identity for log prefixes."""
-        device_address = getattr(self, "device_address", "n/a")
+        device_address = getattr(self, "device_address", "247")
         plant_index = getattr(self, "plant_index", "n/a")
 
         suffix_parts = [
@@ -989,6 +989,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._attributes_published = True
         self.force_publish = False
 
+    def _update_derived_sensors(self) -> None:
+        """Update derived sensors."""
+        if self._states:
+            for sensor in self.derived_sensors.values():
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (states={self._states})")
+                sensor.set_source_values(self, self._states)
+
     def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and propagate to derived sensors.
 
@@ -1033,10 +1041,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         # Always pass the current state to derived sensors regardless of suppression,
         # so they can make their own publishing decisions.
-        for sensor in self.derived_sensors.values():
-            if self.debug_logging:
-                logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (states={self._states})")
-            sensor.set_source_values(self, self._states)
+        self._update_derived_sensors()
 
         return updated
 
