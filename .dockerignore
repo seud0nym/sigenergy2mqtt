@@ -15,6 +15,7 @@ venv/
 .env.*
 build/
 dist/
+!dist/*.whl
 htmlcov/
 .coverage
 .coverage.*

@@ -30,10 +30,8 @@ from __future__ import annotations
 import ast
 import logging
 import re
-import threading
 import warnings
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import overload
 
@@ -51,17 +49,10 @@ log = logging.getLogger(__name__)
 # YAML configuration
 # ---------------------------------------------------------------------------
 
-_yaml_local = threading.local()
-
-
-def get_yaml() -> YAML:
-    if getattr(_yaml_local, "parser", None) is None:
-        parser = YAML()
-        parser.indent(mapping=2, sequence=4, offset=2)
-        parser.preserve_quotes = True
-        parser.width = 1000  # Avoid line-wrapping
-        _yaml_local.parser = parser
-    return _yaml_local.parser
+_yaml = YAML()
+_yaml.indent(mapping=2, sequence=4, offset=2)
+_yaml.preserve_quotes = True
+_yaml.width = 1000  # Avoid line-wrapping
 
 
 # ---------------------------------------------------------------------------
@@ -983,11 +974,11 @@ def load_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
     with path.open(encoding="utf-8") as fh:
-        return get_yaml().load(fh) or {}
+        return _yaml.load(fh) or {}
 
 
 def save_yaml(path: Path, data: object) -> None:
-    """Write *data* to *path* using a thread-local ``YAML`` parser.
+    """Write *data* to *path* as YAML.
 
     Parameters
     ----------
@@ -997,7 +988,7 @@ def save_yaml(path: Path, data: object) -> None:
         A ``CommentedMap`` / ``CommentedSeq`` tree or plain Python structure.
     """
     with path.open("w", encoding="utf-8") as fh:
-        get_yaml().dump(data, fh)
+        _yaml.dump(data, fh)
 
 
 # ---------------------------------------------------------------------------
@@ -1320,13 +1311,8 @@ def propagate_to_other_translations(
     translations_dir: Path,
     class_bases: dict[str, list[str]],
     old_en_translations: dict | None = None,
-    *,
-    max_workers: int = 4,
 ) -> None:
     """Update all non-English YAML files in *translations_dir*.
-
-    Files are processed in parallel using a ``ThreadPoolExecutor`` so that
-    YAML I/O for multiple languages overlaps.
 
     Parameters
     ----------
@@ -1338,20 +1324,14 @@ def propagate_to_other_translations(
         Class inheritance mapping from ``TranslationExtractor``.
     old_en_translations:
         Previous English snapshot used for change detection.
-    max_workers:
-        Maximum number of threads for parallel file I/O.
     """
-    language_files = [p for p in translations_dir.glob("*.yaml") if p.name != "en.yaml"]
+    language_files = sorted(p for p in translations_dir.glob("*.yaml") if p.name != "en.yaml")
 
-    def _update(path: Path) -> None:
-        _update_language_file(path, en_translations, class_bases, old_en_translations)
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(_update, lf): lf for lf in language_files}
-        for future in as_completed(futures):
-            exc = future.exception()
-            if exc:
-                log.error("Error updating %s: %s", futures[future].name, exc)
+    for language_file in language_files:
+        try:
+            _update_language_file(language_file, en_translations, class_bases, old_en_translations)
+        except Exception as exc:
+            log.error("Error updating %s: %s", language_file.name, exc)
 
 
 # ---------------------------------------------------------------------------
@@ -1427,7 +1407,7 @@ def main() -> None:
 
     if en_yaml_path.exists():
         with en_yaml_path.open(encoding="utf-8") as fh:
-            all_translations_commented = get_yaml().load(fh)
+            all_translations_commented = _yaml.load(fh)
         if isinstance(all_translations_commented, dict):
             old_all_translations = _strip_comments(all_translations_commented)
 
