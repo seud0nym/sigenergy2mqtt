@@ -1526,7 +1526,7 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
   ResettableAccumulationSensor:
-    name_reset: 设置 {self.name}
+    name_reset: 設置 {self.name}
   RunningStateSensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1708,6 +1708,14 @@ class:
     name: 重置指标
     name_off: 重置指标
     name_on: 重置指标
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy 当前 - ESSTotalDischargedEnergy 上次满充时) ÷ (ESSTotalChargedEnergy 当前 - ESSTotalChargedEnergy 上次满充时) × 100 当 PlantBatterySoC 最后一次 == ChargeCutOffSoC 时
+    name: 电池RTE
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 当 PlantBatterySoC 最后一次 == ChargeCutOffSoC 时
+    name: 累计电池RTE
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML配置文件的路径（默认：SIGENERGY2MQTT_CONFIG环境变量，否则为/etc/sigenergy2mqtt.yaml）'

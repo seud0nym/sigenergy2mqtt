@@ -1708,6 +1708,14 @@ class:
     name: メトリクスリセット
     name_off: メトリクスリセット
     name_on: メトリクスリセット
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy 現在値 - ESSTotalDischargedEnergy 前回満充電時) ÷ (ESSTotalChargedEnergy 現在値 - ESSTotalChargedEnergy 前回満充電時) × 100 PlantBatterySoC が最後に == ChargeCutOffSoC の時
+    name: バッテリーRTE
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 PlantBatterySoC が最後に == ChargeCutOffSoC の時
+    name: 累積バッテリーRTE
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML設定ファイルのパス（デフォルト: SIGENERGY2MQTT_CONFIG環境変数、それ以外の場合は/etc/sigenergy2mqtt.yaml）'

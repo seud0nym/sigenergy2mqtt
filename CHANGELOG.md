@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- PlantLifetimeBatteryRTE sensor to track lifetime battery round-trip efficiency, and PlantBatteryRTE sensor to track battery round-trip efficiency on last discharge/charge cycle (RTE is only calculated/published when Battery S0C == ChargeCutoffSoC)
+
 ### Changed
 
 - Dockerfile updated to use Python 3.14.3-slim and no-cache pip install

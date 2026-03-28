@@ -1708,6 +1708,14 @@ class:
     name: Reimposta Metriche
     name_off: Reimposta Metriche
     name_on: Reimposta Metriche
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy attuale - ESSTotalDischargedEnergy all'ultima carica completa) ÷ (ESSTotalChargedEnergy attuale - ESSTotalChargedEnergy all'ultima carica completa) × 100 quando PlantBatterySoC era per l'ultima volta == ChargeCutOffSoC
+    name: RTE Batteria
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 quando PlantBatterySoC era per l'ultima volta == ChargeCutOffSoC
+    name: RTE Batteria Totale
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Il percorso al file di configurazione YAML (predefinito: variabile di ambiente SIGENERGY2MQTT_CONFIG, altrimenti /etc/sigenergy2mqtt.yaml)'

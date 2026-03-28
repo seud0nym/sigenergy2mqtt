@@ -1708,6 +1708,14 @@ class:
     name: Metriken zurücksetzen
     name_off: Metriken zurücksetzen
     name_on: Metriken zurücksetzen
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy aktuell - ESSTotalDischargedEnergy bei letzter Vollladung) ÷ (ESSTotalChargedEnergy aktuell - ESSTotalChargedEnergy bei letzter Vollladung) × 100 wenn PlantBatterySoC zuletzt == ChargeCutOffSoC
+    name: Batterie-RTE
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 wenn PlantBatterySoC zuletzt == ChargeCutOffSoC
+    name: Gesamt Batterie-RTE
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Der Pfad zur YAML-Konfigurationsdatei (Standard: SIGENERGY2MQTT_CONFIG-Umgebungsvariable, andernfalls /etc/sigenergy2mqtt.yaml)'

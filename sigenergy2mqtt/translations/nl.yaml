@@ -1708,6 +1708,14 @@ class:
     name: Statistieken Resetten
     name_off: Statistieken Resetten
     name_on: Statistieken Resetten
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy huidig - ESSTotalDischargedEnergy bij laatste volle lading) ÷ (ESSTotalChargedEnergy huidig - ESSTotalChargedEnergy bij laatste volle lading) × 100 wanneer PlantBatterySoC laatst == ChargeCutOffSoC
+    name: Batterij RTE
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 wanneer PlantBatterySoC laatst == ChargeCutOffSoC
+    name: Totale Batterij RTE
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'De pad naar het YAML-configuratiebestand (standaard: SIGENERGY2MQTT_CONFIG-omgevingsvariabele, anders /etc/sigenergy2mqtt.yaml)'

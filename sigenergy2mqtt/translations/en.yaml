@@ -1262,6 +1262,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Plant Alarms
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy now - ESSTotalDischargedEnergy when last full) ÷ (ESSTotalChargedEnergy now - ESSTotalChargedEnergy when last full) × 100 when PlantBatterySoC was last == ChargeCutOffSoC
+    name: Battery RTE
   PlantBatterySoC:
     attributes:
       source: Modbus Register {address}
@@ -1292,6 +1296,10 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy at last midnight
     name: Daily PV Production
     name_reset: Set Daily PV Production
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 when PlantBatterySoC was last == ChargeCutOffSoC
+    name: Lifetime Battery RTE
   PlantPVPower:
     attributes:
       source: Modbus Register {address}

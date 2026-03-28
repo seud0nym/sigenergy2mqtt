@@ -1708,6 +1708,14 @@ class:
     name: 메트릭 초기화
     name_off: 메트릭 초기화
     name_on: 메트릭 초기화
+  PlantBatteryRTE:
+    attributes:
+      source: (ESSTotalDischargedEnergy 현재 - ESSTotalDischargedEnergy 마지막 완충 시) ÷ (ESSTotalChargedEnergy 현재 - ESSTotalChargedEnergy 마지막 완충 시) × 100 PlantBatterySoC가 마지막으로 == ChargeCutOffSoC 일 때
+    name: 배터리 RTE
+  PlantLifetimeBatteryRTE:
+    attributes:
+      source: ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 PlantBatterySoC가 마지막으로 == ChargeCutOffSoC 일 때
+    name: 누적 배터리 RTE
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML 설정 파일의 경로 (기본값: SIGENERGY2MQTT_CONFIG 환경 변수, 그렇지 않으면 /etc/sigenergy2mqtt.yaml)'
