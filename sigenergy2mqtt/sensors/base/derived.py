@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Deque
+import asyncio
+import logging
+from typing import Any, Coroutine, Deque
 
 from pymodbus.pdu import ExceptionResponse
 
@@ -49,6 +51,30 @@ class DerivedSensor(TypedSensorMixin, Sensor):
 
         state = self._states[-1][1]
         return state if isinstance(state, str) else self._apply_gain_and_precision(state, raw)
+
+    def run_persistence_coroutine(self, coro: Coroutine[Any, Any, None]) -> None:
+        """Run a coroutine in the background to persist state.
+
+        Args:
+            coro: The coroutine to run
+        """
+        # This is a fire and forget operation - we don't want to wait for the state to be persisted
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(coro)
+        except RuntimeError:
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.run_coroutine_threadsafe(coro, loop)
+                else:
+                    coro.close()
+            except Exception as e:
+                logging.warning(f"{self.log_identity} Failed to persist state: {e}")
+                coro.close()
+        except Exception as e:
+            logging.warning(f"{self.log_identity} Failed to persist state: {e}")
+            coro.close()
 
     @abc.abstractmethod
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
