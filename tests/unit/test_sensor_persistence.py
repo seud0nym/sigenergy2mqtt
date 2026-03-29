@@ -214,6 +214,7 @@ async def test_midnight_state_file_stale(mock_config, tmp_path):
         mock_localtime.side_effect = lambda t=None: today_struct if (t is None or t > yesterday_ts + 10) else yesterday_struct
 
         sensor = EnergyDailyAccumulationSensor(name="Daily Energy", unique_id="sigen_daily_2", object_id="sigen_daily_2", source=source)
+        sensor.on_added_to_device()
 
     assert sensor._state_at_midnight is None
     assert not fpath.exists(), f"Stale file {fpath} still exists. mtime date: {time.localtime(fpath.stat().st_mtime)}"
