@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import Constants, InputType
+from sigenergy2mqtt.common import Constants, DeviceClass, InputType
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
@@ -124,7 +124,11 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         if slm_map:
             kwargs[DiscoveryKeys.OBJECT_ID] = str(slm_map["object_id"])
             kwargs.pop(DiscoveryKeys.UNIT_OF_MEASUREMENT, None)
-            kwargs["unit"] = cast(str | None, slm_map.get("unit"))
+            uom = cast(str | None, slm_map.get("unit"))
+            if uom == "s" and kwargs[DiscoveryKeys.DEVICE_CLASS] == DeviceClass.TIMESTAMP:
+                pass  # Sigenergy-Local-Modbus register definitions incorrectly apply numeric UoM "s" to non-numeric device class "timestamp"
+            else:
+                kwargs["unit"] = uom
             kwargs["gain"] = cast(float | None, slm_map.get("gain"))
 
         # Set unique_id
