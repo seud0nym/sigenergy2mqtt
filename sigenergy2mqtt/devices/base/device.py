@@ -335,9 +335,10 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         if not self.get_sensor(sensor.unique_id, search_children=True):
             if sensor.debug_logging:
                 logging.debug(f"{self.log_identity} adding sensor {sensor.unique_id} ({sensor.__class__.__name__})")
-            sensor.apply_sensor_overrides(self.registers)
             sensor.parent_device = self
+            sensor.apply_sensor_overrides(self.registers)
             sensor.configure_mqtt_topics(self.unique_id)
+            sensor.on_added_to_device()
             self.all_sensors[sensor.unique_id] = sensor
         elif sensor.debug_logging:
             logging.debug(f"{self.log_identity} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
