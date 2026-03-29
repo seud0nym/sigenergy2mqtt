@@ -755,6 +755,21 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return result
 
+    def on_added_to_device(self) -> None:
+        """Called when the sensor is added to a device.
+
+        Allows the sensor to do any one-time setup after being added to a device.
+
+        It will be invoked after the sensor overrides have been applied and
+        MQTT topics configured.
+
+        Implementations should call `super().on_added_to_device()` if they override
+        this method.
+
+        The default implementation does nothing.
+        """
+        pass
+
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         """Publish sensor state to MQTT.
 
@@ -981,10 +996,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         for k, v in kwargs.items():
             attributes[k] = v
 
+        attributes_json = json.dumps(attributes)
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing attributes={attributes}")
-
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), json.dumps(attributes, indent=4), qos=1, retain=True)
+            logging.debug(f"{self.log_identity} Publishing attributes={attributes_json}")
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), attributes_json, qos=1, retain=True)
 
         self._attributes_published = True
         self.force_publish = False

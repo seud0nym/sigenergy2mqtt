@@ -246,21 +246,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
 
         # Update total
         if new_total != self._current_total:
-            coro = self._persist_current_total(new_total)
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(coro)
-            except RuntimeError:
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        asyncio.run_coroutine_threadsafe(coro, loop)
-                    else:
-                        coro.close()
-                except Exception:
-                    coro.close()
-            except Exception:
-                coro.close()
+            self.run_persistence_coroutine(self._persist_current_total(new_total))
 
         self._current_total = new_total
         self.set_latest_state(self._current_total)
@@ -353,6 +339,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         safe_uid = _sanitize_path_component(uid)
         self._persistent_state_file = Path(active_config.persistent_state_path, f"{safe_uid}.atmidnight")
 
+    def on_added_to_device(self) -> None:
+        super().on_added_to_device()
         # Load midnight state if it's from today
         self._load_midnight_state()
 
@@ -480,21 +468,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             if was_time.tm_year != now_time.tm_year or was_time.tm_mon != now_time.tm_mon or was_time.tm_mday != now_time.tm_mday:
                 # Day changed - reset midnight state
-                coro = self._update_state_at_midnight(now_state)
-                try:
-                    loop = asyncio.get_running_loop()
-                    loop.create_task(coro)
-                except RuntimeError:
-                    try:
-                        loop = asyncio.get_event_loop()
-                        if loop.is_running():
-                            asyncio.run_coroutine_threadsafe(coro, loop)
-                        else:
-                            coro.close()
-                    except Exception:
-                        coro.close()
-                except Exception:
-                    coro.close()
+                self.run_persistence_coroutine(self._update_state_at_midnight(now_state))
                 self._states.clear()
                 self._state_at_midnight = now_state
 
