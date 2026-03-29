@@ -221,6 +221,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
                 mock_stat.return_value.st_mtime = time.time()
                 with patch.object(Path, "open", return_value=MagicMock(__enter__=lambda self: MagicMock(read=lambda: "100.0"))):
                     sensor = self._make_sensor()
+                    sensor.on_added_to_device()
                     assert sensor._state_at_midnight == 100.0
 
     def test_load_midnight_state_error_types(self, mock_config, caplog):
@@ -230,6 +231,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
                  mock_stat.return_value.st_mtime = time.time() - 86400 * 2
                  with caplog.at_level(logging.DEBUG):
                      sensor = self._make_sensor()
+                     sensor.on_added_to_device()
                      assert "Ignored stale midnight state" in caplog.text
 
         # Negative value (Line 365)
@@ -241,6 +243,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
                  with patch.object(Path, "open", return_value=MagicMock(__enter__=lambda self: MagicMock(read=lambda: "-10.0"))):
                      with caplog.at_level(logging.DEBUG):
                          sensor = self._make_sensor()
+                         sensor.on_added_to_device()
                          assert "Ignored negative midnight state" in caplog.text
 
         # Generic Exception (Line 373-374)
@@ -252,6 +255,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
                  with patch.object(Path, "open", side_effect=RuntimeError("generic")):
                      with caplog.at_level(logging.ERROR):
                          sensor = self._make_sensor()
+                         sensor.on_added_to_device()
                          assert "Unexpected error reading" in caplog.text
 
     @pytest.mark.asyncio
