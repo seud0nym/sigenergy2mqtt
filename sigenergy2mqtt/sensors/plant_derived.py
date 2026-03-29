@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import time
@@ -649,13 +648,14 @@ class PlantBatteryRTE(DerivedSensor):
         self._charged_sensor = charged
         self._discharged_sensor = discharged
 
+        self._charged: float | None = None
+        self._discharged: float | None = None
+        self._publish_persisted: bool = False
+
         self._data: dict[str, float | None] = {
             "charge_cut_off_soc": 100.0,
             "soc": None,
-            "charged": None,
-            "discharged": None,
-            "previous_charged": None,
-            "previous_discharged": None,
+            "state": None,
         }
 
         # Use sanitized unique_id for file paths
@@ -665,7 +665,14 @@ class PlantBatteryRTE(DerivedSensor):
 
         safe_uid = _sanitize_path_component(uid)
         self._persistent_state_file = Path(active_config.persistent_state_path, f"{safe_uid}.state")
+
+    def on_added_to_device(self) -> None:
+        super().on_added_to_device()
         self._load_persisted_state()
+        self._soc_sensor.force_publish = True
+        self._charge_cut_off_soc_sensor.force_publish = True
+        self._charged_sensor.force_publish = True
+        self._discharged_sensor.force_publish = True
 
     @property
     def _charge_cut_off_soc(self) -> float | None:
@@ -686,70 +693,31 @@ class PlantBatteryRTE(DerivedSensor):
         self._data["soc"] = value
 
     @property
-    def _charged(self) -> float | None:
-        """Current Lifetime Charged."""
-        return self._data["charged"]
+    def _stored_state(self) -> float | None:
+        """Stored state."""
+        return self._data["state"]
 
-    @_charged.setter
-    def _charged(self, value: float | None) -> None:
-        self._data["charged"] = value
-
-    @property
-    def _discharged(self) -> float | None:
-        """Current Lifetime Discharged."""
-        return self._data["discharged"]
-
-    @_discharged.setter
-    def _discharged(self, value: float | None) -> None:
-        self._data["discharged"] = value
-
-    @property
-    def _previous_charged(self) -> float | None:
-        """Lifetime Charged when battery was last at charge_cut_off_soc."""
-        return self._data["previous_charged"]
-
-    @_previous_charged.setter
-    def _previous_charged(self, value: float | None) -> None:
-        self._data["previous_charged"] = value
-
-    @property
-    def _previous_discharged(self) -> float | None:
-        """Lifetime Discharged when battery was last at charge_cut_off_soc."""
-        return self._data["previous_discharged"]
-
-    @_previous_discharged.setter
-    def _previous_discharged(self, value: float | None) -> None:
-        self._data["previous_discharged"] = value
+    @_stored_state.setter
+    def _stored_state(self, value: float | None) -> None:
+        self._data["state"] = value
 
     @property
     def _is_full(self) -> bool:
         return self._soc is not None and self._charge_cut_off_soc is not None and self._soc >= self._charge_cut_off_soc
 
-    @property
-    def last_rte(self) -> float | None:
-        if self._is_full and self._previous_charged is not None and self._previous_discharged is not None and self._charged is not None and self._discharged is not None:
-            return (self._discharged - self._previous_discharged) / (self._charged - self._previous_charged) * 100
-        else:
-            return None
-
-    @property
-    def lifetime_rte(self) -> float | None:
-        if self._is_full and self._charged is not None and self._discharged is not None:
-            return self._discharged / self._charged * 100
-        return None
-
     def _load_persisted_state(self) -> None:
-        """Load accumulated value from persistent storage."""
+        """Load current state from persistent storage."""
         if self._persistent_state_file.is_file():
             try:
                 with self._persistent_state_file.open("r") as f:
                     saved: dict[str, float | None] = json.load(f)
                     if saved:
-                        logging.debug(f"{self.log_identity} Loaded current state from {self._persistent_state_file} ({saved})")
-                        self._data = saved
-                        state = self.last_rte
-                        if state is not None:
-                            self.set_latest_state(state)
+                        if self.debug_logging:
+                            logging.debug(f"{self.log_identity} Loaded current state from {self._persistent_state_file} ({saved})")
+                        for key, value in saved.items():
+                            if key in self._data:
+                                self._data[key] = value
+                        self._publish_persisted = self._stored_state is not None
                         return
             except (OSError, ValueError, PermissionError) as e:
                 logging.warning(f"{self.log_identity} Failed to read {self._persistent_state_file}: {e}")
@@ -760,6 +728,8 @@ class PlantBatteryRTE(DerivedSensor):
         try:
             with self._persistent_state_file.open("w") as f:
                 json.dump(self._data, f)
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Persisted current state to {self._persistent_state_file} ({self._data})")
         except (OSError, ValueError, PermissionError) as e:
             logging.warning(f"{self.log_identity} Failed to write {self._persistent_state_file}: {e}")
         except Exception as e:
@@ -767,138 +737,80 @@ class PlantBatteryRTE(DerivedSensor):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["source"] = (
-            "(ESSTotalDischargedEnergy now - ESSTotalDischargedEnergy when last full) ÷ (ESSTotalChargedEnergy now - ESSTotalChargedEnergy when last full) × 100 when PlantBatterySoC was last == ChargeCutOffSoC"
-        )
+        attributes["source"] = "ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 when PlantBatterySoC was last == ChargeCutOffSoC"
         return attributes
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        return await super().get_state(raw=raw, republish=republish, **kwargs)
+    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
+        if isinstance(state, float):
+            if state != self._stored_state:
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Setting latest state: {self._discharged} ÷ {self._charged} × 100 = {state}")
+                self._stored_state = state
+                return super().set_latest_state(state)
+        return False
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+        # On first call, publish persisted state if it was not None
+        if self._publish_persisted:
+            self._publish_persisted = False
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} Publishing persisted state: {self._stored_state}")
+            self.set_state(self._stored_state)
+
         persist = False
         if isinstance(sensor, ChargeCutOffSoC):
-            persist = True
-            if self.debug_logging:
-                logging.debug(f"{self.log_identity} ChargeCutOffSoC updated: {values[-1][1]}")
-            self._charge_cut_off_soc = values[-1][1] / self._charge_cut_off_soc_sensor.gain
-        elif isinstance(sensor, PlantBatterySoC):
-            # When SoC >= ChargeCutOffSoC, set the previous charged/discharged energy to current charged/discharged energy
-            # Since SoC can stay at the same level for extended periods, we have to make sure that we do not do it more than once
-            soc = values[-1][1] / self._soc_sensor.gain
-            if self.debug_logging:
-                logging.debug(f"{self.log_identity} PlantBatterySoC updated: {soc}")
-            old_soc = self._soc
-            self._soc = soc
-            if (
-                self._soc is not None  # State of Charge has been set at least once
-                and self._charge_cut_off_soc is not None
-                and soc != old_soc  # State of Charge has changed
-                and soc >= self._charge_cut_off_soc  # State of Charge has reached maximum
-                and self._charged is not None  # Charged energy has been set at least once
-                and self._discharged is not None  # Discharged energy has been set at least once
-            ):
+            soc = values[-1][1] / self._charge_cut_off_soc_sensor.gain
+            if soc != self._charge_cut_off_soc:
                 persist = True
+                self._charge_cut_off_soc = soc
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} PlantBatterySoC >= ChargeCutOffSoC ({self._charge_cut_off_soc}), moving charged/discharged energy to previous charged/discharged energy")
-                self._previous_charged = self._charged
-                self._previous_discharged = self._discharged
-                # Reset the charged/discharged energy to None so that they are ready to be updated with current figures
-                self._charged = None
-                self._discharged = None
-                # Force an update to get current charged/discharged energy
-                self._charged_sensor.force_publish = True
-                self._discharged_sensor.force_publish = True
-            elif self.debug_logging:
-                logging.debug(
-                    f"{self.log_identity} Not moving charged/discharged energy to previous charged/discharged energy ({old_soc=} -> {soc=} charge_cut_off_soc={self._charge_cut_off_soc} charged={self._charged} discharged={self._discharged})"
-                )
+                    logging.debug(f"{self.log_identity} ChargeCutOffSoC updated: {soc}")
+        elif isinstance(sensor, PlantBatterySoC):
+            soc = values[-1][1] / self._soc_sensor.gain
+            if soc != self._soc:
+                persist = True
+                old_soc = self._soc
+                self._soc = soc
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} PlantBatterySoC updated: {soc}")
+                if old_soc < soc and self._is_full:
+                    self._charged = None
+                    self._discharged = None
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Reset charged and discharged energy ({old_soc=} {soc=} full={self._is_full})")
+                    self._charged_sensor.force_publish = True
+                    self._discharged_sensor.force_publish = True
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Forced publish of charged and discharged energy")
         elif isinstance(sensor, ESSTotalChargedEnergy):
-            if self._is_full:
+            if self._is_full and self._charged is None:
                 charged = values[-1][1] / self._charged_sensor.gain
                 if charged != self._charged:
-                    persist = True
                     self._charged = charged
                     if self.debug_logging:
                         logging.debug(f"{self.log_identity} Charged energy updated: {values[-1][1]}")
             elif self.debug_logging:
-                logging.debug(f"{self.log_identity} Not updating charged energy - SoC is less than Charge Cut Off SoC (soc={self._soc} charge_cut_off_soc={self._charge_cut_off_soc})")
+                logging.debug(f"{self.log_identity} Not updating charged energy (full={self._is_full})")
         elif isinstance(sensor, ESSTotalDischargedEnergy):
-            if self._is_full:
+            if self._is_full and self._discharged is None:
                 discharged = values[-1][1] / self._discharged_sensor.gain
                 if discharged != self._discharged:
-                    persist = True
                     self._discharged = discharged
                     if self.debug_logging:
                         logging.debug(f"{self.log_identity} Discharged energy updated: {values[-1][1]}")
             elif self.debug_logging:
-                logging.debug(f"{self.log_identity} Not updating discharged energy - SoC is less than Charge Cut Off SoC (soc={self._soc} charge_cut_off_soc={self._charge_cut_off_soc})")
+                logging.debug(f"{self.log_identity} Not updating discharged energy (full={self._is_full})")
         else:
             logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
+        if self._is_full and self._charged is not None and self._discharged is not None:
+            # Only calculate RTE once each time we get back to ChargeCutOffSoC
+            # (and do it before persisting the new values because self._stored_state is updated by set_latest_state)
+            persist = updated = self.set_latest_state(self._discharged / self._charged * 100)
+        else:
+            updated = False
         if persist:
-            # This is a fire and forget operation - we don't want to wait for the state to be persisted
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} Persisting state to {self._persistent_state_file}")
-            coro = self._persist_state()
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(coro)
-            except RuntimeError:
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        asyncio.run_coroutine_threadsafe(coro, loop)
-                    else:
-                        coro.close()
-                except Exception as e:
-                    logging.warning(f"{self.log_identity} Failed to persist state: {e}")
-                    coro.close()
-            except Exception as e:
-                logging.warning(f"{self.log_identity} Failed to persist state: {e}")
-                coro.close()
-        state = self.last_rte
-        if state is None:
-            lifetime = self.lifetime_rte
-            if lifetime is not None:
-                for sensor in [s for s in self.derived_sensors.values() if isinstance(s, PlantLifetimeBatteryRTE)]:
-                    sensor.set_source_values(self, None)  # type: ignore[arg-type] - PlantLifetimeBatteryRTE does not use the values argument
-                return False
-        else:
-            self.set_latest_state(state)
-        return True
-
-
-class PlantLifetimeBatteryRTE(DerivedSensor):
-    def __init__(self, plant_index: int):
-        # Set properties before super().__init__ so that log_identity is correctly generated
-        self.plant_index = plant_index
-        super().__init__(
-            name="Lifetime Battery RTE",
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_battery_rte",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_lifetime_battery_rte",
-            data_type=ModbusDataType.UINT16,
-            unit=PERCENTAGE,
-            device_class=DeviceClass.BATTERY,
-            state_class=StateClass.MEASUREMENT,
-            icon="mdi:battery-sync-outline",
-            gain=None,
-            precision=2,
-        )
-        self.protocol_version = Protocol.V2_7
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["source"] = "ESSTotalDischargedEnergy ÷ ESSTotalChargedEnergy × 100 when PlantBatterySoC was last == ChargeCutOffSoC"
-        return attributes
-
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
-        if isinstance(sensor, PlantBatteryRTE):
-            state = sensor.lifetime_rte
-            if state is None:
-                return False
-            self.set_latest_state(state)
-            return True
-        else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
-            return False
+            self.run_persistence_coroutine(self._persist_state())
+        return updated
