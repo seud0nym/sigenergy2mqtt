@@ -792,8 +792,8 @@ class PlantBatteryRTE(DerivedSensor):
             self._soc = soc
             if (
                 self._soc is not None  # State of Charge has been set at least once
-                and soc != old_soc  # State of Charge has changed
                 and self._charge_cut_off_soc is not None
+                and soc != old_soc  # State of Charge has changed
                 and soc >= self._charge_cut_off_soc  # State of Charge has reached maximum
                 and self._charged is not None  # Charged energy has been set at least once
                 and self._discharged is not None  # Discharged energy has been set at least once
@@ -811,7 +811,7 @@ class PlantBatteryRTE(DerivedSensor):
                 self._discharged_sensor.force_publish = True
             elif self.debug_logging:
                 logging.debug(
-                    f"{self.log_identity} Not moving charged/discharged energy to previous charged/discharged energy ({soc=} current_soc={self._soc} charge_cut_off_soc={self._charge_cut_off_soc} charged={self._charged} discharged={self._discharged})"
+                    f"{self.log_identity} Not moving charged/discharged energy to previous charged/discharged energy ({old_soc=} -> {soc=} charge_cut_off_soc={self._charge_cut_off_soc} charged={self._charged} discharged={self._discharged})"
                 )
         elif isinstance(sensor, ESSTotalChargedEnergy):
             if self._is_full:
