@@ -1,13 +1,27 @@
 #!/bin/bash
 
-cd "$(cd $(dirname $0)/..; pwd)"
+cd "$(cd $(dirname $0)/../..; pwd)"
+if [[ -z "$VIRTUAL_ENV" ]]; then
+   source .venv/bin/activate
+fi
 
 python3 -m build || exit
 python3 -m twine check dist/* || exit
 docker buildx build --platform linux/amd64 --load -t sigenergy2mqtt:latest . || exit
 
-if [[ $1 == compose ]]; then
-    cd test
+MODE="run"
+KEEP=false
+
+for arg in "$@"; do
+    if [[ $arg == compose ]]; then
+        MODE="compose"
+    elif [[ $arg == keep ]]; then
+        KEEP=true
+    fi
+done
+
+if [[ $MODE == compose ]]; then
+    cd tests/utils
     docker compose up
 else
     docker run -it \
@@ -17,4 +31,8 @@ else
         -v /var/lib/sigenergy2mqtt:/data \
         --network host \
         sigenergy2mqtt:latest
+fi
+
+if [[ $KEEP == false ]]; then
+    docker rmi sigenergy2mqtt:latest
 fi
