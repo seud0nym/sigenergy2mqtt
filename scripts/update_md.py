@@ -467,7 +467,7 @@ async def compare_sensor_instances() -> None:
     deferred to this function because the module is fetched at runtime by
     ``download_latest`` and may not exist when the script is first loaded.
     """
-    typqxq_instances = {}
+    typqxq_instances: dict[int, tuple[str, Any]] = {}
     with _swap_active_config(Config()):
         sensor_instances = await get_sensor_instances(home_assistant_enabled=True)
         registers = invert_dict_by_attr(sensor_instances, "address")
@@ -588,9 +588,6 @@ def download_latest(path: str) -> None:
     Args:
         path: Repository-relative path to the file to download
               (e.g. ``"custom_components/sigen/modbusregisterdefinitions.py"``).
-
-    Raises:
-        requests.exceptions.HTTPError: If any GitHub API request fails.
     """
     OWNER = "TypQxQ"
     REPO = "Sigenergy-Local-Modbus"
@@ -615,60 +612,60 @@ def download_latest(path: str) -> None:
         commits = r.json()
         return commits[0] if commits else None
 
-    branches = get_branches()
-    latest = None
+    try:
+        branches = get_branches()
+        latest = None
 
-    for b in branches:  # pyrefly: ignore
-        branch_name = b["name"]
-        commit = get_latest_commit_for_file(branch_name, path)
-        if not commit:
-            continue
+        for b in branches:  # pyrefly: ignore
+            branch_name = b["name"]
+            commit = get_latest_commit_for_file(branch_name, path)
+            if not commit:
+                continue
 
-        commit_date = commit["commit"]["committer"]["date"]
+            commit_date = commit["commit"]["committer"]["date"]
 
-        if latest is None or commit_date > latest["date"]:
-            latest = {
-                "branch": branch_name,
-                "sha": commit["sha"],
-                "date": commit_date,
-                "message": commit["commit"]["message"],
-                "url": commit["html_url"],
-            }
+            if latest is None or commit_date > latest["date"]:
+                latest = {
+                    "branch": branch_name,
+                    "sha": commit["sha"],
+                    "date": commit_date,
+                    "message": commit["commit"]["message"],
+                    "url": commit["html_url"],
+                }
 
-    if latest is not None:
-        commit_date = datetime.strptime(latest["date"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-        commit_sha = latest["sha"]
+        if latest is not None:
+            commit_date = datetime.strptime(latest["date"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            commit_sha = latest["sha"]
 
-        logging.info(f"Latest commit for {path}: {commit_sha} ({commit_date})")
+            logging.info(f"Latest commit for {path}: {commit_sha} ({commit_date})")
 
-        if file.exists() and file.stat().st_mtime >= commit_date.timestamp():
-            logging.info(f"{file} is already up to date.")
-            file.touch()
-            return
+            if file.exists() and file.stat().st_mtime >= commit_date.timestamp():
+                logging.info(f"{file} is already up to date.")
+                file.touch()
+                return
 
-        contents_url = f"https://api.github.com/repos/TypQxQ/Sigenergy-Local-Modbus/contents/{path}"
-        params = {"ref": commit_sha}
-        file_response = requests.get(contents_url, headers={"Accept": "application/vnd.github.v3.raw"}, params=params, timeout=HTTP_TIMEOUT)
-        file_response.raise_for_status()
+            contents_url = f"https://api.github.com/repos/TypQxQ/Sigenergy-Local-Modbus/contents/{path}"
+            params = {"ref": commit_sha}
+            file_response = requests.get(contents_url, headers={"Accept": "application/vnd.github.v3.raw"}, params=params, timeout=HTTP_TIMEOUT)
+            file_response.raise_for_status()
 
-        with file.open("wb") as f:
-            f.write(file_response.content)
+            with file.open("wb") as f:
+                f.write(file_response.content)
 
-        logging.info(f"{file} downloaded from commit {commit_sha}")
+            logging.info(f"{file} downloaded from commit {commit_sha}")
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else "unknown"
+        if status == 429:
+            logging.warning(f"GitHub rate limit hit (HTTP 429); proceeding with cached {file.name} file.")
+        else:
+            logging.error(f"HTTP {status} error downloading {file.name}: {e}")
+        # Ensure the file exists so the deferred import in compare_sensor_instances() doesn't fail.
+        file.touch()
 
 
 async def main() -> None:
     """Entry point: download latest TypQxQ definitions then regenerate both MD files."""
-    try:
-        download_latest("custom_components/sigen/modbusregisterdefinitions.py")
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code if e.response is not None else "unknown"
-        if status == 429:
-            logging.warning("GitHub rate limit hit (HTTP 429); proceeding with cached definitions file.")
-        else:
-            logging.error(f"HTTP {status} error downloading definitions: {e}")
-        # Ensure the file exists so the deferred import in compare_sensor_instances() doesn't fail.
-        Path("modbusregisterdefinitions.py").touch()
+    download_latest("custom_components/sigen/modbusregisterdefinitions.py")
 
     await sensor_index()
     await compare_sensor_instances()
