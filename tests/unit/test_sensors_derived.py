@@ -26,7 +26,7 @@ def mock_modules():
         yield
 
 
-from sigenergy2mqtt.common import ConsumptionMethod, Protocol  # noqa: E402
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, StateClass  # noqa: E402
 from sigenergy2mqtt.config import Config, _swap_active_config  # noqa: E402
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_derived import (  # noqa: E402
@@ -62,8 +62,8 @@ class TestBatteryDerivedPower:
         class ProxyBatteryPower(BatteryPower):
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
-                self["device_class"] = MagicMock()
-                self.state_class = self["state_class"] = MagicMock()
+                self["device_class"] = DeviceClass.POWER
+                self.state_class = self["state_class"] = StateClass.MEASUREMENT
                 self.precision = 2
 
         proxy_battery = ProxyBatteryPower()
@@ -78,8 +78,8 @@ class TestBatteryDerivedPower:
         class ProxyBatteryPower(BatteryPower):
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
-                self["device_class"] = MagicMock()
-                self.state_class = self["state_class"] = MagicMock()
+                self["device_class"] = DeviceClass.POWER
+                self.state_class = self["state_class"] = StateClass.MEASUREMENT
                 self.precision = 2
 
         proxy_battery = ProxyBatteryPower()
@@ -96,8 +96,8 @@ class TestGridDerivedPower:
         class ProxyGridPower(GridSensorActivePower):
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
-                self["device_class"] = MagicMock()
-                self.state_class = self["state_class"] = MagicMock()
+                self["device_class"] = DeviceClass.POWER
+                self.state_class = self["state_class"] = StateClass.MEASUREMENT
                 self["display_precision"] = 1
                 self.precision = 1
 
@@ -111,8 +111,8 @@ class TestGridDerivedPower:
         class ProxyGridPower(GridSensorActivePower):
             def __init__(self):
                 self.protocol_version = Protocol.V2_4
-                self["device_class"] = MagicMock()
-                self.state_class = self["state_class"] = MagicMock()
+                self["device_class"] = DeviceClass.POWER
+                self.state_class = self["state_class"] = StateClass.MEASUREMENT
                 self["display_precision"] = 1
                 self.precision = 1
 
