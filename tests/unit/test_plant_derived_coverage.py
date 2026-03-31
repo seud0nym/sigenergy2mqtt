@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, StateClass
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
@@ -47,8 +47,8 @@ class TestBasicDerivedSensorsCoverage:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             bp = MagicMock(spec=BatteryPower)
-            bp.device_class = "power"
-            bp.state_class = "measurement"
+            bp.device_class = DeviceClass.POWER
+            bp.state_class = StateClass.MEASUREMENT
             bp.protocol_version = Protocol.V2_4
             sensor = BatteryChargingPower(0, bp)
             assert "BatteryPower > 0" in str(sensor.get_attributes()["source"])
@@ -62,8 +62,8 @@ class TestBasicDerivedSensorsCoverage:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             bp = MagicMock(spec=BatteryPower)
-            bp.device_class = "power"
-            bp.state_class = "measurement"
+            bp.device_class = DeviceClass.POWER
+            bp.state_class = StateClass.MEASUREMENT
             bp.protocol_version = Protocol.V2_4
             sensor = BatteryDischargingPower(0, bp)
             assert "BatteryPower < 0" in str(sensor.get_attributes()["source"])
@@ -77,8 +77,8 @@ class TestBasicDerivedSensorsCoverage:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             gp = MagicMock(spec=GridSensorActivePower)
-            gp.device_class = "power"
-            gp.state_class = "measurement"
+            gp.device_class = DeviceClass.POWER
+            gp.state_class = StateClass.MEASUREMENT
             gp.precision = 2
             gp.protocol_version = Protocol.V2_4
             sensor = GridSensorExportPower(0, gp)
@@ -93,8 +93,8 @@ class TestBasicDerivedSensorsCoverage:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             gp = MagicMock(spec=GridSensorActivePower)
-            gp.device_class = "power"
-            gp.state_class = "measurement"
+            gp.device_class = DeviceClass.POWER
+            gp.state_class = StateClass.MEASUREMENT
             gp.precision = 2
             gp.protocol_version = Protocol.V2_4
             sensor = GridSensorImportPower(0, gp)
@@ -116,6 +116,7 @@ class TestBasicDerivedSensorsCoverage:
             source_exp.protocol_version = Protocol.V2_4
             source_exp.unit = "kWh"
             source_exp.object_id = "exp_oid"
+            source_exp.device_class = DeviceClass.ENERGY
             source_exp.state_class = "total_increasing"
             source_exp.precision = 2
             s_exp = GridSensorDailyExportEnergy(0, source_exp)
@@ -128,6 +129,7 @@ class TestBasicDerivedSensorsCoverage:
             source_imp.protocol_version = Protocol.V2_4
             source_imp.unit = "kWh"
             source_imp.object_id = "imp_oid"
+            source_imp.device_class = DeviceClass.ENERGY
             source_imp.state_class = "total_increasing"
             source_imp.precision = 2
             s_imp = GridSensorDailyImportEnergy(0, source_imp)
@@ -140,6 +142,7 @@ class TestBasicDerivedSensorsCoverage:
             source_tpv.protocol_version = Protocol.V2_4
             source_tpv.unit = "kWh"
             source_tpv.object_id = "tpv_oid"
+            source_tpv.device_class = DeviceClass.ENERGY
             source_tpv.state_class = "total_increasing"
             source_tpv.precision = 2
             s_tpv = TotalDailyPVEnergy(0, source_tpv)
@@ -158,6 +161,7 @@ class TestBasicDerivedSensorsCoverage:
             source_charge.protocol_version = Protocol.V2_4
             source_charge.unit = "kWh"
             source_charge.object_id = "ch_oid"
+            source_charge.device_class = DeviceClass.ENERGY
             source_charge.state_class = "total_increasing"
             source_charge.precision = 2
             s_pdc = PlantDailyChargeEnergy(0, source_charge)
@@ -170,6 +174,7 @@ class TestBasicDerivedSensorsCoverage:
             source_discharge.protocol_version = Protocol.V2_4
             source_discharge.unit = "kWh"
             source_discharge.object_id = "dis_oid"
+            source_discharge.device_class = DeviceClass.ENERGY
             source_discharge.state_class = "total_increasing"
             source_discharge.precision = 2
             s_pdd = PlantDailyDischargeEnergy(0, source_discharge)
