@@ -177,6 +177,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             delta=None,
         )
 
+        if device_class is not None and not DeviceClass.is_valid_unit(device_class, unit):
+            logging.error(f"{self.log_identity} unit '{unit}' is not valid for device class {device_class.name}")
+
     def _validate_unique_id(self, unique_id: str) -> None:
         """Validate that unique_id is not duplicated and has correct prefix.
 
