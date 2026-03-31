@@ -6,7 +6,7 @@
 
 - Dockerfile updated to use Python 3.14.3-slim and no-cache pip install
 - Docker build test added to build script
-- Upgraded `requests` from 2.32.5 to 2.33.0
+- Upgraded `requests` from 2.32.5 to 2.33.1
 - Standardised logging prefixes across devices and sensors using new log_identity field
 - Set sanity check min/max values for PV string current (0-50A) and voltage (0-1000V) sensors
 
