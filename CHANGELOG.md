@@ -4,15 +4,21 @@
 
 ### Changed
 
+- Set sanity check min/max values for PV string current (0-50A) and voltage (0-1000V) sensors
+- Expanded DeviceClass and StateClass enums with comprehensive Home Assistant standard definitions and validation logic
+- Set PYTHONUNBUFFERED environment variable in Dockerfile
+- Standardised logging prefixes across devices and sensors using new log_identity field
+- Consolidated low-volume unit test modules by domain
+- Refactored sensor base tests into scoped modules
+- Renamed unit test files to behaviour-centric naming
 - Dockerfile updated to use Python 3.14.3-slim and no-cache pip install
 - Docker build test added to build script
 - Upgraded `requests` from 2.32.5 to 2.33.1
-- Standardised logging prefixes across devices and sensors using new log_identity field
-- Set sanity check min/max values for PV string current (0-50A) and voltage (0-1000V) sensors
 
 ### Fixed
 
 - Updated and renamed several environment variables in documentation, and added unit test to verify documentation coverage for constants. (#151)
+- Return None instead of 0 when no state is available for derived sensors
 
 ## [2026.3.21b2] - 2026-03-21
 
@@ -61,7 +67,7 @@
 
 ### Fixed
 
-- MPPT Count was misspelt as MPTT
+- MPPT Count was misspelt
 - Per-sensor scan jitter that could defeat read-ahead optimisation
 - Dockerfile fixed to reduce vulnerabilities
 
