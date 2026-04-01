@@ -543,3 +543,26 @@ async def test_scan_host_cancelled_error_in_chunk():
                     await auto_discovery.scan_host("1.2.3.4", 502, [])
 
 
+
+
+# =============================================================================
+# ping_scan chunking (merged from low-volume chunking module)
+# =============================================================================
+
+
+def test_ping_scan_chunking_calls_async_multiping_multiple_times():
+    ip_list = [f"192.168.0.{i}" for i in range(1, 8)]
+    concurrent = 3
+
+    async def fake_gather(*coros, return_exceptions=True):
+        return [("0.0.0.0", None) for _ in coros]
+
+    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.gather", new=AsyncMock(side_effect=fake_gather)) as mock_gather:
+        results = asyncio.run(auto_discovery.ping_scan(ip_list, concurrent=concurrent, timeout=1))
+
+        assert mock_gather.call_count == 3
+        for call, expected_size in zip(mock_gather.call_args_list, [3, 3, 1]):
+            assert len(call.args) == expected_size
+
+        assert isinstance(results, dict)
+        assert len(results) == 0

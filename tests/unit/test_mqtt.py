@@ -2,12 +2,13 @@ import asyncio
 import logging
 import ssl
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config import Config, _swap_active_config, active_config
+from sigenergy2mqtt.mqtt import mqtt_setup
 from sigenergy2mqtt.mqtt.client import MqttClient, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
 from sigenergy2mqtt.mqtt.handler import MqttHandler
 
@@ -656,3 +657,247 @@ class TestMqttClient:
             context = mock_ssl.return_value
             assert context.check_hostname is False
             assert context.verify_mode == ssl.CERT_NONE
+
+
+# =============================================================================
+# mqtt_setup behavior (merged from init/setup-specific modules)
+# =============================================================================
+
+
+class TestMqttSetup:
+    @patch("sigenergy2mqtt.mqtt.MqttClient")
+    @patch("sigenergy2mqtt.mqtt.MqttHandler")
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_anonymous(self, mock_handler_class, mock_client_class):
+        mock_client = mock_client_class.return_value
+        loop = asyncio.new_event_loop()
+        modbus = MagicMock()
+
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+            cfg.mqtt.anonymous = True
+            cfg.mqtt.keepalive = 60
+
+            client, handler = await mqtt_setup("test_client", modbus, loop)
+
+            assert client == mock_client
+            assert handler == mock_handler_class.return_value
+            mock_client.connect.assert_called_once_with("test_broker", port=1883, keepalive=60)
+            mock_client.loop_start.assert_called_once()
+            mock_client.username_pw_set.assert_not_called()
+
+        loop.close()
+
+    @patch("sigenergy2mqtt.mqtt.MqttClient")
+    @patch("sigenergy2mqtt.mqtt.MqttHandler")
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_authenticated(self, mock_handler_class, mock_client_class):
+        mock_client = mock_client_class.return_value
+        loop = asyncio.new_event_loop()
+        modbus = MagicMock()
+
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+            cfg.mqtt.anonymous = False
+            cfg.mqtt.username = "user"
+            cfg.mqtt.password = "pass"
+            cfg.mqtt.keepalive = 60
+
+            client, _ = await mqtt_setup("test_client", modbus, loop)
+
+            assert client == mock_client
+            mock_client.username_pw_set.assert_called_once_with("user", "pass")
+
+        loop.close()
+
+    @patch("sigenergy2mqtt.mqtt.MqttClient")
+    @patch("sigenergy2mqtt.mqtt.MqttHandler")
+    @patch("sigenergy2mqtt.mqtt.sleep")
+    @patch("time.sleep")
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_retry_logic(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
+        mock_client = mock_client_class.return_value
+        loop = asyncio.new_event_loop()
+        modbus = MagicMock()
+        mock_client.connect.side_effect = [Exception("Fail 1"), Exception("Fail 2"), None]
+
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+            cfg.mqtt.keepalive = 10
+            cfg.mqtt.retry_delay = 1
+
+            client, _ = await mqtt_setup("test_client", modbus, loop)
+
+            assert client == mock_client
+            assert mock_client.connect.call_count == 3
+            assert mock_sleep.call_count == 2
+            mock_sleep.assert_called_with(1)
+
+        loop.close()
+
+    @patch("sigenergy2mqtt.mqtt.MqttClient")
+    @patch("sigenergy2mqtt.mqtt.MqttHandler")
+    @patch("sigenergy2mqtt.mqtt.sleep")
+    @patch("time.sleep")
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_critical_failure(self, mock_time_sleep, mock_sleep, mock_handler_class, mock_client_class):
+        mock_client = mock_client_class.return_value
+        loop = asyncio.new_event_loop()
+        modbus = MagicMock()
+        mock_client.connect.side_effect = Exception("Permanent Fail")
+
+        with _swap_active_config(Config()) as cfg:
+            cfg.mqtt.broker = "test_broker"
+            cfg.mqtt.port = 1883
+
+            with pytest.raises(Exception, match="Permanent Fail"):
+                await mqtt_setup("test_client", modbus, loop)
+
+            assert mock_client.connect.call_count == 3
+            assert mock_sleep.call_count == 2
+
+        loop.close()
+
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_invalid_id(self):
+        with pytest.raises(ValueError, match="mqtt_client_id must not be None or an empty string"):
+            await mqtt_setup("", MagicMock(), MagicMock())
+
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_retries_then_succeeds(self, monkeypatch):
+        async def _fake_sleep(s):
+            return None
+
+        monkeypatch.setitem(mqtt_setup.__globals__, "sleep", _fake_sleep)
+        active_config.mqtt.broker = "localhost"
+        active_config.mqtt.port = 1883
+        active_config.mqtt.keepalive = 10
+        active_config.mqtt.anonymous = False
+        active_config.mqtt.username = "user"
+        active_config.mqtt.password = "pass"
+
+        import paho.mqtt.client as paho
+
+        side = {"calls": 0}
+
+        def fake_connect(self, broker, port=1883, keepalive=60):
+            side["calls"] += 1
+            if side["calls"] == 1:
+                raise Exception("connect failed")
+            return 0
+
+        def fake_loop_start(self):
+            setattr(self, "loop_started", True)
+
+        def fake_username_pw_set(self, u, p):
+            setattr(self, "_user", u)
+            setattr(self, "_pw", p)
+
+        monkeypatch.setattr(paho.Client, "connect", fake_connect, raising=True)
+        monkeypatch.setattr(paho.Client, "loop_start", fake_loop_start, raising=True)
+        monkeypatch.setattr(paho.Client, "username_pw_set", fake_username_pw_set, raising=True)
+
+        loop = asyncio.new_event_loop()
+        try:
+            client, _ = await mqtt_setup("cid", None, loop)
+        finally:
+            loop.close()
+
+        assert getattr(client, "loop_started", False) is True
+        assert getattr(client, "_user") == "user"
+        assert getattr(client, "_pw") == "pass"
+
+    @pytest.mark.asyncio
+    async def test_mqtt_setup_fails_after_retries(self, monkeypatch):
+        async def _fake_sleep(s):
+            return None
+
+        monkeypatch.setitem(mqtt_setup.__globals__, "sleep", _fake_sleep)
+        active_config.mqtt.broker = "localhost"
+        active_config.mqtt.port = 1883
+        active_config.mqtt.keepalive = 10
+        active_config.mqtt.anonymous = True
+
+        import paho.mqtt.client as paho
+
+        def always_fail_connect(self, broker, port=1883, keepalive=60):
+            raise Exception("boom")
+
+        monkeypatch.setattr(paho.Client, "connect", always_fail_connect, raising=True)
+
+        loop = asyncio.new_event_loop()
+        try:
+            with pytest.raises(Exception):
+                await mqtt_setup("cid2", None, loop)
+        finally:
+            loop.close()
+
+
+# =============================================================================
+# multiplexing behavior (merged from dedicated module)
+# =============================================================================
+
+
+class TestMqttMultiplexing:
+    @pytest.fixture
+    def mqtt_handler(self):
+        loop = asyncio.new_event_loop()
+        handler = MqttHandler("test_client", None, loop)
+        yield handler
+        loop.close()
+
+    def test_shared_topic_multiplexing(self, mqtt_handler):
+        mock_client = MagicMock(spec=mqtt.Client)
+        topic = "homeassistant/status"
+        callback1 = MagicMock(return_value=False)
+        callback2 = MagicMock(return_value=False)
+        mqtt_handler.register(mock_client, topic, callback1)
+        mqtt_handler.register(mock_client, topic, callback2)
+        mqtt_handler.on_message(mock_client, topic, "online")
+        callback1.assert_called_once()
+        callback2.assert_called_once()
+        assert callback1.call_args[0][3] == topic
+        assert callback2.call_args[0][3] == topic
+
+    def test_topic_collision_avoidance(self, mqtt_handler):
+        mock_client = MagicMock(spec=mqtt.Client)
+        callback_a = MagicMock()
+        callback_b = MagicMock()
+        mqtt_handler.register(mock_client, "cmd/sensor_a", callback_a)
+        mqtt_handler.register(mock_client, "cmd/sensor_b", callback_b)
+        mqtt_handler.on_message(mock_client, "cmd/sensor_a", "val_a")
+        callback_a.assert_called_once()
+        callback_b.assert_not_called()
+        callback_a.reset_mock()
+        mqtt_handler.on_message(mock_client, "cmd/sensor_b", "val_b")
+        callback_b.assert_called_once()
+        callback_a.assert_not_called()
+
+    def test_reconnect_resubscribes_all(self, mqtt_handler):
+        mock_client = MagicMock(spec=mqtt.Client)
+        topics = ["topic/one", "topic/two", "topic/three"]
+        dummy_cb = MagicMock()
+        for t in topics:
+            mqtt_handler.register(mock_client, t, dummy_cb)
+
+        mock_client.reset_mock()
+        mqtt_handler.on_reconnect(mock_client)
+        assert mock_client.subscribe.call_count == len(topics)
+        mock_client.subscribe.assert_has_calls([call(t) for t in topics], any_order=True)
+
+    @pytest.mark.asyncio
+    async def test_async_callback_execution(self, mqtt_handler):
+        mock_client = MagicMock(spec=mqtt.Client)
+        future = asyncio.Future()
+
+        async def async_cb(*args):
+            future.set_result(True)
+            return True
+
+        mqtt_handler.register(mock_client, "async/test", async_cb)
+        mqtt_handler._loop = asyncio.get_running_loop()
+        mqtt_handler.on_message(mock_client, "async/test", "payload")
+        assert await asyncio.wait_for(future, timeout=1.0) is True

@@ -1,11 +1,13 @@
 import logging
 import os
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest  # noqa: F401
+from ruamel.yaml import YAML
 from pydantic import ValidationError
 
-from sigenergy2mqtt.config import Config, active_config
+from sigenergy2mqtt.config import Config, _promote_cli_to_env, active_config, const
 from sigenergy2mqtt.config.config import _swap_active_config
 from sigenergy2mqtt.config.settings import ModbusConfig, Settings
 
@@ -589,3 +591,98 @@ class TestConfigYamlString:
             text = str(cfg)
             assert "secretpwd" in text
             assert "ABC123" in text
+
+
+# =============================================================================
+# CLI overrides and reload edge-cases (merged from low-volume modules)
+# =============================================================================
+
+
+@patch.dict(os.environ, {}, clear=True)
+def test_apply_cli_overrides_boolean_flags():
+    args = SimpleNamespace()
+    setattr(args, const.SIGENERGY2MQTT_HASS_ENABLED, False)
+    setattr(args, const.SIGENERGY2MQTT_INFLUX_ENABLED, None)
+    setattr(args, const.SIGENERGY2MQTT_MQTT_TLS, "false")
+    setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
+    setattr(args, const.SIGENERGY2MQTT_PVOUTPUT_ENABLED, True)
+    setattr(args, const.SIGENERGY2MQTT_SMARTPORT_ENABLED, "true")
+    setattr(args, "some_other_arg", "some_value")
+
+    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[]):
+        _promote_cli_to_env(args)
+        assert const.SIGENERGY2MQTT_HASS_ENABLED not in os.environ
+        assert const.SIGENERGY2MQTT_INFLUX_ENABLED not in os.environ
+        assert const.SIGENERGY2MQTT_MQTT_TLS not in os.environ
+        assert os.environ[const.SIGENERGY2MQTT_PVOUTPUT_ENABLED] == "True"
+        assert os.environ[const.SIGENERGY2MQTT_SMARTPORT_ENABLED] == "true"
+        assert os.environ["some_other_arg"] == "some_value"
+
+
+@patch.dict(os.environ, {}, clear=True)
+def test_apply_cli_overrides_repeated_interval():
+    args = SimpleNamespace()
+    setattr(args, const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, 10)
+    setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
+
+    with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[]):
+        _promote_cli_to_env(args)
+        assert os.environ[const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL] == "10"
+
+
+def _write_yaml(tmp_path, data: dict) -> str:
+    path = tmp_path / "cfg.yaml"
+    with path.open("w") as f:
+        YAML(typ="safe").dump(data, f)
+    return str(path)
+
+
+def test_reload_applies_yaml(tmp_path):
+    data = {"log-level": "DEBUG", "modbus": [{"host": "m1.local", "port": 1502}]}
+    config_path = _write_yaml(tmp_path, data)
+    original_env = {k: v for k, v in os.environ.items() if k.startswith("SIGENERGY2MQTT_")}
+    for key in original_env:
+        del os.environ[key]
+
+    original_modbus = list(active_config.modbus)
+    try:
+        active_config.modbus.clear()
+        active_config.load(config_path)
+        assert active_config.log_level == getattr(__import__("logging"), "DEBUG")
+        assert len(active_config.modbus) >= 1
+        assert active_config.modbus[0].port == 1502
+    finally:
+        active_config.modbus.clear()
+        active_config.modbus.extend(original_modbus)
+        os.environ.update(original_env)
+
+
+def test_reload_env_overrides(monkeypatch):
+    monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "8.8.8.8")
+    monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_PORT, "1503")
+
+    original_modbus = list(active_config.modbus)
+    original_source = active_config._source
+    try:
+        active_config.modbus.clear()
+        active_config._source = None
+        active_config.reload()
+        assert len(active_config.modbus) >= 1
+        assert active_config.modbus[0].host == "8.8.8.8"
+        assert active_config.modbus[0].port == 1503
+    finally:
+        active_config.modbus.clear()
+        active_config.modbus.extend(original_modbus)
+        active_config._source = original_source
+
+
+def test_reload_invalid_yaml(tmp_path):
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("influxdb: [\n  - invalid")
+    original_source = active_config._source
+    try:
+        active_config._source = str(bad)
+        with pytest.raises(Exception):
+            active_config.reload()
+    finally:
+        active_config._source = original_source
