@@ -859,7 +859,9 @@ class TestMqttMultiplexing:
         mqtt_handler.on_message(mock_client, topic, "online")
         callback1.assert_called_once()
         callback2.assert_called_once()
+        assert callback1.call_args[0][2] == "online"
         assert callback1.call_args[0][3] == topic
+        assert callback2.call_args[0][2] == "online"
         assert callback2.call_args[0][3] == topic
 
     def test_topic_collision_avoidance(self, mqtt_handler):
