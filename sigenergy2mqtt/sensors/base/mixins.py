@@ -127,7 +127,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
             uom = cast(str | None, slm_map.get("unit"))
             if uom == "s" and kwargs[DiscoveryKeys.DEVICE_CLASS] == DeviceClass.TIMESTAMP:
                 pass  # Sigenergy-Local-Modbus register definitions incorrectly apply numeric UoM "s" to non-numeric device class "timestamp"
-            else:
+            elif uom is not None:
                 kwargs["unit"] = uom
             kwargs["gain"] = cast(float | None, slm_map.get("gain"))
 
