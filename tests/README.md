@@ -22,3 +22,25 @@ To keep the test suite maintainable, prefer these thresholds and grouping rules:
 * **Consolidate tiny satellites:** if a domain has many very small test files, merge related low-volume tests into a scoped sibling to avoid excessive fragmentation.
 
 When splitting a large file, prefer sibling filenames that reflect the concern, such as `test_sensors_base_extended_validation.py` or `test_sensors_base_extended_publish_and_discovery.py`.
+
+## Unit Test Naming Convention (`tests/unit/`)
+
+Use behavior-centric filenames that describe the primary scenario under test (for example, config validation, device offline handling, MQTT topic generation). Avoid meta labels like `coverage`, `booster`, `extended`, `misc`, and `more` in new filenames.
+
+| Old pattern | New pattern |
+| --- | --- |
+| `test_*_coverage*.py` | `test_*_<behavior>.py` |
+| `test_*_booster*.py` | `test_*_<behavior>.py` |
+| `test_*_extended*.py` | `test_*_<behavior>.py` |
+| `test_*_misc*.py` | `test_*_<behavior>.py` |
+| `test_*_more.py` | `test_*_<behavior>.py` |
+
+Examples from this repo after consolidation/rename:
+
+| Previous filename | Behavior-centric filename |
+| --- | --- |
+| `test_config_coverage_booster.py` | `test_config_environment_overrides.py` |
+| `test_threading_coverage.py` | `test_threading_signal_and_shutdown.py` |
+| `test_sensors_base_extended_validation.py` | `test_sensors_base_validation_rules.py` |
+| `test_coverage_booster_misc.py` | `test_protocol_and_main_helpers.py` |
+| `test_device_more.py` | `test_device_runtime_behaviors.py` |
