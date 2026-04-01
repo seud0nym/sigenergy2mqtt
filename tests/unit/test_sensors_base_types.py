@@ -212,6 +212,50 @@ class TestModbusSensor:
             assert sensor.unit == "kW"
             assert sensor.gain == 0.1
 
+    def test_modbus_sensor_ignores_slm_unit_if_none(self, mock_config_all):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            mock_config_all.home_assistant.sigenergy_local_modbus_naming = True
+            with patch.dict(
+                "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
+                {30001: {"object_id": "sigen_local_name", "gain": 0.1}},
+                clear=True,
+            ):
+                sensor = ReadOnlySensor(
+                    name="Test RO",
+                    object_id="sigen_test_ro",
+                    input_type=InputType.HOLDING,
+                    plant_index=0,
+                    device_address=1,
+                    address=30001,
+                    count=1,
+                    data_type=ModbusClient.DATATYPE.UINT16,
+                    scan_interval=10,
+                    unit="original_unit",
+                    device_class=DeviceClass.POWER,
+                    state_class=StateClass.MEASUREMENT,
+                    icon="mdi:power",
+                    gain=1.0,
+                    precision=2,
+                    protocol_version=Protocol.V2_4,
+                )
+
+            assert sensor.object_id == "sigen_local_name"
+            assert getattr(sensor, "unit", sensor.get("unit_of_measurement")) == "original_unit"
+            assert sensor.gain == 0.1
+
+    def test_modbus_sensor_ignores_slm_uom_s_for_timestamp(self, mock_config_all):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            mock_config_all.home_assistant.sigenergy_local_modbus_naming = True
+            with patch.dict(
+                "sigenergy2mqtt.sensors.base.mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS",
+                {30005: {"object_id": "sigen_local_ts_name", "gain": 1.0, "unit": "s"}},
+                clear=True,
+            ):
+                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
+
+            assert sensor.object_id == "sigen_local_ts_name"
+            assert getattr(sensor, "unit", sensor.get("unit_of_measurement")) is None
+
 
 class TestReadOnlySensor:
     @pytest.mark.asyncio
