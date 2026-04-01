@@ -1,8 +1,11 @@
+import glob
+import os
+
 import ast
 from pathlib import Path
 
 import pytest
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, YAMLError
 
 # Initialize YAML with specific settings for en.yaml
 yaml_parser = YAML()
@@ -327,3 +330,24 @@ def test_cli_translations_completeness():
     for dest, content in extractor.cli_translations.items():
         assert dest in current_translations["cli"], f"CLI key '{dest}' is missing from en.yaml"
         assert "help" in current_translations["cli"][dest], f"CLI key '{dest}' is missing 'help' in en.yaml"
+
+
+# =============================================================================
+# YAML validity checks (merged from low-volume validity module)
+# =============================================================================
+
+
+def test_translations_are_valid_yaml():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    translations_dir = os.path.normpath(os.path.join(base_dir, "../../sigenergy2mqtt/translations"))
+    files = glob.glob(os.path.join(translations_dir, "*.yaml"))
+
+    assert len(files) > 0, f"No translation files found in {translations_dir}"
+
+    yaml = YAML(typ="safe", pure=True)
+    for file_path in files:
+        with open(file_path, "r", encoding="utf-8") as handle:
+            try:
+                yaml.load(handle)
+            except YAMLError as exc:
+                pytest.fail(f"Invalid YAML in {file_path}:\n{exc}")
