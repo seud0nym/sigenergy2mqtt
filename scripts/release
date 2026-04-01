@@ -17,15 +17,28 @@ scripts/dependencies
 
 source $(dirname $0)/build $*
 
-echo -en "${ORANGE}>>> Confirm version bump? (y/n): ${NC}"
+echo -en "${GREEN}>>> Confirm version bump? (y/n): ${NC}"
 read confirm
 if [[ "$confirm" != "y" ]]; then
     echo -e "${RED}>>> Version bump cancelled.${NC}"
     exit 1
 fi
 
+for file in CHANGELOG.md resources/sensors/SENSORS.md resources/sensors/TOPICS.md sigenergy2mqtt/config/version.py; do
+    if ! git diff --quiet "$file"; then
+        git add "$file"
+    fi
+done
+files=$(git diff --name-only --exit-code)
+status=$?
+if [ $status -ne 0 ]; then
+    echo -e "${ORANGE}>>> Uncommitted changes found in the following files:${NC}"
+    echo "$files"
+    echo -e "${RED}>>> Version bump cancelled.${NC}"
+    exit 1
+fi
+
 echo -e "${GREEN}>>> Bumping version...${NC}"
-git add sigenergy2mqtt/config/version.py
 git commit -m "build: bump version to $new_version"
 git tag "$new_version"
 git push && git push --tags
