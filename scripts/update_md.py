@@ -13,6 +13,9 @@ if not os.getcwd().endswith("resources"):
 sys.path.insert(0, str((Path(__file__).parent / "..").resolve()))
 sys.path.insert(0, str((Path(__file__).parent / "../resources").resolve()))
 
+# Need to set SIGENERGY2MQTT_MODBUS_HOST before importing the config module otherwise it will not be found and config will attempt to run auto-discovery
+os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
+
 import requests
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
@@ -664,7 +667,7 @@ def download_latest(path: str) -> None:
 
 
 async def main() -> None:
-    """Entry point: download latest TypQxQ definitions then regenerate both MD files."""
+    """Entry point: download latest TypQxQ definitions then regenerate files."""
     download_latest("custom_components/sigen/modbusregisterdefinitions.py")
 
     await sensor_index()
@@ -672,6 +675,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
     logging.getLogger().setLevel(logging.INFO)
     asyncio.run(main())
