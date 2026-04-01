@@ -128,8 +128,8 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         gap = abs(self.volts.timestamp - self.amperes.timestamp)
         if self.debug_logging:
             logging.debug(f"{self.log_identity} Publishing READY   - string={self.string_number} current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
-        if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
-            logging.warning(f"{self.log_identity} Publishing WARNING - string={self.string_number} gap between acquiring current and voltage was {gap:.2f}s")
+            if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
+                logging.debug(f"{self.log_identity} Publishing WARNING - string={self.string_number} gap between acquiring current and voltage was {gap:.2f}s")
         await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
         if not republish:
             # reset internal values to missing for next calculation
