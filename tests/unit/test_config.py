@@ -224,19 +224,10 @@ class TestConfigReload:
                             assert "Invalid language 'de'" in caplog.text
 
     @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "1.2.3.4", "port": 502}])
-    @patch("sigenergy2mqtt.config.config.os.getenv")
-    def test_reload_with_auto_discovery_force(self, mock_getenv, mock_run_auto_discovery):
+    def test_reload_with_auto_discovery_force(self, mock_run_auto_discovery):
         """Test reload with auto-discovery forced."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY
-
         with _swap_active_config(Config()) as cfg:
-            mock_getenv.side_effect = lambda k, default=None: "force" if k == SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY else default
-
-            # We need to mock open properly to avoid infinite loops in ruamel.yaml
-            from unittest.mock import mock_open
-
-            m = mock_open(read_data="- host: 1.2.3.4\n  port: 502\n")
-            with patch("builtins.open", m):
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}, clear=True):
                 with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
                     cfg.reload()
             mock_run_auto_discovery.assert_called_once()
@@ -250,18 +241,53 @@ class TestConfigReload:
             mock_run_auto_discovery.assert_called_once()
 
     @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
-    @patch("sigenergy2mqtt.config.sources.RuamelYamlSettingsSource.__call__", return_value={"modbus": [{"port": 502}]})
-    def test_reload_triggers_auto_discovery_yaml_no_host(self, mock_yaml, mock_run_auto_discovery):
+    def test_reload_triggers_auto_discovery_yaml_no_host(self, mock_run_auto_discovery, tmp_path):
         """Test reload triggers auto-discovery if YAML possesses modbus array without a host."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("modbus:\n  - port: 502\n")
         with _swap_active_config(Config()) as cfg:
+            cfg._source = str(config_file)
+            cfg.persistent_state_path = tmp_path
+            cache_file = tmp_path / "auto-discovery.yaml"
+            if cache_file.exists():
+                cache_file.unlink()
             with patch.dict("os.environ", {}, clear=True):
-                with patch("sigenergy2mqtt.config.config.Path.exists", return_value=True):
-                    cfg._source = "dummy.yaml"
-                    try:
-                        cfg.reload()
-                    except ValidationError:
-                        pass
+                with pytest.raises(ValidationError):
+                    cfg.reload()
             mock_run_auto_discovery.assert_called_once()
+
+    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[])
+    def test_reload_does_not_toggle_skip_validation_env_var(self, mock_run_auto_discovery):
+        """reload must not set internal SKIP_MODBUS_VALIDATION environment variable."""
+        with _swap_active_config(Config()) as cfg:
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
+                cfg.reload()
+        assert "SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION" not in os.environ
+
+    def test_reload_ignores_preflight_yaml_keys_in_final_settings_parse(self, tmp_path):
+        """Preflight-only YAML keys must not trigger extra_forbidden on final Settings parse."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            "\n".join(
+                [
+                    "modbus-port: 1502",
+                    "modbus-auto-discovery: once",
+                    "modbus-auto-discovery-timeout: 1.25",
+                    "modbus-auto-discovery-ping-timeout: 2.5",
+                    "modbus-auto-discovery-retries: 7",
+                    "modbus:",
+                    "  - host: 10.0.0.9",
+                    "    port: 502",
+                ]
+            )
+            + "\n"
+        )
+
+        with _swap_active_config(Config()) as cfg:
+            cfg._source = str(config_file)
+            with patch.dict("os.environ", {}, clear=True):
+                cfg.reload(skip_auto_discovery=True)
+            assert cfg.modbus[0].host == "10.0.0.9"
 
     def test_devices_list_exists(self):
         """Test devices list exists and is a list."""

@@ -469,7 +469,7 @@ class TestMqttHandler:
         async def runner():
             return await handler.wait_for(5.0, "prefix", mock_method)
 
-        caplog.set_level(logging.DEBUG)
+        caplog.set_level(logging.DEBUG, logger="paho.mqtt")
         task = asyncio.create_task(runner())
         await asyncio.sleep(0.1)  # let it start sleeping
         task.cancel()

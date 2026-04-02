@@ -11,10 +11,9 @@ Priority (highest → lowest):
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
@@ -100,6 +99,13 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(populate_by_name=True)
+    preflight_only_yaml_keys: ClassVar[set[str]] = {
+        "modbus-port",
+        "modbus-auto-discovery",
+        "modbus-auto-discovery-timeout",
+        "modbus-auto-discovery-ping-timeout",
+        "modbus-auto-discovery-retries",
+    }
 
     # ── Internal args ────────────────────────────────────────────────────────
     yaml_file_arg: Optional[str] = Field(None, exclude=True)
@@ -116,12 +122,6 @@ class Settings(BaseSettings):
     ems_mode_check: bool = Field(True, alias="ems-mode-check")
     metrics_enabled: bool = Field(True, alias="metrics-enabled")
     sensor_debug_logging: bool = Field(False, alias="sensor-debug-logging")
-
-    # ── Auto-discovery control ───────────────────────────────────────────────
-    modbus_auto_discovery: Optional[str] = Field(None, alias="modbus-auto-discovery")
-    modbus_auto_discovery_timeout: Optional[float] = Field(None, alias="modbus-auto-discovery-timeout")
-    modbus_auto_discovery_ping_timeout: Optional[float] = Field(None, alias="modbus-auto-discovery-ping-timeout")
-    modbus_auto_discovery_retries: Optional[int] = Field(None, alias="modbus-auto-discovery-retries")
 
     # ── Sub-configs ──────────────────────────────────────────────────────────
     home_assistant: HomeAssistantConfig = Field(default_factory=HomeAssistantConfig, alias="home-assistant")  # type: ignore[reportCallIssue]
@@ -244,7 +244,7 @@ class Settings(BaseSettings):
         logging.getLogger().setLevel(self.log_level)
 
         # Cross-model validation
-        if not os.environ.get("SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION") and not self.modbus:
+        if not self.modbus:
             raise ValueError("At least one Modbus device must be configured")
 
         if not self.ems_mode_check:
@@ -273,7 +273,7 @@ class Settings(BaseSettings):
 
         return (
             EnvSettingsSource(settings_cls),  # 1. env vars
-            RuamelYamlSettingsSource(settings_cls, yaml_file),  # 2. config YAML
+            RuamelYamlSettingsSource(settings_cls, yaml_file, strip_top_level_keys=cls.preflight_only_yaml_keys),  # 2. config YAML
             AutoDiscoveryYamlSettingsSource(settings_cls, discovery_yaml),  # 3. discovery YAML
             init_settings,  # 4. programmatic
         )
