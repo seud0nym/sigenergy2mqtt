@@ -34,7 +34,7 @@ class Metrics:
 
     _lock: threading.Lock = threading.Lock()
     _pending_lock: threading.Lock = threading.Lock()
-    _executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
+    _executor: ThreadPoolExecutor | None = None
     _pending_updates: list[Future] = []
 
     _started: float = 0.0
@@ -243,6 +243,9 @@ class Metrics:
         if not cls._metrics_enabled():
             return
 
+        if cls._executor is None:
+            cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
+
         future = cls._executor.submit(operation)
         with cls._pending_lock:
             cls._pending_updates.append(future)
@@ -282,6 +285,30 @@ class Metrics:
         done, not_done = await asyncio.to_thread(wait, pending, timeout=timeout)
         if not_done:
             raise TimeoutError(f"Timed out waiting for {len(not_done)} metrics updates to finish.")
+
+    @classmethod
+    def shutdown(cls, timeout: float | None = 1.0) -> None:
+        """Flush pending metric tasks and stop the internal worker thread.
+
+        This is intended for process shutdown paths so interpreter teardown
+        does not race with the executor's background thread.
+        """
+        with cls._pending_lock:
+            pending = list(cls._pending_updates)
+            cls._pending_updates.clear()
+
+        executor = cls._executor
+        if executor is None:
+            return
+
+        not_done: set[Future] = set()
+        if pending:
+            _, not_done = wait(pending, timeout=timeout)
+            if not_done:
+                logging.warning(f"Metrics shutdown timed out with {len(not_done)} pending updates")
+
+        executor.shutdown(wait=not not_done, cancel_futures=bool(not_done))
+        cls._executor = None
 
     @classmethod
     async def modbus_cache_fill(cls) -> None:

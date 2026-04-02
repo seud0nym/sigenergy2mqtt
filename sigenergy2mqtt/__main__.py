@@ -13,6 +13,7 @@ import sys
 import sigenergy2mqtt.config.auto_discovery as auto_discovery
 from sigenergy2mqtt.config import ConfigurationError, active_config, initialize
 from sigenergy2mqtt.main import async_main, validate_connections
+from sigenergy2mqtt.metrics.metrics import Metrics
 
 
 def _make_early_signal_handler():
@@ -115,7 +116,14 @@ def main():
     # debug=True enables asyncio's slow-callback detector, ResourceWarning
     # emission, and coroutine origin tracking — valuable during development,
     # but adds overhead so it is gated on the DEBUG log level.
-    asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)  # pyrefly: ignore
+    try:
+        asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)  # pyrefly: ignore
+    except KeyboardInterrupt:
+        # Keep Ctrl-C shutdown quiet and deterministic: avoid interpreter-level
+        # traceback noise while still allowing normal cleanup below.
+        logging.info("Keyboard interrupt received during runtime shutdown")
+    finally:
+        Metrics.shutdown(timeout=2.0)
 
 
 if __name__ == "__main__":
