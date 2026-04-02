@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
@@ -99,6 +99,13 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(populate_by_name=True)
+    preflight_only_yaml_keys: ClassVar[set[str]] = {
+        "modbus-port",
+        "modbus-auto-discovery",
+        "modbus-auto-discovery-timeout",
+        "modbus-auto-discovery-ping-timeout",
+        "modbus-auto-discovery-retries",
+    }
 
     # ── Internal args ────────────────────────────────────────────────────────
     yaml_file_arg: Optional[str] = Field(None, exclude=True)
@@ -266,7 +273,7 @@ class Settings(BaseSettings):
 
         return (
             EnvSettingsSource(settings_cls),  # 1. env vars
-            RuamelYamlSettingsSource(settings_cls, yaml_file),  # 2. config YAML
+            RuamelYamlSettingsSource(settings_cls, yaml_file, strip_top_level_keys=cls.preflight_only_yaml_keys),  # 2. config YAML
             AutoDiscoveryYamlSettingsSource(settings_cls, discovery_yaml),  # 3. discovery YAML
             init_settings,  # 4. programmatic
         )

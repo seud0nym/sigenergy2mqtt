@@ -35,9 +35,15 @@ class RuamelYamlSettingsSource(PydanticBaseSettingsSource):
       3. 'sigenergy2mqtt.yaml' in the current working directory
     """
 
-    def __init__(self, settings_cls: type[BaseSettings], yaml_file: str | Path | None = None):
+    def __init__(
+        self,
+        settings_cls: type[BaseSettings],
+        yaml_file: str | Path | None = None,
+        strip_top_level_keys: set[str] | None = None,
+    ):
         super().__init__(settings_cls)
         self._yaml_file = yaml_file
+        self._strip_top_level_keys = strip_top_level_keys or set()
 
     def _resolve_yaml_path(self) -> Path | None:
         path = os.environ.get(const.SIGENERGY2MQTT_CONFIG) or self._yaml_file or "sigenergy2mqtt.yaml"
@@ -56,7 +62,11 @@ class RuamelYamlSettingsSource(PydanticBaseSettingsSource):
         yaml = YAML()
         with open(path, "r") as f:
             data = yaml.load(f)
-        return dict(data) if data else {}
+        payload = dict(data) if data else {}
+        if self._strip_top_level_keys:
+            for key in self._strip_top_level_keys:
+                payload.pop(key, None)
+        return payload
 
 
 class AutoDiscoveryYamlSettingsSource(PydanticBaseSettingsSource):

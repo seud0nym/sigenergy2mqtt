@@ -264,6 +264,31 @@ class TestConfigReload:
                 cfg.reload()
         assert "SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION" not in os.environ
 
+    def test_reload_ignores_preflight_yaml_keys_in_final_settings_parse(self, tmp_path):
+        """Preflight-only YAML keys must not trigger extra_forbidden on final Settings parse."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            "\n".join(
+                [
+                    "modbus-port: 1502",
+                    "modbus-auto-discovery: once",
+                    "modbus-auto-discovery-timeout: 1.25",
+                    "modbus-auto-discovery-ping-timeout: 2.5",
+                    "modbus-auto-discovery-retries: 7",
+                    "modbus:",
+                    "  - host: 10.0.0.9",
+                    "    port: 502",
+                ]
+            )
+            + "\n"
+        )
+
+        with _swap_active_config(Config()) as cfg:
+            cfg._source = str(config_file)
+            with patch.dict("os.environ", {}, clear=True):
+                cfg.reload(skip_auto_discovery=True)
+            assert cfg.modbus[0].host == "10.0.0.9"
+
     def test_devices_list_exists(self):
         """Test devices list exists and is a list."""
         assert isinstance(active_config.modbus, list)
