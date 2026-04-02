@@ -1372,7 +1372,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Fattore di Potenza
   PowerPlant:
-    name: 'Impianto Sigenergy'{plant_suffix}
+    name: 'Impianto Sigenergy{plant_suffix}'
   ProtocolPublished:
     name: Protocollo Pubblicato
   ProtocolVersion:

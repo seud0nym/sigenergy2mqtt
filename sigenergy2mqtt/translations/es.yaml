@@ -1372,7 +1372,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Valor Objetivo de Ajuste del Factor de Potencia
   PowerPlant:
-    name: 'Planta Sigenergy'{plant_suffix}
+    name: 'Planta Sigenergy{plant_suffix}'
   ProtocolPublished:
     name: Protocolo Publicado
   ProtocolVersion:

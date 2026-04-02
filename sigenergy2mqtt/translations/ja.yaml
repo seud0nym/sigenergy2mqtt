@@ -1372,7 +1372,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 力率調整目標値
   PowerPlant:
-    name: 'Sigenergy システム'{plant_suffix}
+    name: 'Sigenergy システム{plant_suffix}'
   ProtocolPublished:
     name: プロトコル公開
   ProtocolVersion:

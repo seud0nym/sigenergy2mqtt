@@ -1372,7 +1372,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 功率因数调节目标值
   PowerPlant:
-    name: 'Sigenergy 电厂'{plant_suffix}
+    name: 'Sigenergy 电厂{plant_suffix}'
   ProtocolPublished:
     name: 协议发布
   ProtocolVersion:

@@ -1372,7 +1372,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Valeur Cible d'Ajustement du Facteur de Puissance
   PowerPlant:
-    name: 'Centrale Sigenergy'{plant_suffix}
+    name: 'Centrale Sigenergy{plant_suffix}'
   ProtocolPublished:
     name: Protocole Publié
   ProtocolVersion:

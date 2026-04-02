@@ -1372,7 +1372,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Arbeidsfactor Instelwaarde
   PowerPlant:
-    name: 'Sigenergy-installatie'{plant_suffix}
+    name: 'Sigenergy-installatie{plant_suffix}'
   ProtocolPublished:
     name: Protocol Gepubliceerd
   ProtocolVersion:
