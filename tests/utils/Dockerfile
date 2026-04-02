@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN pip install --upgrade pip --root-user-action=ignore --no-cache-dir && bash scripts/dependencies --install-only --skip-build-deps
+RUN pip install --root-user-action=ignore --break-system-packages --no-cache-dir && bash scripts/dependencies --install-only --skip-build-deps
 RUN echo "$(date +"%Y-%m-%dT%H:%M:%S%z")" > /app/build_date.txt
 
 EXPOSE 502
