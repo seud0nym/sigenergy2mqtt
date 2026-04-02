@@ -411,7 +411,7 @@ class:
       "7": EMS Remoto
       "9": Controlo Baseado no Tempo
   ESS:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} Sistema de Armazenamento de Energia'
   ESSBackupSOC:
     attributes:
       comment: "Intervalo: [0,00, 100,00]"
@@ -576,7 +576,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Alarmes PCS
   GridCode:
-    name: '{device_name}'
+    name: Código de Rede Central Sigenergy{plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registo Modbus {address}
@@ -729,7 +729,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Potência reativa da fase {phase}
   GridSensor:
-    name: '{device_name}'
+    name: Sensor de Rede Central Sigenergy{plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Adicionar Serviço de Estado PVOutput
   PVString:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} String PV {string_number}'
   PVStringCount:
     attributes:
       source: Registo Modbus {address}
@@ -1340,7 +1340,7 @@ class:
       '3': Desligado
       '7': Anomalia Ambiental
   PlantStatistics:
-    name: '{device_name}'
+    name: Estatísticas Central Sigenergy{plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Parar 1:Iniciar
@@ -1372,7 +1372,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Valor Alvo de Ajuste do Fator de Potência
   PowerPlant:
-    name: '{device_name}'
+    name: 'Planta Sigenergy'{plant_suffix}
   ProtocolPublished:
     name: Protocolo Publicado
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Consumo total de carga inteligente {smart_load_index}
   SmartPort:
-    name: '{device_name}'
+    name: Smart-Port Central Sigenergy{plant_suffix}
   Started:
     name: Iniciado
   StartupTime:

@@ -24,7 +24,6 @@ class ESS(ModbusDevice):
             "Energy Storage System",
             protocol_version,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}",
-            device_name=name,
             model_id=model_id,
             serial_number=serial_number,
         )

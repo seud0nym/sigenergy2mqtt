@@ -411,7 +411,7 @@ class:
       "7": EMS à Distance
       "9": Contrôle Basé sur le Temps
   ESS:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} Système de stockage d’énergie'
   ESSBackupSOC:
     attributes:
       comment: "Plage : [0,00, 100,00]"
@@ -576,7 +576,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Alarmes PCS
   GridCode:
-    name: '{device_name}'
+    name: Code Réseau Installation Sigenergy{plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registre Modbus {address}
@@ -729,7 +729,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Puissance réactive de la phase {phase}
   GridSensor:
-    name: '{device_name}'
+    name: Capteur Réseau Installation Sigenergy{plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Données collectées par le capteur réseau au point de contrôle réseau/système ; >0 achat au réseau ; <0 vente au réseau"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Ajouter Service de Statut PVOutput
   PVString:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} Chaîne PV {string_number}'
   PVStringCount:
     attributes:
       source: Registre Modbus {address}
@@ -1340,7 +1340,7 @@ class:
       '3': Hors Tension
       '7': Anomalie Environnementale
   PlantStatistics:
-    name: '{device_name}'
+    name: Statistiques Installation Sigenergy{plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Arrêter 1:Démarrer
@@ -1372,7 +1372,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Valeur Cible d'Ajustement du Facteur de Puissance
   PowerPlant:
-    name: '{device_name}'
+    name: 'Centrale Sigenergy'{plant_suffix}
   ProtocolPublished:
     name: Protocole Publié
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Consommation totale de la charge intelligente {smart_load_index}
   SmartPort:
-    name: '{device_name}'
+    name: Smart-Port Installation Sigenergy{plant_suffix}
   Started:
     name: Démarré
   StartupTime:

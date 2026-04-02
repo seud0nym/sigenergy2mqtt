@@ -411,7 +411,7 @@ class:
       "7": 远程EMS
       "9": 时间控制
   ESS:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} 储能系统'
   ESSBackupSOC:
     attributes:
       comment: "范围：[0.00, 100.00]"
@@ -576,7 +576,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: PCS告警
   GridCode:
-    name: '{device_name}'
+    name: Sigenergy电站 电网规范{plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbus 寄存器 {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 相 {phase} 无功功率
   GridSensor:
-    name: '{device_name}'
+    name: Sigenergy电站 电网传感器{plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: 从电网传感器在电网到系统检查点收集的数据；>0 从电网购买；<0 卖给电网
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: 添加PVOutput状态服务
   PVString:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} 光伏组串 {string_number}'
   PVStringCount:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1340,7 +1340,7 @@ class:
       '3': 关机
       '7': 环境异常
   PlantStatistics:
-    name: '{device_name}'
+    name: Sigenergy电站 统计{plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:停止 1:启动
@@ -1372,7 +1372,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 功率因数调节目标值
   PowerPlant:
-    name: '{device_name}'
+    name: 'Sigenergy 电厂'{plant_suffix}
   ProtocolPublished:
     name: 协议发布
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 智能负载 {smart_load_index} 总消耗
   SmartPort:
-    name: '{device_name}'
+    name: Sigenergy电站 智能端口{plant_suffix}
   Started:
     name: 已启动
   StartupTime:

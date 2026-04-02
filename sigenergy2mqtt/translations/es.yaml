@@ -411,7 +411,7 @@ class:
       "7": EMS Remoto
       "9": Control Basado en Tiempo
   ESS:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} Sistema de Almacenamiento de Energía'
   ESSBackupSOC:
     attributes:
       comment: "Rango: [0,00, 100,00]"
@@ -576,7 +576,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Alarmas PCS
   GridCode:
-    name: '{device_name}'
+    name: Código de Red Planta Sigenergy{plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registro Modbus {address}
@@ -729,7 +729,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Potencia reactiva de fase {phase}
   GridSensor:
-    name: '{device_name}'
+    name: Sensor de Red Planta Sigenergy{plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Datos recopilados del sensor de red en el punto de control red/sistema; >0 compra de red; <0 venta a red"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Agregar Servicio de Estado PVOutput
   PVString:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} String PV {string_number}'
   PVStringCount:
     attributes:
       source: Registro Modbus {address}
@@ -1340,7 +1340,7 @@ class:
       '3': Apagado
       '7': Anomalía Ambiental
   PlantStatistics:
-    name: '{device_name}'
+    name: Estadísticas Planta Sigenergy{plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Detener 1:Iniciar
@@ -1372,7 +1372,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Valor Objetivo de Ajuste del Factor de Potencia
   PowerPlant:
-    name: '{device_name}'
+    name: 'Planta Sigenergy'{plant_suffix}
   ProtocolPublished:
     name: Protocolo Publicado
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Consumo total de carga inteligente {smart_load_index}
   SmartPort:
-    name: '{device_name}'
+    name: Smart-Port Planta Sigenergy{plant_suffix}
   Started:
     name: Iniciado
   StartupTime:

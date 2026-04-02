@@ -411,7 +411,7 @@ class:
       '7': Remote EMS
       '9': Time-Based Control
   ESS:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
     attributes:
       comment: 'Range: [0.00,100.00]'
@@ -576,7 +576,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: PCS Alarms
   GridCode:
-    name: '{device_name}'
+    name: Sigenergy Plant Grid Code{plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbus Register {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Reactive Power
   GridSensor:
-    name: '{device_name}'
+    name: Sigenergy Plant Grid Sensor{plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
@@ -1193,7 +1193,7 @@ class:
   PVOutputStatusService:
     name: PVOutput Add Status Service
   PVString:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
     attributes:
       source: Modbus Register {address}
@@ -1344,7 +1344,7 @@ class:
       '3': Power-Off
       '7': Environmental Abnormality
   PlantStatistics:
-    name: '{device_name}'
+    name: Sigenergy Plant Statistics{plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Stop 1:Start
@@ -1376,7 +1376,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Power Factor Adjustment Target Value
   PowerPlant:
-    name: '{device_name}'
+    name: Sigenergy Plant{plant_suffix}
   ProtocolPublished:
     name: Protocol Published
   ProtocolVersion:
@@ -1631,7 +1631,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Smart Load {smart_load_index} Total Consumption
   SmartPort:
-    name: '{device_name}'
+    name: Sigenergy Plant Smart-Port{plant_suffix}
   Started:
     name: Started
   StartupTime:

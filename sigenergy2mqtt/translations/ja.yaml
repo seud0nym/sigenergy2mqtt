@@ -411,7 +411,7 @@ class:
       "7": リモートEMS
       "9": 時間ベース制御
   ESS:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} 蓄電システム'
   ESSBackupSOC:
     attributes:
       comment: "範囲：[0.00, 100.00]"
@@ -576,7 +576,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム
   GridCode:
-    name: '{device_name}'
+    name: Sigenergyシステム 系統規程{plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbusレジスタ {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 無効電力
   GridSensor:
-    name: '{device_name}'
+    name: Sigenergyシステム 系統センサー{plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutputステータスサービス追加
   PVString:
-    name: '{device_name}'
+    name: '{model_id} {serial_number} PVストリング {string_number}'
   PVStringCount:
     attributes:
       source: Modbusレジスタ {address}
@@ -1340,7 +1340,7 @@ class:
       '3': 電源オフ
       '7': 環境異常
   PlantStatistics:
-    name: '{device_name}'
+    name: Sigenergyシステム 統計{plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:停止 1:開始
@@ -1372,7 +1372,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 力率調整目標値
   PowerPlant:
-    name: '{device_name}'
+    name: 'Sigenergy システム'{plant_suffix}
   ProtocolPublished:
     name: プロトコル公開
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: スマートロード {smart_load_index} 合計消費量
   SmartPort:
-    name: '{device_name}'
+    name: Sigenergyシステム スマートポート{plant_suffix}
   Started:
     name: 起動済み
   StartupTime:
