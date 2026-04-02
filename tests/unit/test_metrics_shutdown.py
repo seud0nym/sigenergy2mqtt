@@ -55,3 +55,32 @@ def test_shutdown_noop_without_executor():
     finally:
         Metrics._executor = original_executor
         Metrics._pending_updates = original_pending
+
+
+def test_submit_initializes_executor_once(monkeypatch):
+    class StubExecutor:
+        instances = 0
+
+        def __init__(self, *args, **kwargs):
+            StubExecutor.instances += 1
+
+        def submit(self, operation):
+            operation()
+            future = MagicMock()
+            future.add_done_callback = lambda callback: None
+            return future
+
+    original_executor = Metrics._executor
+    original_pending = list(Metrics._pending_updates)
+    try:
+        Metrics._executor = None
+        Metrics._pending_updates = []
+
+        monkeypatch.setattr(metrics_mod, "ThreadPoolExecutor", StubExecutor)
+        Metrics._submit(lambda: None)
+        Metrics._submit(lambda: None)
+
+        assert StubExecutor.instances == 1
+    finally:
+        Metrics._executor = original_executor
+        Metrics._pending_updates = original_pending

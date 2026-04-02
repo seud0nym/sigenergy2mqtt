@@ -34,6 +34,7 @@ class Metrics:
 
     _lock: threading.Lock = threading.Lock()
     _pending_lock: threading.Lock = threading.Lock()
+    _executor_lock: threading.Lock = threading.Lock()
     _executor: ThreadPoolExecutor | None = None
     _pending_updates: list[Future] = []
 
@@ -243,10 +244,12 @@ class Metrics:
         if not cls._metrics_enabled():
             return
 
-        if cls._executor is None:
-            cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
+        with cls._executor_lock:
+            if cls._executor is None:
+                cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
+            executor = cls._executor
 
-        future = cls._executor.submit(operation)
+        future = executor.submit(operation)
         with cls._pending_lock:
             cls._pending_updates.append(future)
 
@@ -297,7 +300,10 @@ class Metrics:
             pending = list(cls._pending_updates)
             cls._pending_updates.clear()
 
-        executor = cls._executor
+        with cls._executor_lock:
+            executor = cls._executor
+            cls._executor = None
+
         if executor is None:
             return
 
@@ -308,7 +314,6 @@ class Metrics:
                 logging.warning(f"Metrics shutdown timed out with {len(not_done)} pending updates")
 
         executor.shutdown(wait=not not_done, cancel_futures=bool(not_done))
-        cls._executor = None
 
     @classmethod
     async def modbus_cache_fill(cls) -> None:
