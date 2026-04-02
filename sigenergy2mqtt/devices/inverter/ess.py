@@ -16,6 +16,8 @@ class ESS(ModbusDevice):
         serial_number: str,
     ):
         name = f"{model_id.split()[0]} {serial_number} ESS"
+        if plant_index > 0:
+            name = f"Sigenergy Plant {plant_index + 1} {name}"
         super().__init__(
             device_type,
             name,
@@ -24,6 +26,7 @@ class ESS(ModbusDevice):
             "Energy Storage System",
             protocol_version,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}",
+            translate=False,
             model_id=model_id,
             serial_number=serial_number,
         )

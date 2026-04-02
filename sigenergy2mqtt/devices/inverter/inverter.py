@@ -29,6 +29,8 @@ class Inverter(ModbusDevice):
         words = (match.group(0).rstrip() if match else model_id).replace("EC", "Energy Controller", 1).split()
         words.insert(1, serial)
         name = " ".join(words)
+        if plant_index > 0:
+            name = f"Sigenergy Plant {plant_index + 1} {name}"
 
         super().__init__(
             type=device_type,

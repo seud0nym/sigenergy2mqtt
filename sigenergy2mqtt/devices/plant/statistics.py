@@ -11,7 +11,7 @@ class PlantStatistics(ModbusDevice):
         protocol_version: Protocol,
     ):
         name = "Sigenergy Plant Statistics" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Statistics"
-        super().__init__(device_type, name, plant_index, 247, "EMS Statistics", protocol_version)
+        super().__init__(device_type, name, plant_index, 247, "EMS Statistics", protocol_version, translate=False)
 
     @classmethod
     async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol) -> "PlantStatistics":

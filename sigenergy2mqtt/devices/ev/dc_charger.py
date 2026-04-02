@@ -12,7 +12,8 @@ class DCCharger(ModbusDevice):
         device_address: int,
         protocol_version: Protocol,
     ):
-        super().__init__(NonInverter(), "Sigenergy DC Charger", plant_index, device_address, "DC Charger", protocol_version)
+        name = "Sigenergy DC Charger" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} DC Charger"
+        super().__init__(NonInverter(), name, plant_index, device_address, "DC Charger", protocol_version, translate=False)
 
     @classmethod
     async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol) -> "DCCharger":

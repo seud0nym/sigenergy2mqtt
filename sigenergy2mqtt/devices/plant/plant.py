@@ -31,7 +31,7 @@ class PowerPlant(ModbusDevice):
         protocol_version: Protocol,
     ):
         name = "Sigenergy Plant" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1}"
-        super().__init__(device_type, name, plant_index, 247, "Energy Management System", protocol_version, sw=f"Modbus Protocol V{protocol_version.value}")
+        super().__init__(device_type, name, plant_index, 247, "Energy Management System", protocol_version, sw=f"Modbus Protocol V{protocol_version.value}", translate=False)
         self._consumption_source = ConsumptionMethod.CALCULATED if self.protocol_version < Protocol.V2_8 else active_config.consumption
         self._consumption_group = "Consumption" if self._consumption_source == ConsumptionMethod.CALCULATED else None  # No need to group sensors for scanning if not calculating consumption
         self._plant_pv_power = ro.PlantPVPower(plant_index)
