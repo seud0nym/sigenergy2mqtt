@@ -72,7 +72,7 @@ class Config:
             self.persistent_state_path = Path(".")
 
         try:
-            self.reload()
+            self.reload(skip_auto_discovery=True)
         except Exception:
             pass
 
@@ -116,7 +116,7 @@ class Config:
         self._source = filename
         self.reload()
 
-    def reload(self) -> None:
+    def reload(self, skip_auto_discovery: bool = False) -> None:
         """Reload configuration from the YAML source file and re-apply all overrides.
 
         The full load sequence on every call:
@@ -137,26 +137,55 @@ class Config:
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
 
-        if not auto_discovery:
-            # Check if any modbus host is configured via env
-            has_env_modbus = bool(os.getenv(const.SIGENERGY2MQTT_MODBUS_HOST))
-            # Check if any modbus host is configured via YAML
-            has_yaml_modbus = False
-            yaml_path = os.environ.get(const.SIGENERGY2MQTT_CONFIG) or self._source or "sigenergy2mqtt.yaml"
-            if Path(yaml_path).exists():
-                from .sources import RuamelYamlSettingsSource
-                try:
-                    yaml_data = RuamelYamlSettingsSource(Settings, self._source)()
-                    modbus_list = yaml_data.get("modbus", [])
-                    if isinstance(modbus_list, list):
-                        has_yaml_modbus = any(entry.get("host") for entry in modbus_list if isinstance(entry, dict))
-                except Exception:
-                    pass
+        # Load initial configuration to check if auto-discovery is needed.
+        # Temporarily bypass the Modbus requirement to allow partial config loading.
+        os.environ["SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION"] = "1"
+        # The decision to use the temporary environment variable SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION
+        # stems from a "chicken-and-egg" problem created by Pydantic's validation lifecycle combined
+        # with the requirement to let Pydantic handle all the parsing.
+        #
+        # The Problem
+        # To fulfil the requirement of "initiating auto-discovery ONLY after all sources have been parsed",
+        # we needed to construct the Settings object first so that we could reliably read overriding variables
+        # (like modbus_auto_discovery_timeout, ping_timeout, etc.) directly from the Pydantic model
+        # instead of reading os.environ manually.
+        #
+        # However, Pydantic's model_post_init natively enforces that modbus cannot be empty. If no Modbus
+        # device is defined in the environment or YAML, Pydantic immediately throws a ValidationError
+        # and aborts, leaving us without a Settings object to extract the auto-discovery settings from.
+        #
+        # Why the Environment Variable?
+        # Bypassing model_post_init cleanly: Pydantic's model_post_init method takes no extra context aside
+        #       from the parsed class attributes. There is no supported way in Pydantic v2 to tell a constructor
+        #       Settings(_skip_post_init=True) without defining it inside the model schema.
+        # Preventing Schema Pollution: We could have added a field like skip_modbus_validation: bool = Field(False, exclude=True)
+        #       to the Settings class itself. I advised against this because it adds an internal functional mechanism
+        #       into the user-facing configuration space. If a user accidentally (or intentionally) put
+        #       skip_modbus_validation: true in their YAML, they might unknowingly disable the safeguard entirely.
+        # Pydantic V2 limitations: While Pydantic offers Settings.model_construct(...) strictly for bypassing validation,
+        #       it accomplishes this by bypassing all field parsing, coercions, default fallbacks, and alias checking.
+        #       It ruins the point of relying on Pydantic to do the parsing work.
+        # Scope Control: Setting an environment variable and dropping it in a try...finally block guarantees
+        #       that the override is strictly localized to that single first-pass loading stage.
+        from pydantic import ValidationError
 
-            if not has_env_modbus and not has_yaml_modbus:
+        try:
+            try:
+                self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=None)  # type: ignore[reportCallIssue]
+                has_modbus = bool(self._settings.modbus)
+                if self._settings.modbus_auto_discovery:
+                    auto_discovery = self._settings.modbus_auto_discovery
+            except ValidationError:
+                self._settings = None
+                has_modbus = False
+        finally:
+            os.environ.pop("SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION", None)
+
+        if not auto_discovery:
+            if not has_modbus:
                 auto_discovery = "once"
 
-        if auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file()):
+        if not skip_auto_discovery and (auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())):
             port = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_PORT, "502"))
             modbus_timeout = float(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, "0.25"))
             modbus_retries = int(os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES, "0"))
@@ -167,13 +196,26 @@ class Config:
                 with open(auto_discovery_cache, "w") as f:
                     _yaml = YAML(typ="safe", pure=True)
                     _yaml.dump(auto_discovered, f)
+                # Re-parse to incorporate the new cache
+                os.environ["SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION"] = "1"
+                try:
+                    self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+                finally:
+                    os.environ.pop("SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION", None)
         elif auto_discovery == "once" and auto_discovery_cache.is_file():
             logging.info("Auto-discovery already completed, using cached results.")
+            os.environ["SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION"] = "1"
+            try:
+                self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+            finally:
+                os.environ.pop("SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION", None)
         else:
             logging.debug("Auto-discovery disabled")
             auto_discovery_cache = None
 
+        # Final load including the auto discovery results (if any), WITH post-init validation
         self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+
         i18n.load(self._settings.language)
 
     def reset(self):

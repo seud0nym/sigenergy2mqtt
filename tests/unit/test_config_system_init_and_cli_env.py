@@ -119,11 +119,12 @@ def test_reload_exhaustive_v7(tmp_path):
         active_config.reload()
     cache = tmp_path / "auto-discovery.yaml"
     YAML().dump([], cache)
-    with patch.object(active_config, "persistent_state_path", tmp_path), patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}):
-        active_config.reload()
-    with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}):
-        with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[{"host": "h"}]):
+    with patch.object(active_config, "persistent_state_path", tmp_path):
+        with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}):
             active_config.reload()
+        with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}):
+            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[{"host": "h"}]):
+                active_config.reload()
 
 
 def test_promote_cli_to_env_read_only_branch():
