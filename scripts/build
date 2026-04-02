@@ -83,10 +83,12 @@ else
         pypi_version=$new_version
     fi
 
-    sed -e "s/\[Unreleased\]/[${new_version}] - $(date +"%Y-%m-%d")/" -i CHANGELOG.md
-    if ! grep -q "\[${new_version}\] - $(date +"%Y-%m-%d")" CHANGELOG.md; then
-        echo -e "${RED}>>> Build CANCELLED: ${ORANGE}Failed to update CHANGELOG.md${NC}"
-        exit
+    if [[ $build_stable = y ]]; then
+        sed -e "s/\[Unreleased\]/[${new_version}] - $(date +"%Y-%m-%d")/" -i CHANGELOG.md
+        if ! grep -q "\[${new_version}\] - $(date +"%Y-%m-%d")" CHANGELOG.md; then
+            echo -e "${RED}>>> Build CANCELLED: ${ORANGE}Failed to update CHANGELOG.md${NC}"
+            exit
+        fi
     fi
 
     sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
