@@ -26,7 +26,12 @@ from ruamel.yaml import YAML
 
 yaml_loader = YAML(typ="rt")
 
-logger = logging.getLogger(__name__)
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Patterns for strings that are safe to leave untranslated
@@ -105,7 +110,7 @@ def has_ignore_comment(container: object, key: object) -> bool:
             return False
         return "verify:ignore" in eol_comment.value
     except Exception:
-        logger.debug(
+        log.debug(
             "Unexpected error inspecting comment for key %r in %r; assuming no ignore.",
             key,
             container,
@@ -279,20 +284,21 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
+    if args.verbose:
+        log.setLevel(logging.DEBUG)
 
     translations_dir: Path = args.translations_dir or _default_translations_dir()
 
     en_path = translations_dir / "en.yaml"
     if not en_path.exists():
-        print(f"Error: base file not found: {en_path}")
+        log.error("Base file not found: %s", en_path)
         sys.exit(1)
 
-    print(f"Loading base language file: {en_path}")
+    log.info("Loading base language file: %s", en_path)
     try:
         en_data = load_yaml(en_path)
     except TranslationLoadError as exc:
-        print(exc)
+        log.error(exc)
         sys.exit(1)
 
     total_issues = 0
@@ -303,11 +309,11 @@ def main() -> None:
         if yaml_file.name == "en.yaml":
             continue
 
-        print(f"\n--- Verifying {yaml_file.name} ---")
+        log.info("--- Verifying %s ---", yaml_file.name)
         try:
             other_data = load_yaml(yaml_file)
         except TranslationLoadError as exc:
-            print(exc)
+            log.error(exc)
             continue
 
         files_checked += 1
@@ -317,17 +323,17 @@ def main() -> None:
             files_with_issues += 1
             total_issues += len(file_issues)
             for issue in file_issues:
-                print(issue)
+                log.warning(issue)
         else:
-            print("OK")
+            log.info("OK")
 
     # ---- Summary ----
-    print(f"\n{'=' * 48}")
+    log.info("=" * 48)
     if total_issues:
-        print(f"Found {total_issues} issue(s) across {files_with_issues} of {files_checked} file(s) checked.")
+        log.error("Found %d issue(s) across %d of %d file(s) checked.", total_issues, files_with_issues, files_checked)
         sys.exit(1)
     else:
-        print(f"All {files_checked} file(s) passed with no issues.")
+        log.info("All %d file(s) passed with no issues.", files_checked)
         sys.exit(0)
 
 
