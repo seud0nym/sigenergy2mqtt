@@ -25,7 +25,7 @@ def test_multi_modbus_device_naming_uses_plant_index_and_charger_sequence():
     assert plant1["name"] == "Sigenergy Plant 2"
 
     assert inverter1["name"].startswith("Sigenergy Plant 2 ")
-    assert ess1["name"].startswith("Sigenergy Plant 2 ")
+    assert ess1["name"] == "SigenStor SN123 ESS"
     assert pv_string1["name"] == "SigenStor SN123 PV String 1"
     assert ac1["name"] == "Sigenergy AC Charger 1"
     assert ac2["name"] == "Sigenergy AC Charger 2"

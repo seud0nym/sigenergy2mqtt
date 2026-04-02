@@ -16,8 +16,6 @@ class ESS(ModbusDevice):
         serial_number: str,
     ):
         name = f"{model_id.split()[0]} {serial_number} ESS"
-        if plant_index > 0:
-            name = f"Sigenergy Plant {plant_index + 1} {name}"
         super().__init__(
             device_type,
             name,
