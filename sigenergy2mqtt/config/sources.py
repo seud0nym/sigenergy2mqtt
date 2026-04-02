@@ -182,11 +182,6 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(modbus, "scan_interval_high", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH)))
         _set(modbus, "scan_interval_realtime", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME)))
 
-        _set(result, "modbus_auto_discovery", g(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY))
-        _set(result, "modbus_auto_discovery_timeout", _float(g(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT)))
-        _set(result, "modbus_auto_discovery_ping_timeout", _float(g(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT)))
-        _set(result, "modbus_auto_discovery_retries", _int(g(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES)))
-
         # Smart-port
         sp: dict[str, Any] = {}
         _set(sp, "enabled", _bool(g(const.SIGENERGY2MQTT_SMARTPORT_ENABLED)))
@@ -265,3 +260,24 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
             result["influxdb"] = influx
 
         return result
+
+
+def _auto_discovery_env_values(getenv: Any, include_modbus_port: bool = False) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    _set(result, "modbus_auto_discovery", getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY))
+    _set(result, "modbus_auto_discovery_timeout", _float(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT)))
+    _set(result, "modbus_auto_discovery_ping_timeout", _float(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT)))
+    _set(result, "modbus_auto_discovery_retries", _int(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES)))
+    if include_modbus_port:
+        _set(result, "modbus_port", _int(getenv(const.SIGENERGY2MQTT_MODBUS_PORT)))
+    return result
+
+
+class AutoDiscoveryEnvSettingsSource(PydanticBaseSettingsSource):
+    """Maps only auto-discovery related SIGENERGY2MQTT_* variables."""
+
+    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        return None, field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        return _auto_discovery_env_values(os.environ.get, include_modbus_port=True)

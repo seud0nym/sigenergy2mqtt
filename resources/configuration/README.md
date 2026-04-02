@@ -468,6 +468,7 @@ You can also automatically discover Sigenergy devices on your network, using eit
 - Config key: `n\a`
 
 Controls auto-discovery of Sigenergy Modbus hosts and device IDs. 
+These settings are parsed in a preflight configuration pass before full Modbus validation, so discovery can run even when no `modbus` host entries are present yet.
 
 - If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. 
 - If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. 
@@ -1288,4 +1289,3 @@ Change the default [scan interval](#scan-interval) in seconds at which the state
 - Config key: `sensor-overrides.{sensor_spec}.unit-of-measurement`
 
 Change the unit of this sensor. If you change the Unit of Measurement, you must also change the [Gain](#opt_sensor_overrides_gain) to a corresponding value.
-
