@@ -13,7 +13,7 @@ class GridSensor(ModbusDevice):
         protocol_version: Protocol,
     ):
         name = "Sigenergy Plant Grid Sensor" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Grid Sensor"
-        super().__init__(device_type, name, plant_index, 247, "Grid Sensor", protocol_version, translate=False)
+        super().__init__(device_type, name, plant_index, 247, "Grid Sensor", protocol_version, device_name=name)
 
     @classmethod
     async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, power_phases: int, consumption_group: str | None, modbus_client: ModbusClient) -> "GridSensor":

@@ -231,13 +231,22 @@ async def make_ac_charger(
     modbus_client: ModbusClient,
     device_address: int,
     plant: PowerPlant,
+    sequence_number: int | None = None,
+    total_count: int | None = None,
 ) -> ACCharger:
     """Create an AC charger device and link it to the parent plant.
 
     Side effects: performs async device initialisation reads and sets
     ``via_device`` to the plant unique ID for topology/discovery metadata.
     """
-    charger = await ACCharger.create(plant_index, device_address, plant.protocol_version, modbus_client)
+    charger = await ACCharger.create(
+        plant_index,
+        device_address,
+        plant.protocol_version,
+        modbus_client,
+        sequence_number=sequence_number,
+        total_count=total_count,
+    )
     charger.via_device = plant.unique_id
     return charger
 
@@ -247,13 +256,21 @@ async def make_dc_charger(
     device_address: int,
     protocol_version: Protocol,
     inverter_unique_id: str,
+    sequence_number: int | None = None,
+    total_count: int | None = None,
 ) -> DCCharger:
     """Create a DC charger device and associate it with its inverter.
 
     Side effects: performs async device initialisation and sets ``via_device``
     to the owning inverter unique ID.
     """
-    charger = await DCCharger.create(plant_index, device_address, protocol_version)
+    charger = await DCCharger.create(
+        plant_index,
+        device_address,
+        protocol_version,
+        sequence_number=sequence_number,
+        total_count=total_count,
+    )
     charger.via_device = inverter_unique_id
     return charger
 
@@ -356,6 +373,10 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], Protocol | None]:
     """Iterate over all configured Modbus hosts, probe registers, and populate ThreadConfigs."""
     protocol_version: Protocol | None = None
+    total_ac_chargers = sum(len(d.ac_chargers or []) for d in active_config.modbus)
+    total_dc_chargers = sum(len(d.dc_chargers or []) for d in active_config.modbus)
+    ac_charger_sequence = 0
+    dc_charger_sequence = 0
 
     for plant_index in range(len(active_config.modbus)):
         device = active_config.modbus[plant_index]
@@ -404,8 +425,25 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, *INVERTER_ILLEGAL_DATA_ADDRESSES)
 
             if plant is not None:
-                await _setup_dc_chargers(plant_index, device, plant, inverters, config)
-                await _setup_ac_chargers(plant_index, device, plant, modbus, config, protocol_version)
+                dc_charger_sequence = await _setup_dc_chargers(
+                    plant_index,
+                    device,
+                    plant,
+                    inverters,
+                    config,
+                    dc_charger_sequence,
+                    total_dc_chargers,
+                )
+                ac_charger_sequence = await _setup_ac_chargers(
+                    plant_index,
+                    device,
+                    plant,
+                    modbus,
+                    config,
+                    protocol_version,
+                    ac_charger_sequence,
+                    total_ac_chargers,
+                )
 
             logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
@@ -418,7 +456,9 @@ async def _setup_dc_chargers(
     plant: PowerPlant,
     inverters: dict[int, str],
     config: ThreadConfig,
-) -> None:
+    sequence_start: int,
+    total_count: int,
+) -> int:
     if not device.dc_chargers:
         logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
         for register in (SITotalEVDCChargedEnergy.ADDRESS, SITotalEVDCDischargedEnergy.ADDRESS):
@@ -428,14 +468,24 @@ async def _setup_dc_chargers(
             )
             if si_sensor:
                 si_sensor.publishable = False
-        return
+        return sequence_start
 
+    sequence_number = sequence_start
     for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
         if device_address not in inverters:
             logging.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
             continue
-        charger = await make_dc_charger(plant_index, device_address, plant.protocol_version, inverters[device_address])
+        sequence_number += 1
+        charger = await make_dc_charger(
+            plant_index,
+            device_address,
+            plant.protocol_version,
+            inverters[device_address],
+            sequence_number=sequence_number,
+            total_count=total_count,
+        )
         config.add_device(charger)
+    return sequence_number
 
 
 async def _setup_ac_chargers(
@@ -445,7 +495,9 @@ async def _setup_ac_chargers(
     modbus_client: ModbusClient,
     config: ThreadConfig,
     protocol_version: Protocol | None,
-) -> None:
+    sequence_start: int,
+    total_count: int,
+) -> int:
     if not device.ac_chargers:
         logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
         si_sensor = plant.get_sensor(
@@ -454,15 +506,25 @@ async def _setup_ac_chargers(
         )
         if si_sensor:
             si_sensor.publishable = False
-        return
+        return sequence_start
 
     if protocol_version is not None and protocol_version < Protocol.V2_0:
         logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
-        return
+        return sequence_start
 
+    sequence_number = sequence_start
     for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
-        charger = await make_ac_charger(plant_index, modbus_client, device_address, plant)
+        sequence_number += 1
+        charger = await make_ac_charger(
+            plant_index,
+            modbus_client,
+            device_address,
+            plant,
+            sequence_number=sequence_number,
+            total_count=total_count,
+        )
         config.add_device(charger)
+    return sequence_number
 
 
 def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:

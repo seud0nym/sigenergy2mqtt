@@ -39,7 +39,7 @@ class Inverter(ModbusDevice):
             device_address=device_address,
             model=device_type.__str__(),
             protocol_version=protocol_version,
-            translate=False,
+            device_name=name,
             # HA device registry attributes
             sn=serial,
             hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion

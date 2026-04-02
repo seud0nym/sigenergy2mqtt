@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Sigenergy AC 충전기
+    name: Sigenergy AC 충전기{sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': 계통 과전압
@@ -331,7 +331,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 현재 제어 명령 값
   DCCharger:
-    name: Sigenergy DC 충전기
+    name: Sigenergy DC 충전기{sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: 단회
@@ -411,7 +411,7 @@ class:
       "7": 원격 EMS
       "9": 시간 기반 제어
   ESS:
-    name: '{model_id} {serial_number} 에너지 저장 시스템'
+    name: '{device_name}'
   ESSBackupSOC:
     attributes:
       comment: "범위: [0.00, 100.00]"
@@ -576,7 +576,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: PCS 알람
   GridCode:
-    name: Sigenergy 발전소 계통 규정
+    name: '{device_name}'
   GridCodeHVRT:
     attributes:
       source: Modbus 레지스터 {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 페이즈 {phase} 무효 전력
   GridSensor:
-    name: Sigenergy 발전소 계통 센서
+    name: '{device_name}'
   GridSensorActivePower:
     attributes:
       comment: "계통에서 시스템으로의 체크포인트에서 계통 센서에 의해 수집된 데이터; >0 계통에서 구매; <0 계통에 판매"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutput 상태 서비스 추가
   PVString:
-    name: '{model_id} {serial_number} PV 스트링 {string_number}'
+    name: '{device_name}'
   PVStringCount:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1340,7 +1340,7 @@ class:
       '3': 전원 꺼짐
       '7': 환경 이상
   PlantStatistics:
-    name: Sigenergy 발전소 통계
+    name: '{device_name}'
   PlantStatus:
     attributes:
       comment: 0:정지 1:시작
@@ -1372,7 +1372,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 역률 조정 목표값
   PowerPlant:
-    name: Sigenergy 발전소
+    name: '{device_name}'
   ProtocolPublished:
     name: 프로토콜 게시됨
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 스마트 부하 {smart_load_index} 총 소비량
   SmartPort:
-    name: Sigenergy 발전소 스마트포트
+    name: '{device_name}'
   Started:
     name: 시작됨
   StartupTime:

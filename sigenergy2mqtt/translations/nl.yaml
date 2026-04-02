@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Sigenergy AC-lader
+    name: Sigenergy AC-lader{sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': Net overspanning
@@ -331,7 +331,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Huidige Regelcommandowaarde
   DCCharger:
-    name: Sigenergy DC-lader
+    name: Sigenergy DC-lader{sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: Eenmalig
@@ -411,7 +411,7 @@ class:
       "7": Extern EMS
       "9": Tijdgebaseerde Regeling
   ESS:
-    name: '{model_id} {serial_number} Energieopslagsysteem'
+    name: '{device_name}'
   ESSBackupSOC:
     attributes:
       comment: "Bereik: [0,00, 100,00]"
@@ -576,7 +576,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: PCS Alarmen
   GridCode:
-    name: Sigenergy-installatie Netcode
+    name: '{device_name}'
   GridCodeHVRT:
     attributes:
       source: Modbus-register {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Reactief vermogen fase {phase}
   GridSensor:
-    name: Sigenergy-installatie Netsensor
+    name: '{device_name}'
   GridSensorActivePower:
     attributes:
       comment: "Gegevens verzameld door netsensor bij net-naar-systeem controlepunt; >0 kopen van net; <0 verkopen aan net"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: PVOutput Status Service Toevoegen
   PVString:
-    name: '{model_id} {serial_number} PV-string {string_number}'
+    name: '{device_name}'
   PVStringCount:
     attributes:
       source: Modbus-register {address}
@@ -1340,7 +1340,7 @@ class:
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
   PlantStatistics:
-    name: Sigenergy-installatie Statistieken
+    name: '{device_name}'
   PlantStatus:
     attributes:
       comment: 0:Stop 1:Start # verify:ignore
@@ -1372,7 +1372,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Arbeidsfactor Instelwaarde
   PowerPlant:
-    name: 'Sigenergy-installatie'
+    name: '{device_name}'
   ProtocolPublished:
     name: Protocol Gepubliceerd
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Totaal verbruik slimme verbruiker {smart_load_index}
   SmartPort:
-    name: Sigenergy-installatie Smart-Port
+    name: '{device_name}'
   Started:
     name: Gestart
   StartupTime:

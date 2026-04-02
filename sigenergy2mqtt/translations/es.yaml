@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Cargador CA Sigenergy
+    name: Cargador CA Sigenergy{sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': Sobretensión de red
@@ -331,7 +331,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Valor de Comando de Control Actual
   DCCharger:
-    name: Cargador CC Sigenergy
+    name: Cargador CC Sigenergy{sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: Sesión única
@@ -411,7 +411,7 @@ class:
       "7": EMS Remoto
       "9": Control Basado en Tiempo
   ESS:
-    name: '{model_id} {serial_number} Sistema de Almacenamiento de Energía'
+    name: '{device_name}'
   ESSBackupSOC:
     attributes:
       comment: "Rango: [0,00, 100,00]"
@@ -576,7 +576,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Alarmas PCS
   GridCode:
-    name: Código de Red Planta Sigenergy
+    name: '{device_name}'
   GridCodeHVRT:
     attributes:
       source: Registro Modbus {address}
@@ -729,7 +729,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Potencia reactiva de fase {phase}
   GridSensor:
-    name: Sensor de Red Planta Sigenergy
+    name: '{device_name}'
   GridSensorActivePower:
     attributes:
       comment: "Datos recopilados del sensor de red en el punto de control red/sistema; >0 compra de red; <0 venta a red"
@@ -1189,7 +1189,7 @@ class:
   PVOutputStatusService:
     name: Agregar Servicio de Estado PVOutput
   PVString:
-    name: '{model_id} {serial_number} String PV {string_number}'
+    name: '{device_name}'
   PVStringCount:
     attributes:
       source: Registro Modbus {address}
@@ -1340,7 +1340,7 @@ class:
       '3': Apagado
       '7': Anomalía Ambiental
   PlantStatistics:
-    name: Estadísticas Planta Sigenergy
+    name: '{device_name}'
   PlantStatus:
     attributes:
       comment: 0:Detener 1:Iniciar
@@ -1372,7 +1372,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Valor Objetivo de Ajuste del Factor de Potencia
   PowerPlant:
-    name: 'Planta Sigenergy'
+    name: '{device_name}'
   ProtocolPublished:
     name: Protocolo Publicado
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Consumo total de carga inteligente {smart_load_index}
   SmartPort:
-    name: Smart-Port Planta Sigenergy
+    name: '{device_name}'
   Started:
     name: Iniciado
   StartupTime:
