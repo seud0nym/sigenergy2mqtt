@@ -21,6 +21,7 @@ _NOTE: Includes all changes in 2026.3.21bx beta releases_
 
 ### Changed
 
+- Simplified Inverter naming to use unchanged model and serial number acquired via the Modbus registers
 - On firmware SPC113 and later, ESS Max Charging/Discharging and PV Max Power limits are now globally available; the validation override option added in 2026.1.20 is ignored for these firmware versions
 - Improved Modbus read sanity checking to better target the requirements of specific sensors
 - PVOutput output uploads are now only verified at end-of-day upload (previously also verified when the upload was unchanged from the previous upload)
