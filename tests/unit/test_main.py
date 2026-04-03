@@ -808,7 +808,7 @@ async def test_setup_dc_chargers_missing_inverter(clean_config):
     mock_plant = MagicMock()
     mock_config = MagicMock()
     with patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn:
-        await main_mod._setup_dc_chargers(0, mock_modbus_cfg, mock_plant, {1: "inv1"}, mock_config)
+        await main_mod._setup_dc_chargers(0, mock_modbus_cfg, mock_plant, {1: "inv1"}, mock_config, 0, 1)
         assert mock_warn.called
 
 
@@ -819,7 +819,7 @@ async def test_setup_ac_chargers_older_protocol(clean_config):
     mock_plant = MagicMock()
     mock_config = MagicMock()
     with patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn:
-        await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, Protocol.V1_8)
+        await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, Protocol.V1_8, 0, 1)
         assert mock_warn.called
 
 

@@ -1,4 +1,5 @@
 import asyncio
+import copy
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import MagicMock
@@ -6,9 +7,9 @@ from unittest.mock import MagicMock
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import HybridInverter, Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.devices import Device, DeviceRegistry
+from sigenergy2mqtt.devices import ESS, ACCharger, DCCharger, Device, DeviceRegistry, Inverter, PowerPlant, PVString
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
 
@@ -139,3 +140,32 @@ def test_add_derived_sensor_handles_none_and_unregistered():
     dev._add_derived_sensor(cast(Any, derived), cast(Any, src))
     # Nothing should have been added to all_sensors
     assert len(dev.all_sensors) == 0
+
+
+def test_multi_modbus_device_naming_uses_plant_index_and_charger_sequence():
+    cfg = Config()
+    cfg.modbus = [cfg.modbus[0], copy.deepcopy(cfg.modbus[0])]
+
+    with _swap_active_config(cfg):
+        plant0 = PowerPlant(0, HybridInverter(), Protocol.V2_8)
+        plant1 = PowerPlant(1, HybridInverter(), Protocol.V2_8)
+
+        inverter1 = Inverter(1, 1, HybridInverter(), Protocol.V2_8, "SigenStor EC 10.0 SP", "SN123", "V01.01.113")
+        ess1 = ESS(1, 1, HybridInverter(), Protocol.V2_8, "SigenStor EC 10.0 SP", "SN123")
+        pv_string1 = PVString(1, 1, HybridInverter(), "SigenStor EC 10.0 SP", "SN123", 1, 31027, 31028, Protocol.V2_8)
+        ac1 = ACCharger(1, 248 - 1, Protocol.V2_8, sequence_number=1, total_count=2)
+        ac2 = ACCharger(0, 248 - 2, Protocol.V2_8, sequence_number=2, total_count=2)
+        dc1 = DCCharger(1, 248 - 1, Protocol.V2_8, sequence_number=1, total_count=2)
+        dc2 = DCCharger(0, 248 - 2, Protocol.V2_8, sequence_number=2, total_count=2)
+
+    assert plant0["name"] == "Sigenergy Plant"
+    assert plant1["name"] == "Sigenergy Plant 2"
+
+    assert inverter1["name"].startswith("Sigenergy Plant 2 ") is False
+    assert "Sigenergy Plant 2" not in ess1["name"]
+    assert ess1["name"].endswith("SN123 ESS")
+    assert pv_string1["name"].endswith("SN123 PV String 1")
+    assert ac1["name"] == "Sigenergy AC Charger 1"
+    assert ac2["name"] == "Sigenergy AC Charger 2"
+    assert dc1["name"] == "Sigenergy DC Charger 1"
+    assert dc2["name"] == "Sigenergy DC Charger 2"
