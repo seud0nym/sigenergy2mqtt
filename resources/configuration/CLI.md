@@ -164,12 +164,15 @@ options:
                         Enable the simplified topic structure
                         (sigenergy2mqtt/object_id/state) instead of the full
                         Home Assistant topic structure
-                        (homeassistant/platform/device_id/object_id/state)
+                        (homeassistant/platform/device_id/object_id/state).
+                        Forced off when --hass-sigenergy-local-modbus-naming
+                        is enabled.
   --hass-sigenergy-local-modbus-naming
                         Use Sigenergy-Local-Modbus entity_id, gain and unit
                         naming conventions for mapped Modbus sensors. If
                         enabled, --hass-entity-id-prefix must be 'sigen'
-                        (default).
+                        (default) and --hass-use-simplified-topics is forced
+                        to false.
   --hass-device-name-prefix [SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX]
                         The prefix to use for Home Assistant entity names.
                         Example: A prefix of 'prefix' will prepend 'prefix '

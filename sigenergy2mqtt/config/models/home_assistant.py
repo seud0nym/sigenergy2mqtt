@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from pydantic import BaseModel, Field, model_validator
 
 from sigenergy2mqtt.config.models._base import _SUB
@@ -37,4 +39,7 @@ class HomeAssistantConfig(BaseModel):
             from sigenergy2mqtt.config.config import ConfigurationError
 
             raise ConfigurationError("home-assistant.entity-id-prefix must be 'sigen' (default) when sigenergy-local-modbus-naming is true")
+        if self.sigenergy_local_modbus_naming and self.use_simplified_topics:
+            logging.warning("home-assistant.use-simplified-topics=true is incompatible with sigenergy-local-modbus-naming=true; forcing use-simplified-topics=false")
+            self.use_simplified_topics = False
         return self
