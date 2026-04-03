@@ -1708,6 +1708,8 @@ class:
   WriteOnlySensor:
     name_off: 電源オフ
     name_on: 電源オン
+  Inverter:
+    name: '{model_id} {serial}'
 cli:
   clean:
     help: 空のdiscoveryを公開して既存機器を削除し、終了。

@@ -1708,6 +1708,8 @@ class:
   WriteOnlySensor:
     name_off: Apagar
     name_on: Encender
+  Inverter:
+    name: '{model_id} {serial}'
 cli:
   clean:
     help: Publicar descubrimiento vacío para eliminar dispositivos existentes, luego sale inmediatamente.

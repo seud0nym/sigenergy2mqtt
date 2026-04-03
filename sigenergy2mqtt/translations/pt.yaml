@@ -1708,6 +1708,8 @@ class:
   WriteOnlySensor:
     name_off: Desligar
     name_on: Ligar
+  Inverter:
+    name: '{model_id} {serial}'
 cli:
   clean:
     help: Publicar discovery vazia para remover dispositivos, depois sair.

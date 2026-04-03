@@ -1321,6 +1321,9 @@ def _update_language_file(
 
     # 4b. Sync CLI translations.
     for key, value in en_cli.items():
+        if "cli" not in existing:
+            existing["cli"] = {}
+            updated = True
         if key not in existing["cli"]:
             existing["cli"][key] = value
             updated = True
@@ -1341,6 +1344,8 @@ def _update_language_file(
                     updated = True
 
     if updated:
+        # Re-sort to match English canonical order and preserve comments.
+        existing = deep_update_commented(existing, sort_dict(_strip_comments(existing)))
         save_yaml(language_file, existing)
         log.info("  Saved %s", language_file.name)
     else:

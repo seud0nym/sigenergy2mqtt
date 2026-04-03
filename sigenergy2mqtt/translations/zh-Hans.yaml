@@ -1708,6 +1708,8 @@ class:
   WriteOnlySensor:
     name_off: 关机
     name_on: 开机
+  Inverter:
+    name: '{model_id} {serial}'
 cli:
   clean:
     help: 发布空discovery删除现有设备后退出。

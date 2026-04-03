@@ -1708,6 +1708,8 @@ class:
   WriteOnlySensor:
     name_off: 전원 끄기
     name_on: 전원 켜기
+  Inverter:
+    name: '{model_id} {serial}'
 cli:
   clean:
     help: 빈 discovery 게시하여 기존 장치 삭제 후 종료.

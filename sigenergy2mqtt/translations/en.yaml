@@ -330,16 +330,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Current Control Command Value
-  DailyChargeEnergy:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Daily Charge Energy
-  DailyDischargeEnergy:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Daily Discharge Energy
   DCCharger:
     name: Sigenergy DC Charger {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -392,6 +382,16 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Vehicle SoC
+  DailyChargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Daily Charge Energy
+  DailyDischargeEnergy:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Daily Discharge Energy
   DischargeCutOffSoC:
     attributes:
       source: Modbus Register {address}
@@ -410,39 +410,6 @@ class:
       '6': VPP Scheduling
       '7': Remote EMS
       '9': Time-Based Control
-  EnphaseCurrent:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Current
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Daily Production
-    name_reset: Set Daily Production
-  EnphaseFrequency:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Frequency
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Lifetime Production
-  EnphasePowerFactor:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Power Factor
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API # verify:ignore
-    name: PV Power
-  EnphaseReactivePower:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Reactive Power
-  EnphaseVoltage:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Voltage
   ESS:
     name: '{model_id} {serial_number} ESS'
   ESSBackupSOC:
@@ -483,6 +450,39 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Lifetime DC EV Discharge Energy
+  EnphaseCurrent:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Current
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Daily Production
+    name_reset: Set Daily Production
+  EnphaseFrequency:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Frequency
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Lifetime Production
+  EnphasePVPower:
+    attributes:
+      source: Enphase Envoy API # verify:ignore
+    name: PV Power
+  EnphasePowerFactor:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Power Factor
+  EnphaseReactivePower:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Reactive Power
+  EnphaseVoltage:
+    attributes:
+      source: Enphase Envoy API when EnphasePVPower derived
+    name: Voltage
   GeneralAlarm1:
     alarm:
       '0': Software version mismatch
@@ -811,6 +811,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Insulation Resistance
+  Inverter:
+    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Modbus Register {address}
@@ -965,16 +967,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PCS Alarms
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Power Factor Adjustment
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Power Factor Adjustment Feedback
   InverterPVDailyGeneration:
     attributes:
       source: Modbus Register {address}
@@ -990,6 +982,16 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PV Power
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Power Factor Adjustment
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Power Factor Adjustment Feedback
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Modbus Register {address}
@@ -1040,6 +1042,15 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: '{phase} Line Voltage'
+  MPPTCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: MPPT Count
+  MQTTPhysicalPublishes:
+    name: MQTT Physical Publishes
+  MQTTPublishFailures:
+    name: MQTT Publish Failures
   MaxAbsorptionPower:
     attributes:
       source: Modbus Register {address}
@@ -1132,18 +1143,9 @@ class:
     name: Modbus Write Min
   MonitorService:
     name: Sigenergy Monitor
-  MPPTCount:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: MPPT Count
   MqttOverriddenSensor:
     attributes:
       source: MQTT Override
-  MQTTPhysicalPublishes:
-    name: MQTT Physical Publishes
-  MQTTPublishFailures:
-    name: MQTT Publish Failures
   NumericSensor:
     attributes:
       source: Modbus Register {address}
@@ -1175,6 +1177,49 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PCS Max Import Limit
+  PVCurrentSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Current
+  PVInverter:
+    name: PV Inverter
+  PVMaxPowerLimit:
+    attributes:
+      comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PV Max Power Limit
+  PVOutputOutputService:
+    name: PVOutput Add Output Service
+  PVOutputStatusService:
+    name: PVOutput Add Status Service
+  PVString:
+    name: '{model_id} {serial_number} PV String {string_number}'
+  PVStringCount:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PV String Count
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy at last midnight
+    name: Daily Production
+    name_reset: Set Daily Production
+  PVStringLifetimeEnergy:
+    attributes:
+      source: Riemann ∑ of PVStringPower
+    name: Lifetime Production
+    name_reset: Set Lifetime Production
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor
+    name: Power
+  PVVoltageSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Voltage
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N
@@ -1249,16 +1294,6 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy at last midnight
     name: Daily PV Production
     name_reset: Set Daily PV Production
-  PlantPhaseActivePower:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Phase{phase_label} Active Power
-  PlantPhaseReactivePower:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Phase{phase_label} Reactive Power
   PlantPVPower:
     attributes:
       source: Modbus Register {address}
@@ -1269,6 +1304,16 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Lifetime PV Production
+  PlantPhaseActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase{phase_label} Active Power
+  PlantPhaseReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Phase{phase_label} Reactive Power
   PlantRatedChargingPower:
     attributes:
       source: Modbus Register {address}
@@ -1338,49 +1383,6 @@ class:
     name: Protocol Published
   ProtocolVersion:
     name: Protocol Version
-  PVCurrentSensor:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Current
-  PVInverter:
-    name: PV Inverter
-  PVMaxPowerLimit:
-    attributes:
-      comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Max Power Limit
-  PVOutputOutputService:
-    name: PVOutput Add Output Service
-  PVOutputStatusService:
-    name: PVOutput Add Status Service
-  PVString:
-    name: '{model_id} {serial_number} PV String {string_number}'
-  PVStringCount:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV String Count
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy at last midnight
-    name: Daily Production
-    name_reset: Set Daily Production
-  PVStringLifetimeEnergy:
-    attributes:
-      source: Riemann ∑ of PVStringPower
-    name: Lifetime Production
-    name_reset: Set Lifetime Production
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor
-    name: Power
-  PVVoltageSensor:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Voltage
   QSAdjustmentTargetValue:
     attributes:
       comment: 'Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode'
@@ -1545,15 +1547,6 @@ class:
       '2': Fault
       '3': Power-Off
       '7': Environmental Abnormality
-  SelectSensor:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Shutdown Time
   SITotalChargedEnergy:
     attributes:
       comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
@@ -1620,6 +1613,15 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Total Third-Party PV Production
+  SelectSensor:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Shutdown Time
   SmartLoadPower:
     attributes:
       source: Modbus Register {address}
@@ -1709,12 +1711,6 @@ class:
     name_off: Power Off
     name_on: Power On
 cli:
-  clean:
-    help: Publish empty discovery to delete existing devices, then exits immediately.
-  discovery_only:
-    help: Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.
-  show_version:
-    help: Shows the version number, then exits immediately.
   SIGENERGY2MQTT_CONFIG:
     help: 'The path to the YAML configuration file (default: SIGENERGY2MQTT_CONFIG env var, otherwise /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1903,5 +1899,11 @@ cli:
     help: The sensor class to hold the production data obtained from the third-party device.
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: The username to authenticate to the third-party device.
+  clean:
+    help: Publish empty discovery to delete existing devices, then exits immediately.
+  discovery_only:
+    help: Exit immediately after publishing discovery. Does not read values from the Modbus interface, except to probe for device configuration.
+  show_version:
+    help: Shows the version number, then exits immediately.
   validate_only:
     help: 'Validates the configuration and tests configured connections/authentication, then exits immediately. Optional mode: --validate=show_credentials logs the raw credentials used for connection tests.'

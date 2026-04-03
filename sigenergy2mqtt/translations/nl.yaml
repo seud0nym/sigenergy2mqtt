@@ -1708,6 +1708,8 @@ class:
   WriteOnlySensor:
     name_off: Uitschakelen
     name_on: Inschakelen
+  Inverter:
+    name: '{model_id} {serial}'
 cli:
   clean:
     help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.
