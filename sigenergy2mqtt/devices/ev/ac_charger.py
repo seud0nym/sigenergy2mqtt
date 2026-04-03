@@ -19,7 +19,7 @@ class ACCharger(ModbusDevice):
     ):
         multi_charger = (total_count or 0) > 1 and sequence_number is not None
         name = "Sigenergy AC Charger"
-        sequence_suffix = f" {sequence_number}" if multi_charger else ""
+        sequence_suffix = str(sequence_number) if multi_charger else ""
         super().__init__(
             NonInverter(),
             name,

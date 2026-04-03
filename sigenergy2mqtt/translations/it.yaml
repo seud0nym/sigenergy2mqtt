@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Caricatore CA Sigenergy{sequence_suffix}
+    name: Caricatore CA Sigenergy {sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': Sovratensione di rete
@@ -331,7 +331,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Valore Comando di Controllo Corrente
   DCCharger:
-    name: Caricatore CC Sigenergy{sequence_suffix}
+    name: Caricatore CC Sigenergy {sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: Singola sessione
@@ -576,7 +576,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Allarmi PCS
   GridCode:
-    name: Codice Rete Impianto Sigenergy{plant_suffix}
+    name: Codice Rete Impianto Sigenergy {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registro Modbus {address}
@@ -729,7 +729,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Potenza reattiva fase {phase}
   GridSensor:
-    name: Sensore Rete Impianto Sigenergy{plant_suffix}
+    name: Sensore Rete Impianto Sigenergy {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Dati raccolti dal sensore di rete al punto di controllo rete/sistema; >0 acquisto dalla rete; <0 vendita alla rete"
@@ -1340,7 +1340,7 @@ class:
       '3': Spento
       '7': Anomalia Ambientale
   PlantStatistics:
-    name: Statistiche Impianto Sigenergy{plant_suffix}
+    name: Statistiche Impianto Sigenergy {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Ferma 1:Avvia
@@ -1372,7 +1372,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Fattore di Potenza
   PowerPlant:
-    name: 'Impianto Sigenergy{plant_suffix}'
+    name: 'Impianto Sigenergy {plant_suffix}'
   ProtocolPublished:
     name: Protocollo Pubblicato
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Consumo totale carico intelligente {smart_load_index}
   SmartPort:
-    name: Smart-Port Impianto Sigenergy{plant_suffix}
+    name: Smart-Port Impianto Sigenergy {plant_suffix}
   Started:
     name: Avviato
   StartupTime:

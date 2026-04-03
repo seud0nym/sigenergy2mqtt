@@ -415,7 +415,7 @@ class SmartPort(Device):
                 raise Exception(f"Unable to initialise from {url} after 3 attempts")
         unique_id = f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_envoy_{sn}"
         name = "Sigenergy Plant Smart-Port"
-        plant_suffix = "" if plant_index == 0 else f" {plant_index + 1}"
+        plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", Protocol.N_A, plant_suffix=plant_suffix, mdl_id=pn, sn=sn, hw=fw)
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)

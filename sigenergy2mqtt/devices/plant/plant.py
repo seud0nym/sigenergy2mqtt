@@ -31,7 +31,7 @@ class PowerPlant(ModbusDevice):
         protocol_version: Protocol,
     ):
         name = "Sigenergy Plant"
-        plant_suffix = "" if plant_index == 0 else f" {plant_index + 1}"
+        plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
             device_type,
             name,
