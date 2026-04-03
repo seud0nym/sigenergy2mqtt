@@ -330,16 +330,6 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 현재 제어 명령 값
-  DailyChargeEnergy:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 일일 충전 에너지
-  DailyDischargeEnergy:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 일일 방전 에너지
   DCCharger:
     name: Sigenergy DC 충전기 {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -392,6 +382,16 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 차량 충전율
+  DailyChargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 일일 충전 에너지
+  DailyDischargeEnergy:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 일일 방전 에너지
   DischargeCutOffSoC:
     attributes:
       source: Modbus 레지스터 {address}
@@ -410,39 +410,6 @@ class:
       "6": VPP 스케줄링
       "7": 원격 EMS
       "9": 시간 기반 제어
-  EnphaseCurrent:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 전류
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 일일 생산량
-    name_reset: 일일 생산량 설정
-  EnphaseFrequency:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 주파수
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 누적 생산량
-  EnphasePowerFactor:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 역률
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV 전력
-  EnphaseReactivePower:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 무효 전력
-  EnphaseVoltage:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 전압
   ESS:
     name: '{model_id} {serial_number} 에너지 저장 시스템'
   ESSBackupSOC:
@@ -483,6 +450,39 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: DC EV 누적 방전 에너지
+  EnphaseCurrent:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 전류
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 일일 생산량
+    name_reset: 일일 생산량 설정
+  EnphaseFrequency:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 주파수
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 누적 생산량
+  EnphasePVPower:
+    attributes:
+      source: Enphase Envoy API
+    name: PV 전력
+  EnphasePowerFactor:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 역률
+  EnphaseReactivePower:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 무효 전력
+  EnphaseVoltage:
+    attributes:
+      source: EnphasePVPower 파생 시 Enphase Envoy API
+    name: 전압
   GeneralAlarm1:
     alarm:
       '0': 소프트웨어 버전 불일치
@@ -965,16 +965,6 @@ class:
       source: Modbus 레지스터 30605-30606
       source_range: Modbus 레지스터 {start}-{end}
     name: PCS 알람
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 역률 조정
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 역률 조정 피드백
   InverterPVDailyGeneration:
     attributes:
       source: Modbus 레지스터 {address}
@@ -990,6 +980,16 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: PV 전력
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 역률 조정
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 역률 조정 피드백
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1040,6 +1040,11 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: '{phase} 선간 전압'
+  MPPTCount:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: MPPT 수
   MaxAbsorptionPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1132,18 +1137,9 @@ class:
     name: Modbus 쓰기 최소
   MonitorService:
     name: Sigenergy 모니터
-  MPPTCount:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: MPPT 수
   MqttOverriddenSensor:
     attributes:
       source: MQTT 재정의
-  MQTTPhysicalPublishes:
-    name: MQTT 물리 패블리시
-  MQTTPublishFailures:
-    name: MQTT 패블리시 실패
   NumericSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1175,6 +1171,49 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: PCS 최대 수입 제한
+  PVCurrentSensor:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 전류
+  PVInverter:
+    name: PV 인버터
+  PVMaxPowerLimit:
+    attributes:
+      comment: 원격 EMS 제어 모드(40031)가 명령 충전/방전으로 설정된 경우 적용됨
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: PV 최대 전력 제한
+  PVOutputOutputService:
+    name: PVOutput 출력 서비스 추가
+  PVOutputStatusService:
+    name: PVOutput 상태 서비스 추가
+  PVString:
+    name: '{model_id} {serial_number} PV 스트링 {string_number}'
+  PVStringCount:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: PV 스트링 수
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − 자정의 PVStringLifetimeEnergy
+    name: 일일 생산량
+    name_reset: 일일 생산량 설정
+  PVStringLifetimeEnergy:
+    attributes:
+      source: PVStringPower의 리만 합
+    name: 누적 생산량
+    name_reset: 누적 생산량 설정
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
+    name: 전력
+  PVVoltageSensor:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 전압
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효함
@@ -1249,16 +1288,6 @@ class:
       source: PlantLifetimePVEnergy − 자정의 PlantLifetimePVEnergy
     name: 일일 PV 생산량
     name_reset: 일일 PV 생산량 설정
-  PlantPhaseActivePower:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 페이즈 {phase_label} 유효 전력
-  PlantPhaseReactivePower:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 페이즈 {phase_label} 무효 전력
   PlantPVPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1269,6 +1298,16 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 누적 PV 생산량
+  PlantPhaseActivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 페이즈 {phase_label} 유효 전력
+  PlantPhaseReactivePower:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 페이즈 {phase_label} 무효 전력
   PlantRatedChargingPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1338,49 +1377,6 @@ class:
     name: 프로토콜 게시됨
   ProtocolVersion:
     name: 프로토콜 버전
-  PVCurrentSensor:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 전류
-  PVInverter:
-    name: PV 인버터
-  PVMaxPowerLimit:
-    attributes:
-      comment: 원격 EMS 제어 모드(40031)가 명령 충전/방전으로 설정된 경우 적용됨
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: PV 최대 전력 제한
-  PVOutputOutputService:
-    name: PVOutput 출력 서비스 추가
-  PVOutputStatusService:
-    name: PVOutput 상태 서비스 추가
-  PVString:
-    name: '{model_id} {serial_number} PV 스트링 {string_number}'
-  PVStringCount:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: PV 스트링 수
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − 자정의 PVStringLifetimeEnergy
-    name: 일일 생산량
-    name_reset: 일일 생산량 설정
-  PVStringLifetimeEnergy:
-    attributes:
-      source: PVStringPower의 리만 합
-    name: 누적 생산량
-    name_reset: 누적 생산량 설정
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
-    name: 전력
-  PVVoltageSensor:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 전압
   QSAdjustmentTargetValue:
     attributes:
       comment: "범위: [-60.0, 60.00]. EMS 작동 모드와 관계없이 전역적으로 적용됨"
@@ -1529,10 +1525,6 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-  ResetMetrics:
-    name: 메트릭 초기화
-    name_off: 메트릭 초기화
-    name_on: 메트릭 초기화
   ResettableAccumulationSensor:
     name_reset: '{self.name} 설정'
   RunningStateSensor:
@@ -1545,15 +1537,6 @@ class:
       "2": 고장
       "3": 전원 꺼짐
       "7": 환경 이상
-  SelectSensor:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-    name: 종료 시간
   SITotalChargedEnergy:
     attributes:
       comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함
@@ -1620,6 +1603,15 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 제3자 PV 총 생산량
+  SelectSensor:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+    name: 종료 시간
   SmartLoadPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1669,10 +1661,6 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 제3자 PV 전력
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1708,15 +1696,19 @@ class:
   WriteOnlySensor:
     name_off: 전원 끄기
     name_on: 전원 켜기
-  Inverter:
-    name: '{model_id} {serial}'
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
+  MQTTPhysicalPublishes:
+    name: MQTT 물리 패블리시
+  MQTTPublishFailures:
+    name: MQTT 패블리시 실패
+  ResetMetrics:
+    name: 메트릭 초기화
+    name_off: 메트릭 초기화
+    name_on: 메트릭 초기화
 cli:
-  clean:
-    help: 빈 discovery 게시하여 기존 장치 삭제 후 종료.
-  discovery_only:
-    help: 'discovery 게시 후 즉시 종료.'
-  show_version:
-    help: 버전 번호 표시 후 종료.
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML 설정 파일의 경로 (기본값: SIGENERGY2MQTT_CONFIG 환경 변수, 그렇지 않으면 /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1733,12 +1725,12 @@ cli:
     help: 'Home Assistant 자동 검색 활성화.'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Home Assistant 엔티티 ID 접두사 (기본값: sigen)'
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: '호환되는 센서에 대해 Sigenergy-Local-Modbus entity_id, 게인 및 단위 매핑을 사용합니다.'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지 마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: '호환되는 센서에 대해 Sigenergy-Local-Modbus entity_id, 게인 및 단위 매핑을 사용합니다.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB 배치 크기 (기본값: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1905,5 +1897,11 @@ cli:
     help: 타사 생산 데이터용 센서 클래스.
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: 타사 장치 인증 사용자명.
+  clean:
+    help: 빈 discovery 게시하여 기존 장치 삭제 후 종료.
+  discovery_only:
+    help: 'discovery 게시 후 즉시 종료.'
+  show_version:
+    help: 버전 번호 표시 후 종료.
   validate_only:
     help: '구성을 검증하고 설정된 연결/인증 설정을 테스트한 뒤 즉시 종료합니다. 선택 모드: --validate=show_credentials 를 지정하면 연결 대상 테스트에 실제로 사용되는 자격 증명을 로그에 출력합니다.'

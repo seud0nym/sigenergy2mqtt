@@ -330,16 +330,6 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Huidige Regelcommandowaarde
-  DailyChargeEnergy:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Dagelijkse Laadenergie
-  DailyDischargeEnergy:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Dagelijkse Ontlaadenergie
   DCCharger:
     name: Sigenergy DC-lader {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -392,6 +382,16 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Voertuig Laadtoestand
+  DailyChargeEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Dagelijkse Laadenergie
+  DailyDischargeEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Dagelijkse Ontlaadenergie
   DischargeCutOffSoC:
     attributes:
       source: Modbus-register {address}
@@ -410,39 +410,6 @@ class:
       "6": VPP Planning
       "7": Extern EMS
       "9": Tijdgebaseerde Regeling
-  EnphaseCurrent:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Stroom
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Dagelijkse Productie
-    name_reset: Stel Dagelijkse Productie in
-  EnphaseFrequency:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Frequentie
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Totale Productie
-  EnphasePowerFactor:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Arbeidsfactor
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV Vermogen
-  EnphaseReactivePower:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Reactief Vermogen
-  EnphaseVoltage:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Spanning
   ESS:
     name: '{model_id} {serial_number} Energieopslagsysteem'
   ESSBackupSOC:
@@ -483,6 +450,39 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
+  EnphaseCurrent:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Stroom
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Dagelijkse Productie
+    name_reset: Stel Dagelijkse Productie in
+  EnphaseFrequency:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Frequentie
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Totale Productie
+  EnphasePVPower:
+    attributes:
+      source: Enphase Envoy API
+    name: PV Vermogen
+  EnphasePowerFactor:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Arbeidsfactor
+  EnphaseReactivePower:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Reactief Vermogen
+  EnphaseVoltage:
+    attributes:
+      source: Enphase Envoy API bij afleiding EnphasePVPower
+    name: Spanning
   GeneralAlarm1:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -965,16 +965,6 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PCS Alarmen
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Arbeidsfactor Aanpassing
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Arbeidsfactor Aanpassing Feedback
   InverterPVDailyGeneration:
     attributes:
       source: Modbus-register {address}
@@ -990,6 +980,16 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PV Vermogen
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Arbeidsfactor Aanpassing
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Arbeidsfactor Aanpassing Feedback
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Modbus-register {address}
@@ -1040,6 +1040,11 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: '{phase} Lijnspanning'
+  MPPTCount:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: MPPT Aantal
   MaxAbsorptionPower:
     attributes:
       source: Modbus-register {address}
@@ -1132,18 +1137,9 @@ class:
     name: Modbus Schrijven Min
   MonitorService:
     name: 'Sigenergy Monitor' # verify:ignore
-  MPPTCount:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: MPPT Aantal
   MqttOverriddenSensor:
     attributes:
       source: MQTT Overschrijving
-  MQTTPhysicalPublishes:
-    name: MQTT Fysieke Publicaties
-  MQTTPublishFailures:
-    name: MQTT Publicatiefouten
   NumericSensor:
     attributes:
       source: Modbus-register {address}
@@ -1175,6 +1171,49 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PCS Max Importlimiet
+  PVCurrentSensor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Stroom
+  PVInverter:
+    name: PV-omvormer
+  PVMaxPowerLimit:
+    attributes:
+      comment: Van kracht wanneer externe EMS-regelmodus (40031) is ingesteld op Commando Laden/Ontladen
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: PV Max Vermogenslimiet
+  PVOutputOutputService:
+    name: PVOutput Uitgang Service Toevoegen
+  PVOutputStatusService:
+    name: PVOutput Status Service Toevoegen
+  PVString:
+    name: '{model_id} {serial_number} PV-string {string_number}'
+  PVStringCount:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: PV String Aantal
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy om middernacht
+    name: Dagelijkse Productie
+    name_reset: Stel Dagelijkse Productie in
+  PVStringLifetimeEnergy:
+    attributes:
+      source: Riemann Σ van PVStringPower
+    name: Totale Productie
+    name_reset: Stel Totale Productie in
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
+    name: Vermogen
+  PVVoltageSensor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Spanning
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Alleen geldig wanneer Uitgangstype L1/L2/L3/N is
@@ -1249,16 +1288,6 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy om middernacht
     name: Dagelijkse PV Productie
     name_reset: Stel Dagelijkse PV Productie in
-  PlantPhaseActivePower:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Actief vermogen fase{phase_label}
-  PlantPhaseReactivePower:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Reactief vermogen fase{phase_label}
   PlantPVPower:
     attributes:
       source: Modbus-register {address}
@@ -1269,6 +1298,16 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale PV Productie
+  PlantPhaseActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Actief vermogen fase{phase_label}
+  PlantPhaseReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Reactief vermogen fase{phase_label}
   PlantRatedChargingPower:
     attributes:
       source: Modbus-register {address}
@@ -1338,49 +1377,6 @@ class:
     name: Protocol Gepubliceerd
   ProtocolVersion:
     name: Protocolversie
-  PVCurrentSensor:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Stroom
-  PVInverter:
-    name: PV-omvormer
-  PVMaxPowerLimit:
-    attributes:
-      comment: Van kracht wanneer externe EMS-regelmodus (40031) is ingesteld op Commando Laden/Ontladen
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: PV Max Vermogenslimiet
-  PVOutputOutputService:
-    name: PVOutput Uitgang Service Toevoegen
-  PVOutputStatusService:
-    name: PVOutput Status Service Toevoegen
-  PVString:
-    name: '{model_id} {serial_number} PV-string {string_number}'
-  PVStringCount:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: PV String Aantal
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy om middernacht
-    name: Dagelijkse Productie
-    name_reset: Stel Dagelijkse Productie in
-  PVStringLifetimeEnergy:
-    attributes:
-      source: Riemann Σ van PVStringPower
-    name: Totale Productie
-    name_reset: Stel Totale Productie in
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
-    name: Vermogen
-  PVVoltageSensor:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Spanning
   QSAdjustmentTargetValue:
     attributes:
       comment: "Bereik: [-60,0, 60,00]. Geldt globaal ongeacht de EMS-bedrijfsmodus"
@@ -1529,10 +1525,6 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-  ResetMetrics:
-    name: Statistieken Resetten
-    name_off: Statistieken Resetten
-    name_on: Statistieken Resetten
   ResettableAccumulationSensor:
     name_reset: Stel {self.name} in
   RunningStateSensor:
@@ -1545,15 +1537,6 @@ class:
       "2": Storing
       "3": Uitgeschakeld
       "7": Omgevingsafwijking
-  SelectSensor:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
-    name: Uitschakeltijd
   SITotalChargedEnergy:
     attributes:
       comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen
@@ -1620,6 +1603,15 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale Derde Partij PV Productie
+  SelectSensor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Uitschakeltijd
   SmartLoadPower:
     attributes:
       source: Modbus-register {address}
@@ -1669,10 +1661,6 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Derde Partij PV Vermogen
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Modbus-register {address}
-      source_range: Modbus-registers {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbus-register {address}
@@ -1708,15 +1696,19 @@ class:
   WriteOnlySensor:
     name_off: Uitschakelen
     name_on: Inschakelen
-  Inverter:
-    name: '{model_id} {serial}'
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+  MQTTPhysicalPublishes:
+    name: MQTT Fysieke Publicaties
+  MQTTPublishFailures:
+    name: MQTT Publicatiefouten
+  ResetMetrics:
+    name: Statistieken Resetten
+    name_off: Statistieken Resetten
+    name_on: Statistieken Resetten
 cli:
-  clean:
-    help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.
-  discovery_only:
-    help: 'Sluit direct af na publicatie van discovery.'
-  show_version:
-    help: Toon het versienummer en sluit dan af.
   SIGENERGY2MQTT_CONFIG:
     help: 'De pad naar het YAML-configuratiebestand (standaard: SIGENERGY2MQTT_CONFIG-omgevingsvariabele, anders /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1733,12 +1725,12 @@ cli:
     help: 'Schakel auto-discovery in Home Assistant in.'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Het voorvoegsel voor Home Assistant entiteit-IDs (standaard: sigen)'
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: 'Gebruik Sigenergy-Local-Modbus entity_id-, gain- en eenheidskoppelingen voor compatibele sensoren.'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: 'Het voorvoegsel voor Home Assistant unieke IDs. Voorbeeld: Een voorvoegsel van ''prefix'' zal ''prefix_'' voorafgaan aan unieke IDs (standaard: sigen). Zodra u dit heeft ingesteld, mag u dit NOOIT meer wijzigen, omdat dit bestaande entiteiten in Home Assistant zal verbreken.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Gebruik vereenvoudigde topic-structuur (sigenergy2mqtt/object_id/state)'
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: 'Gebruik Sigenergy-Local-Modbus entity_id-, gain- en eenheidskoppelingen voor compatibele sensoren.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB-batchgrootte (standaard: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1905,5 +1897,11 @@ cli:
     help: De sensorklasse voor productiegegevens van derden.
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: De gebruikersnaam voor authenticatie bij het apparaat van derden.
+  clean:
+    help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.
+  discovery_only:
+    help: 'Sluit direct af na publicatie van discovery.'
+  show_version:
+    help: Toon het versienummer en sluit dan af.
   validate_only:
     help: 'Valideert de configuratie en test de geconfigureerde verbindings-/authenticatie-instellingen, en sluit daarna direct af. Optionele modus: --validate=show_credentials logt de daadwerkelijk gebruikte inloggegevens voor verbindingstests.'

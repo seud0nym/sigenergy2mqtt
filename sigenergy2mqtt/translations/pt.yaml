@@ -330,16 +330,6 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Valor do Comando de Controlo Atual
-  DailyChargeEnergy:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Energia de Carga Diária
-  DailyDischargeEnergy:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Energia de Descarga Diária
   DCCharger:
     name: Carregador CC Sigenergy {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -392,6 +382,16 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Estado de carga do veículo
+  DailyChargeEnergy:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Energia de Carga Diária
+  DailyDischargeEnergy:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Energia de Descarga Diária
   DischargeCutOffSoC:
     attributes:
       source: Registo Modbus {address}
@@ -410,39 +410,6 @@ class:
       "6": Programação VPP
       "7": EMS Remoto
       "9": Controlo Baseado no Tempo
-  EnphaseCurrent:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Corrente
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Produção Diária
-    name_reset: Definir Produção Diária
-  EnphaseFrequency:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Frequência
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Produção Total
-  EnphasePowerFactor:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Fator de Potência
-  EnphasePVPower:
-    attributes:
-      source: API Enphase Envoy
-    name: Potência PV
-  EnphaseReactivePower:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Potência Reativa
-  EnphaseVoltage:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Tensão
   ESS:
     name: '{model_id} {serial_number} Sistema de Armazenamento de Energia'
   ESSBackupSOC:
@@ -483,6 +450,39 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Energia de Descarga CC VE Total
+  EnphaseCurrent:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Corrente
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Produção Diária
+    name_reset: Definir Produção Diária
+  EnphaseFrequency:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Frequência
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Produção Total
+  EnphasePVPower:
+    attributes:
+      source: API Enphase Envoy
+    name: Potência PV
+  EnphasePowerFactor:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Fator de Potência
+  EnphaseReactivePower:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Potência Reativa
+  EnphaseVoltage:
+    attributes:
+      source: API Enphase Envoy ao derivar EnphasePVPower
+    name: Tensão
   GeneralAlarm1:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -965,16 +965,6 @@ class:
       source: Registos Modbus 30605-30606
       source_range: Registos Modbus {start}-{end}
     name: Alarmes PCS
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Ajuste do Fator de Potência
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Feedback de Ajuste do Fator de Potência
   InverterPVDailyGeneration:
     attributes:
       source: Registo Modbus {address}
@@ -990,6 +980,16 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Potência PV
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Ajuste do Fator de Potência
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Feedback de Ajuste do Fator de Potência
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Registo Modbus {address}
@@ -1040,6 +1040,11 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: '{phase} Tensão de linha'
+  MPPTCount:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Contagem MPPT
   MaxAbsorptionPower:
     attributes:
       source: Registo Modbus {address}
@@ -1132,18 +1137,9 @@ class:
     name: Escrita Modbus Mín
   MonitorService:
     name: Monitor Sigenergy
-  MPPTCount:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Contagem MPPT
   MqttOverriddenSensor:
     attributes:
       source: Substituição MQTT
-  MQTTPhysicalPublishes:
-    name: Publicações Físicas MQTT
-  MQTTPublishFailures:
-    name: Falhas de Publicação MQTT
   NumericSensor:
     attributes:
       source: Registo Modbus {address}
@@ -1175,6 +1171,49 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Limite Máx de Importação PCS
+  PVCurrentSensor:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Corrente
+  PVInverter:
+    name: Inversor fotovoltaico
+  PVMaxPowerLimit:
+    attributes:
+      comment: Efetivo quando o modo de controlo EMS remoto (40031) está definido para Carga/Descarga por Comando
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Limite de Potência Máx PV
+  PVOutputOutputService:
+    name: Adicionar Serviço de Saída PVOutput
+  PVOutputStatusService:
+    name: Adicionar Serviço de Estado PVOutput
+  PVString:
+    name: '{model_id} {serial_number} String PV {string_number}'
+  PVStringCount:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Contagem de Strings PV
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy à meia-noite
+    name: Produção Diária
+    name_reset: Definir Produção Diária
+  PVStringLifetimeEnergy:
+    attributes:
+      source: Σ Riemann de PVStringPower
+    name: Produção Total
+    name_reset: Definir Produção Total
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
+    name: Potência
+  PVVoltageSensor:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Tensão
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Válido apenas quando o Tipo de Saída é L1/L2/L3/N
@@ -1249,16 +1288,6 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à meia-noite
     name: Produção PV Diária
     name_reset: Definir Produção PV Diária
-  PlantPhaseActivePower:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Potência ativa da fase{phase_label}
-  PlantPhaseReactivePower:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Potência reativa da fase{phase_label}
   PlantPVPower:
     attributes:
       source: Registo Modbus {address}
@@ -1269,6 +1298,16 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Produção PV Total
+  PlantPhaseActivePower:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Potência ativa da fase{phase_label}
+  PlantPhaseReactivePower:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Potência reativa da fase{phase_label}
   PlantRatedChargingPower:
     attributes:
       source: Registo Modbus {address}
@@ -1338,49 +1377,6 @@ class:
     name: Protocolo Publicado
   ProtocolVersion:
     name: Versão do Protocolo
-  PVCurrentSensor:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Corrente
-  PVInverter:
-    name: Inversor fotovoltaico
-  PVMaxPowerLimit:
-    attributes:
-      comment: Efetivo quando o modo de controlo EMS remoto (40031) está definido para Carga/Descarga por Comando
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Limite de Potência Máx PV
-  PVOutputOutputService:
-    name: Adicionar Serviço de Saída PVOutput
-  PVOutputStatusService:
-    name: Adicionar Serviço de Estado PVOutput
-  PVString:
-    name: '{model_id} {serial_number} String PV {string_number}'
-  PVStringCount:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Contagem de Strings PV
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy à meia-noite
-    name: Produção Diária
-    name_reset: Definir Produção Diária
-  PVStringLifetimeEnergy:
-    attributes:
-      source: Σ Riemann de PVStringPower
-    name: Produção Total
-    name_reset: Definir Produção Total
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
-    name: Potência
-  PVVoltageSensor:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Tensão
   QSAdjustmentTargetValue:
     attributes:
       comment: "Intervalo: [-60,0, 60,00]. Aplica-se globalmente independentemente do modo de operação EMS"
@@ -1529,10 +1525,6 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-  ResetMetrics:
-    name: Reiniciar Métricas
-    name_off: Reiniciar Métricas
-    name_on: Reiniciar Métricas
   ResettableAccumulationSensor:
     name_reset: Definir {self.name}
   RunningStateSensor:
@@ -1545,15 +1537,6 @@ class:
       "2": Falha
       "3": Desligado
       "7": Anomalia Ambiental
-  SelectSensor:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
-    name: Hora de Desligamento
   SITotalChargedEnergy:
     attributes:
       comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos
@@ -1620,6 +1603,15 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Produção PV de Terceiros Total
+  SelectSensor:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+    name: Hora de Desligamento
   SmartLoadPower:
     attributes:
       source: Registo Modbus {address}
@@ -1669,10 +1661,6 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Potência PV de Terceiros
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Registo Modbus {address}
-      source_range: Registos Modbus {start}-{end}
   TimestampSensor:
     attributes:
       source: Registo Modbus {address}
@@ -1708,15 +1696,19 @@ class:
   WriteOnlySensor:
     name_off: Desligar
     name_on: Ligar
-  Inverter:
-    name: '{model_id} {serial}'
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Registo Modbus {address}
+      source_range: Registos Modbus {start}-{end}
+  MQTTPhysicalPublishes:
+    name: Publicações Físicas MQTT
+  MQTTPublishFailures:
+    name: Falhas de Publicação MQTT
+  ResetMetrics:
+    name: Reiniciar Métricas
+    name_off: Reiniciar Métricas
+    name_on: Reiniciar Métricas
 cli:
-  clean:
-    help: Publicar discovery vazia para remover dispositivos, depois sair.
-  discovery_only:
-    help: 'Sair imediatamente após publicar discovery.'
-  show_version:
-    help: Mostrar número da versão e sair.
   SIGENERGY2MQTT_CONFIG:
     help: 'O caminho para o arquivo de configuração YAML (padrão: variável de ambiente SIGENERGY2MQTT_CONFIG, caso contrário /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1733,12 +1725,12 @@ cli:
     help: 'Ativar auto-descoberta no Home Assistant.'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Prefixo para IDs de entidade do Home Assistant (padrão: sigen)'
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: 'Use os mapeamentos de entity_id, ganho e unidade do Sigenergy-Local-Modbus para sensores compatíveis.'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: 'O prefixo a ser usado para IDs exclusivos do Home Assistant. Exemplo: Um prefixo ''prefix'' anexará ''prefix_'' aos IDs exclusivos (padrão: sigen). Depois de definir isso, você NUNCA deve alterá-lo, pois isso quebrará as entidades existentes no Home Assistant.'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: 'Usar estrutura de tópicos simplificada'
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: 'Use os mapeamentos de entity_id, ganho e unidade do Sigenergy-Local-Modbus para sensores compatíveis.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'Tamanho do lote InfluxDB (padrão: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1905,5 +1897,11 @@ cli:
     help: Classe de sensor para dados de produção de terceiros.
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: Nome de usuário para autenticação no dispositivo de terceiros.
+  clean:
+    help: Publicar discovery vazia para remover dispositivos, depois sair.
+  discovery_only:
+    help: 'Sair imediatamente após publicar discovery.'
+  show_version:
+    help: Mostrar número da versão e sair.
   validate_only:
     help: 'Valida a configuração e testa as definições configuradas de conexão/autenticação; em seguida, encerra imediatamente. Modo opcional: --validate=show_credentials registra as credenciais reais usadas nos testes de conexão.'
