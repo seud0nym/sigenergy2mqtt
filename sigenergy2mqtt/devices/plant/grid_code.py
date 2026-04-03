@@ -14,8 +14,9 @@ class GridCode(ModbusDevice):
         device_type: DeviceType,
         protocol_version: Protocol,
     ):
-        name = "Sigenergy Plant Grid Code" if plant_index == 0 else f"Sigenergy Plant {plant_index + 1} Grid Code"
-        super().__init__(device_type, name, plant_index, 247, "Grid Code", protocol_version)
+        name = "Sigenergy Plant Grid Code"
+        plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
+        super().__init__(device_type, name, plant_index, 247, "Grid Code", protocol_version, plant_suffix=plant_suffix)
 
     @classmethod
     async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClient) -> "GridCode":

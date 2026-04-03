@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Sigenergy AC充電器
+    name: Sigenergy AC充電器 {sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': 系統過電圧
@@ -331,7 +331,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 現在の制御コマンド値
   DCCharger:
-    name: Sigenergy DC充電器
+    name: Sigenergy DC充電器 {sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: 単回
@@ -576,7 +576,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム
   GridCode:
-    name: Sigenergyシステム 系統規程
+    name: Sigenergyシステム 系統規程 {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbusレジスタ {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 無効電力
   GridSensor:
-    name: Sigenergyシステム 系統センサー
+    name: Sigenergyシステム 系統センサー {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
@@ -1340,7 +1340,7 @@ class:
       '3': 電源オフ
       '7': 環境異常
   PlantStatistics:
-    name: Sigenergyシステム 統計
+    name: Sigenergyシステム 統計 {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:停止 1:開始
@@ -1372,7 +1372,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 力率調整目標値
   PowerPlant:
-    name: 'Sigenergy システム'
+    name: 'Sigenergy システム {plant_suffix}'
   ProtocolPublished:
     name: プロトコル公開
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: スマートロード {smart_load_index} 合計消費量
   SmartPort:
-    name: Sigenergyシステム スマートポート
+    name: Sigenergyシステム スマートポート {plant_suffix}
   Started:
     name: 起動済み
   StartupTime:

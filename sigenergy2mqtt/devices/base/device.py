@@ -73,7 +73,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         self._sleeper_task: asyncio.Task | None = None
         self._shutdown_event: asyncio.Event = asyncio.Event()
 
-        name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs)
+        name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs).rstrip()
         self["name"] = self.name = name if active_config.home_assistant.device_name_prefix == "" else f"{active_config.home_assistant.device_name_prefix} {name}"
         self._log_identity: str = ""
         self.refresh_log_identity()

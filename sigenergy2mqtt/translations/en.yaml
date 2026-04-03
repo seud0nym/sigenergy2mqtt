@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Sigenergy AC Charger
+    name: Sigenergy AC Charger {sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': Grid over-voltage
@@ -331,7 +331,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Current Control Command Value
   DCCharger:
-    name: Sigenergy DC Charger
+    name: Sigenergy DC Charger {sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: Single time
@@ -576,7 +576,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: PCS Alarms
   GridCode:
-    name: Sigenergy Plant Grid Code
+    name: Sigenergy Plant Grid Code {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbus Register {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Reactive Power
   GridSensor:
-    name: Sigenergy Plant Grid Sensor
+    name: Sigenergy Plant Grid Sensor {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: Data collected from grid sensor at grid to system checkpoint; >0 buy from grid; <0 sell to grid
@@ -1344,7 +1344,7 @@ class:
       '3': Power-Off
       '7': Environmental Abnormality
   PlantStatistics:
-    name: Sigenergy Plant Statistics
+    name: Sigenergy Plant Statistics {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Stop 1:Start
@@ -1376,7 +1376,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Power Factor Adjustment Target Value
   PowerPlant:
-    name: Sigenergy Plant
+    name: Sigenergy Plant {plant_suffix}
   ProtocolPublished:
     name: Protocol Published
   ProtocolVersion:
@@ -1631,7 +1631,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Smart Load {smart_load_index} Total Consumption
   SmartPort:
-    name: Sigenergy Plant Smart-Port
+    name: Sigenergy Plant Smart-Port {plant_suffix}
   Started:
     name: Started
   StartupTime:

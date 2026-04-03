@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Carregador CA Sigenergy
+    name: Carregador CA Sigenergy {sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': Sobretensão de rede
@@ -331,7 +331,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Valor do Comando de Controlo Atual
   DCCharger:
-    name: Carregador CC Sigenergy
+    name: Carregador CC Sigenergy {sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: Sessão única
@@ -576,7 +576,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Alarmes PCS
   GridCode:
-    name: Código de Rede Central Sigenergy
+    name: Código de Rede Central Sigenergy {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registo Modbus {address}
@@ -729,7 +729,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Potência reativa da fase {phase}
   GridSensor:
-    name: Sensor de Rede Central Sigenergy
+    name: Sensor de Rede Central Sigenergy {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
@@ -1340,7 +1340,7 @@ class:
       '3': Desligado
       '7': Anomalia Ambiental
   PlantStatistics:
-    name: Estatísticas Central Sigenergy
+    name: Estatísticas Central Sigenergy {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Parar 1:Iniciar
@@ -1372,7 +1372,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Valor Alvo de Ajuste do Fator de Potência
   PowerPlant:
-    name: 'Planta Sigenergy'
+    name: 'Planta Sigenergy {plant_suffix}'
   ProtocolPublished:
     name: Protocolo Publicado
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Consumo total de carga inteligente {smart_load_index}
   SmartPort:
-    name: Smart-Port Central Sigenergy
+    name: Smart-Port Central Sigenergy {plant_suffix}
   Started:
     name: Iniciado
   StartupTime:

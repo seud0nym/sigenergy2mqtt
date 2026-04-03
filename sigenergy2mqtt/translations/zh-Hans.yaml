@@ -1,6 +1,6 @@
 class:
   ACCharger:
-    name: Sigenergy 交流充电器
+    name: Sigenergy 交流充电器 {sequence_suffix}
   ACChargerAlarm1:
     alarm:
       '0': 电网过压
@@ -331,7 +331,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 当前控制命令值
   DCCharger:
-    name: Sigenergy 直流充电器
+    name: Sigenergy 直流充电器 {sequence_suffix}
   DCChargerCurrentChargingCapacity:
     attributes:
       comment: 单次
@@ -576,7 +576,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: PCS告警
   GridCode:
-    name: Sigenergy电站 电网规范
+    name: Sigenergy电站 电网规范 {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbus 寄存器 {address}
@@ -729,7 +729,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 相 {phase} 无功功率
   GridSensor:
-    name: Sigenergy电站 电网传感器
+    name: Sigenergy电站 电网传感器 {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: 从电网传感器在电网到系统检查点收集的数据；>0 从电网购买；<0 卖给电网
@@ -1340,7 +1340,7 @@ class:
       '3': 关机
       '7': 环境异常
   PlantStatistics:
-    name: Sigenergy电站 统计
+    name: Sigenergy电站 统计 {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:停止 1:启动
@@ -1372,7 +1372,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 功率因数调节目标值
   PowerPlant:
-    name: 'Sigenergy 电厂'
+    name: 'Sigenergy 电厂 {plant_suffix}'
   ProtocolPublished:
     name: 协议发布
   ProtocolVersion:
@@ -1623,7 +1623,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 智能负载 {smart_load_index} 总消耗
   SmartPort:
-    name: Sigenergy电站 智能端口
+    name: Sigenergy电站 智能端口 {plant_suffix}
   Started:
     name: 已启动
   StartupTime:
