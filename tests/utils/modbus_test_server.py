@@ -252,21 +252,28 @@ class CustomDataBlock(ModbusSparseDataBlock):
         else:
             raw = sensor.state2raw(value)
             registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
+        if len(registers) != sensor.count:
+            raise ValueError(
+                f"#{self.device_address} _set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} {source=}] Expected {sensor.count} registers for sensor {sensor['name']}, got {len(registers)}"
+            )
         if debug or sensor.debug_logging:
-            _logger.debug(f"_set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} device_address={self.device_address} {source=}]")
-        super().setValues(address, registers)
+            _logger.debug(f"#{self.device_address} _set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} {source=}]")
+        for i in range(0, sensor.count):
+            super().setValues(address + i, registers[i])
         if address == PhaseVoltage.PHASE_A_ADDRESS:  # Use the Phase A Voltage for all three phases, because the real data source does not provide separate values for the three phases
-            super().setValues(PhaseVoltage.PHASE_B_ADDRESS, registers)
-            super().setValues(PhaseVoltage.PHASE_C_ADDRESS, registers)
+            for i in range(0, sensor.count):
+                super().setValues(PhaseVoltage.PHASE_B_ADDRESS + i, registers[i])
+                super().setValues(PhaseVoltage.PHASE_C_ADDRESS + i, registers[i])
         elif address == PhaseCurrent.PHASE_A_ADDRESS:  # Use the Phase A Current for all three phases, because the real data source does not provide separate values for the three phases
-            super().setValues(PhaseCurrent.PHASE_B_ADDRESS, registers)
-            super().setValues(PhaseCurrent.PHASE_C_ADDRESS, registers)
+            for i in range(0, sensor.count):
+                super().setValues(PhaseCurrent.PHASE_B_ADDRESS + i, registers[i])
+                super().setValues(PhaseCurrent.PHASE_C_ADDRESS + i, registers[i])
         if address == 31027:  # Use the PV String 1 Voltage register for all 36 PV strings, because the real data source only has one string
             for n in range(0, 36):
-                super().setValues(31027 + (n * 2), registers)
+                super().setValues(31027 + (n * 2), registers[0])
         if address == 31028:  # Use the PV String 1 Current register for all 36 PV strings, because the real data source only has one string
             for n in range(0, 36):
-                super().setValues(31028 + (n * 2), registers)
+                super().setValues(31028 + (n * 2), registers[0])
 
     def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
         """Update the register for *topic*'s sensor from an incoming MQTT message.
@@ -430,7 +437,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
         await asyncio.sleep(sleep_time / 1000)
         result = self.getValues(address, count)
         if address in self.addresses and self.addresses[address].debug_logging:
-            _logger.debug(f"async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
+            _logger.debug(f"#{self.device_address} async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
         return result
 
     async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
@@ -463,7 +470,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
             sensor = None
         self._written_addresses.add(address)  # When an address has been written to via the test server, prevent it being reset from the real source server
         if sensor and sensor.debug_logging:
-            _logger.debug(f"async_setValues({fc_as_hex}, {address}, {values})")
+            _logger.debug(f"#{self.device_address} async_setValues({fc_as_hex}, {address}, {values})")
         return super().setValues(address, values)
 
     def getValues(self, address, count=1) -> list[int] | list[bool] | ExcCodes:
@@ -507,7 +514,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
                         pre_read.append(0)
             result = pre_read if len(pre_read) == count else ExcCodes.ILLEGAL_ADDRESS
         if sensor and sensor.debug_logging:
-            _logger.debug(f"getValues({address}, {count}) -> {result}")
+            _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
         return result
 
 
