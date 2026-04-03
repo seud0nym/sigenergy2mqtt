@@ -811,6 +811,8 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 절연 저항
+  Inverter:
+    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1045,6 +1047,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: MPPT 수
+  MQTTPhysicalPublishes:
+    name: MQTT 물리 패블리시
+  MQTTPublishFailures:
+    name: MQTT 패블리시 실패
   MaxAbsorptionPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1525,6 +1531,10 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  ResetMetrics:
+    name: 메트릭 초기화
+    name_off: 메트릭 초기화
+    name_on: 메트릭 초기화
   ResettableAccumulationSensor:
     name_reset: '{self.name} 설정'
   RunningStateSensor:
@@ -1661,6 +1671,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 제3자 PV 전력
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus 레지스터 {address}
+      source_range: Modbus 레지스터 {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1696,18 +1710,6 @@ class:
   WriteOnlySensor:
     name_off: 전원 끄기
     name_on: 전원 켜기
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Modbus 레지스터 {address}
-      source_range: Modbus 레지스터 {start}-{end}
-  MQTTPhysicalPublishes:
-    name: MQTT 물리 패블리시
-  MQTTPublishFailures:
-    name: MQTT 패블리시 실패
-  ResetMetrics:
-    name: 메트릭 초기화
-    name_off: 메트릭 초기화
-    name_on: 메트릭 초기화
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML 설정 파일의 경로 (기본값: SIGENERGY2MQTT_CONFIG 환경 변수, 그렇지 않으면 /etc/sigenergy2mqtt.yaml)'
@@ -1725,12 +1727,12 @@ cli:
     help: 'Home Assistant 자동 검색 활성화.'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Home Assistant 엔티티 ID 접두사 (기본값: sigen)'
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: '호환되는 센서에 대해 Sigenergy-Local-Modbus entity_id, 게인 및 단위 매핑을 사용합니다.'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: 'Home Assistant 고유 ID 접두사. 일단 설정하면 Home Assistant의 기존 엔티티가 손상되므로 절대 변경하지 마십시오. 예: ''prefix''라는 접두사는 고유 ID 앞에 ''prefix_''를 추가합니다(기본값: sigen).'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '단순화된 토픽 구조 사용'
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: '호환되는 센서에 대해 Sigenergy-Local-Modbus entity_id, 게인 및 단위 매핑을 사용합니다.'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB 배치 크기 (기본값: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:

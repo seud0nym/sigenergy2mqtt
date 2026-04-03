@@ -811,6 +811,8 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Isolationswiderstand
+  Inverter:
+    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Modbus-Register {address}
@@ -1045,6 +1047,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: MPPT-Anzahl
+  MQTTPhysicalPublishes:
+    name: MQTT Physische Veröffentlichungen
+  MQTTPublishFailures:
+    name: MQTT Veröffentlichungsfehler
   MaxAbsorptionPower:
     attributes:
       source: Modbus-Register {address}
@@ -1525,6 +1531,10 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+  ResetMetrics:
+    name: Metriken zurücksetzen
+    name_off: Metriken zurücksetzen
+    name_on: Metriken zurücksetzen
   ResettableAccumulationSensor:
     name_reset: Setze {self.name}
   RunningStateSensor:
@@ -1661,6 +1671,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Drittanbieter-PV-Leistung
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbus-Register {address}
@@ -1696,18 +1710,6 @@ class:
   WriteOnlySensor:
     name_off: Ausschalten
     name_on: Einschalten
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-  MQTTPhysicalPublishes:
-    name: MQTT Physische Veröffentlichungen
-  MQTTPublishFailures:
-    name: MQTT Veröffentlichungsfehler
-  ResetMetrics:
-    name: Metriken zurücksetzen
-    name_off: Metriken zurücksetzen
-    name_on: Metriken zurücksetzen
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Der Pfad zur YAML-Konfigurationsdatei (Standard: SIGENERGY2MQTT_CONFIG-Umgebungsvariable, andernfalls /etc/sigenergy2mqtt.yaml)'
@@ -1725,12 +1727,12 @@ cli:
     help: Auto-Discovery in Home Assistant aktivieren.
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: "Das Präfix für Home Assistant Entity-IDs. Beispiel: Ein Präfix 'prefix' stellt 'prefix_' den Entity-IDs voran (Standard: sigen)"
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: Sigenergy-Local-Modbus-Entity-ID-, Verstärkungs- und Einheit-Zuordnungen für kompatible Sensoren verwenden.
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: "Das Präfix für Home Assistant Unique-IDs. Beispiel: Ein Präfix 'prefix' stellt 'prefix_' den Unique-IDs voran (Standard: sigen). Einmal festgelegt, sollte dies NIE geändert werden, da es bestehende Entitäten in Home Assistant beschädigt."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Vereinfachte Topic-Struktur aktivieren (sigenergy2mqtt/object_id/state) anstelle der vollständigen Home Assistant Topic-Struktur (homeassistant/platform/device_id/object_id/state)
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: Sigenergy-Local-Modbus-Entity-ID-, Verstärkungs- und Einheit-Zuordnungen für kompatible Sensoren verwenden.
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB-Batch-Größe (Standard: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:

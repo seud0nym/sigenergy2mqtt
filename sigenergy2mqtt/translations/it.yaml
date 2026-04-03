@@ -811,6 +811,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Resistenza di Isolamento
+  Inverter:
+    name: '{model_id} {serial}'
   InverterActivePowerFixedValueAdjustment:
     attributes:
       source: Registro Modbus {address}
@@ -1045,6 +1047,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Conteggio MPPT
+  MQTTPhysicalPublishes:
+    name: Pubblicazioni Fisiche MQTT
+  MQTTPublishFailures:
+    name: Fallimenti di Pubblicazione MQTT
   MaxAbsorptionPower:
     attributes:
       source: Registro Modbus {address}
@@ -1525,6 +1531,10 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+  ResetMetrics:
+    name: Reimposta Metriche
+    name_off: Reimposta Metriche
+    name_on: Reimposta Metriche
   ResettableAccumulationSensor:
     name_reset: Imposta {self.name}
   RunningStateSensor:
@@ -1661,6 +1671,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza PV di Terze Parti
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
   TimestampSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1696,18 +1710,6 @@ class:
   WriteOnlySensor:
     name_off: Spegnere
     name_on: Accendere
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-  MQTTPhysicalPublishes:
-    name: Pubblicazioni Fisiche MQTT
-  MQTTPublishFailures:
-    name: Fallimenti di Pubblicazione MQTT
-  ResetMetrics:
-    name: Reimposta Metriche
-    name_off: Reimposta Metriche
-    name_on: Reimposta Metriche
 cli:
   SIGENERGY2MQTT_CONFIG:
     help: 'Il percorso al file di configurazione YAML (predefinito: variabile di ambiente SIGENERGY2MQTT_CONFIG, altrimenti /etc/sigenergy2mqtt.yaml)'
@@ -1725,12 +1727,12 @@ cli:
     help: Abilita l'auto-scoperta in Home Assistant.
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: "Il prefisso per gli ID entità di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID entità (predefinito: sigen)"
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: Usa le mappature entity_id, guadagno e unità di Sigenergy-Local-Modbus per i sensori compatibili.
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: "Il prefisso per gli ID unici di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID unici (predefinito: sigen). Una volta impostato, NON cambiarlo MAI, romperebbe le entità esistenti in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Abilita la struttura dei topic semplificata (sigenergy2mqtt/object_id/state) invece della struttura completa di Home Assistant (homeassistant/platform/device_id/object_id/state)
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: Usa le mappature entity_id, guadagno e unità di Sigenergy-Local-Modbus per i sensori compatibili.
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'Dimensione del lotto InfluxDB (predefinito: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
