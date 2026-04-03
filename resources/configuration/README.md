@@ -222,6 +222,7 @@ The prefix string that will be prepended to the Home Assistant MQTT unique id. T
 If true, apply Sigenergy-Local-Modbus entity id, gain and unit mappings where available to help migration. 
 
 If enabled, [Entity Id Prefix](#opt_home_assistant_entity_id_prefix) must be `sigen` (the default).
+If enabled, [Use Simplified Topics](#opt_home_assistant_use_simplified_topics) is automatically forced to `false`.
 
 > [!IMPORTANT]
 > Note that this _only_ affects the **naming** of the entity id. The underlying unique id is unchanged and will be different from the unique id used by Sigenergy-Local-Modbus, so you will need to **remove** the old entities from Home Assistant before enabling this option. This also means that it is not possible to migrate historical data from Sigenergy-Local-Modbus to sigenergy2mqtt. 
@@ -237,6 +238,8 @@ If enabled, [Entity Id Prefix](#opt_home_assistant_entity_id_prefix) must be `si
 If true, sigenergy2mqtt will use a simplified topic structure for Home Assistant entities. 
 
 The topic will be sigenergy2mqtt/object_id/state instead of the full Home Assistant topic structure of homeassistant/platform/device_id/object_id/state.
+
+This setting is automatically forced to `false` when [Use Sigenergy Local Modbus Naming](#opt_home_assistant_use_sigenergy_local_modbus_naming) is enabled.
 
 
 ## InfluxDB

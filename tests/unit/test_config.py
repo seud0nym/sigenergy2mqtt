@@ -321,6 +321,16 @@ class TestConfigHomeAssistant:
         with pytest.raises(ConfigurationError, match="home-assistant.entity-id-prefix must be 'sigen'"):
             Settings(home_assistant={"sigenergy-local-modbus-naming": True, "entity-id-prefix": "other"}, modbus=[{"host": "localhost"}])
 
+    def test_home_assistant_local_modbus_naming_forces_simplified_topics_off(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            settings = Settings(
+                home_assistant={"sigenergy-local-modbus-naming": True, "use-simplified-topics": True},
+                modbus=[{"host": "localhost"}],
+            )
+        assert settings.home_assistant.sigenergy_local_modbus_naming is True
+        assert settings.home_assistant.use_simplified_topics is False
+        assert "forcing use-simplified-topics=false" in caplog.text
+
 
 class TestConfigMqtt:
     """Tests for active_config.mqtt configuration."""

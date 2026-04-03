@@ -119,7 +119,8 @@ home-assistant:
   #   default: false
   #   description:  If true, apply Sigenergy-Local-Modbus entity_id, gain and
   #                 unit mappings where available to help migration. If enabled,
-  #                 entity-id-prefix must be 'sigen' (default).
+  #                 entity-id-prefix must be 'sigen' (default) and
+  #                 use-simplified-topics is forced to false.
   sigenergy-local-modbus-naming: false
   # use-simplified-topics
   #   added: 2025.7.26
@@ -129,6 +130,8 @@ home-assistant:
   #                 sigenergy2mqtt/object_id/state instead of the full Home
   #                 Assistant topic structure of 
   #                 homeassistant/platform/device_id/object_id/state.
+  #                 This is forced to false when
+  #                 sigenergy-local-modbus-naming is true.
   use-simplified-topics: false
   # edit-pct-box
   #   added: 2025.12.23
@@ -811,4 +814,3 @@ influxdb:
   #   default: 4
   #   description: The maximum number of parallel sync operations.
   max-sync-workers: 4
-

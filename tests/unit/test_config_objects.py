@@ -46,7 +46,7 @@ class TestHomeAssistantConfig:
         assert config.republish_discovery_interval == 300
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
-        assert config.use_simplified_topics is True
+        assert config.use_simplified_topics is False
         assert config.sigenergy_local_modbus_naming is True
 
     def test_alias_keys(self):
@@ -72,8 +72,15 @@ class TestHomeAssistantConfig:
         assert config.republish_discovery_interval == 300
         assert config.enabled_by_default is True
         assert config.unique_id_prefix == "test_unique"
-        assert config.use_simplified_topics is True
+        assert config.use_simplified_topics is False
         assert config.sigenergy_local_modbus_naming is True
+
+    def test_sigenergy_local_modbus_naming_disables_simplified_topics(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            config = HomeAssistantConfig(sigenergy_local_modbus_naming=True, use_simplified_topics=True)
+        assert config.sigenergy_local_modbus_naming is True
+        assert config.use_simplified_topics is False
+        assert "forcing use-simplified-topics=false" in caplog.text
 
     def test_false_values(self):
         """Test that False values are properly set."""
