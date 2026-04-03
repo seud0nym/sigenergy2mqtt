@@ -373,13 +373,13 @@ async def test_for_0x02_ILLEGAL_DATA_ADDRESS(
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], Protocol | None]:
     """Iterate over all configured Modbus hosts, probe registers, and populate ThreadConfigs."""
     protocol_version: Protocol | None = None
-    total_ac_chargers = sum(len(d.ac_chargers or []) for d in active_config.modbus)
-    total_dc_chargers = sum(len(d.dc_chargers or []) for d in active_config.modbus)
+    devices = active_config.modbus
+    total_ac_chargers = sum(len(d.ac_chargers) if d.ac_chargers else 0 for d in devices)  # type: ignore[reportGeneralTypeIssues]
+    total_dc_chargers = sum(len(d.dc_chargers) if d.dc_chargers else 0 for d in devices)  # type: ignore[reportGeneralTypeIssues]
     ac_charger_sequence = 0
     dc_charger_sequence = 0
 
-    for plant_index in range(len(active_config.modbus)):
-        device = active_config.modbus[plant_index]
+    for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
             logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
             continue
