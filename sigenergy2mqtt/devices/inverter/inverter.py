@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 from typing import cast
 
 import sigenergy2mqtt.sensors.inverter_read_only as ro
@@ -25,14 +24,9 @@ class Inverter(ModbusDevice):
         serial: str,
         firmware: str,
     ):
-        match = re.match(r"^[^\d]*", model_id)
-        words = (match.group(0).rstrip() if match else model_id).replace("EC", "Energy Controller", 1).split()
-        words.insert(1, serial)
-        name = " ".join(words)
-
         super().__init__(
             type=device_type,
-            name=name,
+            name=f"{model_id} {serial}",
             plant_index=plant_index,
             device_address=device_address,
             model=device_type.__str__(),

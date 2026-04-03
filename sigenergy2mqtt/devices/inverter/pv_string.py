@@ -19,14 +19,13 @@ class PVString(ModbusDevice):
         protocol_version: Protocol,
     ):
         self.string_number = string_number
-        name = f"{model_id.split()[0]} {serial_number} PV String {string_number}"
         super().__init__(
-            device_type,
-            name,
-            plant_index,
-            device_address,
-            "PV String",
-            protocol_version,
+            type=device_type,
+            name=f"{model_id} {serial_number} PV String {string_number}",
+            plant_index=plant_index,
+            device_address=device_address,
+            model="PV String",
+            protocol_version=protocol_version,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}{string_number}",
             model_id=model_id,
             serial_number=serial_number,

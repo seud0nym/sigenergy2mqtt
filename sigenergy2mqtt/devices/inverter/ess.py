@@ -15,14 +15,13 @@ class ESS(ModbusDevice):
         model_id: str,
         serial_number: str,
     ):
-        name = f"{model_id.split()[0]} {serial_number} ESS"
         super().__init__(
-            device_type,
-            name,
-            plant_index,
-            device_address,
-            "Energy Storage System",
-            protocol_version,
+            type=device_type,
+            name=f"{model_id} {serial_number} ESS",
+            plant_index=plant_index,
+            device_address=device_address,
+            model="Energy Storage System",
+            protocol_version=protocol_version,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_address:03d}_{self.__class__.__name__.lower()}",
             model_id=model_id,
             serial_number=serial_number,
