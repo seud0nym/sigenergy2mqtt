@@ -330,6 +330,16 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 現在の制御コマンド値
+  DailyChargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 日次充電電力量
+  DailyDischargeEnergy:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 日次放電電力量
   DCCharger:
     name: Sigenergy DC充電器 {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -382,16 +392,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 車両充電率
-  DailyChargeEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 日次充電電力量
-  DailyDischargeEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 日次放電電力量
   DischargeCutOffSoC:
     attributes:
       source: Modbusレジスタ {address}
@@ -410,6 +410,39 @@ class:
       "6": VPPスケジューリング
       "7": リモートEMS
       "9": 時間ベース制御
+  EnphaseCurrent:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 電流
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 日次発電量
+    name_reset: 日次発電量を設定
+  EnphaseFrequency:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 周波数
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 累計発電量
+  EnphasePowerFactor:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 力率
+  EnphasePVPower:
+    attributes:
+      source: Enphase Envoy API
+    name: PV電力
+  EnphaseReactivePower:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 無効電力
+  EnphaseVoltage:
+    attributes:
+      source: EnphasePVPower導出時のEnphase Envoy API
+    name: 電圧
   ESS:
     name: '{model_id} {serial_number} 蓄電システム'
   ESSBackupSOC:
@@ -450,39 +483,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: DC EV累計放電電力量
-  EnphaseCurrent:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 電流
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 日次発電量
-    name_reset: 日次発電量を設定
-  EnphaseFrequency:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 周波数
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 累計発電量
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV電力
-  EnphasePowerFactor:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 力率
-  EnphaseReactivePower:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 無効電力
-  EnphaseVoltage:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 電圧
   GeneralAlarm1:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -965,6 +965,16 @@ class:
       source: Modbusレジスタ 30605-30606
       source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 力率調整
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 力率調整フィードバック
   InverterPVDailyGeneration:
     attributes:
       source: Modbusレジスタ {address}
@@ -980,16 +990,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: PV電力
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 力率調整
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 力率調整フィードバック
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Modbusレジスタ {address}
@@ -1040,11 +1040,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: '{phase} 線間電圧'
-  MPPTCount:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: MPPT数
   MaxAbsorptionPower:
     attributes:
       source: Modbusレジスタ {address}
@@ -1137,9 +1132,18 @@ class:
     name: Modbus書き込み最小
   MonitorService:
     name: Sigenergyモニター
+  MPPTCount:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: MPPT数
   MqttOverriddenSensor:
     attributes:
       source: MQTTオーバーライド
+  MQTTPhysicalPublishes:
+    name: MQTT 物理パブリッシュ
+  MQTTPublishFailures:
+    name: MQTT パブリッシュ失敗
   NumericSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1171,49 +1175,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: PCS最大輸入制限
-  PVCurrentSensor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 電流
-  PVInverter:
-    name: PVインバータ
-  PVMaxPowerLimit:
-    attributes:
-      comment: リモートEMS制御モード（40031）がコマンド充放電に設定されている場合に有効
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: PV最大電力制限
-  PVOutputOutputService:
-    name: PVOutput出力サービス追加
-  PVOutputStatusService:
-    name: PVOutputステータスサービス追加
-  PVString:
-    name: '{model_id} {serial_number} PVストリング {string_number}'
-  PVStringCount:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: PVストリング数
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − 深夜0時のPVStringLifetimeEnergy
-    name: 日次発電量
-    name_reset: 日次発電量を設定
-  PVStringLifetimeEnergy:
-    attributes:
-      source: PVStringPowerのリーマン和
-    name: 累計発電量
-    name_reset: 累計発電量を設定
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
-    name: 電力
-  PVVoltageSensor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 電圧
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 出力タイプがL1/L2/L3/Nの場合のみ有効
@@ -1288,16 +1249,6 @@ class:
       source: PlantLifetimePVEnergy − 深夜0時のPlantLifetimePVEnergy
     name: 日次PV発電量
     name_reset: 日次PV発電量を設定
-  PlantPVPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: PV電力
-  PlantPVTotalGeneration:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 累計PV発電量
   PlantPhaseActivePower:
     attributes:
       source: Modbusレジスタ {address}
@@ -1308,6 +1259,16 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase_label} 無効電力
+  PlantPVPower:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: PV電力
+  PlantPVTotalGeneration:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 累計PV発電量
   PlantRatedChargingPower:
     attributes:
       source: Modbusレジスタ {address}
@@ -1377,6 +1338,49 @@ class:
     name: プロトコル公開
   ProtocolVersion:
     name: プロトコルバージョン
+  PVCurrentSensor:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 電流
+  PVInverter:
+    name: PVインバータ
+  PVMaxPowerLimit:
+    attributes:
+      comment: リモートEMS制御モード（40031）がコマンド充放電に設定されている場合に有効
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: PV最大電力制限
+  PVOutputOutputService:
+    name: PVOutput出力サービス追加
+  PVOutputStatusService:
+    name: PVOutputステータスサービス追加
+  PVString:
+    name: '{model_id} {serial_number} PVストリング {string_number}'
+  PVStringCount:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: PVストリング数
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − 深夜0時のPVStringLifetimeEnergy
+    name: 日次発電量
+    name_reset: 日次発電量を設定
+  PVStringLifetimeEnergy:
+    attributes:
+      source: PVStringPowerのリーマン和
+    name: 累計発電量
+    name_reset: 累計発電量を設定
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
+    name: 電力
+  PVVoltageSensor:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 電圧
   QSAdjustmentTargetValue:
     attributes:
       comment: "範囲：[-60.0, 60.00]。EMS動作モードに関係なくグローバルに有効"
@@ -1525,6 +1529,10 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+  ResetMetrics:
+    name: メトリクスリセット
+    name_off: メトリクスリセット
+    name_on: メトリクスリセット
   ResettableAccumulationSensor:
     name_reset: '{self.name}を設定'
   RunningStateSensor:
@@ -1537,6 +1545,15 @@ class:
       "2": 故障
       "3": 電源オフ
       "7": 環境異常
+  SelectSensor:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 停止時間
   SITotalChargedEnergy:
     attributes:
       comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します
@@ -1603,15 +1620,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: サードパーティPV合計発電量
-  SelectSensor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 停止時間
   SmartLoadPower:
     attributes:
       source: Modbusレジスタ {address}
@@ -1661,6 +1669,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: サードパーティPV電力
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -1696,19 +1708,13 @@ class:
   WriteOnlySensor:
     name_off: 電源オフ
     name_on: 電源オン
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-  MQTTPhysicalPublishes:
-    name: MQTT 物理パブリッシュ
-  MQTTPublishFailures:
-    name: MQTT パブリッシュ失敗
-  ResetMetrics:
-    name: メトリクスリセット
-    name_off: メトリクスリセット
-    name_on: メトリクスリセット
 cli:
+  clean:
+    help: 空のdiscoveryを公開して既存機器を削除し、終了。
+  discovery_only:
+    help: 'discovery公開後すぐに終了。'
+  show_version:
+    help: バージョン番号を表示して終了。
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML設定ファイルのパス（デフォルト: SIGENERGY2MQTT_CONFIG環境変数、それ以外の場合は/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1725,12 +1731,12 @@ cli:
     help: 'Home Assistantで自動検出を有効にする。'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: 'Home AssistantエンティティIDのプレフィックス（デフォルト: sigen）'
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: '互換性のあるセンサーで Sigenergy-Local-Modbus の entity_id、ゲイン、単位のマッピングを使用します。'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: 'Home AssistantのユニークIDに使用するプレフィックス。例：「prefix」というプレフィックスは、ユニークIDの前に「prefix_」を付けます（デフォルト：sigen）。これを一度設定したら、Home Assistantの既存のエンティティが壊れるため、決して変更しないでください。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '簡略化されたトピック構造を使用'
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: '互換性のあるセンサーで Sigenergy-Local-Modbus の entity_id、ゲイン、単位のマッピングを使用します。'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDBバッチサイズ（デフォルト: 100）'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1897,11 +1903,5 @@ cli:
     help: サードパーティ製造データ用センサークラス。
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: サードパーティ機器の認証ユーザー名。
-  clean:
-    help: 空のdiscoveryを公開して既存機器を削除し、終了。
-  discovery_only:
-    help: 'discovery公開後すぐに終了。'
-  show_version:
-    help: バージョン番号を表示して終了。
   validate_only:
     help: '設定を検証し、構成された接続/認証設定をテストしてから直ちに終了します。オプションモード: --validate=show_credentials を指定すると、接続先へのテストで実際に使用する認証情報をログに出力します。'

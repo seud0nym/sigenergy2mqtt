@@ -330,6 +330,16 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore Comando di Controllo Corrente
+  DailyChargeEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia di Carica Giornaliera
+  DailyDischargeEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia di Scarica Giornaliera
   DCCharger:
     name: Caricatore CC Sigenergy {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -382,16 +392,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Stato di carica veicolo
-  DailyChargeEnergy:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Energia di Carica Giornaliera
-  DailyDischargeEnergy:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Energia di Scarica Giornaliera
   DischargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}
@@ -410,6 +410,39 @@ class:
       "6": Pianificazione VPP
       "7": EMS Remoto
       "9": Controllo Basato sul Tempo
+  EnphaseCurrent:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Corrente
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Produzione Giornaliera
+    name_reset: Imposta Produzione Giornaliera
+  EnphaseFrequency:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Frequenza
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Produzione Totale
+  EnphasePowerFactor:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Fattore di Potenza
+  EnphasePVPower:
+    attributes:
+      source: API Enphase Envoy
+    name: Potenza PV
+  EnphaseReactivePower:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Potenza Reattiva
+  EnphaseVoltage:
+    attributes:
+      source: API Enphase Envoy quando EnphasePVPower derivato
+    name: Tensione
   ESS:
     name: '{model_id} {serial_number} Sistema di Accumulo di Energia'
   ESSBackupSOC:
@@ -450,39 +483,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Energia Scarica CC VE Totale
-  EnphaseCurrent:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Corrente
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Produzione Giornaliera
-    name_reset: Imposta Produzione Giornaliera
-  EnphaseFrequency:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Frequenza
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Produzione Totale
-  EnphasePVPower:
-    attributes:
-      source: API Enphase Envoy
-    name: Potenza PV
-  EnphasePowerFactor:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Fattore di Potenza
-  EnphaseReactivePower:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Potenza Reattiva
-  EnphaseVoltage:
-    attributes:
-      source: API Enphase Envoy quando EnphasePVPower derivato
-    name: Tensione
   GeneralAlarm1:
     alarm:
       '0': Mancata corrispondenza versione software
@@ -965,6 +965,16 @@ class:
       source: Registri Modbus 30605-30606
       source_range: Registri Modbus {start}-{end}
     name: Allarmi PCS
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Regolazione Fattore di Potenza
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Feedback Regolazione Fattore di Potenza
   InverterPVDailyGeneration:
     attributes:
       source: Registro Modbus {address}
@@ -980,16 +990,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza PV
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Regolazione Fattore di Potenza
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Feedback Regolazione Fattore di Potenza
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Registro Modbus {address}
@@ -1040,11 +1040,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: '{phase} Tensione di linea'
-  MPPTCount:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Conteggio MPPT
   MaxAbsorptionPower:
     attributes:
       source: Registro Modbus {address}
@@ -1137,9 +1132,18 @@ class:
     name: Scrittura Modbus Min
   MonitorService:
     name: Monitor Sigenergy
+  MPPTCount:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Conteggio MPPT
   MqttOverriddenSensor:
     attributes:
       source: Override MQTT
+  MQTTPhysicalPublishes:
+    name: Pubblicazioni Fisiche MQTT
+  MQTTPublishFailures:
+    name: Fallimenti di Pubblicazione MQTT
   NumericSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1171,49 +1175,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Max Importazione PCS
-  PVCurrentSensor:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Corrente
-  PVInverter:
-    name: Inverter fotovoltaico
-  PVMaxPowerLimit:
-    attributes:
-      comment: Ha effetto quando la modalità di controllo EMS remoto (40031) è impostata su Carica/Scarica a Comando
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Limite Potenza Max PV
-  PVOutputOutputService:
-    name: Aggiungi Servizio Output PVOutput
-  PVOutputStatusService:
-    name: Aggiungi Servizio Stato PVOutput
-  PVString:
-    name: '{model_id} {serial_number} Stringa PV {string_number}'
-  PVStringCount:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Conteggio Stringhe PV
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy a mezzanotte
-    name: Produzione Giornaliera
-    name_reset: Imposta Produzione Giornaliera
-  PVStringLifetimeEnergy:
-    attributes:
-      source: Σ Riemann di PVStringPower
-    name: Produzione Totale
-    name_reset: Imposta Produzione Totale
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
-    name: Potenza
-  PVVoltageSensor:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Tensione
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Valido solo quando il Tipo di Uscita è L1/L2/L3/N
@@ -1288,16 +1249,6 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy a mezzanotte
     name: Produzione PV Giornaliera
     name_reset: Imposta Produzione PV Giornaliera
-  PlantPVPower:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Potenza PV
-  PlantPVTotalGeneration:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Produzione PV Totale
   PlantPhaseActivePower:
     attributes:
       source: Registro Modbus {address}
@@ -1308,6 +1259,16 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza reattiva fase{phase_label}
+  PlantPVPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza PV
+  PlantPVTotalGeneration:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Produzione PV Totale
   PlantRatedChargingPower:
     attributes:
       source: Registro Modbus {address}
@@ -1377,6 +1338,49 @@ class:
     name: Protocollo Pubblicato
   ProtocolVersion:
     name: Versione Protocollo
+  PVCurrentSensor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente
+  PVInverter:
+    name: Inverter fotovoltaico
+  PVMaxPowerLimit:
+    attributes:
+      comment: Ha effetto quando la modalità di controllo EMS remoto (40031) è impostata su Carica/Scarica a Comando
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Limite Potenza Max PV
+  PVOutputOutputService:
+    name: Aggiungi Servizio Output PVOutput
+  PVOutputStatusService:
+    name: Aggiungi Servizio Stato PVOutput
+  PVString:
+    name: '{model_id} {serial_number} Stringa PV {string_number}'
+  PVStringCount:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Conteggio Stringhe PV
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − PVStringLifetimeEnergy a mezzanotte
+    name: Produzione Giornaliera
+    name_reset: Imposta Produzione Giornaliera
+  PVStringLifetimeEnergy:
+    attributes:
+      source: Σ Riemann di PVStringPower
+    name: Produzione Totale
+    name_reset: Imposta Produzione Totale
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
+    name: Potenza
+  PVVoltageSensor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione
   QSAdjustmentTargetValue:
     attributes:
       comment: "Intervallo: [-60,0, 60,00]. Ha effetto globalmente indipendentemente dalla modalità operativa EMS"
@@ -1525,6 +1529,10 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
+  ResetMetrics:
+    name: Reimposta Metriche
+    name_off: Reimposta Metriche
+    name_on: Reimposta Metriche
   ResettableAccumulationSensor:
     name_reset: Imposta {self.name}
   RunningStateSensor:
@@ -1537,6 +1545,15 @@ class:
       "2": Guasto
       "3": Spento
       "7": Anomalia Ambientale
+  SelectSensor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Ora di Spegnimento
   SITotalChargedEnergy:
     attributes:
       comment: Dopo l'aggiornamento del firmware del dispositivo per supportare la nuova Interfaccia Statistiche, i valori del registro si azzereranno e inizieranno a contare di nuovo senza ereditare i dati storici
@@ -1603,15 +1620,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Produzione PV di Terze Parti Totale
-  SelectSensor:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-    name: Ora di Spegnimento
   SmartLoadPower:
     attributes:
       source: Registro Modbus {address}
@@ -1661,6 +1669,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza PV di Terze Parti
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
   TimestampSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1696,19 +1708,13 @@ class:
   WriteOnlySensor:
     name_off: Spegnere
     name_on: Accendere
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Registro Modbus {address}
-      source_range: Registri Modbus {start}-{end}
-  MQTTPhysicalPublishes:
-    name: Pubblicazioni Fisiche MQTT
-  MQTTPublishFailures:
-    name: Fallimenti di Pubblicazione MQTT
-  ResetMetrics:
-    name: Reimposta Metriche
-    name_off: Reimposta Metriche
-    name_on: Reimposta Metriche
 cli:
+  clean:
+    help: Pubblica discovery vuota per eliminare i dispositivi esistenti, poi esce immediatamente.
+  discovery_only:
+    help: Esce immediatamente dopo la pubblicazione della discovery. Non legge valori dall'interfaccia Modbus, eccetto per sondare la configurazione del dispositivo.
+  show_version:
+    help: Mostra il numero di versione, poi esce immediatamente.
   SIGENERGY2MQTT_CONFIG:
     help: 'Il percorso al file di configurazione YAML (predefinito: variabile di ambiente SIGENERGY2MQTT_CONFIG, altrimenti /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1725,12 +1731,12 @@ cli:
     help: Abilita l'auto-scoperta in Home Assistant.
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: "Il prefisso per gli ID entità di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID entità (predefinito: sigen)"
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: Usa le mappature entity_id, guadagno e unità di Sigenergy-Local-Modbus per i sensori compatibili.
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: "Il prefisso per gli ID unici di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix_' agli ID unici (predefinito: sigen). Una volta impostato, NON cambiarlo MAI, romperebbe le entità esistenti in Home Assistant."
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: Abilita la struttura dei topic semplificata (sigenergy2mqtt/object_id/state) invece della struttura completa di Home Assistant (homeassistant/platform/device_id/object_id/state)
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: Usa le mappature entity_id, guadagno e unità di Sigenergy-Local-Modbus per i sensori compatibili.
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'Dimensione del lotto InfluxDB (predefinito: 100)'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1897,11 +1903,5 @@ cli:
     help: La classe di sensore per memorizzare i dati di produzione del dispositivo di terze parti.
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: Il nome utente per l'autenticazione al dispositivo di terze parti.
-  clean:
-    help: Pubblica discovery vuota per eliminare i dispositivi esistenti, poi esce immediatamente.
-  discovery_only:
-    help: Esce immediatamente dopo la pubblicazione della discovery. Non legge valori dall'interfaccia Modbus, eccetto per sondare la configurazione del dispositivo.
-  show_version:
-    help: Mostra il numero di versione, poi esce immediatamente.
   validate_only:
     help: 'Convalida la configurazione e testa le impostazioni di connessione/autenticazione configurate, quindi esce immediatamente. Modalità opzionale: --validate=show_credentials registra le credenziali effettive usate per i test di connessione.'

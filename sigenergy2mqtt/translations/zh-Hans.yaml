@@ -330,6 +330,16 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 当前控制命令值
+  DailyChargeEnergy:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 日充电电量
+  DailyDischargeEnergy:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 日放电电量
   DCCharger:
     name: Sigenergy 直流充电器 {sequence_suffix}
   DCChargerCurrentChargingCapacity:
@@ -382,16 +392,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 车辆荷电状态
-  DailyChargeEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 日充电电量
-  DailyDischargeEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 日放电电量
   DischargeCutOffSoC:
     attributes:
       source: Modbus 寄存器 {address}
@@ -410,6 +410,39 @@ class:
       "6": VPP调度
       "7": 远程EMS
       "9": 时间控制
+  EnphaseCurrent:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 电流
+  EnphaseDailyPVEnergy:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 日发电量
+    name_reset: 设置 日发电量
+  EnphaseFrequency:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 频率
+  EnphaseLifetimePVEnergy:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 累计发电量
+  EnphasePowerFactor:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 功率因数
+  EnphasePVPower:
+    attributes:
+      source: Enphase Envoy API
+    name: PV功率
+  EnphaseReactivePower:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 无功功率
+  EnphaseVoltage:
+    attributes:
+      source: 派生EnphasePVPower时的Enphase Envoy API
+    name: 电压
   ESS:
     name: '{model_id} {serial_number} 储能系统'
   ESSBackupSOC:
@@ -450,39 +483,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 直流电动汽车累计放电电量
-  EnphaseCurrent:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 电流
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 日发电量
-    name_reset: 设置 日发电量
-  EnphaseFrequency:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 频率
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 累计发电量
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV功率
-  EnphasePowerFactor:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 功率因数
-  EnphaseReactivePower:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 无功功率
-  EnphaseVoltage:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 电压
   GeneralAlarm1:
     alarm:
       '0': 软件版本不匹配
@@ -965,6 +965,16 @@ class:
       source: Modbus寄存器 30605-30606
       source_range: Modbus 寄存器 {start}-{end}
     name: PCS告警
+  InverterPowerFactorAdjustment:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 功率因数调节
+  InverterPowerFactorAdjustmentFeedback:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 功率因数调节反馈
   InverterPVDailyGeneration:
     attributes:
       source: Modbus 寄存器 {address}
@@ -980,16 +990,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: PV功率
-  InverterPowerFactorAdjustment:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 功率因数调节
-  InverterPowerFactorAdjustmentFeedback:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 功率因数调节反馈
   InverterReactivePowerFixedValueAdjustment:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1040,11 +1040,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: '{phase} 线电压'
-  MPPTCount:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: MPPT数量
   MaxAbsorptionPower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1137,9 +1132,18 @@ class:
     name: Modbus 写入最小值
   MonitorService:
     name: Sigenergy 监控
+  MPPTCount:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: MPPT数量
   MqttOverriddenSensor:
     attributes:
       source: MQTT 覆盖
+  MQTTPhysicalPublishes:
+    name: MQTT 物理发布
+  MQTTPublishFailures:
+    name: MQTT 发布失败
   NumericSensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1171,49 +1175,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: PCS最大输入限制
-  PVCurrentSensor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 电流
-  PVInverter:
-    name: 光伏逆变器
-  PVMaxPowerLimit:
-    attributes:
-      comment: 当远程EMS控制模式（40031）设置为命令充放电时生效
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: PV最大功率限制
-  PVOutputOutputService:
-    name: 添加PVOutput输出服务
-  PVOutputStatusService:
-    name: 添加PVOutput状态服务
-  PVString:
-    name: '{model_id} {serial_number} 光伏组串 {string_number}'
-  PVStringCount:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: PV组串数量
-  PVStringDailyEnergy:
-    attributes:
-      source: PVStringLifetimeEnergy − 午夜时的PVStringLifetimeEnergy
-    name: 日发电量
-    name_reset: 设置 日发电量
-  PVStringLifetimeEnergy:
-    attributes:
-      source: PVStringPower的黎曼和
-    name: 累计发电量
-    name_reset: 设置 累计发电量
-  PVStringPower:
-    attributes:
-      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
-    name: 功率
-  PVVoltageSensor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 电压
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 仅当输出类型为L1/L2/L3/N时有效
@@ -1288,16 +1249,6 @@ class:
       source: PlantLifetimePVEnergy − 午夜时的PlantLifetimePVEnergy
     name: PV日发电量
     name_reset: 设置 PV日发电量
-  PlantPVPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: PV功率
-  PlantPVTotalGeneration:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: PV累计发电量
   PlantPhaseActivePower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1308,6 +1259,16 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 相 {phase_label} 无功功率
+  PlantPVPower:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: PV功率
+  PlantPVTotalGeneration:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: PV累计发电量
   PlantRatedChargingPower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1377,6 +1338,49 @@ class:
     name: 协议发布
   ProtocolVersion:
     name: 协议版本
+  PVCurrentSensor:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 电流
+  PVInverter:
+    name: 光伏逆变器
+  PVMaxPowerLimit:
+    attributes:
+      comment: 当远程EMS控制模式（40031）设置为命令充放电时生效
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: PV最大功率限制
+  PVOutputOutputService:
+    name: 添加PVOutput输出服务
+  PVOutputStatusService:
+    name: 添加PVOutput状态服务
+  PVString:
+    name: '{model_id} {serial_number} 光伏组串 {string_number}'
+  PVStringCount:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: PV组串数量
+  PVStringDailyEnergy:
+    attributes:
+      source: PVStringLifetimeEnergy − 午夜时的PVStringLifetimeEnergy
+    name: 日发电量
+    name_reset: 设置 日发电量
+  PVStringLifetimeEnergy:
+    attributes:
+      source: PVStringPower的黎曼和
+    name: 累计发电量
+    name_reset: 设置 累计发电量
+  PVStringPower:
+    attributes:
+      source: PVVoltageSensor × PVCurrentSensor #verify:ignore
+    name: 功率
+  PVVoltageSensor:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 电压
   QSAdjustmentTargetValue:
     attributes:
       comment: "范围：[-60.0, 60.00]。无论EMS运行模式如何，全局生效"
@@ -1525,6 +1529,10 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  ResetMetrics:
+    name: 重置指标
+    name_off: 重置指标
+    name_on: 重置指标
   ResettableAccumulationSensor:
     name_reset: 设置 {self.name}
   RunningStateSensor:
@@ -1537,6 +1545,15 @@ class:
       "2": 故障
       "3": 关机
       "7": 环境异常
+  SelectSensor:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+  ShutdownTime:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 关机时间
   SITotalChargedEnergy:
     attributes:
       comment: 将设备固件升级以支持新的统计接口后，寄存器值将重置为0并重新开始计数，不继承历史数据
@@ -1603,15 +1620,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 第三方PV总发电量
-  SelectSensor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-  ShutdownTime:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 关机时间
   SmartLoadPower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1661,6 +1669,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 第三方PV功率
+  ThreePhaseAdjustmentTargetValue:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
   TimestampSensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1696,19 +1708,13 @@ class:
   WriteOnlySensor:
     name_off: 关机
     name_on: 开机
-  ThreePhaseAdjustmentTargetValue:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-  MQTTPhysicalPublishes:
-    name: MQTT 物理发布
-  MQTTPublishFailures:
-    name: MQTT 发布失败
-  ResetMetrics:
-    name: 重置指标
-    name_off: 重置指标
-    name_on: 重置指标
 cli:
+  clean:
+    help: 发布空discovery删除现有设备后退出。
+  discovery_only:
+    help: '发布discovery后立即退出。'
+  show_version:
+    help: 显示版本号后退出。
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML配置文件的路径（默认：SIGENERGY2MQTT_CONFIG环境变量，否则为/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -1725,12 +1731,12 @@ cli:
     help: '启用Home Assistant自动发现。'
   SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX:
     help: Home Assistant实体ID前缀（默认：sigen）
+  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
+    help: '对兼容传感器使用 Sigenergy-Local-Modbus 的 entity_id、增益和单位映射。'
   SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX:
     help: '用于 Home Assistant 唯一 ID 的前缀。例如：前缀 ''prefix'' 将在唯一 ID 前加上 ''prefix_''（默认：sigen）。一旦设置，请永远不要更改它，因为它会破坏 Home Assistant 中的现有实体。'
   SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS:
     help: '使用简化的主题结构'
-  SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING:
-    help: '对兼容传感器使用 Sigenergy-Local-Modbus 的 entity_id、增益和单位映射。'
   SIGENERGY2MQTT_INFLUX_BATCH_SIZE:
     help: 'InfluxDB 批处理大小（默认：100）'
   SIGENERGY2MQTT_INFLUX_BUCKET:
@@ -1897,11 +1903,5 @@ cli:
     help: 第三方生产数据传感器类。
   SIGENERGY2MQTT_SMARTPORT_USERNAME:
     help: 第三方设备认证用户名。
-  clean:
-    help: 发布空discovery删除现有设备后退出。
-  discovery_only:
-    help: '发布discovery后立即退出。'
-  show_version:
-    help: 显示版本号后退出。
   validate_only:
     help: '验证配置并测试已配置的连接/身份验证设置，然后立即退出。可选模式：--validate=show_credentials 会记录用于连接目标测试的实际凭据。'
