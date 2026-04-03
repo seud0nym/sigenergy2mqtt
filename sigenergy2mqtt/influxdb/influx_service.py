@@ -243,15 +243,15 @@ class InfluxService(InfluxBase):
                         continue
 
                     if not getattr(s, "publishable", False):
-                        self.logger.debug(f"{self.log_identity} [{tpc}] Skipping because object_id '{obj}' is not publishable")
+                        self.logger.debug(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is not publishable")
                         continue
 
-                    if active_config.influxdb.include and not self._matches_filter(s, obj, uid, active_config.influxdb.include):  # type: ignore[reportGeneralTypeIssues]
-                        self.logger.info(f"{self.log_identity} [{tpc}] Skipping because object_id '{obj}' is not in include list")
+                    if active_config.influxdb.include and not self._matches_filter(s, obj, uid, active_config.influxdb.include):
+                        self.logger.info(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is not in include list")
                         continue
 
-                    if active_config.influxdb.exclude and self._matches_filter(s, obj, uid, active_config.influxdb.exclude):  # type: ignore[reportGeneralTypeIssues]
-                        self.logger.info(f"{self.log_identity} [{tpc}] Skipping because object_id '{obj}' is excluded")
+                    if active_config.influxdb.exclude and self._matches_filter(s, obj, uid, active_config.influxdb.exclude):
+                        self.logger.info(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is excluded")
                         continue
 
                     self._topic_cache[tpc] = {
