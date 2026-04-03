@@ -42,6 +42,7 @@ _SKIP_PATTERNS: list[re.Pattern] = [
     re.compile(r"^[\w.+-]+@[\w.-]+\.\w+$"),  # email addresses
     re.compile(r"^<[^>]+>$"),  # bare HTML tags
     re.compile(r"^(true|false|yes|no)$", re.IGNORECASE),  # boolean-like literals
+    re.compile(r"^(\{[^{}]+\}[\s.,:;/-]*)+$"),  # pure placeholders and punctuation
 ]
 
 

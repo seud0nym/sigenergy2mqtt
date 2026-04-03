@@ -74,11 +74,19 @@ RESET_TRANSLATIONS: dict[str, str] = {
 
 #: Classes whose ``__init__`` first positional argument is a *type*, not a
 #: name, so the name lives at index 1 instead of 0.
-MODBUS_BASE_CLASSES: frozenset[str] = frozenset({"ModbusDevice", "Inverter", "ACCharger", "DCCharger", "ESS", "PVString", "PowerPlant", "GridSensor", "GridCode"})
+CLASSES_WITH_TYPE_ARG: frozenset[str] = frozenset({"ModbusDevice", "Inverter", "ACCharger", "DCCharger", "ESS", "PVString", "PowerPlant", "GridSensor", "GridCode"})
+
+#: Classes whose ``name`` field should be automatically suffixed with dynamic
+#: placeholders (plant_index, etc.) if they were passed to ``super().__init__``.
+DEVICE_BASE_CLASSES: frozenset[str] = CLASSES_WITH_TYPE_ARG | {"Device", "SmartPort"}
+
+#: Classes that should NEVER have automatic suffixes appended because they are
+#: already uniquely identified by their hardware IDs.
+SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString"})
 
 #: Classes that are infrastructure/base devices – their ``name`` field is
 #: typically dynamic and should not be emitted as a static translation.
-IGNORE_NAME_CLASSES: frozenset[str] = frozenset({"Device", "ModbusDevice", "Service"})
+IGNORE_NAME_CLASSES: frozenset[str] = frozenset({"Device", "ModbusDevice", "Service", "ReadOnlySensor"})
 
 #: Classes whose subclasses automatically receive a ``name_reset`` entry.
 RESETTABLE_BASE_CLASSES: frozenset[str] = frozenset({"ResettableAccumulationSensor", "EnergyDailyAccumulationSensor", "EnergyLifetimeAccumulationSensor"})
@@ -101,11 +109,12 @@ _UNRESOLVED_TOKENS: frozenset[str] = frozenset({"{words}", "{name}", "{}"})
 
 
 def is_placeholder_only(s: object) -> bool:
-    """Return *True* if *s* consists solely of ``{placeholder}`` tokens.
+    """Return *True* if *s* consists solely of unresolved ``{placeholder}`` tokens.
 
-    Strings like ``"{name}"`` or ``"{model_id} {serial}"`` are considered
-    placeholder-only.  Strings that contain any alphanumeric characters
-    outside of placeholders (e.g. ``"Set {name}"``) return *False*.
+    Strings like ``"{name}"`` or ``"{}"`` are considered placeholder-only and
+    disqualified from extraction.  However, placeholders that represent
+    specific dynamic entity state (e.g. ``"{sequence_suffix}"`` or
+    ``"{plant_index}"``) are considered valid and do not trigger exclusion.
 
     Parameters
     ----------
@@ -114,10 +123,22 @@ def is_placeholder_only(s: object) -> bool:
     """
     if not isinstance(s, str):
         return False
-    if "{" not in s or "}" not in s:
-        return False
+
+    # If there are any alphanumeric characters outside of placeholders, it's
+    # never just a placeholder (e.g. "Space {name}" or "Serial {serial}").
     remaining = re.sub(r"\{[^{}]+\}", "", s)
-    return not bool(re.search(r"[a-zA-Z0-9]", remaining))
+    if bool(re.search(r"[a-zA-Z0-9]", remaining)):
+        return False
+
+    # Check if all placeholders in the string are known unresolved tokens.
+    # If any of them are NOT unresolved then we consider the string valid.
+    placeholders = re.findall(r"\{[^{}]+\}", s)
+    if not placeholders:
+        # No placeholders and no alphanumeric text (e.g. "!!!") - skip?
+        # Re-apply alphanumeric search without placeholder sub to be sure.
+        return not bool(re.search(r"[a-zA-Z0-9]", s))
+
+    return all(p in _UNRESOLVED_TOKENS for p in placeholders)
 
 
 @overload
@@ -656,30 +677,34 @@ class TranslationExtractor(ast.NodeVisitor):
             The resolved name string, or *None* if it could not be determined.
         """
         # 1. Keyword argument `name=`
+        names: list[str] = []
         for kw in node.keywords:
             if kw.arg == "name":
                 names = get_ast_string_values(kw.value)
-                return names[0] if names else None
+                break
 
-        # 2. Positional argument – index depends on whether this class
-        #    (or any ancestor) is a ModbusDevice subclass.
-        assert self._current_class is not None
-        arg_index = 1 if self._has_ancestor(self._current_class, MODBUS_BASE_CLASSES) else 0
-
-        if len(node.args) <= arg_index:
-            return None
-
-        arg_node = node.args[arg_index]
-
-        # Try local variable resolution first.
-        if isinstance(arg_node, ast.Name) and arg_node.id in self._local_vars:
-            name = self._local_vars[arg_node.id]
+        if names:
+            name = names[0]
         else:
-            values = get_ast_string_values(arg_node)
-            name = values[0] if values else None
+            # 2. Positional argument – index depends on whether this class
+            #    (or any ancestor) is a ModbusDevice subclass.
+            assert self._current_class is not None
+            arg_index = 1 if self._has_ancestor(self._current_class, CLASSES_WITH_TYPE_ARG) else 0
+
+            if len(node.args) <= arg_index:
+                name = None
+            else:
+                arg_node = node.args[arg_index]
+
+                # Try local variable resolution first.
+                if isinstance(arg_node, ast.Name) and arg_node.id in self._local_vars:
+                    name = self._local_vars[arg_node.id]
+                else:
+                    values = get_ast_string_values(arg_node)
+                    name = values[0] if values else None
 
         # Apply per-class dynamic fallbacks.
-        if not name or name in _UNRESOLVED_TOKENS:
+        if (not name or name in _UNRESOLVED_TOKENS) and self._current_class:
             name = DYNAMIC_CLASS_NAMES.get(self._current_class, name)
 
         # Last resort: try the 5th positional argument (model name) for
@@ -722,6 +747,22 @@ class TranslationExtractor(ast.NodeVisitor):
 
         name = self._resolve_name_arg(node)
         if name:
+            # Suffixes passed as keyword arguments to super().__init__ are intended
+            # to be part of the translation key so they can be replaced by _t().
+            # If the literal name string didn't already include them, append them now.
+            # We only do this for top-level device classes to avoid cluttering
+            # individual sensors with plant indices.
+            if self._has_ancestor(self._current_class, DEVICE_BASE_CLASSES):
+                for kw in node.keywords:
+                    # Skip plant_index for classes that are uniquely identified (e.g. Inverter)
+                    if kw.arg == "plant_index" and self._current_class in SKIP_SUFFIX_CLASSES:
+                        continue
+
+                    if kw.arg in ("plant_index", "sequence_suffix", "plant_suffix"):
+                        placeholder = f"{{{kw.arg}}}"
+                        if placeholder not in name:
+                            name = f"{name} {placeholder}"
+
             self._add_translation(self._current_class, "name", name)
             if self._is_resettable:
                 self._add_translation(self._current_class, "name_reset", f"Set {name}")
@@ -1371,13 +1412,36 @@ def main() -> None:
 
     # 1. Extract sensor translations.
     extractor = TranslationExtractor()
+    trees = []
     for py_file in package_dir.glob("**/*.py"):
         if py_file.name == "i18n.py" or "test" in py_file.name:
             continue
         try:
-            extractor.visit(ast.parse(py_file.read_text(encoding="utf-8")))
+            content = py_file.read_text(encoding="utf-8")
+            tree = ast.parse(content)
+            trees.append((py_file, tree))
         except Exception as exc:
             log.error("Error parsing %s: %s", py_file, exc)
+
+    # 1. First pass: Collect all class_bases to allow _has_ancestor to work
+    # during the second pass.
+    for py_file, tree in trees:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                bases = []
+                for base in node.bases:
+                    vals = get_ast_string_values(base)
+                    if vals:
+                        bases.append(vals[0])
+                if bases:
+                    extractor.class_bases[node.name] = bases
+
+    # 2. Second pass: Extract translations.
+    for py_file, tree in trees:
+        try:
+            extractor.visit(tree)
+        except Exception as exc:
+            log.error("Error visiting %s: %s", py_file, exc)
 
     merge_translations(sensor_translations, extractor.translations)
 
