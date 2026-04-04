@@ -1,4 +1,4 @@
-FROM python:3.14.3-slim
+FROM python:3.14-alpine3.23
 
 ENV PYTHONUNBUFFERED=1
 
