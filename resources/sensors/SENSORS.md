@@ -253,11 +253,17 @@ and the corresponding sensor in `sigenergy2mqtt`. You can click on the `sigenerg
 | sigen_plant_grid_point_maximum_export_limitation | <a href='./TOPICS.md#sigen_0_247_40038'>sigen_0_plant_grid_max_export_limit</a><br> |
 | sigen_plant_grid_sensor_active_power | <a href='./TOPICS.md#sigen_0_247_30005'>sigen_0_plant_grid_sensor_active_power</a><br> |
 | sigen_plant_grid_sensor_phase_a_active_power | <a href='./TOPICS.md#sigen_0_247_30052'>sigen_0_plant_grid_phase_a_active_power</a><br> |
+| sigen_plant_grid_sensor_phase_a_current | <a href='./TOPICS.md#sigen_0_247_30292'>sigen_0_plant_grid_phase_a_current</a><br> |
 | sigen_plant_grid_sensor_phase_a_reactive_power | <a href='./TOPICS.md#sigen_0_247_30058'>sigen_0_plant_grid_phase_a_reactive_power</a><br> |
+| sigen_plant_grid_sensor_phase_a_voltage | <a href='./TOPICS.md#sigen_0_247_30286'>sigen_0_plant_grid_phase_a_voltage</a><br> |
 | sigen_plant_grid_sensor_phase_b_active_power | <a href='./TOPICS.md#sigen_0_247_30054'>sigen_0_plant_grid_phase_b_active_power</a><br> |
+| sigen_plant_grid_sensor_phase_b_current | <a href='./TOPICS.md#sigen_0_247_30294'>sigen_0_plant_grid_phase_b_current</a><br> |
 | sigen_plant_grid_sensor_phase_b_reactive_power | <a href='./TOPICS.md#sigen_0_247_30060'>sigen_0_plant_grid_phase_b_reactive_power</a><br> |
+| sigen_plant_grid_sensor_phase_b_voltage | <a href='./TOPICS.md#sigen_0_247_30288'>sigen_0_plant_grid_phase_b_voltage</a><br> |
 | sigen_plant_grid_sensor_phase_c_active_power | <a href='./TOPICS.md#sigen_0_247_30056'>sigen_0_plant_grid_phase_c_active_power</a><br> |
+| sigen_plant_grid_sensor_phase_c_current | <a href='./TOPICS.md#sigen_0_247_30296'>sigen_0_plant_grid_phase_c_current</a><br> |
 | sigen_plant_grid_sensor_phase_c_reactive_power | <a href='./TOPICS.md#sigen_0_247_30062'>sigen_0_plant_grid_phase_c_reactive_power</a><br> |
+| sigen_plant_grid_sensor_phase_c_voltage | <a href='./TOPICS.md#sigen_0_247_30290'>sigen_0_plant_grid_phase_c_voltage</a><br> |
 | sigen_plant_grid_sensor_reactive_power | <a href='./TOPICS.md#sigen_0_247_30007'>sigen_0_plant_grid_sensor_reactive_power</a><br> |
 | sigen_plant_grid_sensor_status | <a href='./TOPICS.md#sigen_0_247_30004'>sigen_0_plant_grid_sensor_status</a><br> |
 | sigen_plant_hvrt_enable | <a href='./TOPICS.md#sigen_0_247_40056'>sigen_0_grid_code_hvrt</a><br> |
