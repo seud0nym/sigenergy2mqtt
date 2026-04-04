@@ -1,4 +1,6 @@
 FROM python:3.14-alpine3.23
+# CVE-2026-27171 | CVSS 5.5 – Medium
+RUN apk upgrade --no-cache zlib
 
 ENV PYTHONUNBUFFERED=1
 
