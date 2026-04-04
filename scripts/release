@@ -24,7 +24,14 @@ if [[ "$confirm" != "y" ]]; then
     exit 1
 fi
 
-for file in CHANGELOG.md resources/sensors/SENSORS.md resources/sensors/TOPICS.md sigenergy2mqtt/config/version.py; do
+for file in \
+    CHANGELOG.md \
+    resources/configuration/CLI.md \
+    resources/sensors/SENSORS.md \
+    resources/sensors/TOPICS.md \
+    sigenergy2mqtt/config/version.py \
+    sigenergy2mqtt/sensors/base/_sigenergy_local_modbus_registers.py
+do
     if ! git diff --quiet "$file"; then
         git add "$file"
     fi

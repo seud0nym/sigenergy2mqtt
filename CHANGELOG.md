@@ -15,7 +15,7 @@ _NOTE: Includes all changes from the 2026.3.21bx beta releases_
 - Refactored sensor base tests into scoped modules
 - Renamed unit test files to behaviour-centric naming
 - Docker build test added to build script
-- Dockerfile updated to use python:3.14-alpine3.23 and no-cache pip install across both native Docker and Home Assistant add-on
+- Dockerfile updated to use python:3.14-alpine3.23 and no-cache pip install across both native Docker and Home Assistant add-on, with mitigation for CVE-2026-27171
 - Upgraded `requests` from 2.32.5 to 2.33.1
 
 ### Fixed
