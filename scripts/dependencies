@@ -60,6 +60,8 @@ check_pkg () {
   fi
 }
 
+pip install --upgrade pip
+
 if [[ "$install_build_deps" -eq 1 ]]; then
   for spec in \
       "build(>=1.3.0,<2.0.0)" \
