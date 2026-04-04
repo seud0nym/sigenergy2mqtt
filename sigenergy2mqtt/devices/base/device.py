@@ -107,9 +107,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             ]:
                 self[k] = v
             else:
-                logging.debug(f"{self.log_identity} - Ignored unknown device attribute: {k} (probably translation placeholder)")
+                logging.debug(f"{self.log_identity} Ignored unknown device attribute: {k} (probably translation placeholder)")
 
-        logging.debug(f"Created Device {self}")
+        logging.debug(f"{self.log_identity} Created Device {self}")
         DeviceRegistry.add(self.plant_index, self)
 
     def _build_log_identity(self) -> str:
