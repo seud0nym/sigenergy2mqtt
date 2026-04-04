@@ -247,13 +247,16 @@ async def get_sensor_instances(
             sensors[key] = s
         elif s.__class__.__name__ != sensors[key].__class__.__name__:
             logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensors[key].__class__.__name__}")
-        try:
-            classes[s.__class__.__name__] += 1
-        except KeyError:
-            logging.critical(f"Class {s.__class__.__name__} not found in classes???")
-            raise
+        if s.__class__.__name__ not in classes:
+            classes[s.__class__.__name__] = 0
+        classes[s.__class__.__name__] += 1
+
         for d in s.derived_sensors.values():
             add_sensor_instance(d)
+        if hasattr(s, "alarms") and isinstance(s.alarms, list):
+            for alarm in s.alarms:
+                add_sensor_instance(alarm)
+
 
     find_concrete_classes(Sensor)
     for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
@@ -261,12 +264,8 @@ async def get_sensor_instances(
         devices.extend(parent.children)
         for device in devices:
             for sensor in device.sensors.values():
-                if isinstance(sensor, AlarmCombinedSensor):
-                    add_sensor_instance(sensor)
-                    for alarm in sensor.alarms:
-                        add_sensor_instance(alarm)
-                else:
-                    add_sensor_instance(sensor)
+                add_sensor_instance(sensor)
+
 
     if concrete_sensor_check:
         previous: tuple[int, int] | None = None
