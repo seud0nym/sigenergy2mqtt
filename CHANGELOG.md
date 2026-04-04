@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Created `scripts/yaml_to_env.py` helper script to convert YAML configuration files into equivalent environment variables
+- Added `SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT` environment variable for setting initial state of Home Assistant sensors
+- Added `SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON` environment variable to allow complex sensor overrides via JSON strings
+
+---
+
 ## [2026.4.4] - 2026-04-04
 
 _NOTE: Includes all changes from the 2026.3.21bx beta releases_

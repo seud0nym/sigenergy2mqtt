@@ -144,6 +144,11 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
             result["sensor_overrides"] = overrides
             result["log_level"] = logging.DEBUG
 
+        overrides_json = g(const.SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON)
+        if overrides_json:
+            o = json.loads(overrides_json)
+            result["sensor_overrides"] = {**result.get("sensor_overrides", {}), **o}
+
         # ── Home Assistant ───────────────────────────────────────────────────
         hass: dict[str, Any] = {}
         _set(hass, "enabled", _bool(g(const.SIGENERGY2MQTT_HASS_ENABLED)))
@@ -154,6 +159,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(hass, "sigenergy_local_modbus_naming", _bool(g(const.SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING)))
         _set(hass, "use_simplified_topics", _bool(g(const.SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS)))
         _set(hass, "edit_percentage_with_box", _bool(g(const.SIGENERGY2MQTT_HASS_EDIT_PCT_BOX)))
+        _set(hass, "enabled_by_default", _bool(g(const.SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT)))
         if hass:
             result["home_assistant"] = hass
 

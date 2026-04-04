@@ -198,7 +198,7 @@ The interval (in seconds) at which the Home Assistant discovery will be automati
 <a id="opt_home_assistant_sensors_enabled_by_default"></a>
 ### Sensors Enabled By Default
 - CLI: `n/a`
-- ENV: `n/a`
+- ENV: `SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT`
 - Config key: `home-assistant.sensors-enabled-by-default`
 
 When sensors are initially discovered by Home Assistant, the majority will be disabled in the UI. If you want all sensors to be enabled, set this to true. 
@@ -1175,13 +1175,23 @@ The source of the voltage value to be sent to PVOutput. Valid values are:
 If not specified, defaults to `l/n-avg`.
 
 
+<a id="opt_sensor_overrides"></a>
 ## Sensor Overrides
+- CLI: `n/a`
+- ENV: `SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON`
+- Config key: `sensor-overrides`
 
 Sensor Overrides allow you to specify options for individual sensors. 
 
 You can specify the sensor to be overridden by either by the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying `Reactive` would match all sensors with `Reactive` in their class name.
 
 From releases after 2026.1.5, the sensor may be specified as a regular expression. e.g. `^PowerFactor$` will match *only* the `PowerFactor` class name, but not `InverterPowerFactorAdjustmentFeedback`.
+
+When using the environment variable, the value is a JSON string containing the sensor overrides. For example:
+
+```json
+{"PlantConsumedPower": {"debug-logging": true, "unit-of-measurement": "kW", "gain": 1000, "precision": 2}}
+```
 
 For each sensor, you can specify one or more of the following options:
 
