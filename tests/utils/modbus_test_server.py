@@ -494,27 +494,67 @@ class CustomDataBlock(ModbusSparseDataBlock):
         """
         sensor = None if address not in self.addresses else self.addresses[address]
         last_address = address + count - 1
+        debug = any(TestConfig.registers_to_debug) and address in TestConfig.registers_to_debug
         if address in self._reserved or last_address - count + 1 in self._reserved:
             # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
             result = ExcCodes.ILLEGAL_ADDRESS
+            if debug:
+                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (ExcCodes.ILLEGAL_ADDRESS)")
         elif sensor and sensor.count == count:
+            if address in self.addresses:
+                sensor = self.addresses[address]
+                if debug:
+                    _logger.debug(f"#{self.device_address}  >>> self.addresses[k]: address={sensor.address}, count={sensor.count}, name={sensor.name}")
+            elif debug:
+                _logger.debug(f"#{self.device_address}  >>> address {address} not in self.addresses")
             result = super().getValues(address, count)
+            if debug:
+                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
         else:
             pre_read: list[int | bool] = []
             keys = list(self.addresses.keys())
             start = bisect.bisect_left(keys, address)
             end = bisect.bisect_right(keys, last_address)
+            for a in range(address, keys[start]):
+                pre_read.append(0)
+                if debug:
+                    _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {a} for 1 register ({pre_read=})")
+            current = keys[start]  # track the next expected address
             for k in keys[start:end]:
+                # fill gap before this key
+                for a in range(current, k):
+                    pre_read.append(0)
+                    if debug:
+                        _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {a} for 1 register ({pre_read=})")
                 sensor = self.addresses[k]
+                if debug:
+                    _logger.debug(f"#{self.device_address}  >>> self.addresses[k]: address={sensor.address}, count={sensor.count}, name={sensor.name}")
                 state = super().getValues(sensor.address, sensor.count)
                 if isinstance(state, list):
                     pre_read.extend(state)
+                    if debug:
+                        _logger.debug(f"#{self.device_address}  >>> extending preread from {sensor.address} for {sensor.count} registers -> {state} ({pre_read=})")
                 else:
                     for _ in range(0, sensor.count):
                         pre_read.append(0)
-            result = pre_read if len(pre_read) == count else ExcCodes.ILLEGAL_ADDRESS
-        if sensor and sensor.debug_logging:
-            _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
+                        if debug:
+                            _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {sensor.address} for 1 register ({pre_read=})")
+                current = k + sensor.count
+            last_key = keys[end - 1]
+            last_sensor = self.addresses[last_key]
+            last_covered = last_key + last_sensor.count  # first address not yet covered
+            for a in range(last_covered, last_address + 1):  # ✅
+                pre_read.append(0)
+                if debug:
+                    _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {a} for 1 register ({pre_read=})")
+            if len(pre_read) == count:
+                result = pre_read
+                if debug:
+                    _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
+            else:
+                result = ExcCodes.ILLEGAL_ADDRESS
+                if debug:
+                    _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (ExcCodes.ILLEGAL_ADDRESS)")
         return result
 
 
