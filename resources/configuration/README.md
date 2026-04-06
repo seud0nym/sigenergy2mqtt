@@ -820,6 +820,41 @@ Notes:
 - The topic(s) must match in both the `sigenergy2mqtt` configuration and the Home Assistant automation.
 
 
+## Persistence
+
+<a id="opt_persistence_mqtt_redundancy"></a>
+### Persistence MQTT Redundancy
+- CLI: `--persistence-mqtt-redundancy / --no-persistence-mqtt-redundancy`
+- ENV: `SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY`
+- Config key: `persistence.mqtt-redundancy`
+
+Set to `true` (default) to enable off-host state redundancy using MQTT retained messages (QoS 2). This allows the application to recover critical state (like daily energy totals or auto-discovery results) even after a clean install or hardware failure.
+
+<a id="opt_persistence_mqtt_state_prefix"></a>
+### Persistence MQTT State Prefix
+- CLI: `--persistence-mqtt-state-prefix`
+- ENV: `SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX`
+- Config key: `persistence.mqtt-state-prefix`
+
+The MQTT topic prefix used for storing persisted state. (default: `sigenergy2mqtt/persistence`)
+
+<a id="opt_persistence_disk_primary"></a>
+### Persistence Disk Primary
+- CLI: `--persistence-disk-primary / --no-persistence-disk-primary`
+- ENV: `SIGENERGY2MQTT_PERSISTENCE_DISK_PRIMARY`
+- Config key: `persistence.disk-primary`
+
+Set to `true` (default) to prefer local disk-based state over MQTT if both are available. If set to `false`, MQTT state will be preferred.
+
+<a id="opt_persistence_cache_warmup_timeout"></a>
+### Persistence Cache Warmup Timeout
+- CLI: `--persistence-cache-warmup-timeout`
+- ENV: `SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT`
+- Config key: `persistence.cache-warmup-timeout`
+
+The maximum time in seconds to wait for the MQTT state cache to warm up from retained messages on startup. (default: `5.0`)
+
+
 ## MQTT
 
 <a id="opt_mqtt_anonymous"></a>

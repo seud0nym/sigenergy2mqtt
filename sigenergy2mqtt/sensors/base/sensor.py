@@ -10,8 +10,8 @@ import logging
 import re
 import time
 from collections import deque
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Deque, cast
+
 
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse
@@ -21,6 +21,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.persistence import state_store
 
 from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
 from .sanity_check import SanityCheck, SanityCheckException
@@ -133,9 +134,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._publish_raw: bool = False
         self._publishable: bool = True
 
-        # Use sanitized unique_id for file paths
-        safe_unique_id = _sanitize_path_component(unique_id)
-        self._persistent_publish_state_file: Path = Path(active_config.persistent_state_path, f"{safe_unique_id}.publishable")
+        # Use sanitized unique_id for persistence key
+        self._persistence_key: str = f"{_sanitize_path_component(unique_id)}.publishable"
 
         # State history - use deque for efficient bounded collection
         self._states: Deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
@@ -667,13 +667,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         return components
 
     def _cleanup_persistent_state_file(self) -> None:
-        """Remove persistent state file if sensor is publishable and not in clean mode."""
-        if self._persistent_publish_state_file.exists():
-            try:
-                self._persistent_publish_state_file.unlink(missing_ok=True)
-                logging.debug(f"{self.log_identity} Removed {self._persistent_publish_state_file} (publishable={self.publishable} clean={active_config.clean})")
-            except OSError as e:
-                logging.warning(f"Failed to remove persistent state file: {e}")
+        """Remove persistent state if sensor is publishable and not in clean mode."""
+        state_store.delete_sync("sensor", self._persistence_key, debug=self.debug_logging)
+
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} Removed persistence for {self._persistence_key} (publishable={self.publishable} clean={active_config.clean})")
 
     def _handle_unpublishable_discovery(self, mqtt_client: mqtt.Client, components: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Handle discovery for unpublishable sensors.
@@ -691,23 +689,21 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
-        # Handle persistent state file
-        if self._persistent_publish_state_file.exists() or active_config.clean:
+        # Check for persistent state
+        persisted = state_store.load_sync("sensor", self._persistence_key, debug=self.debug_logging)
+
+        if persisted is not None or active_config.clean:
             components = {}
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} unpublished - removed all discovery (persistent file exists={self._persistent_publish_state_file.exists()} clean={active_config.clean})")
+                logging.debug(f"{self.log_identity} unpublished - removed all discovery (persisted={persisted is not None} clean={active_config.clean})")
         else:
             # Create minimal discovery to remove entity
             for comp_id in components.keys():
                 components[comp_id] = {"p": self[DiscoveryKeys.PLATFORM]}
 
-            try:
-                with self._persistent_publish_state_file.open("w") as f:
-                    f.write("0")
-                if self.debug_logging:
-                    logging.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistent file handling)")
-            except OSError as e:
-                logging.warning(f"Failed to create persistent state file: {e}")
+            state_store.save_sync("sensor", self._persistence_key, "0", debug=self.debug_logging)
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistence handling)")
 
         return components
 

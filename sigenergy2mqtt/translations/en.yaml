@@ -1839,6 +1839,12 @@ cli:
     help: Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This option is ignored for firmware SPC113 and later as these limits are globally available in those versions.
   SIGENERGY2MQTT_NO_METRICS:
     help: Do not publish any sigenergy2mqtt metrics.
+  SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
+    help: 'Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
+    help: Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
+    help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: The API Key for PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

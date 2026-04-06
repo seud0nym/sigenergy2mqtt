@@ -1839,6 +1839,12 @@ cli:
     help: Validierung deaktivieren, die ESS Max Lade-/Entladeleistung und PV Max Leistungsgrenzen deaktiviert, wenn der Fern-EMS-Steuerungsmodus nicht auf Befehlsladung/-entladung eingestellt ist.
   SIGENERGY2MQTT_NO_METRICS:
     help: Keine sigenergy2mqtt-Metriken veröffentlichen.
+  SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
+    help: 'Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
+    help: Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
+    help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: Der API-Schlüssel für PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

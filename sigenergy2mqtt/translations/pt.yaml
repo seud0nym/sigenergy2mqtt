@@ -1839,6 +1839,12 @@ cli:
     help: 'Desative a validação que desativa os limites de Carga/Descarga Máxima do ESS e de Potência Máxima do PV quando o Modo de Controle EMS Remoto não for Carga/Descarga por Comando.'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'Não publicar métricas sigenergy2mqtt.'
+  SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
+    help: 'Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
+    help: Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
+    help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: Chave API para PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

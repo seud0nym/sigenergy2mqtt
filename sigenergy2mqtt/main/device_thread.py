@@ -199,20 +199,23 @@ async def start(configs: list[ThreadConfig]) -> None:
             # Poll with a short timeout so KeyboardInterrupt and stop_event are
             # both handled promptly rather than blocking until all threads finish.
             while True:
-                done_raw, pending_raw = concurrent.futures.wait(executions, timeout=1.0)
-                done = set(done_raw)
-                pending = set(pending_raw)
+                done = {fut for fut in executions if fut.done()}
+                pending = {fut for fut in executions if not fut.done()}
 
                 if stop_event.is_set() and pending:
                     logging.warning("A thread crashed — cancelling remaining threads")
                     for config in configs:
                         config.offline()
-                    concurrent.futures.wait(pending)
-                    done = done | pending  # Ensure pending results are also inspected below
+                    # Wait for remaining threads to finish
+                    while not all(fut.done() for fut in executions):
+                        await asyncio.sleep(0.1)
+                    done = set(executions)
                     break
 
                 if not pending:
                     break
+
+                await asyncio.sleep(1.0)
         except KeyboardInterrupt:
             logging.info("Keyboard interrupt received — requesting cooperative shutdown")
             stop_event.set()

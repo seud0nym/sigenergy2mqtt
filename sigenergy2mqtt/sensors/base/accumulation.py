@@ -6,15 +6,15 @@ import asyncio
 import logging
 import sys
 import time
-from pathlib import Path
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Deque, cast
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import DeviceClass, StateClass, UnitOfEnergy
-from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.persistence import state_store
 
 from .constants import DiscoveryKeys, SensorAttributeKeys, _sanitize_path_component
 from .derived import DerivedSensor
@@ -83,13 +83,12 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
                 setattr(self, discriminator, getattr(source, discriminator))
         self.refresh_log_identity()
 
-        # Use sanitized unique_id for file paths
+        # Use sanitized unique_id for persistence key
         uid = str(self.unique_id)
         if uid.startswith("<MagicMock"):  # For testing
             uid = "mock_uid"
 
-        safe_uid = _sanitize_path_component(uid)
-        self._persistent_state_file = Path(active_config.persistent_state_path, f"{safe_uid}.state")
+        self._persistence_key: str = f"{_sanitize_path_component(uid)}.state"
 
         # Load persisted state
         self._load_persisted_state()
@@ -97,19 +96,22 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
 
     def _load_persisted_state(self) -> None:
         """Load accumulated value from persistent storage."""
-        if not self._persistent_state_file.is_file():
-            return
-
         try:
-            with self._persistent_state_file.open("r") as f:
-                content = f.read().strip()
-                if content and content != "None":
-                    self._current_total = float(content)
-                    logging.debug(f"{self.log_identity} Loaded current state from {self._persistent_state_file} ({self._current_total})")
-        except (OSError, ValueError, PermissionError) as e:
-            logging.warning(f"{self.log_identity} Failed to read {self._persistent_state_file}: {e}")
+            content = state_store.load_sync("sensor", self._persistence_key, debug=self.debug_logging)
         except Exception as e:
-            logging.error(f"{self.log_identity} Unexpected error reading {self._persistent_state_file}: {e}")
+            if isinstance(e, (OSError, RuntimeError)):
+                logging.warning(f"{self.log_identity} Failed to read state for {self._persistence_key}: {e}")
+            else:
+                logging.error(f"{self.log_identity} Unexpected error reading state for {self._persistence_key}: {e}")
+            return
+            
+        if content is not None:
+            try:
+                self._current_total = float(content)
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Loaded current state for {self._persistence_key} ({self._current_total})")
+            except (ValueError, TypeError) as e:
+                logging.warning(f"{self.log_identity} Failed to parse persisted state for {self._persistence_key}: {e}")
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Get discovery components including reset control.
@@ -162,19 +164,18 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         return attributes
 
     async def _persist_current_total(self, new_total: float) -> None:
-        """Persist accumulated value to file.
+        """Persist accumulated value.
 
         Args:
             new_total: New total value to persist
         """
         async with self._current_total_lock:
             try:
-                with self._persistent_state_file.open("w") as f:
-                    f.write(str(new_total))
-            except (OSError, PermissionError) as e:
-                logging.error(f"Failed to persist state: {e}")
+                state_store.save_sync("sensor", self._persistence_key, str(new_total), debug=self.debug_logging)
+            except PermissionError as e:
+                logging.warning(f"{self.log_identity} Failed to persist state for {self._persistence_key}: {e}")
             except Exception as e:
-                logging.error(f"Unexpected error persisting state: {e}")
+                logging.error(f"{self.log_identity} Unexpected error persisting state for {self._persistence_key}: {e}")
 
     async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
@@ -331,13 +332,12 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._state_at_midnight_lock = asyncio.Lock()
         self._state_at_midnight: float | None = None
 
-        # Use sanitized unique_id for file path
+        # Use sanitized unique_id for persistence key
         uid = str(source.unique_id)
         if uid.startswith("<MagicMock"):
             uid = "mock_uid_atmidnight"
 
-        safe_uid = _sanitize_path_component(uid)
-        self._persistent_state_file = Path(active_config.persistent_state_path, f"{safe_uid}.atmidnight")
+        self._persistence_key = f"{_sanitize_path_component(uid)}.atmidnight"
 
     def on_added_to_device(self) -> None:
         super().on_added_to_device()
@@ -345,35 +345,31 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._load_midnight_state()
 
     def _load_midnight_state(self) -> None:
-        """Load state at midnight if file is from today."""
-        if not self._persistent_state_file.is_file():
+        """Load state at midnight if entry is from today."""
+        try:
+            content = state_store.load_sync("sensor", self._persistence_key, stale_after=timedelta(hours=24), debug=self.debug_logging)
+        except Exception as e:
+            logging.warning(f"{self.log_identity} Failed to read midnight state for {self._persistence_key}: {e}")
+            state_store.delete_sync("sensor", self._persistence_key, debug=self.debug_logging)
+            return
+
+        if content is None:
+            # Ensure stale/missing files are cleared from disk
+            state_store.delete_sync("sensor", self._persistence_key, debug=self.debug_logging)
             return
 
         try:
-            file_time = time.localtime(self._persistent_state_file.stat().st_mtime)
-            now = time.localtime()
-
-            # Check if file is from today
-            if not (file_time.tm_year == now.tm_year and file_time.tm_mon == now.tm_mon and file_time.tm_mday == now.tm_mday):
-                logging.debug(f"{self.log_identity} Ignored stale midnight state file {self._persistent_state_file} (from {file_time})")
-                self._persistent_state_file.unlink(missing_ok=True)
-                return
-
-            with self._persistent_state_file.open("r") as f:
-                content = f.read().strip()
-                if content and content != "None":
-                    value = float(content)
-                    if value <= 0.0:
-                        logging.debug(f"{self.log_identity} Ignored negative midnight state from {self._persistent_state_file} ({value})")
-                        self._persistent_state_file.unlink()
-                    else:
-                        self._state_at_midnight = value
-                        logging.debug(f"{self.log_identity} Loaded midnight state from {self._persistent_state_file} ({self._state_at_midnight})")
-        except (OSError, ValueError, PermissionError) as e:
-            logging.warning(f"{self.log_identity} Failed to read {self._persistent_state_file}: {e}")
-            self._persistent_state_file.unlink(missing_ok=True)
-        except Exception as e:
-            logging.error(f"{self.log_identity} Unexpected error reading {self._persistent_state_file}: {e}")
+            value = float(content)
+            if value <= 0.0:
+                logging.debug(f"{self.log_identity} Ignored negative midnight state for {self._persistence_key} ({value})")
+                state_store.delete_sync("sensor", self._persistence_key, debug=self.debug_logging)
+            else:
+                self._state_at_midnight = value
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Loaded midnight state for {self._persistence_key} ({self._state_at_midnight})")
+        except (ValueError, TypeError) as e:
+            logging.warning(f"{self.log_identity} Failed to parse midnight state for {self._persistence_key}: {e}")
+            state_store.delete_sync("sensor", self._persistence_key, debug=self.debug_logging)
 
     async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
         """Persist state at midnight.
@@ -386,13 +382,11 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
         async with self._state_at_midnight_lock:
             try:
-                with self._persistent_state_file.open("w") as f:
-                    f.write(str(midnight_state))
-                self._state_at_midnight = midnight_state
-            except (OSError, PermissionError) as e:
-                logging.error(f"Failed to update midnight state: {e}")
+                state_store.save_sync("sensor", self._persistence_key, str(midnight_state), debug=self.debug_logging)
             except Exception as e:
-                logging.error(f"Unexpected error updating midnight state: {e}")
+                logging.warning(f"{self.log_identity} Failed to update midnight state for {self._persistence_key}: {e}")
+
+            self._state_at_midnight = midnight_state
 
     async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command.
@@ -440,8 +434,11 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         Returns:
             True if published
         """
-        if not self._persistent_state_file.is_file():
-            await self._update_state_at_midnight(self._state_at_midnight)
+        latest_raw = self._source.latest_raw_state
+        if self._state_at_midnight is None and latest_raw is not None:
+            # Note: state_store already handles redundancy, so we just ensuring it's "set"
+            # if somehow it wasn't on disk but was in memory.
+            await self._update_state_at_midnight(float(latest_raw))
 
         return await super().publish(mqtt_client, modbus_client, republish)
 
@@ -459,7 +456,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
             return False
 
-        now_state = values[-1][1]
+        val = values[-1][1]
+        now_state = float(val) if val is not None else 0.0
 
         # Check for day change
         if len(values) > 1:

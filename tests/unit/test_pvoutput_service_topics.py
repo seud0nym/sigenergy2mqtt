@@ -1,7 +1,8 @@
 import json
 import logging
 import time
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, mock_open, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+
 
 import pytest
 
@@ -10,6 +11,8 @@ from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
 from sigenergy2mqtt.pvoutput.topic import Topic
+
+
 
 
 def make_service(unique_id: str = "test_service") -> Service:
@@ -117,11 +120,9 @@ class TestPVOutputServiceTopics:
     @pytest.mark.asyncio
     async def test_handle_update_peak_calculation(self):
         st = make_service_topics(calc=Calculation.PEAK)
-        with patch("sigenergy2mqtt.pvoutput.service_topics.Path") as mock_path_cls:
-            mock_file = MagicMock()
-            mock_path_cls.return_value = mock_file
-            mock_file.is_file.return_value = False
-            mock_file.open = mock_open()
+        with patch("sigenergy2mqtt.pvoutput.service_topics.state_store") as mock_ss:
+            mock_ss.is_initialised = True
+            mock_ss.load_sync.return_value = None
 
             t = Topic("t/1", gain=1.0, state=50.0)
             st.register(t)
@@ -131,24 +132,22 @@ class TestPVOutputServiceTopics:
 
             await st.handle_update(None, MagicMock(), 100.0, "t/1", MagicMock())
             assert t.state == 100.0
-            mock_file.open.assert_called()
+            mock_ss.save_sync.assert_called()
+
 
     def test_restore_state_from_file(self):
         st = make_service_topics(value_key=OutputField.PEAK_POWER)
         topic = Topic("test/topic", gain=1.0)
 
-        with patch("sigenergy2mqtt.pvoutput.service_topics.Path") as mock_path_cls:
-            mock_file = MagicMock()
-            mock_path_cls.side_effect = lambda *a: mock_file if "test_service" in str(a) else MagicMock(is_file=lambda: False)
-            mock_file.is_file.return_value = True
-            mock_file.stat.return_value.st_mtime = time.time()
-
+        with patch("sigenergy2mqtt.pvoutput.service_topics.state_store") as mock_ss:
+            mock_ss.is_initialised = True
             saved_topic = Topic("test/topic", state=100.0, timestamp=time.localtime())
-            mock_content = json.dumps({"test/topic": saved_topic}, default=Topic.json_encoder)
-            mock_file.open = mock_open(read_data=mock_content)
+            # StateStore returns the raw JSON string of the object as stored
+            mock_ss.load_sync.return_value = json.dumps({"test/topic": saved_topic}, default=Topic.json_encoder)
 
             st.restore_state(topic)
             assert st["test/topic"].state == 100.0
+
 
     def test_reset_clears_state(self):
         st = make_service_topics()

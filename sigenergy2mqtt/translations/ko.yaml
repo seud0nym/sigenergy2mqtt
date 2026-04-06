@@ -1839,6 +1839,12 @@ cli:
     help: '원격 EMS 제어 모드가 명령 충전/방전이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를 끕니다.'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'sigenergy2mqtt 메트릭 게시 안 함.'
+  SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
+    help: 'Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
+    help: Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
+    help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput API 키
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

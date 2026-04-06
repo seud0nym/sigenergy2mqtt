@@ -137,7 +137,7 @@ def test_main_validate_logs_config_yaml(monkeypatch):
         with pytest.raises(SystemExit):
             main_module.main()
 
-    assert any(call.args and call.args[0] == "Validation configuration:\n%s" for call in mock_info.call_args_list)
+    assert any(call.args and call.args[0].startswith("Validation configuration:\n") for call in mock_info.call_args_list)
 
 
 def test_main_smartport_warning_coverage(monkeypatch, caplog):

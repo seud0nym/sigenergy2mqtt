@@ -75,6 +75,16 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_MQTT_TRANSPORT` | Sets the MQTT transport mechanism. Must be one of `websockets` or `tcp`. The default is `tcp`. [<sup>(More…)</sup>](README.md#opt_mqtt_transport) | 2026.1.4 |
 | `SIGENERGY2MQTT_MQTT_LOG_LEVEL` | Set the paho.mqtt log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `WARNING` (warnings, errors and critical failures) [<sup>(More…)</sup>](README.md#opt_mqtt_log_level) | 2025.5.12 |
 
+## State Persistence Configuration Variables
+
+| Name | Description | Since |
+|------|-------------|-------|
+| `SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY` | Set to `true` to enable off-host state redundancy using MQTT retained messages (QoS 2). Default is `true`. [<sup>(More…)</sup>](README.md#opt_persistence_mqtt_redundancy) | 2026.4.5 |
+| `SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX` | The MQTT topic prefix used for storing persisted state. (default: `sigenergy2mqtt/persistence`) [<sup>(More…)</sup>](README.md#opt_persistence_mqtt_state_prefix) | 2026.4.5 |
+| `SIGENERGY2MQTT_PERSISTENCE_DISK_PRIMARY` | Set to `true` to prefer local disk-based state over MQTT if both are available. Default is `true`. [<sup>(More…)</sup>](README.md#opt_persistence_disk_primary) | 2026.4.5 |
+| `SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT` | The maximum time in seconds to wait for the MQTT state cache to warm up from retained messages on startup. (default: `5.0`) [<sup>(More…)</sup>](README.md#opt_persistence_cache_warmup_timeout) | 2026.4.5 |
+
+
 ## PVOutput Configuration Variables
 
 <table>
@@ -153,3 +163,4 @@ This feature allows you to report PV generation from a third-party device, eithe
 | `SIGENERGY2MQTT_SMARTPORT_PV_POWER` | The sensor class to hold the production data obtained from the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_pv_power) | 2025.5.12 |
 | `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` | The MQTT topic to which to subscribe to obtain the production data for the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_mqtt_topic) | 2025.5.12 |
 | `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` | The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. `1000` if the data is in kW) Default is `1` (Watts). [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_mqtt_gain) | 2025.5.12 |
+

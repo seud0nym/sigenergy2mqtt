@@ -197,6 +197,32 @@ mqtt:
   #   description:  The MQTT interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: WARNING
+# persistence
+#   added: 2026.4.5
+#   description: Configuration for state persistence and MQTT redundancy.
+#                This allows the application to recover state (like daily energy
+#                totals or auto-discovery results) even after a clean install
+#                or hardware failure, by using MQTT retained messages.
+persistence:
+  # mqtt-redundancy
+  #   default: true
+  #   description: If true, enables off-host state redundancy using MQTT
+  #                retained messages (QoS 2).
+  mqtt-redundancy: true
+  # mqtt-state-prefix
+  #   default: sigenergy2mqtt/persistence
+  #   description: The MQTT topic prefix used for storing persisted state.
+  mqtt-state-prefix: sigenergy2mqtt/persistence
+  # disk-primary
+  #   default: true
+  #   description: If true, prefer local disk-based state over MQTT if both
+  #                are available.
+  disk-primary: true
+  # cache-warmup-timeout
+  #   default: 5.0
+  #   description: The maximum time in seconds to wait for the MQTT state
+  #                cache to warm up from retained messages on startup.
+  cache-warmup-timeout: 5.0
 # modbus
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device

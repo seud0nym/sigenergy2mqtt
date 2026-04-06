@@ -10,6 +10,7 @@ mock_types = MagicMock()
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.i18n import _t
+from sigenergy2mqtt.persistence import state_store
 
 
 class MockHybridInverter:
@@ -34,9 +35,24 @@ sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
 
 @pytest.fixture(autouse=True)
-def mock_sensor_types():
-    """Fixture that ensures sigenergy2mqtt.common.types is mocked.
-    Since we already did it at module level, this is just for explicit documentation
-    and to provide access to the mock if needed.
+def mock_persistence_defaults(monkeypatch):
+    """Ensure MQTT redundancy is disabled by default for all unit tests.
+
+    This avoids multi-second timeouts in tests that accidentally trigger
+    persistence initialization.
     """
-    return mock_types
+    monkeypatch.setenv("SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY", "false")
+
+
+@pytest.fixture(autouse=True)
+def reset_state_store():
+    """Ensure StateStore is clean before each test."""
+    import traceback
+
+    traceback.print_stack()
+    state_store.shutdown()
+    yield
+    import traceback
+
+    traceback.print_stack()
+    state_store.shutdown()
