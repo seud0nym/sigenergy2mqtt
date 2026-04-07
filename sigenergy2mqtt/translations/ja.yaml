@@ -1840,11 +1840,11 @@ cli:
   SIGENERGY2MQTT_NO_METRICS:
     help: 'sigenergy2mqttメトリクスを公開しない。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
-    help: 'Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)'
+    help: '起動キャッシュウォームアップ中にMQTT保持状態を待つ最大秒数（デフォルト：10.0、範囲：1-60）'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
-    help: Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.
+    help: '状態永続化のためのMQTT保持メッセージの冗長性を無効にします。設定されると、状態はディスクにのみ永続化されます。'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
-    help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
+    help: '永続化された状態メッセージのMQTTトピックプレフィックス（デフォルト：sigenergy2mqtt/_state）'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput APIキー
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
