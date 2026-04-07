@@ -12,19 +12,27 @@ fi
 
 force_build=n
 build_stable=n
+build_beta=n
+build_alpha=y
 
 for arg in "$@"; do
     case "$arg" in
         -f|--force)
             force_build=y
             ;;
+        -b|--beta)
+            build_beta=y
+            build_alpha=n
+            ;;
         -s|--stable)
             build_stable=y
+            build_alpha=n
             ;;
         -h|--help)
-            echo "Usage: scripts/build [-f|--force] [-s|--stable]"
+            echo "Usage: scripts/build [-f|--force] [-b|--beta] [-s|--stable]"
             echo "  -f, --force   Build even when no source files changed"
-            echo "  -s, --stable  Produce a stable release version (default is prerelease)"
+            echo "  -b, --beta    Produce a beta prerelease version"
+            echo "  -s, --stable  Produce a stable release version (default is alpha prerelease)"
             exit 0
             ;;
     esac
@@ -73,13 +81,21 @@ else
                 new_version="${base_version}-1"
             fi
         fi
-    else
+    elif [[ $build_beta = y ]]; then
         if [[ $old_version =~ ^${base_version}b([0-9]+)$ ]]; then
             beta=$((BASH_REMATCH[1] + 1))
         else
             beta=1
         fi
         new_version="${base_version}b${beta}"
+        pypi_version=$new_version
+    else
+        if [[ $old_version =~ ^${base_version}a([0-9]+)$ ]]; then
+            alpha=$((BASH_REMATCH[1] + 1))
+        else
+            alpha=1
+        fi
+        new_version="${base_version}a${alpha}"
         pypi_version=$new_version
     fi
 
@@ -122,16 +138,32 @@ echo -e "${GREEN}>>> Testing Docker build...${NC}"
 docker buildx build . || exit
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
+    # Determine which branch is required for this release type.
+    # Promotion between branches (alpha->beta->main) is handled by the home-assistant-addons build script.
+    if [[ $build_stable = y ]]; then
+        required_branch="beta"
+    else
+        required_branch="alpha"
+    fi
+
+    # Check and switch the home-assistant-addons branch early
+    current_branch=$(git -C ../home-assistant-addons rev-parse --abbrev-ref HEAD)
+    if [[ $current_branch != $required_branch ]]; then
+        modified_files=$(git -C ../home-assistant-addons status --short | grep -v '^?' | wc -l)
+        if [[ $modified_files -gt 0 ]]; then
+            echo -e "${RED}>>> Build CANCELLED: ${ORANGE}home-assistant-addons has $modified_files modified file(s) on branch '$current_branch'; cannot switch to '$required_branch'${NC}"
+            git -C ../home-assistant-addons status --short | grep -v '^?'
+            exit 1
+        fi
+        echo -e "${GREEN}>>> Switching home-assistant-addons from '$current_branch' to '$required_branch'...${NC}"
+        git -C ../home-assistant-addons checkout "$required_branch" || exit 1
+    fi
+
     echo -e "${GREEN}>>> Updating add-on...${NC}"
     mkdir -p ../home-assistant-addons/sigenergy2mqtt/rootfs/dist
     rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/
     sed -e "s/^version: \".*\"/version: \"$new_version\"/g" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
-    if [[ $build_stable = y ]]; then
-        sed -e "s/^stage: .*/stage: stable/" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
-    else
-        sed -e "s/^stage: .*/stage: experimental/" -i ../home-assistant-addons/sigenergy2mqtt/config.yaml
-    fi
     sed -e "s/sigenergy2mqtt-.*-py3/sigenergy2mqtt-${pypi_version}-py3/" -i ../home-assistant-addons/sigenergy2mqtt/Dockerfile
     grep -Eoe '"--[^"]+' sigenergy2mqtt/config/cli.py | cut -c4- | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.cli.options
     grep -Eoe '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.env.vars
