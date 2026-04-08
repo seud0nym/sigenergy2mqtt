@@ -6,8 +6,11 @@ metrics to PVOutput using ``addstatus.jsp``.
 
 import asyncio
 import logging
+import os
 import time
 from typing import Any, Awaitable
+
+import requests
 
 from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
@@ -20,7 +23,13 @@ from .topic import Topic
 
 class PVOutputStatusService(Service):
     """Upload interval-based PVOutput status records from MQTT topic values."""
-    def __init__(self, logger: logging.Logger, topics: dict[StatusField, list[Topic]], extended_data: dict[StatusField, str | None]):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        topics: dict[StatusField, list[Topic]],
+        extended_data: dict[StatusField, str | None],
+        ha_extended_entities: dict[StatusField, str] | None = None,
+    ):
         """Configure status field aggregators and register discovered topics.
 
         Args:
@@ -29,6 +38,8 @@ class PVOutputStatusService(Service):
             extended_data: Metadata describing configured extended fields.
         """
         super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
+        self._ha_extended_entities = ha_extended_entities or {}
+        self._ha_supervisor_warning_emitted = False
 
         _v1 = ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY)
         _v2 = ServiceTopics(self, True, logger, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
@@ -82,6 +93,40 @@ class PVOutputStatusService(Service):
             else:
                 self.logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
 
+    async def _refresh_home_assistant_extended_fields(self) -> None:
+        """Refresh HA sensor-backed extended field values via Supervisor API."""
+        if not self._ha_extended_entities:
+            return
+
+        token = os.getenv("SUPERVISOR_TOKEN")
+        if not token:
+            if not self._ha_supervisor_warning_emitted:
+                self.logger.warning(f"{self.log_identity} Home Assistant sensor source configured, but SUPERVISOR_TOKEN is not available")
+                self._ha_supervisor_warning_emitted = True
+            return
+
+        base_url = os.getenv("SUPERVISOR_URL", "http://supervisor").rstrip("/")
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        for field, entity_id in self._ha_extended_entities.items():
+            url = f"{base_url}/core/api/states/{entity_id}"
+            state_raw: Any = None
+            try:
+                response = await asyncio.to_thread(requests.get, url, headers=headers, timeout=5)
+                if response.status_code != 200:
+                    self.logger.warning(f"{self.log_identity} Failed to read Home Assistant sensor '{entity_id}' via Supervisor API: status_code={response.status_code}")
+                    continue
+                state_raw = response.json().get("state")
+                if state_raw in (None, "unknown", "unavailable"):
+                    self.logger.debug(f"{self.log_identity} Ignoring Home Assistant sensor '{entity_id}' state={state_raw}")
+                    continue
+                topic = f"__ha_sensor__:{entity_id}"
+                if field in self._service_topics and topic in self._service_topics[field]:
+                    await self._service_topics[field].handle_update(None, None, float(state_raw), topic, None)
+            except (TypeError, ValueError):
+                self.logger.warning(f"{self.log_identity} Home Assistant sensor '{entity_id}' returned non-numeric state='{state_raw}'")
+            except Exception as exc:
+                self.logger.warning(f"{self.log_identity} Failed reading Home Assistant sensor '{entity_id}' via Supervisor API: {exc}")
+
     def _create_payload(self, now: time.struct_time) -> tuple[dict[str, Any], dict[str, dict[str, tuple[float | None, time.struct_time | None]]]]:
         """Build a status payload and snapshot state for rollback on failure.
 
@@ -123,6 +168,7 @@ class PVOutputStatusService(Service):
             while self.online:
                 try:
                     if wait <= 0:
+                        await self._refresh_home_assistant_extended_fields()
                         now = time.localtime()
                         async with self.lock(timeout=5):
                             payload, snapshot = self._create_payload(now)

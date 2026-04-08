@@ -520,7 +520,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC, None),
-        help="An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.",
+        help="A source for the current temperature sent to PVOutput. You can specify a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, the temperature will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-voltage",
@@ -537,7 +537,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V7, None),
-        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+        help="A source used to populate the v7 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-ext-v8",
@@ -545,7 +545,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V8, None),
-        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+        help="A source used to populate the v8 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-ext-v9",
@@ -553,7 +553,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V9, None),
-        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+        help="A source used to populate the v9 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-ext-v10",
@@ -561,7 +561,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V10, None),
-        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+        help="A source used to populate the v10 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-ext-v11",
@@ -569,7 +569,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11, None),
-        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v11 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+        help="A source used to populate the v11 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-ext-v12",
@@ -577,7 +577,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12,
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12, None),
-        help="A sensor class name, or entity id without the 'sensor.' prefix, that will be used to populate the v12 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value.",
+        help="A source used to populate the v12 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.",
     )
     parser.add_argument(
         "--pvoutput-log-level",

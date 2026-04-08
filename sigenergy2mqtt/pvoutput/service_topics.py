@@ -418,6 +418,9 @@ class ServiceTopics(dict[str, Topic]):
         """
         for topic in self.keys():
             if self.enabled:
+                if topic.startswith("__ha_sensor__:"):
+                    self._logger.debug(f"{self._service.log_identity} Skipping MQTT subscription for Home Assistant Supervisor source {topic} ({self._name})")
+                    continue
                 result = mqtt_handler.register(mqtt_client, topic, self.handle_update)
                 self._logger.debug(f"{self._service.log_identity} Subscribed to topic {topic} to record {self._name} ({result=})")
             else:

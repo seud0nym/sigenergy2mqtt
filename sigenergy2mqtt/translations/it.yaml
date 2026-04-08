@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Abilita l'invio dei dati di esportazione a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v10 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: "Una sorgente per valorizzare il campo esteso v10 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v11 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: "Una sorgente per valorizzare il campo esteso v11 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v12 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: "Una sorgente per valorizzare il campo esteso v12 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v7 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: "Una sorgente per valorizzare il campo esteso v7 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v8 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: "Una sorgente per valorizzare il campo esteso v8 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: Un nome di classe sensore, o ID entità senza prefisso 'sensor.', che sarà usato per il campo esteso v9 in PVOutput. Se non specificato O lo stato di donazione non è corrente, questo campo non sarà inviato a PVOutput. Puoi usare qualsiasi sensore con valore numerico.
+    help: "Una sorgente per valorizzare il campo esteso v9 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Abilita l'invio dei dati di importazione a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: L'ID Sistema PVOutput
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: Un topic MQTT da cui leggere la temperatura corrente. Usato per inviare la temperatura a PVOutput. Se non specificato, la temperatura non sarà inviata a PVOutput.
+    help: "Una sorgente per la temperatura corrente inviata a PVOutput. Puoi specificare un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo add-on). Se non specificato, la temperatura non verrà inviata a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "La fonte del valore di tensione da inviare a PVOutput. Valori validi: phase-a, phase-b, phase-c, l/n-avg (media linea-neutro), l/l-avg (media linea-linea) o pv (media sulle stringhe PV). Predefinito: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
