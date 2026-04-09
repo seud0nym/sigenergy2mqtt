@@ -131,7 +131,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             DiscoveryKeys.MAX: sys.float_info.max,
             DiscoveryKeys.MODE: "box",
             DiscoveryKeys.STEP: 10 ** -(self.precision if self.precision else 0),
-            DiscoveryKeys.ENABLED_BY_DEFAULT: self.publishable,
+            DiscoveryKeys.ENABLED_BY_DEFAULT: False,
         }
 
         components: dict[str, dict[str, Any]] = super().get_discovery_components()
