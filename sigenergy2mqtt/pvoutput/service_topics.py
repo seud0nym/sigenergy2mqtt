@@ -426,7 +426,7 @@ class ServiceTopics(dict[str, Topic]):
             else:
                 self._logger.debug(f"{self._service.log_identity} Not subscribing to topic {topic} because {self._name} uploading is disabled")
 
-    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
+    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client | None, value: float | int | str, topic: str, handler: MqttHandler | None) -> bool:
         """Handle a new MQTT value and update aggregate state.
 
         Args:

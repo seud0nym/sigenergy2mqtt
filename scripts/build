@@ -159,7 +159,7 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
         git -C ../home-assistant-addons checkout "$required_branch" || exit 1
     fi
 
-    echo -e "${GREEN}>>> Updating add-on...${NC}"
+    echo -e "${GREEN}>>> Updating app...${NC}"
     mkdir -p ../home-assistant-addons/sigenergy2mqtt/rootfs/dist
     rm -f ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/sigenergy2mqtt-*.whl
     cp -v dist/sigenergy2mqtt-${pypi_version}-py3-none-any.whl ../home-assistant-addons/sigenergy2mqtt/rootfs/dist/

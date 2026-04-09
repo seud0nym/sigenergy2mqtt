@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Schakel verzending van exportgegevens naar PVOutput in.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: "Een bron om het uitgebreide veld v10 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+    help: "Een bron om het uitgebreide veld v10 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: "Een bron om het uitgebreide veld v11 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+    help: "Een bron om het uitgebreide veld v11 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: "Een bron om het uitgebreide veld v12 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+    help: "Een bron om het uitgebreide veld v12 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: "Een bron om het uitgebreide veld v7 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+    help: "Een bron om het uitgebreide veld v7 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: "Een bron om het uitgebreide veld v8 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+    help: "Een bron om het uitgebreide veld v8 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: "Een bron om het uitgebreide veld v9 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+    help: "Een bron om het uitgebreide veld v9 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Schakel verzending van importgegevens naar PVOutput in.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: Het PVOutput Systeem-ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: "Een bron voor de huidige temperatuur die naar PVOutput wordt gestuurd. Je kunt een direct MQTT-topic (of mqtt:<topic>) opgeven, of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen add-on). Als dit niet is opgegeven, wordt de temperatuur niet naar PVOutput gestuurd."
+    help: "Een bron voor de huidige temperatuur die naar PVOutput wordt gestuurd. Je kunt een direct MQTT-topic (of mqtt:<topic>) opgeven, of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven, wordt de temperatuur niet naar PVOutput gestuurd."
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "De bron van de spanningswaarde voor PVOutput. Standaard: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

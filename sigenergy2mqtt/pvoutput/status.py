@@ -10,7 +10,7 @@ import os
 import time
 from typing import Any, Awaitable
 
-import requests
+import requests  # pyrefly: ignore
 
 from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
@@ -23,6 +23,7 @@ from .topic import Topic
 
 class PVOutputStatusService(Service):
     """Upload interval-based PVOutput status records from MQTT topic values."""
+
     def __init__(
         self,
         logger: logging.Logger,
@@ -162,6 +163,7 @@ class PVOutputStatusService(Service):
             modbus_client: Modbus client reference (unused).
             mqtt_client: MQTT client reference (unused).
         """
+
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
             self.logger.info(f"{self.log_identity} Commenced")
             wait, _ = await self.seconds_until_status_upload()

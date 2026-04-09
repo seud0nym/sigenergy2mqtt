@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Enable sending of export data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: A source used to populate the v10 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+    help: A source used to populate the v10 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: A source used to populate the v11 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+    help: A source used to populate the v11 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: A source used to populate the v12 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+    help: A source used to populate the v12 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: A source used to populate the v7 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+    help: A source used to populate the v7 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: A source used to populate the v8 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+    help: A source used to populate the v8 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: A source used to populate the v9 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+    help: A source used to populate the v9 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Enable sending of import data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: The PVOutput System ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: A source for the current temperature sent to PVOutput. You can specify a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, add-on only). If not specified, the temperature will not be sent to PVOutput.
+    help: A source for the current temperature sent to PVOutput. You can specify a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, the temperature will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

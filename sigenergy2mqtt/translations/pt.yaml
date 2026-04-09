@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Ativar envio de dados de exportação para PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: "Uma fonte para preencher o campo estendido v10 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+    help: "Uma fonte para preencher o campo estendido v10 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: "Uma fonte para preencher o campo estendido v11 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+    help: "Uma fonte para preencher o campo estendido v11 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: "Uma fonte para preencher o campo estendido v12 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+    help: "Uma fonte para preencher o campo estendido v12 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: "Uma fonte para preencher o campo estendido v7 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+    help: "Uma fonte para preencher o campo estendido v7 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: "Uma fonte para preencher o campo estendido v8 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+    help: "Uma fonte para preencher o campo estendido v8 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: "Uma fonte para preencher o campo estendido v9 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+    help: "Uma fonte para preencher o campo estendido v9 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Ativar envio de dados de importação para PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: ID do Sistema PVOutput
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: "Uma fonte para a temperatura atual enviada ao PVOutput. Você pode informar um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente add-on). Se não for especificado, a temperatura não será enviada ao PVOutput."
+    help: "Uma fonte para a temperatura atual enviada ao PVOutput. Você pode informar um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado, a temperatura não será enviada ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "Fonte do valor de tensão para PVOutput. Padrão: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

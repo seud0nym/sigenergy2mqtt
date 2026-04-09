@@ -62,7 +62,7 @@ def get_gain(sensor: Sensor, negate: bool = False) -> float:
 
 
 def _is_home_assistant_addon_runtime() -> bool:
-    """Return True when running inside a Home Assistant add-on container."""
+    """Return True when running inside a Home Assistant app container."""
     if any(os.getenv(var) for var in ("SUPERVISOR_TOKEN", "HASSIO_TOKEN", "HASSIO")):
         return True
     return os.path.isfile("/data/options.json")
@@ -228,7 +228,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
             matched_extended.add(key)
             continue
         if v.startswith("sensor.") or v.lower().startswith("ha:sensor."):
-            logger.warning(f"PVOutput extended field '{k}' Home Assistant sensor source '{v}' ignored: only available when running as a Home Assistant add-on")
+            logger.warning(f"PVOutput extended field '{k}' Home Assistant sensor source '{v}' ignored: only available when running as a Home Assistant app")
 
     if total_pv_power is not None:
         total_pv_power.publish_raw = True
@@ -250,7 +250,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
             if temp_topic != temp_source:
                 logger.info(f"PVOutput temperature source configured as direct MQTT topic '{temp_topic}'")
             elif temp_source.startswith("sensor.") or temp_source.lower().startswith("ha:sensor."):
-                logger.warning(f"PVOutput temperature source '{temp_source}' ignored as Home Assistant sensor source because add-on runtime was not detected; using literal MQTT topic")
+                logger.warning(f"PVOutput temperature source '{temp_source}' ignored as Home Assistant sensor source because app runtime was not detected; using literal MQTT topic")
 
     status = PVOutputStatusService(logger, status_topics, extended_data, ha_extended_entities)
     output = PVOutputOutputService(logger, output_topics)
