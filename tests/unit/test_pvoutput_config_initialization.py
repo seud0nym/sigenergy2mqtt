@@ -282,3 +282,20 @@ def test_get_pvoutput_services_temperature_ha_sensor_non_addon_treated_as_topic(
         services = get_pvoutput_services([])
         status = services[0]
         assert "sensor.outdoor_temp" in status._service_topics[StatusField.TEMPERATURE]
+
+
+def test_get_pvoutput_services_ignores_unknown_extended_keys(caplog):
+    from sigenergy2mqtt.config.config import active_config
+    ext = {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")}
+    ext["vv7"] = "sensor.bad"
+    caplog.set_level(logging.WARNING, logger="pvoutput")
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.pvoutput, "log_level", logging.WARNING),
+        patch.object(active_config.pvoutput, "extended", ext),
+        patch.dict("os.environ", {"SUPERVISOR_TOKEN": "x"}, clear=False),
+    ):
+        services = get_pvoutput_services([])
+        assert len(services) == 2
+        assert "not recognised and will be ignored" in caplog.text

@@ -93,6 +93,15 @@ def _as_home_assistant_sensor_entity(value: str) -> str | None:
     return f"sensor.{object_id}"
 
 
+def _safe_status_field(value: str, logger: logging.Logger) -> StatusField | None:
+    """Convert a configured extended-field key into StatusField when valid."""
+    try:
+        return StatusField(value)
+    except ValueError:
+        logger.warning(f"PVOutput extended field key '{value}' is not recognised and will be ignored")
+        return None
+
+
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     """Build and configure PVOutput status/output service devices.
 
@@ -205,13 +214,17 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if sensor.data_type == ModbusDataType.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
-                        key = StatusField(k)
+                        key = _safe_status_field(k, logger)
+                        if key is None:
+                            continue
                         status_topics[key].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None), precision=sensor.precision))  # Used displayed value, not raw
                         extended_data[key] = sensor.device_class
                         matched_extended.add(key)
 
     for k, v in donation.items():
-        key = StatusField(k)
+        key = _safe_status_field(k, logger)
+        if key is None:
+            continue
         if key in matched_extended:
             continue
         entity_id = _as_home_assistant_sensor_entity(v)
