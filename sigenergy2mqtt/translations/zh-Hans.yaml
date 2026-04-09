@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: 启用向PVOutput发送出口数据。
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: PVOutput v10扩展字段传感器。
+    help: "用于填充 PVOutput 扩展字段 v10 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: PVOutput v11扩展字段传感器。
+    help: "用于填充 PVOutput 扩展字段 v11 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: PVOutput v12扩展字段传感器。
+    help: "用于填充 PVOutput 扩展字段 v12 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: PVOutput v7扩展字段传感器。
+    help: "用于填充 PVOutput 扩展字段 v7 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: PVOutput v8扩展字段传感器。
+    help: "用于填充 PVOutput 扩展字段 v8 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: PVOutput v9扩展字段传感器。
+    help: "用于填充 PVOutput 扩展字段 v9 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: 启用向PVOutput发送进口数据。
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: PVOutput系统ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: PVOutput温度数据MQTT主题。
+    help: "发送到 PVOutput 的当前温度来源。你可以指定直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，则不会向 PVOutput 发送温度。"
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: PVOutput电压值来源。默认：'l/n-avg'。
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

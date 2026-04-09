@@ -213,3 +213,89 @@ def test_get_pvoutput_services_disabled():
     with patch.object(active_config.pvoutput, "enabled", False):
         services = get_pvoutput_services([])
         assert services == []
+
+
+def test_get_pvoutput_services_extended_mqtt_topic_fallback():
+    from sigenergy2mqtt.config.config import active_config
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")} | {StatusField.V7: "external/source/topic"}),
+    ):
+        services = get_pvoutput_services([])
+        status = services[0]
+        assert "external/source/topic" in status._service_topics[StatusField.V7]
+
+
+def test_get_pvoutput_services_extended_ha_sensor_addon_only():
+    from sigenergy2mqtt.config.config import active_config
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.home_assistant, "discovery_prefix", "homeassistant"),
+        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")} | {StatusField.V8: "sensor.grid_power"}),
+        patch.dict("os.environ", {"SUPERVISOR_TOKEN": "x"}, clear=False),
+    ):
+        services = get_pvoutput_services([])
+        status = services[0]
+        assert "__ha_sensor__:sensor.grid_power" in status._service_topics[StatusField.V8]
+
+
+def test_get_pvoutput_services_extended_ha_sensor_non_addon_skipped():
+    from sigenergy2mqtt.config.config import active_config
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")} | {StatusField.V9: "sensor.grid_power"}),
+        patch.dict("os.environ", {}, clear=True),
+        patch("os.path.isfile", return_value=False),
+    ):
+        services = get_pvoutput_services([])
+        status = services[0]
+        assert len(status._service_topics[StatusField.V9]) == 0
+
+
+def test_get_pvoutput_services_temperature_ha_sensor_addon():
+    from sigenergy2mqtt.config.config import active_config
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.pvoutput, "temperature_topic", "sensor.outdoor_temp"),
+        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")}),
+        patch.dict("os.environ", {"SUPERVISOR_TOKEN": "x"}, clear=False),
+    ):
+        services = get_pvoutput_services([])
+        status = services[0]
+        assert "__ha_sensor__:sensor.outdoor_temp" in status._service_topics[StatusField.TEMPERATURE]
+
+
+def test_get_pvoutput_services_temperature_ha_sensor_non_addon_treated_as_topic():
+    from sigenergy2mqtt.config.config import active_config
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.pvoutput, "temperature_topic", "sensor.outdoor_temp"),
+        patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")}),
+        patch.dict("os.environ", {}, clear=True),
+        patch("os.path.isfile", return_value=False),
+    ):
+        services = get_pvoutput_services([])
+        status = services[0]
+        assert "sensor.outdoor_temp" in status._service_topics[StatusField.TEMPERATURE]
+
+
+def test_get_pvoutput_services_ignores_unknown_extended_keys(caplog):
+    from sigenergy2mqtt.config.config import active_config
+    ext = {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")}
+    ext["vv7"] = "sensor.bad"
+    caplog.set_level(logging.WARNING, logger="pvoutput")
+
+    with (
+        patch.object(active_config.pvoutput, "enabled", True),
+        patch.object(active_config.pvoutput, "log_level", logging.WARNING),
+        patch.object(active_config.pvoutput, "extended", ext),
+        patch.dict("os.environ", {"SUPERVISOR_TOKEN": "x"}, clear=False),
+    ):
+        services = get_pvoutput_services([])
+        assert len(services) == 2
+        assert "not recognised and will be ignored" in caplog.text

@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: Exportdaten an PVOutput senden aktivieren.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v10-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+    help: "Eine Quelle zum Befüllen des erweiterten Felds v10 in PVOutput. Du kannst einen Sensorklassennamen, eine Entitäts-ID ohne das Präfix 'sensor.', ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben ODER dein Spendenstatus nicht aktuell ist, wird dieses Feld nicht an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v11-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+    help: "Eine Quelle zum Befüllen des erweiterten Felds v11 in PVOutput. Du kannst einen Sensorklassennamen, eine Entitäts-ID ohne das Präfix 'sensor.', ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben ODER dein Spendenstatus nicht aktuell ist, wird dieses Feld nicht an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v12-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+    help: "Eine Quelle zum Befüllen des erweiterten Felds v12 in PVOutput. Du kannst einen Sensorklassennamen, eine Entitäts-ID ohne das Präfix 'sensor.', ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben ODER dein Spendenstatus nicht aktuell ist, wird dieses Feld nicht an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v7-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+    help: "Eine Quelle zum Befüllen des erweiterten Felds v7 in PVOutput. Du kannst einen Sensorklassennamen, eine Entitäts-ID ohne das Präfix 'sensor.', ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben ODER dein Spendenstatus nicht aktuell ist, wird dieses Feld nicht an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v8-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+    help: "Eine Quelle zum Befüllen des erweiterten Felds v8 in PVOutput. Du kannst einen Sensorklassennamen, eine Entitäts-ID ohne das Präfix 'sensor.', ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben ODER dein Spendenstatus nicht aktuell ist, wird dieses Feld nicht an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: Ein Sensorklassenname oder eine Entity-ID ohne 'sensor.'-Präfix für das v9-Erweiterungsfeld in PVOutput. Ohne Angabe ODER bei nicht aktuellem Spendenstatus wird dieses Feld nicht an PVOutput gesendet. Jeder Sensor mit numerischem Wert kann verwendet werden.
+    help: "Eine Quelle zum Befüllen des erweiterten Felds v9 in PVOutput. Du kannst einen Sensorklassennamen, eine Entitäts-ID ohne das Präfix 'sensor.', ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben ODER dein Spendenstatus nicht aktuell ist, wird dieses Feld nicht an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Importdaten an PVOutput senden aktivieren.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: Die PVOutput-System-ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: Ein MQTT-Topic, von dem die aktuelle Temperatur gelesen werden kann. Dies wird verwendet, um die Temperatur an PVOutput zu senden. Ohne Angabe wird keine Temperatur an PVOutput gesendet.
+    help: "Eine Quelle für die aktuelle Temperatur, die an PVOutput gesendet wird. Du kannst ein direktes MQTT-Topic (oder mqtt:<topic>) oder eine Home-Assistant-Sensor-Entitäts-ID (sensor.<id> oder ha:sensor.<id>, nur App) angeben. Wenn nicht angegeben, wird keine Temperatur an PVOutput gesendet."
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "Die Quelle des Spannungswerts für PVOutput. Gültige Werte sind: phase-a, phase-b, phase-c, l/n-avg (Leiter-Neutralleiter-Durchschnitt), l/l-avg (Leiter-Leiter-Durchschnitt) oder pv (Durchschnitt über PV-Strings). Standard ist 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

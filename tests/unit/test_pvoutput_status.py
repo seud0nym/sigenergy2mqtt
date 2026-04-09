@@ -251,3 +251,41 @@ class TestPVOutputStatus:
         caplog.set_level(logging.DEBUG)
         PVOutputStatusService(logging.getLogger("test-status"), {"FAKE": []}, {})
         assert "IGNORED unrecognized FAKE" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_refresh_home_assistant_extended_fields_uses_supervisor_api(self):
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.V7: "sensor.grid_power"}
+        svc._service_topics[StatusField.V7].enabled = True
+        svc._service_topics[StatusField.V7].register(Topic("__ha_sensor__:sensor.grid_power", gain=1.0))
+
+        class Resp:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {"state": "123.4"}
+
+        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "token"}, clear=False), patch("requests.get", return_value=Resp()):
+            await svc._refresh_home_assistant_extended_fields()
+
+        assert svc._service_topics[StatusField.V7]["__ha_sensor__:sensor.grid_power"].state == 123.4
+
+    @pytest.mark.asyncio
+    async def test_refresh_home_assistant_temperature_uses_supervisor_api(self):
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.TEMPERATURE: "sensor.outdoor_temp"}
+        svc._service_topics[StatusField.TEMPERATURE].enabled = True
+        svc._service_topics[StatusField.TEMPERATURE].register(Topic("__ha_sensor__:sensor.outdoor_temp", gain=1.0))
+
+        class Resp:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {"state": "21.5"}
+
+        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "token"}, clear=False), patch("requests.get", return_value=Resp()):
+            await svc._refresh_home_assistant_extended_fields()
+
+        assert svc._service_topics[StatusField.TEMPERATURE]["__ha_sensor__:sensor.outdoor_temp"].state == 21.5

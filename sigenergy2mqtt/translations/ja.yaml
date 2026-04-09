@@ -1848,17 +1848,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: PVOutputへの輸出データ送信を有効にする。
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: PVOutputのv10拡張フィールド用センサー。
+    help: "PVOutput の拡張フィールド v10 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: PVOutputのv11拡張フィールド用センサー。
+    help: "PVOutput の拡張フィールド v11 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: PVOutputのv12拡張フィールド用センサー。
+    help: "PVOutput の拡張フィールド v12 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: PVOutputのv7拡張フィールド用センサー。
+    help: "PVOutput の拡張フィールド v7 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: PVOutputのv8拡張フィールド用センサー。
+    help: "PVOutput の拡張フィールド v8 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: PVOutputのv9拡張フィールド用センサー。
+    help: "PVOutput の拡張フィールド v9 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: PVOutputへの輸入データ送信を有効にする。
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1868,7 +1868,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: PVOutputシステムID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: PVOutput用温度データのMQTTトピック。
+    help: "PVOutput に送信する現在温度のソースです。直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定の場合、温度は PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "PVOutput用電圧値のソース。デフォルト: 'l/n-avg'。"
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
