@@ -1,19 +1,14 @@
 from __future__ import annotations
 
-import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
-    AlarmSensor,
-    ReadOnlySensor,
     Sensor,
-    WriteOnlySensor,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -64,7 +59,6 @@ def _mqtt_mock():
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Debug-logging branches in property setters
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestPublishMethod:
@@ -259,7 +253,6 @@ class TestPublishMethod:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestPublishAttributes:
     def _sensor_with_attrs(self, suffix, debug=False):
         s = _make_sensor(uid_suffix=suffix, debug=debug)
@@ -327,7 +320,6 @@ class TestPublishAttributes:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestConfigureMqttTopics:
     def test_simplified_topics(self):
         """Cover simplified topics path."""
@@ -373,7 +365,6 @@ class TestConfigureMqttTopics:
 # ─────────────────────────────────────────────────────────────────────────────
 # 6. get_attributes() branches
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestGetAttributes:
@@ -439,7 +430,6 @@ class TestGetAttributes:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestGetDiscovery:
     def _sensor_with_topics(self, suffix):
         s = _make_sensor(uid_suffix=suffix)
@@ -458,9 +448,9 @@ class TestGetDiscovery:
         cfg = Config()
         cfg.clean = False
         cfg.home_assistant.enabled = False
-        with _swap_active_config(cfg):
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.state_store") as mock_ss:
             components = s.get_discovery(mqtt)
-        assert not pfile.exists()
+        mock_ss.delete_sync.assert_called_once()
         assert len(components) > 0
 
     def test_get_discovery_unpublishable_clears_attributes(self, tmp_path):
@@ -499,9 +489,10 @@ class TestGetDiscovery:
         cfg = Config()
         cfg.clean = False
         cfg.home_assistant.enabled = False
-        with _swap_active_config(cfg):
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.state_store") as mock_ss:
+            mock_ss.load_sync.return_value = None
             components = s.get_discovery(mqtt)
-        assert pfile.exists()
+        mock_ss.save_sync.assert_called_once()
         # Components should have minimal platform entry
         for v in components.values():
             assert "p" in v
@@ -510,7 +501,6 @@ class TestGetDiscovery:
 # ─────────────────────────────────────────────────────────────────────────────
 # 8. get_state() with republish=True
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestGetStateRepublish:
@@ -552,7 +542,6 @@ class TestGetStateRepublish:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestGetDiscoveryComponents:
     def test_options_are_translated(self):
         """Options list is properly translated in get_discovery_components."""
@@ -581,5 +570,3 @@ class TestGetDiscoveryComponents:
 # ─────────────────────────────────────────────────────────────────────────────
 # 21. gain property edge cases
 # ─────────────────────────────────────────────────────────────────────────────
-
-

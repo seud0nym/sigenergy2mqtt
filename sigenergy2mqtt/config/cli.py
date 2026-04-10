@@ -792,6 +792,41 @@ def get_parser() -> argparse.ArgumentParser:
     )
     # endregion
 
+    # region Persistence Configuration
+    parser.add_argument(
+        "--no-persistence-mqtt-redundancy",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY,
+        help="Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.",
+    )
+    parser.add_argument(
+        "--persistence-mqtt-state-prefix",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX,
+        default=os.getenv(const.SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX, None),
+        help="MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)",
+    )
+    parser.add_argument(
+        "--persistence-cache-warmup-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT, None),
+        help="Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)",
+    )
+    parser.add_argument(
+        "--persistence-sync-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT, None),
+        help="Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread (default: 5.0, range: 0.1-30.0)",
+    )
+    # endregion
+
     parser.add_argument(
         "--clean",
         action="store_true",

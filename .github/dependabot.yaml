@@ -1,22 +1,41 @@
 version: 2
 updates:
+  # Monitor GitHub Actions with global grouping
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: weekly
+      interval: "weekly"
       time: "06:00"
       timezone: "Australia/Melbourne"
     groups:
-      artifact-actions:
+      all-actions:
         patterns:
-          - "actions/upload-artifact"
-          - "actions/download-artifact"
-  - package-ecosystem: pip
+          - "*"
+
+  # Monitor Python dependencies (Hatch/pyproject.toml)
+  - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: daily
-      time: "13:00"
+      interval: "weekly"
+      time: "06:00"
+      timezone: "Australia/Melbourne"
     groups:
       python-packages:
         patterns:
           - "*"
+
+  # Monitor Docker base image (sigenergy2mqtt)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "06:00"
+      timezone: "Australia/Melbourne"
+
+  # Monitor Docker base image (modbus-test-server)
+  - package-ecosystem: "docker"
+    directory: "/tests/utils"
+    schedule:
+      interval: "weekly"
+      time: "06:00"
+      timezone: "Australia/Melbourne"

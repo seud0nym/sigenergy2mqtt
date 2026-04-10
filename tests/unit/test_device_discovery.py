@@ -46,10 +46,10 @@ def test_publish_discovery_empty(tmp_path, monkeypatch):
         # Two publishes: availability cleared and discovery cleared
         assert len(mqtt.published) >= 2
         avail_topic = f"{active_config.home_assistant.discovery_prefix}/device/{dev.unique_id}/availability"
-        # discovery topic publish will be with None payload when empty
+        # discovery topic publish will be with b"" payload when empty
         disc_topic = f"{active_config.home_assistant.discovery_prefix}/device/{dev.unique_id}/config"
-        assert any(p[0] == avail_topic and p[1] is None for p in mqtt.published)
-        assert any(p[0] == disc_topic and p[1] is None for p in mqtt.published)
+        assert any(p[0] == avail_topic and p[1] == b"" for p in mqtt.published)
+        assert any(p[0] == disc_topic and p[1] == b"" for p in mqtt.published)
 
 
 def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):

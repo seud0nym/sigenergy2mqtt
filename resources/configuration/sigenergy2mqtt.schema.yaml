@@ -131,6 +131,31 @@ properties:
       client_id_prefix:
         type: string
 
+  persistence:
+    type: object
+    additionalProperties: false
+    properties:
+      mqtt-redundancy:
+        type: boolean
+        default: true
+      mqtt-state-prefix:
+        type: string
+        default: sigenergy2mqtt/_state
+      disk-primary:
+        type: boolean
+        default: true
+      cache-warmup-timeout:
+        type: number
+        default: 5.0
+        minimum: 1.0
+        maximum: 60.0
+      sync-timeout:
+        type: number
+        default: 5.0
+        minimum: 0.1
+        maximum: 30.0
+
+
   modbus:
     type: array
     items:

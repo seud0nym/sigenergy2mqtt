@@ -275,6 +275,15 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         if influx:
             result["influxdb"] = influx
 
+        # ── Persistence ──────────────────────────────────────────────────────
+        persist: dict[str, Any] = {}
+        _set(persist, "mqtt_redundancy", _bool(g(const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY)))
+        _set(persist, "mqtt_state_prefix", g(const.SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX))
+        _set(persist, "disk_primary", _bool(g(const.SIGENERGY2MQTT_PERSISTENCE_DISK_PRIMARY)))
+        _set(persist, "cache_warmup_timeout", _float(g(const.SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT)))
+        if persist:
+            result["persistence"] = persist
+
         return result
 
 

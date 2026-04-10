@@ -189,7 +189,7 @@ class InfluxService(InfluxBase):
     # Device interface stubs
     # ------------------------------------------------------------------
 
-    def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
+    def publish_availability(self, mqtt_client: mqtt.Client, ha_state: bytes | str, qos: int = 2) -> None:
         """No-op: InfluxDB service does not publish availability to MQTT."""
 
     def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:

@@ -142,7 +142,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
 
         if result and rr:
             # Convert registers to value and update state
-            value = modbus_client.convert_from_registers(rr.registers, self.data_type)
+            value = modbus_client.convert_from_registers(rr.registers, cast(Any, self.data_type))
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} Converted registers {rr.registers} to {self.data_type.name} raw state value: {value}")
             # set_latest_state returns True only when self._states was updated

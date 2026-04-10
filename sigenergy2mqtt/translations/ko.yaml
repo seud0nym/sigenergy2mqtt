@@ -1839,6 +1839,14 @@ cli:
     help: '원격 EMS 제어 모드가 명령 충전/방전이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를 끕니다.'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'sigenergy2mqtt 메트릭 게시 안 함.'
+  SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
+    help: '시작 캐시 워밍업 중 MQTT 보관 상태를 기다리는 최대 초 (기본값: 10.0, 범위: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
+    help: '상태 지속성을 위한 MQTT 보관 메시지 중복을 비활성화합니다. 설정된 경우 상태는 디스크에만 저장됩니다.'
+  SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
+    help: '지속된 상태 메시지의 MQTT 토픽 접두사 (기본값: sigenergy2mqtt/_state)'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: '비 asyncio 스레드에서 호출될 때 동기 지속성 작업의 시간 초과(초) (기본값: 5.0, 범위: 0.1-30.0)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput API 키
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

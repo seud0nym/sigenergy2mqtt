@@ -12,12 +12,13 @@ from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config import active_config, initialize_with_persistence
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
+from sigenergy2mqtt.persistence import state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
@@ -838,6 +839,16 @@ async def async_main() -> None:
         restart_controller.reset()
         thread_config_registry.clear()
 
+        # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
+        if active_config.persistence.mqtt_redundancy or not active_config.clean:
+            await state_store.initialise(
+                active_config.persistent_state_path,
+                active_config.persistence,
+            )
+
+        # Phase 2 config load — StateStore now available for auto-discovery fallback
+        initialize_with_persistence()
+
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
         configs = setup_services(configs, protocol_version)
@@ -845,6 +856,9 @@ async def async_main() -> None:
         setup_signals(configs)
 
         await start(configs)
+
+        # Shutdown StateStore
+        state_store.shutdown()
 
         if not restart_controller.requested:
             logging.info(f"Shutdown of Release {active_config.version} completed")

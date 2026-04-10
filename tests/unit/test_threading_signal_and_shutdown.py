@@ -179,18 +179,20 @@ async def test_start_logic_keyboard_interrupt_sets_offline_and_reraises():
         patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", MagicMock()),
         patch("concurrent.futures.ThreadPoolExecutor") as mock_executor,
         patch("asyncio.new_event_loop", return_value=mock_loop),
+        patch("asyncio.sleep", side_effect=[KeyboardInterrupt()]),
         patch(
             "concurrent.futures.wait",
-            side_effect=[KeyboardInterrupt(), ([MagicMock()], [])],
+            return_value=([MagicMock()], []),
         ) as mock_wait,
     ):
         mock_fut = MagicMock()
+        mock_fut.done.side_effect = [False, False, True, True, True, True]
         mock_fut.result.return_value = None
         mock_executor.return_value.__enter__.return_value.submit.return_value = mock_fut
 
         with pytest.raises(KeyboardInterrupt):
             await start([config])
 
-        # First wait raises KeyboardInterrupt, second wait is the graceful drain.
-        assert mock_wait.call_count == 2
+        # One call from the exception handler to drain the futures.
+        assert mock_wait.call_count == 1
         config.offline.assert_called_once()

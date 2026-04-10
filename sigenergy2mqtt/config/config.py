@@ -105,7 +105,7 @@ class Config:
         for device in self._settings.modbus:
             device.log_level = level
 
-    def load(self, filename: str) -> None:
+    def load(self, filename: str, skip_auto_discovery: bool = False) -> None:
         """Load configuration from a YAML file and apply environment variable overrides.
 
         Records *filename* as the configuration source and delegates to :meth:`reload`.
@@ -113,10 +113,11 @@ class Config:
 
         Args:
             filename: Path to the YAML configuration file.
+            skip_auto_discovery: Set to True to bypass Modbus device scanning.
         """
         logging.info(f"Loading configuration from {filename}...")
         self._source = filename
-        self.reload()
+        self.reload(skip_auto_discovery=skip_auto_discovery)
 
     def reload(self, skip_auto_discovery: bool = False) -> None:
         """Reload configuration from the YAML source file and re-apply all overrides.
@@ -149,18 +150,52 @@ class Config:
                 auto_discovery = "once"
 
         if not skip_auto_discovery and (auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())):
-            port = auto_settings.modbus_port
-            modbus_timeout = auto_settings.modbus_auto_discovery_timeout
-            modbus_retries = auto_settings.modbus_auto_discovery_retries
-            ping_timeout = auto_settings.modbus_auto_discovery_ping_timeout
-            logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
-            auto_discovered = self._run_auto_discovery(port, ping_timeout, modbus_timeout, modbus_retries)
-            if len(auto_discovered) > 0:
-                with open(auto_discovery_cache, "w") as f:
-                    _yaml = YAML(typ="safe", pure=True)
-                    _yaml.dump(auto_discovered, f)
+            # MQTT fallback: try to restore from retained state before live scan
+            if auto_discovery != "force":
+                try:
+                    from sigenergy2mqtt.persistence import state_store
+                    if state_store.is_initialised:
+                        cached = state_store.load_sync("config", "auto-discovery")
+                        if cached is not None:
+                            auto_discovery_cache.write_text(cached)
+                            logging.info("Auto-discovery cache restored from MQTT")
+                except Exception:
+                    logging.debug("StateStore not available for auto-discovery restore")
+
+            # If still no cache on disk (or forced), run live discovery
+            if auto_discovery == "force" or not auto_discovery_cache.is_file():
+                port = auto_settings.modbus_port
+                modbus_timeout = auto_settings.modbus_auto_discovery_timeout
+                modbus_retries = auto_settings.modbus_auto_discovery_retries
+                ping_timeout = auto_settings.modbus_auto_discovery_ping_timeout
+                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
+                auto_discovered = self._run_auto_discovery(port, ping_timeout, modbus_timeout, modbus_retries)
+                if len(auto_discovered) > 0:
+                    yaml_content = ""
+                    with StringIO() as stream:
+                        _yaml = YAML(typ="safe", pure=True)
+                        _yaml.dump(auto_discovered, stream)
+                        yaml_content = stream.getvalue()
+
+                    with open(auto_discovery_cache, "w") as f:
+                        f.write(yaml_content)
+
+                    # Also persist to MQTT for redundancy
+                    try:
+                        from sigenergy2mqtt.persistence import state_store
+                        if state_store.is_initialised:
+                            state_store.save_sync("config", "auto-discovery", yaml_content)
+                    except Exception:
+                        logging.debug("StateStore not available for auto-discovery persist")
         elif auto_discovery == "once" and auto_discovery_cache.is_file():
             logging.info("Auto-discovery already completed, using cached results.")
+            # Existing disk cache found — also ensure it's in MQTT for redundancy
+            try:
+                from sigenergy2mqtt.persistence import state_store
+                if state_store.is_initialised:
+                    state_store.save_sync("config", "auto-discovery", auto_discovery_cache.read_text())
+            except Exception:
+                pass
         else:
             logging.debug("Auto-discovery disabled")
             auto_discovery_cache = None
@@ -265,7 +300,7 @@ class Config:
         except TimeoutError:
             if future:
                 future.cancel()
-            logging.error("Auto-discovery timed out after %.1fs", timeout)
+            logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
             return []
         except Exception:
             if future:

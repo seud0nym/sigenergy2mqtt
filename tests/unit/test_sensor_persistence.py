@@ -1,6 +1,6 @@
 import asyncio
+import json
 import logging
-import os
 import time
 from pathlib import Path
 from unittest.mock import patch
@@ -9,7 +9,9 @@ import pytest
 
 from sigenergy2mqtt.common import InputType, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config.models.persistence import PersistenceConfig
 from sigenergy2mqtt.modbus import ModbusDataType
+from sigenergy2mqtt.persistence import state_store
 from sigenergy2mqtt.sensors.base import (
     EnergyDailyAccumulationSensor,
     ReadOnlySensor,
@@ -57,8 +59,12 @@ def mock_config(tmp_path):
     cfg.home_assistant.discovery_prefix = "homeassistant"
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.sensor_debug_logging = True
 
     with _swap_active_config(cfg):
+        # Initialize state_store for tests
+        persistence_cfg = PersistenceConfig(mqtt_redundancy=False)
+        asyncio.run(state_store.initialise(tmp_path, persistence_cfg))
         yield cfg
 
     logging.getLogger().setLevel(old_level)
@@ -96,10 +102,11 @@ async def test_accumulation_sensor_persistence(mock_config, tmp_path):
 
     assert sensor._current_total == 1000.0
 
-    # Verify file exists
-    fpath = Path(tmp_path, "sigen_accum_1.state")
+    # Verify file exists in category directory with JSON envelope
+    fpath = Path(tmp_path, "sensor", "sigen_accum_1.state")
     assert fpath.exists()
-    assert fpath.read_text() == "1000.0"
+    content = json.loads(fpath.read_text())
+    assert content["v"] == "1000.0"
 
     # Re-initialize sensor and verify restoration
     Sensor._used_unique_ids.clear()
@@ -122,7 +129,11 @@ async def test_accumulation_sensor_persistence(mock_config, tmp_path):
 
 def test_accumulation_sensor_init_load_logs_with_source_identity(mock_config, tmp_path, caplog):
     source = MockSource("sigen_source_log_identity")
-    Path(tmp_path, "sigen_accum_log_identity.state").write_text("42.0")
+    # Prepare envelope
+    cat_dir = tmp_path / "sensor"
+    cat_dir.mkdir(parents=True, exist_ok=True)
+    fpath = cat_dir / "sigen_accum_log_identity.state"
+    fpath.write_text(json.dumps({"v": "42.0", "ts": int(time.time()), "ver": "1.0.0"}))
 
     with caplog.at_level(logging.DEBUG):
         sensor = ResettableAccumulationSensor(
@@ -175,28 +186,23 @@ async def test_energy_daily_accumulation_reset(mock_config, tmp_path):
     assert sensor._state_at_midnight == 5100.0
     assert sensor._state_now == 0.0
 
-    # Verify .atmidnight file
-    fpath = Path(tmp_path, "sigen_source_2.atmidnight")
-    assert fpath.exists(), f"Persistence file {fpath} does not exist. Current total: {getattr(sensor, '_current_total', 'N/A')}"
-    assert fpath.read_text() == "5100.0"
+    # Verify .atmidnight file in sensor category
+    fpath = Path(tmp_path, "sensor", "sigen_source_2.atmidnight")
+    assert fpath.exists(), f"Persistence file {fpath} does not exist."
+    content = json.loads(fpath.read_text())
+    assert content["v"] == "5100.0"
 
 
 @pytest.mark.asyncio
 async def test_midnight_state_file_stale(mock_config, tmp_path):
     source = MockSource("sigen_source_3")
-    fpath = Path(tmp_path, "sigen_source_3.atmidnight")
+    cat_dir = tmp_path / "sensor"
+    cat_dir.mkdir(parents=True, exist_ok=True)
+    fpath = cat_dir / "sigen_source_3.atmidnight"
 
-    # Create a "yesterday" file
-    # We use a fixed past date in our mock
-    yesterday_struct = time.struct_time((2024, 1, 1, 12, 0, 0, 0, 1, 0))
-    today_struct = time.struct_time((2024, 1, 2, 12, 0, 0, 1, 2, 0))
-
-    # We must ensure the file's mtime reflects "yesterday"
-    # mtime is in seconds since epoch.
-    yesterday_ts = time.mktime(yesterday_struct)
-
-    fpath.write_text("4000.0")
-    os.utime(fpath, (yesterday_ts, yesterday_ts))
+    # Create a "yesterday" file with envelope to test staleness
+    yesterday_ts = int(time.time()) - 90000  # > 24h
+    fpath.write_text(json.dumps({"v": "4000.0", "ts": yesterday_ts, "ver": "1.0.0"}))
 
     # Initialize sensor - it should detect stale file and unlink it
     with patch("time.localtime") as mock_localtime:
@@ -214,10 +220,10 @@ async def test_midnight_state_file_stale(mock_config, tmp_path):
         mock_localtime.side_effect = lambda t=None: today_struct if (t is None or t > yesterday_ts + 10) else yesterday_struct
 
         sensor = EnergyDailyAccumulationSensor(name="Daily Energy", unique_id="sigen_daily_2", object_id="sigen_daily_2", source=source)
-        sensor.on_added_to_device()
+    sensor.on_added_to_device()
 
     assert sensor._state_at_midnight is None
-    assert not fpath.exists(), f"Stale file {fpath} still exists. mtime date: {time.localtime(fpath.stat().st_mtime)}"
+    assert not fpath.exists()
 
 
 @pytest.mark.asyncio
@@ -246,9 +252,9 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     sensor.set_source_values(source, [(time.time() - 3600, 1000.0), (time.time(), 1000.0)])
     await asyncio.sleep(0.5)
 
-    fpath = Path(tmp_path, "sigen_accum_opt.state")
+    fpath = Path(tmp_path, "sensor", "sigen_accum_opt.state")
     assert fpath.exists()
-    assert fpath.read_text() == "1000.0"
+    assert json.loads(fpath.read_text())["v"] == "1000.0"
 
     # Get initial mtime
     initial_mtime = fpath.stat().st_mtime
@@ -275,5 +281,9 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     await asyncio.sleep(0.5)
 
     assert sensor._current_total == 2000.0
-    assert fpath.read_text() == "2000.0"
+    assert json.loads(fpath.read_text())["v"] == "2000.0"
+    assert fpath.stat().st_mtime > initial_mtime
+
+    assert sensor._current_total == 2000.0
+    assert json.loads(fpath.read_text())["v"] == "2000.0"
     assert fpath.stat().st_mtime > initial_mtime

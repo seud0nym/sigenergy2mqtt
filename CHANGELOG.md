@@ -8,9 +8,14 @@
 - Added `SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT` environment variable for setting initial state of Home Assistant sensors
 - Added `SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON` environment variable to allow complex sensor overrides via JSON strings
 
+### Changed
+
+- Refactored state persistence (where transient states are saved to disk and restored after a restart) to use MQTT retained messages so that state can be restored even if the app is moved to another host after, for example, a hardware failure, or to migrate more easily from one installation method to another such as a Linux install to Docker, or Docker to Home Assistant add-on, without having to find and restore the state directory
+
 ### Fixed
 
-- Reset controls for daily accumulation sensors i Home Assistant were incorrectly marked as enabled by default (only affects new or cleaned installations)
+- Use zero-length payload rather than None when deleting retained MQTT messages
+- The reset controls for daily accumulation sensors in Home Assistant were incorrectly marked as enabled by default (only affects new or cleaned installations)
 
 ---
 

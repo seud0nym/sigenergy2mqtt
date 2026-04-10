@@ -47,7 +47,8 @@ def test_initialize_env_config_exists(mock_active_config, mock_cli_parse, mock_s
     """Test loading from SIGENERGY2MQTT_CONFIG environment variable."""
     with patch.dict(os.environ, {SIGENERGY2MQTT_CONFIG: "/path/to/config.yaml"}), patch("os.path.isfile", side_effect=lambda x: x == "/path/to/config.yaml"):
         config_mod.initialize()
-        mock_active_config.load.assert_called_once_with("/path/to/config.yaml")
+        mock_active_config.load.assert_called_once_with("/path/to/config.yaml", skip_auto_discovery=True)
+
 
 
 def test_initialize_env_config_not_found(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
@@ -63,14 +64,16 @@ def test_initialize_fallback_etc(mock_active_config, mock_cli_parse, mock_system
     """Test fallback to /etc/sigenergy2mqtt.yaml."""
     with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", side_effect=lambda x: x == "/etc/sigenergy2mqtt.yaml"):
         config_mod.initialize()
-        mock_active_config.load.assert_called_once_with("/etc/sigenergy2mqtt.yaml")
+        mock_active_config.load.assert_called_once_with("/etc/sigenergy2mqtt.yaml", skip_auto_discovery=True)
+
 
 
 def test_initialize_fallback_data(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test fallback to /data/sigenergy2mqtt.yaml."""
     with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", side_effect=lambda x: x == "/data/sigenergy2mqtt.yaml"):
         config_mod.initialize()
-        mock_active_config.load.assert_called_once_with("/data/sigenergy2mqtt.yaml")
+        mock_active_config.load.assert_called_once_with("/data/sigenergy2mqtt.yaml", skip_auto_discovery=True)
+
 
 
 def test_initialize_default_reload(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):

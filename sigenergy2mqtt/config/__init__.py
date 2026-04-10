@@ -13,7 +13,7 @@ from . import cli, const
 from .config import Config, ConfigurationError, _swap_active_config, active_config
 from .settings import Settings
 
-__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "OutputField", "Settings", "StatusField", "VoltageSource", "_swap_active_config"]
+__all__ = ["Config", "ConfigurationError", "ConsumptionSource", "initialize", "initialize_with_persistence", "OutputField", "Settings", "StatusField", "VoltageSource", "_swap_active_config"]
 
 
 # ---------------------------------------------------------------------------
@@ -103,14 +103,14 @@ def _discover_config_file() -> str | None:
     return None
 
 
-def _load_config() -> None:
+def _load_config(skip_auto_discovery: bool = False) -> None:
     """Load active_config from a discovered file, or fall back to env-var / defaults."""
     path = _discover_config_file()
     if path:
-        active_config.load(path)
+        active_config.load(path, skip_auto_discovery=skip_auto_discovery)
     else:
         logging.debug("No config file found; using environment variables and defaults.")
-        active_config.reload()
+        active_config.reload(skip_auto_discovery=skip_auto_discovery)
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +121,9 @@ def _load_config() -> None:
 def initialize(args=None) -> bool:
     """
     Initialise the configuration module.
+
+    Phase 1: Parse CLI, load YAML/env config WITHOUT auto-discovery.
+    Auto-discovery is deferred until StateStore is available.
 
     Returns:
         False if early exit required, otherwise True
@@ -140,9 +143,9 @@ def initialize(args=None) -> bool:
     # 2. CLI → env (ENV already set takes priority, no duplicate processing logic)
     _promote_cli_to_env(parsed_args)
 
-    # 3. Load config
+    # 3. Load config but explicitly skip auto-discovery for Phase 1
     try:
-        _load_config()
+        _load_config(skip_auto_discovery=True)
     except ConfigurationError:
         raise
     except Exception as exc:
@@ -163,3 +166,13 @@ def initialize(args=None) -> bool:
         active_config.home_assistant.discovery_only = True
 
     return True
+
+
+def initialize_with_persistence() -> None:
+    """
+    Phase 2: Called from async_main() after StateStore is initialised.
+
+    Re-runs reload() with full auto-discovery. StateStore is now available,
+    so auto-discovery cache can be restored from MQTT if disk is missing.
+    """
+    _load_config(skip_auto_discovery=False)

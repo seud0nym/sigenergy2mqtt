@@ -8,8 +8,9 @@ import json
 import logging
 import math
 import time
-from enum import Flag, auto
+from datetime import timedelta
 from pathlib import Path
+from enum import Flag, auto
 from typing import Any, cast
 
 import paho.mqtt.client as mqtt
@@ -18,6 +19,7 @@ from sigenergy2mqtt.common.output_field import OutputField
 from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
+from sigenergy2mqtt.persistence import state_store
 
 from .service import Service
 from .topic import Topic
@@ -77,7 +79,7 @@ class ServiceTopics(dict[str, Topic]):
         self._last_update_warning: float | None = None
         self._logger = logger
         self._name = value_key.name
-        self._persistent_state_file: Path | None = None
+        self._persistence_key: str | None = None
         self.requires_donation = donation
         self._service = service
         self._value_key = value_key
@@ -354,10 +356,10 @@ class ServiceTopics(dict[str, Topic]):
             self._logger.debug(f"{self._service.log_identity} IGNORED subscription request for '{topic.topic}' because {self._name} uploading is disabled")
 
     def restore_state(self, topic):
-        """Restore persisted topic state from disk when available.
+        """Restore persisted topic state from StateStore.
 
         Args:
-            topic: Topic descriptor that determines the persistence file path.
+            topic: Topic descriptor that determines the persistence key.
         """
         sid = str(self._service.unique_id)
         if sid.startswith("<MagicMock"):
@@ -365,33 +367,47 @@ class ServiceTopics(dict[str, Topic]):
         name = str(self._name)
         if name.startswith("<MagicMock"):
             name = "mock_name"
-        self._persistent_state_file = Path(active_config.persistent_state_path, f"{sid}-{name}.state")
+
+        key = f"{sid}-{name}.state"
+        self._persistence_key = key
+
+        # Legacy migration: move files from root to pvoutput/ category dir
+        legacy_path = Path(active_config.persistent_state_path) / key
+        category_dir = Path(active_config.persistent_state_path) / "pvoutput"
+        new_path = category_dir / key
+
+        if legacy_path.is_file() and not new_path.is_file():
+            try:
+                category_dir.mkdir(parents=True, exist_ok=True)
+                legacy_path.rename(new_path)
+                self._logger.info(f"{self._service.log_identity} Migrated legacy file {key} to pvoutput/ category")
+            except Exception as e:
+                self._logger.warning(f"{self._service.log_identity} Failed to migrate legacy file {key}: {e}")
+
         # Migrate obsolete peak power state file
         if self._value_key == OutputField.PEAK_POWER:
-            obsolete = Path(active_config.persistent_state_path, "pvoutput_output-peak_power.state")
-            if obsolete.is_file() and not self._persistent_state_file.is_file():
-                obsolete.rename(self._persistent_state_file.resolve())
-        if self._persistent_state_file.is_file():
-            fmt = time.localtime(self._persistent_state_file.stat().st_mtime)
-            now = time.localtime()
-            if fmt.tm_yday == now.tm_yday:
-                with self._persistent_state_file.open("r") as f:
-                    try:
-                        saved: ServiceTopics = json.load(f, object_hook=Topic.json_decoder)
-                        self._logger.debug(f"{self._service.log_identity} Loaded {self._persistent_state_file}")
-                        if topic.topic in saved:
-                            topic = saved[topic.topic]
-                            self[topic.topic] = topic
-                            self._logger.debug(
-                                f"{self._service.log_identity} Restored {self._name} topic {topic.topic} (gain={topic.gain}) with {topic.state=} at {time.strftime('%H:%M', topic.timestamp) if topic.timestamp else 'None'} and {topic.previous_state=} at {time.strftime('%H:%M', topic.previous_timestamp) if topic.previous_timestamp else 'None'}"
-                            )
-                    except ValueError as error:
-                        self._logger.warning(f"{self._service.log_identity} Failed to read {self._persistent_state_file}: {error}")
-            else:
-                self._logger.debug(f"{self._service.log_identity} Ignored {self._persistent_state_file} because it is stale ({fmt})")
-                self._persistent_state_file.unlink(missing_ok=True)
+            obsolete = Path(active_config.persistent_state_path) / "pvoutput_output-peak_power.state"
+            if obsolete.is_file() and not new_path.is_file():
+                try:
+                    category_dir.mkdir(parents=True, exist_ok=True)
+                    obsolete.rename(new_path)
+                except Exception:
+                    pass
+
+        content = state_store.load_sync("pvoutput", key, stale_after=timedelta(hours=24), debug=active_config.pvoutput.log_level == logging.DEBUG)
+        if content is not None:
+            try:
+                saved = json.loads(content, object_hook=Topic.json_decoder)
+                if topic.topic in saved:
+                    topic = saved[topic.topic]
+                    self[topic.topic] = topic
+                    self._logger.debug(
+                        f"{self._service.log_identity} Restored {self._name} topic {topic.topic} (gain={topic.gain}) with {topic.state=} at {time.strftime('%H:%M', topic.timestamp) if topic.timestamp else 'None'}"
+                    )
+            except (json.JSONDecodeError, ValueError) as error:
+                self._logger.warning(f"{self._service.log_identity} Failed to decode persisted state for {key}: {error}")
         else:
-            self._logger.debug(f"{self._service.log_identity} Persistent state file {self._persistent_state_file} not found")
+            self._logger.debug(f"{self._service.log_identity} No persisted state found for {key}")
 
     def reset(self) -> None:
         """Reset all tracked topic states and clear persistence files.
@@ -406,8 +422,8 @@ class ServiceTopics(dict[str, Topic]):
             topic.previous_timestamp = None
         for child in self._time_periods:
             child.reset()
-        if hasattr(self, "_persistent_state_file") and self._persistent_state_file is not None and self._persistent_state_file.is_file():
-            self._persistent_state_file.unlink(missing_ok=True)
+        if self._persistence_key:
+            state_store.delete_sync("pvoutput", self._persistence_key, debug=active_config.pvoutput.log_level == logging.DEBUG)
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         """Subscribe each registered topic to MQTT updates.
@@ -445,9 +461,9 @@ class ServiceTopics(dict[str, Topic]):
                     state_was = self[topic].state
                     self[topic].state = state
                     self[topic].timestamp = time.localtime()
-                    if self._persistent_state_file and ((self._always_persist and state_was != state) or (self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
-                        with self._persistent_state_file.open("w") as f:
-                            json.dump(self, f, default=Topic.json_encoder)
+                    if self._persistence_key and ((self._always_persist and state_was != state) or (self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
+                        payload = json.dumps(self, default=Topic.json_encoder)
+                        state_store.save_sync("pvoutput", self._persistence_key, payload, debug=active_config.pvoutput.log_level == logging.DEBUG)
             elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self.calculation:
                 ts = self[topic].timestamp
                 if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore

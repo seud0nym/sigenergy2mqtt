@@ -135,9 +135,7 @@ class Translator:
         if value is not None:
             if not isinstance(value, (str, int, float, bool)):
                 logging.warning(
-                    "Translation key %r resolved to a non-scalar (%s); falling back to English.",
-                    key,
-                    type(value).__name__,
+                    f"Translation key {key!r} resolved to a non-scalar ({type(value).__name__}); falling back to English."
                 )
             else:
                 return str(value), self._language, True
@@ -147,9 +145,7 @@ class Translator:
             if isinstance(value, (str, int, float, bool)):
                 return str(value), DEFAULT_LANGUAGE, False
             logging.warning(
-                "Fallback translation key %r also resolved to a non-scalar (%s).",
-                key,
-                type(value).__name__,
+                f"Fallback translation key {key!r} also resolved to a non-scalar ({type(value).__name__})."
             )
 
         return default if default is not None else key, DEFAULT_LANGUAGE, False
@@ -188,7 +184,7 @@ class Translator:
         file_path = self._translations_dir / f"{resolved}.yaml"
         if not file_path.exists():
             if language != DEFAULT_LANGUAGE:
-                logging.warning("Translation file not found: %s", file_path)
+                logging.warning(f"Translation file not found: {file_path}")
             return {}
 
         try:
@@ -197,7 +193,7 @@ class Translator:
                 self._cache[language] = data
                 return data
         except Exception as exc:
-            logging.error("Failed to load translation file %s: %s", file_path, exc)
+            logging.error(f"Failed to load translation file {file_path}: {exc}")
             return {}
 
     @staticmethod
@@ -256,11 +252,11 @@ def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) 
 
     if not translated:
         if debugging:
-            logging.debug("%s : %s=%r %s=%r [%s]", key, "default", default, "translation", translation, language)
+            logging.debug(f"{key} : default={default!r} translation={translation!r} [{language}]")
         if default is None:
             # Only warn when there is no intentional fallback; callers that
             # supply a default are using it as the expected display value.
-            logging.warning("No translation found for key %r.", key)
+            logging.warning(f"No translation found for key {key!r}.")
 
     try:
         result = translation
@@ -268,7 +264,7 @@ def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) 
             result = result.replace(f"{{{k}}}", str(v))
         return result
     except Exception as exc:
-        logging.warning("Translation formatting failed for key %r: %s", key, exc)
+        logging.warning(f"Translation formatting failed for key {key!r}: {exc}")
         return translation
 
 

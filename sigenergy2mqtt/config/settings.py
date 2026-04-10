@@ -31,6 +31,7 @@ from sigenergy2mqtt.config.models import (
     InfluxDbConfig,
     ModbusConfig,
     MqttConfig,
+    PersistenceConfig,
     PvOutputConfig,
 )
 from sigenergy2mqtt.config.sources import (
@@ -126,6 +127,7 @@ class Settings(BaseSettings):
     # ── Sub-configs ──────────────────────────────────────────────────────────
     home_assistant: HomeAssistantConfig = Field(default_factory=HomeAssistantConfig, alias="home-assistant")  # type: ignore[reportCallIssue]
     mqtt: MqttConfig = Field(default_factory=MqttConfig)  # type: ignore[reportCallIssue]
+    persistence: PersistenceConfig = Field(default_factory=PersistenceConfig, alias="persistence")  # type: ignore[reportCallIssue]
     pvoutput: PvOutputConfig = Field(default_factory=PvOutputConfig)  # type: ignore[reportCallIssue]
     influxdb: InfluxDbConfig = Field(default_factory=InfluxDbConfig)  # type: ignore[reportCallIssue]
     modbus: list[ModbusConfig] = Field(default_factory=list)
