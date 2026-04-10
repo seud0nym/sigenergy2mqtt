@@ -8,6 +8,10 @@
 - Added `SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT` environment variable for setting initial state of Home Assistant sensors
 - Added `SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON` environment variable to allow complex sensor overrides via JSON strings
 
+### Fixed
+
+- Reset controls for daily accumulation sensors i Home Assistant were incorrectly marked as enabled by default (only affects new or cleaned installations)
+
 ---
 
 ## [2026.4.4] - 2026-04-04
