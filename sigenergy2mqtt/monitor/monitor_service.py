@@ -134,7 +134,7 @@ class MonitorService(Device):
 
         logging.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
 
-    def publish_availability(self, mqtt_client: mqtt.Client, ha_state: str | None, qos: int = 2) -> None:
+    def publish_availability(self, mqtt_client: mqtt.Client, ha_state: bytes | str, qos: int = 2) -> None:
         """No-op availability publisher for the monitor service.
 
         Args:
