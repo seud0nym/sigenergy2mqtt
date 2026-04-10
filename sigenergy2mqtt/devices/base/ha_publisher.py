@@ -181,7 +181,7 @@ class HaPublisherMixin(abc.ABC):
             logging.debug(f"{self.log_identity} cleaning availability")
             self.publish_availability(mqtt_client, None, qos=0)  # Availability is always retained
             logging.debug(f"{self.log_identity} cleaning discovery")
-            info = mqtt_client.publish(topic, None, qos=0, retain=True)  # Clear retained messages
+            info = mqtt_client.publish(topic, b"", qos=0, retain=True)  # Clear retained messages
         else:
             components: dict[str, Any] = {}
             for sensor in self.sensors.values():
@@ -203,7 +203,7 @@ class HaPublisherMixin(abc.ABC):
                 logging.debug(f"{self.log_identity} publishing empty availability (No components found)")
                 self.publish_availability(mqtt_client, None, qos=0)
                 logging.debug(f"{self.log_identity} publishing empty discovery (No components found)")
-                info = mqtt_client.publish(topic, None, qos=0, retain=True)  # Clear retained messages
+                info = mqtt_client.publish(topic, b"", qos=0, retain=True)  # Clear retained messages
         self.publish_attributes(mqtt_client, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
         for device in self.children:
             device.publish_discovery(mqtt_client, clean=clean)

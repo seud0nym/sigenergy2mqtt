@@ -270,7 +270,7 @@ class _MqttBackend:
     def publish_delete(self, client: mqtt.Client, category: str, key: str, debug: bool = True) -> None:
         """Clear a retained message by publishing an empty payload."""
         topic = self._key_to_topic(category, key)
-        info = client.publish(topic, None, qos=2, retain=True)
+        info = client.publish(topic, b"", qos=2, retain=True)
         info.wait_for_publish(timeout=5.0)
         self._cache.pop((category, key), None)
         if debug:

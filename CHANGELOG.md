@@ -12,6 +12,10 @@
 
 - Refactored state persistence (where transient states are saved to disk and restored after a restart) to use MQTT retained messages so that state can be restored even if the app is moved to another host after, for example, a hardware failure, or to migrate more easily from one installation method to another such as a Linux install to Docker, or Docker to Home Assistant add-on, without having to find and restore the state directory
 
+### Fixed
+
+- Use zero-length payload rather than None when deleting retained MQTT messages
+
 ---
 
 ## [2026.4.4] - 2026-04-04
