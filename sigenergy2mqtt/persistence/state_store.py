@@ -383,6 +383,7 @@ class StateStore:
         self._mqtt_enabled: bool = False
         self._loop: asyncio.AbstractEventLoop | None = None
         self._loop_thread_id: int | None = None
+        self._disk_primary: bool = True
         self._version: str = ""
 
     # ------------------------------------------------------------------
@@ -422,6 +423,7 @@ class StateStore:
         self._loop_thread_id = threading.get_ident()
         self._disk = _DiskBackend(state_path, self._version)
         self._mqtt_enabled = persistence_config.mqtt_redundancy
+        self._disk_primary = persistence_config.disk_primary
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="persistence")
 
         if not self._mqtt_enabled:
@@ -691,7 +693,7 @@ class StateStore:
         # Determine backend order.
         backends_primary_first: list[str] = (
             ["disk", "mqtt"]
-            if self._mqtt_enabled is False or True  # disk_primary always True for now
+            if not self._mqtt_enabled or self._disk_primary
             else ["mqtt", "disk"]
         )
 
