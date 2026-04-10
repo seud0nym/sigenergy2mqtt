@@ -11,6 +11,7 @@
 ### Changed
 
 - Refactored state persistence (where transient states are saved to disk and restored after a restart) to use MQTT retained messages so that state can be restored even if the app is moved to another host after, for example, a hardware failure, or to migrate more easily from one installation method to another such as a Linux install to Docker, or Docker to Home Assistant add-on, without having to find and restore the state directory
+- Allow PVOutput extended v7-v12 fields and the temperature source to be backed by Home Assistant sensors when running as a Home Assistant add-on, or by explicit MQTT topics (in addition to using sensor class names or entity ids for v7-v12)
 
 ### Fixed
 
