@@ -223,6 +223,11 @@ persistence:
   #   description: The maximum time in seconds to wait for the MQTT state
   #                cache to warm up from retained messages on startup.
   cache-warmup-timeout: 5.0
+  # sync-timeout
+  #   default: 5.0
+  #   description: The timeout in seconds for synchronous persistence
+  #                operations when called from a non-asyncio thread.
+  sync-timeout: 5.0
 # modbus
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device

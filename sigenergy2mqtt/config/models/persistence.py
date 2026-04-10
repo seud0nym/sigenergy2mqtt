@@ -44,3 +44,11 @@ class PersistenceConfig(BaseModel):
     """Maximum seconds to wait for MQTT retained state during startup cache warming.
     The sentinel-based mechanism normally completes in milliseconds; this timeout
     is a safety limit for degraded broker conditions."""
+
+    sync_timeout: float = Field(
+        5.0,
+        alias="sync-timeout",
+        ge=0.1,
+        le=30.0,
+    )
+    """Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread."""

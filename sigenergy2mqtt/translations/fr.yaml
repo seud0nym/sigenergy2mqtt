@@ -1845,6 +1845,8 @@ cli:
     help: 'Désactiver la redondance des messages MQTT conservés pour la persistance d''état. Lorsque défini, l''état est uniquement persisté sur disque.'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: 'Préfixe de sujet MQTT pour les messages d''état persistés (par défaut : sigenergy2mqtt/_state)'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: 'Délai d''attente en secondes pour les opérations de persistance synchrones lorsqu''elles sont appelées depuis un thread non asyncio (par défaut : 5.0, plage : 0.1-30.0)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: La clé API pour PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

@@ -1845,6 +1845,8 @@ cli:
     help: '禁用状态持久化的 MQTT 保留消息冗余。设置后，状态仅持久化到磁盘。'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: '持久化状态消息的 MQTT 主题前缀（默认：sigenergy2mqtt/_state）'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: '从非 asyncio 线程调用时同步持久化操作的超时秒数（默认：5.0，范围：0.1-30.0）'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput API密钥
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

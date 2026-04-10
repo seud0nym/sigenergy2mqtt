@@ -854,6 +854,14 @@ Set to `true` (default) to prefer local disk-based state over MQTT if both are a
 
 The maximum time in seconds to wait for the MQTT state cache to warm up from retained messages on startup. (default: `5.0`)
 
+<a id="opt_persistence_sync_timeout"></a>
+### Persistence Sync Timeout
+- CLI: `--persistence-sync-timeout`
+- ENV: `SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT`
+- Config key: `persistence.sync-timeout`
+
+The timeout in seconds for synchronous persistence operations when called from a non-asyncio thread. (default: `5.0`)
+
 
 ## MQTT
 

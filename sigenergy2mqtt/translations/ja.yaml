@@ -1845,6 +1845,8 @@ cli:
     help: '状態永続化のためのMQTT保持メッセージの冗長性を無効にします。設定されると、状態はディスクにのみ永続化されます。'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: '永続化された状態メッセージのMQTTトピックプレフィックス（デフォルト：sigenergy2mqtt/_state）'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: '非asyncioスレッドから呼び出された場合の同期永続化操作のタイムアウト（秒）（デフォルト：5.0、範囲：0.1-30.0）'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput APIキー
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

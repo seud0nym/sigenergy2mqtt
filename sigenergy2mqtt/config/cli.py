@@ -816,6 +816,15 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT, None),
         help="Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)",
     )
+    parser.add_argument(
+        "--persistence-sync-timeout",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT, None),
+        help="Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread (default: 5.0, range: 0.1-30.0)",
+    )
     # endregion
 
     parser.add_argument(

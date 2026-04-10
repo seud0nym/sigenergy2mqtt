@@ -149,6 +149,11 @@ properties:
         default: 5.0
         minimum: 1.0
         maximum: 60.0
+      sync-timeout:
+        type: number
+        default: 5.0
+        minimum: 0.1
+        maximum: 30.0
 
 
   modbus:

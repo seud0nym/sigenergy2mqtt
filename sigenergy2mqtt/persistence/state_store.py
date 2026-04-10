@@ -112,6 +112,8 @@ class _DiskBackend:
         self._version = version
 
     def _path_for(self, category: str, key: str) -> Path:
+        if ".." in category or ".." in key:
+            raise ValueError(f"Invalid category or key: {category}/{key}")
         return self._state_path / category / key
 
     def save(self, category: str, key: str, value: str, debug: bool = True) -> None:
@@ -308,7 +310,7 @@ class _MqttBackend:
             info = client.publish(topic, envelope, qos=2, retain=True)
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
-        except Exception:
+        except RuntimeError:
             self._schedule_retry(_attempt, self.publish, category, key, value, debug)
             return
         if debug:
@@ -322,7 +324,7 @@ class _MqttBackend:
             info = client.publish(topic, b"", qos=2, retain=True)
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
-        except Exception:
+        except RuntimeError:
             self._schedule_retry(_attempt, self.publish_delete, category, key, debug)
             return
 
@@ -385,6 +387,7 @@ class StateStore:
         self._loop_thread_id: int | None = None
         self._disk_primary: bool = True
         self._version: str = ""
+        self._sync_timeout: float = 5.0
 
     # ------------------------------------------------------------------
     # Properties
@@ -424,6 +427,7 @@ class StateStore:
         self._disk = _DiskBackend(state_path, self._version)
         self._mqtt_enabled = persistence_config.mqtt_redundancy
         self._disk_primary = persistence_config.disk_primary
+        self._sync_timeout = persistence_config.sync_timeout
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="persistence")
 
         if not self._mqtt_enabled:
@@ -599,7 +603,7 @@ class StateStore:
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
             future = asyncio.run_coroutine_threadsafe(self.save(category, key, value, debug=debug), loop)
             try:
-                future.result(timeout=5.0)
+                future.result(timeout=self._sync_timeout)
             except Exception as exc:
                 logging.warning(f"StateStore.save_sync failed for {category}/{key}: {repr(exc)}")
         else:
@@ -625,7 +629,7 @@ class StateStore:
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
             future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator, debug=debug), loop)
             try:
-                return future.result(timeout=5.0)
+                return future.result(timeout=self._sync_timeout)
             except Exception as exc:
                 logging.warning(f"StateStore.load_sync failed for {category}/{key}: {repr(exc)}")
                 return None
@@ -640,15 +644,30 @@ class StateStore:
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
             future = asyncio.run_coroutine_threadsafe(self.delete(category, key, debug=debug), loop)
             try:
-                future.result(timeout=5.0)
+                future.result(timeout=self._sync_timeout)
             except Exception as exc:
                 logging.warning(f"StateStore.delete_sync failed for {category}/{key}: {repr(exc)}")
         else:
             self._delete_sync_impl(category, key, debug)
 
-    # ------------------------------------------------------------------
-    # Internal synchronous implementations (run in executor)
-    # ------------------------------------------------------------------
+    def _accept(self, value: str, ts: int, cutoff: int | None, validator: Callable[[str], bool] | None, debug: bool) -> bool:
+        if cutoff is not None and ts < cutoff:
+            if debug:
+                logging.debug(f"StateStore: discarding stale value (ts={ts} cutoff={cutoff})")
+            return False
+        if validator is not None and not validator(value):
+            if debug:
+                logging.debug("StateStore: validator rejected value")
+            return False
+        return True
+
+    def _load_from_backend(self, backend: str, category: str, key: str) -> tuple[str, int] | None:
+        if backend == "disk":
+            assert self._disk is not None
+            return self._disk.load(category, key)
+        elif backend == "mqtt" and self._mqtt_enabled:
+            return self._mqtt.load(category, key)
+        return None
 
     def _save_sync_impl(self, category: str, key: str, value: str, debug: bool = True) -> None:
         """Write to disk and MQTT; called from the ThreadPoolExecutor."""
@@ -679,34 +698,14 @@ class StateStore:
         if stale_after is not None:
             cutoff = int(time.time() - stale_after.total_seconds())
 
-        def _accept(value: str, ts: int) -> bool:
-            if cutoff is not None and ts < cutoff:
-                if debug:
-                    logging.debug(f"StateStore: discarding stale value for {category}/{key} (ts={ts} cutoff={cutoff})")
-                return False
-            if validator is not None and not validator(value):
-                if debug:
-                    logging.debug(f"StateStore: validator rejected value for {category}/{key}")
-                return False
-            return True
-
         # Determine backend order.
-        backends_primary_first: list[str] = (
-            ["disk", "mqtt"]
-            if not self._mqtt_enabled or self._disk_primary
-            else ["mqtt", "disk"]
-        )
+        backends_primary_first: list[str] = ["disk", "mqtt"] if not self._mqtt_enabled or self._disk_primary else ["mqtt", "disk"]
 
         for backend in backends_primary_first:
-            result: tuple[str, int] | None = None
-            if backend == "disk":
-                result = self._disk.load(category, key)
-            elif backend == "mqtt" and self._mqtt_enabled:
-                result = self._mqtt.load(category, key)
-
+            result = self._load_from_backend(backend, category, key)
             if result is not None:
                 value, ts = result
-                if _accept(value, ts):
+                if self._accept(value, ts, cutoff, validator, debug):
                     if debug:
                         logging.debug(f"StateStore.load {category}/{key} from {backend} (ts={ts})")
                     return value

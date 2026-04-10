@@ -1845,6 +1845,8 @@ cli:
     help: 'MQTT-Redundanz für gespeicherte Nachrichten zur Zustandspersistenz deaktivieren. Wenn gesetzt, wird der Zustand nur auf der Festplatte gespeichert.'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: 'MQTT-Topic-Präfix für persistierte Zustandsmeldungen (Standard: sigenergy2mqtt/_state)'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: 'Zeitüberschreitung in Sekunden für synchrone Persistenzoperationen, wenn sie von einem Nicht-Asyncio-Thread aufgerufen werden (Standard: 5.0, Bereich: 0.1-30.0)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: Der API-Schlüssel für PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

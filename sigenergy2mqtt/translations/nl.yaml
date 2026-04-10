@@ -1845,6 +1845,8 @@ cli:
     help: 'MQTT-berichtredundantie voor toestandspersistentie uitschakelen. Indien ingesteld, wordt de toestand alleen op schijf opgeslagen.'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: 'MQTT-topic-prefix voor persistente toestandsberichten (standaard: sigenergy2mqtt/_state)'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: 'Time-out in seconden voor synchrone persistentie-operaties wanneer aangeroepen vanuit een niet-asyncio thread (standaard: 5.0, bereik: 0.1-30.0)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: De API-sleutel voor PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

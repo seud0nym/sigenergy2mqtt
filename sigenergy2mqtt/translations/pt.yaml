@@ -1845,6 +1845,8 @@ cli:
     help: 'Desativar a redundância de mensagens retidas MQTT para persistência de estado. Quando definido, o estado é persistido apenas no disco.'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: 'Prefixo de tópico MQTT para mensagens de estado persistidas (padrão: sigenergy2mqtt/_state)'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: 'Tempo limite em segundos para operações de persistência síncronas quando chamadas de um thread não asyncio (padrão: 5.0, intervalo: 0.1-30.0)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: Chave API para PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

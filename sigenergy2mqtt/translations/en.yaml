@@ -1845,6 +1845,8 @@ cli:
     help: Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
     help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
+  SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
+    help: 'Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread (default: 5.0, range: 0.1-30.0)'
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: The API Key for PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
