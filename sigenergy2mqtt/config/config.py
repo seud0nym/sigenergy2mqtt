@@ -33,12 +33,13 @@ from typing import Any, Generator
 from ruamel.yaml import YAML
 
 from sigenergy2mqtt import i18n
+from sigenergy2mqtt.persistence import Category
 
 from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
 from .auto_discovery_settings import AutoDiscoverySettings
-from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
 from .settings import Settings
+from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
 
 
 class ConfigurationError(Exception):
@@ -154,8 +155,9 @@ class Config:
             if auto_discovery != "force":
                 try:
                     from sigenergy2mqtt.persistence import state_store
+
                     if state_store.is_initialised:
-                        cached = state_store.load_sync("config", "auto-discovery")
+                        cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
                         if cached is not None:
                             auto_discovery_cache.write_text(cached)
                             logging.info("Auto-discovery cache restored from MQTT")
@@ -183,8 +185,9 @@ class Config:
                     # Also persist to MQTT for redundancy
                     try:
                         from sigenergy2mqtt.persistence import state_store
+
                         if state_store.is_initialised:
-                            state_store.save_sync("config", "auto-discovery", yaml_content)
+                            state_store.save_sync(Category.CONFIG, "auto-discovery", yaml_content)
                     except Exception:
                         logging.debug("StateStore not available for auto-discovery persist")
         elif auto_discovery == "once" and auto_discovery_cache.is_file():
@@ -192,8 +195,9 @@ class Config:
             # Existing disk cache found — also ensure it's in MQTT for redundancy
             try:
                 from sigenergy2mqtt.persistence import state_store
+
                 if state_store.is_initialised:
-                    state_store.save_sync("config", "auto-discovery", auto_discovery_cache.read_text())
+                    state_store.save_sync(Category.CONFIG, "auto-discovery", auto_discovery_cache.read_text())
             except Exception:
                 pass
         else:

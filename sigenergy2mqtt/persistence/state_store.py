@@ -293,9 +293,9 @@ class _MqttBackend:
             from sigenergy2mqtt.config import active_config
 
             show = True
-            if category == Category.SENSOR:
+            if category == Category.SENSOR.value:
                 show = active_config.sensor_debug_logging
-            elif category == Category.PVOUTPUT:
+            elif category == Category.PVOUTPUT.value:
                 show = active_config.pvoutput.log_level == logging.DEBUG
 
             if show:
@@ -472,12 +472,8 @@ class StateStore:
 
         self._initialised = True
 
-    def shutdown(self, timeout: float = 1.0) -> None:
-        """Flush pending writes, disconnect the persistence MQTT client, and stop the executor.
-
-        Args:
-            timeout: Seconds to wait for in-flight background tasks to complete.
-        """
+    def shutdown(self) -> None:
+        """Flush pending writes, disconnect the persistence MQTT client, and stop the executor."""
         if self._executor:
             self._executor.shutdown(wait=True, cancel_futures=False)
             self._executor = None
@@ -515,6 +511,8 @@ class StateStore:
             stale_after: Unused on save; present for API symmetry with :meth:`load`.
             debug:       If False, suppresses debug logging for this operation.
         """
+        if isinstance(category, Category):
+            category = category.value
         if not self._initialised or self._executor is None:
             if debug:
                 logging.debug(f"StateStore.save called before initialise — skipping {category}/{key}")
@@ -551,6 +549,9 @@ class StateStore:
         if not self._initialised or self._disk is None:
             return None
 
+        if isinstance(category, Category):
+            category = category.value
+
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             self._executor,
@@ -570,6 +571,8 @@ class StateStore:
         """
         if not self._initialised or self._executor is None:
             return
+        if isinstance(category, Category):
+            category = category.value
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key, debug)
 

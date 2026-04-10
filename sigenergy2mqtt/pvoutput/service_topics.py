@@ -9,8 +9,8 @@ import logging
 import math
 import time
 from datetime import timedelta
-from pathlib import Path
 from enum import Flag, auto
+from pathlib import Path
 from typing import Any, cast
 
 import paho.mqtt.client as mqtt
@@ -19,7 +19,7 @@ from sigenergy2mqtt.common.output_field import OutputField
 from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
-from sigenergy2mqtt.persistence import state_store
+from sigenergy2mqtt.persistence import Category, state_store
 
 from .service import Service
 from .topic import Topic
@@ -394,7 +394,7 @@ class ServiceTopics(dict[str, Topic]):
                 except Exception:
                     pass
 
-        content = state_store.load_sync("pvoutput", key, stale_after=timedelta(hours=24), debug=active_config.pvoutput.log_level == logging.DEBUG)
+        content = state_store.load_sync(Category.PVOUTPUT, key, stale_after=timedelta(hours=24), debug=active_config.pvoutput.log_level == logging.DEBUG)
         if content is not None:
             try:
                 saved = json.loads(content, object_hook=Topic.json_decoder)
@@ -423,7 +423,7 @@ class ServiceTopics(dict[str, Topic]):
         for child in self._time_periods:
             child.reset()
         if self._persistence_key:
-            state_store.delete_sync("pvoutput", self._persistence_key, debug=active_config.pvoutput.log_level == logging.DEBUG)
+            state_store.delete_sync(Category.PVOUTPUT, self._persistence_key, debug=active_config.pvoutput.log_level == logging.DEBUG)
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         """Subscribe each registered topic to MQTT updates.
@@ -463,7 +463,7 @@ class ServiceTopics(dict[str, Topic]):
                     self[topic].timestamp = time.localtime()
                     if self._persistence_key and ((self._always_persist and state_was != state) or (self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
                         payload = json.dumps(self, default=Topic.json_encoder)
-                        state_store.save_sync("pvoutput", self._persistence_key, payload, debug=active_config.pvoutput.log_level == logging.DEBUG)
+                        state_store.save_sync(Category.PVOUTPUT, self._persistence_key, payload, debug=active_config.pvoutput.log_level == logging.DEBUG)
             elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self.calculation:
                 ts = self[topic].timestamp
                 if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore
