@@ -16,16 +16,16 @@ Usage::
     )
 
     # Save / load / delete:
-    await state_store.save("sensor", "my_key.state", "123.45")
-    value = await state_store.load("sensor", "my_key.state")
-    await state_store.delete("sensor", "my_key.state")
+    await state_store.save(Category.SENSOR, "my_key.state", "123.45")
+    value = await state_store.load(Category.SENSOR, "my_key.state")
+    await state_store.delete(Category.SENSOR, "my_key.state")
 
     # During shutdown:
     state_store.shutdown()
 """
 
-from .state_store import StateStore
+from .state_store import Category, StateStore
 
 state_store: StateStore = StateStore()
 
-__all__ = ["StateStore", "state_store"]
+__all__ = ["Category", "StateStore", "state_store"]

@@ -41,8 +41,10 @@ import json
 import logging
 import threading
 import time
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
@@ -59,6 +61,12 @@ _SENTINEL_SUFFIX = "_sentinel"
 _PAYLOAD_VALUE_KEY = "v"
 _PAYLOAD_TS_KEY = "ts"
 _PAYLOAD_VER_KEY = "ver"
+
+
+class Category(str, Enum):
+    SENSOR = "sensor"
+    PVOUTPUT = "pvoutput"
+    CONFIG = "config"
 
 
 def _make_envelope(value: str, version: str) -> str:
@@ -84,7 +92,7 @@ def _parse_envelope(raw: str, *, fallback_ts: int | None = None) -> tuple[str, i
         if isinstance(obj, dict) and _PAYLOAD_VALUE_KEY in obj and _PAYLOAD_TS_KEY in obj:
             return str(obj[_PAYLOAD_VALUE_KEY]), int(obj[_PAYLOAD_TS_KEY]), False
     except (json.JSONDecodeError, ValueError, TypeError):
-        pass
+        logging.debug("StateStore: invalid envelope detected, treating as legacy value")
 
     # Legacy / raw value — treat the whole string as the value.
     ts = fallback_ts if fallback_ts is not None else int(time.time())
@@ -179,11 +187,18 @@ class _DiskBackend:
         results: list[tuple[str, str]] = []
         if not self._state_path.is_dir():
             return results
+
+        # Include legacy root files
+        for file in self._state_path.iterdir():
+            if file.is_file():
+                results.append(("__root__", file.name))
+
         for category_dir in self._state_path.iterdir():
             if category_dir.is_dir():
                 for file in category_dir.iterdir():
                     if file.is_file():
                         results.append((category_dir.name, file.name))
+
         return results
 
 
@@ -198,9 +213,14 @@ class _MqttBackend:
     def __init__(self) -> None:
         # Maps (category, key) -> (value, ts)
         self._cache: dict[tuple[str, str], tuple[str, int]] = {}
-        self._prefix: str = ""
-        self._sentinel_topic: str = ""
-        self._client: mqtt.Client | None = None
+        self._lock = threading.Lock()
+
+        self._retry_queue = deque()
+        self._max_retries = 3
+        self._base_delay = 0.5
+
+        self._prefix = ""
+        self._sentinel_topic = ""
         self._sentinel_event = threading.Event()
         self._version: str = ""
 
@@ -208,6 +228,25 @@ class _MqttBackend:
         self._prefix = prefix
         self._sentinel_topic = f"{prefix}/{_SENTINEL_SUFFIX}"
         self._version = version
+
+    def _schedule_retry(self, attempt, fn, *args) -> None:
+        if attempt >= self._max_retries:
+            logging.warning("MqttBackend: dropping message after %d retries", attempt)
+            return
+        delay = self._base_delay * (2**attempt)
+        self._retry_queue.append((time.time() + delay, attempt + 1, fn, args))
+
+    def _drain_retries(self, client) -> None:
+        now = time.time()
+        for _ in range(len(self._retry_queue)):
+            ts, attempt, fn, args = self._retry_queue[0]
+            if ts > now:
+                break
+            self._retry_queue.popleft()
+            try:
+                fn(client, *args, _attempt=attempt)
+            except Exception:
+                pass
 
     def _topic_to_key(self, topic: str) -> tuple[str, str] | None:
         """Convert an MQTT topic to ``(category, key)`` or ``None`` if not ours."""
@@ -239,50 +278,69 @@ class _MqttBackend:
         category, key = key_pair
         if not msg.payload:
             # Empty payload = delete
-            self._cache.pop(key_pair, None)
+            with self._lock:
+                self._cache.pop(key_pair, None)
             return
 
         raw = msg.payload.decode("utf-8", errors="replace")
         result = _parse_envelope(raw)
         if result is not None:
             value, ts, _ = result
-            self._cache[key_pair] = (value, ts)
+            with self._lock:
+                self._cache[key_pair] = (value, ts)
             from sigenergy2mqtt.config import active_config
 
             show = True
-            if category == "sensor":
+            if category == Category.SENSOR:
                 show = active_config.sensor_debug_logging
-            elif category == "pvoutput":
+            elif category == Category.PVOUTPUT:
                 show = active_config.pvoutput.log_level == logging.DEBUG
 
             if show:
                 logging.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
 
-    def publish(self, client: mqtt.Client, category: str, key: str, value: str, debug: bool = True) -> None:
+    def publish(self, client: mqtt.Client, category: str, key: str, value: str, debug: bool = True, _attempt: int = 0) -> None:
         """Publish a retained state message."""
+        self._drain_retries(client)
         topic = self._key_to_topic(category, key)
         envelope = _make_envelope(value, self._version)
-        info = client.publish(topic, envelope, qos=2, retain=True)
-        info.wait_for_publish(timeout=5.0)
+        try:
+            info = client.publish(topic, envelope, qos=2, retain=True)
+            if info.rc != mqtt.MQTT_ERR_SUCCESS:
+                raise RuntimeError(info.rc)
+        except Exception:
+            self._schedule_retry(_attempt, self.publish, category, key, value, debug)
+            return
         if debug:
             logging.debug(f"MqttBackend.publish {category}/{key}")
 
-    def publish_delete(self, client: mqtt.Client, category: str, key: str, debug: bool = True) -> None:
+    def publish_delete(self, client: mqtt.Client, category: str, key: str, debug: bool = True, _attempt: int = 0) -> None:
         """Clear a retained message by publishing an empty payload."""
+        self._drain_retries(client)
         topic = self._key_to_topic(category, key)
-        info = client.publish(topic, b"", qos=2, retain=True)
-        info.wait_for_publish(timeout=5.0)
-        self._cache.pop((category, key), None)
+        try:
+            info = client.publish(topic, b"", qos=2, retain=True)
+            if info.rc != mqtt.MQTT_ERR_SUCCESS:
+                raise RuntimeError(info.rc)
+        except Exception:
+            self._schedule_retry(_attempt, self.publish_delete, category, key, debug)
+            return
+
+        with self._lock:
+            self._cache.pop((category, key), None)
+
         if debug:
             logging.debug(f"MqttBackend.publish_delete {category}/{key}")
 
     def load(self, category: str, key: str) -> tuple[str, int] | None:
         """Return cached ``(value, ts)`` or ``None``."""
-        return self._cache.get((category, key))
+        with self._lock:
+            return self._cache.get((category, key))
 
     def all_known_keys(self) -> list[tuple[str, str]]:
         """All ``(category, key)`` pairs currently held in the in-memory cache."""
-        return list(self._cache.keys())
+        with self._lock:
+            return list(self._cache.keys())
 
     def publish_sentinel(self, client: mqtt.Client) -> None:
         """Publish the non-retained sentinel to trigger end-of-retained-messages."""
