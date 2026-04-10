@@ -13,7 +13,10 @@ from sigenergy2mqtt.metrics import Metrics
 from .read_ahead import ReadAhead
 
 
-class ModbusClient(AsyncModbusTcpClient):
+from pymodbus.client.mixin import ModbusClientMixin
+
+
+class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
     """Async Modbus TCP client with optional read-ahead caching and metrics hooks.
 
     This class wraps :class:`pymodbus.client.AsyncModbusTcpClient` to provide:

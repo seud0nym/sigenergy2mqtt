@@ -7,7 +7,7 @@ import asyncio
 import logging
 import re
 import time
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
@@ -419,10 +419,10 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         # String values
         if self.data_type == ModbusDataType.STRING:
-            return modbus_client.convert_to_registers(str(raw_value), self.data_type)
+            return modbus_client.convert_to_registers(str(raw_value), cast(Any, self.data_type))
 
         # Numeric values
-        return modbus_client.convert_to_registers(int(raw_value), self.data_type)
+        return modbus_client.convert_to_registers(int(raw_value), cast(Any, self.data_type))
 
     async def _perform_modbus_write(self, modbus_client: ModbusClient, registers: list[int], device_id: int, no_response_expected: bool, method: str) -> bool:
         """Perform the actual Modbus write operation.
