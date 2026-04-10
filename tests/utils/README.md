@@ -10,7 +10,6 @@ This directory contains various utility scripts, configuration files, and tools 
 
 ### Docker Testing
 - **`docker-compose.yaml`**: A Docker Compose configuration file that creates a test environment with an `emqx` MQTT broker and a `sigenergy2mqtt` instance.
-- **`Dockerfile`**: A Docker configuration file designed to build an image specifically for running the asynchronous Modbus test server (`modbus_test_server.py`).
 
 ### Other Utilities
 - **`launch.py`**: A local test entrypoint script that simply executes the `sigenergy2mqtt.__main__` module, allowing developers to manually launch and debug the application from their IDE or terminal.

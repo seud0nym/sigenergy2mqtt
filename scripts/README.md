@@ -5,11 +5,10 @@ This directory contains various utility scripts for development, translation man
 ## Scripts Overview
 
 *   **`build`**: Script for building the project.
-*   **`build-modbus-test-server-docker-image`**: Script to build the Docker image used for the local Modbus test server.
 *   **`dependencies`**: Script for managing project dependencies.
-*   **`docker-test`**: Script to execute tests within a Docker environment.
+*   **`docker-test`**: Script to build and run the Docker container for testing.
 *   **`release`**: Script used in the project's release process.
-*   **`translations`**: Script for managing translations.
+*   **`translations`**: Script to run the translation update and verification scripts.
 *   **`update_en_translation.py`**: Python script responsible for updating the English translation base from code entities.
 *   **`update_md` / `update_md.py`**: Scripts primarily used for updating markdown documentation such as `SENSORS.md` by analysing sensor definitions and fetching Modbus definitions.
 *   **`verify_translations.py`**: Python script used to verify the consistency and correctness of the provided translations against the base English file.
