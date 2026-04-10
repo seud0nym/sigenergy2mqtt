@@ -140,7 +140,7 @@ properties:
         default: true
       mqtt-state-prefix:
         type: string
-        default: sigenergy2mqtt/persistence
+        default: sigenergy2mqtt/_state
       disk-primary:
         type: boolean
         default: true

@@ -210,9 +210,9 @@ persistence:
   #                retained messages (QoS 2).
   mqtt-redundancy: true
   # mqtt-state-prefix
-  #   default: sigenergy2mqtt/persistence
+  #   default: sigenergy2mqtt/_state
   #   description: The MQTT topic prefix used for storing persisted state.
-  mqtt-state-prefix: sigenergy2mqtt/persistence
+  mqtt-state-prefix: sigenergy2mqtt/_state
   # disk-primary
   #   default: true
   #   description: If true, prefer local disk-based state over MQTT if both

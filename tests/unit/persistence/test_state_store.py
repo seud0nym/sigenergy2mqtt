@@ -31,7 +31,7 @@ def mock_mqtt_config():
 def mock_persistence_config():
     config = MagicMock()
     config.mqtt_redundancy = True
-    config.mqtt_state_prefix = "sigenergy2mqtt/persistence"
+    config.mqtt_state_prefix = "sigenergy2mqtt/_state"
     config.cache_warmup_timeout = 1.0
     return config
 

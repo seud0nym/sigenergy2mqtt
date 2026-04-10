@@ -57,7 +57,7 @@ async def test_persistence_integration_flow(temp_state_dir, mock_mqtt_client):
 
     persistence_config = MagicMock()
     persistence_config.mqtt_redundancy = True
-    persistence_config.mqtt_state_prefix = "sigenergy2mqtt/persistence"
+    persistence_config.mqtt_state_prefix = "sigenergy2mqtt/_state"
     persistence_config.disk_primary = True
     persistence_config.cache_warmup_timeout = 2.0
 
@@ -87,7 +87,7 @@ async def test_persistence_integration_flow(temp_state_dir, mock_mqtt_client):
         new_store = StateStore()
 
         # We need to trigger the on_message callback to simulate retained messages arriving
-        topic = "sigenergy2mqtt/persistence/category/key"
+        topic = "sigenergy2mqtt/_state/category/key"
         payload = json.dumps({"v": "value", "ts": int(time.time()), "ver": "1.0.0"})
 
         msg_info = MagicMock()
@@ -108,7 +108,7 @@ async def test_persistence_integration_flow(temp_state_dir, mock_mqtt_client):
 
                 # Message 2: The sentinel
                 msg2 = MagicMock()
-                msg2.topic = "sigenergy2mqtt/persistence/_sentinel"
+                msg2.topic = "sigenergy2mqtt/_state/_sentinel"
                 msg2.payload = b"1"
 
                 on_message(mock_mqtt_client, None, msg2)

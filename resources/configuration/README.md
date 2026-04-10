@@ -836,7 +836,7 @@ Set to `true` (default) to enable off-host state redundancy using MQTT retained 
 - ENV: `SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX`
 - Config key: `persistence.mqtt-state-prefix`
 
-The MQTT topic prefix used for storing persisted state. (default: `sigenergy2mqtt/persistence`)
+The MQTT topic prefix used for storing persisted state. (default: `sigenergy2mqtt/_state`)
 
 <a id="opt_persistence_disk_primary"></a>
 ### Persistence Disk Primary
