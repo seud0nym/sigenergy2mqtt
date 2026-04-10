@@ -16,6 +16,7 @@ from sigenergy2mqtt.common.voltage_source import VoltageSource
 __all__ = ["get_pvoutput_services"]
 
 import logging
+import os
 from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.common import UnitOfEnergy, UnitOfPower
@@ -60,6 +61,47 @@ def get_gain(sensor: Sensor, negate: bool = False) -> float:
     return gain if negate is False else gain * -1.0
 
 
+def _is_home_assistant_addon_runtime() -> bool:
+    """Return True when running inside a Home Assistant app container."""
+    if any(os.getenv(var) for var in ("SUPERVISOR_TOKEN", "HASSIO_TOKEN", "HASSIO")):
+        return True
+    return os.path.isfile("/data/options.json")
+
+
+def _as_explicit_mqtt_topic(value: str) -> str | None:
+    """Extract a direct MQTT topic from a configured extended-field value."""
+    v = value.strip()
+    if v.lower().startswith("mqtt:"):
+        return v[5:].strip() or None
+    if "/" in v:
+        return v
+    return None
+
+
+def _as_home_assistant_sensor_entity(value: str) -> str | None:
+    """Return a Home Assistant sensor entity id when configured and supported."""
+    v = value.strip()
+    if v.lower().startswith("ha:"):
+        v = v[3:].strip()
+    if not v.startswith("sensor."):
+        return None
+    if not _is_home_assistant_addon_runtime():
+        return None
+    object_id = v[7:]
+    if not object_id:
+        return None
+    return f"sensor.{object_id}"
+
+
+def _safe_status_field(value: str, logger: logging.Logger) -> StatusField | None:
+    """Convert a configured extended-field key into StatusField when valid."""
+    try:
+        return StatusField(value)
+    except ValueError:
+        logger.warning(f"PVOutput extended field key '{value}' is not recognised and will be ignored")
+        return None
+
+
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     """Build and configure PVOutput status/output service devices.
 
@@ -83,7 +125,9 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     plant_pv_power: PlantPVPower | None = None
     total_pv_power: TotalPVPower | None = None
 
-    donation = {k: v for k, v in active_config.pvoutput.extended.items() if v != ""}  # type: ignore[reportGeneralTypeIssues]
+    donation = {k: v for k, v in active_config.pvoutput.extended.items() if isinstance(v, str) and v.strip() != ""}  # type: ignore[reportGeneralTypeIssues]
+    matched_extended: set[StatusField] = set()
+    ha_extended_entities: dict[StatusField, str] = {}
 
     extended_data: dict[StatusField, str | None] = {field: None for field in StatusField}
     status_topics: dict[StatusField, list[Topic]] = {field: [] for field in StatusField}
@@ -170,9 +214,34 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if sensor.data_type == ModbusDataType.STRING:
                         logger.warning(f"PVOutput extended field '{k}' is configured to use sensor '{v}', which does not have a numeric data type")
                     else:
-                        key = StatusField(k)
+                        key = _safe_status_field(k, logger)
+                        if key is None:
+                            continue
                         status_topics[key].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None), precision=sensor.precision))  # Used displayed value, not raw
                         extended_data[key] = sensor.device_class
+                        matched_extended.add(key)
+
+    for k, v in donation.items():
+        key = _safe_status_field(k, logger)
+        if key is None:
+            continue
+        if key in matched_extended:
+            continue
+        entity_id = _as_home_assistant_sensor_entity(v)
+        if entity_id is not None:
+            ha_extended_entities[key] = entity_id
+            status_topics[key].append(Topic(f"__ha_sensor__:{entity_id}", scan_interval=None))
+            logger.info(f"PVOutput extended field '{k}' mapped Home Assistant sensor '{v}' to Supervisor API entity '{entity_id}'")
+            matched_extended.add(key)
+            continue
+        topic = _as_explicit_mqtt_topic(v)
+        if topic is not None:
+            status_topics[key].append(Topic(topic, scan_interval=None))
+            logger.info(f"PVOutput extended field '{k}' configured as direct MQTT topic '{topic}'")
+            matched_extended.add(key)
+            continue
+        if v.startswith("sensor.") or v.lower().startswith("ha:sensor."):
+            logger.warning(f"PVOutput extended field '{k}' Home Assistant sensor source '{v}' ignored: only available when running as a Home Assistant app")
 
     if total_pv_power is not None:
         total_pv_power.publish_raw = True
@@ -182,9 +251,21 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
         output_topics[OutputField.PEAK_POWER].append(Topic(plant_pv_power.raw_state_topic, plant_pv_power.scan_interval, get_gain(plant_pv_power)))
 
     if active_config.pvoutput.temperature_topic:
-        status_topics[StatusField.TEMPERATURE].append(Topic(active_config.pvoutput.temperature_topic, scan_interval=None))
+        temp_source = active_config.pvoutput.temperature_topic.strip()
+        temp_entity_id = _as_home_assistant_sensor_entity(temp_source)
+        if temp_entity_id is not None:
+            ha_extended_entities[StatusField.TEMPERATURE] = temp_entity_id
+            status_topics[StatusField.TEMPERATURE].append(Topic(f"__ha_sensor__:{temp_entity_id}", scan_interval=None))
+            logger.info(f"PVOutput temperature source mapped Home Assistant sensor '{temp_source}' to Supervisor API entity '{temp_entity_id}'")
+        else:
+            temp_topic = _as_explicit_mqtt_topic(temp_source) or temp_source
+            status_topics[StatusField.TEMPERATURE].append(Topic(temp_topic, scan_interval=None))
+            if temp_topic != temp_source:
+                logger.info(f"PVOutput temperature source configured as direct MQTT topic '{temp_topic}'")
+            elif temp_source.startswith("sensor.") or temp_source.lower().startswith("ha:sensor."):
+                logger.warning(f"PVOutput temperature source '{temp_source}' ignored as Home Assistant sensor source because app runtime was not detected; using literal MQTT topic")
 
-    status = PVOutputStatusService(logger, status_topics, extended_data)
+    status = PVOutputStatusService(logger, status_topics, extended_data, ha_extended_entities)
     output = PVOutputOutputService(logger, output_topics)
 
     return [status, output]

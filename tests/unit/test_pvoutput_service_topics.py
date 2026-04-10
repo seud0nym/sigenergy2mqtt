@@ -200,3 +200,10 @@ class TestPVOutputServiceTopics:
         payload_sum = {"v2": 100.0}
         st_sum.add_to_payload(payload_sum, 5, time.localtime())
         assert "v2" not in payload_sum
+
+    def test_subscribe_skips_supervisor_topics(self):
+        st = make_service_topics(value_key=StatusField.V7)
+        st.register(Topic("__ha_sensor__:sensor.grid_power", gain=1.0))
+        mqtt_handler = MagicMock()
+        st.subscribe(MagicMock(), mqtt_handler)
+        mqtt_handler.register.assert_not_called()

@@ -214,7 +214,7 @@ def main():
     for k, v in env_vars.items():
         # Escape single quotes for shell
         escaped_v = v.replace("'", "'\\''")
-        print(f"export {k}='{escaped_v}'")
+        print(f"export '{k}={escaped_v}'")
 
 
 if __name__ == "__main__":

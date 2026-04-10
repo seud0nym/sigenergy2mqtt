@@ -434,12 +434,15 @@ class ServiceTopics(dict[str, Topic]):
         """
         for topic in self.keys():
             if self.enabled:
+                if topic.startswith("__ha_sensor__:"):
+                    self._logger.debug(f"{self._service.log_identity} Skipping MQTT subscription for Home Assistant Supervisor source {topic} ({self._name})")
+                    continue
                 result = mqtt_handler.register(mqtt_client, topic, self.handle_update)
                 self._logger.debug(f"{self._service.log_identity} Subscribed to topic {topic} to record {self._name} ({result=})")
             else:
                 self._logger.debug(f"{self._service.log_identity} Not subscribing to topic {topic} because {self._name} uploading is disabled")
 
-    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client, value: float | int | str, topic: str, handler: MqttHandler) -> bool:
+    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client | None, value: float | int | str, topic: str, handler: MqttHandler | None) -> bool:
         """Handle a new MQTT value and update aggregate state.
 
         Args:

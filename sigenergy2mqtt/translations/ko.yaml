@@ -1856,17 +1856,17 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_EXPORTS:
     help: PVOutput 수출 데이터 전송 활성화.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V10:
-    help: PVOutput v10 확장 필드용 센서.
+    help: "PVOutput의 확장 필드 v10를 채우는 소스입니다. 센서 클래스 이름, 'sensor.' 접두사 없는 엔터티 ID, 직접 MQTT 토픽(또는 mqtt:<topic>), 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않았거나 기부 상태가 유효하지 않으면 이 필드는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V11:
-    help: PVOutput v11 확장 필드용 센서.
+    help: "PVOutput의 확장 필드 v11를 채우는 소스입니다. 센서 클래스 이름, 'sensor.' 접두사 없는 엔터티 ID, 직접 MQTT 토픽(또는 mqtt:<topic>), 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않았거나 기부 상태가 유효하지 않으면 이 필드는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V12:
-    help: PVOutput v12 확장 필드용 센서.
+    help: "PVOutput의 확장 필드 v12를 채우는 소스입니다. 센서 클래스 이름, 'sensor.' 접두사 없는 엔터티 ID, 직접 MQTT 토픽(또는 mqtt:<topic>), 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않았거나 기부 상태가 유효하지 않으면 이 필드는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V7:
-    help: PVOutput v7 확장 필드용 센서.
+    help: "PVOutput의 확장 필드 v7를 채우는 소스입니다. 센서 클래스 이름, 'sensor.' 접두사 없는 엔터티 ID, 직접 MQTT 토픽(또는 mqtt:<topic>), 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않았거나 기부 상태가 유효하지 않으면 이 필드는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V8:
-    help: PVOutput v8 확장 필드용 센서.
+    help: "PVOutput의 확장 필드 v8를 채우는 소스입니다. 센서 클래스 이름, 'sensor.' 접두사 없는 엔터티 ID, 직접 MQTT 토픽(또는 mqtt:<topic>), 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않았거나 기부 상태가 유효하지 않으면 이 필드는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
-    help: PVOutput v9 확장 필드용 센서.
+    help: "PVOutput의 확장 필드 v9를 채우는 소스입니다. 센서 클래스 이름, 'sensor.' 접두사 없는 엔터티 ID, 직접 MQTT 토픽(또는 mqtt:<topic>), 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않았거나 기부 상태가 유효하지 않으면 이 필드는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: PVOutput 수입 데이터 전송 활성화.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -1876,7 +1876,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID:
     help: PVOutput 시스템 ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
-    help: PVOutput 온도 데이터용 MQTT 토픽.
+    help: "PVOutput로 전송할 현재 온도 소스입니다. 직접 MQTT 토픽(또는 mqtt:<topic>) 또는 Home Assistant 센서 엔터티 ID(sensor.<id> 또는 ha:sensor.<id>, 애드온에서만)를 지정할 수 있습니다. 지정하지 않으면 온도는 PVOutput로 전송되지 않습니다."
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "PVOutput 전압 값 소스. 기본값: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

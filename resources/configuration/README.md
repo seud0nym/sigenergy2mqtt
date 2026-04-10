@@ -1233,10 +1233,26 @@ From releases after 2026.1.5, the sensor may be specified as a regular expressio
 When using the environment variable, the value is a JSON string containing the sensor overrides. For example:
 
 ```json
-{"PlantConsumedPower": {"debug-logging": true, "unit-of-measurement": "kW", "gain": 1000, "precision": 2}}
+{"_0_inverter_1_pv2":{"publishable":false},"_si_":{"publishable":false},"_smart_load_":{"publishable":false},"PlantConsumedPower":{"debug-logging":true,"unit-of-measurement":"kW","gain":1000,"precision":2}}
 ```
 
-For each sensor, you can specify one or more of the following options:
+For each sensor specifier, you can specify one or more of the following options:
+
+| Option | Description |
+|--------|-------------|
+| debug-logging | If true, then debug messages will be logged when log-level is set to DEBUG. |
+| gain | The Sigenergy Modbus Protocol defines a gain to be applied to the raw value read from the interface. e.g. an energy register may have a gain of 1000 to be expressed in kWh. If the gain is over-ridden, you must also over-ride the unit-of-measurement with a correct, corresponding unit. |
+| icon | Specify a different icon for the sensor. |
+| max-failures | The maximum number of failures before attempts to read the state are tapered off. |
+| max-failures-retry-interval | After max-failures are reached, this option specifies how long (in seconds) to wait before retrying. The default is to not retry. If specified, this interval will increase by the same amount after each subsequent failure above max-failures. |
+| precision | Specify the default display precision (number of decimal places) for this sensor. |
+| publishable | If false, the sensor will not be published to MQTT and will not appear in Home Assistant at all. |
+| publish-raw | If true, the raw state will be published in addition to the state with gain and precision applied. The raw state topic is NOT included in Home Assistant discovery. Ignored if the sensor is not publishable. |
+| sanity-check-max-value | Sets a maximum allowable value for this sensor to allow anomalous readings to be ignored. This value must be a RAW value read from, for example, the Modbus interface, BEFORE the gain is applied. |
+| sanity-check-min-value | Sets a minimum allowable value for this sensor to allow anomalous readings to be ignored. This value must be a RAW value read from, for example, the Modbus interface, BEFORE the gain is applied. |
+| sanity-check-delta | If true, the sanity check will be applied to the change in value since the last reading, rather than the value itself. This is useful for sensors that are expected to change rapidly, such as power sensors. |
+| scan-interval | Change the default scan interval in seconds at which the state of this sensor is read. |
+| unit-of-measurement | Change the unit of this sensor. Used in conjunction with gain. |
 
 <a id="opt_sensor_overrides_debug_logging"></a>
 ### Debug Logging
