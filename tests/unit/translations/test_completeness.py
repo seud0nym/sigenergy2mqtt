@@ -220,7 +220,7 @@ def prune_empty_dicts(d):
 
 def test_en_yaml_completeness():
     """Verify that en.yaml contains all translatable strings found in the codebase."""
-    package_dir = Path(__file__).parent.parent.parent / "sigenergy2mqtt"
+    package_dir = Path(__file__).parent.parent.parent.parent / "sigenergy2mqtt"
     en_yaml_path = package_dir / "translations" / "en.yaml"
 
     assert en_yaml_path.exists(), "en.yaml does not exist"
@@ -308,7 +308,7 @@ class CLIHelpExtractor(ast.NodeVisitor):
 
 def test_cli_translations_completeness():
     """Verify that en.yaml contains all CLI help texts from config/cli.py."""
-    package_dir = Path(__file__).parent.parent.parent / "sigenergy2mqtt"
+    package_dir = Path(__file__).parent.parent.parent.parent / "sigenergy2mqtt"
     en_yaml_path = package_dir / "translations" / "en.yaml"
     config_cli_path = package_dir / "config" / "cli.py"
 
@@ -339,7 +339,7 @@ def test_cli_translations_completeness():
 
 def test_translations_are_valid_yaml():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    translations_dir = os.path.normpath(os.path.join(base_dir, "../../sigenergy2mqtt/translations"))
+    translations_dir = os.path.normpath(os.path.join(base_dir, "../../../sigenergy2mqtt/translations"))
     files = glob.glob(os.path.join(translations_dir, "*.yaml"))
 
     assert len(files) > 0, f"No translation files found in {translations_dir}"

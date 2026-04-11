@@ -10,7 +10,7 @@ except ImportError:
     pytest.skip("jsonschema not installed", allow_module_level=True)
 
 # Find paths relative to the project root
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 SCHEMA_PATH = os.path.join(PROJECT_ROOT, "resources/configuration/sigenergy2mqtt.schema.yaml")
 SAMPLE_CONFIG_PATH = os.path.join(PROJECT_ROOT, "resources/configuration/sigenergy2mqtt.yaml")
 

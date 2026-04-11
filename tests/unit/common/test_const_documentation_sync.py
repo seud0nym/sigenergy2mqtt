@@ -11,7 +11,7 @@ def test_constants_in_documentation():
     all_constants = [name for name in dir(const) if name.startswith("SIGENERGY2MQTT_") and isinstance(getattr(const, name), str)]
 
     # Define paths to documentation files
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     env_md_path = os.path.join(project_root, "resources", "configuration", "ENV.md")
     readme_md_path = os.path.join(project_root, "resources", "configuration", "README.md")
 
