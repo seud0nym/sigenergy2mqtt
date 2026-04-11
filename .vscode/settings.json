@@ -137,7 +137,7 @@
     "evenBetterToml.formatter.reorderInlineTables": true,
     "evenBetterToml.formatter.reorderKeys": true,
     "python.analysis.diagnosticMode": "workspace",
-    "python.defaultInterpreterPath": ".venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.languageServer": "None",
     "python.pyrefly.displayTypeErrors": "force-on",
     "python.terminal.activateEnvironment": true,
