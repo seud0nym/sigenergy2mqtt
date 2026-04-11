@@ -264,7 +264,7 @@ class TestPublishAttributes:
         s = self._sensor_with_attrs("pa_clean")
         mqtt = _mqtt_mock()
         s.publish_attributes(mqtt, clean=True)
-        mqtt.publish.assert_called_with("test/attributes", None, qos=0, retain=True)
+        mqtt.publish.assert_called_with("test/attributes", b"", qos=0, retain=True)
 
     def test_publish_attributes_clean_with_debug(self):
         """clean=True with debug_logging=True covers debug branch."""
@@ -464,7 +464,7 @@ class TestGetDiscovery:
         cfg.home_assistant.enabled = False
         with _swap_active_config(cfg):
             s.get_discovery(mqtt)
-        mqtt.publish.assert_called_with("test/attributes", None, qos=0, retain=False)
+        mqtt.publish.assert_called_with("test/attributes", b"", qos=0, retain=False)
 
     def test_get_discovery_clean_mode_clears_all(self, tmp_path):
         """In clean mode, components dict is empty."""
