@@ -149,31 +149,13 @@ def test_restore_state_branches(caplog):
     st._name = MagicMock()
     st._name.__str__.return_value = "<MagicMock"
 
-    with patch("sigenergy2mqtt.pvoutput.service_topics.Path") as mock_path:
-        mock_file = MagicMock()
-        mock_path.return_value = mock_file
-        mock_obsolete = MagicMock()
-        mock_obsolete.is_file.return_value = True
-        mock_file.is_file.return_value = False
-
-        mocks = {}
-
-        def side_effect(*args):
-            arg_str = str(args[0]) if args else ""
-            if arg_str not in mocks:
-                m = MagicMock()
-                # If this is the peak power request, return mock_obsolete when divided
-                m.__truediv__.side_effect = lambda x: mock_obsolete if "peak_power" in (arg_str + str(x)).lower() else mock_file
-                m.is_file.return_value = False
-                mock_file.is_file.return_value = False
-                mock_file.__truediv__.return_value.is_file.return_value = False
-                m.is_file.return_value = False
-                mocks[arg_str] = m
-            return mocks[arg_str]
-
-        mock_path.side_effect = side_effect
+    # Success branch
+    valid_json = '{"t1": {"topic": "t1", "gain": 1.0, "state": 12.3, "timestamp": [2024, 1, 1, 0, 0, 0, 0, 0, 0]}}'
+    with patch("sigenergy2mqtt.pvoutput.service_topics.state_store") as mock_ss:
+        mock_ss.load_sync.return_value = valid_json
         st.restore_state(Topic("t1"))
-        assert mock_obsolete.rename.called
+        assert st["t1"].state == 12.3
+        assert "Restored <MagicMock topic t1" in caplog.text
 
     # JSON error
     with patch("sigenergy2mqtt.pvoutput.service_topics.state_store") as mock_ss:
