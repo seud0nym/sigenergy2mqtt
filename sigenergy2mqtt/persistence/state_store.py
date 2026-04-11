@@ -44,7 +44,7 @@ import time
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
@@ -63,7 +63,7 @@ _PAYLOAD_TS_KEY = "ts"
 _PAYLOAD_VER_KEY = "ver"
 
 
-class Category(str, Enum):
+class Category(StrEnum):
     SENSOR = "sensor"
     PVOUTPUT = "pvoutput"
     CONFIG = "config"
@@ -513,8 +513,6 @@ class StateStore:
             stale_after: Unused on save; present for API symmetry with :meth:`load`.
             debug:       If False, suppresses debug logging for this operation.
         """
-        if isinstance(category, Category):
-            category = category.value
         if not self._initialised or self._executor is None:
             if debug:
                 logging.debug(f"StateStore.save called before initialise — skipping {category}/{key}")
@@ -551,9 +549,6 @@ class StateStore:
         if not self._initialised or self._disk is None:
             return None
 
-        if isinstance(category, Category):
-            category = category.value
-
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             self._executor,
@@ -573,8 +568,6 @@ class StateStore:
         """
         if not self._initialised or self._executor is None:
             return
-        if isinstance(category, Category):
-            category = category.value
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key, debug)
 
