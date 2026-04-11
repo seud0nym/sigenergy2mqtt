@@ -1257,6 +1257,7 @@ class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInve
 class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, address: int, smart_load_index: int):
         assert 1 <= smart_load_index <= 24, "smart_load_index must be between 1 and 24"
+        self.smart_load_index = smart_load_index
         super().__init__(
             name=f"Smart Load {smart_load_index:02} Total Consumption",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_smart_load_{smart_load_index:02}_total_consumption",
@@ -1281,6 +1282,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
 class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, address: int, smart_load_index: int):
         assert 1 <= smart_load_index <= 24, "smart_load_index must be between 1 and 24"
+        self.smart_load_index = smart_load_index
         super().__init__(
             name=f"Smart Load {smart_load_index:02} Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_smart_load_{smart_load_index:02}_power",

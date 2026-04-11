@@ -268,6 +268,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             if phase:
                 suffix_parts.append(f"phase={phase}")
 
+        if hasattr(self, "smart_load_index"):
+            suffix_parts.append(f"idx={getattr(self, 'smart_load_index')}")
+
         return f"{self.__class__.__name__}[{','.join(suffix_parts)}]"
 
     def refresh_log_identity(self) -> None:
@@ -684,7 +687,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         # Clear retained attributes
         if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
-            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=0, retain=False)
+            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=0, retain=False)
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
@@ -858,7 +861,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return published
 
-    def _publish_message(self, mqtt_client: mqtt.Client, topic: str, payload: str | None, qos: int = 0, retain: bool = False, timeout: float | None = 0.5) -> bool:
+    def _publish_message(self, mqtt_client: mqtt.Client, topic: str, payload: bytes | str, qos: int = 0, retain: bool = False, timeout: float | None = 0.5) -> bool:
         """Publish a message to MQTT.
 
         Args:
@@ -979,7 +982,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logging.debug(f"{self.log_identity} cleaning attributes")
 
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), None, qos=0, retain=True)
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=0, retain=True)
 
     def _publish_current_attributes(self, mqtt_client: mqtt.Client, **kwargs) -> None:
         """Publish current sensor attributes.
