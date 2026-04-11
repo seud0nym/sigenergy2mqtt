@@ -125,8 +125,8 @@ class _DiskBackend:
         if debug:
             logging.debug(f"DiskBackend.save {category}/{key}")
 
-    def load(self, category: str, key: str, debug: bool = True) -> tuple[str, int] | None:
-        """Read and return ``(value, ts)`` from disk, or ``None`` if absent.
+    def load(self, category: str, key: str, debug: bool = True) -> tuple[str, int, bool, bool] | None:
+        """Read and return ``(value, ts, was_legacy, found_in_root)`` from disk, or ``None`` if absent.
 
         Legacy files containing raw (non-JSON-envelope) content are migrated
         automatically on first read.  Legacy files from the root state directory
@@ -152,30 +152,14 @@ class _DiskBackend:
                 return None
             value, ts, was_legacy = result
 
-            # We migrate if:
-            # 1. The content was legacy (non-envelope)
-            # 2. OR the file was picked up from the root directory instead of the category dir.
-            if was_legacy or found_in_root:
-                if debug:
-                    logging.debug(f"DiskBackend.load migrating legacy file {category}/{key}")
-                self.save(category, key, value, debug=debug)
-
-                # If we've successfully migrated it from the root, remove the old one.
-                if found_in_root:
-                    try:
-                        path.unlink()
-                        if debug:
-                            logging.debug(f"DiskBackend.load deleted migrated root file {key}")
-                    except OSError as exc:
-                        logging.warning(f"DiskBackend.load failed to delete migrated root file {key}: {exc}")
-
-            return value, ts
+            return value, ts, was_legacy, found_in_root
         except OSError as exc:
             logging.warning(f"DiskBackend.load failed for {category}/{key}: {exc}")
             return None
 
     def delete(self, category: str, key: str, debug: bool = True) -> None:
-        """Remove the state file for *category*/*key* if it exists."""
+        """Remove the state file for *category*/*key* if it exists, including legacy root positions."""
+        # Remove from the category subdirectory
         path = self._path_for(category, key)
         try:
             path.unlink(missing_ok=True)
@@ -183,6 +167,24 @@ class _DiskBackend:
                 logging.debug(f"DiskBackend.delete {category}/{key}")
         except OSError as exc:
             logging.warning(f"DiskBackend.delete failed for {category}/{key}: {exc}")
+
+        # Also remove from the legacy root state directory if present
+        root_path = self._state_path / key
+        if root_path.is_file():
+            try:
+                root_path.unlink()
+                if debug:
+                    logging.debug(f"DiskBackend.delete legacy root file {key}")
+            except OSError as exc:
+                logging.warning(f"DiskBackend.delete failed for legacy root file {key}: {exc}")
+
+    def delete_root_legacy(self, key: str) -> None:
+        """Explicitly remove a legacy file from the root state path."""
+        root_path = self._state_path / key
+        try:
+            root_path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     def all_keys(self) -> list[tuple[str, str]]:
         """Return all ``(category, key)`` pairs currently on disk."""
@@ -664,12 +666,15 @@ class StateStore:
             return False
         return True
 
-    def _load_from_backend(self, backend: str, category: str, key: str) -> tuple[str, int] | None:
+    def _load_from_backend(self, backend: str, category: str, key: str) -> tuple[str, int, bool, bool] | None:
         if backend == "disk":
             assert self._disk is not None
             return self._disk.load(category, key)
         elif backend == "mqtt" and self._mqtt_enabled:
-            return self._mqtt.load(category, key)
+            res = self._mqtt.load(category, key)
+            if res is not None:
+                value, ts = res
+                return value, ts, False, False
         return None
 
     def _save_sync_impl(self, category: str, key: str, value: str, debug: bool = True) -> None:
@@ -707,8 +712,15 @@ class StateStore:
         for backend in backends_primary_first:
             result = self._load_from_backend(backend, category, key)
             if result is not None:
-                value, ts = result
+                value, ts, was_legacy, found_in_root = result
                 if self._accept(value, ts, cutoff, validator, debug):
+                    if was_legacy or found_in_root:
+                        if debug:
+                            logging.debug(f"StateStore.load migrating legacy file {category}/{key}")
+                        self._save_sync_impl(category, key, value, debug=debug)
+                        if found_in_root:
+                            self._disk.delete_root_legacy(key)
+
                     if debug:
                         logging.debug(f"StateStore.load {category}/{key} from {backend} (ts={ts})")
                     return value

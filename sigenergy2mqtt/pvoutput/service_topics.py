@@ -10,7 +10,6 @@ import math
 import time
 from datetime import timedelta
 from enum import Flag, auto
-from pathlib import Path
 from typing import Any, cast
 
 import paho.mqtt.client as mqtt
@@ -370,29 +369,6 @@ class ServiceTopics(dict[str, Topic]):
 
         key = f"{sid}-{name}.state"
         self._persistence_key = key
-
-        # Legacy migration: move files from root to pvoutput/ category dir
-        legacy_path = Path(active_config.persistent_state_path) / key
-        category_dir = Path(active_config.persistent_state_path) / "pvoutput"
-        new_path = category_dir / key
-
-        if legacy_path.is_file() and not new_path.is_file():
-            try:
-                category_dir.mkdir(parents=True, exist_ok=True)
-                legacy_path.rename(new_path)
-                self._logger.info(f"{self._service.log_identity} Migrated legacy file {key} to pvoutput/ category")
-            except Exception as e:
-                self._logger.warning(f"{self._service.log_identity} Failed to migrate legacy file {key}: {e}")
-
-        # Migrate obsolete peak power state file
-        if self._value_key == OutputField.PEAK_POWER:
-            obsolete = Path(active_config.persistent_state_path) / "pvoutput_output-peak_power.state"
-            if obsolete.is_file() and not new_path.is_file():
-                try:
-                    category_dir.mkdir(parents=True, exist_ok=True)
-                    obsolete.rename(new_path)
-                except Exception:
-                    pass
 
         content = state_store.load_sync(Category.PVOUTPUT, key, stale_after=timedelta(hours=24), debug=active_config.pvoutput.log_level == logging.DEBUG)
         if content is not None:
