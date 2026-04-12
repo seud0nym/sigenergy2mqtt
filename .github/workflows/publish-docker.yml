@@ -148,7 +148,8 @@ jobs:
           push-to-registry: true
 
       - name: Print image digest
-        run: echo "Pushed digest: ${{ steps.docker_build.outputs.digest }}"
+        run: |
+          echo "Pushed digest: ${{ steps.docker_build.outputs.digest }}"
 
       - name: Summary
         run: |
