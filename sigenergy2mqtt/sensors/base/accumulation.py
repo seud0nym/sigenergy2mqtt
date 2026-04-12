@@ -88,7 +88,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         if uid.startswith("<MagicMock"):  # For testing
             uid = "mock_uid"
 
-        self._persistence_key: str = f"{_sanitize_path_component(uid)}.state"
+        self._state_persistence_key: str = f"{_sanitize_path_component(uid)}.state"
 
         # Load persisted state
         self._load_persisted_state()
@@ -97,21 +97,21 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
     def _load_persisted_state(self) -> None:
         """Load accumulated value from persistent storage."""
         try:
-            content = state_store.load_sync(Category.SENSOR, self._persistence_key, debug=self.debug_logging)
+            content = state_store.load_sync(Category.SENSOR, self._state_persistence_key, debug=self.debug_logging)
         except Exception as e:
             if isinstance(e, (OSError, RuntimeError)):
-                logging.warning(f"{self.log_identity} Failed to read state for {self._persistence_key}: {e}")
+                logging.warning(f"{self.log_identity} Failed to read state for {self._state_persistence_key}: {e}")
             else:
-                logging.error(f"{self.log_identity} Unexpected error reading state for {self._persistence_key}: {e}")
+                logging.error(f"{self.log_identity} Unexpected error reading state for {self._state_persistence_key}: {e}")
             return
 
         if content is not None:
             try:
                 self._current_total = float(content)
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Loaded current state for {self._persistence_key} ({self._current_total})")
+                    logging.debug(f"{self.log_identity} Loaded current state for {self._state_persistence_key} ({self._current_total})")
             except (ValueError, TypeError) as e:
-                logging.warning(f"{self.log_identity} Failed to parse persisted state for {self._persistence_key}: {e}")
+                logging.warning(f"{self.log_identity} Failed to parse persisted state for {self._state_persistence_key}: {e}")
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Get discovery components including reset control.
@@ -171,11 +171,11 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         """
         async with self._current_total_lock:
             try:
-                state_store.save_sync(Category.SENSOR, self._persistence_key, str(new_total), debug=self.debug_logging)
+                state_store.save_sync(Category.SENSOR, self._state_persistence_key, str(new_total), debug=self.debug_logging)
             except PermissionError as e:
-                logging.warning(f"{self.log_identity} Failed to persist state for {self._persistence_key}: {e}")
+                logging.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
             except Exception as e:
-                logging.error(f"{self.log_identity} Unexpected error persisting state for {self._persistence_key}: {e}")
+                logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
     async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
@@ -337,7 +337,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         if uid.startswith("<MagicMock"):
             uid = "mock_uid_atmidnight"
 
-        self._persistence_key = f"{_sanitize_path_component(uid)}.atmidnight"
+        self._midnight_persistence_key = f"{_sanitize_path_component(uid)}.atmidnight"
 
     def on_added_to_device(self) -> None:
         super().on_added_to_device()
@@ -347,29 +347,29 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
     def _load_midnight_state(self) -> None:
         """Load state at midnight if entry is from today."""
         try:
-            content = state_store.load_sync(Category.SENSOR, self._persistence_key, stale_after=timedelta(hours=24), debug=self.debug_logging)
+            content = state_store.load_sync(Category.SENSOR, self._midnight_persistence_key, stale_after=timedelta(hours=24), debug=self.debug_logging)
         except Exception as e:
-            logging.warning(f"{self.log_identity} Failed to read midnight state for {self._persistence_key}: {e}")
-            state_store.delete_sync(Category.SENSOR, self._persistence_key, debug=self.debug_logging)
+            logging.warning(f"{self.log_identity} Failed to read midnight state for {self._midnight_persistence_key}: {e}")
+            state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key, debug=self.debug_logging)
             return
 
         if content is None:
             # Ensure stale/missing files are cleared from disk
-            state_store.delete_sync(Category.SENSOR, self._persistence_key, debug=self.debug_logging)
+            state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key, debug=self.debug_logging)
             return
 
         try:
             value = float(content)
             if value <= 0.0:
-                logging.debug(f"{self.log_identity} Ignored negative midnight state for {self._persistence_key} ({value})")
-                state_store.delete_sync(Category.SENSOR, self._persistence_key, debug=self.debug_logging)
+                logging.debug(f"{self.log_identity} Ignored negative midnight state for {self._midnight_persistence_key} ({value})")
+                state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key, debug=self.debug_logging)
             else:
                 self._state_at_midnight = value
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Loaded midnight state for {self._persistence_key} ({self._state_at_midnight})")
+                    logging.debug(f"{self.log_identity} Loaded midnight state for {self._midnight_persistence_key} ({self._state_at_midnight})")
         except (ValueError, TypeError) as e:
-            logging.warning(f"{self.log_identity} Failed to parse midnight state for {self._persistence_key}: {e}")
-            state_store.delete_sync(Category.SENSOR, self._persistence_key, debug=self.debug_logging)
+            logging.warning(f"{self.log_identity} Failed to parse midnight state for {self._midnight_persistence_key}: {e}")
+            state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key, debug=self.debug_logging)
 
     async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
         """Persist state at midnight.
@@ -382,9 +382,9 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
         async with self._state_at_midnight_lock:
             try:
-                state_store.save_sync(Category.SENSOR, self._persistence_key, str(midnight_state), debug=self.debug_logging)
+                state_store.save_sync(Category.SENSOR, self._midnight_persistence_key, str(midnight_state), debug=self.debug_logging)
             except Exception as e:
-                logging.warning(f"{self.log_identity} Failed to update midnight state for {self._persistence_key}: {e}")
+                logging.warning(f"{self.log_identity} Failed to update midnight state for {self._midnight_persistence_key}: {e}")
 
             self._state_at_midnight = midnight_state
 
