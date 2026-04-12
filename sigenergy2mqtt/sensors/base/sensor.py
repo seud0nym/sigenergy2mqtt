@@ -764,8 +764,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         It will be invoked after the sensor overrides have been applied and
         MQTT topics configured.
 
-        Implementations should call `super().on_added_to_device()` if they override
-        this method.
+        Implementations should call :meth:`super().on_added_to_device()` if they
+        override this method.
 
         The default implementation does nothing.
         """

@@ -252,7 +252,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         """Set the rediscover flag.
 
         When set to True, the next completed poll cycle in SensorGroupPoller.run()
-        will call publish_discovery(). Logged at INFO when enabled, DEBUG when cleared.
+        will call :meth:`publish_discovery()`. Logged at INFO when enabled, DEBUG
+        when cleared.
 
         Args:
             value: Boolean flag value.
