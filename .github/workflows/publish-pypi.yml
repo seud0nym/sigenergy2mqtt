@@ -1,12 +1,14 @@
-name: Publish Python Package to PyPI
+name: Publish Python Package
 
 on:
   release:
-    # `published` fires for both stable releases and prereleases once they are published.
-    # Keeping this to `published` avoids duplicate runs that can happen when combining
-    # `published` and `prereleased` for the same prerelease publication.
     types: [published]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag to publish (defaults to latest tag)"
+        required: false
+        type: string
 
 concurrency:
   group: pypi-publish
@@ -21,32 +23,104 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine ref
+        id: ref
+        env:
+          INPUT_REF: ${{ github.event.inputs.ref }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${INPUT_REF:-$(git describe --tags --abbrev=0 2>/dev/null || echo "")}"
+            if [ -z "$TAG" ]; then
+              echo "No tags found and no ref provided"
+              exit 1
+            fi
+            echo "ref=$TAG" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout target ref
+        run: |
+          git fetch --tags --force
+          git checkout --force "${{ steps.ref.outputs.ref }}"
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+          cache: "pip"
 
       - name: Fix README links for PyPI
         run: |
-          REPO="https://github.com/seud0nym/sigenergy2mqtt/blob/${{ github.ref_name }}"
-          REPO_RAW="https://github.com/seud0nym/sigenergy2mqtt/raw/${{ github.ref_name }}"
-          sed -i "s|(\.\/|(${REPO}/|g" README.md
-          sed -i "s|(\.\./|(${REPO}/|g" README.md
-          sed -i "s|(resources/badges/|(${REPO_RAW}/resources/badges/|g" README.md
-          sed -i "s|(resources/|(${REPO}/resources/|g" README.md
+          REF="${{ steps.ref.outputs.ref }}"
+          REPO="https://github.com/${{ github.repository }}/blob/${REF}"
+          REPO_RAW="https://github.com/${{ github.repository }}/raw/${REF}"
 
-      - name: Build release distributions
+          # Rewrite ./ and ../ links only
+          sed -i -E 's|\]\((\./|\.\./)|]('"${REPO}"'/|g' README.md
+
+          # Rewrite resource paths safely (badges/ must come before resources/)
+          sed -i -E 's|\]\((resources/badges/)|]('"${REPO_RAW}"'/\1|g' README.md
+          sed -i -E 's|\]\((resources/)|]('"${REPO}"'/\1|g' README.md
+
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build
-          python -m build
+          python -m pip install --upgrade build twine
+
+      - name: Build release distributions
+        run: python -m build
+
+      - name: Verify distributions exist
+        run: |
+          ls -lah dist/
+          test -n "$(ls -A dist/)"
 
       - name: Check distributions
-        run: |
-          python -m pip install twine
-          twine check dist/*
+        run: twine check dist/*
 
+      - name: Verify version matches tag
+        run: |
+          TAG="${{ steps.ref.outputs.ref }}"
+          TAG="${TAG#v}"
+
+          VERSION=$(echo "import glob, zipfile, sys, tarfile
+wheels = glob.glob('dist/*.whl')
+data = None
+if wheels:
+    with zipfile.ZipFile(wheels[0]) as z:
+        name = next((n for n in z.namelist() if n.endswith('METADATA')), None)
+        if not name:
+            print('METADATA not found in wheel', file=sys.stderr)
+            sys.exit(1)
+        data = z.read(name).decode()
+else:
+    sdists = glob.glob('dist/*.tar.gz')
+    if not sdists:
+        print('No wheel or sdist found in dist/', file=sys.stderr)
+        sys.exit(1)
+    with tarfile.open(sdists[0]) as t:
+        pkg_info = next((m for m in t.getmembers() if m.name.endswith('PKG-INFO')), None)
+        if not pkg_info:
+            print('PKG-INFO not found in sdist', file=sys.stderr)
+            sys.exit(1)
+        data = t.extractfile(pkg_info).read().decode()
+for line in data.splitlines():
+    if line.startswith('Version:'):
+        print(line.split(': ', 1)[1])
+        break
+else:
+    print('Version field not found in metadata', file=sys.stderr)
+    sys.exit(1)" | python)
+
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "Version mismatch: package=$VERSION tag=$TAG"
+            exit 1
+          fi
+          echo "Version verified: $VERSION"
       - name: Upload distributions
         uses: actions/upload-artifact@v7
         with:
@@ -59,7 +133,6 @@ jobs:
       - release-build
 
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
 
     environment:
@@ -68,12 +141,18 @@ jobs:
 
     steps:
       - name: Retrieve release distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v7
         with:
           name: release-dists
           path: dist/
+
+      - name: Verify distributions exist
+        run: |
+          ls -lah dist/
+          test -n "$(ls -A dist/)"
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          # skip-existing intentionally omitted (fail loudly on partial uploads)

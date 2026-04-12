@@ -3,10 +3,23 @@ name: Publish Docker Images
 on:
   release:
     types: [published]
+
   workflow_dispatch:
-  # NOTE: When triggered via workflow_call, secrets must be passed explicitly
-  # by the caller. When triggered by release/workflow_dispatch, the job uses
-  # repository-level secrets with the same names.
+    inputs:
+      version:
+        description: "Tag to publish (defaults to latest tag)"
+        required: false
+        type: string
+      release_channel:
+        description: "Floating channel tag to apply"
+        required: true
+        type: choice
+        default: alpha
+        options:
+          - alpha
+          - beta
+          - stable
+
   workflow_call:
     secrets:
       DOCKER_HUB_TOKEN:
@@ -15,47 +28,71 @@ on:
         required: true
 
 concurrency:
-  group: publish-${{ github.ref }}
-  cancel-in-progress: false  # Queue rather than cancel in-flight publishes
+  group: publish-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   publish:
     name: Publish Docker Images
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     permissions:
       packages: write
       contents: read
-      id-token: write  # Required for provenance attestation
-      attestations: write # Required for actions/attest
+      id-token: write
+      attestations: write
+
+    env:
+      IMAGE_NAME: sigenergy2mqtt
 
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          fetch-tags: true
+          fetch-depth: 0
 
-      - name: Build release distribution
+      - name: Resolve version
+        id: version
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install build
-          python -m build
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          fi
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Unable to determine version (no git tags found)" >&2
+            exit 1
+          fi
+
+          echo "Resolved version: $VERSION"
+          echo "value=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
         with:
           images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/sigenergy2mqtt
-            ghcr.io/${{ github.repository_owner }}/sigenergy2mqtt
+            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
+            # Release events: version tag from git ref
             type=ref,event=tag
-            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
-            type=raw,value=beta,enable=${{ github.event.release.prerelease }}
+
+            # Release events: explicit tag fallback (hardening)
+            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+
+            # Release events: floating tags
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
+            type=raw,value=beta,enable=${{ github.event_name == 'release' && github.event.release.prerelease }}
+
+            # Manual dispatch: version + channel
+            type=raw,value=${{ steps.version.outputs.value }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=${{ inputs.release_channel || '' }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -85,18 +122,36 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          provenance: true   # Attaches SLSA Build L2 provenance to the image manifest
-          sbom: true         # Attaches a Syft SBOM to the image manifest
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          provenance: true
+          sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Attest build provenance
+      - name: Attest build provenance (GHCR)
         uses: actions/attest@v4
         with:
-          subject-name: ghcr.io/${{ github.repository_owner }}/sigenergy2mqtt
+          subject-name: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
-          push-to-registry: true  # Stores attestation in GHCR alongside the image
+          push-to-registry: true
+
+      # Docker Hub attestation can be flaky; keep but don't fail build if it errors
+      - name: Attest build provenance (Docker Hub)
+        continue-on-error: true
+        uses: actions/attest@v4
+        with:
+          subject-name: index.docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.docker_build.outputs.digest }}
+          push-to-registry: true
 
       - name: Print image digest
-        run: 'echo "Pushed digest: ${{ steps.docker_build.outputs.digest }}"'
+        run: echo "Pushed digest: ${{ steps.docker_build.outputs.digest }}"
+
+      - name: Summary
+        run: |
+          echo "### Docker Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: ${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Digest: ${{ steps.docker_build.outputs.digest }}" >> $GITHUB_STEP_SUMMARY

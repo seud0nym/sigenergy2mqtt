@@ -8,9 +8,18 @@ updates:
       time: "06:00"
       timezone: "Australia/Melbourne"
     groups:
-      all-actions:
+      # This group forces these two to always be updated together
+      artifact-actions:
+        patterns:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
+      # Everything else stays in the general group
+      all-other-actions:
         patterns:
           - "*"
+        exclude:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
 
   # Monitor Python dependencies (Hatch/pyproject.toml)
   - package-ecosystem: "pip"
