@@ -64,9 +64,10 @@ _PAYLOAD_VER_KEY = "ver"
 
 
 class Category(StrEnum):
-    SENSOR = "sensor"
-    PVOUTPUT = "pvoutput"
+    _ROOT = "__root__"
     CONFIG = "config"
+    PVOUTPUT = "pvoutput"
+    SENSOR = "sensor"
 
 
 def _make_envelope(value: str, version: str) -> str:
@@ -111,12 +112,12 @@ class _DiskBackend:
         self._state_path = state_path
         self._version = version
 
-    def _path_for(self, category: str, key: str) -> Path:
-        if ".." in category or ".." in key:
+    def _path_for(self, category: Category | str, key: str) -> Path:
+        if ".." in str(category) or ".." in key:
             raise ValueError(f"Invalid category or key: {category}/{key}")
-        return self._state_path / category / key
+        return self._state_path / str(category) / key
 
-    def save(self, category: str, key: str, value: str, debug: bool = True) -> None:
+    def save(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
         """Write *value* to disk under ``{state_path}/{category}/{key}``."""
         path = self._path_for(category, key)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -125,7 +126,7 @@ class _DiskBackend:
         if debug:
             logging.debug(f"DiskBackend.save {category}/{key}")
 
-    def load(self, category: str, key: str, debug: bool = True) -> tuple[str, int, bool, bool] | None:
+    def load(self, category: Category | str, key: str, debug: bool = False) -> tuple[str, int, bool, bool] | None:
         """Read and return ``(value, ts, was_legacy, found_in_root)`` from disk, or ``None`` if absent.
 
         Legacy files containing raw (non-JSON-envelope) content are migrated
@@ -157,7 +158,7 @@ class _DiskBackend:
             logging.warning(f"DiskBackend.load failed for {category}/{key}: {exc}")
             return None
 
-    def delete(self, category: str, key: str, debug: bool = True) -> None:
+    def delete(self, category: Category | str, key: str, debug: bool = False) -> None:
         """Remove the state file for *category*/*key* if it exists, including legacy root positions."""
         # Remove from the category subdirectory
         path = self._path_for(category, key)
@@ -186,22 +187,27 @@ class _DiskBackend:
         except OSError:
             pass
 
-    def all_keys(self) -> list[tuple[str, str]]:
+    def all_keys(self) -> list[tuple[Category | str, str]]:
         """Return all ``(category, key)`` pairs currently on disk."""
-        results: list[tuple[str, str]] = []
+        results: list[tuple[Category | str, str]] = []
         if not self._state_path.is_dir():
             return results
 
         # Include legacy root files
         for file in self._state_path.iterdir():
             if file.is_file():
-                results.append(("__root__", file.name))
+                results.append((Category._ROOT, file.name))
 
         for category_dir in self._state_path.iterdir():
             if category_dir.is_dir():
+                name = category_dir.name
+                try:
+                    category = Category(name)
+                except ValueError:
+                    category = name
                 for file in category_dir.iterdir():
                     if file.is_file():
-                        results.append((category_dir.name, file.name))
+                        results.append((category, file.name))
 
         return results
 
@@ -216,7 +222,7 @@ class _MqttBackend:
 
     def __init__(self) -> None:
         # Maps (category, key) -> (value, ts)
-        self._cache: dict[tuple[str, str], tuple[str, int]] = {}
+        self._cache: dict[tuple[Category | str, str], tuple[str, int]] = {}
         self._lock = threading.Lock()
 
         self._retry_queue = deque()
@@ -252,7 +258,7 @@ class _MqttBackend:
             except Exception:
                 pass
 
-    def _topic_to_key(self, topic: str) -> tuple[str, str] | None:
+    def _topic_to_key(self, topic: str) -> tuple[Category | str, str] | None:
         """Convert an MQTT topic to ``(category, key)`` or ``None`` if not ours."""
         if not topic.startswith(self._prefix + "/"):
             return None
@@ -263,10 +269,13 @@ class _MqttBackend:
         category, key = parts
         if key == _SENTINEL_SUFFIX:
             return None  # ignore the sentinel itself
-        return category, key
+        try:
+            return Category(category), key
+        except ValueError:
+            return category, key
 
-    def _key_to_topic(self, category: str, key: str) -> str:
-        return f"{self._prefix}/{category}/{key}"
+    def _key_to_topic(self, category: Category | str, key: str) -> str:
+        return f"{self._prefix}/{str(category)}/{key}"
 
     def on_message(self, client: mqtt.Client, userdata: object, msg: mqtt.MQTTMessage) -> None:
         """Handle an incoming MQTT message — either retained state or the sentinel."""
@@ -295,15 +304,15 @@ class _MqttBackend:
             from sigenergy2mqtt.config import active_config
 
             show = True
-            if category == Category.SENSOR.value:
+            if category == Category.SENSOR:
                 show = active_config.sensor_debug_logging
-            elif category == Category.PVOUTPUT.value:
-                show = active_config.pvoutput.log_level == logging.DEBUG
+            elif category == Category.PVOUTPUT:
+                show = active_config.pvoutput.update_debug_logging
 
             if show:
                 logging.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
 
-    def publish(self, client: mqtt.Client, category: str, key: str, value: str, debug: bool = True, _attempt: int = 0) -> None:
+    def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, debug: bool = False, _attempt: int = 0) -> None:
         """Publish a retained state message."""
         self._drain_retries(client)
         topic = self._key_to_topic(category, key)
@@ -318,7 +327,7 @@ class _MqttBackend:
         if debug:
             logging.debug(f"MqttBackend.publish {category}/{key}")
 
-    def publish_delete(self, client: mqtt.Client, category: str, key: str, debug: bool = True, _attempt: int = 0) -> None:
+    def publish_delete(self, client: mqtt.Client, category: Category | str, key: str, debug: bool = False, _attempt: int = 0) -> None:
         """Clear a retained message by publishing an empty payload."""
         self._drain_retries(client)
         topic = self._key_to_topic(category, key)
@@ -336,12 +345,12 @@ class _MqttBackend:
         if debug:
             logging.debug(f"MqttBackend.publish_delete {category}/{key}")
 
-    def load(self, category: str, key: str) -> tuple[str, int] | None:
+    def load(self, category: Category | str, key: str) -> tuple[str, int] | None:
         """Return cached ``(value, ts)`` or ``None``."""
         with self._lock:
             return self._cache.get((category, key))
 
-    def all_known_keys(self) -> list[tuple[str, str]]:
+    def all_known_keys(self) -> list[tuple[Category | str, str]]:
         """All ``(category, key)`` pairs currently held in the in-memory cache."""
         with self._lock:
             return list(self._cache.keys())
@@ -497,12 +506,12 @@ class StateStore:
 
     async def save(
         self,
-        category: str,
+        category: Category | str,
         key: str,
         value: str,
         *,
         stale_after: timedelta | None = None,
-        debug: bool = True,
+        debug: bool = False,
     ) -> None:
         """Persist *value* to both disk and MQTT (fire-and-forget via executor).
 
@@ -522,12 +531,12 @@ class StateStore:
 
     async def load(
         self,
-        category: str,
+        category: Category | str,
         key: str,
         *,
         stale_after: timedelta | None = None,
         validator: Callable[[str], bool] | None = None,
-        debug: bool = True,
+        debug: bool = False,
     ) -> str | None:
         """Load a persisted value, applying staleness check and optional validator.
 
@@ -560,7 +569,7 @@ class StateStore:
             debug,
         )
 
-    async def delete(self, category: str, key: str, debug: bool = True) -> None:
+    async def delete(self, category: Category | str, key: str, debug: bool = False) -> None:
         """Remove *category*/*key* from both backends.
 
         MQTT removal is achieved by publishing an empty retained message,
@@ -587,7 +596,7 @@ class StateStore:
     # Synchronous wrappers (for use from Config.reload() sync context)
     # ------------------------------------------------------------------
 
-    def save_sync(self, category: str, key: str, value: str, debug: bool = True) -> None:
+    def save_sync(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
         """Synchronous wrapper for :meth:`save`.
 
         When called from a synchronous context while an asyncio event loop is
@@ -609,12 +618,12 @@ class StateStore:
 
     def load_sync(
         self,
-        category: str,
+        category: Category | str,
         key: str,
         *,
         stale_after: timedelta | None = None,
         validator: Callable[[str], bool] | None = None,
-        debug: bool = True,
+        debug: bool = False,
     ) -> str | None:
         """Synchronous wrapper for :meth:`load`.
 
@@ -634,7 +643,7 @@ class StateStore:
         else:
             return self._load_sync_impl(category, key, stale_after, validator, debug)
 
-    def delete_sync(self, category: str, key: str, debug: bool = True) -> None:
+    def delete_sync(self, category: Category | str, key: str, debug: bool = False) -> None:
         """Synchronous wrapper for :meth:`delete`."""
         if not self._initialised or self._executor is None:
             return
@@ -659,7 +668,7 @@ class StateStore:
             return False
         return True
 
-    def _load_from_backend(self, backend: str, category: str, key: str) -> tuple[str, int, bool, bool] | None:
+    def _load_from_backend(self, backend: str, category: Category | str, key: str) -> tuple[str, int, bool, bool] | None:
         if backend == "disk":
             assert self._disk is not None
             return self._disk.load(category, key)
@@ -670,7 +679,7 @@ class StateStore:
                 return value, ts, False, False
         return None
 
-    def _save_sync_impl(self, category: str, key: str, value: str, debug: bool = True) -> None:
+    def _save_sync_impl(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
         """Write to disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         try:
@@ -686,11 +695,11 @@ class StateStore:
 
     def _load_sync_impl(
         self,
-        category: str,
+        category: Category | str,
         key: str,
         stale_after: timedelta | None,
         validator: Callable[[str], bool] | None,
-        debug: bool = True,
+        debug: bool = False,
     ) -> str | None:
         """Read from backends in priority order; called from the ThreadPoolExecutor."""
         assert self._disk is not None
@@ -720,7 +729,7 @@ class StateStore:
 
         return None
 
-    def _delete_sync_impl(self, category: str, key: str, debug: bool = True) -> None:
+    def _delete_sync_impl(self, category: Category | str, key: str, debug: bool = False) -> None:
         """Remove from disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         self._disk.delete(category, key, debug=debug)

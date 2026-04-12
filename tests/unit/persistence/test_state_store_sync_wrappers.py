@@ -66,7 +66,7 @@ def test_sync_wrappers_no_running_loop(temp_state_dir, mock_persistence_config):
     store._executor = ThreadPoolExecutor(max_workers=1)
 
     # Calling save_sync without async context
-    store.save_sync("test", "key", "val")
+    store.save_sync("test", "key", "val", debug=True)
     store._disk.save.assert_called_with("test", "key", "val", debug=True)
 
     # Calling load_sync without async context
@@ -74,7 +74,7 @@ def test_sync_wrappers_no_running_loop(temp_state_dir, mock_persistence_config):
     assert val == "val"
 
     # Calling delete_sync without async context
-    store.delete_sync("test", "key")
+    store.delete_sync("test", "key", debug=True)
     store._disk.delete.assert_called_with("test", "key", debug=True)
 
 
