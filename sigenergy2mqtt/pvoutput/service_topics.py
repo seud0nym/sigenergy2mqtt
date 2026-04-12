@@ -439,7 +439,7 @@ class ServiceTopics(dict[str, Topic]):
                     self[topic].timestamp = time.localtime()
                     if self._persistence_key and ((self._always_persist and state_was != state) or (self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
                         payload = json.dumps(self, default=Topic.json_encoder)
-                        state_store.save_sync(Category.PVOUTPUT, self._persistence_key, payload, debug=active_config.pvoutput.log_level == logging.DEBUG)
+                        state_store.save_sync(Category.PVOUTPUT, self._persistence_key, payload, debug=active_config.pvoutput.update_debug_logging)
             elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self.calculation:
                 ts = self[topic].timestamp
                 if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore
