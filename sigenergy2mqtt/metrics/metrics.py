@@ -151,6 +151,46 @@ class Metrics:
     """Total number of data points written to InfluxDB across all batches."""
 
     # ------------------------------------------------------------------
+    # StateStore metrics
+    # ------------------------------------------------------------------
+
+    sigenergy2mqtt_state_store_saves: int = 0
+    """Total number of StateStore save calls."""
+
+    sigenergy2mqtt_state_store_save_errors: int = 0
+    """Number of StateStore save errors."""
+
+    sigenergy2mqtt_state_store_save_total: float = 0.0
+    """Cumulative elapsed time of all StateStore saves, in milliseconds."""
+
+    sigenergy2mqtt_state_store_save_max: float = 0.0
+    """Maximum single StateStore save duration, in milliseconds."""
+
+    sigenergy2mqtt_state_store_save_mean: float = 0.0
+    """Mean StateStore save duration per save call, in milliseconds."""
+
+    sigenergy2mqtt_state_store_save_min: float = float("inf")
+    """Minimum single StateStore save duration, in milliseconds."""
+
+    sigenergy2mqtt_state_store_loads: int = 0
+    """Total number of StateStore load calls."""
+
+    sigenergy2mqtt_state_store_load_hits: int = 0
+    """Number of StateStore load calls that returned a value."""
+
+    sigenergy2mqtt_state_store_load_hit_percentage: float = 0.0
+    """Percentage of StateStore load calls that returned a value."""
+
+    sigenergy2mqtt_state_store_load_errors: int = 0
+    """Number of StateStore load errors."""
+
+    sigenergy2mqtt_state_store_deletes: int = 0
+    """Total number of StateStore delete calls."""
+
+    sigenergy2mqtt_state_store_delete_errors: int = 0
+    """Number of StateStore delete errors."""
+
+    # ------------------------------------------------------------------
     # Service identity
     # ------------------------------------------------------------------
 
@@ -536,6 +576,100 @@ class Metrics:
                 cls.sigenergy2mqtt_influxdb_rate_limit_waits += 1
 
             cls._update_with_lock(_operation, "influxdb rate limit metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def state_store_save(cls, seconds: float) -> None:
+        """
+        Record a completed StateStore save operation.
+
+        Args:
+            seconds: Wall-clock duration of the operation in seconds.
+        """
+
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
+                cls.sigenergy2mqtt_state_store_saves += 1
+                cls.sigenergy2mqtt_state_store_save_total += elapsed
+                cls.sigenergy2mqtt_state_store_save_max = max(cls.sigenergy2mqtt_state_store_save_max, elapsed)
+                cls.sigenergy2mqtt_state_store_save_min = min(cls.sigenergy2mqtt_state_store_save_min, elapsed)
+                cls.sigenergy2mqtt_state_store_save_mean = cls.sigenergy2mqtt_state_store_save_total / cls.sigenergy2mqtt_state_store_saves if cls.sigenergy2mqtt_state_store_saves > 0 else 0.0
+
+            cls._update_with_lock(_operation, "state store save metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def state_store_save_error(cls) -> None:
+        """Increment the StateStore save error counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_state_store_save_errors += 1
+
+            cls._update_with_lock(_operation, "state store save error metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def state_store_load(cls, hit: bool) -> None:
+        """Record a completed StateStore load call.
+
+        Args:
+            hit: ``True`` when the load returned a value; ``False`` when it
+                 returned ``None`` (miss, stale, or invalid).
+        """
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_state_store_loads += 1
+                if hit:
+                    cls.sigenergy2mqtt_state_store_load_hits += 1
+                cls.sigenergy2mqtt_state_store_load_hit_percentage = (
+                    round(cls.sigenergy2mqtt_state_store_load_hits / cls.sigenergy2mqtt_state_store_loads * 100.0, 2)
+                    if cls.sigenergy2mqtt_state_store_loads > 0
+                    else 0.0
+                )
+
+            cls._update_with_lock(_operation, "state store load metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def state_store_load_error(cls) -> None:
+        """Increment the StateStore load error counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_state_store_load_errors += 1
+
+            cls._update_with_lock(_operation, "state store load error metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def state_store_delete(cls) -> None:
+        """Record a completed StateStore delete call."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_state_store_deletes += 1
+
+            cls._update_with_lock(_operation, "state store delete metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def state_store_delete_error(cls) -> None:
+        """Increment the StateStore delete error counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_state_store_delete_errors += 1
+
+            cls._update_with_lock(_operation, "state store delete error metrics collection")
 
         cls._submit(_update)
 

@@ -592,6 +592,191 @@ class InfluxDBThroughput(MetricsSensor):
 
 
 # =============================================================================
+# StateStore Metrics Sensors
+# =============================================================================
+
+
+class StateStoreSaves(MetricsSensor):
+    """Cumulative count of StateStore save operations."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Saves",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_saves",
+            object_id="sigenergy2mqtt_state_store_saves",
+            icon="mdi:content-save",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_saves)
+        return True
+
+
+class StateStoreSaveErrors(MetricsSensor):
+    """Cumulative count of StateStore save errors."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Save Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_errors",
+            object_id="sigenergy2mqtt_state_store_save_errors",
+            icon="mdi:content-save-alert",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_save_errors)
+        return True
+
+
+class StateStoreSaveMax(MetricsSensor):
+    """Maximum single StateStore save duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Save Max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_max",
+            object_id="sigenergy2mqtt_state_store_save_max",
+            unit="ms",
+            icon="mdi:timer-plus-outline",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_state_store_save_max
+        if value == float("inf"):
+            value = 0.0
+        self.set_latest_state(value)
+        return True
+
+
+class StateStoreSaveMean(MetricsSensor):
+    """Mean StateStore save duration per save call, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Save Mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_mean",
+            object_id="sigenergy2mqtt_state_store_save_mean",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_save_mean)
+        return True
+
+
+class StateStoreSaveMin(MetricsSensor):
+    """Minimum single StateStore save duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Save Min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_min",
+            object_id="sigenergy2mqtt_state_store_save_min",
+            unit="ms",
+            icon="mdi:timer-minus-outline",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_state_store_save_min
+        if value == float("inf"):
+            value = 0.0
+        self.set_latest_state(value)
+        return True
+
+
+class StateStoreLoads(MetricsSensor):
+    """Cumulative count of StateStore load operations."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Loads",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_loads",
+            object_id="sigenergy2mqtt_state_store_loads",
+            icon="mdi:folder-open-outline",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_loads)
+        return True
+
+
+class StateStoreLoadHitPercentage(MetricsSensor):
+    """Percentage of StateStore load calls that returned a value (cache/disk hit rate)."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Load Hit %",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_load_hit_percentage",
+            object_id="sigenergy2mqtt_state_store_load_hit_percentage",
+            unit=PERCENTAGE,
+            icon="mdi:percent",
+            precision=2,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_load_hit_percentage)
+        return True
+
+
+class StateStoreLoadErrors(MetricsSensor):
+    """Cumulative count of StateStore load errors."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Load Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_load_errors",
+            object_id="sigenergy2mqtt_state_store_load_errors",
+            icon="mdi:folder-alert-outline",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_load_errors)
+        return True
+
+
+class StateStoreDeletes(MetricsSensor):
+    """Cumulative count of StateStore delete operations."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Deletes",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_deletes",
+            object_id="sigenergy2mqtt_state_store_deletes",
+            icon="mdi:trash-can-outline",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_deletes)
+        return True
+
+
+class StateStoreDeleteErrors(MetricsSensor):
+    """Cumulative count of StateStore delete errors."""
+
+    def __init__(self):
+        super().__init__(
+            name="State Store Delete Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_delete_errors",
+            object_id="sigenergy2mqtt_state_store_delete_errors",
+            icon="mdi:delete-alert-outline",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_delete_errors)
+        return True
+
+
+# =============================================================================
 # Reset control
 # =============================================================================
 

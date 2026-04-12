@@ -679,19 +679,50 @@ class StateStore:
                 return value, ts, False, False
         return None
 
+    def _fire_metric(self, method_name: str, *args) -> None:
+        """Schedule a :class:`~sigenergy2mqtt.metrics.Metrics` coroutine from any thread.
+
+        Called from the ThreadPoolExecutor so we cannot ``await`` directly.
+        Instead we use :func:`asyncio.run_coroutine_threadsafe` to post the
+        coroutine back onto the owning event loop. The future is intentionally
+        dropped — metrics are fire-and-forget.
+        """
+        loop = self._loop
+        if loop is None or not loop.is_running():
+            return
+        try:
+            from sigenergy2mqtt.metrics import Metrics
+
+            coro_fn = getattr(Metrics, method_name, None)
+            if coro_fn is None:
+                return
+            asyncio.run_coroutine_threadsafe(coro_fn(*args), loop)
+        except Exception:
+            pass
+
     def _save_sync_impl(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
         """Write to disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
+        t0 = time.perf_counter()
+        error = False
         try:
             self._disk.save(category, key, value, debug=debug)
         except Exception as exc:
+            error = True
             logging.warning(f"StateStore: disk save failed for {category}/{key}: {exc}")
 
         if self._mqtt_enabled and self._client is not None:
             try:
                 self._mqtt.publish(self._client, category, key, value, debug=debug)
             except Exception as exc:
+                error = True
                 logging.warning(f"StateStore: MQTT publish failed for {category}/{key}: {exc}")
+
+        elapsed = time.perf_counter() - t0
+        if error:
+            self._fire_metric("state_store_save_error")
+        else:
+            self._fire_metric("state_store_save", elapsed)
 
     def _load_sync_impl(
         self,
@@ -725,20 +756,26 @@ class StateStore:
 
                     if debug:
                         logging.debug(f"StateStore.load {category}/{key} from {backend} (ts={ts})")
+                    self._fire_metric("state_store_load", True)
                     return value
 
+        self._fire_metric("state_store_load", False)
         return None
 
     def _delete_sync_impl(self, category: Category | str, key: str, debug: bool = False) -> None:
         """Remove from disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
+        error = False
         self._disk.delete(category, key, debug=debug)
 
         if self._mqtt_enabled and self._client is not None:
             try:
                 self._mqtt.publish_delete(self._client, category, key, debug=debug)
             except Exception as exc:
+                error = True
                 logging.warning(f"StateStore: MQTT delete failed for {category}/{key}: {exc}")
+
+        self._fire_metric("state_store_delete_error" if error else "state_store_delete")
 
     def _clean_all_sync_impl(self) -> None:
         """Clear all state from both backends; called from the ThreadPoolExecutor."""

@@ -59,6 +59,17 @@ class MetricsService(Device):
         self._add_read_sensor(sensors.MQTTPublishFailures())
         self._add_read_sensor(sensors.MQTTPhysicalPublishes())
 
+        self._add_read_sensor(sensors.StateStoreSaves())
+        self._add_read_sensor(sensors.StateStoreSaveErrors())
+        self._add_read_sensor(sensors.StateStoreSaveMax())
+        self._add_read_sensor(sensors.StateStoreSaveMean())
+        self._add_read_sensor(sensors.StateStoreSaveMin())
+        self._add_read_sensor(sensors.StateStoreLoads())
+        self._add_read_sensor(sensors.StateStoreLoadHitPercentage())
+        self._add_read_sensor(sensors.StateStoreLoadErrors())
+        self._add_read_sensor(sensors.StateStoreDeletes())
+        self._add_read_sensor(sensors.StateStoreDeleteErrors())
+
         self._add_read_sensor(sensors.Started())
         self._add_read_sensor(sensors.ProtocolVersion(protocol_version))
         self._add_read_sensor(sensors.ProtocolPublished(protocol_version))
