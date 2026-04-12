@@ -1641,6 +1641,26 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Hora de Inicio
+  StateStoreDeleteErrors:
+    name: Errores de Eliminación del Almacén de Estado
+  StateStoreDeletes:
+    name: Eliminaciones del Almacén de Estado
+  StateStoreLoadErrors:
+    name: Errores de Lectura del Almacén de Estado
+  StateStoreLoadHitPercentage:
+    name: Tasa de Aciertos de Lectura %
+  StateStoreLoads:
+    name: Lecturas del Almacén de Estado
+  StateStoreSaveErrors:
+    name: Errores de Escritura del Almacén de Estado
+  StateStoreSaveMax:
+    name: Escritura del Almacén de Estado Máx
+  StateStoreSaveMean:
+    name: Escritura del Almacén de Estado Media
+  StateStoreSaveMin:
+    name: Escritura del Almacén de Estado Mín
+  StateStoreSaves:
+    name: Escrituras del Almacén de Estado
   StatisticsInterfaceSensor:
     attributes:
       comment: Después de actualizar el firmware del dispositivo para soportar la nueva Interfaz de Estadísticas, los valores del registro se reiniciarán a 0 y comenzarán a contar de nuevo sin heredar datos históricos

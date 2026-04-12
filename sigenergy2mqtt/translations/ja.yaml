@@ -1641,6 +1641,26 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 起動時間
+  StateStoreDeleteErrors:
+    name: 状態ストア削除エラー
+  StateStoreDeletes:
+    name: 状態ストア削除数
+  StateStoreLoadErrors:
+    name: 状態ストア読み込みエラー
+  StateStoreLoadHitPercentage:
+    name: 状態ストア読み込みヒット率 %
+  StateStoreLoads:
+    name: 状態ストア読み込み数
+  StateStoreSaveErrors:
+    name: 状態ストア書き込みエラー
+  StateStoreSaveMax:
+    name: 状態ストア書き込み最大
+  StateStoreSaveMean:
+    name: 状態ストア書き込み平均
+  StateStoreSaveMin:
+    name: 状態ストア書き込み最小
+  StateStoreSaves:
+    name: 状態ストア書き込み数
   StatisticsInterfaceSensor:
     attributes:
       comment: 新しい統計インターフェースをサポートするためにデバイスファームウェアをアップグレードした後、レジスタ値は0にリセットされ、履歴データを継承せずに新たにカウントを開始します

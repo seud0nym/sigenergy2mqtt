@@ -1641,6 +1641,26 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 시작 시간
+  StateStoreDeleteErrors:
+    name: 상태 저장소 삭제 오류
+  StateStoreDeletes:
+    name: 상태 저장소 삭제 수
+  StateStoreLoadErrors:
+    name: 상태 저장소 읽기 오류
+  StateStoreLoadHitPercentage:
+    name: 상태 저장소 읽기 적중률 %
+  StateStoreLoads:
+    name: 상태 저장소 읽기 수
+  StateStoreSaveErrors:
+    name: 상태 저장소 쓰기 오류
+  StateStoreSaveMax:
+    name: 상태 저장소 쓰기 최대
+  StateStoreSaveMean:
+    name: 상태 저장소 쓰기 평균
+  StateStoreSaveMin:
+    name: 상태 저장소 쓰기 최소
+  StateStoreSaves:
+    name: 상태 저장소 쓰기 수
   StatisticsInterfaceSensor:
     attributes:
       comment: 새로운 통계 인터페이스를 지원하도록 장치 펌웨어를 업그레이드한 후 레지스터 값이 0으로 재설정되고 과거 데이터를 상속하지 않고 새로 계수를 시작함

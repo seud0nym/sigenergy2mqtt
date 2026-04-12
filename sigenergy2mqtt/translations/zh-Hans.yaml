@@ -1641,6 +1641,26 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 启动时间
+  StateStoreDeleteErrors:
+    name: 状态存储删除错误
+  StateStoreDeletes:
+    name: 状态存储删除次数
+  StateStoreLoadErrors:
+    name: 状态存储读取错误
+  StateStoreLoadHitPercentage:
+    name: 状态存储读取命中率 %
+  StateStoreLoads:
+    name: 状态存储读取次数
+  StateStoreSaveErrors:
+    name: 状态存储写入错误
+  StateStoreSaveMax:
+    name: 状态存储写入最大值
+  StateStoreSaveMean:
+    name: 状态存储写入平均值
+  StateStoreSaveMin:
+    name: 状态存储写入最小值
+  StateStoreSaves:
+    name: 状态存储写入次数
   StatisticsInterfaceSensor:
     attributes:
       comment: 将设备固件升级以支持新的统计接口后，寄存器值将重置为0并重新开始计数，不继承历史数据

@@ -1641,6 +1641,26 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Heure de Démarrage
+  StateStoreDeleteErrors:
+    name: Erreurs de Suppression du Magasin d'État
+  StateStoreDeletes:
+    name: Suppressions du Magasin d'État
+  StateStoreLoadErrors:
+    name: Erreurs de Lecture du Magasin d'État
+  StateStoreLoadHitPercentage:
+    name: Taux de Succès de Lecture %
+  StateStoreLoads:
+    name: Lectures du Magasin d'État
+  StateStoreSaveErrors:
+    name: Erreurs d'Écriture du Magasin d'État
+  StateStoreSaveMax:
+    name: Écriture du Magasin d'État Max
+  StateStoreSaveMean:
+    name: Écriture du Magasin d'État Moyenne
+  StateStoreSaveMin:
+    name: Écriture du Magasin d'État Min
+  StateStoreSaves:
+    name: Écritures du Magasin d'État
   StatisticsInterfaceSensor:
     attributes:
       comment: Après la mise à jour du firmware de l'appareil pour prendre en charge la nouvelle Interface de Statistiques, les valeurs des registres seront réinitialisées à 0 et recommenceront le comptage sans hériter des données historiques

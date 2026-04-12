@@ -1641,6 +1641,26 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Hora de Início
+  StateStoreDeleteErrors:
+    name: Erros de Exclusão do Repositório de Estado
+  StateStoreDeletes:
+    name: Exclusões do Repositório de Estado
+  StateStoreLoadErrors:
+    name: Erros de Leitura do Repositório de Estado
+  StateStoreLoadHitPercentage:
+    name: Taxa de Acerto de Leitura %
+  StateStoreLoads:
+    name: Leituras do Repositório de Estado
+  StateStoreSaveErrors:
+    name: Erros de Escrita do Repositório de Estado
+  StateStoreSaveMax:
+    name: Escrita do Repositório de Estado Máx
+  StateStoreSaveMean:
+    name: Escrita do Repositório de Estado Média
+  StateStoreSaveMin:
+    name: Escrita do Repositório de Estado Mín
+  StateStoreSaves:
+    name: Escritas do Repositório de Estado
   StatisticsInterfaceSensor:
     attributes:
       comment: Após atualizar o firmware do dispositivo para suportar a nova Interface de Estatísticas, os valores do registo serão reiniciados para 0 e começarão a contar novamente sem herdar dados históricos

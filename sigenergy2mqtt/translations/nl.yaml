@@ -1641,6 +1641,26 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Opstarttijd
+  StateStoreDeleteErrors:
+    name: Statusopslagverwijderfouten
+  StateStoreDeletes:
+    name: Statusopslagverwijderingen
+  StateStoreLoadErrors:
+    name: Statusopslagleesfouten
+  StateStoreLoadHitPercentage:
+    name: Statusopslag Leestrefferquotum %
+  StateStoreLoads:
+    name: Statusopslagleesbewerkingen
+  StateStoreSaveErrors:
+    name: Statusopslagschrijffouten
+  StateStoreSaveMax:
+    name: Statusopslag Schrijven Max
+  StateStoreSaveMean:
+    name: Statusopslag Schrijven Gemiddeld
+  StateStoreSaveMin:
+    name: Statusopslag Schrijven Min
+  StateStoreSaves:
+    name: Statusopslagschrijfbewerkingen
   StatisticsInterfaceSensor:
     attributes:
       comment: Na upgrade van de apparaatfirmware ter ondersteuning van de nieuwe Statistieken Interface, worden de registerwaarden gereset naar 0 en begint het tellen opnieuw zonder historische gegevens over te nemen

@@ -1641,6 +1641,26 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Startup Time
+  StateStoreDeleteErrors:
+    name: State Store Delete Errors
+  StateStoreDeletes:
+    name: State Store Deletes
+  StateStoreLoadErrors:
+    name: State Store Load Errors
+  StateStoreLoadHitPercentage:
+    name: State Store Load Hit %
+  StateStoreLoads:
+    name: State Store Loads
+  StateStoreSaveErrors:
+    name: State Store Save Errors
+  StateStoreSaveMax:
+    name: State Store Save Max
+  StateStoreSaveMean:
+    name: State Store Save Mean
+  StateStoreSaveMin:
+    name: State Store Save Min
+  StateStoreSaves:
+    name: State Store Saves
   StatisticsInterfaceSensor:
     attributes:
       comment: After upgrading the device firmware to support the new Statistics Interface, the register values will reset to 0 and start fresh counting without inheriting historical data
