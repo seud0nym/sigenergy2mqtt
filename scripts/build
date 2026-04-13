@@ -156,13 +156,7 @@ if [[ $skip_extras = n ]]; then
 fi
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
-    # Determine which branch is required for this release type.
-    # Promotion between branches (alpha->beta->main) is handled by the home-assistant-addons build script.
-    if [[ $build_stable = y ]]; then
-        required_branch="beta"
-    else
-        required_branch="alpha"
-    fi
+    required_branch="alpha"
 
     # Check and switch the home-assistant-addons branch early
     current_branch=$(git -C ../home-assistant-addons rev-parse --abbrev-ref HEAD)
