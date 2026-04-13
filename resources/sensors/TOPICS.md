@@ -533,6 +533,16 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <a href='#sigen_modbus_protocol'>Protocol Version</a><br>
 <a href='#sigen_metrics_reset'>Reset Metrics</a><br>
 <a href='#sigen_started'>Started</a><br>
+<a href='#sigen_state_store_delete_errors'>State Store Delete Errors</a><br>
+<a href='#sigen_state_store_deletes'>State Store Deletes</a><br>
+<a href='#sigen_state_store_load_errors'>State Store Load Errors</a><br>
+<a href='#sigen_state_store_load_hit_percentage'>State Store Load Hit %</a><br>
+<a href='#sigen_state_store_loads'>State Store Loads</a><br>
+<a href='#sigen_state_store_save_errors'>State Store Save Errors</a><br>
+<a href='#sigen_state_store_save_max'>State Store Save Max</a><br>
+<a href='#sigen_state_store_save_mean'>State Store Save Mean</a><br>
+<a href='#sigen_state_store_save_min'>State Store Save Min</a><br>
+<a href='#sigen_state_store_saves'>State Store Saves</a><br>
 </td><td>
 
 <h6>Plant</h6>
@@ -583,7 +593,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 
 <h6>DC Charger</h6>
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -6457,6 +6467,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 | <a id='sigen_modbus_protocol'>Protocol Version</a> | 1 |  | sigenergy2mqtt/metrics/modbus_protocol ||
 | <a id='sigen_metrics_reset'>Reset Metrics</a> |||| sigenergy2mqtt/metrics/metrics_reset/set |
 | <a id='sigen_started'>Started</a> | 1 |  | sigenergy2mqtt/metrics/started ||
+| <a id='sigen_state_store_delete_errors'>State Store Delete Errors</a> | 1 |  | sigenergy2mqtt/metrics/state_store_delete_errors ||
+| <a id='sigen_state_store_deletes'>State Store Deletes</a> | 1 |  | sigenergy2mqtt/metrics/state_store_deletes ||
+| <a id='sigen_state_store_load_errors'>State Store Load Errors</a> | 1 |  | sigenergy2mqtt/metrics/state_store_load_errors ||
+| <a id='sigen_state_store_load_hit_percentage'>State Store Load Hit %</a> | 1 | % | sigenergy2mqtt/metrics/state_store_load_hit_percentage ||
+| <a id='sigen_state_store_loads'>State Store Loads</a> | 1 |  | sigenergy2mqtt/metrics/state_store_loads ||
+| <a id='sigen_state_store_save_errors'>State Store Save Errors</a> | 1 |  | sigenergy2mqtt/metrics/state_store_save_errors ||
+| <a id='sigen_state_store_save_max'>State Store Save Max</a> | 1 | ms | sigenergy2mqtt/metrics/state_store_save_max ||
+| <a id='sigen_state_store_save_mean'>State Store Save Mean</a> | 1 | ms | sigenergy2mqtt/metrics/state_store_save_mean ||
+| <a id='sigen_state_store_save_min'>State Store Save Min</a> | 1 | ms | sigenergy2mqtt/metrics/state_store_save_min ||
+| <a id='sigen_state_store_saves'>State Store Saves</a> | 1 |  | sigenergy2mqtt/metrics/state_store_saves ||
 
 ## Subscribed Topics
 
