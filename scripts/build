@@ -48,11 +48,18 @@ if [[ $force_build = n && $changed_files = n ]]; then
 fi
 
 # `--force` means: continue even without source changes and recalculate version.
+# If forcing a build with no actual source changes, skip translations, tests, and Docker build.
+skip_extras=n
 if [[ $force_build = y ]]; then
+    if [[ $changed_files = n ]]; then
+        skip_extras=y
+    fi
     changed_files=y
 fi
 
-source scripts/translations
+if [[ $skip_extras = n ]]; then
+    source scripts/translations
+fi
 
 echo -e "${GREEN}>>> Calculating version...${NC}"
 old_version=$(grep __version__ sigenergy2mqtt/config/version.py | cut -d'"' -f2)
@@ -111,7 +118,7 @@ else
     date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0044 Updated version from $old_version to $new_version (PyPi=$pypi_version)"
 fi
 
-if [[ $new_version != $old_version ]]; then
+if [[ $new_version != $old_version && $skip_extras = n ]]; then
     echo -e "${GREEN}>>> Running test suite...${NC}"
     pytest -n logical -q --disable-warnings || exit
 
@@ -134,8 +141,10 @@ rm -f dist/*
 python3 -m build || exit
 python3 -m twine check dist/* || exit
 
-echo -e "${GREEN}>>> Testing Docker build...${NC}"
-docker buildx build . || exit
+if [[ $skip_extras = n ]]; then
+    echo -e "${GREEN}>>> Testing Docker build...${NC}"
+    docker buildx build . || exit
+fi
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     # Determine which branch is required for this release type.
