@@ -1,6 +1,7 @@
 #!/bin/bash
 
 GREEN='\033[1;32m'
+GREY='\033[90m'
 ORANGE='\033[0;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Colour
@@ -39,8 +40,14 @@ for arg in "$@"; do
 done
 
 changed_files=y
-if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1 && [[ $(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | grep -cE '\.(py|yaml)$') = 0 ]]; then
-    changed_files=n
+if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1; then
+    file_list=$(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | grep -E '\.(py|yaml)$')
+    if [[ $(echo "$file_list" | grep -v 'sigenergy2mqtt/config/version.py\|sigenergy2mqtt/translations/en.yaml\|^[[:blank:]]*$' | wc -l) = 0 ]]; then
+        changed_files=n
+    else
+        echo -e "${GREEN}>>> Changed files found${NC}"
+        echo -e "${GREY}${file_list}${NC}"
+    fi
 fi
 if [[ $force_build = n && $changed_files = n ]]; then
     echo -e "${RED}>>> Build CANCELLED: ${ORANGE}No changed files found${NC}"
@@ -55,10 +62,6 @@ if [[ $force_build = y ]]; then
         skip_extras=y
     fi
     changed_files=y
-fi
-
-if [[ $skip_extras = n ]]; then
-    source scripts/translations
 fi
 
 echo -e "${GREEN}>>> Calculating version...${NC}"
@@ -106,16 +109,22 @@ else
         pypi_version=$new_version
     fi
 
-    if [[ $build_stable = y ]]; then
-        sed -e "s/\[Unreleased\]/[${new_version}] - $(date +"%Y-%m-%d")/" -i CHANGELOG.md
-        if ! grep -q "\[${new_version}\] - $(date +"%Y-%m-%d")" CHANGELOG.md; then
-            echo -e "${RED}>>> Build CANCELLED: ${ORANGE}Failed to update CHANGELOG.md${NC}"
-            exit
+    if [[ $build_alpha = n ]]; then
+        if ! grep -q "\[${new_version}\]" CHANGELOG.md; then
+            sed -e "s/\[Unreleased\]/[${new_version}] - $(date +"%Y-%m-%d")/" -i CHANGELOG.md
+            if ! grep -q "\[${new_version}\] - $(date +"%Y-%m-%d")" CHANGELOG.md; then
+                echo -e "${RED}>>> Build CANCELLED: ${ORANGE}No [${new_version}] header found in CHANGELOG.md${NC}"
+                exit
+            fi
         fi
     fi
 
     sed -e "s/^__version__ = \".*\"/__version__ = \"$new_version\"/g" -i sigenergy2mqtt/config/version.py
     date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0044 Updated version from $old_version to $new_version (PyPi=$pypi_version)"
+fi
+
+if [[ $skip_extras = n ]]; then
+    source scripts/translations
 fi
 
 if [[ $new_version != $old_version && $skip_extras = n ]]; then

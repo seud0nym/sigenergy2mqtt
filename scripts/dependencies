@@ -4,11 +4,15 @@ cd "$(cd $(dirname $0)/..; pwd)"
 
 install_only=0
 install_build_deps=1
+no_upgrade=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --install-only)
       install_only=1
+      ;;
+    --no-upgrade)
+      no_upgrade=1
       ;;
     --skip-build-deps)
       install_build_deps=0
@@ -33,6 +37,8 @@ USAGE
   shift
 done
 
+frozen="$(pip freeze)"
+
 check_pkg () {
   local spec="$1"
   local add_after="$2"
@@ -45,17 +51,17 @@ check_pkg () {
 
   echo ">>> Checking $pkg..."
 
-  if ! pip freeze | grep -q "^${pkg}=="; then
+  if ! echo "$frozen" | grep -q "^${pkg}=="; then
     pip install "$spec" --root-user-action=ignore || exit 1
-  else
-    pip install "$spec" --upgrade --root-user-action=ignore --quiet || exit 1
+  elif [[ $no_upgrade -eq 0 ]]; then
+    pip install "$spec" --upgrade --root-user-action=ignore || exit 1
   fi
 
   if [[ -n "$add_after" ]]; then
     if grep -Eq "$pkg[=(]" pyproject.toml; then
-      sed -e "s/$pkg[=(][^\"]*/$(pip freeze | grep "^${pkg}==")/" -i pyproject.toml
+      sed -e "s/$pkg[=(][^\"]*/$(echo "$frozen" | grep "^${pkg}==")/" -i pyproject.toml
     else
-      sed -e "/${add_after}/a\    \"$(pip freeze | grep "^${pkg}==")\"," -i pyproject.toml
+      sed -e "/${add_after}/a\    \"$(echo "$frozen" | grep "^${pkg}==")\"," -i pyproject.toml
     fi
   fi
 }

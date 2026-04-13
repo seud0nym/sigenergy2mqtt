@@ -13,7 +13,7 @@ fi
 git restore sigenergy2mqtt/config/version.py
 
 echo -e "${GREEN}>>> Checking dependencies...${NC}"
-scripts/dependencies
+scripts/dependencies --no-upgrade
 
 source $(dirname $0)/build $*
 
@@ -21,6 +21,8 @@ echo -en "${GREEN}>>> Confirm version bump? (y/n): ${NC}"
 read confirm
 if [[ "$confirm" != "y" ]]; then
     echo -e "${RED}>>> Version bump cancelled.${NC}"
+    git restore sigenergy2mqtt/config/version.py
+    touch -d "$(git log -1 --pretty=format:%cI -- sigenergy2mqtt/config/version.py)" sigenergy2mqtt/config/version.py
     exit 1
 fi
 
