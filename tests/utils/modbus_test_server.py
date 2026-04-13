@@ -44,7 +44,7 @@ from pymodbus import FramerType, ModbusDeviceIdentification
 from pymodbus import __version__ as pymodbus_version
 from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.constants import ExcCodes
-from pymodbus.datastore import ModbusServerContext, ModbusSparseDataBlock
+from pymodbus.datastore import ModbusServerContext
 from pymodbus.server import StartAsyncTcpServer
 
 from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
@@ -177,10 +177,38 @@ class CustomMqttHandler:
         return client.subscribe(topic)
 
 
-class CustomDataBlock(ModbusSparseDataBlock):
+class FixedModbusServerContext(ModbusServerContext):
+    """Bypasses the broken async_getValues in Pymodbus 3.13.0 for non-simulator contexts."""
+
+    def __init__(self, devices: dict[int, Any], single: bool = False):
+        super().__init__(devices=devices, single=single)
+        self._devices = devices
+        self.simdevices = []  # Clear so that the async server uses this context directly instead of replacing it with SimCore
+
+    def __get_device(self, device_id: int) -> Any:
+        if device_id in self._devices:
+            return self._devices[device_id]
+        if 0 in self._devices:
+            return self._devices[0]
+        return None
+
+    async def async_getValues(self, device_id: int, func_code: int, address: int, count: int = 1) -> list[int] | list[bool] | ExcCodes:
+        dev = self.__get_device(device_id)
+        if dev and hasattr(dev, "async_getValues"):
+            return await dev.async_getValues(func_code, address, count)
+        return ExcCodes.ILLEGAL_ADDRESS
+
+    async def async_setValues(self, device_id: int, func_code: int, address: int, values: list[int] | list[bool]) -> None | ExcCodes:
+        dev = self.__get_device(device_id)
+        if dev and hasattr(dev, "async_setValues"):
+            return await dev.async_setValues(0, address, values)
+        return ExcCodes.ILLEGAL_ADDRESS
+
+
+class CustomDataBlock:
     """Modbus data store for a single device address.
 
-    Wraps :class:`pymodbus.datastore.ModbusSparseDataBlock` with:
+    Wraps register storage with:
 
     * Sensor-aware reads and writes — register values are decoded and encoded
       using each sensor's own ``state2raw`` / ``convert_to_registers`` logic.
@@ -188,7 +216,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
       sensor subscribes to its ``state_topic`` so that live values from a real
       installation flow into the simulated registers.
     * Simulated latency — :meth:`async_getValues` introduces a randomised
-      response delay that mimics real Modbus device behaviour.
+      call delay that mimics real Modbus device behaviour.
     * Write-lock semantics — addresses written through :meth:`async_setValues`
       are permanently shielded from MQTT overwrite, allowing tests to assert on
       the values they set.
@@ -205,7 +233,7 @@ class CustomDataBlock(ModbusSparseDataBlock):
             mqtt_client: A connected Paho MQTT client used to subscribe to
                 sensor state topics, or ``None`` to disable MQTT integration.
         """
-        super().__init__(values=None, mutable=True)
+        self._data_registers: dict[int, int] = {}
         self.device_address = device_address
         self.addresses: dict[int, Any] = {}
         self._reserved: list[int] = []
@@ -259,21 +287,21 @@ class CustomDataBlock(ModbusSparseDataBlock):
         if debug or sensor.debug_logging:
             _logger.debug(f"#{self.device_address} _set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} {source=}]")
         for i in range(0, sensor.count):
-            super().setValues(address + i, registers[i])
+            self.setValues(address + i, registers[i])
         if address == PhaseVoltage.PHASE_A_ADDRESS:  # Use the Phase A Voltage for all three phases, because the real data source does not provide separate values for the three phases
             for i in range(0, sensor.count):
-                super().setValues(PhaseVoltage.PHASE_B_ADDRESS + i, registers[i])
-                super().setValues(PhaseVoltage.PHASE_C_ADDRESS + i, registers[i])
+                self.setValues(PhaseVoltage.PHASE_B_ADDRESS + i, registers[i])
+                self.setValues(PhaseVoltage.PHASE_C_ADDRESS + i, registers[i])
         elif address == PhaseCurrent.PHASE_A_ADDRESS:  # Use the Phase A Current for all three phases, because the real data source does not provide separate values for the three phases
             for i in range(0, sensor.count):
-                super().setValues(PhaseCurrent.PHASE_B_ADDRESS + i, registers[i])
-                super().setValues(PhaseCurrent.PHASE_C_ADDRESS + i, registers[i])
+                self.setValues(PhaseCurrent.PHASE_B_ADDRESS + i, registers[i])
+                self.setValues(PhaseCurrent.PHASE_C_ADDRESS + i, registers[i])
         if address == 31027:  # Use the PV String 1 Voltage register for all 36 PV strings, because the real data source only has one string
             for n in range(0, 36):
-                super().setValues(31027 + (n * 2), registers[0])
+                self.setValues(31027 + (n * 2), registers[0])
         if address == 31028:  # Use the PV String 1 Current register for all 36 PV strings, because the real data source only has one string
             for n in range(0, 36):
-                super().setValues(31028 + (n * 2), registers[0])
+                self.setValues(31028 + (n * 2), registers[0])
 
     def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
         """Update the register for *topic*'s sensor from an incoming MQTT message.
@@ -464,14 +492,31 @@ class CustomDataBlock(ModbusSparseDataBlock):
         if address in self.addresses:
             sensor = self.addresses[address]
             if hasattr(sensor, "_availability_control_sensor") and isinstance(sensor._availability_control_sensor, RemoteEMS):
-                if super().getValues(RemoteEMS.ADDRESS, 1) == [0]:
+                if self.getValues(RemoteEMS.ADDRESS, 1) == [0]:
                     return ExcCodes.ILLEGAL_ADDRESS
         else:
             sensor = None
         self._written_addresses.add(address)  # When an address has been written to via the test server, prevent it being reset from the real source server
         if sensor and sensor.debug_logging:
             _logger.debug(f"#{self.device_address} async_setValues({fc_as_hex}, {address}, {values})")
-        return super().setValues(address, values)
+        return self.setValues(address, values)
+
+    def setValues(self, address: int, values: int | list[int] | list[bool]) -> None:
+        """Internal low-level register write."""
+        if not isinstance(values, list):
+            values = [values]
+        for i, v in enumerate(values):
+            self._data_registers[address + i] = v
+
+    def _get_registers(self, address: int, count: int = 1) -> list[int] | ExcCodes:
+        """Internal low-level register read."""
+        res = []
+        for i in range(count):
+            addr = address + i
+            if addr not in self._data_registers:
+                return ExcCodes.ILLEGAL_ADDRESS
+            res.append(self._data_registers[addr])
+        return res
 
     def getValues(self, address, count=1) -> list[int] | list[bool] | ExcCodes:
         """Read *count* registers starting at *address*.
@@ -479,10 +524,10 @@ class CustomDataBlock(ModbusSparseDataBlock):
         Handles three cases:
 
         * **Reserved address** — returns :attr:`ExcCodes.ILLEGAL_ADDRESS`.
-        * **Exact sensor match** — delegates directly to the parent block.
-        * **Spanning request** — assembles registers from multiple sensors
-          using a binary-search over the sorted address list, padding any
-          missing sensor reads with zeros.
+        * **Sensor coverage** — assembles registers from sensors and internal storage,
+          filling gaps with values from internal storage (defaulting to 0).
+        * **Unknown address** — if the range touches no sensors and no written
+          registers, returns :attr:`ExcCodes.ILLEGAL_ADDRESS`.
 
         Args:
             address: Starting register address.
@@ -492,69 +537,70 @@ class CustomDataBlock(ModbusSparseDataBlock):
             A list of integer register values, or
             :attr:`ExcCodes.ILLEGAL_ADDRESS` if the range cannot be satisfied.
         """
-        sensor = None if address not in self.addresses else self.addresses[address]
         last_address = address + count - 1
         debug = any(TestConfig.registers_to_debug) and address in TestConfig.registers_to_debug
-        if address in self._reserved or last_address - count + 1 in self._reserved:
-            # Return ILLEGAL ADDRESS for request for specific address, but not if part of larger chunk
+
+        if address in self._reserved or last_address in self._reserved:
             result = ExcCodes.ILLEGAL_ADDRESS
             if debug:
                 _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (ExcCodes.ILLEGAL_ADDRESS)")
-        elif sensor and sensor.count == count:
-            if address in self.addresses:
-                sensor = self.addresses[address]
-                if debug:
-                    _logger.debug(f"#{self.device_address}  >>> self.addresses[k]: address={sensor.address}, count={sensor.count}, name={sensor.name}")
-            elif debug:
-                _logger.debug(f"#{self.device_address}  >>> address {address} not in self.addresses")
-            result = super().getValues(address, count)
+            return result
+
+        keys = sorted(list(self.addresses.keys()))
+        start = bisect.bisect_left(keys, address)
+        end = bisect.bisect_right(keys, last_address)
+
+        # Check if any register in range was written to
+        has_data = any((address + i) in self._data_registers for i in range(count))
+
+        # A request is valid if it touches a sensor OR has been written to
+        if start == end and not has_data:
+            result = ExcCodes.ILLEGAL_ADDRESS
+            if debug:
+                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (No sensors or data)")
+            return result
+
+        pre_read: list[int] = []
+        current = address
+        for k in keys[start:end]:
+            # Gap before this sensor
+            for a in range(current, k):
+                if a > last_address:
+                    break
+                val = self._data_registers.get(a)
+                if val is None:
+                    return ExcCodes.ILLEGAL_ADDRESS
+                pre_read.append(val)
+
+            if current > last_address:
+                break
+
+            sensor = self.addresses[k]
+            state = self._get_registers(sensor.address, sensor.count)
+            if isinstance(state, ExcCodes):
+                return state
+            pre_read.extend(state)
+            current = k + sensor.count
+
+        # Gap after last sensor
+        for a in range(current, last_address + 1):
+            val = self._data_registers.get(a)
+            if val is None:
+                return ExcCodes.ILLEGAL_ADDRESS
+            pre_read.append(val)
+
+        # Correctly handle spanning sensors by truncating
+        if len(pre_read) > count:
+            pre_read = pre_read[:count]
+
+        if len(pre_read) == count:
+            result = pre_read
             if debug:
                 _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
         else:
-            pre_read: list[int | bool] = []
-            keys = list(self.addresses.keys())
-            start = bisect.bisect_left(keys, address)
-            end = bisect.bisect_right(keys, last_address)
-            for a in range(address, keys[start]):
-                pre_read.append(0)
-                if debug:
-                    _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {a} for 1 register ({pre_read=})")
-            current = keys[start]  # track the next expected address
-            for k in keys[start:end]:
-                # fill gap before this key
-                for a in range(current, k):
-                    pre_read.append(0)
-                    if debug:
-                        _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {a} for 1 register ({pre_read=})")
-                sensor = self.addresses[k]
-                if debug:
-                    _logger.debug(f"#{self.device_address}  >>> self.addresses[k]: address={sensor.address}, count={sensor.count}, name={sensor.name}")
-                state = super().getValues(sensor.address, sensor.count)
-                if isinstance(state, list):
-                    pre_read.extend(state)
-                    if debug:
-                        _logger.debug(f"#{self.device_address}  >>> extending preread from {sensor.address} for {sensor.count} registers -> {state} ({pre_read=})")
-                else:
-                    for _ in range(0, sensor.count):
-                        pre_read.append(0)
-                        if debug:
-                            _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {sensor.address} for 1 register ({pre_read=})")
-                current = k + sensor.count
-            last_key = keys[end - 1]
-            last_sensor = self.addresses[last_key]
-            last_covered = last_key + last_sensor.count  # first address not yet covered
-            for a in range(last_covered, last_address + 1):  # ✅
-                pre_read.append(0)
-                if debug:
-                    _logger.debug(f"#{self.device_address}  >>> extending preread with 0 from {a} for 1 register ({pre_read=})")
-            if len(pre_read) == count:
-                result = pre_read
-                if debug:
-                    _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
-            else:
-                result = ExcCodes.ILLEGAL_ADDRESS
-                if debug:
-                    _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (ExcCodes.ILLEGAL_ADDRESS)")
+            result = ExcCodes.ILLEGAL_ADDRESS
+            if debug:
+                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (Length mismatch {len(pre_read)} != {count})")
         return result
 
 
@@ -748,7 +794,7 @@ async def run_async_server(
         tasks = []
         tasks.append(
             StartAsyncTcpServer(
-                context=ModbusServerContext(devices=context, single=False),
+                context=FixedModbusServerContext(devices=context, single=False),
                 identity=ModbusDeviceIdentification(
                     info_name={
                         "VendorName": "seud0nym",
