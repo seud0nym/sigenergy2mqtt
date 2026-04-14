@@ -59,8 +59,9 @@ jobs:
           REPO="https://github.com/${{ github.repository }}/blob/${REF}"
           REPO_RAW="https://github.com/${{ github.repository }}/raw/${REF}"
 
-          # Rewrite ./ and ../ links only
-          sed -i -E 's|\]\((\./|\.\./)|]('"${REPO}"'/|g' README.md
+          # Rewrite ./ and ../ links
+          sed -i -E 's|\]\(\./|]('"${REPO}"'/|g' README.md
+          sed -i -E 's|\]\(\.\./|]('"${REPO}"'/|g' README.md
 
           # Rewrite resource paths safely (badges/ must come before resources/)
           sed -i -E 's|\]\((resources/badges/)|]('"${REPO_RAW}"'/\1|g' README.md
