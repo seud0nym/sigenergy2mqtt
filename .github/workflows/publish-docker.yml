@@ -18,7 +18,7 @@ on:
         options:
           - alpha
           - beta
-          - stable
+          - latest
 
   workflow_call:
     secrets:
