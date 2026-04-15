@@ -6,6 +6,7 @@
 
 - Modified the PVOutput extended fields (V7-V12) to allow up to 4 decimal places (even though the API Specification indicates that the values are integers) so that they can be used for tariff rates
 
+---
 
 ## [2026.4.14] - 2026-04-14
 
