@@ -28,11 +28,12 @@ class Calculation(Flag):
     """Bitwise flags describing how topic values are aggregated."""
 
     SUM = auto()
-    AVERAGE = auto()
+    AVERAGE = auto()  # Excludes zero values
     DIFFERENCE = auto()
     PEAK = auto()
     CONVERT_TO_WATTS = auto()
     L_L_AVG = auto()
+    MEAN = auto()  # Includes zero values
 
 
 class ServiceTopics(dict[str, Topic]):
@@ -141,15 +142,16 @@ class ServiceTopics(dict[str, Topic]):
         assert isinstance(value, bool), "Enabled must be a boolean value"
         self._enabled = value
 
-    def _average_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
+    def _average_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None, exclude_zero: bool = True) -> bool:
         """Write an averaged value into *payload* when valid data exists.
 
         Args:
             payload: Payload being assembled.
             value_key: Target payload field for the numeric value.
             datetime_key: Optional payload field for the timestamp.
+            exclude_zero: Whether to exclude zero-valued states from the average.
         """
-        total, at, count = self.aggregate(exclude_zero=True)
+        total, at, count = self.aggregate(exclude_zero=exclude_zero)
         if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
             payload[value_key.value] = round(total / count, self.decimals if self.decimals > 0 else None)
             if datetime_key is not None and at is not None:
@@ -234,8 +236,8 @@ class ServiceTopics(dict[str, Topic]):
             now: Current timestamp used for staleness checks.
         """
         if self._value_key not in (None, "") and (self._bypass_updating_check or self.check_is_updating(interval_minutes, now)):
-            if Calculation.AVERAGE in self.calculation:
-                return self._average_into(payload, self._value_key, self._datetime_key)
+            if self.calculation & (Calculation.AVERAGE | Calculation.MEAN):
+                return self._average_into(payload, self._value_key, self._datetime_key, exclude_zero=(Calculation.AVERAGE in self.calculation))
             elif Calculation.L_L_AVG in self.calculation:
                 return self._squared_root_into(payload, self._value_key, self._datetime_key)
             else:  # SUM

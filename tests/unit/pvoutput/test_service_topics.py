@@ -3,7 +3,6 @@ import logging
 import time
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
-
 import pytest
 
 from sigenergy2mqtt.config import OutputField, StatusField, active_config
@@ -11,8 +10,6 @@ from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
 from sigenergy2mqtt.pvoutput.topic import Topic
-
-
 
 
 def make_service(unique_id: str = "test_service") -> Service:
@@ -134,7 +131,6 @@ class TestPVOutputServiceTopics:
             assert t.state == 100.0
             mock_ss.save_sync.assert_called()
 
-
     def test_restore_state_from_file(self):
         st = make_service_topics(value_key=OutputField.PEAK_POWER)
         topic = Topic("test/topic", gain=1.0)
@@ -147,7 +143,6 @@ class TestPVOutputServiceTopics:
 
             st.restore_state(topic)
             assert st["test/topic"].state == 100.0
-
 
     def test_reset_clears_state(self):
         st = make_service_topics()
@@ -200,6 +195,58 @@ class TestPVOutputServiceTopics:
         payload_sum = {"v2": 100.0}
         st_sum.add_to_payload(payload_sum, 5, time.localtime())
         assert "v2" not in payload_sum
+
+    def test_mean_includes_zero_values(self):
+        """Test that MEAN calculation includes zero values in the average."""
+        st = make_service_topics(calc=Calculation.MEAN, decimals=1)
+        t1 = Topic("t/a", gain=1.0, state=10.0, timestamp=time.localtime())
+        t2 = Topic("t/b", gain=1.0, state=0.0, timestamp=time.localtime())  # Zero value
+        t3 = Topic("t/c", gain=1.0, state=5.0, timestamp=time.localtime())
+        st.register(t1)
+        st.register(t2)
+        st.register(t3)
+        payload = {}
+        st.add_to_payload(payload, 5, time.localtime())
+        # Expected: (10.0 + 0.0 + 5.0) / 3 = 5.0
+        assert payload[OutputField.GENERATION.value] == 5.0
+
+    def test_average_excludes_zero_values(self):
+        """Test that AVERAGE calculation excludes zero values from the average."""
+        st = make_service_topics(calc=Calculation.AVERAGE, decimals=1)
+        t1 = Topic("t/a", gain=1.0, state=10.0, timestamp=time.localtime())
+        t2 = Topic("t/b", gain=1.0, state=0.0, timestamp=time.localtime())  # Zero value
+        t3 = Topic("t/c", gain=1.0, state=5.0, timestamp=time.localtime())
+        st.register(t1)
+        st.register(t2)
+        st.register(t3)
+        payload = {}
+        st.add_to_payload(payload, 5, time.localtime())
+        # Expected: (10.0 + 5.0) / 2 = 7.5 (zero value excluded)
+        assert payload[OutputField.GENERATION.value] == 7.5
+
+    def test_average_excludes_zero_final_value(self):
+        """Test that AVERAGE calculation excludes zero final value from payload."""
+        st = make_service_topics(calc=Calculation.AVERAGE, decimals=1)
+        # Register a single topic with state=0.0
+        # AVERAGE with exclude_zero=True will exclude 0.0, so count=0, nothing added to payload
+        t1 = Topic("t/a", gain=1.0, state=0.0, timestamp=time.localtime())
+        st.register(t1)
+        payload = {}
+        st.add_to_payload(payload, 5, time.localtime())
+        # Expected: zero value is excluded from AVERAGE, so no field in payload
+        assert OutputField.GENERATION.value not in payload
+
+    def test_mean_includes_zero_final_value(self):
+        """Test that MEAN calculation includes zero final value in payload."""
+        st = make_service_topics(calc=Calculation.MEAN, decimals=1)
+        # Register a single topic with state=0.0
+        # MEAN includes 0.0 values, so count=1, total=0.0, result is 0.0/1 = 0.0
+        t1 = Topic("t/a", gain=1.0, state=0.0, timestamp=time.localtime())
+        st.register(t1)
+        payload = {}
+        st.add_to_payload(payload, 5, time.localtime())
+        # Expected: zero value is included with MEAN, so field exists with value 0.0
+        assert payload[OutputField.GENERATION.value] == 0.0
 
     def test_subscribe_skips_supervisor_topics(self):
         st = make_service_topics(value_key=StatusField.V7)
