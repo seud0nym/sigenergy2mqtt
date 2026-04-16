@@ -18,7 +18,6 @@ automated test fixtures.
 """
 
 import asyncio
-import bisect
 import logging
 import os
 import secrets
@@ -44,8 +43,8 @@ from pymodbus import FramerType, ModbusDeviceIdentification
 from pymodbus import __version__ as pymodbus_version
 from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.constants import ExcCodes
-from pymodbus.datastore import ModbusServerContext
-from pymodbus.server import StartAsyncTcpServer
+from pymodbus.server import ModbusTcpServer
+from pymodbus.simulator import DataType, SimData, SimDevice
 
 from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -62,7 +61,7 @@ _logger = logging.getLogger(__file__)
 _logger.setLevel(logging.INFO)
 
 # Simulated Modbus response latency bounds (milliseconds).
-# async_getValues targets DELAY_AVG on average, clamping to DELAY_MIN when
+# _make_trace_pdu targets DELAY_AVG on average, clamping to DELAY_MIN when
 # ahead of budget and sampling uniformly up to DELAY_MAX when behind.
 DELAY_AVG: int = 15
 DELAY_MIN: int = 5
@@ -177,32 +176,30 @@ class CustomMqttHandler:
         return client.subscribe(topic)
 
 
-class FixedModbusServerContext(ModbusServerContext):
-    """Bypasses the broken async_getValues in Pymodbus 3.13.0 for non-simulator contexts."""
+class _LatencyBudget:
+    """Internal helper to track simulated latency across all devices on a server."""
 
-    def __init__(self, devices: dict[int, Any], single: bool = False):
-        super().__init__(devices=devices, single=single)
-        self._devices = devices
-        self.simdevices = []  # Clear so that the async server uses this context directly instead of replacing it with SimCore
+    def __init__(self) -> None:
+        self.total_sleep_ms: int = 0
+        self.request_count: int = 0
 
-    def __get_device(self, device_id: int) -> Any:
-        if device_id in self._devices:
-            return self._devices[device_id]
-        if 0 in self._devices:
-            return self._devices[0]
-        return None
 
-    async def async_getValues(self, device_id: int, func_code: int, address: int, count: int = 1) -> list[int] | list[bool] | ExcCodes:
-        dev = self.__get_device(device_id)
-        if dev and hasattr(dev, "async_getValues"):
-            return await dev.async_getValues(func_code, address, count)
-        return ExcCodes.ILLEGAL_ADDRESS
+def _make_trace_pdu(_context: dict[int, "CustomDataBlock"]) -> Any:
+    """Return a synchronous ``trace_pdu`` callback for :class:`ModbusTcpServer`.
 
-    async def async_setValues(self, device_id: int, func_code: int, address: int, values: list[int] | list[bool]) -> None | ExcCodes:
-        dev = self.__get_device(device_id)
-        if dev and hasattr(dev, "async_setValues"):
-            return await dev.async_setValues(0, address, values)
-        return ExcCodes.ILLEGAL_ADDRESS
+    In pymodbus 3.13.0 trace hooks called from the transport layer must be
+    synchronous.  Latency simulation and write-lock tracking have been
+    moved to the async ``SimDevice.action`` callback returned by
+    :meth:`CustomDataBlock._make_device_action`.
+
+    Returns:
+        A synchronous callable with signature ``(is_response: bool, pdu) -> pdu``.
+    """
+
+    def trace_pdu(_is_response: bool, pdu: Any) -> Any:
+        return pdu
+
+    return trace_pdu
 
 
 class CustomDataBlock:
@@ -215,50 +212,289 @@ class CustomDataBlock:
     * MQTT integration — when an MQTT client is supplied, each publishable
       sensor subscribes to its ``state_topic`` so that live values from a real
       installation flow into the simulated registers.
-    * Simulated latency — :meth:`async_getValues` introduces a randomised
-      call delay that mimics real Modbus device behaviour.
-    * Write-lock semantics — addresses written through :meth:`async_setValues`
-      are permanently shielded from MQTT overwrite, allowing tests to assert on
-      the values they set.
+    * Simulated latency — injected globally via the server's ``trace_pdu``
+      callback returned by :func:`_make_trace_pdu`.
+    * Write-lock semantics — addresses written through the Modbus protocol are
+      permanently shielded from MQTT overwrite (tracked in ``trace_pdu``),
+      and addresses written by simulation helpers are locked via
+      :meth:`force_set_registers`.
     * Phase mirroring — Phase A voltage and current are automatically mirrored
-      to phases B and C because the real data source does not expose them
-      individually.
+      to phases B and C via the :class:`SimDevice` ``action`` callback; the
+      same mirroring occurs during initialisation in :meth:`_set_value`.
+    * RemoteEMS write gate — when the RemoteEMS register is disabled (``0``),
+      writes to availability-controlled sensors are rejected.  The
+      :class:`SimDevice` ``action`` (see :meth:`_make_device_action`) returns
+      :attr:`ExcCodes.ILLEGAL_ADDRESS` directly, which pymodbus translates into
+      a Modbus exception response and prevents the write from being committed
+      to the register store — matching the behaviour of the real device exactly.
     """
 
-    def __init__(self, device_address: int, mqtt_client: mqtt.Client):
+    def __init__(self, device_address: int, mqtt_client: mqtt.Client, latency_budget: _LatencyBudget):
         """Initialise an empty data block for *device_address*.
 
         Args:
             device_address: The Modbus slave/unit ID this block represents.
             mqtt_client: A connected Paho MQTT client used to subscribe to
                 sensor state topics, or ``None`` to disable MQTT integration.
+            latency_budget: Shared state used to coordinate simulated latency
+                across all devices on the same server.
         """
-        self._data_registers: dict[int, int] = {}
+        # Raw uint16 register values used to seed SimData during build_sim_device().
+        # Only mutated during the initialisation phase (before the server starts).
+        self._initial_registers: dict[int, int] = {}
         self.device_address = device_address
         self.addresses: dict[int, Any] = {}
-        self._reserved: list[int] = []
         self._topics: dict[str, Any] = {}
-        # A set of addresses written via the test server.  Using a set avoids
-        # unbounded growth from repeated writes and gives O(1) membership tests.
-        # Once an address is added here it is intentionally kept for the lifetime
-        # of the server so that MQTT updates from the real data source never
-        # overwrite a value that was explicitly set through the test interface.
+        # A set of addresses written via the Modbus protocol or test helpers.
+        # Once an address is added it is kept for the server's lifetime so that
+        # MQTT updates from the real data source never overwrite deliberately set values.
         self._written_addresses: set[int] = set()
         self._mqtt_client = mqtt_client
-        self._total_sleep_time: int = 0
-        self._read_count: int = 0
+        self._latency_budget = latency_budget
+        # Set to True immediately before internal async_setValues calls (MQTT
+        # updates and simulation helpers) so that the SimDevice action bypasses
+        # the RemoteEMS gate and does not perform mirroring that is already
+        # applied explicitly by the caller.  Safe without locking because
+        # asyncio is single-threaded and the call chain from async_setValues to
+        # the action contains no I/O suspension points.
+        self._internal_write: bool = False
+        # Populated in run_async_server() after ModbusTcpServer is created but
+        # before serve_forever() is called.  Required by _async_set_value() and
+        # force_set_registers() so they can call server.context.async_setValues().
+        self._server: ModbusTcpServer | None = None
 
-    def _set_value(self, sensor, value: float | int | str, source: str = "", debug: bool = False) -> None:
-        """Encode *value* using *sensor*'s conversion logic and write it to the data block.
+    # ── SimData / SimDevice construction ──────────────────────────────────────
+
+    def _make_device_action(self) -> Any:
+        """Return the async ``action`` callable for the :class:`SimDevice`.
+
+        In pymodbus 3.13.0 the ``action`` lives on :class:`SimDevice`, not on
+        individual :class:`SimData` entries.  It is invoked for **every** read
+        and write request addressed to the device, receiving the full register
+        snapshot for the requested range.
+
+        The action signature required by pymodbus is::
+
+            async def action(
+                func_code: int,            # Modbus function code of the request
+                start_address: int,        # address of current_registers[0]
+                address: int,              # address from the request
+                count: int,                # register count from the request
+                current_registers: list[int],         # live register values (mutable)
+                set_values: list[int] | list[bool] | None,  # None for reads
+            ) -> None | ExcCodes
+
+        Returning :attr:`ExcCodes.ILLEGAL_ADDRESS` causes pymodbus to send a
+        Modbus exception response to the client **and** discard the write.
+
+        Responsibilities handled here (write path only, i.e. ``set_values is
+        not None``):
+
+        * **RemoteEMS write gate** — if the request address maps to a sensor
+          that is availability-controlled by :class:`RemoteEMS` and the
+          RemoteEMS register currently reads ``0``, returns
+          :attr:`ExcCodes.ILLEGAL_ADDRESS`.  Internal writes (MQTT updates,
+          simulation helpers) set :attr:`_internal_write` to ``True`` to
+          bypass this gate.
+        * **Phase A mirroring** — when Phase A voltage or current registers are
+          written by an external Modbus client, the same values are replicated
+          to the Phase B and C register addresses.  Internal writes skip this
+          because :meth:`_async_set_value` performs the mirroring itself.
+        * **PV-string mirroring** — PV-string 1 voltage/current writes are
+          replicated to all 36 string addresses.  Same internal-write exemption
+          applies.
+
+        Returns:
+            An async callable matching the pymodbus ``SimDevice.action``
+            signature.
+        """
+        block = self
+        dev_addr = self.device_address
+
+        # Pre-compute address sets for fast membership tests inside the action.
+        gated_addrs: set[int] = {addr for addr, sensor in block.addresses.items() if hasattr(sensor, "_availability_control_sensor") and isinstance(sensor._availability_control_sensor, RemoteEMS)}
+        all_reserved_addrs: dict[int, Any] = {}
+        for addr, sensor in block.addresses.items():
+            if sensor.__class__.__name__.startswith("Reserved"):
+                for i in range(sensor.count):
+                    all_reserved_addrs[addr + i] = sensor
+
+        async def _action(
+            func_code: int,
+            start_address: int,
+            address: int,
+            count: int,
+            current_registers: list[int],
+            set_values: list[int] | list[bool] | None,
+        ) -> None | ExcCodes:
+            # ── Internal writes ────────────────────────────────────────────
+            # MQTT updates and simulation helpers bypass latency, write-locking,
+            # and the RemoteEMS gate.
+            if block._internal_write:
+                return None
+
+            # ── Debug logging ──────────────────────────────────────────────
+            # Log external Modbus requests if they target a register specified for debugging.
+            if _logger.isEnabledFor(logging.DEBUG):
+                if 0 in TestConfig.registers_to_debug or any(addr in TestConfig.registers_to_debug for addr in range(address, address + count)):
+                    is_write = set_values is not None
+                    prefix = f"#{dev_addr} {'WRITE ' if is_write else 'READ  '} @{address}"
+                    if count > 1:
+                        prefix += f"-{address + count - 1}"
+
+                    if is_write:
+                        values_str = f" values={set_values}"
+                    else:
+                        offset = address - start_address
+                        values_str = f" values={current_registers[offset : offset + count]}"
+
+                    _logger.debug(f"{prefix} (count={count}){values_str}")
+
+            # ── Reserved registers ─────────────────────────────────────────
+            # Specific requests for reserved registers (not as part of a bulk
+            # pre-read) must return ILLEGAL_ADDRESS.  A bulk read is assumed
+            # if the request spans beyond the bounds of the reserved sensor.
+            if address in all_reserved_addrs:
+                sensor = all_reserved_addrs[address]
+                # If the request is fully contained within this reserved sensor, reject it.
+                if (address + count) <= (sensor.address + sensor.count):
+                    return ExcCodes.ILLEGAL_ADDRESS
+
+            # ── Simulated latency ──────────────────────────────────────────
+            budget = block._latency_budget
+            budget.request_count += 1
+            if (budget.total_sleep_ms + DELAY_MIN) / budget.request_count > DELAY_AVG:
+                sleep_ms = DELAY_MIN
+            else:
+                sleep_ms = randint(DELAY_MIN, DELAY_MAX)
+            budget.total_sleep_ms += sleep_ms
+            await asyncio.sleep(sleep_ms / 1000)
+
+            # ── Write-lock tracking ────────────────────────────────────────
+            # For external Modbus-protocol writes, lock the addresses so
+            # subsequent MQTT updates cannot overwrite them.
+            if set_values is not None:
+                for i in range(count):
+                    block._written_addresses.add(address + i)
+
+            # ── RemoteEMS write gate ───────────────────────────────────────
+            # For external Modbus-protocol writes to gated sensors, check
+            # whether RemoteEMS is enabled.  If disabled, reject the write
+            # and let pymodbus send ILLEGAL_ADDRESS to the client.
+            if set_values is not None and address in gated_addrs and block._server is not None:
+                ems = await block._server.context.async_getValues(dev_addr, 0x03, RemoteEMS.ADDRESS, 1)
+                if ems and ems[0] == 0:
+                    return ExcCodes.ILLEGAL_ADDRESS
+
+            # ── Phase / PV-string mirroring ────────────────────────────────
+            # Replicate external Modbus-protocol writes to the mirror
+            # addresses.  Internal writes bypass this (handled by the caller).
+            if set_values is None or block._server is None:
+                return None
+            ctx = block._server.context
+            reg_values = list(set_values)
+
+            if address == PhaseVoltage.PHASE_A_ADDRESS:
+                block._internal_write = True
+                try:
+                    for i, v in enumerate(reg_values):
+                        await ctx.async_setValues(dev_addr, 0x10, PhaseVoltage.PHASE_B_ADDRESS + i, [v])
+                        await ctx.async_setValues(dev_addr, 0x10, PhaseVoltage.PHASE_C_ADDRESS + i, [v])
+                finally:
+                    block._internal_write = False
+
+            elif address == PhaseCurrent.PHASE_A_ADDRESS:
+                block._internal_write = True
+                try:
+                    for i, v in enumerate(reg_values):
+                        await ctx.async_setValues(dev_addr, 0x10, PhaseCurrent.PHASE_B_ADDRESS + i, [v])
+                        await ctx.async_setValues(dev_addr, 0x10, PhaseCurrent.PHASE_C_ADDRESS + i, [v])
+                finally:
+                    block._internal_write = False
+
+            elif address == 31027:
+                block._internal_write = True
+                try:
+                    for target_addr, target_sensor in block.addresses.items():
+                        if target_addr != address and "PV" in target_sensor.name and "Voltage" in target_sensor.name:
+                            await ctx.async_setValues(dev_addr, 0x10, target_addr, reg_values[:1])
+                finally:
+                    block._internal_write = False
+
+            elif address == 31028:
+                block._internal_write = True
+                try:
+                    for target_addr, target_sensor in block.addresses.items():
+                        if target_addr != address and "PV" in target_sensor.name and "Current" in target_sensor.name:
+                            await ctx.async_setValues(dev_addr, 0x10, target_addr, reg_values[:1])
+                finally:
+                    block._internal_write = False
+
+            return None
+
+        return _action
+
+    def build_sim_device(self) -> SimDevice:
+        """Build and return a :class:`SimDevice` from all registered sensors.
+
+        Each non-reserved sensor becomes a :class:`SimData` entry using
+        ``DataType.REGISTERS`` (raw uint16 register storage) with initial
+        values pre-populated from :attr:`_initial_registers`.
+
+        Reserved addresses are intentionally omitted so that pymodbus returns a
+        Modbus ``ILLEGAL_ADDRESS`` exception for any client request targeting them.
+
+        The device-level ``action`` callback (produced by
+        :meth:`_make_device_action`) is attached to handle RemoteEMS write
+        gating and phase/PV-string mirroring for externally-sourced writes.
+
+        Returns:
+            A :class:`SimDevice` configured with a shared register block
+            covering all non-reserved sensors for this device address.
+        """
+        sim_data_list: list[SimData] = []
+        for address, sensor in self.addresses.items():
+            # DataType.REGISTERS packs each value with struct.pack(">h", v),
+            # i.e. signed int16.  _initial_registers holds raw uint16 values
+            # (0–65535), so values above 32767 must be reinterpreted as their
+            # signed two's-complement equivalent before being passed to SimData.
+            # count is intentionally omitted (defaults to 1) because it means
+            # "repeat the values list N times", not "number of registers" — the
+            # values list already contains exactly sensor.count register words.
+            values = [v if v < 32768 else v - 65536 for v in (self._initial_registers.get(address + i, 0) for i in range(sensor.count))]
+            sim_data_list.append(
+                SimData(
+                    address,
+                    datatype=DataType.REGISTERS,
+                    values=values,
+                )
+            )
+        return SimDevice(
+            id=self.device_address,
+            simdata=sim_data_list,
+            action=self._make_device_action(),
+        )
+
+    # ── Value encoding / writing ──────────────────────────────────────────────
+
+    def _set_value(self, sensor: Any, value: float | int | str, source: str = "", debug: bool = False) -> None:
+        """Encode *value* using *sensor*'s conversion logic and cache it in :attr:`_initial_registers`.
+
+        Called only during the **initialisation** phase (inside :meth:`add_sensor`)
+        before the server has started.  The cached values are baked into
+        :class:`SimData` objects when :meth:`build_sim_device` is called.
+
+        Post-initialisation writes (MQTT updates, simulation helpers) use
+        :meth:`_async_set_value` and :meth:`force_set_registers` respectively,
+        both of which write through ``server.context.async_setValues``.
 
         Addresses that were previously written through the test interface
         (i.e. present in :attr:`_written_addresses`) are silently skipped so
-        that MQTT updates from the real data source cannot overwrite test
-        values.
+        that MQTT updates from the real data source cannot overwrite test values.
 
         For :attr:`PhaseVoltage.PHASE_A_ADDRESS` and
         :attr:`PhaseCurrent.PHASE_A_ADDRESS` the encoded registers are also
-        mirrored to phases B and C.
+        mirrored to phases B and C in the initial cache.
 
         Args:
             sensor: The sensor descriptor whose encoding rules to use.
@@ -269,53 +505,176 @@ class CustomDataBlock:
                 own ``debug_logging`` flag is not set.
         """
         address = sensor.address
-        if address in self._written_addresses:  # Ignore MQTT messages from the real data source for addresses that were just written to, so that we can test reading back what we wrote
+        if address in self._written_addresses:
             return
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
             if len(registers) < sensor.count:
-                registers.extend([0] * (sensor.count - len(registers)))  # Pad with zeros
+                registers.extend([0] * (sensor.count - len(registers)))
             elif len(registers) > sensor.count:
-                registers = registers[: sensor.count]  # Truncate to the required length
+                registers = registers[: sensor.count]
         else:
             raw = sensor.state2raw(value)
             registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
         if len(registers) != sensor.count:
             raise ValueError(
-                f"#{self.device_address} _set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} {source=}] Expected {sensor.count} registers for sensor {sensor['name']}, got {len(registers)}"
+                f"#{self.device_address} _set_value({sensor.name}, {value}) [{registers=} address={sensor.address} {source=}] Expected {sensor.count} registers for sensor {sensor.name}, got {len(registers)}"
             )
         if debug or sensor.debug_logging:
-            _logger.debug(f"#{self.device_address} _set_value({sensor['name']}, {value}) [{registers=} address={sensor.address} {source=}]")
+            prefix = f"#{self.device_address} UPDATE @{sensor.address}"
+            if sensor.count > 1:
+                prefix += f"-{sensor.address + sensor.count - 1}"
+            _logger.debug(f"{prefix} (count={sensor.count}) values={registers} {source=}")
         for i in range(0, sensor.count):
             self.setValues(address + i, registers[i])
-        if address == PhaseVoltage.PHASE_A_ADDRESS:  # Use the Phase A Voltage for all three phases, because the real data source does not provide separate values for the three phases
-            for i in range(0, sensor.count):
+
+        # Phase mirroring in the initial register cache.  At runtime this is
+        # handled by the SimDevice action returned from _make_device_action().
+        if address == PhaseVoltage.PHASE_A_ADDRESS:
+            for i in range(sensor.count):
                 self.setValues(PhaseVoltage.PHASE_B_ADDRESS + i, registers[i])
                 self.setValues(PhaseVoltage.PHASE_C_ADDRESS + i, registers[i])
-        elif address == PhaseCurrent.PHASE_A_ADDRESS:  # Use the Phase A Current for all three phases, because the real data source does not provide separate values for the three phases
-            for i in range(0, sensor.count):
+        elif address == PhaseCurrent.PHASE_A_ADDRESS:
+            for i in range(sensor.count):
                 self.setValues(PhaseCurrent.PHASE_B_ADDRESS + i, registers[i])
                 self.setValues(PhaseCurrent.PHASE_C_ADDRESS + i, registers[i])
-        if address == 31027:  # Use the PV String 1 Voltage register for all 36 PV strings, because the real data source only has one string
-            for n in range(0, 36):
-                self.setValues(31027 + (n * 2), registers[0])
-        if address == 31028:  # Use the PV String 1 Current register for all 36 PV strings, because the real data source only has one string
-            for n in range(0, 36):
-                self.setValues(31028 + (n * 2), registers[0])
+
+        # PV string mirroring in the initial register cache.  Safely targets
+        # only other PV string sensors using name-based matching.
+        if address == 31027:
+            for target_addr, target_sensor in self.addresses.items():
+                if target_addr != address and "PV" in target_sensor.name and "Voltage" in target_sensor.name:
+                    self.setValues(target_addr, registers[0])
+        elif address == 31028:
+            for target_addr, target_sensor in self.addresses.items():
+                if target_addr != address and "PV" in target_sensor.name and "Current" in target_sensor.name:
+                    self.setValues(target_addr, registers[0])
+
+    async def _async_set_value(self, sensor: Any, value: float | int | str, source: str = "", debug: bool = False) -> None:
+        """Async counterpart to :meth:`_set_value` for **post-initialisation** writes.
+
+        Used exclusively by the MQTT message handler (:meth:`_handle_mqtt_message`)
+        to propagate live register values from the real installation into the
+        running server's SimData store.
+
+        Skips the write if *sensor*'s address is in :attr:`_written_addresses`
+        (i.e. has been written by a Modbus-protocol client or a simulation
+        helper) so that test-controlled values are never overwritten.
+
+        Sets :attr:`_internal_write` to ``True`` around the
+        ``context.async_setValues`` calls so that the :class:`SimDevice` action
+        bypasses the RemoteEMS gate (MQTT updates must always go through) and
+        does not re-apply mirroring (handled explicitly below).
+
+        Phase and PV-string mirroring is applied directly here so that the
+        mirror addresses are also updated atomically in the same event-loop
+        turn as the primary write.
+
+        Args:
+            sensor: The sensor descriptor whose encoding rules to use.
+            value: The human-readable state value received from MQTT.
+            source: Label included in debug log messages (e.g. ``"mqtt::topic"``).
+            debug: When ``True``, emit a debug log entry.
+        """
+        address = sensor.address
+        if address in self._written_addresses:
+            return
+        if self._server is None:
+            return
+        ctx = self._server.context
+        if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
+            registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
+            if len(registers) < sensor.count:
+                registers.extend([0] * (sensor.count - len(registers)))
+            elif len(registers) > sensor.count:
+                registers = registers[: sensor.count]
+        else:
+            raw = sensor.state2raw(value)
+            registers = ModbusClientMixin.convert_to_registers(raw, sensor.data_type)
+        if len(registers) != sensor.count:
+            raise ValueError(
+                f"#{self.device_address} _async_set_value({sensor.name}, {value}) [{registers=} address={sensor.address} {source=}]"
+                f" Expected {sensor.count} registers for sensor {sensor.name}, got {len(registers)}"
+            )
+        if debug or sensor.debug_logging:
+            prefix = f"#{self.device_address} UPDATE @{sensor.address}"
+            if sensor.count > 1:
+                prefix += f"-{sensor.address + sensor.count - 1}"
+            _logger.debug(f"{prefix} (count={sensor.count}) values={registers} {source=}")
+        self._internal_write = True
+        try:
+            await ctx.async_setValues(self.device_address, 0x10, address, registers)
+            # Phase / PV-string mirroring for MQTT-sourced updates.
+            if address == PhaseVoltage.PHASE_A_ADDRESS:
+                for i in range(sensor.count):
+                    await ctx.async_setValues(self.device_address, 0x10, PhaseVoltage.PHASE_B_ADDRESS + i, [registers[i]])
+                    await ctx.async_setValues(self.device_address, 0x10, PhaseVoltage.PHASE_C_ADDRESS + i, [registers[i]])
+            elif address == PhaseCurrent.PHASE_A_ADDRESS:
+                for i in range(sensor.count):
+                    await ctx.async_setValues(self.device_address, 0x10, PhaseCurrent.PHASE_B_ADDRESS + i, [registers[i]])
+                    await ctx.async_setValues(self.device_address, 0x10, PhaseCurrent.PHASE_C_ADDRESS + i, [registers[i]])
+
+            if address == 31027:
+                for target_addr, target_sensor in self.addresses.items():
+                    if target_addr != address and "PV" in target_sensor.name and "Voltage" in target_sensor.name:
+                        await ctx.async_setValues(self.device_address, 0x10, target_addr, [registers[0]])
+            elif address == 31028:
+                for target_addr, target_sensor in self.addresses.items():
+                    if target_addr != address and "PV" in target_sensor.name and "Current" in target_sensor.name:
+                        await ctx.async_setValues(self.device_address, 0x10, target_addr, [registers[0]])
+        finally:
+            self._internal_write = False
+
+    async def force_set_registers(self, address: int, values: list[int]) -> None:
+        """Write *values* to *address* directly, bypassing all write-lock checks.
+
+        Intended for test simulation helpers (:func:`simulate_grid_outage`,
+        :func:`simulate_firmware_version_upgrade`) that need to override register
+        values unconditionally.  The address is added to :attr:`_written_addresses`
+        so that subsequent MQTT updates from the live data source do not overwrite it.
+
+        Sets :attr:`_internal_write` to ``True`` around the write so the
+        :class:`SimDevice` action bypasses the RemoteEMS gate.
+
+        Args:
+            address: Starting register address.
+            values: Raw uint16 register values to write.
+        """
+        if self._server is None:
+            _logger.warning(f"#{self.device_address} force_set_registers({address}, {values}) called before server is initialised")
+            return
+        self._written_addresses.add(address)
+        if self.addresses.get(address) and self.addresses[address].debug_logging:
+            _logger.debug(f"#{self.device_address} force_set_registers({address}, {values})")
+        self._internal_write = True
+        try:
+            await self._server.context.async_setValues(self.device_address, 0x10, address, values)
+        finally:
+            self._internal_write = False
 
     def _handle_mqtt_message(self, topic: str, value: str, debug: bool = False) -> None:
         """Update the register for *topic*'s sensor from an incoming MQTT message.
 
         Called on the asyncio event-loop thread via
-        :pymeth:`CustomMqttHandler.on_message`.
+        :pymeth:`CustomMqttHandler.on_message`.  Schedules :meth:`_async_set_value`
+        as an asyncio task so the coroutine can await ``server.context.async_setValues``.
 
         Args:
             topic: The MQTT topic that received a message.
             value: The decoded payload string.
-            debug: Forwarded to :meth:`_set_value` to control debug logging.
+            debug: Forwarded to :meth:`_async_set_value` to control debug logging.
         """
         sensor = self._topics.get(topic)
-        self._set_value(sensor, value, f"mqtt::{topic}", debug=debug)
+        if sensor is None:
+            return
+        asyncio.ensure_future(self._async_set_value(sensor, value, f"mqtt::{topic}", debug=debug))
+
+    def setValues(self, address: int, values: int | list[int] | list[bool]) -> None:
+        """Cache raw uint16 values in :attr:`_initial_registers` during initialisation."""
+        if not isinstance(values, list):
+            values = [values]
+        for i, v in enumerate(values):
+            self._initial_registers[address + i] = v
 
     def _get_initial_value(self, sensor: Any) -> tuple[Any, str]:
         """Determine the initial register value and its source label for *sensor*.
@@ -423,15 +782,13 @@ class CustomDataBlock:
 
         Delegates value selection to :meth:`_get_initial_value` and MQTT
         subscription to :meth:`_register_mqtt_topic`, then writes the result
-        via :meth:`_set_value`.
+        to :attr:`_initial_registers` via :meth:`_set_value`.
 
         Args:
             sensor: A sensor descriptor object.  Must have at least ``address``,
                 ``device_address``, ``publishable``, and ``data_type`` attributes.
         """
         self.addresses[sensor.address] = sensor
-        if sensor.__class__.__name__.startswith("Reserved"):
-            self._reserved.append(sensor.address)
         if not sensor.publishable:
             return
         value, source = self._get_initial_value(sensor)
@@ -439,177 +796,12 @@ class CustomDataBlock:
             self._register_mqtt_topic(sensor, source)
         self._set_value(sensor, value, source)
 
-    async def async_getValues(self, fc_as_hex: int, address: int, count=1) -> ExcCodes | list[int] | list[bool]:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
-        """Read *count* registers starting at *address*, with simulated latency.
-
-        The delay is sampled from ``[DELAY_MIN, DELAY_MAX]`` ms, clamping to
-        ``DELAY_MIN`` whenever the running average would otherwise exceed
-        ``DELAY_AVG``.
-
-        Args:
-            fc_as_hex: Modbus function code (passed through to :meth:`getValues`
-                for logging purposes).
-            address: Starting register address.
-            count: Number of registers to read.
-
-        Returns:
-            A list of register values, or :attr:`ExcCodes.ILLEGAL_ADDRESS` if
-            the address range is invalid.
-        """
-        self._read_count += count
-        if (self._total_sleep_time + DELAY_MIN) / self._read_count > DELAY_AVG:
-            sleep_time = DELAY_MIN
-        else:
-            sleep_time = randint(DELAY_MIN, DELAY_MAX)  # Simulate variable response times
-        self._total_sleep_time += sleep_time
-        await asyncio.sleep(sleep_time / 1000)
-        result = self.getValues(address, count)
-        if address in self.addresses and self.addresses[address].debug_logging:
-            _logger.debug(f"#{self.device_address} async_getValues({fc_as_hex}, {address}, {count}) -> {result}")
-        return result
-
-    async def async_setValues(self, fc_as_hex: int, address: int, values: list[int] | list[bool]) -> ExcCodes | None:  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore
-        """Write *values* to *address*, enforcing RemoteEMS availability control.
-
-        If the sensor at *address* has an ``_availability_control_sensor`` of
-        type ``RemoteEMS`` and that sensor's current register state is ``[0]``
-        (disabled), the write is rejected with
-        :attr:`ExcCodes.ILLEGAL_ADDRESS`.
-
-        Successfully written addresses are added to
-        :attr:`_written_addresses` to prevent subsequent MQTT updates from
-        overwriting them for the remainder of the server's lifetime.
-
-        Args:
-            fc_as_hex: Modbus function code.
-            address: Starting register address.
-            values: Register values to write.
-
-        Returns:
-            ``None`` on success, or :attr:`ExcCodes.ILLEGAL_ADDRESS` if the
-            write was rejected by the availability control check.
-        """
-        if address in self.addresses:
-            sensor = self.addresses[address]
-            if hasattr(sensor, "_availability_control_sensor") and isinstance(sensor._availability_control_sensor, RemoteEMS):
-                if self.getValues(RemoteEMS.ADDRESS, 1) == [0]:
-                    return ExcCodes.ILLEGAL_ADDRESS
-        else:
-            sensor = None
-        self._written_addresses.add(address)  # When an address has been written to via the test server, prevent it being reset from the real source server
-        if sensor and sensor.debug_logging:
-            _logger.debug(f"#{self.device_address} async_setValues({fc_as_hex}, {address}, {values})")
-        return self.setValues(address, values)
-
-    def setValues(self, address: int, values: int | list[int] | list[bool]) -> None:
-        """Internal low-level register write."""
-        if not isinstance(values, list):
-            values = [values]
-        for i, v in enumerate(values):
-            self._data_registers[address + i] = v
-
-    def _get_registers(self, address: int, count: int = 1) -> list[int] | ExcCodes:
-        """Internal low-level register read."""
-        res = []
-        for i in range(count):
-            addr = address + i
-            if addr not in self._data_registers:
-                return ExcCodes.ILLEGAL_ADDRESS
-            res.append(self._data_registers[addr])
-        return res
-
-    def getValues(self, address, count=1) -> list[int] | list[bool] | ExcCodes:
-        """Read *count* registers starting at *address*.
-
-        Handles three cases:
-
-        * **Reserved address** — returns :attr:`ExcCodes.ILLEGAL_ADDRESS`.
-        * **Sensor coverage** — assembles registers from sensors and internal storage,
-          filling gaps with values from internal storage (defaulting to 0).
-        * **Unknown address** — if the range touches no sensors and no written
-          registers, returns :attr:`ExcCodes.ILLEGAL_ADDRESS`.
-
-        Args:
-            address: Starting register address.
-            count: Number of contiguous registers to read.
-
-        Returns:
-            A list of integer register values, or
-            :attr:`ExcCodes.ILLEGAL_ADDRESS` if the range cannot be satisfied.
-        """
-        last_address = address + count - 1
-        debug = any(TestConfig.registers_to_debug) and address in TestConfig.registers_to_debug
-
-        if address in self._reserved or last_address in self._reserved:
-            result = ExcCodes.ILLEGAL_ADDRESS
-            if debug:
-                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (ExcCodes.ILLEGAL_ADDRESS)")
-            return result
-
-        keys = sorted(list(self.addresses.keys()))
-        start = bisect.bisect_left(keys, address)
-        end = bisect.bisect_right(keys, last_address)
-
-        # Check if any register in range was written to
-        has_data = any((address + i) in self._data_registers for i in range(count))
-
-        # A request is valid if it touches a sensor OR has been written to
-        if start == end and not has_data:
-            result = ExcCodes.ILLEGAL_ADDRESS
-            if debug:
-                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (No sensors or data)")
-            return result
-
-        pre_read: list[int] = []
-        current = address
-        for k in keys[start:end]:
-            # Gap before this sensor
-            for a in range(current, k):
-                if a > last_address:
-                    break
-                val = self._data_registers.get(a)
-                if val is None:
-                    return ExcCodes.ILLEGAL_ADDRESS
-                pre_read.append(val)
-
-            if current > last_address:
-                break
-
-            sensor = self.addresses[k]
-            state = self._get_registers(sensor.address, sensor.count)
-            if isinstance(state, ExcCodes):
-                return state
-            pre_read.extend(state)
-            current = k + sensor.count
-
-        # Gap after last sensor
-        for a in range(current, last_address + 1):
-            val = self._data_registers.get(a)
-            if val is None:
-                return ExcCodes.ILLEGAL_ADDRESS
-            pre_read.append(val)
-
-        # Correctly handle spanning sensors by truncating
-        if len(pre_read) > count:
-            pre_read = pre_read[:count]
-
-        if len(pre_read) == count:
-            result = pre_read
-            if debug:
-                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result}")
-        else:
-            result = ExcCodes.ILLEGAL_ADDRESS
-            if debug:
-                _logger.debug(f"#{self.device_address} getValues({address}, {count}) -> {result} (Length mismatch {len(pre_read)} != {count})")
-        return result
-
 
 async def simulate_firmware_version_upgrade(data_block: CustomDataBlock, wait_for_seconds: int) -> None:
     """Simulate inverter firmware version upgrade on *data_block*.
 
     Args:
-        data_block: The plant device's data block (unit ID
-            ``Constants.PLANT_DEVICE_ADDRESS``).
+        data_block: The inverter device's data block.
         wait_for_seconds: Idle time before simulating firmware
             update, in seconds.
     """
@@ -617,7 +809,10 @@ async def simulate_firmware_version_upgrade(data_block: CustomDataBlock, wait_fo
         _logger.info(f"Waiting for {wait_for_seconds} seconds before simulating inverter firmware update for device address {data_block.device_address}...")
         await asyncio.sleep(wait_for_seconds)
         _logger.info(f"Simulating inverter firmware update for device address {data_block.device_address}")
-        await data_block.async_setValues(0x06, InverterFirmwareVersion.ADDRESS, ModbusClientMixin.convert_to_registers(TestConfig.upgrade_firmware, ModbusClientMixin.DATATYPE.STRING))
+        await data_block.force_set_registers(
+            InverterFirmwareVersion.ADDRESS,
+            ModbusClientMixin.convert_to_registers(TestConfig.upgrade_firmware, ModbusClientMixin.DATATYPE.STRING),
+        )
     except asyncio.CancelledError:
         pass
 
@@ -640,9 +835,9 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             _logger.info(f"Waiting for {wait_for_seconds} seconds before simulating grid outage for device address {data_block.device_address}...")
             await asyncio.sleep(wait_for_seconds)
             _logger.info(f"Simulating grid outage for device address {data_block.device_address} for {duration_seconds} seconds...")
-            await data_block.async_setValues(0x06, GridStatus.ADDRESS, [1])
+            await data_block.force_set_registers(GridStatus.ADDRESS, [1])
             await asyncio.sleep(duration_seconds)
-            await data_block.async_setValues(0x06, GridStatus.ADDRESS, [0])
+            await data_block.force_set_registers(GridStatus.ADDRESS, [0])
             _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
         except asyncio.CancelledError:
             break
@@ -708,12 +903,16 @@ async def run_async_server(
     3. Optionally pre-populates values from a live *modbus_client*.
     4. Creates a :class:`CustomDataBlock` per device address and calls
        :meth:`~CustomDataBlock.add_sensor` for every sensor.
-    5. Starts the pymodbus ``StartAsyncTcpServer``.
-    6. Optionally co-schedules :func:`simulate_grid_outage` for the plant
-       device.
-    7. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
+    5. Calls :meth:`~CustomDataBlock.build_sim_device` to produce a
+       :class:`SimDevice` per device address.
+    6. Starts :class:`ModbusTcpServer` with a ``trace_pdu`` hook that injects
+       latency and tracks write-locked addresses.
+    7. Sets :attr:`CustomDataBlock._server` on every data block so that
+       post-initialisation writes (MQTT, simulation helpers) can reach the
+       server's :class:`SimDevice` context.
+    8. Optionally co-schedules :func:`simulate_grid_outage` for the plant device.
+    9. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
        inverter device.
-    8. Optionally sends incorrect PowerFactor values to force manual calculation.
 
     Args:
         mqtt_client: A started Paho MQTT client, or ``None`` to disable MQTT
@@ -775,11 +974,15 @@ async def run_async_server(
         _logger.setLevel(logging.DEBUG)
 
     _logger.info("Creating data blocks...")
+    latency_budget = _LatencyBudget()
     for sensor in sorted_sensors:
         if hasattr(sensor, "device_address"):
             if sensor.device_address not in context:
-                context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client)
+                context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client, latency_budget)
             context[sensor.device_address].add_sensor(sensor)
+
+    _logger.info("Building SimDevice objects...")
+    sim_devices: list[SimDevice] = [block.build_sim_device() for block in context.values()]
 
     try:
         with open("/app/build_date.txt", "r") as f:
@@ -791,28 +994,37 @@ async def run_async_server(
     if log_level <= logging.INFO:
         logging.getLogger("pymodbus").setLevel(logging.INFO)
     try:
-        tasks = []
-        tasks.append(
-            StartAsyncTcpServer(
-                context=FixedModbusServerContext(devices=context, single=False),
-                identity=ModbusDeviceIdentification(
-                    info_name={
-                        "VendorName": "seud0nym",
-                        "ProductCode": "sigenergy2mqtt",
-                        "VendorUrl": "https://github.com/seud0nym/sigenergy2mqtt/",
-                        "ProductName": "sigenergy2mqtt Testing Modbus Server",
-                        "ModelName": "sigenergy2mqtt Testing Modbus Server",
-                        "MajorMinorRevision": pymodbus_version,
-                    }
-                ),
-                address=(host, port),
-                framer=FramerType.SOCKET,
-            )
+        # ModbusTcpServer is instantiated (not started) first so that we can hand
+        # a reference to each CustomDataBlock before serve_forever() is called.
+        # The trace_pdu hook handles latency injection and write-lock tracking.
+        server = ModbusTcpServer(
+            context=sim_devices,
+            identity=ModbusDeviceIdentification(
+                info_name={
+                    "VendorName": "seud0nym",
+                    "ProductCode": "sigenergy2mqtt",
+                    "VendorUrl": "https://github.com/seud0nym/sigenergy2mqtt/",
+                    "ProductName": "sigenergy2mqtt Testing Modbus Server",
+                    "ModelName": "sigenergy2mqtt Testing Modbus Server",
+                    "MajorMinorRevision": pymodbus_version,
+                }
+            ),
+            address=(host, port),
+            framer=FramerType.SOCKET,
+            trace_pdu=_make_trace_pdu(context),
         )
+
+        # Hand every data block a server reference so that post-initialisation
+        # writes (MQTT updates, simulation helpers) can reach the SimDevice context
+        # via server.context.async_setValues().
+        for block in context.values():
+            block._server = server
+
+        tasks = [server.serve_forever()]
         if TestConfig.simulate_grid_outages:
             tasks.append(simulate_grid_outage(context[Constants.PLANT_DEVICE_ADDRESS], wait_for_seconds=30, duration_seconds=30) if Constants.PLANT_DEVICE_ADDRESS in context else asyncio.sleep(0))
         if TestConfig.simulate_firmware_upgrade:
-            tasks.append(simulate_firmware_version_upgrade(context[1], wait_for_seconds=45))
+            tasks.append(simulate_firmware_version_upgrade(context[inverter_device_address], wait_for_seconds=45))
         await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
