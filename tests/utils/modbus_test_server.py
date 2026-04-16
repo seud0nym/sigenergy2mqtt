@@ -176,7 +176,7 @@ class CustomMqttHandler:
         return client.subscribe(topic)
 
 
-class _LatencyBudget:
+class LatencyBudget:
     """Internal helper to track simulated latency across all devices on a server."""
 
     def __init__(self) -> None:
@@ -229,7 +229,7 @@ class CustomDataBlock:
       to the register store — matching the behaviour of the real device exactly.
     """
 
-    def __init__(self, device_address: int, mqtt_client: mqtt.Client, latency_budget: _LatencyBudget):
+    def __init__(self, device_address: int, mqtt_client: mqtt.Client, latency_budget: LatencyBudget):
         """Initialise an empty data block for *device_address*.
 
         Args:
@@ -669,6 +669,7 @@ class CustomDataBlock:
             return
         asyncio.ensure_future(self._async_set_value(sensor, value, f"mqtt::{topic}", debug=debug))
 
+
     def setValues(self, address: int, values: int | list[int] | list[bool]) -> None:
         """Cache raw uint16 values in :attr:`_initial_registers` during initialisation."""
         if not isinstance(values, list):
@@ -974,7 +975,7 @@ async def run_async_server(
         _logger.setLevel(logging.DEBUG)
 
     _logger.info("Creating data blocks...")
-    latency_budget = _LatencyBudget()
+    latency_budget = LatencyBudget()
     for sensor in sorted_sensors:
         if hasattr(sensor, "device_address"):
             if sensor.device_address not in context:
