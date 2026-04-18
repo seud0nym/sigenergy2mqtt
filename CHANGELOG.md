@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed the Phase Current and Phase Voltage sensors object_id when the inverter is a single-phase inverter
+
+---
+
 ## [2026.4.16] - 2026-04-16
 
 ### Fixed
