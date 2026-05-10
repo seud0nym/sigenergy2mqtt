@@ -556,10 +556,9 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
     else:
         logging.info("No services configured - skipping service thread")
 
-    if active_config.log_level == logging.DEBUG:
-        mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
-        mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
-        configs.append(mon_thread_cfg)
+    mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
+    mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
+    configs.append(mon_thread_cfg)
 
     return configs
 
