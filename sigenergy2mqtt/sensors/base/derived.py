@@ -78,7 +78,6 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             logging.warning(f"{self.log_identity} Failed to persist state: {e}")
             coro.close()
 
-
     def declare_source_sensors(self, *sensors: Sensor | None) -> None:
         """Declare sensors this derived sensor depends on."""
         self.source_sensors = [s for s in sensors if s is not None]
