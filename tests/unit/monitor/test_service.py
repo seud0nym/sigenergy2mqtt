@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 
 import pytest
@@ -37,7 +38,20 @@ class FakeMqttHandler:
         self.registered.append((mqtt_client, topic, handler))
 
 
+class FakeMqttClient:
+    def __init__(self, connected: bool = True):
+        self._connected = connected
+        self.published = []
+
+    def is_connected(self):
+        return self._connected
+
+    def publish(self, topic, payload, qos=0, retain=False):
+        self.published.append((topic, payload, qos, retain))
+
+
 def test_subscribe_registers_topics():
+    active_config.log_level = logging.DEBUG
     s = DummyReadable(name="sensor1", scan_interval=5, state_topic="topic/1", publishable=True)
     d = DummyDevice("Device1", {"s1": s})
     handler = FakeMqttHandler()
@@ -54,6 +68,7 @@ def test_subscribe_registers_topics():
 
 
 def test_subscribe_skips_registration_when_repeated_negative(monkeypatch):
+    monkeypatch.setattr(active_config, "log_level", logging.DEBUG)
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", -1)
     s = DummyReadable(name="sensor1", scan_interval=5, state_topic="topic/1", publishable=True)
     d = DummyDevice("Device1", {"s1": s})
@@ -66,11 +81,13 @@ def test_subscribe_skips_registration_when_repeated_negative(monkeypatch):
     assert svc._topics == {}
 
 
-def test_schedule_returns_no_tasks_when_repeated_negative(monkeypatch):
+def test_schedule_returns_monitor_task_when_repeated_negative(monkeypatch):
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", -1)
     svc = MonitorService([])
 
-    assert svc.schedule(None, None) == []
+    tasks = svc.schedule(None, None)
+    assert len(tasks) == 1
+    tasks[0].close()
 
 
 def test_monitored_sensor_last_seen_uses_creation_time_default():
@@ -126,6 +143,7 @@ async def test_on_topic_update_known_and_unknown():
 
 @pytest.mark.asyncio
 async def test_monitor_marks_overdue_and_stops(monkeypatch):
+    monkeypatch.setattr(active_config, "log_level", logging.DEBUG)
     # Track sleep calls to allow first 30s sleep, then mock subsequent 1s sleeps
     original_sleep = asyncio.sleep
     sleep_count = 0
@@ -153,7 +171,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     fut = loop.create_future()
     svc.online = fut
 
-    task = asyncio.create_task(svc._monitor(None, None))
+    task = asyncio.create_task(svc._monitor(None, FakeMqttClient()))
 
     # let the monitor run one iteration
     await original_sleep(0.2)
@@ -163,3 +181,22 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     await task
 
     assert ms.notified is True
+
+
+@pytest.mark.asyncio
+async def test_publish_health_includes_modbus_and_mqtt_connectivity(tmp_path):
+    svc = MonitorService([])
+    svc._health_file = tmp_path / "health.json"
+    mqtt_client = FakeMqttClient(connected=True)
+
+    class Modbus:
+        connected = True
+
+    await svc._publish_health(Modbus(), mqtt_client, overdue_count=0)
+
+    assert svc._health_file.exists()
+    content = svc._health_file.read_text(encoding="utf-8")
+    assert '"modbus_connected": true' in content
+    assert '"mqtt_connected": true' in content
+    assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
+    assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)

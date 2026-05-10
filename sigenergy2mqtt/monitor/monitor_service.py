@@ -1,8 +1,10 @@
-"""Monitor service for tracking expected sensor MQTT updates."""
+"""Monitor service for tracking expected sensor MQTT updates and service health."""
 
 import asyncio
+import json
 import logging
 import time
+from pathlib import Path
 from typing import Any, Awaitable
 
 import paho.mqtt.client as mqtt
@@ -34,6 +36,13 @@ class MonitorService(Device):
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}
+        self._health_state_topic = f"sigenergy2mqtt/health/state"
+        self._health_attributes_topic = f"sigenergy2mqtt/health/attributes"
+        self._health_file = Path("/tmp/sigenergy2mqtt-health.json")
+        self._monitor_topic_updates = active_config.log_level == logging.DEBUG and active_config.repeated_state_publish_interval >= 0
+        # Health publication should remain reasonably frequent and independent
+        # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
+        self._health_publish_interval = 30
 
     async def _monitor(self, modbus_client: Any, mqtt_client: Any, *sensors: Any):
         """Check for overdue topics and log warning/recovery events.
@@ -57,13 +66,14 @@ class MonitorService(Device):
 
         while self.online:
             async with self._lock:
-                overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if s.is_overdue}
+                overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
             if any(overdue):
                 for topic, sensor in overdue.items():
                     sensor.notified = True
                     logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
+            await self._publish_health(modbus_client, mqtt_client, len(overdue))
             try:
-                task = asyncio.create_task(asyncio.sleep(1))
+                task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
@@ -71,6 +81,27 @@ class MonitorService(Device):
                 break
             finally:
                 self.sleeper_task = None
+
+    async def _publish_health(self, modbus_client: Any, mqtt_client: mqtt.Client, overdue_count: int) -> None:
+        modbus_connected = bool(modbus_client and getattr(modbus_client, "connected", False))
+        mqtt_connected = bool(mqtt_client and mqtt_client.is_connected())
+        status = "healthy" if overdue_count == 0 and mqtt_connected and modbus_connected else "degraded"
+        now = int(time.time())
+        payload = {
+            "status": status,
+            "mqtt_connected": mqtt_connected,
+            "modbus_connected": modbus_connected,
+            "overdue_topics": overdue_count,
+            "monitored_topics": len(self._topics),
+            "timestamp": now,
+        }
+        try:
+            self._health_file.write_text(json.dumps(payload), encoding="utf-8")
+            if mqtt_client:
+                mqtt_client.publish(self._health_state_topic, status, qos=1, retain=True)
+                mqtt_client.publish(self._health_attributes_topic, json.dumps(payload), qos=1, retain=True)
+        except Exception as ex:
+            logging.debug(f"{self.log_identity} unable to publish health payload: {ex}")
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
@@ -170,10 +201,6 @@ class MonitorService(Device):
             publishing is disabled for unchanged values.
         """
 
-        if active_config.repeated_state_publish_interval < 0:
-            logging.info(f"{self.log_identity} Monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
-            return []
-
         return [self._monitor(modbus_client, mqtt_client, [])]
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
@@ -184,8 +211,11 @@ class MonitorService(Device):
             mqtt_handler: Helper used to register topic callbacks.
         """
 
-        if active_config.repeated_state_publish_interval < 0:
-            logging.info(f"{self.log_identity} Monitoring subscriptions disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
+        if not self._monitor_topic_updates:
+            logging.info(
+                f"{self.log_identity} Topic-overdue monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval}); "
+                "publishing connectivity health only"
+            )
             return
 
         for d in self._devices:
