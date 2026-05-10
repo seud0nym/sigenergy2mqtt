@@ -80,6 +80,9 @@ class TestConfig:
     registers_to_debug: list[int] = []
 
     simulate_grid_outages: bool = False
+    grid_status_initial_state: int | None = None
+    grid_outage_initial_delay_seconds: int = 30
+    grid_outage_duration_seconds: int = 30
     simulate_firmware_upgrade: bool = False
     simulate_power_factor_errors: bool = False
 
@@ -1021,9 +1024,12 @@ async def run_async_server(
         for block in context.values():
             block._server = server
 
+        if Constants.PLANT_DEVICE_ADDRESS in context and TestConfig.grid_status_initial_state is not None:
+            await context[Constants.PLANT_DEVICE_ADDRESS].force_set_registers(GridStatus.ADDRESS, [TestConfig.grid_status_initial_state])
+
         tasks = [server.serve_forever()]
         if TestConfig.simulate_grid_outages:
-            tasks.append(simulate_grid_outage(context[Constants.PLANT_DEVICE_ADDRESS], wait_for_seconds=30, duration_seconds=30) if Constants.PLANT_DEVICE_ADDRESS in context else asyncio.sleep(0))
+            tasks.append(simulate_grid_outage(context[Constants.PLANT_DEVICE_ADDRESS], wait_for_seconds=TestConfig.grid_outage_initial_delay_seconds, duration_seconds=TestConfig.grid_outage_duration_seconds) if Constants.PLANT_DEVICE_ADDRESS in context else asyncio.sleep(0))
         if TestConfig.simulate_firmware_upgrade:
             tasks.append(simulate_firmware_version_upgrade(context[inverter_device_address], wait_for_seconds=45))
         await asyncio.gather(*tasks)
@@ -1198,6 +1204,9 @@ async def async_helper() -> None:
     TestConfig.registers_to_debug = _env_registers("MODBUS_TEST_SERVER_REGISTERS_TO_DEBUG")
     TestConfig.use_simplified_topics = _env_bool("MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS", True)
     TestConfig.simulate_grid_outages = _env_bool("MODBUS_TEST_SERVER_SIMULATE_GRID_OUTAGES", False)
+    TestConfig.grid_status_initial_state = _env_int("MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE")
+    TestConfig.grid_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY", 30)
+    TestConfig.grid_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION", 30)
     TestConfig.simulate_firmware_upgrade = _env_bool("MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE", False)
     TestConfig.simulate_power_factor_errors = _env_bool("MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS", False)
 
