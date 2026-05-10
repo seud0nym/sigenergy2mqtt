@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import signal
@@ -34,6 +35,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     ThirdPartyPVPower,
     TotalLoadDailyConsumption,
     TotalLoadPower,
+    GridStatus,
 )
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerRegulationGradient, GridCodeLVRT, IndependentPhasePowerControl
 
@@ -51,6 +53,8 @@ PLANT_ILLEGAL_DATA_ADDRESSES: list[int] = [
     Alarm7.ADDRESS,
     ActivePowerRegulationGradient.ADDRESS,
 ]
+
+_GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -486,7 +490,57 @@ async def _setup_dc_chargers(
             total_count=total_count,
         )
         config.add_device(charger)
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
+
     return sequence_number
+
+
+async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool | None:
+    """Return True when grid is unavailable, False when on-grid, None when probe fails."""
+    grid_status = GridStatus(plant_index)
+    try:
+        raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
+    except Exception as exc:
+        logging.debug(f"Unable to probe GridStatus for outage detection: {exc}")
+        return None
+
+    if raw_status is None:
+        return None
+
+    try:
+        return int(raw_status) != 0
+    except (TypeError, ValueError):
+        logging.debug(f"Unexpected GridStatus raw value for outage detection: {raw_status}")
+        return None
+
+
+async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout: float, retries: int, plant_index: int) -> None:
+    """Watch GridStatus and request runtime restart once grid returns on-line."""
+    key = (host, port, plant_index)
+    try:
+        while True:
+            modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
+            async with modbus:
+                if modbus.connected:
+                    is_outage = await _is_grid_outage(plant_index, modbus)
+                    if is_outage is False:
+                        restart_controller.request(f"grid restored for AC charger setup on modbus://{host}:{port} plant {plant_index}")
+                        return
+            await asyncio.sleep(10)
+    except asyncio.CancelledError:
+        raise
+    finally:
+        _GRID_RESTORE_WATCH_TASKS.discard(key)
+
+
+def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
+    key = (device.host, device.port, plant_index)
+    if key in _GRID_RESTORE_WATCH_TASKS:
+        return
+    _GRID_RESTORE_WATCH_TASKS.add(key)
+    logging.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
+    asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
 
 
 async def _setup_ac_chargers(
@@ -514,17 +568,33 @@ async def _setup_ac_chargers(
         return sequence_start
 
     sequence_number = sequence_start
+    skipped_due_to_outage = False
     for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
         sequence_number += 1
-        charger = await make_ac_charger(
-            plant_index,
-            modbus_client,
-            device_address,
-            plant,
-            sequence_number=sequence_number,
-            total_count=total_count,
-        )
-        config.add_device(charger)
+        try:
+            charger = await make_ac_charger(
+                plant_index,
+                modbus_client,
+                device_address,
+                plant,
+                sequence_number=sequence_number,
+                total_count=total_count,
+            )
+            config.add_device(charger)
+        except Exception as exc:
+            is_outage = await _is_grid_outage(plant_index, modbus_client)
+            if is_outage is True:
+                logging.warning(
+                    f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}"
+                )
+                skipped_due_to_outage = True
+                continue
+
+            logging.error(f"Failed to initialize AC charger at address {device_address}; skipping: {exc}")
+
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
+
     return sequence_number
 
 
@@ -556,10 +626,9 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
     else:
         logging.info("No services configured - skipping service thread")
 
-    if active_config.log_level == logging.DEBUG:
-        mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
-        mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
-        configs.append(mon_thread_cfg)
+    mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
+    mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
+    configs.append(mon_thread_cfg)
 
     return configs
 

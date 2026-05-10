@@ -324,6 +324,12 @@ async def sensor_index() -> None:
         f.write("\nYou can also enable the `sigenergy2mqtt/` topics when Home Assistant discovery is enabled by setting the `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` environment variable to true,\n")
         f.write("or by specifying the `--hass-use-simplified-topics` command line option.\n")
         f.write("\nDefault Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.\n")
+        f.write("\n## Service Health Topics\n")
+        f.write("\nThe monitor service publishes runtime health for both Docker and non-Docker observers:\n")
+        f.write("\n- `sigenergy2mqtt/health/state` (string: `healthy` or `degraded`)\n")
+        f.write("- `sigenergy2mqtt/health/attributes` (JSON object)\n")
+        f.write("\nThe attributes payload currently includes:\n")
+        f.write("\n- `status`\n- `mqtt_connected`\n- `modbus_connected`\n- `overdue_topics`\n- `monitored_topics`\n- `timestamp`\n")
         write_naming_convention(f)
         # Index
         published = 0

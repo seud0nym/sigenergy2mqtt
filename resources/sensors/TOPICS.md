@@ -10,6 +10,22 @@ or by specifying the `--hass-use-simplified-topics` command line option.
 
 Default Scan Intervals are shown in seconds, but may be overridden via configuration. Intervals for derived sensors are dependent on the source sensors.
 
+## Service Health Topics
+
+The monitor service publishes runtime health for both Docker and non-Docker observers:
+
+- `sigenergy2mqtt/health/state` (string: `healthy` or `degraded`)
+- `sigenergy2mqtt/health/attributes` (JSON object)
+
+The attributes payload currently includes:
+
+- `status`
+- `mqtt_connected`
+- `modbus_connected`
+- `overdue_topics`
+- `monitored_topics`
+- `timestamp`
+
 
 > [!IMPORTANT]
 > All `sigenergy2mqtt` sensor names begin with a prefix. The default is `sigen`, but this may be changed via configuration.
