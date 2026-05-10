@@ -52,7 +52,7 @@ class GridSensor(ModbusDevice):
 
         import_power = derived.GridSensorImportPower(self.plant_index, active_power)
         export_power = derived.GridSensorExportPower(self.plant_index, active_power)
-        self._add_derived_sensor(import_power, active_power)
-        self._add_derived_sensor(export_power, active_power)
-        self._add_derived_sensor(derived.GridSensorDailyExportEnergy(self.plant_index, export_energy), export_energy)
-        self._add_derived_sensor(derived.GridSensorDailyImportEnergy(self.plant_index, import_energy), import_energy)
+        self._add_sensor(import_power)
+        self._add_sensor(export_power)
+        self._add_sensor(derived.GridSensorDailyExportEnergy(self.plant_index, export_energy))
+        self._add_sensor(derived.GridSensorDailyImportEnergy(self.plant_index, import_energy))

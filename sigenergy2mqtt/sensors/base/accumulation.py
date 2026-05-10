@@ -72,6 +72,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         )
 
         self._source = source
+        self.declare_source_sensors(source)
         self._reset_topic = f"sigenergy2mqtt/{self[DiscoveryKeys.OBJECT_ID]}/reset"
         self._current_total_lock = asyncio.Lock()
         self._current_total: float = 0.0

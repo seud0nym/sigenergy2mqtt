@@ -35,7 +35,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
     Subclasses must be concrete (non-abstract) and are expected to register their
     sensors during __init__ via the _add_read_sensor, _add_writeonly_sensor, and
-    _add_derived_sensor helpers.
+    _add_sensor helper.
     """
 
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
@@ -344,46 +344,33 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         elif sensor.debug_logging:
             logging.debug(f"{self.log_identity} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
 
-    def _add_derived_sensor(self, sensor: DerivedSensor, *from_sensors: Sensor | None, search_children: bool = False) -> None:
-        """Register a DerivedSensor that computes its value from one or more source sensors.
+    def _add_sensor(self, sensor: Sensor, search_children: bool = False) -> None:
+        """Register a sensor with automatic derived-source wiring.
 
-        Filters out None entries from from_sensors (which arise when optional source
-        sensors are not defined for a given protocol version) and validates protocol
-        version compatibility. The derived sensor is attached to each source sensor
-        via add_derived_sensor() and registered in all_sensors.
-
-        Args:
-            sensor: The DerivedSensor to register.
-            *from_sensors: The source sensors whose values feed into the derived sensor.
-                           None values are removed before processing.
-            search_children: Whether to search child devices when looking up source
-                             sensors by unique_id.
+        Derived sensors must declare their source sensors in their own definition.
         """
-        none_sensors = len([s for s in from_sensors if s is None])
-        if none_sensors:
-            logging.debug(f"{self.log_identity} removed {none_sensors} undefined source sensor{'s' if none_sensors != 1 else ''} for {sensor.__class__.__name__}")
-            source_sensors: list[Sensor] = [s for s in from_sensors if s is not None]
-        else:
-            source_sensors = cast(list[Sensor], from_sensors)
-        if self.protocol_version > Protocol.N_A:
-            if sensor.protocol_version > self.protocol_version:
+        if isinstance(sensor, DerivedSensor):
+            if self.protocol_version > Protocol.N_A and sensor.protocol_version > self.protocol_version:
                 if sensor.debug_logging:
                     logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
                 return
-            elif any(s for s in source_sensors if s.protocol_version > self.protocol_version):
-                if sensor.debug_logging:
-                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
+            source_sensors = [s for s in sensor.source_sensors if s is not None]
+            if not source_sensors:
+                logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - No source sensors defined")
                 return
-        if not source_sensors:
-            logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - No source sensors defined")
-        else:
+            self._add_to_all_sensors(sensor)
             for to_sensor in source_sensors:
                 found = self.get_sensor(to_sensor.unique_id, search_children=search_children)
                 if not found:
                     logging.warning(f"{self.log_identity} cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.log_identity}")
-                else:
-                    to_sensor.add_derived_sensor(sensor)
-                    self._add_to_all_sensors(sensor)
+                    continue
+                if to_sensor.protocol_version > self.protocol_version and self.protocol_version > Protocol.N_A:
+                    logging.debug(f"{self.log_identity} skipped source {to_sensor.__class__.__name__} due to protocol version")
+                    continue
+                to_sensor.add_derived_sensor(sensor)
+                sensor.bind_source_sensor(to_sensor)
+        else:
+            self._add_to_all_sensors(sensor)
 
     def _add_read_sensor(self, sensor: Sensor, group: str | None = None) -> bool:
         """Register a readable sensor, optionally placing it in a named scan group.

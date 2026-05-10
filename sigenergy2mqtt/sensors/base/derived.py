@@ -30,6 +30,8 @@ class DerivedSensor(TypedSensorMixin, Sensor):
 
         super().__init__(**kwargs)
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+        self.source_sensors: list[Sensor] = []
+        self.bound_source_sensors: dict[str, Sensor] = {}
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         """Derived sensors don't update from Modbus."""
@@ -75,6 +77,15 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         except Exception as e:
             logging.warning(f"{self.log_identity} Failed to persist state: {e}")
             coro.close()
+
+
+    def declare_source_sensors(self, *sensors: Sensor | None) -> None:
+        """Declare sensors this derived sensor depends on."""
+        self.source_sensors = [s for s in sensors if s is not None]
+
+    def bind_source_sensor(self, sensor: Sensor) -> None:
+        """Track bound source sensors and inherit their capabilities."""
+        self.bound_source_sensors[sensor.unique_id] = sensor
 
     @abc.abstractmethod
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:

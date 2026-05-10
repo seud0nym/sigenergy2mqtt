@@ -151,6 +151,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         # Public attributes
         self.derived_sensors: dict[str, DerivedSensor] = {}
+        self.capabilities: set[str] = set()
         self.force_publish: bool = False
         self.name: str = name
         self.object_id: str = object_id

@@ -195,10 +195,10 @@ class PowerPlant(ModbusDevice):
             self._add_read_sensor(rw.MaxDischargingLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None, cast(float, rdp_value)))
             self._add_read_sensor(total_charge_energy)
             self._add_read_sensor(total_discharge_energy)
-            self._add_derived_sensor(derived.BatteryChargingPower(self.plant_index, battery_power), battery_power)
-            self._add_derived_sensor(derived.BatteryDischargingPower(self.plant_index, battery_power), battery_power)
-            self._add_derived_sensor(derived.PlantDailyChargeEnergy(self.plant_index, total_charge_energy), total_charge_energy, search_children=False)
-            self._add_derived_sensor(derived.PlantDailyDischargeEnergy(self.plant_index, total_discharge_energy), total_discharge_energy, search_children=False)
+            self._add_sensor(derived.BatteryChargingPower(self.plant_index, battery_power))
+            self._add_sensor(derived.BatteryDischargingPower(self.plant_index, battery_power))
+            self._add_sensor(derived.PlantDailyChargeEnergy(self.plant_index, total_charge_energy), search_children=False)
+            self._add_sensor(derived.PlantDailyDischargeEnergy(self.plant_index, total_discharge_energy), search_children=False)
 
         self._add_read_sensor(ro.EVDCTotalChargedEnergy(self.plant_index))
         self._add_read_sensor(ro.EVDCTotalDischargedEnergy(self.plant_index))
@@ -215,25 +215,25 @@ class PowerPlant(ModbusDevice):
         self._add_read_sensor(ro.CurrentControlCommandValue(self.plant_index))
         self._add_read_sensor(ro.PlantAlarms(self.plant_index, ro.Alarm6(self.plant_index), ro.Alarm7(self.plant_index)))
 
-        self._add_derived_sensor(self._total_pv_power, self._plant_pv_power, search_children=False)
+        self._add_sensor(self._total_pv_power, search_children=False)
         if self._smartport:
             smartport_pv_power = active_config.modbus[self.plant_index].smartport.module.pv_power
             if smartport_pv_power and not smartport_pv_power.isspace():
                 for sensor in self._smartport.sensors.values():
                     if sensor.__class__.__name__ == smartport_pv_power:
                         self._total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
-                        self._add_derived_sensor(self._total_pv_power, sensor, search_children=True)
+                        self._add_sensor(self._total_pv_power, search_children=True)
                         break
             if self._plant_3rd_party_pv_power:
                 self._add_read_sensor(self._plant_3rd_party_pv_power)
-                self._add_derived_sensor(self._total_pv_power, self._plant_3rd_party_pv_power, search_children=False)
+                self._add_sensor(self._total_pv_power, search_children=False)
                 self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
             else:
                 logging.warning(f"{self.log_identity} Unable to register ThirdPartyPVPower sensor for SmartPort failover - protocol version {self.protocol_version} does not support it")
         else:
             if self._plant_3rd_party_pv_power:
                 self._add_read_sensor(self._plant_3rd_party_pv_power, self._consumption_group)
-                self._add_derived_sensor(self._total_pv_power, self._plant_3rd_party_pv_power, search_children=False)
+                self._add_sensor(self._total_pv_power, search_children=False)
                 self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
             else:
                 logging.warning(f"{self.log_identity} Unable to register ThirdPartyPVPower sensor as TotalPVPower source - protocol version {self.protocol_version} does not support it")
@@ -249,20 +249,20 @@ class PowerPlant(ModbusDevice):
                 grid_status = self._grid_sensor.get_sensor(GridStatus)
                 if not grid_status:
                     raise RuntimeError(f"{self.log_identity} GridStatus not registered in GridSensor device???")
-                self._add_derived_sensor(plant_consumed_power, self._total_pv_power, battery_power, active_power, grid_status, search_children=True)
+                self._add_sensor(plant_consumed_power, search_children=True)
             case ConsumptionMethod.GENERAL:
-                self._add_derived_sensor(plant_consumed_power, general_load_power)
+                self._add_sensor(plant_consumed_power)
             case ConsumptionMethod.TOTAL:
-                self._add_derived_sensor(plant_consumed_power, total_load_power)
+                self._add_sensor(plant_consumed_power)
 
         plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(self.plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(self.plant_index)
         total_lifetime_pv_energy = derived.TotalLifetimePVEnergy(self.plant_index)
         self._add_read_sensor(plant_lifetime_pv_energy, "Lifetime Production")
         self._add_read_sensor(plant_3rd_party_lifetime_pv_energy, "Lifetime Production")
-        self._add_derived_sensor(total_lifetime_pv_energy, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
-        self._add_derived_sensor(derived.PlantDailyPVEnergy(self.plant_index, plant_lifetime_pv_energy), plant_lifetime_pv_energy)
-        self._add_derived_sensor(derived.TotalDailyPVEnergy(self.plant_index, total_lifetime_pv_energy), total_lifetime_pv_energy)
+        self._add_sensor(total_lifetime_pv_energy)
+        self._add_sensor(derived.PlantDailyPVEnergy(self.plant_index, plant_lifetime_pv_energy))
+        self._add_sensor(derived.TotalDailyPVEnergy(self.plant_index, total_lifetime_pv_energy))
 
         # Add the reserved registers to optimise sensor scanning
         self._add_read_sensor(ro.Reserved30073(self.plant_index))
