@@ -179,6 +179,7 @@ class DummyDerived(DerivedSensor):
         object.__setattr__(self, "protocol_version", protocol_version)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "source_sensors", [])
 
     def apply_sensor_overrides(self, registers):
         pass
@@ -350,7 +351,7 @@ def test_add_child_device_with_publishable_sensor(device):
 
 
 # ===========================================================================
-# _add_derived_sensor branches
+# _add_sensor branches for DerivedSensor
 # ===========================================================================
 
 
@@ -362,21 +363,23 @@ def test_add_derived_sensor_protocol_version_too_high(device):
     device._add_read_sensor(src)
 
     derived = DummyDerived("derived_high_pv", protocol_version=Protocol.V2_4)
-    device._add_derived_sensor(derived, src)
+    derived.source_sensors = [src]
+    device._add_sensor(derived)
     # Should not be in all_sensors because its protocol_version > device's
     assert "derived_high_pv" not in device.all_sensors
 
 
 def test_add_derived_sensor_source_protocol_version_too_high(device):
-    """Lines 323-326: derived sensor skipped when source sensor has protocol_version > device."""
+    """Derived sensor still registers, but too-new source sensor is skipped for binding."""
     device.protocol_version = Protocol.V1_8
     src = DummyReadable("src_sensor_high")
     src.protocol_version = Protocol.V2_4  # source too new
     device._add_read_sensor(src)
 
     derived = DummyDerived("derived_ok_pv", protocol_version=Protocol.V1_8)
-    device._add_derived_sensor(derived, src)
-    assert "derived_ok_pv" not in device.all_sensors
+    derived.source_sensors = [src]
+    device._add_sensor(derived)
+    assert "derived_ok_pv" in device.all_sensors
 
 
 def test_add_derived_sensor_source_not_found(device):
@@ -385,8 +388,9 @@ def test_add_derived_sensor_source_not_found(device):
     src = DummyReadable("nonexistent_src")  # never added to device
     derived = DummyDerived("derived_no_src")
 
+    derived.source_sensors = [src]
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        device._add_derived_sensor(derived, src)
+        device._add_sensor(derived)
         mock_log.warning.assert_called()
 
 
@@ -395,8 +399,9 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
     derived = DummyDerived("derived_none_src")
     device.protocol_version = Protocol.N_A
 
+    derived.source_sensors = [None]  # all None after filtering
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        device._add_derived_sensor(derived, None)  # all None
+        device._add_sensor(derived)
         mock_log.error.assert_called()
 
 
