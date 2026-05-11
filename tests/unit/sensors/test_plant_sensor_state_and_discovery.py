@@ -231,9 +231,9 @@ def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by
         patch("sigenergy2mqtt.devices.plant.plant.GridSensorActivePower", new=type("GridSensorActivePower", (), {})),
         patch("sigenergy2mqtt.devices.plant.plant.GridStatus", new=type("GridStatus", (), {})),
         patch("sigenergy2mqtt.devices.plant.plant.asyncio.gather", new=AsyncMock(return_value=(5000.0, 5000.0))),
-        patch.object(plant, "_add_read_sensor", return_value=True),
-        patch.object(plant, "_add_writeonly_sensor", return_value=None),
-        patch.object(plant, "_add_derived_sensor", add_derived),
+        patch.object(plant, "_add_sensor", return_value=True),
+        patch.object(plant, "_add_sensor", return_value=None),
+        patch.object(plant, "_add_sensor", add_derived),
     ):
         import asyncio
 

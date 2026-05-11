@@ -146,9 +146,9 @@ class TestCreateSensorScanGroups:
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1, scan_interval=10)
         s3 = DummyModbusSensor("s3", address=102, count=1, device_address=1, scan_interval=60)
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2))
-        dev._add_read_sensor(cast(Sensor, s3))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, s3))
 
         groups = create_sensor_scan_groups(dev)
 
@@ -164,8 +164,8 @@ class TestCreateSensorScanGroups:
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=10)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=2, scan_interval=10)
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2))
 
         groups = create_sensor_scan_groups(dev)
 
@@ -180,8 +180,8 @@ class TestCreateSensorScanGroups:
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=10)
         s2 = DummyModbusSensor("s2", address=200, count=1, device_address=1, scan_interval=10)  # Gap
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2))
 
         groups = create_sensor_scan_groups(dev)
 
@@ -200,7 +200,7 @@ class TestCreateSensorScanGroups:
         while total_count < Constants.MAX_MODBUS_REGISTERS_PER_REQUEST + 10:
             s = DummyModbusSensor(f"s{address}", address=address, count=5, device_address=1, scan_interval=10)
             sensors.append(s)
-            dev._add_read_sensor(cast(Sensor, s))
+            dev._add_sensor(cast(Sensor, s))
             address += 5
             total_count += 5
 
@@ -222,11 +222,11 @@ class TestCreateSensorScanGroups:
         s2 = DummyModbusSensor("s2", address=103, count=1, device_address=1, scan_interval=10)
         r3 = DummyReservedSensor(104)
 
-        dev._add_read_sensor(cast(Sensor, r1))
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, r2))
-        dev._add_read_sensor(cast(Sensor, s2))
-        dev._add_read_sensor(cast(Sensor, r3))
+        dev._add_sensor(cast(Sensor, r1))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, r2))
+        dev._add_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, r3))
 
         groups = create_sensor_scan_groups(dev)
 
@@ -250,8 +250,8 @@ class TestCreateSensorScanGroups:
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2))
 
         groups = create_sensor_scan_groups(dev)
         modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
@@ -269,8 +269,8 @@ class TestCreateSensorScanGroups:
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2))
 
         groups = create_sensor_scan_groups(dev)
         modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
@@ -288,8 +288,8 @@ class TestCreateSensorScanGroups:
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
 
         # Add both to the same named group
-        dev._add_read_sensor(cast(Sensor, s1), group="MyGroup")
-        dev._add_read_sensor(cast(Sensor, s2), group="MyGroup")
+        dev._add_sensor(cast(Sensor, s1), group="MyGroup")
+        dev._add_sensor(cast(Sensor, s2), group="MyGroup")
 
         groups = create_sensor_scan_groups(dev)
 
@@ -314,8 +314,8 @@ class TestPublishUpdates:
         fast.force_publish = True  # Force immediate publish
         slow.force_publish = True  # Force immediate publish
 
-        dev._add_read_sensor(cast(Sensor, fast))
-        dev._add_read_sensor(cast(Sensor, slow))
+        dev._add_sensor(cast(Sensor, fast))
+        dev._add_sensor(cast(Sensor, slow))
 
         modbus_client = MagicMock(spec=ModbusClient)
         modbus_client.read_ahead_registers = AsyncMock(return_value=0)
@@ -358,7 +358,7 @@ class TestPublishUpdates:
         sensor = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=60)
         sensor.force_publish = True  # Force immediate publish
 
-        dev._add_read_sensor(cast(Sensor, sensor))
+        dev._add_sensor(cast(Sensor, sensor))
 
         modbus_client = MagicMock(spec=ModbusClient)
         modbus_client.read_ahead_registers = AsyncMock(return_value=0)
@@ -403,9 +403,9 @@ class TestSensorScanGroupsRecursion:
         s_child = DummyModbusSensor("s_child", 30101)
         s_grandchild = DummyModbusSensor("s_grandchild", 30102)
 
-        root._add_read_sensor(s_root)
-        child._add_read_sensor(s_child)
-        grandchild._add_read_sensor(s_grandchild)
+        root._add_sensor(s_root)
+        child._add_sensor(s_child)
+        grandchild._add_sensor(s_grandchild)
 
         child._add_child_device(grandchild)
         root._add_child_device(child)
@@ -432,8 +432,8 @@ class TestSensorScanGroupsRecursion:
         s3 = DummyModbusSensor("s3", 30607)  # Additional sensor to trigger 'multiple'
 
         combined = AlarmCombinedSensor("Combined Alarms", "sigen_comb_uid", "sigen_comb_oid", a1, a2, plant_index=0)
-        root._add_read_sensor(combined)
-        root._add_read_sensor(s3)
+        root._add_sensor(combined)
+        root._add_sensor(s3)
 
         # Verify grouping
         groups = create_sensor_scan_groups(root)
@@ -490,8 +490,8 @@ class TestSensorScanGroupsEdgeCases:
         s1 = DummyModbusSensor("s1", address=100, count=1)
         s2 = DummyModbusSensor("s2", address=102, count=1)
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2))
 
         groups = create_sensor_scan_groups(dev)
         modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
@@ -509,7 +509,7 @@ class TestSensorScanGroupsEdgeCases:
         for i in range(Constants.MAX_MODBUS_REGISTERS_PER_REQUEST):
             s = DummyModbusSensor(f"s_exact_{i}", address=100 + i, count=1)
             sensors_exact.append(s)
-            dev._add_read_sensor(cast(Sensor, s))
+            dev._add_sensor(cast(Sensor, s))
 
         groups = create_sensor_scan_groups(dev)
         modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
@@ -521,7 +521,7 @@ class TestSensorScanGroupsEdgeCases:
         # Scenario 2: MAX + 1 registers
         # Add one more contiguous sensor
         s_extra = DummyModbusSensor("s_extra", address=100 + Constants.MAX_MODBUS_REGISTERS_PER_REQUEST, count=1)
-        dev._add_read_sensor(cast(Sensor, s_extra))
+        dev._add_sensor(cast(Sensor, s_extra))
 
         groups = create_sensor_scan_groups(dev)
         modbus_groups = [g for g in groups.values() if any(isinstance(s, ModbusSensorMixin) for s in g)]
@@ -547,9 +547,9 @@ class TestSensorScanGroupsEdgeCases:
         s3 = DummyModbusSensor("s3", address=102)
 
         # Add s2 to a specifically named group
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2), group="GroupA")
-        dev._add_read_sensor(cast(Sensor, s3))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2), group="GroupA")
+        dev._add_sensor(cast(Sensor, s3))
 
         groups = create_sensor_scan_groups(dev)
 
@@ -594,8 +594,8 @@ class TestSensorScanGroupsEdgeCases:
         s_start.force_publish = True
         s_end.force_publish = True
 
-        dev._add_read_sensor(cast(Sensor, s_start), group="BigGroup")
-        dev._add_read_sensor(cast(Sensor, s_end), group="BigGroup")
+        dev._add_sensor(cast(Sensor, s_start), group="BigGroup")
+        dev._add_sensor(cast(Sensor, s_end), group="BigGroup")
 
         # Mock Modbus Client
         modbus_client = MagicMock(spec=ModbusClient)
@@ -650,10 +650,10 @@ class TestSensorScanGroupsEdgeCases:
         s3 = DummyModbusSensor("s3", address=102)
         s4 = DummyModbusSensor("s4", address=103)
 
-        dev._add_read_sensor(cast(Sensor, s1))
-        dev._add_read_sensor(cast(Sensor, s2), group="GroupA")
-        dev._add_read_sensor(cast(Sensor, s3), group="GroupB")
-        dev._add_read_sensor(cast(Sensor, s4))
+        dev._add_sensor(cast(Sensor, s1))
+        dev._add_sensor(cast(Sensor, s2), group="GroupA")
+        dev._add_sensor(cast(Sensor, s3), group="GroupB")
+        dev._add_sensor(cast(Sensor, s4))
 
         groups = create_sensor_scan_groups(dev)
 

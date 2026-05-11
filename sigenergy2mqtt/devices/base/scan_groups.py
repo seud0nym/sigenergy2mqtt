@@ -99,7 +99,7 @@ def create_sensor_scan_groups(device: "Device") -> dict[str, list[ReadableSensor
     Constants.MAX_MODBUS_REGISTERS_PER_REQUEST limit. If active_config.modbus[plant_index].
     disable_chunking is True, each sensor gets its own group.
 
-    Named groups (registered via Device._add_read_sensor with a group key) are always
+    Named groups (registered via Device._add_sensor with a group key) are always
     kept intact and take priority. Auto-generated groups use the key format
     "{device_address:03d}_{first_address:05d}".
 

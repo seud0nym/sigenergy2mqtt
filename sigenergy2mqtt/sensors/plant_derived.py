@@ -49,6 +49,7 @@ class BatteryChargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
+        self.declare_source_sensors(battery_power)
         self.sanity_check.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -83,6 +84,7 @@ class BatteryDischargingPower(DerivedSensor):
             precision=2,
         )
         self.protocol_version = battery_power.protocol_version
+        self.declare_source_sensors(battery_power)
         self.sanity_check.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -117,6 +119,7 @@ class GridSensorExportPower(DerivedSensor):
             precision=active_power.precision,
         )
         self.protocol_version = active_power.protocol_version
+        self.declare_source_sensors(active_power)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -150,6 +153,7 @@ class GridSensorImportPower(DerivedSensor):
             precision=active_power.precision,
         )
         self.protocol_version = active_power.protocol_version
+        self.declare_source_sensors(active_power)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()

@@ -162,14 +162,14 @@ async def test_device_schedule(device):
     s1 = DummyReadable("s1", publishable=True, address=100)
     s2 = DummyReadable("s2", publishable=False, address=101)
 
-    device._add_read_sensor(s1)
-    device._add_read_sensor(s2)
+    device._add_sensor(s1)
+    device._add_sensor(s2)
 
     modbus = MagicMock()
     mqtt = MagicMock()
 
     s3 = DummyReadable("s3", publishable=False, address=200)
-    device._add_read_sensor(s3)
+    device._add_sensor(s3)
 
     tasks = device.schedule(modbus, mqtt)
 
@@ -208,7 +208,7 @@ async def test_device_on_ha_state_change(device):
 
     s1 = DummyReadable("s1")
     s1.publish = AsyncMock()
-    device._add_read_sensor(s1)
+    device._add_sensor(s1)
 
     with patch("asyncio.sleep", new_callable=AsyncMock), patch.object(device, "publish_discovery", return_value=None):
         res = await device.on_ha_state_change(modbus_client, mqtt_client, "online", "src", mqtt_handler)
@@ -224,11 +224,11 @@ async def test_device_on_ha_state_change(device):
 def test_device_get_sensor(device):
     child = Device("Child", 0, "child_uid", "mf", "model", Protocol.V1_8)
     s_child = DummyReadable("s_child", publishable=True)
-    child._add_read_sensor(s_child)
+    child._add_sensor(s_child)
     device._add_child_device(child)
 
     s_parent = DummyReadable("s_parent", publishable=True)
-    device._add_read_sensor(s_parent)
+    device._add_sensor(s_parent)
 
     assert device.get_sensor("s_parent") == s_parent
     assert device.get_sensor("s_child", search_children=True) == s_child
@@ -259,11 +259,11 @@ def test_device_get_sensor_by_type_and_child_alarm(device):
         pass
 
     s_parent = ParentReadable("parent_by_type", publishable=True)
-    device._add_read_sensor(s_parent)
+    device._add_sensor(s_parent)
 
     child = Device("ChildType", 0, "child_uid_type", "mf", "model", Protocol.V1_8)
     s_child = ChildReadable("child_by_type", publishable=True)
-    child._add_read_sensor(s_child)
+    child._add_sensor(s_child)
     device._add_child_device(child)
 
     # Type-based lookup should return parent's matching sensor first.
@@ -285,15 +285,15 @@ def test_device_get_sensor_by_type_and_child_alarm(device):
         assert found.unique_id == "child_alarm"
 
 
-def test_device_add_writeonly_sensor(device):
+def test_device_add_sensor(device):
     wo = DummyWriteOnly("wo1")
-    device._add_writeonly_sensor(wo)
+    device._add_sensor(wo)
 
     assert "wo1" in device.write_sensors
     assert "wo1" in device.all_sensors
 
     not_wo = DummyWritable("not_wo")
-    device._add_writeonly_sensor(not_wo)
+    device._add_sensor(not_wo)
     assert "not_wo" not in device.write_sensors
 
 
@@ -305,7 +305,7 @@ def test_modbus_device_checks():
     dev = InverterDevice("Inv", 0, 1, "model", Protocol.V1_8)
 
     s_plain = DummyReadable("s_plain")
-    assert dev._add_read_sensor(s_plain) is False
+    assert dev._add_sensor(s_plain) is False
 
     class ValidInverterSensor(DummyReadable, HybridInverter):
         def __init__(self, uid):
@@ -314,11 +314,11 @@ def test_modbus_device_checks():
     s_valid = ValidInverterSensor("s_valid")
     s_valid.protocol_version = Protocol.V1_8
 
-    assert dev._add_read_sensor(s_valid) is True
+    assert dev._add_sensor(s_valid) is True
 
     s_future = ValidInverterSensor("s_future")
     s_future.protocol_version = Protocol.V2_4
-    assert dev._add_read_sensor(s_future) is False
+    assert dev._add_sensor(s_future) is False
 
 
 def test_device_registry():

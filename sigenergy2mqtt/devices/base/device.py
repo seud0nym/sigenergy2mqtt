@@ -34,8 +34,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
     create_sensor_scan_groups(). Per-group polling is driven by SensorGroupPoller.
 
     Subclasses must be concrete (non-abstract) and are expected to register their
-    sensors during __init__ via the _add_read_sensor, _add_writeonly_sensor, and
-    _add_derived_sensor helpers.
+    sensors during __init__ via the _add_sensor, _add_sensor, and
+    _add_sensor helpers.
     """
 
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
@@ -344,92 +344,55 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         elif sensor.debug_logging:
             logging.debug(f"{self.log_identity} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
 
-    def _add_derived_sensor(self, sensor: DerivedSensor, *from_sensors: Sensor | None, search_children: bool = False) -> None:
-        """Register a DerivedSensor that computes its value from one or more source sensors.
-
-        Filters out None entries from from_sensors (which arise when optional source
-        sensors are not defined for a given protocol version) and validates protocol
-        version compatibility. The derived sensor is attached to each source sensor
-        via add_derived_sensor() and registered in all_sensors.
-
-        Args:
-            sensor: The DerivedSensor to register.
-            *from_sensors: The source sensors whose values feed into the derived sensor.
-                           None values are removed before processing.
-            search_children: Whether to search child devices when looking up source
-                             sensors by unique_id.
-        """
-        none_sensors = len([s for s in from_sensors if s is None])
-        if none_sensors:
-            logging.debug(f"{self.log_identity} removed {none_sensors} undefined source sensor{'s' if none_sensors != 1 else ''} for {sensor.__class__.__name__}")
-            source_sensors: list[Sensor] = [s for s in from_sensors if s is not None]
-        else:
-            source_sensors = cast(list[Sensor], from_sensors)
-        if self.protocol_version > Protocol.N_A:
-            if sensor.protocol_version > self.protocol_version:
+    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = False) -> bool:
+        """Register any sensor type and handle type-specific wiring."""
+        if isinstance(sensor, DerivedSensor):
+            sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
+            if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
-                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
-                return
-            elif any(s for s in source_sensors if s.protocol_version > self.protocol_version):
-                if sensor.debug_logging:
-                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
-                return
-        if not source_sensors:
-            logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - No source sensors defined")
-        else:
-            for to_sensor in source_sensors:
-                found = self.get_sensor(to_sensor.unique_id, search_children=search_children)
+                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
+                return False
+            source_sensors = getattr(sensor, "source_sensors", [])
+            if not source_sensors:
+                logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - no declared source sensors")
+                return False
+            if self.protocol_version > Protocol.N_A and any(getattr(s, "protocol_version", Protocol.N_A) > self.protocol_version for s in source_sensors):
+                logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
+                return False
+            added = False
+            for source in source_sensors:
+                if self.protocol_version > Protocol.N_A and source.protocol_version > self.protocol_version:
+                    logging.debug(
+                        f"{self.log_identity} skipped binding source {source.__class__.__name__} to {sensor.__class__.__name__} - "
+                        f"source protocol {source.protocol_version} > device protocol {self.protocol_version}"
+                    )
+                    continue
+                found = self.get_sensor(source.unique_id, search_children=search_children)
                 if not found:
-                    logging.warning(f"{self.log_identity} cannot add {sensor.__class__.__name__} - {to_sensor.__class__.__name__} is not a defined Sensor for {self.log_identity}")
-                else:
-                    to_sensor.add_derived_sensor(sensor)
-                    self._add_to_all_sensors(sensor)
-
-    def _add_read_sensor(self, sensor: Sensor, group: str | None = None) -> bool:
-        """Register a readable sensor, optionally placing it in a named scan group.
-
-        Ungrouped sensors are added to read_sensors and polled individually.
-        Grouped sensors are collected in group_sensors under the given group key;
-        the group is later used by create_sensor_scan_groups to form a single
-        Modbus read request covering all sensors in the group.
-
-        Args:
-            sensor: The sensor to register. Must implement ReadableSensorMixin.
-            group: Optional named group key. If None the sensor is registered
-                   as a standalone readable sensor.
-
-        Returns:
-            True if the sensor was registered successfully, False if the sensor
-            does not implement ReadableSensorMixin.
-        """
-        if not isinstance(sensor, ReadableSensorMixin):
-            logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - not a ReadableSensorMixin")
-            return False
-        else:
-            if group is None:
-                self.read_sensors[sensor.unique_id] = sensor
+                    logging.warning(f"{self.log_identity} cannot bind source {source.__class__.__name__} to {sensor.__class__.__name__} - source not registered")
+                    continue
+                found.add_derived_sensor(sensor)
+                sensor.bind_source_sensor(found)
+                added = True
+            if added:
                 self._add_to_all_sensors(sensor)
-            else:
-                if group not in self.group_sensors:
-                    self.group_sensors[group] = []
-                self.group_sensors[group].append(sensor)
-                self._add_to_all_sensors(sensor)
-            return True
-
-    def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
-        """Register a write-only sensor that accepts commands but publishes no state.
-
-        Write-only sensors are stored in write_sensors and subscribed to their
-        command topic in subscribe(). They do not participate in polling.
-
-        Args:
-            sensor: The sensor to register. Must be a WriteOnlySensor instance.
-        """
-        if not isinstance(sensor, WriteOnlySensor):
-            logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - not a WriteOnlySensor")
-        else:
+            return added
+        if isinstance(sensor, WriteOnlySensor):
             self.write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
+            return True
+        if not isinstance(sensor, ReadableSensorMixin):
+            logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - unsupported sensor type")
+            return False
+        if group is None:
+            self.read_sensors[sensor.unique_id] = sensor
+        else:
+            if group not in self.group_sensors:
+                self.group_sensors[group] = []
+            self.group_sensors[group].append(sensor)
+        self._add_to_all_sensors(sensor)
+        return True
+
 
     def get_all_sensors(self, search_children: bool = True) -> dict[str, Sensor]:
         """Return all sensors owned by this device, optionally including child devices.
@@ -639,12 +602,12 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         self.refresh_log_identity()
         self._device_type = type
 
-    def _add_read_sensor(self, sensor: Sensor, group: str | None = None) -> bool:
+    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = False) -> bool:
         """Register a readable sensor, applying Modbus-specific type and protocol filters.
 
         Skips the sensor if its class is not an instance of the device's configured
         DeviceType, or if its protocol_version exceeds the device's protocol_version.
-        Otherwise delegates to Device._add_read_sensor.
+        Otherwise delegates to Device._add_sensor.
 
         Args:
             sensor: The sensor to register.
@@ -663,23 +626,4 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
                 logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
             return False
         else:
-            return super()._add_read_sensor(sensor, group)
-
-    def _add_writeonly_sensor(self, sensor: WriteOnlySensor) -> None:
-        """Register a write-only sensor, applying Modbus-specific type and protocol filters.
-
-        Skips the sensor if its class is not an instance of the device's configured
-        DeviceType, or if its protocol_version exceeds the device's protocol_version.
-        Otherwise delegates to Device._add_writeonly_sensor.
-
-        Args:
-            sensor: The write-only sensor to register.
-        """
-        if self._device_type is not None and isinstance(self._device_type, (HybridInverter, PVInverter)) and not isinstance(sensor, self._device_type.__class__):
-            if sensor.debug_logging:
-                logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - not a {self._device_type.__class__.__name__}")
-        elif sensor.protocol_version > self.protocol_version:
-            if sensor.debug_logging:
-                logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
-        else:
-            super()._add_writeonly_sensor(sensor)
+            return super()._add_sensor(sensor, group=group, search_children=search_children)

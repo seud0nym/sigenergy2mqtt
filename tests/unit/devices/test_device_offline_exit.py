@@ -63,7 +63,7 @@ async def test_device_offline_exits_loop(mock_config):
     # Setup device and sensors
     device = ConcreteDevice("Test Device 1", 0, "sigen_test_1", "Sigenergy", "Model", Protocol.V2_4)
     sensor = MockSensor("sigen_test_sensor_1")
-    device._add_read_sensor(sensor)
+    device._add_sensor(sensor)
 
     # Set online (via Future)
     future = asyncio.Future()
@@ -100,7 +100,7 @@ async def test_device_offline_cancels_child_sensors(mock_config):
 
     # Add child sensor
     child_sensor = MockSensor("sigen_child_sensor_2", scan_interval=60)
-    child._add_read_sensor(child_sensor)
+    child._add_sensor(child_sensor)
 
     # Link child to parent
     parent._add_child_device(child)
@@ -141,7 +141,7 @@ async def test_device_offline_exits_reconnect_loop(mock_config):
     # Setup device
     device = ConcreteDevice("Test Device 3", 0, "sigen_test_3", "Sigenergy", "Model", Protocol.V2_4)
     sensor = MockSensor("sigen_test_sensor_3")
-    device._add_read_sensor(sensor)
+    device._add_sensor(sensor)
     poller = SensorGroupPoller(device)
 
     # Set online

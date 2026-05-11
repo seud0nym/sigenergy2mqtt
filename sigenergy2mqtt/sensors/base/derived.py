@@ -30,6 +30,19 @@ class DerivedSensor(TypedSensorMixin, Sensor):
 
         super().__init__(**kwargs)
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+        self.source_sensors: list[Sensor] = []
+        self.bound_source_sensors: list[Sensor] = []
+
+    def declare_source_sensors(self, *sensors: Sensor) -> None:
+        self.source_sensors = [s for s in sensors if s is not None]
+        if not hasattr(self, "bound_source_sensors"):
+            self.bound_source_sensors = []
+
+    def bind_source_sensor(self, sensor: Sensor) -> None:
+        if not hasattr(self, "bound_source_sensors"):
+            self.bound_source_sensors = []
+        if sensor not in self.bound_source_sensors:
+            self.bound_source_sensors.append(sensor)
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         """Derived sensors don't update from Modbus."""

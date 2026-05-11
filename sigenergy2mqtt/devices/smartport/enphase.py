@@ -420,14 +420,14 @@ class SmartPort(Device):
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
         lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)
-        self._add_read_sensor(pv_power, "Consumption" if active_config.consumption == ConsumptionMethod.CALCULATED else None)
-        self._add_derived_sensor(lifetime_pv_energy, pv_power)
-        self._add_derived_sensor(EnphaseDailyPVEnergy(plant_index, sn, lifetime_pv_energy), lifetime_pv_energy)
-        self._add_derived_sensor(EnphaseCurrent(plant_index, sn), pv_power)
-        self._add_derived_sensor(EnphaseFrequency(plant_index, sn), pv_power)
-        self._add_derived_sensor(EnphasePowerFactor(plant_index, sn), pv_power)
-        self._add_derived_sensor(EnphaseReactivePower(plant_index, sn), pv_power)
-        self._add_derived_sensor(EnphaseVoltage(plant_index, sn), pv_power)
+        self._add_sensor(pv_power, group="Consumption" if active_config.consumption == ConsumptionMethod.CALCULATED else None)
+        self._add_sensor(lifetime_pv_energy)
+        self._add_sensor(EnphaseDailyPVEnergy(plant_index, sn, lifetime_pv_energy))
+        self._add_sensor(EnphaseCurrent(plant_index, sn))
+        self._add_sensor(EnphaseFrequency(plant_index, sn))
+        self._add_sensor(EnphasePowerFactor(plant_index, sn))
+        self._add_sensor(EnphaseReactivePower(plant_index, sn))
+        self._add_sensor(EnphaseVoltage(plant_index, sn))
 
 
 if __name__ == "__main__":

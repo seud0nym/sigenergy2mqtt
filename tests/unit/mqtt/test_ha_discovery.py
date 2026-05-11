@@ -645,7 +645,7 @@ def get_discovery_payload(mqtt_mock):
 def test_discovery_base_structure(mock_config):
     dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
     sensor = DummySensor("TestSensor", "sigen_s1", 100)
-    dev._add_read_sensor(cast(Sensor, sensor))
+    dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
     dev.publish_discovery(mqtt_client)
@@ -667,7 +667,7 @@ def test_discovery_base_structure(mock_config):
 def test_energy_daily_accumulation_discovery(mock_config):
     dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
     source = DummySensor("Power", "sigen_power", 100)
-    dev._add_read_sensor(cast(Sensor, source))
+    dev._add_sensor(cast(Sensor, source))
 
     sensor = EnergyDailyAccumulationSensor("Daily Energy", "sigen_daily", "sigen_daily", source)
     dev._add_to_all_sensors(sensor)
@@ -692,7 +692,7 @@ def test_alarm_sensor_discovery(mock_config):
             return "Error"
 
     sensor = ConcreteAlarm("Alarm1", "sigen_alarm1", 0, 1, 30001, Protocol.V1_8, "Equipment")
-    dev._add_read_sensor(cast(Sensor, sensor))
+    dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
     dev.publish_discovery(mqtt_client)
@@ -710,7 +710,7 @@ def test_timestamp_sensor_discovery(mock_config):
 
     # name, object_id, input_type, plant_index, device_address, address, scan_interval, protocol_version
     sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8)
-    dev._add_read_sensor(cast(Sensor, sensor))
+    dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
     dev.publish_discovery(mqtt_client)
@@ -729,7 +729,7 @@ def test_simplified_topics_discovery(mock_config):
 
     dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
     sensor = DummySensor("TestSensor", "sigen_s1", 100)
-    dev._add_read_sensor(cast(Sensor, sensor))
+    dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
     dev.publish_discovery(mqtt_client)
@@ -743,15 +743,15 @@ def test_simplified_topics_discovery(mock_config):
 def test_discovery_keys_validity(mock_config):
     dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
     sensor = DummySensor("TestSensor", "sigen_s1", 100)
-    dev._add_read_sensor(cast(Sensor, sensor))
+    dev._add_sensor(cast(Sensor, sensor))
 
     # Add various types of sensors to ensure mixed discovery content
     source = DummySensor("Power", "sigen_power", 101)
-    dev._add_read_sensor(cast(Sensor, source))
+    dev._add_sensor(cast(Sensor, source))
     energy_sensor = EnergyDailyAccumulationSensor("Daily Energy", "sigen_daily", "sigen_daily", source)
     dev._add_to_all_sensors(energy_sensor)
     ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8)
-    dev._add_read_sensor(cast(Sensor, ts_sensor))
+    dev._add_sensor(cast(Sensor, ts_sensor))
 
     mqtt_client = MagicMock()
     dev.publish_discovery(mqtt_client)

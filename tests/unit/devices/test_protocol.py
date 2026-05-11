@@ -101,10 +101,11 @@ def test_add_derived_sensor_skips_newer_protocol(caplog):
     source = DummySensor("source", protocol_version=Protocol.V1_8)
 
     # Add source
-    device._add_read_sensor(source)
+    device._add_sensor(source)
 
     # Try to add derived sensor
-    device._add_derived_sensor(sensor, source)
+    sensor.declare_source_sensors(source)
+    device._add_sensor(sensor)
 
     # Should verify it was NOT added to all_sensors
     # This assertion is expected to FAIL with the current bug as it will be added
@@ -123,9 +124,10 @@ def test_add_derived_sensor_skips_newer_source_protocol(caplog):
     sensor = DummyDerived("ok_sensor", protocol_version=Protocol.V1_8)
     source = DummySensor("newer_source", protocol_version=Protocol.V2_0)
 
-    device._add_read_sensor(source)
+    device._add_sensor(source)
 
-    device._add_derived_sensor(sensor, source)
+    sensor.declare_source_sensors(source)
+    device._add_sensor(sensor)
 
     if "ok_sensor" in device.all_sensors:
         pytest.fail("ok_sensor was added but should have been skipped due to source sensor protocol version mismatch")
@@ -140,8 +142,9 @@ def test_add_derived_sensor_ok_protocol(caplog):
     sensor = DummyDerived("ok_sensor", protocol_version=Protocol.V1_8)
     source = DummySensor("source", protocol_version=Protocol.V1_8)
 
-    device._add_read_sensor(source)
+    device._add_sensor(source)
 
-    device._add_derived_sensor(sensor, source)
+    sensor.declare_source_sensors(source)
+    device._add_sensor(sensor)
 
     assert "ok_sensor" in device.all_sensors
