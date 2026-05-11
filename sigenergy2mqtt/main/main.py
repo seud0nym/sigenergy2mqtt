@@ -26,6 +26,7 @@ from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, I
 from sigenergy2mqtt.sensors.plant_read_only import (
     Alarm7,
     CurrentControlCommandValue,
+    GridStatus,
     PlantBatterySoH,
     SITotalChargedEnergy,
     SITotalDischargedEnergy,
@@ -35,7 +36,6 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     ThirdPartyPVPower,
     TotalLoadDailyConsumption,
     TotalLoadPower,
-    GridStatus,
 )
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerRegulationGradient, GridCodeLVRT, IndependentPhasePowerControl
 
@@ -490,8 +490,6 @@ async def _setup_dc_chargers(
             total_count=total_count,
         )
         config.add_device(charger)
-    if skipped_due_to_outage:
-        _schedule_restart_on_grid_restore(device, plant_index)
 
     return sequence_number
 
@@ -584,9 +582,7 @@ async def _setup_ac_chargers(
         except Exception as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
-                logging.warning(
-                    f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}"
-                )
+                logging.warning(f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
                 skipped_due_to_outage = True
                 continue
 
