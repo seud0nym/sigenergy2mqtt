@@ -83,6 +83,7 @@ class TestConfig:
     grid_status_initial_state: int | None = None  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
     grid_outage_initial_delay_seconds: int = 30
     grid_outage_duration_seconds: int = 30
+    grid_outage_repeated: bool = True
     simulate_firmware_upgrade: bool = False
     simulate_power_factor_errors: bool = False
 
@@ -362,6 +363,17 @@ class CustomDataBlock:
                 # If the request is fully contained within this reserved sensor, reject it.
                 if (address + count) <= (sensor.address + sensor.count):
                     return ExcCodes.ILLEGAL_ADDRESS
+
+            # ── AC Charger Grid Outage Simulation ─────────────────────────
+            # If the grid is down (initial state 1 or 2), AC charger registers
+            # fail to respond, provided that the current GridStatus register
+            # matches that initial state.
+            if set_values is None and TestConfig.grid_status_initial_state in (1, 2):
+                if any(32000 <= addr <= 32014 for addr in range(address, address + count)):
+                    if block._server is not None:
+                        grid_status = await block._server.context.async_getValues(Constants.PLANT_DEVICE_ADDRESS, 0x03, GridStatus.ADDRESS, 1)
+                        if grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
+                            return ExcCodes.DEVICE_FAILURE
 
             # ── Simulated latency ──────────────────────────────────────────
             budget = block._latency_budget
@@ -820,7 +832,7 @@ async def simulate_firmware_version_upgrade(data_block: CustomDataBlock, wait_fo
         pass
 
 
-async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: int, duration_seconds: int) -> None:
+async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: int, duration_seconds: int, repeated: bool = True) -> None:
     """Repeatedly simulate grid outages on *data_block*.
 
     Waits *wait_for_seconds*, sets the ``GridStatus`` register to ``1``
@@ -832,6 +844,7 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             ``Constants.PLANT_DEVICE_ADDRESS``).
         wait_for_seconds: Idle time between outage cycles, in seconds.
         duration_seconds: Duration of each simulated outage, in seconds.
+        repeated: Whether to repeat the grid outage simulation.
     """
     while True:
         try:
@@ -842,6 +855,8 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             await asyncio.sleep(duration_seconds)
             await data_block.force_set_registers(GridStatus.ADDRESS, [0])
             _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
+            if not repeated:
+                break
         except asyncio.CancelledError:
             break
 
@@ -1038,7 +1053,12 @@ async def run_async_server(
         tasks = [server.serve_forever()]
         if TestConfig.simulate_grid_outages:
             tasks.append(
-                simulate_grid_outage(context[Constants.PLANT_DEVICE_ADDRESS], wait_for_seconds=TestConfig.grid_outage_initial_delay_seconds, duration_seconds=TestConfig.grid_outage_duration_seconds)
+                simulate_grid_outage(
+                    context[Constants.PLANT_DEVICE_ADDRESS],
+                    wait_for_seconds=TestConfig.grid_outage_initial_delay_seconds,
+                    duration_seconds=TestConfig.grid_outage_duration_seconds,
+                    repeated=TestConfig.grid_outage_repeated,
+                )
                 if Constants.PLANT_DEVICE_ADDRESS in context
                 else asyncio.sleep(0)
             )
@@ -1219,6 +1239,7 @@ async def async_helper() -> None:
     TestConfig.grid_status_initial_state = _env_int("MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE", None)  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
     TestConfig.grid_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY", 30)
     TestConfig.grid_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION", 30)
+    TestConfig.grid_outage_repeated = _env_bool("MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED", True)
     TestConfig.simulate_firmware_upgrade = _env_bool("MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE", False)
     TestConfig.simulate_power_factor_errors = _env_bool("MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS", False)
 
