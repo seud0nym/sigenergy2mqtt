@@ -840,6 +840,8 @@ async def test_setup_ac_chargers_outage_failure_skips_and_continues(clean_config
 
     monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(side_effect=[RuntimeError("unreachable"), MagicMock()]))
     monkeypatch.setattr(main_mod, "_is_grid_outage", AsyncMock(return_value=True))
+    mock_schedule = MagicMock()
+    monkeypatch.setattr(main_mod, "_schedule_restart_on_grid_restore", mock_schedule)
 
     with patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn:
         next_seq = await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, Protocol.V2_8, 0, 2)
@@ -847,6 +849,7 @@ async def test_setup_ac_chargers_outage_failure_skips_and_continues(clean_config
     assert next_seq == 2
     assert mock_config.add_device.call_count == 1
     assert mock_warn.called
+    assert mock_schedule.called
 
 
 @pytest.mark.asyncio
