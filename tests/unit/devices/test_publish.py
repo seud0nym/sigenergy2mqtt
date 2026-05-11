@@ -143,8 +143,8 @@ async def test_publish_updates_runs_one_iteration(monkeypatch):
     s2 = DummyModbusSensor("s2", address=3, count=1, device_address=5, scan_interval=1)
 
     # add to device via internal APIs so parent_device is set
-    dev._add_read_sensor(s1)
-    dev._add_read_sensor(s2)
+    dev._add_sensor(s1)
+    dev._add_sensor(s2)
 
     # monkeypatch ModbusLockFactory.get to return a FakeLock
     monkeypatch.setattr(ModbusLockFactory, "get", staticmethod(lambda modbus: FakeLock()))
@@ -175,8 +175,8 @@ async def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     dev = Device("devpub2", 0, "uidpub2", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=12, count=1, device_address=7, scan_interval=1)
-    dev._add_read_sensor(s1)
-    dev._add_read_sensor(s2)
+    dev._add_sensor(s1)
+    dev._add_sensor(s2)
 
     class ModbusReadAheadError(FakeModbus):
         def __init__(self):
@@ -214,8 +214,8 @@ async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatc
     dev = Device("devpub3", 0, "uidpub3", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=1, count=1, device_address=2, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=2, count=1, device_address=2, scan_interval=1)
-    dev._add_read_sensor(s1)
-    dev._add_read_sensor(s2)
+    dev._add_sensor(s1)
+    dev._add_sensor(s2)
 
     class ModbusRaises(FakeModbus):
         def __init__(self):
@@ -290,8 +290,8 @@ async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
 
     daily.derived_sensors = {"eda": MockEDA()}
 
-    dev._add_read_sensor(daily)
-    dev._add_read_sensor(regular)
+    dev._add_sensor(daily)
+    dev._add_sensor(regular)
 
     # Track publishes per sensor
     publish_log: list[str] = []
@@ -367,8 +367,8 @@ async def test_poller_skips_unpublishable_sensors(monkeypatch):
     # Mark s1 as unpublishable
     object.__setattr__(s1, "_publishable", False)
 
-    dev._add_read_sensor(s1)
-    dev._add_read_sensor(s2)
+    dev._add_sensor(s1)
+    dev._add_sensor(s2)
 
     monkeypatch.setattr(ModbusLockFactory, "get", staticmethod(lambda modbus: FakeLock()))
 
@@ -406,8 +406,8 @@ async def test_poller_read_ahead_exception_codes(monkeypatch, caplog):
     dev = Device("devpub6", 0, "uidpub6", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=12, count=1, device_address=7, scan_interval=1)
-    dev._add_read_sensor(s1)
-    dev._add_read_sensor(s2)
+    dev._add_sensor(s1)
+    dev._add_sensor(s2)
 
     class ModbusExceptionCodes(FakeModbus):
         def __init__(self):
@@ -481,7 +481,7 @@ async def test_poller_reconnect_cancellation(monkeypatch, caplog):
     """Mock modbus.connect to raise asyncio.CancelledError and ensure _reconnect_modbus_with_backoff returns False properly."""
     dev = Device("devpub7", 0, "uidpub7", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
-    dev._add_read_sensor(s1)
+    dev._add_sensor(s1)
 
     class ModbusCancelledConnect(FakeModbus):
         def close(self):
@@ -531,7 +531,7 @@ async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
 
     dev = Device("devpub8", 0, "uidpub8", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
-    dev._add_read_sensor(s1)
+    dev._add_sensor(s1)
     dev._online = True
 
     # Mark it as debug logging so the caught cancellation logs a specific message
@@ -583,7 +583,7 @@ async def test_poller_run_handles_generic_exception(monkeypatch, caplog):
     """Throw a generic Exception from sensor.publish and verify run catches it and logs an error without crashing."""
     dev = Device("devpub9", 0, "uidpub9", "mf", "mdl", Protocol.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
-    dev._add_read_sensor(s1)
+    dev._add_sensor(s1)
 
     s1.force_publish = True
     s1._states = []

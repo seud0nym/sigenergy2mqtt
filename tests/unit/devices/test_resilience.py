@@ -90,8 +90,8 @@ async def test_modbus_exception_recovery(mock_config):
     dev = Device("test", 0, "sigen_uid", "mf", "mdl", Protocol.V1_8)
     sensor1 = DummyModbusSensor("sigen_s1", address=100)
     sensor2 = DummyModbusSensor("sigen_s1b", address=101)  # Add second sensor for multiple-sensor path
-    dev._add_read_sensor(cast(Sensor, sensor1))
-    dev._add_read_sensor(cast(Sensor, sensor2))
+    dev._add_sensor(cast(Sensor, sensor1))
+    dev._add_sensor(cast(Sensor, sensor2))
 
     mqtt_client = MagicMock()
     modbus_client = MockModbusClient()
@@ -135,7 +135,7 @@ async def test_modbus_exception_recovery(mock_config):
 async def test_reconnection_interruption_on_offline(mock_config):
     dev = Device("test", 0, "sigen_uid2", "mf", "mdl", Protocol.V1_8)
     sensor = DummyModbusSensor("sigen_s2", address=100)
-    dev._add_read_sensor(cast(Sensor, sensor))
+    dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
     modbus_client = MockModbusClient()

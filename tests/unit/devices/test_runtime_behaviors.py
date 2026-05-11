@@ -101,14 +101,14 @@ def test_add_child_device_only_when_publishable():
     child = Device("child", 0, "c_uid", "mf", "mdl", Protocol.V1_8)
     # non-publishable sensor
     s = DummyReadable(unique_id="s1", publishable=False)
-    child._add_read_sensor(cast(Sensor, s))
+    child._add_sensor(cast(Sensor, s))
     parent._add_child_device(child)
     assert child not in parent.children
 
     # publishable sensor
     child2 = Device("child2", 0, "c2", "mf", "mdl", Protocol.V1_8)
     s2 = DummyReadable(unique_id="s2", publishable=True)
-    child2._add_read_sensor(cast(Sensor, s2))
+    child2._add_sensor(cast(Sensor, s2))
     parent._add_child_device(child2)
     assert child2 in parent.children
 
@@ -119,10 +119,10 @@ def test_add_read_sensor_rejects_non_readable_and_add_to_all_sets_parent():
     class NotReadable:
         pass
 
-    assert dev._add_read_sensor(cast(Any, NotReadable())) is False
+    assert dev._add_sensor(cast(Any, NotReadable())) is False
 
     s = DummyReadable(unique_id="s_add")
-    assert dev._add_read_sensor(cast(Sensor, s)) is True
+    assert dev._add_sensor(cast(Sensor, s)) is True
     # _add_to_all_sensors called as part of add; verify parent set
     assert s.unique_id in dev.all_sensors
     assert getattr(s, "parent_device") is dev
@@ -133,11 +133,11 @@ def test_add_derived_sensor_handles_none_and_unregistered():
     dev = Device("dev3", 0, "uid3", "mf", "mdl", Protocol.V1_8)
     derived = DummyDerived()
     # all sources None -> no addition
-    dev._add_derived_sensor(cast(Any, derived), None)
+    dev._add_sensor(cast(Any, derived), None)
 
     # source provided but not registered -> won't be added
     src = DummyReadable(unique_id="missing")
-    dev._add_derived_sensor(cast(Any, derived), cast(Any, src))
+    dev._add_sensor(cast(Any, derived), cast(Any, src))
     # Nothing should have been added to all_sensors
     assert len(dev.all_sensors) == 0
 

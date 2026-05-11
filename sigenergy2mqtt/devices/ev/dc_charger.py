@@ -42,13 +42,13 @@ class DCCharger(ModbusDevice):
         return charger
 
     async def _register_sensors(self, plant_index: int, device_address: int) -> None:
-        self._add_read_sensor(ro.DCChargerOutputPower(plant_index, device_address))
-        self._add_read_sensor(ro.DCChargerCurrentChargingCapacity(plant_index, device_address))
-        self._add_read_sensor(ro.DCChargerCurrentChargingDuration(plant_index, device_address))
-        self._add_read_sensor(ro.DCChargerVehicleBatteryVoltage(plant_index, device_address))
-        self._add_read_sensor(ro.DCChargerVehicleChargingCurrent(plant_index, device_address))
-        self._add_read_sensor(ro.DCChargerVehicleSoC(plant_index, device_address))
-        self._add_read_sensor(ro.InverterAlarm5(plant_index, device_address))
-        self._add_read_sensor(ro.DCChargerRunningState(plant_index, device_address))
+        self._add_sensor(ro.DCChargerOutputPower(plant_index, device_address))
+        self._add_sensor(ro.DCChargerCurrentChargingCapacity(plant_index, device_address))
+        self._add_sensor(ro.DCChargerCurrentChargingDuration(plant_index, device_address))
+        self._add_sensor(ro.DCChargerVehicleBatteryVoltage(plant_index, device_address))
+        self._add_sensor(ro.DCChargerVehicleChargingCurrent(plant_index, device_address))
+        self._add_sensor(ro.DCChargerVehicleSoC(plant_index, device_address))
+        self._add_sensor(ro.InverterAlarm5(plant_index, device_address))
+        self._add_sensor(ro.DCChargerRunningState(plant_index, device_address))
 
-        self._add_writeonly_sensor(rw.DCChargerStatus(plant_index, device_address))
+        self._add_sensor(rw.DCChargerStatus(plant_index, device_address))

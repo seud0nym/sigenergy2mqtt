@@ -51,14 +51,14 @@ class ACCharger(ModbusDevice):
         ib_value = await input_breaker.get_state(modbus_client=modbus_client)
         rc_value = await rated_current.get_state(modbus_client=modbus_client)
 
-        self._add_read_sensor(ro.ACChargerRunningState(plant_index, device_address))
-        self._add_read_sensor(ro.ACChargerTotalEnergyConsumed(plant_index, device_address))
-        self._add_read_sensor(ro.ACChargerChargingPower(plant_index, device_address))
-        self._add_read_sensor(ro.ACChargerRatedPower(plant_index, device_address))
-        self._add_read_sensor(rated_current)
-        self._add_read_sensor(ro.ACChargerRatedVoltage(plant_index, device_address))
-        self._add_read_sensor(input_breaker)
-        self._add_read_sensor(
+        self._add_sensor(ro.ACChargerRunningState(plant_index, device_address))
+        self._add_sensor(ro.ACChargerTotalEnergyConsumed(plant_index, device_address))
+        self._add_sensor(ro.ACChargerChargingPower(plant_index, device_address))
+        self._add_sensor(ro.ACChargerRatedPower(plant_index, device_address))
+        self._add_sensor(rated_current)
+        self._add_sensor(ro.ACChargerRatedVoltage(plant_index, device_address))
+        self._add_sensor(input_breaker)
+        self._add_sensor(
             ro.ACChargerAlarms(
                 plant_index,
                 device_address,
@@ -67,6 +67,6 @@ class ACCharger(ModbusDevice):
                 ro.ACChargerAlarm3(plant_index, device_address),
             )
         )
-        self._add_read_sensor(rw.ACChargerOutputCurrent(plant_index, device_address, cast(float, ib_value), cast(float, rc_value)))
+        self._add_sensor(rw.ACChargerOutputCurrent(plant_index, device_address, cast(float, ib_value), cast(float, rc_value)))
 
-        self._add_writeonly_sensor(rw.ACChargerStatus(plant_index, device_address))
+        self._add_sensor(rw.ACChargerStatus(plant_index, device_address))

@@ -38,11 +38,11 @@ class PVString(ModbusDevice):
         lifetime_energy = PVStringLifetimeEnergy(plant_index, device_address, string_number, power)
         daily_energy = PVStringDailyEnergy(plant_index, device_address, string_number, lifetime_energy)
 
-        self._add_read_sensor(voltage)
-        self._add_read_sensor(current)
-        self._add_derived_sensor(power, voltage, current)
-        self._add_derived_sensor(lifetime_energy, power)
-        self._add_derived_sensor(daily_energy, lifetime_energy)
+        self._add_sensor(voltage)
+        self._add_sensor(current)
+        self._add_sensor(power)
+        self._add_sensor(lifetime_energy)
+        self._add_sensor(daily_energy)
 
     def _build_log_identity(self) -> str:
         base_identity = super()._build_log_identity()

@@ -344,7 +344,7 @@ def test_add_child_device_with_publishable_sensor(device):
     """Contrast: child with a publishable sensor IS added."""
     child = Device("WithSensors", 0, "uid_with_sensors", "mf", "model", Protocol.V1_8)
     s = DummyReadable("s_pub", publishable=True)
-    child._add_read_sensor(s)
+    child._add_sensor(s)
     device._add_child_device(child)
     assert child in device.children
 
@@ -359,10 +359,10 @@ def test_add_derived_sensor_protocol_version_too_high(device):
     device.protocol_version = Protocol.V1_8
     src = DummyReadable("src_sensor")
     src.protocol_version = Protocol.V1_8
-    device._add_read_sensor(src)
+    device._add_sensor(src)
 
     derived = DummyDerived("derived_high_pv", protocol_version=Protocol.V2_4)
-    device._add_derived_sensor(derived, src)
+    device._add_sensor(derived, src)
     # Should not be in all_sensors because its protocol_version > device's
     assert "derived_high_pv" not in device.all_sensors
 
@@ -372,10 +372,10 @@ def test_add_derived_sensor_source_protocol_version_too_high(device):
     device.protocol_version = Protocol.V1_8
     src = DummyReadable("src_sensor_high")
     src.protocol_version = Protocol.V2_4  # source too new
-    device._add_read_sensor(src)
+    device._add_sensor(src)
 
     derived = DummyDerived("derived_ok_pv", protocol_version=Protocol.V1_8)
-    device._add_derived_sensor(derived, src)
+    device._add_sensor(derived, src)
     assert "derived_ok_pv" not in device.all_sensors
 
 
@@ -386,7 +386,7 @@ def test_add_derived_sensor_source_not_found(device):
     derived = DummyDerived("derived_no_src")
 
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        device._add_derived_sensor(derived, src)
+        device._add_sensor(derived, src)
         mock_log.warning.assert_called()
 
 
@@ -396,7 +396,7 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
     device.protocol_version = Protocol.N_A
 
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        device._add_derived_sensor(derived, None)  # all None
+        device._add_sensor(derived, None)  # all None
         mock_log.error.assert_called()
 
 
@@ -408,7 +408,7 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
 def test_create_sensor_scan_groups_non_modbus(device):
     """non-Modbus readable sensors end up in their own scan group."""
     s = DummyReadable("non_modbus_s", publishable=True)
-    device._add_read_sensor(s)
+    device._add_sensor(s)
 
     groups = create_sensor_scan_groups(device)
     assert "non_modbus_sensors" in groups
@@ -699,7 +699,7 @@ async def test_republish_discovery_cancelled(device):
 def test_schedule_skips_non_publishable_group(device):
     """Lines 835-836: groups with no publishable sensors are not scheduled."""
     s = DummyReadable("s_not_publishable", publishable=False)
-    device._add_read_sensor(s)
+    device._add_sensor(s)
 
     from sigenergy2mqtt.config.settings import HomeAssistantConfig, ModbusConfig
 
@@ -780,7 +780,7 @@ def test_modbus_device_add_read_sensor_protocol_too_high():
     """Lines 962-965: sensor with protocol_version > device is skipped."""
     dev = ConcreteModbusDevice(None, "Dev", 0, 1, "model", Protocol.V1_8)
     s = DummyReadable("s_high_pv", protocol_version=Protocol.V2_4)
-    result = dev._add_read_sensor(s)
+    result = dev._add_sensor(s)
     assert result is False
 
 
@@ -788,7 +788,7 @@ def test_modbus_device_add_read_sensor_protocol_matches():
     """sensor with matching protocol_version is added."""
     dev = ConcreteModbusDevice(None, "Dev2", 0, 2, "model", Protocol.V1_8)
     s = DummyReadable("s_ok_pv", protocol_version=Protocol.V1_8)
-    result = dev._add_read_sensor(s)
+    result = dev._add_sensor(s)
     assert result is True
 
 
@@ -806,7 +806,7 @@ def test_modbus_device_add_writeonly_wrong_type():
 
     dev = InverterDevice("Inv2", 0, 3, "model", Protocol.V1_8)
     wo = DummyWriteOnly("wo_wrong_type")  # Not a HybridInverter subclass
-    dev._add_writeonly_sensor(wo)
+    dev._add_sensor(wo)
     assert "wo_wrong_type" not in dev.write_sensors
 
 
@@ -814,7 +814,7 @@ def test_modbus_device_add_writeonly_protocol_too_high():
     """Lines 1020-1025: WriteOnly sensor with too-high protocol version is skipped."""
     dev = ConcreteModbusDevice(None, "Dev3", 0, 4, "model", Protocol.V1_8)
     wo = DummyWriteOnly("wo_high_pv", protocol_version=Protocol.V2_4)
-    dev._add_writeonly_sensor(wo)
+    dev._add_sensor(wo)
     assert "wo_high_pv" not in dev.write_sensors
 
 
@@ -822,7 +822,7 @@ def test_modbus_device_add_writeonly_valid():
     """Valid WriteOnly sensor is added."""
     dev = ConcreteModbusDevice(None, "Dev4", 0, 5, "model", Protocol.V1_8)
     wo = DummyWriteOnly("wo_valid", protocol_version=Protocol.V1_8)
-    dev._add_writeonly_sensor(wo)
+    dev._add_sensor(wo)
     assert "wo_valid" in dev.write_sensors
 
 
@@ -854,7 +854,7 @@ def test_add_read_sensor_not_readable(device):
 
     nr = NotReadable("not_readable")
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        result = device._add_read_sensor(nr)
+        result = device._add_sensor(nr)
     assert result is False
     mock_log.error.assert_called()
 
@@ -867,7 +867,7 @@ def test_add_read_sensor_not_readable(device):
 def test_add_read_sensor_with_group(device):
     """Lines 1053-1055: sensor added under a named group is stored in group_sensors."""
     s = DummyReadable("s_grouped", publishable=True)
-    device._add_read_sensor(s, group="my_group")
+    device._add_sensor(s, group="my_group")
     assert "my_group" in device.group_sensors
     assert s in device.group_sensors["my_group"]
     assert s.unique_id in device.all_sensors
@@ -877,8 +877,8 @@ def test_add_read_sensor_appends_to_existing_group(device):
     """Adding two sensors to the same group accumulates them."""
     s1 = DummyReadable("s_g1")
     s2 = DummyReadable("s_g2")
-    device._add_read_sensor(s1, group="shared_group")
-    device._add_read_sensor(s2, group="shared_group")
+    device._add_sensor(s1, group="shared_group")
+    device._add_sensor(s2, group="shared_group")
     assert len(device.group_sensors["shared_group"]) == 2
 
 
@@ -890,7 +890,7 @@ def test_add_read_sensor_appends_to_existing_group(device):
 def test_add_to_all_sensors_duplicate_skipped(device):
     """adding a sensor that already exists is silently skipped."""
     s = DummyReadable("s_dup", publishable=True)
-    device._add_read_sensor(s)
+    device._add_sensor(s)
     count_before = len(device.all_sensors)
     device._add_to_all_sensors(s)
     assert len(device.all_sensors) == count_before
