@@ -130,14 +130,15 @@ def test_add_read_sensor_rejects_non_readable_and_add_to_all_sets_parent():
 
 def test_add_derived_sensor_handles_none_and_unregistered():
     dev = Device("dev3", 0, "uid3", "mf", "mdl", Protocol.V1_8)
-    dev = Device("dev3", 0, "uid3", "mf", "mdl", Protocol.V1_8)
     derived = DummyDerived()
     # all sources None -> no addition
-    dev._add_sensor(cast(Any, derived), None)
+    derived.declare_source_sensors()
+    dev._add_sensor(cast(Any, derived))
 
     # source provided but not registered -> won't be added
     src = DummyReadable(unique_id="missing")
-    dev._add_sensor(cast(Any, derived), cast(Any, src))
+    derived.declare_source_sensors(cast(Any, src))
+    dev._add_sensor(cast(Any, derived))
     # Nothing should have been added to all_sensors
     assert len(dev.all_sensors) == 0
 

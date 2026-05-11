@@ -344,17 +344,15 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         elif sensor.debug_logging:
             logging.debug(f"{self.log_identity} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
 
-    def _add_sensor(self, sensor: Sensor, *source_sensors: Sensor | None, group: str | None = None, search_children: bool = False) -> bool:
+    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = False) -> bool:
         """Register any sensor type and handle type-specific wiring."""
         if isinstance(sensor, DerivedSensor):
-            if source_sensors:
-                sensor.declare_source_sensors(*[s for s in source_sensors if s is not None])
             sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
             if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
                     logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
                 return False
-            source_sensors = sensor.source_sensors
+            source_sensors = getattr(sensor, "source_sensors", [])
             if not source_sensors:
                 logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - no declared source sensors")
                 return False
@@ -604,7 +602,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         self.refresh_log_identity()
         self._device_type = type
 
-    def _add_sensor(self, sensor: Sensor, *source_sensors: Sensor | None, group: str | None = None, search_children: bool = False) -> bool:
+    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = False) -> bool:
         """Register a readable sensor, applying Modbus-specific type and protocol filters.
 
         Skips the sensor if its class is not an instance of the device's configured
@@ -628,4 +626,4 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
                 logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
             return False
         else:
-            return super()._add_sensor(sensor, *source_sensors, group=group, search_children=search_children)
+            return super()._add_sensor(sensor, group=group, search_children=search_children)

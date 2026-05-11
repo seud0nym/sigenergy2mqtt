@@ -28,7 +28,7 @@ class GridSensor(ModbusDevice):
 
         self._add_sensor(grid_status)
         self._add_sensor(ro.GridSensorStatus(self.plant_index))
-        self._add_sensor(active_power, consumption_group)
+        self._add_sensor(active_power, group=consumption_group)
         self._add_sensor(ro.GridSensorReactivePower(self.plant_index))
         self._add_sensor(ro.GridPhaseActivePower(self.plant_index, "A"))
         self._add_sensor(ro.GridPhaseReactivePower(self.plant_index, "A"))
