@@ -139,7 +139,6 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.languageServer": "None",
-    "python.pyrefly.displayTypeErrors": "force-on",
     "python.terminal.activateEnvironment": true,
     "python.testing.pytestArgs": [
         "tests",
@@ -151,4 +150,6 @@
     "ruff.lineLength": 210,
     "terminal.integrated.defaultProfile.linux": "bash",
     "terminal.integrated.shellIntegration.enabled": true,
+    "python.pyrefly.typeCheckingMode": "off",
+    "python.analysis.completeFunctionParens": true,
 }
