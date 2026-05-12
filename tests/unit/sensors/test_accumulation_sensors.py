@@ -41,8 +41,8 @@ class TestAccumulationLogic:
             assert sensor._current_total == 0.0
 
             # First reading (needs at least 2 for trapezoidal rule)
-            values = [(1000.0, 10.0)]
             source.latest_interval = None
+            source.state_count = 1
             sensor.set_source_values(source)
             assert sensor._current_total == 0.0
 
@@ -56,8 +56,10 @@ class TestAccumulationLogic:
             # In the code: increase = 0.5 * (previous + current) * interval_hours
             # new_total = self._current_total + increase
 
-            values = [(1000.0, 10.0), (4600.0, 20.0)]
             source.latest_interval = 3600.0
+            source.state_count = 2
+            source.previous_raw_state = 10.0
+            source.latest_raw_state = 20.0
 
             # Mock persistence to avoid background thread issues
             with patch.object(sensor, "run_persistence_coroutine"):
@@ -88,8 +90,10 @@ class TestAccumulationLogic:
                 precision=2,
             )
 
-            values = [(1000.0, -10.0), (4600.0, -20.0)]
             source.latest_interval = 3600.0
+            source.state_count = 2
+            source.previous_raw_state = -10.0
+            source.latest_raw_state = -20.0
 
             with patch.object(sensor, "run_persistence_coroutine"):
                 sensor.set_source_values(source)
@@ -214,8 +218,10 @@ class TestAccumulationSensor:
                 precision=2,
             )
 
-            values = [(1000.0, 10.0), (4600.0, 20.0)]
             source.latest_interval = 3600.0
+            source.state_count = 2
+            source.previous_raw_state = 10.0
+            source.latest_raw_state = 20.0
 
             with patch.object(sensor, "run_persistence_coroutine"):
                 sensor.set_source_values(source)
