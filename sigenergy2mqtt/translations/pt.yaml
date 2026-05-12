@@ -1023,6 +1023,10 @@ class:
       '2': Falha
       '3': Desligado
       '7': Anomalia Ambiental
+  InverterSelfConsumedPower:
+    attributes:
+      source: Estimativa do autoconsumo do inversor (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: Potencia Autoconsumida
   InverterSerialNumber:
     attributes:
       source: Registo Modbus {address}
@@ -1345,6 +1349,10 @@ class:
       '2': Falha
       '3': Desligado
       '7': Anomalia Ambiental
+  PlantSelfConsumedPower:
+    attributes:
+      source: "Σ de InverterSelfConsumedPower em todos os Inversores associados à Central"
+    name: Potencia Autoconsumida
   PlantStatistics:
     name: Estatísticas Central Sigenergy {plant_suffix}
   PlantStatus:

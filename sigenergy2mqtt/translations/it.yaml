@@ -1023,6 +1023,10 @@ class:
       '2': Guasto
       '3': Spento
       '7': Anomalia Ambientale
+  InverterSelfConsumedPower:
+    attributes:
+      source: Stima dell'autoconsumo dell'inverter (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: Potenza Autoconsumata
   InverterSerialNumber:
     attributes:
       source: Registro Modbus {address}
@@ -1345,6 +1349,10 @@ class:
       '2': Guasto
       '3': Spento
       '7': Anomalia Ambientale
+  PlantSelfConsumedPower:
+    attributes:
+      source: "Σ di InverterSelfConsumedPower su tutti gli Inverter associati all'Impianto"
+    name: Potenza Autoconsumata
   PlantStatistics:
     name: Statistiche Impianto Sigenergy {plant_suffix}
   PlantStatus:

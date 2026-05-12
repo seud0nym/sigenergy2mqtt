@@ -8,6 +8,7 @@ from sigenergy2mqtt.common import DeviceType, FirmwareVersion, HybridInverter, P
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
 
 from .ess import ESS
 from .pv_string import PVString
@@ -71,7 +72,7 @@ class Inverter(ModbusDevice):
 
         inverter = cls(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
         await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), battery_count)
-        await inverter._register_sensors(plant_index, device_address, pv_string_count, firmware_version, model, serial_number, pack_bcu_count, modbus_client)
+        await inverter._register_sensors(plant_index, device_address, pv_string_count, firmware_version, model, serial_number, pack_bcu_count, battery_count, modbus_client)
         return inverter
 
     async def _register_child_devices(
@@ -159,6 +160,7 @@ class Inverter(ModbusDevice):
         model: ro.InverterModel,
         serial_number: ro.InverterSerialNumber,
         pack_bcu_count: ro.PACKBCUCount,
+        battery_count: int,
         modbus_client: ModbusClient,
     ) -> None:
         output_type = ro.OutputType(plant_index, device_address)
@@ -223,6 +225,16 @@ class Inverter(ModbusDevice):
         self._add_sensor(ro.InverterActivePowerPercentageAdjustmentFeedback(plant_index, device_address))
         self._add_sensor(ro.InverterReactivePowerPercentageAdjustmentFeedback(plant_index, device_address))
         self._add_sensor(ro.InverterPowerFactorAdjustmentFeedback(plant_index, device_address))
+
+        battery_power = cast(ro.ChargeDischargePower, self.get_sensor(ro.ChargeDischargePower, search_children=True))
+        if battery_power is not None and battery_power.publishable:
+            pv_string_power: list[PVStringPower] = [s for s in self.get_all_sensors().values() if isinstance(s, PVStringPower) and s.publishable]
+            if len(pv_string_power) > 0:
+                self._add_sensor(InverterSelfConsumedPower(plant_index, device_address, battery_count, active_power, battery_power, *pv_string_power))
+            else:
+                logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable PVStringPower sensors found")
+        else:
+            logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable ChargeDischargePower sensor found")
 
         # Add the reserved registers to optimise sensor scanning
         self._add_sensor(ro.ReservedDailyExportEnergy(plant_index, device_address))

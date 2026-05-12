@@ -1023,6 +1023,10 @@ class:
       '2': Storing
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
+  InverterSelfConsumedPower:
+    attributes:
+      source: Schatting van eigen verbruik omvormer (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: Eigen verbruik
   InverterSerialNumber:
     attributes:
       source: Modbus-register {address}
@@ -1345,6 +1349,10 @@ class:
       '2': Storing
       '3': Uitgeschakeld
       '7': Omgevingsafwijking
+  PlantSelfConsumedPower:
+    attributes:
+      source: "Σ van InverterSelfConsumedPower over alle Omvormers geassocieerd met de Installatie"
+    name: Eigen verbruik
   PlantStatistics:
     name: Sigenergy-installatie Statistieken {plant_suffix}
   PlantStatus:

@@ -1023,6 +1023,10 @@ class:
       '2': Fehler
       '3': Ausgeschaltet
       '7': Umgebungsanomalie
+  InverterSelfConsumedPower:
+    attributes:
+      source: Schätzung des Inverter-Eigenverbrauchs (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: Eigenverbrauch
   InverterSerialNumber:
     attributes:
       source: Modbus-Register {address}
@@ -1345,6 +1349,10 @@ class:
       '2': Fehler
       '3': Ausgeschaltet
       '7': Umgebungsanomalie
+  PlantSelfConsumedPower:
+    attributes:
+      source: ∑ von InverterSelfConsumedPower über alle mit der Anlage verbundenen Inverter
+    name: Eigenverbrauch
   PlantStatistics:
     name: Sigenergy-Anlage Statistik {plant_suffix}
   PlantStatus:

@@ -1023,6 +1023,10 @@ class:
       '2': 故障
       '3': 关机
       '7': 环境异常
+  InverterSelfConsumedPower:
+    attributes:
+      source: 逆变器自发自用估算值 (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: 自发自用功率
   InverterSerialNumber:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1345,6 +1349,10 @@ class:
       '2': 故障
       '3': 关机
       '7': 环境异常
+  PlantSelfConsumedPower:
+    attributes:
+      source: 与电站关联的所有逆变器的InverterSelfConsumedPower之和
+    name: 自发自用功率
   PlantStatistics:
     name: Sigenergy电站 统计 {plant_suffix}
   PlantStatus:

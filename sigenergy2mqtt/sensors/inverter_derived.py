@@ -4,9 +4,11 @@ from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceClass, HybridInverter, PVInverter, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, HybridInverter, Protocol, PVInverter, StateClass, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.sensors.base import SanityCheckException
+from sigenergy2mqtt.sensors.inverter_read_only import ActivePower
 
 from .base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
@@ -195,3 +197,68 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInver
         attributes = super().get_attributes()
         attributes["source"] = "PVStringLifetimeEnergy − PVStringLifetimeEnergy at last midnight"
         return attributes
+
+
+class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
+    def __init__(self, plant_index: int, device_address: int, battery_count: int, active_power: ActivePower, battery_power: ChargeDischargePower, *pv_string_power: PVStringPower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        self.device_address = device_address
+        super().__init__(
+            name="Self-Consumed Power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_self_consumed_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_self_consumed_power",
+            data_type=ModbusDataType.INT32,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:battery-unknown",
+            gain=None,
+            precision=0,  # Intentional rounding to nearest watt
+            protocol_version=Protocol.V1_8,
+        )
+        self.declare_source_sensors(active_power, battery_power, *pv_string_power)
+
+        self.active_power: int = 0
+        self.battery_power: int = 0
+        self.pv_string_power: dict[int, int] = {p.string_number: 0 for p in pv_string_power}
+
+        self.sanity_check.min_raw = 3
+        self.sanity_check.max_raw = ((battery_count * 35) + 60) * 1.5 if battery_count > 0 else 0  # 35W per battery + 60W for inverter + 50% safety margin
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} battery_count={battery_count} max_raw={self.sanity_check.max_raw}")
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Estimate of inverter self-consumption (ActivePower − ChargeDischargePower − ∑[PVStringPower])"
+        return attributes
+
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+        if self.active_power == 0 and self.battery_power == 0 and all(p == 0 for p in self.pv_string_power.values()):
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+            return False
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+        return await super().publish(mqtt_client, modbus_client, republish=republish)
+
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+        if isinstance(sensor, ActivePower):
+            self.active_power = values[-1][1]
+        elif isinstance(sensor, ChargeDischargePower):
+            self.battery_power = values[-1][1]
+        elif isinstance(sensor, PVStringPower):
+            self.pv_string_power[sensor.string_number] = values[-1][1]
+        else:
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            return False
+        total_pv_power = sum(self.pv_string_power.values())
+        state = total_pv_power - self.active_power - self.battery_power
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} active_power={self.active_power} battery_power={self.battery_power} total_pv_power={total_pv_power} state={state}")
+        try:
+            self.set_latest_state(state)
+        except SanityCheckException as e:
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
+        return True

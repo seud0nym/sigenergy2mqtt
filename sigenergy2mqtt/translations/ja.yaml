@@ -1023,6 +1023,10 @@ class:
       '2': 故障
       '3': 電源オフ
       '7': 環境異常
+  InverterSelfConsumedPower:
+    attributes:
+      source: インバーターの自家消費推定値 (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: 自家消費電力
   InverterSerialNumber:
     attributes:
       source: Modbusレジスタ {address}
@@ -1345,6 +1349,10 @@ class:
       '2': 故障
       '3': 電源オフ
       '7': 環境異常
+  PlantSelfConsumedPower:
+    attributes:
+      source: 発電所に関連付けられたすべてのインバーターのInverterSelfConsumedPowerの合計
+    name: 自家消費電力
   PlantStatistics:
     name: Sigenergyシステム 統計 {plant_suffix}
   PlantStatus:

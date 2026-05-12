@@ -6,16 +6,17 @@ from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, StateClass, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, Protocol, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
 from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
+from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
-from .base import DerivedSensor, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, SubstituteMixin
+from .base import CrossDeviceDerivedSensor, DerivedSensor, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, SubstituteMixin
 from .plant_read_only import (
     BatteryPower,
     ESSTotalChargedEnergy,
@@ -625,3 +626,77 @@ class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
         attributes = super().get_attributes()
         attributes["source"] = "∑ of DailyDischargeEnergy across all Inverters associated with the Plant"
         return attributes
+
+
+class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
+    def __init__(self, plant_index: int):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        super().__init__(
+            name="Self-Consumed Power",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_self_consumed_power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_self_consumed_power",
+            data_type=ModbusDataType.INT32,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:battery-unknown",
+            gain=None,
+            precision=0,  # Intentional rounding to nearest watt
+            protocol_version=Protocol.V1_8,
+        )
+        # _values is populated in finalise_binding() once inverter sensors are known
+        self._values: dict[str, int | None] = {}
+
+    def finalise_binding(self, plant_index: int) -> bool:
+        """Discover all publishable InverterSelfConsumedPower sensors across inverters
+        and wire them as cross-device sources.
+        """
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
+
+        sources: list[InverterSelfConsumedPower] = []
+        for device in DeviceRegistry.get(plant_index):
+            for sensor in device.get_all_sensors(search_children=True).values():
+                if isinstance(sensor, InverterSelfConsumedPower) and sensor.publishable:
+                    sources.append(sensor)
+
+        if not sources:
+            logging.warning(f"{self.log_identity} no publishable InverterSelfConsumedPower sensors found - PlantSelfConsumedPower will not be published")
+            return False
+
+        self._values = {s.object_id: None for s in sources}
+        self.declare_cross_device_sources(*sources)
+        return super().finalise_binding(plant_index)
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["source"] = "∑ of InverterSelfConsumedPower across all Inverters associated with the Plant"
+        return attributes
+
+    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+        if any(v is None for v in self._values.values()):
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} Publishing SKIPPED - values={self._values}")
+            return False  # until all values populated, can't do calculation
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} Publishing READY   - values={self._values}")
+        await super().publish(mqtt_client, modbus_client, republish=republish)
+        # reset internal values to missing for next calculation
+        for k in self._values.keys():
+            self._values[k] = None
+        return True
+
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+        if isinstance(sensor, InverterSelfConsumedPower):
+            self._values[sensor.object_id] = values[-1][1]
+        else:
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            return False
+        if any(v is None for v in self._values.values()):
+            return False  # until all values populated, can't do calculation
+        state = sum([v for v in self._values.values() if v is not None])
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} values={self._values} state={state}")
+        self.set_latest_state(state)
+        return True

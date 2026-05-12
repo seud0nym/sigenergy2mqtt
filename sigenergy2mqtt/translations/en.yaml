@@ -1023,6 +1023,10 @@ class:
       '2': Fault
       '3': Power-Off
       '7': Environmental Abnormality
+  InverterSelfConsumedPower:
+    attributes:
+      source: Estimate of inverter self-consumption (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: Self-Consumed Power
   InverterSerialNumber:
     attributes:
       source: Modbus Register {address}
@@ -1345,6 +1349,10 @@ class:
       '2': Fault
       '3': Power-Off
       '7': Environmental Abnormality
+  PlantSelfConsumedPower:
+    attributes:
+      source: ∑ of InverterSelfConsumedPower across all Inverters associated with the Plant
+    name: Self-Consumed Power
   PlantStatistics:
     name: Sigenergy Plant Statistics {plant_suffix}
   PlantStatus:

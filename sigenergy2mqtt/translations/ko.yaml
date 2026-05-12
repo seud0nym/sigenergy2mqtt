@@ -1023,6 +1023,10 @@ class:
       '2': 고장
       '3': 전원 꺼짐
       '7': 환경 이상
+  InverterSelfConsumedPower:
+    attributes:
+      source: 인버터 자가 소비 추정치 (ActivePower − ChargeDischargePower − ∑[PVStringPower])
+    name: 자가 소비 전력
   InverterSerialNumber:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1345,6 +1349,10 @@ class:
       '2': 고장
       '3': 전원 꺼짐
       '7': 환경 이상
+  PlantSelfConsumedPower:
+    attributes:
+      source: "발전소와 연결된 모든 인버터의 InverterSelfConsumedPower 합계"
+    name: 자가 소비 전력
   PlantStatistics:
     name: Sigenergy 발전소 통계 {plant_suffix}
   PlantStatus:
