@@ -61,11 +61,12 @@ class BatteryChargingPower(DerivedSensor):
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if sensor.latest_raw_state <= 0 else round(sensor.latest_raw_state, self.precision),
+            0 if raw <= 0 else round(raw, self.precision),
         )
         return True
 
@@ -98,11 +99,12 @@ class BatteryDischargingPower(DerivedSensor):
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if sensor.latest_raw_state >= 0 else round(sensor.latest_raw_state * -1, self.precision),
+            0 if raw >= 0 else round(raw * -1, self.precision),
         )
         return True
 
@@ -134,11 +136,12 @@ class GridSensorExportPower(DerivedSensor):
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if sensor.latest_raw_state >= 0 else round(sensor.latest_raw_state * -1, self.precision),
+            0 if raw >= 0 else round(raw * -1, self.precision),
         )
         return True
 
@@ -170,11 +173,12 @@ class GridSensorImportPower(DerivedSensor):
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if sensor.latest_raw_state <= 0 else round(sensor.latest_raw_state, self.precision),
+            0 if raw <= 0 else round(raw, self.precision),
         )
         return True
 

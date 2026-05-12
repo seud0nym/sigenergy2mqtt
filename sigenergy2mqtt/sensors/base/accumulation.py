@@ -450,7 +450,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._state_now = (value if isinstance(value, float) else float(value)) * self.gain
 
         # Calculate new midnight state
-        updated_midnight_state = self._source.latest_raw_state - self._state_now if isinstance(self._source.latest_raw_state, (float, int)) and self._source.latest_raw_state else self._state_now
+        source_raw = self._source.latest_raw_state
+        updated_midnight_state = (float(source_raw) - self._state_now) if isinstance(source_raw, (float, int)) and source_raw else self._state_now
 
         if self.debug_logging:
             logging.debug(f"{self.log_identity} source_raw={self._source.latest_raw_state} (from {self._source.unique_id}) state_now={self._state_now} midnight_state={updated_midnight_state}")

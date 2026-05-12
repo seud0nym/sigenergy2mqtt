@@ -40,9 +40,7 @@ class EnphaseSensor(DerivedSensor):
             source_id = getattr(sensor, "log_identity", str(sensor))
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {source_id}")
             return False
-        value = sensor.latest_raw_state
-        if value is None:
-            return False
+        value = float(sensor.latest_raw_state)
         if value < 0:
             if self.debug_logging:
                 logging.info(f"{self.log_identity} value is negative ({value}), setting to 0.0")

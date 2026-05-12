@@ -42,10 +42,11 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
-        self.set_latest_state(0 if sensor.latest_raw_state <= 0 else sensor.latest_raw_state)
+        self.set_latest_state(0 if raw <= 0 else raw)
         return True
 
 
@@ -77,10 +78,11 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
-        self.set_latest_state(0 if sensor.latest_raw_state >= 0 else sensor.latest_raw_state * -1)
+        self.set_latest_state(0 if raw >= 0 else raw * -1)
         return True
 
 
@@ -255,11 +257,11 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         if sensor.latest_raw_state is None:
             return False
         if isinstance(sensor, ActivePower):
-            self.active_power = sensor.latest_raw_state
+            self.active_power = int(sensor.latest_raw_state)
         elif isinstance(sensor, ChargeDischargePower):
-            self.battery_power = sensor.latest_raw_state
+            self.battery_power = int(sensor.latest_raw_state)
         elif isinstance(sensor, PVStringPower):
-            self.pv_string_power[sensor.string_number] = sensor.latest_raw_state
+            self.pv_string_power[sensor.string_number] = int(sensor.latest_raw_state)
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
