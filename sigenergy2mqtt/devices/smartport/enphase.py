@@ -231,7 +231,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
 
 
 class EnphaseLifetimePVEnergy(EnphaseSensor):
-    def __init__(self, plant_index: int, serial_number: str):
+    def __init__(self, plant_index: int, serial_number: str, source_sensor: EnphasePVPower):
         super().__init__(
             name="Lifetime Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_enphase_{serial_number}_lifetime_pv_energy",
@@ -244,6 +244,7 @@ class EnphaseLifetimePVEnergy(EnphaseSensor):
             gain=1000,
             precision=2,
         )
+        self.declare_source_sensors(source_sensor)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -419,7 +420,7 @@ class SmartPort(Device):
         super().__init__(name, plant_index, unique_id, "Enphase", "Envoy", Protocol.N_A, plant_suffix=plant_suffix, mdl_id=pn, sn=sn, hw=fw)
 
         pv_power = EnphasePVPower(plant_index, sn, config.host, config.username, config.password)
-        lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn)
+        lifetime_pv_energy = EnphaseLifetimePVEnergy(plant_index, sn, pv_power)
         self._add_sensor(pv_power, group="Consumption" if active_config.consumption == ConsumptionMethod.CALCULATED else None)
         self._add_sensor(lifetime_pv_energy)
         self._add_sensor(EnphaseDailyPVEnergy(plant_index, sn, lifetime_pv_energy))
