@@ -103,7 +103,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             raw = sensor.latest_raw_state
             if raw is None:
                 return
-            self.value = raw / self.divisor
+            self.value = float(raw) / self.divisor
             self.timestamp = sensor.latest_time
 
     def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):

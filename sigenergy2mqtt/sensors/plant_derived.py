@@ -318,8 +318,6 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
                 logging.debug(f"{self.log_identity} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
 
     def set_source_values(self, sensor: Sensor, *_: object) -> bool:
-        if sensor.latest_raw_state is None:
-            return False
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
             logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from {sensor.log_identity} - not PVPowerSensor instance")
@@ -327,9 +325,12 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         elif source not in self._sources:
             logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
             return False
+        raw_state = getattr(sensor, "latest_raw_state", None)
+        if raw_state is None:
+            return False
         if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
             self.fallback(source)
-        self._sources[source].state = sensor.latest_raw_state
+        self._sources[source].state = float(raw_state)
         self._sources[source].last_update = time.time()
         if self.debug_logging:
             logging.debug(f"{self.log_identity} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
@@ -456,16 +457,17 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
     def set_source_values(self, sensor: Sensor, *_: object) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        raw = float(sensor.latest_raw_state)
         if isinstance(sensor, TotalLoadPower):
-            self._update_source(ConsumptionMethod.TOTAL.value, sensor.latest_raw_state)
+            self._update_source(ConsumptionMethod.TOTAL.value, raw)
         elif isinstance(sensor, GeneralLoadPower):
-            self._update_source(ConsumptionMethod.GENERAL.value, sensor.latest_raw_state)
+            self._update_source(ConsumptionMethod.GENERAL.value, raw)
         elif isinstance(sensor, BatteryPower):
-            self._update_source("battery", sensor.latest_raw_state)
+            self._update_source("battery", raw)
         elif isinstance(sensor, GridSensorActivePower):
-            self._update_source("grid", sensor.latest_raw_state)
+            self._update_source("grid", raw)
         elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
-            self._update_source("pv", sensor.latest_raw_state)
+            self._update_source("pv", raw)
         elif isinstance(sensor, GridStatus):
             if self.method == ConsumptionMethod.CALCULATED:
                 grid = int(sensor.latest_raw_state)
@@ -561,9 +563,9 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         if sensor.latest_raw_state is None:
             return False
         if isinstance(sensor, PlantPVTotalGeneration):
-            self.plant_lifetime_pv_energy = sensor.latest_raw_state
+            self.plant_lifetime_pv_energy = float(sensor.latest_raw_state)
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
-            self.plant_3rd_party_lifetime_pv_energy = sensor.latest_raw_state
+            self.plant_3rd_party_lifetime_pv_energy = float(sensor.latest_raw_state)
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -709,7 +711,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         if sensor.latest_raw_state is None:
             return False
         if isinstance(sensor, InverterSelfConsumedPower):
-            self._values[sensor.object_id] = sensor.latest_raw_state
+            self._values[sensor.object_id] = int(sensor.latest_raw_state)
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
