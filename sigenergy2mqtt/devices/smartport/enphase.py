@@ -34,6 +34,8 @@ class EnphaseSensor(DerivedSensor):
         super().__init__(**kwargs)
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         if not isinstance(sensor, EnphasePVPower):
             source_id = getattr(sensor, "log_identity", str(sensor))
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {source_id}")

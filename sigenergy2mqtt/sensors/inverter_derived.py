@@ -40,6 +40,8 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
         return attributes
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -73,6 +75,8 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
         return attributes
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -146,6 +150,8 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         return True
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         if isinstance(sensor, PVVoltageSensor):
             self.volts.apply(sensor)
         elif isinstance(sensor, PVCurrentSensor):
@@ -246,6 +252,8 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         return await super().publish(mqtt_client, modbus_client, republish=republish)
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         if isinstance(sensor, ActivePower):
             self.active_power = sensor.latest_raw_state
         elif isinstance(sensor, ChargeDischargePower):

@@ -127,6 +127,8 @@ class AccumulationSensor(DerivedSensor):
                 logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         """Update accumulated value from source sensor.
 
         Args:
@@ -481,6 +483,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         return await super().publish(mqtt_client, modbus_client, republish)
 
     def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         """Update daily accumulation from source values.
 
         Args:
