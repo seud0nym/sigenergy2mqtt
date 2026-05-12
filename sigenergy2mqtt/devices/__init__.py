@@ -1,4 +1,4 @@
-from .base.device import Device, ModbusDevice
+from .base.device import Device, ModbusDevice, bind_cross_device_sensors
 from .base.registry import DeviceRegistry
 from .ev.ac_charger import ACCharger
 from .ev.dc_charger import DCCharger
@@ -23,4 +23,5 @@ __all__ = [
     "PowerPlant",
     "PVString",
     "DeviceRegistry",
+    "bind_cross_device_sensors",
 ]

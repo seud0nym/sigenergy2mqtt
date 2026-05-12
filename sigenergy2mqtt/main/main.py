@@ -14,7 +14,7 @@ from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import active_config, initialize_with_persistence
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
+from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
@@ -449,7 +449,8 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     ac_charger_sequence,
                     total_ac_chargers,
                 )
-
+                # Finalise cross-device sensor bindings now that all inverters and chargers are registered
+                bind_cross_device_sensors(plant_index)
             logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     return thread_config_registry.get_all(), protocol_version

@@ -48,7 +48,7 @@ from .constants import (  # noqa: F401
 )
 
 # Derived sensors
-from .derived import DerivedSensor  # noqa: F401
+from .derived import CrossDeviceDerivedSensor, DerivedSensor  # noqa: F401
 
 # Behaviour mixins
 from .mixins import (  # noqa: F401

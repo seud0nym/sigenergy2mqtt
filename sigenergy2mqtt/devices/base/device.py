@@ -10,7 +10,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
 
 from .ha_publisher import HaPublisherMixin
 from .poller import SensorGroupPoller
@@ -344,8 +344,19 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         elif sensor.debug_logging:
             logging.debug(f"{self.log_identity} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
 
-    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = False) -> bool:
+    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = True) -> bool:
         """Register any sensor type and handle type-specific wiring."""
+        if isinstance(sensor, CrossDeviceDerivedSensor):
+            # Cross-device sensors defer source binding to finalise_binding().
+            # Only apply a protocol check on the sensor itself here; source
+            # validation and bidirectional wiring happen in bind_cross_device_sensors().
+            sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
+            if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
+                if sensor.debug_logging:
+                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
+                return False
+            self._add_to_all_sensors(sensor)
+            return True
         if isinstance(sensor, DerivedSensor):
             sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
             if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
@@ -392,7 +403,6 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             self.group_sensors[group].append(sensor)
         self._add_to_all_sensors(sensor)
         return True
-
 
     def get_all_sensors(self, search_children: bool = True) -> dict[str, Sensor]:
         """Return all sensors owned by this device, optionally including child devices.
@@ -602,7 +612,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         self.refresh_log_identity()
         self._device_type = type
 
-    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = False) -> bool:
+    def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = True) -> bool:
         """Register a readable sensor, applying Modbus-specific type and protocol filters.
 
         Skips the sensor if its class is not an instance of the device's configured
@@ -627,3 +637,39 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             return False
         else:
             return super()._add_sensor(sensor, group=group, search_children=search_children)
+
+
+# =============================================================================
+# Post-init binding pass for cross-device derived sensors
+# =============================================================================
+
+
+def bind_cross_device_sensors(plant_index: int) -> None:
+    """Finalise cross-device derived sensor bindings for a plant.
+
+    Must be called after ALL devices for plant_index have been constructed
+    and added to the DeviceRegistry. Iterates every sensor on every device
+    registered under plant_index and calls finalise_binding() for any
+    CrossDeviceDerivedSensor that has not yet been bound.
+
+    Sensors that fail to bind any source are logged as warnings; they remain
+    in all_sensors so that HA discovery can cleanly remove them, but they
+    will produce no output.
+
+    Args:
+        plant_index: The plant index whose cross-device sensors should be finalised.
+    """
+    from .registry import DeviceRegistry
+
+    for device in DeviceRegistry.get(plant_index):
+        for sensor in list(device.get_all_sensors(search_children=True).values()):
+            if isinstance(sensor, CrossDeviceDerivedSensor):
+                if sensor.bound_source_sensors:
+                    logging.debug(f"{sensor.log_identity} cross-device sources already bound - skipping")
+                    continue
+                ok = sensor.finalise_binding(plant_index)
+                if not ok:
+                    logging.warning(
+                        f"{sensor.log_identity} no cross-device sources were bound - "
+                        f"sensor will produce no output"
+                    )
