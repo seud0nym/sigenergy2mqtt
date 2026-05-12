@@ -60,7 +60,7 @@ class BatteryChargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, BatteryPower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
@@ -95,7 +95,7 @@ class BatteryDischargingPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, BatteryPower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
@@ -129,7 +129,7 @@ class GridSensorExportPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
             0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
@@ -163,7 +163,7 @@ class GridSensorImportPower(DerivedSensor):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
             0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
@@ -265,7 +265,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
                 await self.publish(mqtt_client, modbus_client, republish=True)
             return True
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.notify with topic {source}, but topic is not registered")
+            logging.warning(f"{self.log_identity} Attempt to call notify with topic {source}, but topic is not registered")
             return False
 
     def observable_topics(self) -> set[str]:
@@ -424,7 +424,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                 await self.publish(mqtt_client, modbus_client, republish=True)
             return True
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.notify with topic {source}, but topic is not registered")
+            logging.warning(f"{self.log_identity} Attempt to call notify with topic {source}, but topic is not registered")
         return False
 
     def observable_topics(self) -> set[str]:
@@ -461,7 +461,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                             logging.warning(f"{self.log_identity} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
                     self._grid_status = grid
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         return self._set_latest_consumption()
 
@@ -547,7 +547,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
             self.plant_3rd_party_lifetime_pv_energy = values[-1][1]
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             return False  # until all values populated, can't do calculation
@@ -691,7 +691,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         if isinstance(sensor, InverterSelfConsumedPower):
             self._values[sensor.object_id] = values[-1][1]
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         if any(v is None for v in self._values.values()):
             return False  # until all values populated, can't do calculation

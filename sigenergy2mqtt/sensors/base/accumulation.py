@@ -137,7 +137,7 @@ class AccumulationSensor(DerivedSensor):
             True if accumulation was updated
         """
         if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
 
         if len(values) < 2:
@@ -492,7 +492,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
 
         val = values[-1][1]

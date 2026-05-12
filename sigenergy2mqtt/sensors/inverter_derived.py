@@ -41,7 +41,7 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(0 if values[-1][1] <= 0 else values[-1][1])
         return True
@@ -74,7 +74,7 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
 
     def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(0 if values[-1][1] >= 0 else values[-1][1] * -1)
         return True
@@ -148,7 +148,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVCurrentSensor):
             self.amperes.apply(values)
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         if self.volts.value is None or self.amperes.value is None:
             return False  # until all values populated, can't do calculation
@@ -250,7 +250,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVStringPower):
             self.pv_string_power[sensor.string_number] = values[-1][1]
         else:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         total_pv_power = sum(self.pv_string_power.values())
         state = total_pv_power - self.active_power - self.battery_power
