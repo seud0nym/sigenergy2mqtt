@@ -17,6 +17,7 @@ from sigenergy2mqtt.modbus import ModbusDataType  # noqa: F401
 
 # Accumulation sensors
 from .accumulation import (  # noqa: F401
+    AccumulationSensor,
     EnergyDailyAccumulationSensor,
     EnergyLifetimeAccumulationSensor,
     ResettableAccumulationSensor,

@@ -28,11 +28,10 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
-    """Sensor that accumulates values with manual reset capability.
+class AccumulationSensor(DerivedSensor):
+    """Sensor that accumulates values using Riemann sum.
 
-    Integrates power readings over time to calculate energy, with ability
-    to reset the accumulated value via MQTT.
+    Integrates readings over time to calculate a total value (e.g. power to energy).
     """
 
     if TYPE_CHECKING:
@@ -73,7 +72,6 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
 
         self._source = source
         self.declare_source_sensors(source)
-        self._reset_topic = f"sigenergy2mqtt/{self[DiscoveryKeys.OBJECT_ID]}/reset"
         self._current_total_lock = asyncio.Lock()
         self._current_total: float = 0.0
 
@@ -85,7 +83,7 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         self.refresh_log_identity()
 
         # Use sanitized unique_id for persistence key
-        uid = str(self.unique_id)
+        uid = str(self.unique_id)  # pyrefly:ignore
         if uid.startswith("<MagicMock"):  # For testing
             uid = "mock_uid"
 
@@ -113,6 +111,108 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
                     logging.debug(f"{self.log_identity} Loaded current state for {self._state_persistence_key} ({self._current_total})")
             except (ValueError, TypeError) as e:
                 logging.warning(f"{self.log_identity} Failed to parse persisted state for {self._state_persistence_key}: {e}")
+
+    async def _persist_current_total(self, new_total: float) -> None:
+        """Persist accumulated value.
+
+        Args:
+            new_total: New total value to persist
+        """
+        async with self._current_total_lock:
+            try:
+                state_store.save_sync(Category.SENSOR, self._state_persistence_key, str(new_total), debug=self.debug_logging)
+            except PermissionError as e:
+                logging.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
+            except Exception as e:
+                logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
+
+    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+        """Update accumulated value from source sensor.
+
+        Args:
+            sensor: Source sensor providing readings
+            values: List of (timestamp, value) tuples
+
+        Returns:
+            True if accumulation was updated
+        """
+        if sensor is not self._source:
+            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
+            return False
+
+        if len(values) < 2:
+            return False  # Need at least two points
+
+        # Calculate time difference in hours
+        interval_hours = sensor.latest_interval / 3600 if sensor.latest_interval else 0
+
+        if interval_hours < 0:
+            logging.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
+            return False
+
+        # Convert negative power to zero
+        previous = max(0.0, values[-2][1])
+        current = max(0.0, values[-1][1])
+
+        # Calculate accumulation using trapezoidal rule: E = 0.5 * (P1 + P2) * Δt
+        increase = 0.5 * (previous + current) * interval_hours
+        new_total = self._current_total + increase
+
+        # Check for decreasing total
+        if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
+            logging.debug(
+                f"{self.log_identity} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={sensor.latest_interval:.2f}s)"
+            )
+            return False
+
+        # Update total
+        if new_total != self._current_total:
+            self.run_persistence_coroutine(self._persist_current_total(new_total))
+
+        self._current_total = new_total
+        self.set_latest_state(self._current_total)
+
+        return True
+
+
+class ResettableAccumulationSensor(ObservableMixin, AccumulationSensor):
+    """Sensor that accumulates values with manual reset capability.
+
+    Integrates readings over time to calculate a total value, with ability
+    to reset the accumulated value via MQTT.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        unique_id: str,
+        object_id: str,
+        source: Sensor,
+        data_type: ModbusDataType,
+        unit: str | None,
+        device_class: DeviceClass | None,
+        state_class: StateClass | None,
+        icon: str | None,
+        gain: float | None,
+        precision: int | None,
+        **kwargs,
+    ):
+        super().__init__(
+            name=name,
+            unique_id=unique_id,
+            object_id=object_id,
+            source=source,
+            data_type=data_type,
+            unit=unit,
+            device_class=device_class,
+            state_class=state_class,
+            icon=icon,
+            gain=gain,
+            precision=precision,
+            **kwargs,
+        )
+
+        self._reset_topic = f"sigenergy2mqtt/{self[DiscoveryKeys.OBJECT_ID]}/reset"
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Get discovery components including reset control.
@@ -164,20 +264,6 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
             attributes[SensorAttributeKeys.RESET_UNIT] = self.unit
         return attributes
 
-    async def _persist_current_total(self, new_total: float) -> None:
-        """Persist accumulated value.
-
-        Args:
-            new_total: New total value to persist
-        """
-        async with self._current_total_lock:
-            try:
-                state_store.save_sync(Category.SENSOR, self._state_persistence_key, str(new_total), debug=self.debug_logging)
-            except PermissionError as e:
-                logging.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
-            except Exception as e:
-                logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
-
     async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
 
@@ -204,54 +290,6 @@ class ResettableAccumulationSensor(ObservableMixin, DerivedSensor):
         self._current_total = new_total
         self.set_latest_state(self._current_total)
         self.force_publish = True
-
-        return True
-
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
-        """Update accumulated value from source sensor.
-
-        Args:
-            sensor: Source sensor providing power readings
-            values: List of (timestamp, value) tuples
-
-        Returns:
-            True if accumulation was updated
-        """
-        if sensor is not self._source:
-            logging.warning(f"Attempt to call {self.log_identity}.set_source_values from {sensor.log_identity}")
-            return False
-
-        if len(values) < 2:
-            return False  # Need at least two points
-
-        # Calculate time difference in hours
-        interval_hours = sensor.latest_interval / 3600 if sensor.latest_interval else 0
-
-        if interval_hours < 0:
-            logging.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
-            return False
-
-        # Convert negative power to zero
-        previous = max(0.0, values[-2][1])
-        current = max(0.0, values[-1][1])
-
-        # Calculate energy using trapezoidal rule: E = 0.5 * (P1 + P2) * Δt
-        increase = 0.5 * (previous + current) * interval_hours
-        new_total = self._current_total + increase
-
-        # Check for decreasing total
-        if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
-            logging.debug(
-                f"{self.log_identity} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={sensor.latest_interval:.2f}s)"
-            )
-            return False
-
-        # Update total
-        if new_total != self._current_total:
-            self.run_persistence_coroutine(self._persist_current_total(new_total))
-
-        self._current_total = new_total
-        self.set_latest_state(self._current_total)
 
         return True
 
