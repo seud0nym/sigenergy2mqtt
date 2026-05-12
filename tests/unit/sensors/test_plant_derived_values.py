@@ -290,16 +290,16 @@ class TestPlantConsumedPowerCoverage:
             gs.unique_id = "gs"
 
             # Initial status (sets _grid_status = 0)
-            sensor.set_source_values(gs, [(0, 0)])
+            sensor.set_source_values(gs)
             assert sensor._grid_status == 0
 
             # Off grid transition
-            sensor.set_source_values(gs, [(0, 1)])
+            sensor.set_source_values(gs)
             assert sensor._grid_status == 1
             assert "Off Grid detected" in caplog.text
 
             # Grid restored transition
-            sensor.set_source_values(gs, [(0, 0)])
+            sensor.set_source_values(gs)
             assert sensor._grid_status == 0
             assert "Grid restored" in caplog.text
 
@@ -416,13 +416,13 @@ class TestTotalPVPowerCoverage:
         # Not a PVPowerSensor
         ms = MagicMock(spec=Sensor)
         ms.unique_id = "ms_uid"
-        assert sensor.set_source_values(ms, []) is False
+        assert sensor.set_source_values(ms) is False
         assert "not PVPowerSensor instance" in caplog.text
 
         # Not registered
         s1 = MagicMock(spec=PVPowerSensor)
         s1.unique_id = "unregistered"
-        assert sensor.set_source_values(s1, []) is False
+        assert sensor.set_source_values(s1) is False
         assert "sensor is not registered" in caplog.text
 
     def test_set_source_values_debug(self, caplog):
@@ -432,7 +432,7 @@ class TestTotalPVPowerCoverage:
         s1.gain = 1.0
         sensor = TotalPVPower(0, s1)
         sensor.debug_logging = True
-        sensor.set_source_values(s1, [(0, 100)])
+        sensor.set_source_values(s1)
 
         assert "Updated from enabled source 's1'" in caplog.text
 
@@ -461,7 +461,7 @@ class TestTotalPVPowerCoverage:
             # Initial update works
             start_time = 1000.0
             with patch("time.time", return_value=start_time):
-                sensor.set_source_values(s1, [(start_time, 1000.0)])
+                sensor.set_source_values(s1)
 
             assert sensor.latest_raw_state == 1000.0
             assert sensor._sources["s1"].enabled is True
@@ -509,12 +509,12 @@ class TestTotalLifetimePVEnergyCoverage:
 
             # PlantPVTotalGeneration
             sg = MagicMock(spec=PlantPVTotalGeneration)
-            sensor.set_source_values(sg, [(0, 1000)])
+            sensor.set_source_values(sg)
             assert sensor.plant_lifetime_pv_energy == 1000
 
             # ThirdPartyLifetimePVEnergy
             tp = MagicMock(spec=ThirdPartyLifetimePVEnergy)
-            sensor.set_source_values(tp, [(0, 500)])
+            sensor.set_source_values(tp)
             assert sensor.plant_3rd_party_lifetime_pv_energy == 500
             assert sensor.latest_raw_state == 1500
 

@@ -745,7 +745,7 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
             def log_identity(self):
                 return "WrongSensor"
 
-        result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"current": 10}))
+        result = sensor.set_source_values(cast(Sensor, WrongSensor()))
         assert result is False
 
     def test_enphase_frequency_rejects_wrong_sensor(self):
@@ -757,7 +757,7 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
             def log_identity(self):
                 return "WrongSensor"
 
-        result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"freq": 50}))
+        result = sensor.set_source_values(cast(Sensor, WrongSensor()))
         assert result is False
 
     def test_enphase_power_factor_rejects_wrong_sensor(self):
@@ -769,7 +769,7 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
             def log_identity(self):
                 return "WrongSensor"
 
-        result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"pwrFactor": 0.9}))
+        result = sensor.set_source_values(cast(Sensor, WrongSensor()))
         assert result is False
 
     def test_enphase_reactive_power_rejects_wrong_sensor(self):
@@ -781,7 +781,7 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
             def log_identity(self):
                 return "WrongSensor"
 
-        result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"reactivePower": 100}))
+        result = sensor.set_source_values(cast(Sensor, WrongSensor()))
         assert result is False
 
     def test_enphase_voltage_rejects_wrong_sensor(self):
@@ -793,7 +793,7 @@ class TestDerivedSensorSetSourceValuesWrongSensor:
             def log_identity(self):
                 return "WrongSensor"
 
-        result = sensor.set_source_values(cast(Sensor, WrongSensor()), make_values({"voltage": 240}))
+        result = sensor.set_source_values(cast(Sensor, WrongSensor()))
         assert result is False
 
 
@@ -1004,7 +1004,7 @@ class TestDerivedSensorTriggering:
     """Tests that derived sensors are correctly triggered."""
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_calls_set_source_values(self, pv_power_sensor, tmp_path, monkeypatch):
+    async def test_update_internal_state_calls_set_source_values(self):
         """Test that _update_internal_state calls set_source_values on derived sensors."""
         monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"

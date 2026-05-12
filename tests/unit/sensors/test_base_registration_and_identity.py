@@ -118,23 +118,23 @@ class TestResettableAccumulationSensorCoverage:
         now = time.time()
         # Hit 215-216 (wrong sensor)
         other_sensor = MagicMock()
-        sensor.set_source_values(other_sensor, deque())
+        sensor.set_source_values(other_sensor)
 
         # Hit 218-219 (len < 2)
-        sensor.set_source_values(sensor._source, deque([(now, 100.0)]))
+        sensor.set_source_values(sensor._source)
 
         # Hit 224+
         values = deque([(now - 3600, 100.0), (now, 200.0)])
-        sensor.set_source_values(sensor._source, values)
+        sensor.set_source_values(sensor._source)
         assert sensor._current_total > 0
 
         # Negative increase (Line 228-231)
         values = deque([(now - 3600, 300.0), (now, 200.0)])
-        sensor.set_source_values(sensor._source, values)
+        sensor.set_source_values(sensor._source)
 
         # Negative interval (Line 216)
         sensor._source.latest_interval = -100.0
-        sensor.set_source_values(sensor._source, values)
+        sensor.set_source_values(sensor._source)
 
     @pytest.mark.asyncio
     async def test_persist_errors(self, mock_config, caplog):
@@ -161,10 +161,10 @@ class TestResettableAccumulationSensorCoverage:
                 with patch("asyncio.get_running_loop", side_effect=RuntimeError):
                     with patch("asyncio.run_coroutine_threadsafe") as mock_threadsafe:
                         mock_threadsafe.side_effect = lambda coro, loop: (coro.close(), MagicMock())[1]
-                        sensor.set_source_values(sensor._source, values)
+                        sensor.set_source_values(sensor._source)
                 # Line 248-249 (run_coroutine_threadsafe exception)
                 with patch("asyncio.run_coroutine_threadsafe", side_effect=Exception):
-                    sensor.set_source_values(sensor._source, values)
+                    sensor.set_source_values(sensor._source)
 
 
 class TestEnergyLifetimeAccumulationSensorCoverage:
@@ -322,7 +322,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
             mock_loop = MagicMock()
             mock_loop.create_task.side_effect = lambda coro: coro.close()
             with patch("asyncio.get_running_loop", return_value=mock_loop):
-                sensor.set_source_values(sensor._source, values)
+                sensor.set_source_values(sensor._source)
                 mock_loop.create_task.assert_called()
 
         # Case: Generic Exception in day change (Line 482-483)
@@ -332,12 +332,12 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         with patch("time.localtime", side_effect=[yesterday_tm, today_tm]):
             with patch("asyncio.get_running_loop", side_effect=RuntimeError):  # Force bypass to next block
                 with patch("asyncio.get_event_loop", side_effect=Exception):  # Generic exception
-                    sensor.set_source_values(sensor._source, values)
+                    sensor.set_source_values(sensor._source)
 
     def test_set_source_values_midnight_init(self, mock_config):
         # Line 489
         sensor = self._make_sensor()
         sensor._state_at_midnight = 0.0  # Force init
         values = deque([(time.time(), 300.0)])
-        sensor.set_source_values(sensor._source, values)
+        sensor.set_source_values(sensor._source)
         assert sensor._state_at_midnight == 300.0

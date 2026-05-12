@@ -127,7 +127,7 @@ class MockDerivedSensor(DerivedSensor):
         kwargs.setdefault("data_type", MODBUS_DATA_TYPE.UINT16)
         super().__init__(**kwargs)
 
-    def set_source_values(self, sensor, values):
+    def set_source_values(self, sensor):
         return True
 
 

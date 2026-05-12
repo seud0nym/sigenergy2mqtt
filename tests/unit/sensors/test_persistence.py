@@ -95,7 +95,7 @@ async def test_accumulation_sensor_persistence(mock_config, tmp_path):
 
     # Simulate accumulation: 1000W for 1 hour = 1000Wh
     # Trapazoidal rule: 0.5 * (prev + curr) * hours = 0.5 * (1000 + 1000) * 1 = 1000
-    sensor.set_source_values(source, [(time.time() - 3600, 1000.0), (time.time(), 1000.0)])
+    sensor.set_source_values(source)
 
     # Small sleep to allow background persistence task to run
     await asyncio.sleep(0.5)
@@ -177,7 +177,7 @@ async def test_energy_daily_accumulation_reset(mock_config, tmp_path):
         # Sensor calls it multiple times in its logic
         mock_localtime.side_effect = lambda t=None: was_time if (t is not None and t < now_ts - 5) else now_time
 
-        sensor.set_source_values(source, values)
+        sensor.set_source_values(source)
 
         # Allow background persistence task to run
         await asyncio.sleep(0.5)
@@ -249,7 +249,7 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     # 1. First update: Change value -> Should persist
     # 1000W for 1 hour = 1000Wh
     # Trapazoidal rule: 0.5 * (1000 + 1000) * 1 = 1000
-    sensor.set_source_values(source, [(time.time() - 3600, 1000.0), (time.time(), 1000.0)])
+    sensor.set_source_values(source)
     await asyncio.sleep(0.5)
 
     fpath = Path(tmp_path, "sensor", "sigen_accum_opt.state")
@@ -265,7 +265,7 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     # New total is 1000 + 0 = 1000 (same as before)
     # We simulate this by passing 0.0 power readings
     await asyncio.sleep(1.2)  # Wait > 1s to ensure mtime diff if written
-    sensor.set_source_values(source, [(time.time(), 0.0), (time.time() + 3600, 0.0)])
+    sensor.set_source_values(source)
     await asyncio.sleep(0.5)
 
     assert sensor._current_total == 1000.0  # Total is still 1000.0
@@ -277,7 +277,7 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     # 3. Third update: Change value -> Should persist
     # 1000W for 1 hour = 1000Wh increment
     # New total = 2000.0
-    sensor.set_source_values(source, [(time.time() + 3600, 1000.0), (time.time() + 7200, 1000.0)])
+    sensor.set_source_values(source)
     await asyncio.sleep(0.5)
 
     assert sensor._current_total == 2000.0

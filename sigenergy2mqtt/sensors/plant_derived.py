@@ -58,12 +58,12 @@ class BatteryChargingPower(DerivedSensor):
         attributes["source"] = "BatteryPower > 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
+            0 if sensor.latest_raw_state <= 0 else round(sensor.latest_raw_state, self.precision),
         )
         return True
 
@@ -93,12 +93,12 @@ class BatteryDischargingPower(DerivedSensor):
         attributes["source"] = "BatteryPower < 0 × -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
+            0 if sensor.latest_raw_state >= 0 else round(sensor.latest_raw_state * -1, self.precision),
         )
         return True
 
@@ -127,12 +127,12 @@ class GridSensorExportPower(DerivedSensor):
         attributes["source"] = "GridSensorActivePower < 0 × -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] >= 0 else round(values[-1][1] * -1, self.precision),
+            0 if sensor.latest_raw_state >= 0 else round(sensor.latest_raw_state * -1, self.precision),
         )
         return True
 
@@ -161,12 +161,12 @@ class GridSensorImportPower(DerivedSensor):
         attributes["source"] = "GridSensorActivePower > 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
         self.set_latest_state(
-            0 if values[-1][1] <= 0 else round(values[-1][1], self.precision),
+            0 if sensor.latest_raw_state <= 0 else round(sensor.latest_raw_state, self.precision),
         )
         return True
 
@@ -305,7 +305,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
             logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from {sensor.log_identity} - not PVPowerSensor instance")
@@ -315,7 +315,7 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             return False
         if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
             self.fallback(source)
-        self._sources[source].state = values[-1][1]
+        self._sources[source].state = sensor.latest_raw_state
         self._sources[source].last_update = time.time()
         if self.debug_logging:
             logging.debug(f"{self.log_identity} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
@@ -439,20 +439,20 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
                             logging.debug(f"{self.log_identity} Added MQTT topic {sensor.state_topic} as source")
         return set(self._topics)
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if isinstance(sensor, TotalLoadPower):
-            self._update_source(ConsumptionMethod.TOTAL.value, values[-1][1])
+            self._update_source(ConsumptionMethod.TOTAL.value, sensor.latest_raw_state)
         elif isinstance(sensor, GeneralLoadPower):
-            self._update_source(ConsumptionMethod.GENERAL.value, values[-1][1])
+            self._update_source(ConsumptionMethod.GENERAL.value, sensor.latest_raw_state)
         elif isinstance(sensor, BatteryPower):
-            self._update_source("battery", values[-1][1])
+            self._update_source("battery", sensor.latest_raw_state)
         elif isinstance(sensor, GridSensorActivePower):
-            self._update_source("grid", values[-1][1])
+            self._update_source("grid", sensor.latest_raw_state)
         elif isinstance(sensor, (PlantPVPower, TotalPVPower)):
-            self._update_source("pv", values[-1][1])
+            self._update_source("pv", sensor.latest_raw_state)
         elif isinstance(sensor, GridStatus):
             if self.method == ConsumptionMethod.CALCULATED:
-                grid = int(values[-1][1])
+                grid = int(sensor.latest_raw_state)
                 if grid != self._grid_status:
                     if self._grid_status is not None:
                         if grid == 0:
@@ -541,11 +541,11 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         self.plant_3rd_party_lifetime_pv_energy = None
         return True
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if isinstance(sensor, PlantPVTotalGeneration):
-            self.plant_lifetime_pv_energy = values[-1][1]
+            self.plant_lifetime_pv_energy = sensor.latest_raw_state
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
-            self.plant_3rd_party_lifetime_pv_energy = values[-1][1]
+            self.plant_3rd_party_lifetime_pv_energy = sensor.latest_raw_state
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -687,9 +687,9 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             self._values[k] = None
         return True
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if isinstance(sensor, InverterSelfConsumedPower):
-            self._values[sensor.object_id] = values[-1][1]
+            self._values[sensor.object_id] = sensor.latest_raw_state
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False

@@ -81,16 +81,16 @@ class TestInverterDerived:
 
         # Test positive value (charging)
         source.set_state(1500.0)
-        charging.set_source_values(source, source._states)
-        discharging.set_source_values(source, source._states)
+        charging.set_source_values(source)
+        discharging.set_source_values(source)
 
         assert charging._states[-1][1] == 1500.0
         assert discharging._states[-1][1] == 0
 
         # Test negative value (discharging)
         source.set_state(-2000.0)
-        charging.set_source_values(source, source._states)
-        discharging.set_source_values(source, source._states)
+        charging.set_source_values(source)
+        discharging.set_source_values(source)
 
         assert charging._states[-1][1] == 0
         assert discharging._states[-1][1] == 2000.0
@@ -110,11 +110,11 @@ class TestInverterDerived:
         v.set_state(4000)  # 400.0V (gain=10)
         c.set_state(100)  # 1.0A (gain=100)
 
-        p.set_source_values(v, v._states)
+        p.set_source_values(v)
         assert p.volts.value == 400.0
         assert p.amperes.value is None
 
-        p.set_source_values(c, c._states)
+        p.set_source_values(c)
         assert p.amperes.value == 1.0
         assert p._states[-1][1] == 400.0  # 400.0 * 1.0
 

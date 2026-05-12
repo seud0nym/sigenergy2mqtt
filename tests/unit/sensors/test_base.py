@@ -146,7 +146,7 @@ class TestSensorLogic:
                 sensor._current_total = 100.0
                 values = [(1000.0, -10.0), (1100.0, -20.0)]
                 with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
-                    sensor.set_source_values(source, values)
+                    sensor.set_source_values(source)
                     assert sensor._current_total == 100.0
 
     def test_alarm_sensor_binary(self):

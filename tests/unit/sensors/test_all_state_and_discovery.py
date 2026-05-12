@@ -122,7 +122,7 @@ async def run_coverage_on_module(module):
 
             if hasattr(sensor, "set_source_values"):
                 try:
-                    sensor.set_source_values(1, 2, 3)
+                    sensor.set_source_values(1)
                 except:
                     pass
 

@@ -39,11 +39,11 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
         attributes["source"] = "ChargeDischargePower > 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
-        self.set_latest_state(0 if values[-1][1] <= 0 else values[-1][1])
+        self.set_latest_state(0 if sensor.latest_raw_state <= 0 else sensor.latest_raw_state)
         return True
 
 
@@ -72,11 +72,11 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
         attributes["source"] = "ChargeDischargePower < 0 × -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
-        self.set_latest_state(0 if values[-1][1] >= 0 else values[-1][1] * -1)
+        self.set_latest_state(0 if sensor.latest_raw_state >= 0 else sensor.latest_raw_state * -1)
         return True
 
 
@@ -91,11 +91,14 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         value: float | None = None
         timestamp: float = 0
 
-        def apply(self, values: Deque[tuple[float, Any]]) -> None:
+        def apply(self, sensor: Sensor) -> None:
             if self.value is not None:
-                logging.warning(f"{self.name} Overwriting unconsumed value {self.value} (age={(values[-1][0] - self.timestamp):.2f}s)")
-            self.value = values[-1][1] / self.divisor
-            self.timestamp = values[-1][0]
+                logging.warning(f"{self.name} Overwriting unconsumed value {self.value} (age={(sensor.latest_time - self.timestamp):.2f}s)")
+            raw = sensor.latest_raw_state
+            if raw is None:
+                return
+            self.value = raw / self.divisor
+            self.timestamp = sensor.latest_time
 
     def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):
         # Set properties before super().__init__ so that log_identity is correctly generated
@@ -142,11 +145,11 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             self.amperes.value = None
         return True
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if isinstance(sensor, PVVoltageSensor):
-            self.volts.apply(values)
+            self.volts.apply(sensor)
         elif isinstance(sensor, PVCurrentSensor):
-            self.amperes.apply(values)
+            self.amperes.apply(sensor)
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -242,13 +245,13 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             logging.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
         return await super().publish(mqtt_client, modbus_client, republish=republish)
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if isinstance(sensor, ActivePower):
-            self.active_power = values[-1][1]
+            self.active_power = sensor.latest_raw_state
         elif isinstance(sensor, ChargeDischargePower):
-            self.battery_power = values[-1][1]
+            self.battery_power = sensor.latest_raw_state
         elif isinstance(sensor, PVStringPower):
-            self.pv_string_power[sensor.string_number] = values[-1][1]
+            self.pv_string_power[sensor.string_number] = sensor.latest_raw_state
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
