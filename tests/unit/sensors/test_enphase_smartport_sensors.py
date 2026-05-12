@@ -433,7 +433,7 @@ class TestEnphasePVPowerUpdateInternalState:
         pv_power_sensor.derived_sensors["TotalPVPower"] = mock_derived
 
         with patch("requests.get", side_effect=requests.exceptions.RequestException("Network error")):
-            result = await pv_power_sensor._update_internal_state()
+            await pv_power_sensor._update_internal_state()
 
         mock_derived.failover.assert_called_once_with(pv_power_sensor)
 
@@ -474,14 +474,14 @@ class TestDerivedSensorGetAttributes:
 
     def test_enphase_lifetime_get_attributes(self):
         """Test EnphaseLifetimePVEnergy.get_attributes includes source."""
-        sensor = EnphaseLifetimePVEnergy(0, "SN123")
+        sensor = EnphaseLifetimePVEnergy(0, "SN123", EnphasePVPower(0, "SN123", "host", "user", "pass"))
         attrs = sensor.get_attributes()
         assert attrs["source"] == "Enphase Envoy API when EnphasePVPower derived"
 
-    def test_enphase_daily_get_attributes(self, mock_config, tmp_path, monkeypatch):
+    def test_enphase_daily_get_attributes(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test EnphaseDailyPVEnergy.get_attributes includes source."""
         monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
-        lifetime = EnphaseLifetimePVEnergy(0, "SN123")
+        lifetime = EnphaseLifetimePVEnergy(0, "SN123", pv_power_sensor)
         sensor = EnphaseDailyPVEnergy(0, "SN123", lifetime)
         attrs = sensor.get_attributes()
         assert attrs["source"] == "Enphase Envoy API when EnphasePVPower derived"
@@ -1036,8 +1036,7 @@ class TestDerivedSensorValueIntegration:
         pv_power_sensor._token = "valid_token"
 
         # Instantiate and attach detailed sensors
-        lifetime = EnphaseLifetimePVEnergy(0, "SN123")
-        daily = EnphaseDailyPVEnergy(0, "SN123", lifetime)
+        lifetime = EnphaseLifetimePVEnergy(0, "SN123", pv_power_sensor)
         current = EnphaseCurrent(0, "SN123")
         freq = EnphaseFrequency(0, "SN123")
         pf = EnphasePowerFactor(0, "SN123")

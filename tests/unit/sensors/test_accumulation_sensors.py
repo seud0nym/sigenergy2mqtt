@@ -60,7 +60,7 @@ class TestAccumulationLogic:
             source.latest_interval = 3600.0
 
             # Mock persistence to avoid background thread issues
-            with patch.object(sensor, "run_persistence_coroutine"):
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
                 result = sensor.set_source_values(source, values)
                 assert result is True
                 # 0.5 * (10 + 20) * 1.0 = 15.0
@@ -91,7 +91,7 @@ class TestAccumulationLogic:
             values = [(1000.0, -10.0), (4600.0, -20.0)]
             source.latest_interval = 3600.0
 
-            with patch.object(sensor, "run_persistence_coroutine"):
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
                 sensor.set_source_values(source, values)
                 # 0.5 * (0 + 0) * 1.0 = 0.0
                 assert sensor._current_total == 0.0
@@ -217,7 +217,7 @@ class TestAccumulationSensor:
             values = [(1000.0, 10.0), (4600.0, 20.0)]
             source.latest_interval = 3600.0
 
-            with patch.object(sensor, "run_persistence_coroutine"):
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
                 sensor.set_source_values(source, values)
                 assert sensor._current_total == 15.0
                 assert sensor.latest_raw_state == 15.0

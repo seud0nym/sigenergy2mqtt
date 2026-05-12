@@ -145,7 +145,7 @@ class TestSensorLogic:
                 sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
                 sensor._current_total = 100.0
                 values = [(1000.0, -10.0), (1100.0, -20.0)]
-                with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
+                with patch("asyncio.run_coroutine_threadsafe", side_effect=lambda coro, loop: (coro.close(), MagicMock())[1]), patch("asyncio.get_running_loop", side_effect=RuntimeError):
                     sensor.set_source_values(source, values)
                     assert sensor._current_total == 100.0
 
