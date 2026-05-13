@@ -7,7 +7,7 @@ import logging
 import sys
 import time
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any, Deque, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
 
@@ -524,5 +524,84 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         return True
 
 
-# =============================================================================
-# PV Power Sensor
+class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
+    """Daily energy accumulation sensor that resets to zero at midnight.
+
+    Accumulates values using a Riemann sum throughout the day, automatically
+    resetting the accumulated total to zero at midnight without requiring
+    a baseline value from the source sensor.
+
+    Unlike EnergyDailyAccumulationSensor, this doesn't track the source sensor's
+    state at midnight - it simply accumulates and resets the total.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        unique_id: str,
+        object_id: str,
+        source: Sensor,
+        **kwargs,
+    ):
+        # Set default energy values if not provided in kwargs
+        if "data_type" not in kwargs:
+            kwargs["data_type"] = ModbusDataType.UINT32
+        if "unit" not in kwargs:
+            kwargs["unit"] = UnitOfEnergy.KILO_WATT_HOUR
+        if "device_class" not in kwargs:
+            kwargs["device_class"] = DeviceClass.ENERGY
+        if "state_class" not in kwargs:
+            kwargs["state_class"] = StateClass.TOTAL_INCREASING
+        if "icon" not in kwargs:
+            kwargs["icon"] = "mdi:home-lightning-bolt"
+        if "gain" not in kwargs:
+            kwargs["gain"] = 1000
+        if "precision" not in kwargs:
+            kwargs["precision"] = 2
+
+        super().__init__(
+            name=name,
+            unique_id=unique_id,
+            object_id=object_id,
+            source=source,
+            **kwargs,
+        )
+
+        # Track the last day we saw to detect day changes
+        self._last_day_tuple: tuple[int, int, int] | None = None
+
+    def set_source_values(self, sensor: Sensor) -> bool:
+        """Update daily accumulation from source values.
+
+        Accumulates values throughout the day and resets the total at midnight.
+
+        Args:
+            sensor: Source sensor
+
+        Returns:
+            True if updated
+        """
+        if sensor is not self._source:
+            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            return False
+
+        if sensor.latest_raw_state is None:
+            return False
+
+        # Check for day change by comparing year, month, day
+        if sensor.state_count > 1:
+            now_time = time.localtime(sensor.latest_time)
+            current_day = (now_time.tm_year, now_time.tm_mon, now_time.tm_mday)
+
+            # Reset if this is a new day
+            if self._last_day_tuple is not None and self._last_day_tuple != current_day:
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Day changed from {self._last_day_tuple} to {current_day}, resetting accumulation")
+                self._current_total = 0.0
+                self.run_persistence_coroutine(self._persist_current_total(0.0))
+                self._states.clear()
+
+            self._last_day_tuple = current_day
+
+        # Perform normal accumulation using parent's logic
+        return super().set_source_values(sensor)

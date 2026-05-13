@@ -199,7 +199,10 @@ class PowerPlant(ModbusDevice):
             self._add_sensor(derived.BatteryDischargingPower(self.plant_index, battery_power))
             self._add_sensor(derived.PlantDailyChargeEnergy(self.plant_index, total_charge_energy), search_children=False)
             self._add_sensor(derived.PlantDailyDischargeEnergy(self.plant_index, total_discharge_energy), search_children=False)
-            self._add_sensor(derived.PlantSelfConsumedPower(self.plant_index))
+
+            self_consumed_power = derived.PlantSelfConsumedPower(self.plant_index)
+            self._add_sensor(self_consumed_power)
+            self._add_sensor(derived.PlantDailySelfConsumedEnergy(self.plant_index, self_consumed_power))
 
         self._add_sensor(ro.EVDCTotalChargedEnergy(self.plant_index))
         self._add_sensor(ro.EVDCTotalDischargedEnergy(self.plant_index))

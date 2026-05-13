@@ -2,9 +2,32 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added Inverter and Plant estimated self-consumed power and daily energy sensors
+- Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
+
+### Changed
+
+- Reimplemented Modbus test server using Pymodbus SimDevice and custom latency tracking to support device communication failures simulation
+- Removed legacy add-sensor helpers and migrated to declared derived sources
+- Created `AccumulationSensor` base class and refactored `ResettableAccumulationSensor` to inherit from it
+- Enabled cross-device derived sensors pattern for delayed sensor binding
+- Simplified `set_source_values` method signature across sensor classes
+- Restored debug guard for monitor topic update tracking
+- AC Chargers that were skipped due to an outage now restart automatically when the grid restores
+- Upgraded `pydantic-settings` to 2.14.1 and `requests` to 2.34.0
+- Aligned zlib remediation with targeted package patch style in Dockerfile
+
 ### Fixed
 
 - Fixed the Phase Current and Phase Voltage sensors object_id when the inverter is a single-phase inverter
+- DC Chargers are no longer skipped due to grid outages
+- Resolved `RuntimeWarning: coroutine was never awaited` warnings during testing
+- Fixed `grid_status_initial_state` lacking a default value when configured via environment variable in Modbus test server
+- Corrected the implementation of the `DerivedSensor` pattern
+- Fixed various type errors and test failures related to `latest_raw_state` assignments and `set_source_values` refactoring
+- Improved consistency of warning messages in logs
 
 ---
 

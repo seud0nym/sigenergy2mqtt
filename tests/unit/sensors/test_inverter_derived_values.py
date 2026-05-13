@@ -156,3 +156,92 @@ class TestPVStringEnergyCoverage:
             # Daily
             daily = PVStringDailyEnergy(0, 1, 1, lifetime)
             assert "PVStringLifetimeEnergy −" in daily.get_attributes()["source"]
+
+
+class TestInverterSelfConsumedPowerCoverage:
+    def test_get_attributes(self):
+        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = Protocol.V2_4
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = Protocol.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = Protocol.V2_4
+            
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+            assert "ActivePower − ChargeDischargePower" in sensor.get_attributes()["source"]
+
+    @pytest.mark.asyncio
+    async def test_publish_skipped_and_ready(self, caplog):
+        import logging
+        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+
+        caplog.set_level(logging.DEBUG)
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = Protocol.V2_4
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = Protocol.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = Protocol.V2_4
+            
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+            sensor.debug_logging = True
+
+            # Missing values -> skip
+            assert await sensor.publish(MagicMock(), None) is False
+            assert "Publishing SKIPPED" in caplog.text
+
+            # Ready
+            sensor.active_power = 100
+            sensor.battery_power = -50
+            sensor.pv_string_power[1] = 500
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+                assert await sensor.publish(MagicMock(), None) is True
+                assert "Publishing READY" in caplog.text
+                assert sensor.active_power is None
+                assert sensor.battery_power is None
+                assert sensor.pv_string_power[1] is None
+
+    def test_set_source_values_error_and_calculation(self, caplog):
+        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = Protocol.V2_4
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = Protocol.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = Protocol.V2_4
+            
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+            sensor.debug_logging = True
+
+            # Wrong sensor type
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert "Attempt to call" in caplog.text
+
+            # Populate partial
+            ap.latest_raw_state = 100
+            sensor.set_source_values(ap)
+            assert sensor.active_power == 100
+
+            bp.latest_raw_state = -50
+            sensor.set_source_values(bp)
+            assert sensor.battery_power == -50
+
+            # Last one triggers calc
+            pv1.latest_raw_state = 500
+            sensor.set_source_values(pv1)
+            
+            # total_pv_power (500) - active_power (100) - battery_power (-50) = 450
+            assert sensor.latest_raw_state == 450
+

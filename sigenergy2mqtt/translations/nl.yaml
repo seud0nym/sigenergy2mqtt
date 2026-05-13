@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: Stroom fase {phase}
+    name: Stroom fase{phase4name}
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "Alleen geldig wanneer Uitgangstype L1/L2/L3/N is. Bereik: [-60,00, 60,00]"
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: Spanning fase {phase}
+    name: Spanning fase{phase4name}
   PlantActivePower:
     attributes:
       source: Modbus-register {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy om middernacht
     name: Dagelijkse PV Productie
     name_reset: Stel Dagelijkse PV Productie in
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: Riemann ∑ van Zelfverbruikt Vermogen sinds middernacht
+    name: Dagelijkse Zelfverbruikte Energie
   PlantPVPower:
     attributes:
       source: Modbus-register {address}

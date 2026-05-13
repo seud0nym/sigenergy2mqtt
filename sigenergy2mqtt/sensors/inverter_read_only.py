@@ -1452,7 +1452,7 @@ class PhaseVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
-            phase=phase,  # Used for i18n processing
+            phase4name=phase4name,  # Used for i18n processing
         )
         self.phase = phase
         self.refresh_log_identity()
@@ -1491,7 +1491,7 @@ class PhaseCurrent(ReadOnlySensor, HybridInverter, PVInverter):
             gain=100,
             precision=2,
             protocol_version=Protocol.V1_8,
-            phase=phase,
+            phase4name=phase4name,  # Used for i18n processing
         )
         self.phase = phase
         self.refresh_log_identity()

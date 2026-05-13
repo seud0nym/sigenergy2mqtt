@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase{phase} Current
+    name: Phase{phase4name} Current
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Phase{phase} Voltage
+    name: Phase{phase4name} Voltage
   PlantActivePower:
     attributes:
       source: Modbus Register {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy at last midnight
     name: Daily PV Production
     name_reset: Set Daily PV Production
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: Riemann ∑ of PlantSelfConsumedPower since midnight
+    name: Daily Self Consumed Energy
   PlantPVPower:
     attributes:
       source: Modbus Register {address}

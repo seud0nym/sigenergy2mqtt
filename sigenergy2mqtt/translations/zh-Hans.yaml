@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: 相 {phase} 电流
+    name: 相{phase4name} 电流
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "仅当输出类型为L1/L2/L3/N时有效。范围：[-60.00, 60.00]"
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: 相 {phase} 电压
+    name: 相{phase4name} 电压
   PlantActivePower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − 午夜时的PlantLifetimePVEnergy
     name: PV日发电量
     name_reset: 设置 PV日发电量
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: 自午夜以来的工厂自发自用电力的黎曼 ∑
+    name: 日自发自用能量
   PlantPVPower:
     attributes:
       source: Modbus 寄存器 {address}

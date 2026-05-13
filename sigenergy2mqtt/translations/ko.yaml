@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: 페이즈 {phase} 전류
+    name: 페이즈{phase4name} 전류
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "출력 유형이 L1/L2/L3/N인 경우에만 유효함. 범위: [-60.00, 60.00]"
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: 페이즈 {phase} 전압
+    name: 페이즈{phase4name} 전압
   PlantActivePower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − 자정의 PlantLifetimePVEnergy
     name: 일일 PV 생산량
     name_reset: 일일 PV 생산량 설정
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: 자정 이후 플랜트 자가소비 전력의 리만 ∑
+    name: 일일 자가소비 에너지
   PlantPVPower:
     attributes:
       source: Modbus 레지스터 {address}

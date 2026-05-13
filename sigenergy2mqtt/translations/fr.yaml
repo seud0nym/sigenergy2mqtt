@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: Courant de la phase {phase}
+    name: Courant de la phase{phase4name}
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "Valide uniquement lorsque le Type de Sortie est L1/L2/L3/N. Plage : [-60,00, 60,00]"
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: Tension de la phase {phase}
+    name: Tension de la phase{phase4name}
   PlantActivePower:
     attributes:
       source: Registre Modbus {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à minuit
     name: Production PV Quotidienne
     name_reset: Régler Production PV Quotidienne
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: Somme de Riemann ∑ de la Puissance Autoconsommée depuis minuit
+    name: Énergie Autoconsommée Quotidienne
   PlantPVPower:
     attributes:
       source: Registre Modbus {address}

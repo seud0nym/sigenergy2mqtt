@@ -654,7 +654,7 @@ def bind_cross_device_sensors(plant_index: int) -> None:
 
     Sensors that fail to bind any source are logged as warnings; they remain
     in all_sensors so that HA discovery can cleanly remove them, but they
-    will produce no output.
+    will be set as not publishable.
 
     Args:
         plant_index: The plant index whose cross-device sensors should be finalised.
@@ -669,7 +669,8 @@ def bind_cross_device_sensors(plant_index: int) -> None:
                     continue
                 ok = sensor.finalise_binding(plant_index)
                 if not ok:
-                    logging.warning(
-                        f"{sensor.log_identity} no cross-device sources were bound - "
-                        f"sensor will produce no output"
-                    )
+                    sensor.publishable = False
+                    logging.warning(f"{sensor.log_identity} no cross-device sources were bound - publishable=False")
+                    for derived in sensor.derived_sensors.values():
+                        derived.publishable = False
+                        logging.warning(f"{derived.log_identity} inherited publishable=False from source sensor {sensor.log_identity}")

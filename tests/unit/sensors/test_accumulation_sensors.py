@@ -227,3 +227,90 @@ class TestAccumulationSensor:
                 sensor.set_source_values(source)
                 assert sensor._current_total == 15.0
                 assert sensor.latest_raw_state == 15.0
+
+class TestSimpleEnergyDailyAccumulationSensor:
+    @pytest.mark.asyncio
+    async def test_simple_energy_daily_accumulation_sensor_init(self):
+        """Test default values on initialization."""
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+            
+            sensor = SimpleEnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_daily_uid",
+                object_id="sigen_daily_oid",
+                source=source,
+            )
+            
+            assert sensor.data_type == ModbusDataType.UINT32
+            assert sensor.unit == "kWh"
+            assert sensor.device_class == DeviceClass.ENERGY
+            assert sensor.state_class == StateClass.TOTAL_INCREASING
+            assert sensor._last_day_tuple is None
+
+    @pytest.mark.asyncio
+    async def test_simple_energy_daily_accumulation_sensor_day_change(self):
+        """Test accumulation across a day change resets value."""
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+            
+            sensor = SimpleEnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_daily_uid",
+                object_id="sigen_daily_oid",
+                source=source,
+            )
+            
+            source.latest_interval = 3600.0
+            source.state_count = 2
+            source.previous_raw_state = 10.0
+            source.latest_raw_state = 20.0
+            source.latest_time = 1715560000.0
+            
+            import time
+            with patch("time.localtime", return_value=time.struct_time((2026, 5, 13, 10, 0, 0, 2, 133, 0))), \
+                 patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                
+                # First call sets _last_day_tuple and accumulates
+                sensor.set_source_values(source)
+                assert sensor._last_day_tuple == (2026, 5, 13)
+                assert sensor._current_total == 15.0  # 0.5 * (10 + 20) * 1h
+            
+            # Change day to 14th
+            with patch("time.localtime", return_value=time.struct_time((2026, 5, 14, 10, 0, 0, 3, 134, 0))), \
+                 patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                
+                sensor.set_source_values(source)
+                assert sensor._last_day_tuple == (2026, 5, 14)
+                # Resets, then accumulates new value
+                assert sensor._current_total == 15.0
+
+    def test_simple_energy_daily_accumulation_sensor_invalid_source(self, caplog):
+        """Test ignoring invalid source updates."""
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+            
+            sensor = SimpleEnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_daily_uid",
+                object_id="sigen_daily_oid",
+                source=source,
+            )
+            
+            # Wrong sensor
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert "Attempt to call" in caplog.text
+            
+            # None raw state
+            source.latest_raw_state = None
+            assert sensor.set_source_values(source) is False
+

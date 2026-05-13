@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: Corrente da fase {phase}
+    name: Corrente da fase{phase4name}
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "Válido apenas quando o Tipo de Saída é L1/L2/L3/N. Intervalo: [-60,00, 60,00]"
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: Tensão da fase {phase}
+    name: Tensão da fase{phase4name}
   PlantActivePower:
     attributes:
       source: Registo Modbus {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − PlantLifetimePVEnergy à meia-noite
     name: Produção PV Diária
     name_reset: Definir Produção PV Diária
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: Somatória de Riemann ∑ da Potência Autoconsumida desde meia-noite
+    name: Energia Autoconsumida Diária
   PlantPVPower:
     attributes:
       source: Registo Modbus {address}

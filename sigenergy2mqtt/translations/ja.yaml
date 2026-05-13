@@ -1240,7 +1240,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: フェーズ{phase} 電流
+    name: フェーズ{phase4name} 電流
   PhaseQSAdjustmentTargetValue:
     attributes:
       comment: "出力タイプがL1/L2/L3/Nの場合のみ有効。範囲：[-60.00, 60.00]"
@@ -1257,7 +1257,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: フェーズ{phase} 電圧
+    name: フェーズ{phase4name} 電圧
   PlantActivePower:
     attributes:
       source: Modbusレジスタ {address}
@@ -1298,6 +1298,10 @@ class:
       source: PlantLifetimePVEnergy − 深夜0時のPlantLifetimePVEnergy
     name: 日次PV発電量
     name_reset: 日次PV発電量を設定
+  PlantDailySelfConsumedEnergy:
+    attributes:
+      source: 深夜以降のプラント自家消費電力のリーマン∑
+    name: 日別自家消費エネルギー
   PlantPVPower:
     attributes:
       source: Modbusレジスタ {address}

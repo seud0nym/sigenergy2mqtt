@@ -2,7 +2,6 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
@@ -13,6 +12,7 @@ from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
 from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
+from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
 from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
@@ -722,3 +722,20 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             logging.debug(f"{self.log_identity} values={self._values} state={state}")
         self.set_latest_state(state)
         return True
+
+
+class PlantDailySelfConsumedEnergy(SimpleEnergyDailyAccumulationSensor, HybridInverter):
+    def __init__(self, plant_index: int, self_consumed_power: PlantSelfConsumedPower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        super().__init__(
+            name="Daily Self Consumed Energy",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_daily_self_consumed_energy",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_self_consumed_energy",
+            source=self_consumed_power,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["source"] = "Riemann ∑ of PlantSelfConsumedPower since midnight"
+        return attributes

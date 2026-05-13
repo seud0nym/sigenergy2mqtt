@@ -1,6 +1,5 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Deque
 
 import paho.mqtt.client as mqtt
 
@@ -211,7 +210,7 @@ class PVStringDailyEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInver
 
 
 class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, device_address: int, battery_count: int, active_power: ActivePower, battery_power: ChargeDischargePower, *pv_string_power: PVStringPower):
+    def __init__(self, plant_index: int, device_address: int, active_power: ActivePower, battery_power: ChargeDischargePower, *pv_string_power: PVStringPower):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
         self.device_address = device_address
@@ -230,14 +229,12 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         )
         self.declare_source_sensors(active_power, battery_power, *pv_string_power)
 
-        self.active_power: int = 0
-        self.battery_power: int = 0
-        self.pv_string_power: dict[int, int] = {p.string_number: 0 for p in pv_string_power}
+        self.active_power: int | None = None
+        self.battery_power: int | None = None
+        self.pv_string_power: dict[int, int | None] = {p.string_number: None for p in pv_string_power}
 
-        self.sanity_check.min_raw = 3
-        self.sanity_check.max_raw = ((battery_count * 35) + 60) * 1.5 if battery_count > 0 else 0  # 35W per battery + 60W for inverter + 50% safety margin
-        if self.debug_logging:
-            logging.debug(f"{self.log_identity} battery_count={battery_count} max_raw={self.sanity_check.max_raw}")
+        self.sanity_check.min_raw = 0  # Watts
+        self.sanity_check.max_raw = 2000  # Watts
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -245,13 +242,19 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         return attributes
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
-        if self.active_power == 0 and self.battery_power == 0 and all(p == 0 for p in self.pv_string_power.values()):
+        if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
             return False
         if self.debug_logging:
             logging.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
-        return await super().publish(mqtt_client, modbus_client, republish=republish)
+        await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        if not republish:
+            # reset internal values to missing for next calculation
+            self.active_power = None
+            self.battery_power = None
+            self.pv_string_power = {p: None for p in self.pv_string_power}
+        return True
 
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
@@ -265,7 +268,11 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
-        total_pv_power = sum(self.pv_string_power.values())
+        if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+            return False  # until all values populated, can't do calculation
+        total_pv_power = sum([p for p in self.pv_string_power.values() if p is not None])
         state = total_pv_power - self.active_power - self.battery_power
         if self.debug_logging:
             logging.debug(f"{self.log_identity} active_power={self.active_power} battery_power={self.battery_power} total_pv_power={total_pv_power} state={state}")

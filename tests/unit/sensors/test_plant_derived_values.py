@@ -529,3 +529,102 @@ class TestTotalLifetimePVEnergyCoverage:
             # Unrecognized
             assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
+
+
+class TestPlantSelfConsumedPowerCoverage:
+    def test_finalise_binding_no_sources(self, caplog):
+        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = PlantSelfConsumedPower(0)
+            DeviceRegistry.clear()
+            
+            # empty registry
+            assert sensor.finalise_binding(0) is False
+            assert "no publishable InverterSelfConsumedPower sensors found" in caplog.text
+
+    def test_finalise_binding_with_sources(self):
+        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
+        from sigenergy2mqtt.devices.base.device import Device
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = PlantSelfConsumedPower(0)
+            DeviceRegistry.clear()
+            
+            dev = Device(name="Dev", plant_index=0, unique_id="uid", manufacturer="m", model="m", protocol_version=Protocol.V1_8)
+            DeviceRegistry.add(0, dev)
+            
+            inv_sensor = MagicMock(spec=InverterSelfConsumedPower)
+            inv_sensor.object_id = "inv_sensor"
+            inv_sensor.publishable = True
+            
+            # mock dev.get_all_sensors
+            dev.get_all_sensors = MagicMock(return_value={"inv_sensor": inv_sensor})
+            
+            # We mock the parent finalise_binding which calls bind_cross_device_sensors logic, 
+            # here we can just test if the cross_device sources are declared.
+            with patch("sigenergy2mqtt.sensors.base.CrossDeviceDerivedSensor.finalise_binding", return_value=True):
+                assert sensor.finalise_binding(0) is True
+                assert "inv_sensor" in sensor._values
+                
+    def test_get_attributes(self):
+        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = PlantSelfConsumedPower(0)
+            assert "∑ of InverterSelfConsumedPower" in sensor.get_attributes()["source"]
+
+    @pytest.mark.asyncio
+    async def test_publish_skipped_and_ready(self, caplog):
+        import logging
+        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        
+        caplog.set_level(logging.DEBUG)
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = PlantSelfConsumedPower(0)
+            sensor.debug_logging = True
+            sensor._values = {"s1": None}
+
+            assert await sensor.publish(MagicMock(), None) is False
+            assert "Publishing SKIPPED" in caplog.text
+
+            sensor._values = {"s1": 100}
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
+                assert await sensor.publish(MagicMock(), None) is True
+                assert "Publishing READY" in caplog.text
+                assert sensor._values["s1"] is None
+
+    def test_set_source_values(self, caplog):
+        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = PlantSelfConsumedPower(0)
+            sensor.debug_logging = True
+            sensor._values = {"inv_sensor": None}
+            
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert "Attempt to call" in caplog.text
+            
+            inv_sensor = MagicMock(spec=InverterSelfConsumedPower)
+            inv_sensor.object_id = "inv_sensor"
+            inv_sensor.latest_raw_state = 250
+            
+            sensor.set_source_values(inv_sensor)
+            assert sensor._values["inv_sensor"] == 250
+            assert sensor.latest_raw_state == 250
+
+class TestPlantDailySelfConsumedEnergyCoverage:
+    def test_daily_self_consumed_energy(self):
+        from sigenergy2mqtt.sensors.plant_derived import PlantDailySelfConsumedEnergy, PlantSelfConsumedPower
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            source = MagicMock(spec=PlantSelfConsumedPower)
+            source.unique_id = "source_uid"
+            
+            sensor = PlantDailySelfConsumedEnergy(0, source)
+            assert "Riemann ∑ of PlantSelfConsumedPower" in sensor.get_attributes()["source"]
+

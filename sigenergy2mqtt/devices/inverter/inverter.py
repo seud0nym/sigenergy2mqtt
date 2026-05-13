@@ -226,15 +226,16 @@ class Inverter(ModbusDevice):
         self._add_sensor(ro.InverterReactivePowerPercentageAdjustmentFeedback(plant_index, device_address))
         self._add_sensor(ro.InverterPowerFactorAdjustmentFeedback(plant_index, device_address))
 
-        battery_power = cast(ro.ChargeDischargePower, self.get_sensor(ro.ChargeDischargePower, search_children=True))
-        if battery_power is not None and battery_power.publishable:
-            pv_string_power: list[PVStringPower] = [s for s in self.get_all_sensors().values() if isinstance(s, PVStringPower) and s.publishable]
-            if len(pv_string_power) > 0:
-                self._add_sensor(InverterSelfConsumedPower(plant_index, device_address, battery_count, active_power, battery_power, *pv_string_power))
+        if battery_count > 0:
+            battery_power = cast(ro.ChargeDischargePower, self.get_sensor(ro.ChargeDischargePower, search_children=True))
+            if battery_power is not None and battery_power.publishable:
+                pv_string_power: list[PVStringPower] = [s for s in self.get_all_sensors().values() if isinstance(s, PVStringPower) and s.publishable]
+                if len(pv_string_power) > 0:
+                    self._add_sensor(InverterSelfConsumedPower(plant_index, device_address, active_power, battery_power, *pv_string_power))
+                else:
+                    logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable PVStringPower sensors found")
             else:
-                logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable PVStringPower sensors found")
-        else:
-            logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable ChargeDischargePower sensor found")
+                logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable ChargeDischargePower sensor found")
 
         # Add the reserved registers to optimise sensor scanning
         self._add_sensor(ro.ReservedDailyExportEnergy(plant_index, device_address))
