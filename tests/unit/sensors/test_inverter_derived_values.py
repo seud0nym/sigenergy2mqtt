@@ -56,7 +56,7 @@ class TestBatteryDerivedPowerCoverage:
             sensor = InverterBatteryChargingPower(0, 1, cdp)
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor), []) is False
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
     def test_get_attributes_discharging(self):
@@ -77,7 +77,7 @@ class TestBatteryDerivedPowerCoverage:
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor), []) is False
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
 
@@ -130,7 +130,7 @@ class TestPVStringPowerCoverage:
             sensor = PVStringPower(0, 1, 1, v, c)
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor), []) is False
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
 

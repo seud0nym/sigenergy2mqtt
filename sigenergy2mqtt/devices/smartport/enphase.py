@@ -33,12 +33,14 @@ class EnphaseSensor(DerivedSensor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, EnphasePVPower):
             source_id = getattr(sensor, "log_identity", str(sensor))
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {source_id}")
             return False
-        value = values[-1][1]
+        if sensor.latest_raw_state is None:
+            return False
+        value = float(sensor.latest_raw_state)
         if value < 0:
             if self.debug_logging:
                 logging.info(f"{self.log_identity} value is negative ({value}), setting to 0.0")
@@ -96,26 +98,25 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
                 logging.info(f"{self.log_identity} activePower negative ({state_is}), setting to 0.0")
             state_is = 0.0
         self.set_state(state_is)
+        original_latest = self.latest_raw_state
         for sensor in self.derived_sensors.values():
-            latest = self._states.pop()
             match sensor:
                 case EnphaseLifetimePVEnergy():
-                    self._states.append((latest[0], solar["actEnergyDlvd"]))
+                    self.latest_raw_state = solar["actEnergyDlvd"]
                 case EnphaseCurrent():
-                    self._states.append((latest[0], solar["current"]))
+                    self.latest_raw_state = solar["current"]
                 case EnphaseFrequency():
-                    self._states.append((latest[0], solar["freq"]))
+                    self.latest_raw_state = solar["freq"]
                 case EnphasePowerFactor():
-                    self._states.append((latest[0], solar["pwrFactor"]))
+                    self.latest_raw_state = solar["pwrFactor"]
                 case EnphaseReactivePower():
-                    self._states.append((latest[0], solar["reactivePower"]))
+                    self.latest_raw_state = solar["reactivePower"]
                 case EnphaseVoltage():
-                    self._states.append((latest[0], solar["voltage"]))
+                    self.latest_raw_state = solar["voltage"]
                 case _:
-                    self._states.append(latest)
-            sensor.set_source_values(self, self._states)
-        latest = self._states.pop()
-        self._states.append((latest[0], state_is))
+                    self.latest_raw_state = original_latest if original_latest is not None else state_is
+            sensor.set_source_values(self)
+        self.latest_raw_state = state_is
         self._failover_initiated = False
         return True
 

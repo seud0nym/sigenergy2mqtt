@@ -5,7 +5,7 @@ from __future__ import annotations
 import abc
 import asyncio
 import logging
-from typing import Any, Coroutine, Deque
+from typing import Any, Coroutine
 
 from pymodbus.pdu import ExceptionResponse
 
@@ -93,12 +93,11 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             coro.close()
 
     @abc.abstractmethod
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         """Apply values from source sensor to this derived sensor.
 
         Args:
             sensor: The source sensor providing values
-            values: List of current values to update this sensor
 
         Returns:
             True if values were applied successfully

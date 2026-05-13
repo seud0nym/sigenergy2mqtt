@@ -126,12 +126,13 @@ class AccumulationSensor(DerivedSensor):
             except Exception as e:
                 logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
+        if sensor.latest_raw_state is None:
+            return False
         """Update accumulated value from source sensor.
 
         Args:
             sensor: Source sensor providing readings
-            values: List of (timestamp, value) tuples
 
         Returns:
             True if accumulation was updated
@@ -140,7 +141,7 @@ class AccumulationSensor(DerivedSensor):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
 
-        if len(values) < 2:
+        if sensor.state_count < 2:
             return False  # Need at least two points
 
         # Calculate time difference in hours
@@ -151,8 +152,8 @@ class AccumulationSensor(DerivedSensor):
             return False
 
         # Convert negative power to zero
-        previous = max(0.0, values[-2][1])
-        current = max(0.0, values[-1][1])
+        previous = max(0.0, float(sensor.previous_raw_state if sensor.previous_raw_state is not None else 0.0))
+        current = max(0.0, float(sensor.latest_raw_state if sensor.latest_raw_state is not None else 0.0))
 
         # Calculate accumulation using trapezoidal rule: E = 0.5 * (P1 + P2) * Δt
         increase = 0.5 * (previous + current) * interval_hours
@@ -449,7 +450,8 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._state_now = (value if isinstance(value, float) else float(value)) * self.gain
 
         # Calculate new midnight state
-        updated_midnight_state = self._source.latest_raw_state - self._state_now if isinstance(self._source.latest_raw_state, (float, int)) and self._source.latest_raw_state else self._state_now
+        source_raw = self._source.latest_raw_state
+        updated_midnight_state = (float(source_raw) - self._state_now) if isinstance(source_raw, (float, int)) and source_raw else self._state_now
 
         if self.debug_logging:
             logging.debug(f"{self.log_identity} source_raw={self._source.latest_raw_state} (from {self._source.unique_id}) state_now={self._state_now} midnight_state={updated_midnight_state}")
@@ -481,12 +483,11 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
         return await super().publish(mqtt_client, modbus_client, republish)
 
-    def set_source_values(self, sensor: Sensor, values: Deque[tuple[float, Any]]) -> bool:
+    def set_source_values(self, sensor: Sensor) -> bool:
         """Update daily accumulation from source values.
 
         Args:
             sensor: Source sensor
-            values: List of (timestamp, value) tuples
 
         Returns:
             True if updated
@@ -495,13 +496,16 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
 
-        val = values[-1][1]
+        if sensor.latest_raw_state is None:
+            return False
+
+        val = sensor.latest_raw_state
         now_state = float(val) if val is not None else 0.0
 
         # Check for day change
-        if len(values) > 1:
-            was_time = time.localtime(values[-2][0])
-            now_time = time.localtime(values[-1][0])
+        if sensor.state_count > 1:
+            was_time = time.localtime(sensor.previous_time)
+            now_time = time.localtime(sensor.latest_time)
 
             if was_time.tm_year != now_time.tm_year or was_time.tm_mon != now_time.tm_mon or was_time.tm_mday != now_time.tm_mday:
                 # Day changed - reset midnight state

@@ -369,12 +369,16 @@ class TestEnergyAccumulationSensors:
         with _swap_active_config(cfg):
             source = MagicMock(spec=Sensor)
             source.unique_id = "source_uid"
+            source.state_count = 2
 
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 sensor = EnergyLifetimeAccumulationSensor("Lifetime", "sigen_lifetime", "sigen_lifetime", source)
 
                 sensor._current_total = 100.0
-                values = [(1000.0, 10.0), (1100.0, 20.0)]
+                source.previous_time = 1000.0
+                source.latest_time = 1100.0
+                source.previous_raw_state = 10.0
+                source.latest_raw_state = 20.0
                 source.latest_interval = 100.0
 
                 async def _noop(*args, **kwargs):
@@ -382,7 +386,7 @@ class TestEnergyAccumulationSensors:
 
                 sensor._persist_current_total = _noop
                 with patch("asyncio.run_coroutine_threadsafe", side_effect=lambda coro, loop: coro.close()):
-                    result = sensor.set_source_values(source, values)
+                    result = sensor.set_source_values(source)
                     assert result is True
                     assert pytest.approx(sensor._current_total) == 100.4166666
 
@@ -403,6 +407,7 @@ class TestEnergyAccumulationSensors:
                 sensor._state_at_midnight = 1000.0
 
                 values = [(time_day1, 1100.0), (time_day2, 1105.0)]
+                source._states = values
 
                 mock_t1 = MagicMock()
                 mock_t1.tm_year, mock_t1.tm_mon, mock_t1.tm_mday = 2023, 11, 14
@@ -420,7 +425,7 @@ class TestEnergyAccumulationSensors:
 
                 with patch("sigenergy2mqtt.sensors.base.time.localtime", side_effect=mock_localtime):
                     with patch("asyncio.run_coroutine_threadsafe", side_effect=mock_run_coro):
-                        sensor.set_source_values(source, values)
+                        sensor.set_source_values(source)
 
     @pytest.mark.asyncio
     async def test_readonly_update_internal_state_unknown_type(self):

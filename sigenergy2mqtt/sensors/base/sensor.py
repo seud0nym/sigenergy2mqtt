@@ -250,6 +250,21 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """Get timestamp of most recent state."""
         return 0 if len(self._states) == 0 else self._states[-1][0]
 
+    @property
+    def previous_time(self) -> float:
+        """Get timestamp of previous state."""
+        return 0 if len(self._states) < 2 else self._states[-2][0]
+
+    @property
+    def previous_raw_state(self) -> float | int | str | None:
+        """Get previous raw state value."""
+        return None if len(self._states) < 2 else self._states[-2][1]
+
+    @property
+    def state_count(self) -> int:
+        """Get number of currently buffered states."""
+        return len(self._states)
+
     def _build_log_identity(self) -> str:
         """Build a stable sensor identity for log prefixes."""
         device_address = getattr(self, "device_address", "247")
@@ -1011,7 +1026,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             for sensor in self.derived_sensors.values():
                 if self.debug_logging:
                     logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (states={self._states})")
-                sensor.set_source_values(self, self._states)
+                sensor.set_source_values(self)
 
     def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and propagate to derived sensors.

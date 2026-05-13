@@ -144,9 +144,11 @@ class TestSensorLogic:
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
                 sensor._current_total = 100.0
-                values = [(1000.0, -10.0), (1100.0, -20.0)]
-                with patch("asyncio.run_coroutine_threadsafe", side_effect=lambda coro, loop: (coro.close(), MagicMock())[1]), patch("asyncio.get_running_loop", side_effect=RuntimeError):
-                    sensor.set_source_values(source, values)
+                source.state_count = 2
+                source.previous_raw_state = -10.0
+                source.latest_raw_state = -20.0
+                with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
+                    sensor.set_source_values(source)
                     assert sensor._current_total == 100.0
 
     def test_alarm_sensor_binary(self):
