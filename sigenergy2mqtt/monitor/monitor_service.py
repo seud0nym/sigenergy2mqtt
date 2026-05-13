@@ -12,6 +12,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
@@ -36,8 +37,8 @@ class MonitorService(Device):
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}
-        self._health_state_topic = f"sigenergy2mqtt/health/state"
-        self._health_attributes_topic = f"sigenergy2mqtt/health/attributes"
+        self._health_state_topic = "sigenergy2mqtt/health/state"
+        self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
         self._health_file = Path("/tmp/sigenergy2mqtt-health.json")
         self._monitor_topic_updates = active_config.log_level == logging.DEBUG and active_config.repeated_state_publish_interval >= 0
         # Health publication should remain reasonably frequent and independent
@@ -71,7 +72,7 @@ class MonitorService(Device):
                 for topic, sensor in overdue.items():
                     sensor.notified = True
                     logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
-            await self._publish_health(modbus_client, mqtt_client, len(overdue))
+            await self._publish_health(mqtt_client, len(overdue))
             try:
                 task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
@@ -82,8 +83,8 @@ class MonitorService(Device):
             finally:
                 self.sleeper_task = None
 
-    async def _publish_health(self, modbus_client: Any, mqtt_client: mqtt.Client, overdue_count: int) -> None:
-        modbus_connected = bool(modbus_client and getattr(modbus_client, "connected", False))
+    async def _publish_health(self, mqtt_client: mqtt.Client, overdue_count: int) -> None:
+        modbus_connected = all(client.connected for client in ModbusClientFactory._clients.values())
         mqtt_connected = bool(mqtt_client and mqtt_client.is_connected())
         status = "healthy" if overdue_count == 0 and mqtt_connected and modbus_connected else "degraded"
         now = int(time.time())
@@ -212,10 +213,7 @@ class MonitorService(Device):
         """
 
         if not self._monitor_topic_updates:
-            logging.info(
-                f"{self.log_identity} Topic-overdue monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval}); "
-                "publishing connectivity health only"
-            )
+            logging.info(f"{self.log_identity} Topic-overdue monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval}); publishing connectivity health only")
             return
 
         for d in self._devices:

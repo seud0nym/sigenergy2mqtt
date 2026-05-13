@@ -4,10 +4,11 @@ import time
 
 import pytest
 
+from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.monitor.monitor_service import MonitorService
 from sigenergy2mqtt.monitor.monitored_sensor import MonitoredSensor
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
-from sigenergy2mqtt.config import active_config
 
 
 class DummyReadable(ReadableSensorMixin):
@@ -184,7 +185,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_publish_health_includes_modbus_and_mqtt_connectivity(tmp_path):
+async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch, tmp_path):
     svc = MonitorService([])
     svc._health_file = tmp_path / "health.json"
     mqtt_client = FakeMqttClient(connected=True)
@@ -192,11 +193,43 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(tmp_path):
     class Modbus:
         connected = True
 
-    await svc._publish_health(Modbus(), mqtt_client, overdue_count=0)
+    monkeypatch.setattr(ModbusClientFactory, "_clients", {("127.0.0.1", 502): Modbus()})
+
+    await svc._publish_health(mqtt_client, overdue_count=0)
 
     assert svc._health_file.exists()
     content = svc._health_file.read_text(encoding="utf-8")
     assert '"modbus_connected": true' in content
+    assert '"mqtt_connected": true' in content
+    assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
+    assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)
+
+
+@pytest.mark.asyncio
+async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path):
+    svc = MonitorService([])
+    svc._health_file = tmp_path / "health.json"
+    mqtt_client = FakeMqttClient(connected=True)
+
+    class ConnectedModbus:
+        connected = True
+
+    class DisconnectedModbus:
+        connected = False
+
+    monkeypatch.setattr(
+        ModbusClientFactory,
+        "_clients",
+        {
+            ("127.0.0.1", 502): ConnectedModbus(),
+            ("192.168.0.2", 502): DisconnectedModbus(),
+        },
+    )
+
+    await svc._publish_health(mqtt_client, overdue_count=0)
+
+    content = svc._health_file.read_text(encoding="utf-8")
+    assert '"modbus_connected": false' in content
     assert '"mqtt_connected": true' in content
     assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
     assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)
