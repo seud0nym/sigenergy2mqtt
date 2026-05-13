@@ -67,7 +67,7 @@ def test_aggregate_adjustment_logging(caplog):
 
 def test_aggregate_difference_logic(caplog):
     caplog.set_level(logging.DEBUG)
-    now = time.time()
+    now = time.mktime((2024, 6, 1, 12, 0, 0, 0, 0, -1))
     cfg_obj = Config()
     cfg_obj.pvoutput.calc_debug_logging = True
     with _swap_active_config(cfg_obj):

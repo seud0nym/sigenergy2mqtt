@@ -22,16 +22,16 @@ class TestPVOutputStatus:
     """Tests for PVOutputStatusService."""
 
     def test_create_payload_includes_generation_power(self):
-        # ensure deterministic started time
-        active_config.pvoutput.started = time.time() - 3600
         # create a generation power topic
-        now = time.time()
+        now = time.mktime((2024, 6, 1, 12, 0, 0, 0, 0, -1))
+        # ensure deterministic started time
+        active_config.pvoutput.started = now - 3600
         t = Topic("g/topic", gain=1.0, state=10.5, timestamp=time.localtime(now))
         # simulate a previous energy value an hour earlier so DIFFERENCE calculation can produce a value
         t.previous_state = 8.5
         t.previous_timestamp = time.localtime(now - 3600)
         svc = make_status_service(topics={StatusField.GENERATION_POWER: [t]}, extended={})
-        payload, snapshot = svc._create_payload(time.localtime())
+        payload, snapshot = svc._create_payload(time.localtime(now))
         # 'v2' is the value for GENERATION_POWER; difference (10.5-8.5)=2.0 converted to watts over 1h -> 2.0
         assert StatusField.GENERATION_POWER.value in payload
         assert pytest.approx(payload[StatusField.GENERATION_POWER.value], rel=1e-3) == 2.0
@@ -42,7 +42,7 @@ class TestPVOutputStatus:
     async def test_create_payload_basic(self):
         """Test payload creation with some sample topics."""
         svc = make_status_service()
-        now = time.localtime()
+        now = time.strptime("2024-06-01 12:00:00", "%Y-%m-%d %H:%M:%S")
 
         # Enable some topics
         st_gen = ServiceTopics(svc, True, svc.logger, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM)
@@ -63,7 +63,7 @@ class TestPVOutputStatus:
     def test_create_payload_requires_donation_skips_when_not_donator(self):
         """Test that donation-required topics are skipped for non-donators."""
         svc = make_status_service()
-        now = time.localtime()
+        now = time.strptime("2024-06-01 12:00:00", "%Y-%m-%d %H:%M:%S")
 
         # v7 requires donation
         st_v7 = ServiceTopics(svc, True, svc.logger, value_key=StatusField.V7, donation=True)
@@ -79,12 +79,13 @@ class TestPVOutputStatus:
         active_config.pvoutput.extended[StatusField.V7] = "energy"
         # force service donator state
         with patch("sigenergy2mqtt.pvoutput.service.Service._donator", True):
+            now = time.mktime((2024, 6, 1, 12, 0, 0, 0, 0, -1))
             # ensure started flag so updating checks pass
-            active_config.pvoutput.started = time.time() - 3600
-            t = Topic("v7/topic", gain=1.0, state=2.0, timestamp=time.localtime())
+            active_config.pvoutput.started = now - 3600
+            t = Topic("v7/topic", gain=1.0, state=2.0, timestamp=time.localtime(now))
             # pass empty extended to avoid forcing SUM/DIFFERENCE calculation in constructor
             svc = make_status_service(topics={StatusField.V7: [t]}, extended={})
-            payload, snapshot = svc._create_payload(time.localtime())
+            payload, snapshot = svc._create_payload(time.localtime(now))
             assert StatusField.V7.value in payload
 
     @pytest.mark.asyncio

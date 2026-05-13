@@ -12,7 +12,7 @@ import logging
 import os
 import xml.etree.ElementTree as xml
 from time import sleep
-from typing import Any, Deque, cast
+from typing import cast
 
 import requests
 
@@ -156,6 +156,7 @@ class EnphasePVPower(ReadableSensorMixin, Sensor, PVPowerSensor):
                 if "TotalPVPower" in self.derived_sensors:
                     logging.info(f"{self.log_identity} Failed to fetch data from {url} after {self._failures + 1} attempts, failing over to Modbus sensor")
                     self._failover_initiated = cast(SubstituteMixin, self.derived_sensors["TotalPVPower"]).failover(self)
+                    return self._failover_initiated
                 else:
                     logging.warning(f"{self.log_identity} Failed to fetch data from {url} after {self._failures + 1} attempts, giving up and using last known state")
                     return True

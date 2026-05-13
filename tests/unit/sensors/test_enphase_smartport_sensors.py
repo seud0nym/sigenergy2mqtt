@@ -433,7 +433,7 @@ class TestEnphasePVPowerUpdateInternalState:
         pv_power_sensor.derived_sensors["TotalPVPower"] = mock_derived
 
         with patch("requests.get", side_effect=requests.exceptions.RequestException("Network error")):
-            await pv_power_sensor._update_internal_state()
+            result = await pv_power_sensor._update_internal_state()
 
         assert result is True
         mock_derived.failover.assert_called_once_with(pv_power_sensor)
