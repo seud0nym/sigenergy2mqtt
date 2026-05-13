@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -421,7 +420,7 @@ class TestEnergyAccumulationSensors:
                     return mock_t2
 
                 def mock_run_coro(coro, loop):
-                    asyncio.create_task(coro)
+                    coro.close()
                     return MagicMock()
 
                 with patch("sigenergy2mqtt.sensors.base.time.localtime", side_effect=mock_localtime):
