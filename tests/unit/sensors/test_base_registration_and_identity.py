@@ -43,6 +43,7 @@ def mock_config(tmp_path):
 class TestResettableAccumulationSensorCoverage:
     def _make_sensor(self, source=None, unique_id="sigen_test_uid", **kwargs):
         if source is None:
+            now = time.time()
             source = MagicMock()
             source.unique_id = "sigen_source_id"
             source.data_type = ModbusDataType.UINT32
@@ -50,6 +51,9 @@ class TestResettableAccumulationSensorCoverage:
             source.__getitem__.side_effect = lambda x: "sigenergy2mqtt_source_obj" if x == DiscoveryKeys.OBJECT_ID else MagicMock()
             source.latest_raw_state = 0.0
             source.protocol_version = Protocol.V1_8
+            source.state_count = 2
+            source.previous_time = now - 3600
+            source.latest_time = now
 
         return ResettableAccumulationSensor(
             name="Test",
@@ -125,11 +129,19 @@ class TestResettableAccumulationSensorCoverage:
 
         # Hit 224+
         values = deque([(now - 3600, 100.0), (now, 200.0)])
+        sensor._source._states = values
+        sensor._source.previous_time = now - 3600
+        sensor._source.latest_time = now
+        sensor._source.previous_raw_state = 100.0
+        sensor._source.latest_raw_state = 200.0
         sensor.set_source_values(sensor._source)
         assert sensor._current_total > 0
 
         # Negative increase (Line 228-231)
         values = deque([(now - 3600, 300.0), (now, 200.0)])
+        sensor._source._states = values
+        sensor._source.previous_raw_state = 300.0
+        sensor._source.latest_raw_state = 200.0
         sensor.set_source_values(sensor._source)
 
         # Negative interval (Line 216)
@@ -150,6 +162,7 @@ class TestResettableAccumulationSensorCoverage:
     def test_async_cleanup_branches(self, mock_config):
         sensor = self._make_sensor()
         values = deque([(time.time() - 3600, 100.0), (time.time(), 200.0)])
+        sensor._source._states = values
         # Hit 234-254 (asyncio branches)
         with patch("asyncio.get_running_loop", side_effect=RuntimeError):
             with patch("asyncio.get_event_loop") as mock_evt:
@@ -207,6 +220,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
             source.precision = 2
             source.latest_raw_state = 100.0
             source.protocol_version = Protocol.V1_8
+            source.state_count = 2
 
         return EnergyDailyAccumulationSensor(name="Test Daily", unique_id=kwargs.pop("unique_id", "sigen_daily_uid"), object_id="sigenergy2mqtt_daily_obj", source=source, **kwargs)
 
@@ -306,7 +320,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         sensor = self._make_sensor()
 
         # Wrong sensor (Line 457-458)
-        sensor.set_source_values(MagicMock(), deque())
+        sensor.set_source_values(MagicMock())
 
         now = time.time()
         # Day change branches (Line 472, 482-483)
@@ -316,6 +330,10 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         today = now
 
         values = deque([(yesterday, 100.0), (today, 200.0)])
+        sensor._source._states = values
+        sensor._source.latest_raw_state = 200.0
+        sensor._source.previous_time = yesterday
+        sensor._source.latest_time = today
 
         # Case: asyncio.get_running_loop success (Line 472)
         with patch("time.localtime", side_effect=[yesterday_tm, today_tm, yesterday_tm, today_tm]):
@@ -339,5 +357,9 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         sensor = self._make_sensor()
         sensor._state_at_midnight = 0.0  # Force init
         values = deque([(time.time(), 300.0)])
+        sensor._source._states = values
+        sensor._source.latest_raw_state = 300.0
+        sensor._source.previous_time = time.time() - 10
+        sensor._source.latest_time = time.time()
         sensor.set_source_values(sensor._source)
         assert sensor._state_at_midnight == 300.0

@@ -170,7 +170,8 @@ async def test_energy_daily_accumulation_reset(mock_config, tmp_path):
     now_ts = time.mktime(now_time)
 
     # Use a list of values to simulate set_source_values
-    values = [(was_ts, 5000.0), (now_ts, 5100.0)]
+    source._states = [(was_ts, 5000.0), (now_ts, 5100.0)]
+    source.latest_raw_state = 5100.0
 
     with patch("time.localtime") as mock_localtime:
         # Mocking time.localtime to simulate day change
@@ -201,22 +202,14 @@ async def test_midnight_state_file_stale(mock_config, tmp_path):
     fpath = cat_dir / "sigen_source_3.atmidnight"
 
     # Create a "yesterday" file with envelope to test staleness
-    yesterday_ts = int(time.time()) - 90000  # > 24h
+    now = time.time()
+    today_struct = time.localtime(now)
+    yesterday_ts = now - 90000  # > 24h
+    yesterday_struct = time.localtime(yesterday_ts)
     fpath.write_text(json.dumps({"v": "4000.0", "ts": yesterday_ts, "ver": "1.0.0"}))
 
     # Initialize sensor - it should detect stale file and unlink it
     with patch("time.localtime") as mock_localtime:
-        # If t is None, it's asking for "now" -> today_struct
-        # If t is provided, it's the file mtime -> yesterday_struct
-        mock_localtime.side_effect = lambda t=None: today_struct if t is None else time.struct_from_ts_somehow(t)
-
-        # Actually simpler:
-        def side_effect(t=None):
-            if t is None:
-                return today_struct
-            return time.gmtime(t)  # or whatever preserves the date
-
-        # Let's just use a more robust mock:
         mock_localtime.side_effect = lambda t=None: today_struct if (t is None or t > yesterday_ts + 10) else yesterday_struct
 
         sensor = EnergyDailyAccumulationSensor(name="Daily Energy", unique_id="sigen_daily_2", object_id="sigen_daily_2", source=source)
@@ -265,6 +258,9 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     # New total is 1000 + 0 = 1000 (same as before)
     # We simulate this by passing 0.0 power readings
     await asyncio.sleep(1.2)  # Wait > 1s to ensure mtime diff if written
+    now = time.time()
+    source._states = [(now - 3600, 0.0), (now, 0.0)]
+    source.latest_raw_state = 0.0
     sensor.set_source_values(source)
     await asyncio.sleep(0.5)
 
@@ -277,6 +273,9 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     # 3. Third update: Change value -> Should persist
     # 1000W for 1 hour = 1000Wh increment
     # New total = 2000.0
+    now = time.time()
+    source._states = [(now - 3600, 1000.0), (now, 1000.0)]
+    source.latest_raw_state = 1000.0
     sensor.set_source_values(source)
     await asyncio.sleep(0.5)
 

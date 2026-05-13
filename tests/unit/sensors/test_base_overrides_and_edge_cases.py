@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -64,7 +63,6 @@ def _mqtt_mock():
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Debug-logging branches in property setters
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestDebugLoggingBranches:
@@ -133,7 +131,6 @@ class TestDebugLoggingBranches:
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. apply_sensor_overrides branches
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestApplySensorOverrides:
@@ -274,7 +271,6 @@ class TestApplySensorOverrides:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestAlarmSensorBranches:
     def _make_alarm(self, suffix):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -297,7 +293,6 @@ class TestAlarmSensorBranches:
 # ─────────────────────────────────────────────────────────────────────────────
 # 13. DerivedSensor branches
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestDerivedSensorBranches:
@@ -360,7 +355,6 @@ class TestDerivedSensorBranches:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestSetLatestState:
     def test_set_latest_state_propagates_to_derived(self):
         """set_latest_state calls set_source_values on derived sensors."""
@@ -368,7 +362,7 @@ class TestSetLatestState:
         derived = MagicMock()
         s.derived_sensors["Mock"] = derived
         s.set_latest_state(100.0)
-        derived.set_source_values.assert_called_once_with(s, s._states)
+        derived.set_source_values.assert_called_once_with(s)
 
     def test_set_state_respects_max_states(self):
         """set_state trims state history to _max_states."""
@@ -383,7 +377,6 @@ class TestSetLatestState:
 # ─────────────────────────────────────────────────────────────────────────────
 # 16. ReservedSensor branches
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestReservedSensor:
@@ -442,7 +435,6 @@ class TestReservedSensor:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestWritableSensorOverrides:
     def test_writable_sensor_read_write_false_sets_unpublishable(self):
         """WritableSensorMixin sensor becomes unpublishable when read_write=False."""
@@ -471,7 +463,6 @@ class TestWritableSensorOverrides:
 # ─────────────────────────────────────────────────────────────────────────────
 # 19. __eq__ and __hash__
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestSensorEqualityAndHash:
@@ -543,5 +534,3 @@ class TestSensorEqualityAndHash:
 # ─────────────────────────────────────────────────────────────────────────────
 # 20. get_discovery_components with options
 # ─────────────────────────────────────────────────────────────────────────────
-
-

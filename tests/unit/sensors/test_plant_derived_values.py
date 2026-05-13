@@ -54,7 +54,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "BatteryPower > 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
-            sensor.set_source_values(MagicMock(spec=Sensor), [])
+            sensor.set_source_values(MagicMock(spec=Sensor))
             assert "Attempt to call" in caplog.text
 
     def test_battery_discharging_power(self, caplog):
@@ -69,7 +69,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "BatteryPower < 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
-            sensor.set_source_values(MagicMock(spec=Sensor), [])
+            sensor.set_source_values(MagicMock(spec=Sensor))
             assert "Attempt to call" in caplog.text
 
     def test_grid_export_power(self, caplog):
@@ -85,7 +85,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "GridSensorActivePower < 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
-            sensor.set_source_values(MagicMock(spec=Sensor), [])
+            sensor.set_source_values(MagicMock(spec=Sensor))
             assert "Attempt to call" in caplog.text
 
     def test_grid_import_power(self, caplog):
@@ -101,7 +101,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "GridSensorActivePower > 0" in str(sensor.get_attributes()["source"])
 
             # Error branch
-            sensor.set_source_values(MagicMock(spec=Sensor), [])
+            sensor.set_source_values(MagicMock(spec=Sensor))
             assert "Attempt to call" in caplog.text
 
     def test_daily_accumulation_sensors(self):
@@ -290,21 +290,24 @@ class TestPlantConsumedPowerCoverage:
             gs.unique_id = "gs"
 
             # Initial status (sets _grid_status = 0)
+            gs.latest_raw_state = 0
             sensor.set_source_values(gs)
             assert sensor._grid_status == 0
 
             # Off grid transition
+            gs.latest_raw_state = 1
             sensor.set_source_values(gs)
             assert sensor._grid_status == 1
             assert "Off Grid detected" in caplog.text
 
             # Grid restored transition
+            gs.latest_raw_state = 0
             sensor.set_source_values(gs)
             assert sensor._grid_status == 0
             assert "Grid restored" in caplog.text
 
             # Unrecognized sensor
-            assert sensor.set_source_values(MagicMock(spec=Sensor), [(0, 100)]) is False
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
 
 
 class TestTotalPVPowerCoverage:
@@ -430,6 +433,7 @@ class TestTotalPVPowerCoverage:
         s1 = MagicMock(spec=PVPowerSensor)
         s1.unique_id = "s1"
         s1.gain = 1.0
+        s1.latest_raw_state = 100.0
         sensor = TotalPVPower(0, s1)
         sensor.debug_logging = True
         sensor.set_source_values(s1)
@@ -444,6 +448,7 @@ class TestTotalPVPowerCoverage:
             s1 = MagicMock(spec=PVPowerSensor)
             s1.unique_id = "s1"
             s1.gain = 1.0
+            s1.latest_raw_state = 1000.0
 
             # Initialize TotalPVPower with s1 as primary (SMARTPORT intent)
             sensor = TotalPVPower(0)
@@ -456,6 +461,7 @@ class TestTotalPVPowerCoverage:
             s2 = MagicMock(spec=PVPowerSensor)
             s2.unique_id = "s2"
             s2.gain = 1.0
+            s2.latest_raw_state = 500.0
             sensor.register_source_sensors(s2, type=TotalPVPower.SourceType.FAILOVER, enabled=False)
 
             # Initial update works
@@ -473,8 +479,8 @@ class TestTotalPVPowerCoverage:
                 await sensor.publish(MagicMock(), None)
 
             # Check source statuses - FAILOVER should be enabled, S1 disabled
-            assert sensor._sources["s1"].enabled == False, "S1 should be disabled after timeout"
-            assert sensor._sources["s2"].enabled == True, "S2 should be enabled after timeout"
+            assert not sensor._sources["s1"].enabled, "S1 should be disabled after timeout"
+            assert sensor._sources["s2"].enabled, "S2 should be enabled after timeout"
 
 
 class TestTotalLifetimePVEnergyCoverage:
@@ -509,15 +515,17 @@ class TestTotalLifetimePVEnergyCoverage:
 
             # PlantPVTotalGeneration
             sg = MagicMock(spec=PlantPVTotalGeneration)
+            sg.latest_raw_state = 1000.0
             sensor.set_source_values(sg)
-            assert sensor.plant_lifetime_pv_energy == 1000
+            assert sensor.plant_lifetime_pv_energy == 1000.0
 
             # ThirdPartyLifetimePVEnergy
             tp = MagicMock(spec=ThirdPartyLifetimePVEnergy)
+            tp.latest_raw_state = 500.0
             sensor.set_source_values(tp)
-            assert sensor.plant_3rd_party_lifetime_pv_energy == 500
-            assert sensor.latest_raw_state == 1500
+            assert sensor.plant_3rd_party_lifetime_pv_energy == 500.0
+            assert sensor.latest_raw_state == 1500.0
 
             # Unrecognized
-            assert sensor.set_source_values(MagicMock(spec=Sensor), []) is False
+            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text

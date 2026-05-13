@@ -250,7 +250,7 @@ class TestEnphasePVPowerProcessMeterReading:
         result = pv_power_sensor._process_meter_reading(reading)
 
         assert result is True
-        mock_derived.set_source_values.assert_called_once_with(pv_power_sensor, pv_power_sensor._states)
+        mock_derived.set_source_values.assert_called_once_with(pv_power_sensor)
 
     def test_process_meter_reading_missing_active_power_raises(self, pv_power_sensor):
         """Test that missing activePower field raises KeyError."""
@@ -435,6 +435,7 @@ class TestEnphasePVPowerUpdateInternalState:
         with patch("requests.get", side_effect=requests.exceptions.RequestException("Network error")):
             result = await pv_power_sensor._update_internal_state()
 
+        assert result is True
         mock_derived.failover.assert_called_once_with(pv_power_sensor)
 
     @pytest.mark.asyncio
@@ -474,14 +475,14 @@ class TestDerivedSensorGetAttributes:
 
     def test_enphase_lifetime_get_attributes(self):
         """Test EnphaseLifetimePVEnergy.get_attributes includes source."""
-        sensor = EnphaseLifetimePVEnergy(0, "SN123")
+        sensor = EnphaseLifetimePVEnergy(0, "SN123", MagicMock())
         attrs = sensor.get_attributes()
         assert attrs["source"] == "Enphase Envoy API when EnphasePVPower derived"
 
     def test_enphase_daily_get_attributes(self, mock_config, tmp_path, monkeypatch):
         """Test EnphaseDailyPVEnergy.get_attributes includes source."""
         monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
-        lifetime = EnphaseLifetimePVEnergy(0, "SN123")
+        lifetime = EnphaseLifetimePVEnergy(0, "SN123", MagicMock())
         sensor = EnphaseDailyPVEnergy(0, "SN123", lifetime)
         attrs = sensor.get_attributes()
         assert attrs["source"] == "Enphase Envoy API when EnphasePVPower derived"
@@ -1004,7 +1005,7 @@ class TestDerivedSensorTriggering:
     """Tests that derived sensors are correctly triggered."""
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_calls_set_source_values(self):
+    async def test_update_internal_state_calls_set_source_values(self, pv_power_sensor, tmp_path, monkeypatch):
         """Test that _update_internal_state calls set_source_values on derived sensors."""
         monkeypatch.setattr(active_config, "persistent_state_path", str(tmp_path))
         pv_power_sensor._token = "valid_token"
@@ -1036,8 +1037,8 @@ class TestDerivedSensorValueIntegration:
         pv_power_sensor._token = "valid_token"
 
         # Instantiate and attach detailed sensors
-        lifetime = EnphaseLifetimePVEnergy(0, "SN123")
-        daily = EnphaseDailyPVEnergy(0, "SN123", lifetime)
+        lifetime = EnphaseLifetimePVEnergy(0, "SN123", MagicMock())
+        # daily = EnphaseDailyPVEnergy(0, "SN123", lifetime)
         current = EnphaseCurrent(0, "SN123")
         freq = EnphaseFrequency(0, "SN123")
         pf = EnphasePowerFactor(0, "SN123")

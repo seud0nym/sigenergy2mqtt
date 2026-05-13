@@ -484,8 +484,6 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         return await super().publish(mqtt_client, modbus_client, republish)
 
     def set_source_values(self, sensor: Sensor) -> bool:
-        if sensor.latest_raw_state is None:
-            return False
         """Update daily accumulation from source values.
 
         Args:
@@ -496,6 +494,9 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         """
         if sensor is not self._source:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            return False
+
+        if sensor.latest_raw_state is None:
             return False
 
         val = sensor.latest_raw_state
