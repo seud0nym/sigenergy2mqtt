@@ -362,7 +362,7 @@ def test_add_derived_sensor_protocol_version_too_high(device):
     device._add_sensor(src)
 
     derived = DummyDerived("derived_high_pv", protocol_version=Protocol.V2_4)
-    derived.declare_source_sensors(src)
+    derived._declare_source_sensors(src)
     device._add_sensor(derived)
     # Should not be in all_sensors because its protocol_version > device's
     assert "derived_high_pv" not in device.all_sensors
@@ -376,7 +376,7 @@ def test_add_derived_sensor_source_protocol_version_too_high(device):
     device._add_sensor(src)
 
     derived = DummyDerived("derived_ok_pv", protocol_version=Protocol.V1_8)
-    derived.declare_source_sensors(src)
+    derived._declare_source_sensors(src)
     device._add_sensor(derived)
     assert "derived_ok_pv" not in device.all_sensors
 
@@ -388,7 +388,7 @@ def test_add_derived_sensor_source_not_found(device):
     derived = DummyDerived("derived_no_src")
 
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        derived.declare_source_sensors(src)
+        derived._declare_source_sensors(src)
         device._add_sensor(derived)
         mock_log.warning.assert_called()
 
@@ -399,7 +399,7 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
     device.protocol_version = Protocol.N_A
 
     with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
-        derived.declare_source_sensors()
+        derived._declare_source_sensors()
         device._add_sensor(derived)  # all None
         mock_log.error.assert_called()
 

@@ -104,7 +104,7 @@ def test_add_derived_sensor_skips_newer_protocol(caplog):
     device._add_sensor(source)
 
     # Try to add derived sensor
-    sensor.declare_source_sensors(source)
+    sensor._declare_source_sensors(source)
     device._add_sensor(sensor)
 
     # Should verify it was NOT added to all_sensors
@@ -126,7 +126,7 @@ def test_add_derived_sensor_skips_newer_source_protocol(caplog):
 
     device._add_sensor(source)
 
-    sensor.declare_source_sensors(source)
+    sensor._declare_source_sensors(source)
     device._add_sensor(sensor)
 
     if "ok_sensor" in device.all_sensors:
@@ -144,7 +144,7 @@ def test_add_derived_sensor_ok_protocol(caplog):
 
     device._add_sensor(source)
 
-    sensor.declare_source_sensors(source)
+    sensor._declare_source_sensors(source)
     device._add_sensor(sensor)
 
     assert "ok_sensor" in device.all_sensors

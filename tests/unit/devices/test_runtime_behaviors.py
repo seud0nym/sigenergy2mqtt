@@ -132,12 +132,12 @@ def test_add_derived_sensor_handles_none_and_unregistered():
     dev = Device("dev3", 0, "uid3", "mf", "mdl", Protocol.V1_8)
     derived = DummyDerived()
     # all sources None -> no addition
-    derived.declare_source_sensors()
+    derived._declare_source_sensors()
     dev._add_sensor(cast(Any, derived))
 
     # source provided but not registered -> won't be added
     src = DummyReadable(unique_id="missing")
-    derived.declare_source_sensors(cast(Any, src))
+    derived._declare_source_sensors(cast(Any, src))
     dev._add_sensor(cast(Any, derived))
     # Nothing should have been added to all_sensors
     assert len(dev.all_sensors) == 0

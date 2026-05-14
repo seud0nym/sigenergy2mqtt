@@ -29,9 +29,9 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
             icon="mdi:battery-plus",
             gain=None,
             precision=2,
+            source_sensors=(battery_power,),
         )
         self.protocol_version = battery_power.protocol_version
-        self.declare_source_sensors(battery_power)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -65,9 +65,9 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
             icon="mdi:battery-minus",
             gain=None,
             precision=2,
+            source_sensors=(battery_power,),
         )
         self.protocol_version = battery_power.protocol_version
-        self.declare_source_sensors(battery_power)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -121,11 +121,11 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             icon="mdi:home-lightning-bolt",
             gain=None,
             precision=0,  # Intentional rounding to nearest watt
+            source_sensors=(voltage, current),
         )
         self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=amperes]", PVCurrentSensor.raw2amps)
         self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=volts]", PVVoltageSensor.raw2volts)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
-        self.declare_source_sensors(voltage, current)
         self.sanity_check.min_raw = 0
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -226,8 +226,8 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             gain=None,
             precision=0,  # Intentional rounding to nearest watt
             protocol_version=Protocol.V1_8,
+            source_sensors=(active_power, battery_power, *pv_string_power),
         )
-        self.declare_source_sensors(active_power, battery_power, *pv_string_power)
 
         self.active_power: int | None = None
         self.battery_power: int | None = None

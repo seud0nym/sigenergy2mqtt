@@ -24,16 +24,37 @@ class DerivedSensor(TypedSensorMixin, Sensor):
     source sensors rather than reading directly from Modbus.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, source_sensors: tuple["Sensor", ...] = (), **kwargs):
+        """Initialise the derived sensor.
+
+        Args:
+            source_sensors: The sensors whose values drive this sensor's state.
+                            Subclasses should always supply this so that source
+                            wiring is configured at construction time.
+            **kwargs: Forwarded to the Sensor base class.
+        """
         if "protocol_version" not in kwargs:
             kwargs["protocol_version"] = Protocol.N_A
 
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
-        self.source_sensors: list[Sensor] = []
         self.bound_source_sensors: list[Sensor] = []
 
-    def declare_source_sensors(self, *sensors: Sensor) -> None:
+        # Initialise source_sensors from the constructor argument.  Subclasses
+        # that use deferred / cross-device binding start with an empty list and
+        # populate it later via _declare_source_sensors() / finalise_binding().
+        self.source_sensors: list["Sensor"] = []
+        if source_sensors:
+            self._declare_source_sensors(*source_sensors)
+
+    def _declare_source_sensors(self, *sensors: "Sensor") -> None:
+        """Internal helper – update source_sensors after construction.
+
+        Ordinary subclasses must NOT call this directly; pass ``source_sensors``
+        to ``__init__`` instead.  This method exists only for subclasses that
+        perform deferred or cross-device binding (e.g.
+        ``CrossDeviceDerivedSensor.finalise_binding``).
+        """
         self.source_sensors = [s for s in sensors if s is not None]
         if not self.source_sensors:
             log_id = getattr(self, "_log_identity", self.__class__.__name__)
@@ -130,7 +151,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
     def declare_cross_device_sources(self, *sensors: Sensor) -> None:
         """Record sources that may live on any device in the plant.
 
-        Must be called from __init__ instead of declare_source_sensors().
+        Must be called from __init__ instead of _declare_source_sensors().
         Actual binding is completed by finalise_binding() once all devices exist.
         """
         self._pending_sources = [s for s in sensors if s is not None]

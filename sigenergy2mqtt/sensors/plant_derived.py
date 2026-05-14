@@ -47,9 +47,9 @@ class BatteryChargingPower(DerivedSensor, HybridInverter):
             icon="mdi:battery-plus",
             gain=None,
             precision=2,
+            source_sensors=(battery_power,),
         )
         self.protocol_version = battery_power.protocol_version
-        self.declare_source_sensors(battery_power)
         self.sanity_check.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -85,9 +85,9 @@ class BatteryDischargingPower(DerivedSensor, HybridInverter):
             icon="mdi:battery-minus",
             gain=None,
             precision=2,
+            source_sensors=(battery_power,),
         )
         self.protocol_version = battery_power.protocol_version
-        self.declare_source_sensors(battery_power)
         self.sanity_check.min_raw = 0.0
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -123,9 +123,9 @@ class GridSensorExportPower(DerivedSensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower-export",
             gain=None,
             precision=active_power.precision,
+            source_sensors=(active_power,),
         )
         self.protocol_version = active_power.protocol_version
-        self.declare_source_sensors(active_power)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -160,9 +160,9 @@ class GridSensorImportPower(DerivedSensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower-import",
             gain=None,
             precision=active_power.precision,
+            source_sensors=(active_power,),
         )
         self.protocol_version = active_power.protocol_version
-        self.declare_source_sensors(active_power)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -203,8 +203,8 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
             icon="mdi:solar-power",
             gain=None,
             precision=2,
+            source_sensors=sensors,
         )
-        self.declare_source_sensors(*sensors)
         self._sources: dict[str, TotalPVPower.Value] = {sensor.unique_id: TotalPVPower.Value(gain=1.0) for sensor in sensors}
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -281,8 +281,8 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
             icon="mdi:home-lightning-bolt-outline",
             gain=None,
             precision=2,
+            source_sensors=sources,
         )
-        self.declare_source_sensors(*sources)
         self.method = method
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
@@ -444,9 +444,9 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
             icon="mdi:solar-power-variant-outline",
             gain=100,
             precision=2,
+            source_sensors=(plant_pv_total_generation, third_party_lifetime_pv_energy),
         )
         self["enabled_by_default"] = True
-        self.declare_source_sensors(plant_pv_total_generation, third_party_lifetime_pv_energy)
         self.protocol_version = Protocol.V2_7
         self.plant_lifetime_pv_energy: float | None = None
         self.plant_3rd_party_lifetime_pv_energy: float | None = None

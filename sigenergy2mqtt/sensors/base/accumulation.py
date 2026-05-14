@@ -67,11 +67,11 @@ class AccumulationSensor(DerivedSensor):
             icon=icon,
             gain=gain,
             precision=precision,
+            source_sensors=(source,),
             **kwargs,
         )
 
         self._source = source
-        self.declare_source_sensors(source)
         self._current_total_lock = asyncio.Lock()
         self._current_total: float = 0.0
 
