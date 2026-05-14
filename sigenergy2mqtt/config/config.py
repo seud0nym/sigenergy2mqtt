@@ -285,7 +285,7 @@ class Config:
         except RuntimeError:
             loop = None
 
-        coro = auto_discovery_scan(port, ping_timeout, modbus_timeout, modbus_retries)
+        coro = auto_discovery_scan(None, port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
             # Normal case: no event loop running, asyncio.run() is safe.
             try:
