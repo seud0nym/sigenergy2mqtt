@@ -267,7 +267,7 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
             else:
                 return "Never"
 
-    def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
+    def __init__(self, plant_index: int, *sources: Sensor, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
         super().__init__(
@@ -282,6 +282,7 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
             gain=None,
             precision=2,
         )
+        self.declare_source_sensors(*sources)
         self.method = method
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
@@ -429,7 +430,7 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor, HybridInverter,
 
 
 class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, plant_pv_total_generation: PlantPVTotalGeneration, third_party_lifetime_pv_energy: ThirdPartyLifetimePVEnergy):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
         super().__init__(
@@ -445,6 +446,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
             precision=2,
         )
         self["enabled_by_default"] = True
+        self.declare_source_sensors(plant_pv_total_generation, third_party_lifetime_pv_energy)
         self.protocol_version = Protocol.V2_7
         self.plant_lifetime_pv_energy: float | None = None
         self.plant_3rd_party_lifetime_pv_energy: float | None = None

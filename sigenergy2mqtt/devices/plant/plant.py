@@ -202,8 +202,7 @@ class PowerPlant(ModbusDevice):
             total_pv_power = derived.TotalPVPower(self.plant_index, plant_pv_power, plant_3rd_party_pv_power)
         self._add_sensor(total_pv_power, search_children=False)
 
-        plant_consumed_power = derived.PlantConsumedPower(self.plant_index, method=self._consumption_source)
-        match plant_consumed_power.method:
+        match self._consumption_source:
             case ConsumptionMethod.CALCULATED:
                 if not self._grid_sensor:  # Should not be possible: unconditional registration in _register_child_devices
                     raise RuntimeError(f"{self.log_identity} GridSensor device not registered???")
@@ -213,15 +212,18 @@ class PowerPlant(ModbusDevice):
                 grid_status = self._grid_sensor.get_sensor(GridStatus)
                 if not grid_status:
                     raise RuntimeError(f"{self.log_identity} GridStatus not registered in GridSensor device???")
-                self._add_sensor(plant_consumed_power, search_children=True)
+                if battery_power is not None:
+                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_pv_power, battery_power, active_power, grid_status, method=self._consumption_source), search_children=True)
+                else:
+                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_pv_power, active_power, grid_status, method=self._consumption_source), search_children=True)
             case ConsumptionMethod.GENERAL:
-                self._add_sensor(plant_consumed_power)
+                self._add_sensor(derived.PlantConsumedPower(self.plant_index, general_load_power, method=self._consumption_source))
             case ConsumptionMethod.TOTAL:
-                self._add_sensor(plant_consumed_power)
+                self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_load_power, method=self._consumption_source))
 
         plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(self.plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(self.plant_index)
-        total_lifetime_pv_energy = derived.TotalLifetimePVEnergy(self.plant_index)
+        total_lifetime_pv_energy = derived.TotalLifetimePVEnergy(self.plant_index, plant_lifetime_pv_energy, plant_3rd_party_lifetime_pv_energy)
         self._add_sensor(plant_lifetime_pv_energy, group="Lifetime Production")
         self._add_sensor(plant_3rd_party_lifetime_pv_energy, group="Lifetime Production")
         self._add_sensor(total_lifetime_pv_energy)

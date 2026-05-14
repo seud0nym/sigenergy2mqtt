@@ -346,6 +346,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
     def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = True) -> bool:
         """Register any sensor type and handle type-specific wiring."""
+        if group is not None and not isinstance(group, str):
+            raise ValueError(f"{self.log_identity} cannot add {sensor.log_identity} - group parameter must be a string or None (got: {group})")
         if isinstance(sensor, CrossDeviceDerivedSensor):
             # Cross-device sensors defer source binding to finalise_binding().
             # Only apply a protocol check on the sensor itself here; source

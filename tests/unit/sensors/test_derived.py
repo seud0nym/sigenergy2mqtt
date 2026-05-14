@@ -49,7 +49,12 @@ def mock_config_all():
     cfg.home_assistant.enabled = True
     cfg.sensor_overrides = {}
     cfg.consumption = ConsumptionMethod.CALCULATED
-    cfg.modbus = [MagicMock()]
+    mock_modbus = MagicMock()
+    mock_modbus.scan_interval.low = 600
+    mock_modbus.scan_interval.medium = 60
+    mock_modbus.scan_interval.high = 10
+    mock_modbus.scan_interval.realtime = 5
+    cfg.modbus = [mock_modbus]
 
     with _swap_active_config(cfg):
         yield cfg
@@ -232,13 +237,12 @@ class TestTotalPVPower:
             assert sensor.latest_raw_state == 500.0
 
 
-
 class TestTotalLifetimePVEnergy:
     def test_total_lifetime_pv_energy_set_source_values(self):
         from sigenergy2mqtt.sensors.plant_read_only import PlantPVTotalGeneration, ThirdPartyLifetimePVEnergy
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TotalLifetimePVEnergy(0)
+            sensor = TotalLifetimePVEnergy(0, PlantPVTotalGeneration(0), ThirdPartyLifetimePVEnergy(0))
 
             gen = MagicMock(spec=PlantPVTotalGeneration)
             gen.unique_id = "gen"
