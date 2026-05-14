@@ -6,7 +6,6 @@ from .modbus import ModbusConfig, RegisterAccess, ScanInterval
 from .mqtt import MqttConfig
 from .persistence import PersistenceConfig
 from .pvoutput import PvOutputConfig
-from .smart_port import SmartPortConfig, SmartPortModule, SmartPortMqttEntry
 
 __all__ = [
     "HomeAssistantConfig",
@@ -17,7 +16,4 @@ __all__ = [
     "PvOutputConfig",
     "RegisterAccess",
     "ScanInterval",
-    "SmartPortConfig",
-    "SmartPortModule",
-    "SmartPortMqttEntry",
 ]

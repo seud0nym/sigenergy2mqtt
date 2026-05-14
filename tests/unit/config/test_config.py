@@ -642,7 +642,6 @@ def test_apply_cli_overrides_boolean_flags():
     setattr(args, const.SIGENERGY2MQTT_MQTT_TLS, "false")
     setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
     setattr(args, const.SIGENERGY2MQTT_PVOUTPUT_ENABLED, True)
-    setattr(args, const.SIGENERGY2MQTT_SMARTPORT_ENABLED, "true")
     setattr(args, "some_other_arg", "some_value")
 
     with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[]):
@@ -651,7 +650,6 @@ def test_apply_cli_overrides_boolean_flags():
         assert const.SIGENERGY2MQTT_INFLUX_ENABLED not in os.environ
         assert const.SIGENERGY2MQTT_MQTT_TLS not in os.environ
         assert os.environ[const.SIGENERGY2MQTT_PVOUTPUT_ENABLED] == "True"
-        assert os.environ[const.SIGENERGY2MQTT_SMARTPORT_ENABLED] == "true"
         assert os.environ["some_other_arg"] == "some_value"
 
 

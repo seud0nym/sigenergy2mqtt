@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.common import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import Sensor, TypedSensorMixin
 from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
@@ -187,7 +186,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                     if active_config.pvoutput.consumption == ConsumptionSource.IMPORTED:
                         sensor.publish_raw = True
                         status_topics[StatusField.CONSUMPTION_ENERGY].append(Topic(sensor.raw_state_topic, sensor.scan_interval, get_gain(sensor)))
-                case PVVoltageSensor() | EnphaseVoltage():
+                case PVVoltageSensor():
                     if active_config.pvoutput.voltage == VoltageSource.PV:
                         status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Need voltage, not raw
                 case TotalDailyPVEnergy():

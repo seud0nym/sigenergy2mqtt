@@ -450,39 +450,6 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
-  EnphaseCurrent:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Stroom
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Dagelijkse Productie
-    name_reset: Stel Dagelijkse Productie in
-  EnphaseFrequency:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Frequentie
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Totale Productie
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV Vermogen
-  EnphasePowerFactor:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Arbeidsfactor
-  EnphaseReactivePower:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Reactief Vermogen
-  EnphaseVoltage:
-    attributes:
-      source: Enphase Envoy API bij afleiding EnphasePVPower
-    name: Spanning
   GeneralAlarm1:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -1644,8 +1611,6 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totaal verbruik slimme verbruiker {smart_load_index}
-  SmartPort:
-    name: Sigenergy-installatie Smart-Port {plant_suffix}
   Started:
     name: Gestart
   StartupTime:
@@ -1923,22 +1888,6 @@ cli:
     help: 'Scaninterval in seconden voor registers met gemiddelde frequentie. Standaard: 60.'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'Scaninterval in seconden voor real-time registers. Standaard: 5.'
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: Schakel interrogatie van een apparaat van derden in.
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: Het IP-adres of hostnaam van het apparaat van derden.
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: De modulenaam voor productiegegevens van derden.
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: 'De versterking voor productiegegevens (bijv. 1000 voor kW). Standaard: 1 (Watt).'
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: Het MQTT-topic voor productiegegevens van derden.
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: Het wachtwoord voor authenticatie bij het apparaat van derden.
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: De sensorklasse voor productiegegevens van derden.
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: De gebruikersnaam voor authenticatie bij het apparaat van derden.
   clean:
     help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.
   discovery_only:

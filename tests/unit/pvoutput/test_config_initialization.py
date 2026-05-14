@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 
 from sigenergy2mqtt.common import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, const
-from sigenergy2mqtt.devices.smartport.enphase import EnphaseVoltage
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services
 from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
@@ -55,7 +54,6 @@ def test_get_pvoutput_services_full_coverage():
         mock_sensor(PlantRatedEnergyCapacity),
         mock_sensor(PlantTotalImportedEnergy),
         mock_sensor(PVVoltageSensor),
-        mock_sensor(EnphaseVoltage),
         mock_sensor(TotalDailyPVEnergy),
         mock_sensor(TotalLifetimePVEnergy),
         mock_sensor(TotalLoadConsumption),

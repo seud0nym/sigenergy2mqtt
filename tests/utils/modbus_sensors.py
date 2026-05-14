@@ -200,11 +200,6 @@ async def get_sensor_instances(
     active_config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
     active_config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 
-    active_config.modbus[plant_index].smartport.enabled = True
-    active_config.modbus[plant_index].smartport.module.name = "enphase"
-    active_config.modbus[plant_index].smartport.module.pv_power = "EnphasePVPower"
-    active_config.modbus[plant_index].smartport.module.testing = True
-
     active_config.home_assistant.enabled = home_assistant_enabled
     active_config.influxdb.enabled = True
 

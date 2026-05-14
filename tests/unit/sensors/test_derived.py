@@ -49,9 +49,7 @@ def mock_config_all():
     cfg.home_assistant.enabled = True
     cfg.sensor_overrides = {}
     cfg.consumption = ConsumptionMethod.CALCULATED
-    mock_dev = MagicMock()
-    mock_dev.smartport.enabled = False
-    cfg.modbus = [mock_dev]
+    cfg.modbus = [MagicMock()]
 
     with _swap_active_config(cfg):
         yield cfg
@@ -188,7 +186,7 @@ class TestPlantConsumedPower:
 
 class TestTotalPVPower:
     @pytest.mark.asyncio
-    async def test_total_pv_power_aggregation_and_notify(self):
+    async def test_total_pv_power_aggregation(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
             class MockPV(Sensor, PVPowerSensor):
@@ -203,15 +201,18 @@ class TestTotalPVPower:
                     return False
 
             s1 = MockPV("PV1", "sigen_pv1")
+            s1._states = [(time.time(), 0.0)]
             sensor = TotalPVPower(0, s1)
             sensor.debug_logging = False
 
             with patch("sigenergy2mqtt.sensors.plant_derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
-                await sensor.notify(AsyncMock(), AsyncMock(), 600.0, "sigen_pv1", MagicMock())
+                s1.latest_raw_state = 600.0
+                sensor.set_source_values(s1)
                 assert sensor.latest_raw_state == 600.0
+                await sensor.publish(AsyncMock(), AsyncMock())
                 mock_pub.assert_called_once()
 
-    def test_total_pv_power_set_source_values_and_fallback(self):
+    def test_total_pv_power_set_source_values(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
             class MockPV(Sensor, PVPowerSensor):
@@ -230,13 +231,6 @@ class TestTotalPVPower:
             sensor.set_source_values(s1)
             assert sensor.latest_raw_state == 500.0
 
-            # Test fallback logic
-            sensor._sources["sigen_pv1"].type = TotalPVPower.SourceType.SMARTPORT
-            sensor._sources["sigen_pv1"].enabled = False
-
-            with patch.object(sensor, "fallback") as mock_fallback:
-                sensor.set_source_values(s1)
-                mock_fallback.assert_called_once_with("sigen_pv1")
 
 
 class TestTotalLifetimePVEnergy:

@@ -45,14 +45,6 @@ usage: python3 -m sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                                  [--scan-interval-medium [SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM]]
                                  [--scan-interval-high [SIGENERGY2MQTT_SCAN_INTERVAL_HIGH]]
                                  [--scan-interval-realtime [SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME]]
-                                 [--smartport-enabled]
-                                 [--smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]]
-                                 [--smartport-host [SIGENERGY2MQTT_SMARTPORT_HOST]]
-                                 [--smartport-username [SIGENERGY2MQTT_SMARTPORT_USERNAME]]
-                                 [--smartport-password [SIGENERGY2MQTT_SMARTPORT_PASSWORD]]
-                                 [--smartport-pv-power [SIGENERGY2MQTT_SMARTPORT_PV_POWER]]
-                                 [--smartport-mqtt-topic [SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC]]
-                                 [--smartport-mqtt-gain [SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN]]
                                  [--pvoutput-enabled]
                                  [--pvoutput-api-key [SIGENERGY2MQTT_PVOUTPUT_API_KEY]]
                                  [--pvoutput-system-id [SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID]]
@@ -291,29 +283,6 @@ options:
                         The scan interval in seconds for Modbus registers that
                         are to be scanned in near-real time. Default is 5
                         (seconds), and the minimum value is 1.
-  --smartport-enabled   Enable interrogation of a third-party device for
-                        production data.
-  --smartport-module-name [SIGENERGY2MQTT_SMARTPORT_MODULE_NAME]
-                        The name of the module which will be used to obtain
-                        third-party device production data.
-  --smartport-host [SIGENERGY2MQTT_SMARTPORT_HOST]
-                        The IP address or hostname of the third-party device.
-  --smartport-username [SIGENERGY2MQTT_SMARTPORT_USERNAME]
-                        The username to authenticate to the third-party
-                        device.
-  --smartport-password [SIGENERGY2MQTT_SMARTPORT_PASSWORD]
-                        The password to authenticate to the third-party
-                        device.
-  --smartport-pv-power [SIGENERGY2MQTT_SMARTPORT_PV_POWER]
-                        The sensor class to hold the production data obtained
-                        from the third-party device.
-  --smartport-mqtt-topic [SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC]
-                        The MQTT topic to which to subscribe to obtain the
-                        production data for the third-party device.
-  --smartport-mqtt-gain [SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN]
-                        The gain to be applied to the production data for the
-                        third-party device obtained from the MQTT topic. (e.g.
-                        1000 if the data is in kW) Default is 1 (Watts).
   --pvoutput-enabled    Enable uploading of data to PVOutput.
   --pvoutput-api-key [SIGENERGY2MQTT_PVOUTPUT_API_KEY]
                         The API Key for PVOutput

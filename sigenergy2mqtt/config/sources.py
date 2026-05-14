@@ -198,25 +198,6 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(modbus, "scan_interval_high", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH)))
         _set(modbus, "scan_interval_realtime", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME)))
 
-        # Smart-port
-        sp: dict[str, Any] = {}
-        _set(sp, "enabled", _bool(g(const.SIGENERGY2MQTT_SMARTPORT_ENABLED)))
-        sp_mod: dict[str, Any] = {}
-        _set(sp_mod, "name", g(const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME))
-        _set(sp_mod, "host", g(const.SIGENERGY2MQTT_SMARTPORT_HOST))
-        _set(sp_mod, "username", g(const.SIGENERGY2MQTT_SMARTPORT_USERNAME))
-        _set(sp_mod, "password", g(const.SIGENERGY2MQTT_SMARTPORT_PASSWORD))
-        _set(sp_mod, "pv_power", g(const.SIGENERGY2MQTT_SMARTPORT_PV_POWER))
-        if sp_mod:
-            sp["module"] = sp_mod
-        sp_mqtt: dict[str, Any] = {}
-        _set(sp_mqtt, "topic", g(const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC))
-        _set(sp_mqtt, "gain", _int(g(const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN)))
-        if sp_mqtt:
-            sp["mqtt"] = [sp_mqtt]
-        if sp:
-            modbus["smartport"] = sp
-
         if modbus:
             result["modbus_env_override"] = modbus
 

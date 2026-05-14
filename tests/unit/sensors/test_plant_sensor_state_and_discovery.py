@@ -211,7 +211,6 @@ def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by
 
     class DerivedFactory(GenericFactory):
         class SourceType:
-            SMARTPORT = "SMARTPORT"
             FAILOVER = "FAILOVER"
             MANDATORY = "MANDATORY"
 

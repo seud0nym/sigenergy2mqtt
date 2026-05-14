@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from sigenergy2mqtt.common import ScanIntervalDefault
 from sigenergy2mqtt.config.models._base import _SUB
-from sigenergy2mqtt.config.models.smart_port import SmartPortConfig
 from sigenergy2mqtt.config.validators import validate_log_level
 
 
@@ -45,7 +44,6 @@ class ModbusConfig(BaseModel):
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     registers: RegisterAccess = Field(default_factory=RegisterAccess, alias="registers")  # type: ignore[reportCallIssue]
     scan_interval: ScanInterval = Field(default_factory=ScanInterval, alias="scan-interval")  # type: ignore[reportCallIssue]
-    smartport: SmartPortConfig = Field(default_factory=SmartPortConfig, alias="smart-port")  # type: ignore[reportCallIssue]
 
     @model_validator(mode="before")
     @classmethod

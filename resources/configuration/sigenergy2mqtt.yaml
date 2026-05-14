@@ -235,7 +235,7 @@ persistence:
 #                 contain the port, inverters, ac-chargers, dc-chargers,
 #                 log-level, read-only, read-write, write-only, no-remote-ems,
 #                 scan-interval-low, scan-interval-medium, scan-interval-high,
-#                 scan-interval-realtime, and smart-port configurations.
+#                 and scan-interval-realtime configurations.
 #                 If you have multiple Sigenergy devices, you may specify
 #                 multiple host/port configurations. You can also automatically
 #                 discover Sigenergy devices on your network, using either the
@@ -348,57 +348,6 @@ modbus:
     #                 are to be scanned in near-real time. Default is 5
     #                 (seconds), and the minimum value is 1.
     scan-interval-realtime: 5
-    smart-port:
-      # enabled
-      #   default: false
-      #   description:  If true, sigenergy2mqtt will interrogate a third-party
-      #                 device for production data.
-      enabled: true
-      module:
-        # name
-        #   default: ""
-        #   description:  The name of the module to be loaded to interrogate a
-        #                 third-party device. At this time, the only valid value
-        #                 is enphase.
-        name: enphase
-        # host
-        #   default: ""
-        #   description:  The host name or IP address for the third-party API.
-        host: envoy.local
-        # port
-        #   default: null
-        #   description:  The port number used by the third-party API.
-        port: 502
-        # username
-        #   default: ""
-        #   description:  The username for authenticating to the third-party API.
-        username: enlighten_login@email.address
-        # password
-        #   default: ""
-        #   description:  The password for authenticating to the third-party API.
-        password: your_enlighten_password
-        # pv-power
-        #   default: ""
-        #   description:  The Python sensor class used to report PV generation
-        #                 through the third-party API. If specified, the Sigenergy
-        #                 Plant PV Power entity will be disabled by default, and
-        #                 a new entity called Total PV Power will be published 
-        #                 that will combine the Sigenergy and third-party 
-        #                 PV generation into a single number.
-        pv-power: EnphasePVPower
-      mqtt:
-          # topic
-          #   default: There is no default
-          #   description:  The MQTT to subscribe to for updates to third-party
-          #                 PV production to be included in the Total PV Power.
-          #                 Multiple topic/gain configurations may be specified.
-        - topic:  null
-          # gain
-          #   default: 1
-          #   description:  The gain to be applied to the PV production published
-          #                 on the topic. For example, if the production is
-          #                 published in kWh, then the gain should be 1000.
-          gain: 1
 # sensor-debug-logging
 #   default: false
 #   description:  When log-level is DEBUG, controls whether individual

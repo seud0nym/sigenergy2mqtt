@@ -30,7 +30,6 @@ def mock_config():
     cfg.home_assistant.use_simplified_topics = False
     cfg.home_assistant.edit_percentage_with_box = False
     cfg.modbus = [MagicMock()]
-    cfg.modbus[0].smartport.enabled = False
     cfg.sensor_overrides = {}
 
     with _swap_active_config(cfg):

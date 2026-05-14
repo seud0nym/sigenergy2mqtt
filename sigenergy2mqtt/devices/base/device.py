@@ -628,12 +628,10 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             is not a ReadableSensorMixin.
         """
         if self._device_type is not None and isinstance(self._device_type, (HybridInverter, PVInverter)) and not isinstance(sensor, self._device_type.__class__):
-            if sensor.debug_logging:
-                logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - not a {self._device_type.__class__.__name__}")
+            logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - not applicable to a {self._device_type.__class__.__name__}")
             return False
         elif sensor.protocol_version > self.protocol_version:
-            if sensor.debug_logging:
-                logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
+            logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
             return False
         else:
             return super()._add_sensor(sensor, group=group, search_children=search_children)

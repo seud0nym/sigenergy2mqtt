@@ -47,7 +47,6 @@ Example:
 Sigenergy Plant
    ├─ Sigenergy Plant Grid Code
    ├─ Sigenergy Plant Grid Sensor
-   ├─ Sigenergy Plant Smart-Port
    ├─ Sigenergy Plant Statistics
    ├─ Sigenergy AC Charger
    ├─ SigenStor CMUxxxxxxxxxx Energy Controller (ID 1)

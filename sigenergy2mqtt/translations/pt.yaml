@@ -450,39 +450,6 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Energia de Descarga CC VE Total
-  EnphaseCurrent:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Corrente
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Produção Diária
-    name_reset: Definir Produção Diária
-  EnphaseFrequency:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Frequência
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Produção Total
-  EnphasePVPower:
-    attributes:
-      source: API Enphase Envoy
-    name: Potência PV
-  EnphasePowerFactor:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Fator de Potência
-  EnphaseReactivePower:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Potência Reativa
-  EnphaseVoltage:
-    attributes:
-      source: API Enphase Envoy ao derivar EnphasePVPower
-    name: Tensão
   GeneralAlarm1:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -1644,8 +1611,6 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Consumo total de carga inteligente {smart_load_index}
-  SmartPort:
-    name: Smart-Port Central Sigenergy {plant_suffix}
   Started:
     name: Iniciado
   StartupTime:
@@ -1923,22 +1888,6 @@ cli:
     help: 'Intervalo de varredura para registros de frequência média. Padrão: 60.'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'Intervalo de varredura para registros em tempo real. Padrão: 5.'
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: Ativar interrogação de dispositivo de terceiros.
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: Endereço IP ou nome do host do dispositivo de terceiros.
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: Nome do módulo para dados de produção de terceiros.
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: 'Ganho para dados de produção (ex: 1000 para kW). Padrão: 1 (Watts).'
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: Tópico MQTT para dados de produção de terceiros.
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: Senha para autenticação no dispositivo de terceiros.
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: Classe de sensor para dados de produção de terceiros.
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: Nome de usuário para autenticação no dispositivo de terceiros.
   clean:
     help: Publicar discovery vazia para remover dispositivos, depois sair.
   discovery_only:

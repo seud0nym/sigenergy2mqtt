@@ -56,7 +56,6 @@ from .mixins import (  # noqa: F401
     ObservableMixin,
     PVPowerSensor,
     ReadableSensorMixin,
-    SubstituteMixin,
     WritableSensorMixin,
 )
 

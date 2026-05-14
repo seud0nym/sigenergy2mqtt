@@ -450,39 +450,6 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: DC EV 누적 방전 에너지
-  EnphaseCurrent:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 전류
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 일일 생산량
-    name_reset: 일일 생산량 설정
-  EnphaseFrequency:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 주파수
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 누적 생산량
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV 전력
-  EnphasePowerFactor:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 역률
-  EnphaseReactivePower:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 무효 전력
-  EnphaseVoltage:
-    attributes:
-      source: EnphasePVPower 파생 시 Enphase Envoy API
-    name: 전압
   GeneralAlarm1:
     alarm:
       '0': 소프트웨어 버전 불일치
@@ -1644,8 +1611,6 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 스마트 부하 {smart_load_index} 총 소비량
-  SmartPort:
-    name: Sigenergy 발전소 스마트포트 {plant_suffix}
   Started:
     name: 시작됨
   StartupTime:
@@ -1923,22 +1888,6 @@ cli:
     help: '중빈도 레지스터 스캔 간격. 기본값: 60.'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: '실시간 레지스터 스캔 간격. 기본값: 5.'
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: 타사 장치 쿼리 활성화.
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: 타사 장치 IP 주소 또는 호스트명.
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: 타사 생산 데이터용 모듈 이름.
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: '생산 데이터 게인 (예: kW의 경우 1000). 기본값: 1(와트).'
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: 타사 생산 데이터용 MQTT 토픽.
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: 타사 장치 인증 비밀번호.
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: 타사 생산 데이터용 센서 클래스.
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: 타사 장치 인증 사용자명.
   clean:
     help: 빈 discovery 게시하여 기존 장치 삭제 후 종료.
   discovery_only:

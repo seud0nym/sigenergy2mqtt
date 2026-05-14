@@ -32,8 +32,6 @@ def mock_config():
     cfg.home_assistant.use_simplified_topics = False
     cfg.home_assistant.edit_percentage_with_box = False
     cfg.modbus = [MagicMock()]
-    cfg.modbus[0].smartport.enabled = False
-    cfg.modbus[0].smartport.mqtt = []
     cfg.sensor_overrides = {}
     cfg.consumption = ConsumptionMethod.CALCULATED
 
@@ -312,106 +310,22 @@ class TestPlantConsumedPowerCoverage:
 
 class TestTotalPVPowerCoverage:
     def test_value_repr(self):
-        val = TotalPVPower.Value(gain=1.0, type=TotalPVPower.SourceType.MANDATORY, state=100.0)
-        assert "100.0 (m/enabled)" in repr(val)
+        val = TotalPVPower.Value(gain=1.0, state=100.0)
+        assert "state=100.0" in repr(val)
 
-    def test_failover_and_fallback(self):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            s1 = MagicMock(spec=PVPowerSensor)
-            s1.unique_id = "s1"
-            s1.gain = 1.0
-            sensor = TotalPVPower(0, s1)
-
-            # Add a failover source
-            s2_id = "s2"
-            sensor._sources[s2_id] = TotalPVPower.Value(gain=1.0, type=TotalPVPower.SourceType.FAILOVER, enabled=False)
-
-            # Trigger failover
-            assert sensor.failover(s1) is True
-            # Try again (already enabled)
-            assert sensor.failover(s1) is True
-
-            assert sensor._sources[s2_id].enabled is True
-            assert sensor._sources["s1"].enabled is False
-
-            # Trigger fallback
-            sensor._sources[s1.unique_id].state = 50.0
-            sensor.fallback(s1.unique_id)
-            assert sensor._sources[s1.unique_id].enabled is True
-            assert sensor._sources[s2_id].enabled is False
-
-    def test_get_attributes_smartport(self, mock_config):
-        mock_config.modbus[0].smartport.enabled = True
-        sensor = TotalPVPower(0)
-        assert "Smart-Port" in str(sensor.get_attributes()["source"])
-
-        mock_config.modbus[0].smartport.enabled = False
-        sensor2 = TotalPVPower(0)
-        assert "Third-Party" in str(sensor2.get_attributes()["source"])
-
-    @pytest.mark.asyncio
-    async def test_notify_edge_cases(self, caplog):
-        caplog.set_level(logging.DEBUG)
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TotalPVPower(0)
-            sensor.debug_logging = True
-            sensor.configure_mqtt_topics("test_device")
-            # Unregistered topic
-            assert await sensor.notify(None, MagicMock(), 100, "unknown", MagicMock()) is False
-            assert "topic is not registered" in caplog.text
-
-            # Valid topic, disabled -> trigger fallback
-            sensor._sources["t1"] = TotalPVPower.Value(1.0, TotalPVPower.SourceType.SMARTPORT, enabled=False)
-            await sensor.notify(None, MagicMock(), 100, "t1", MagicMock())
-            assert sensor._sources["t1"].enabled is True
-            assert "Updated from (enabled) topic t1" in caplog.text
-
-    def test_observable_topics_smartport(self, mock_config, caplog):
-        caplog.set_level(logging.DEBUG)
-        mock_config.modbus[0].smartport.enabled = True
-
-        # Valid topic
-        topic_mock = MagicMock()
-        topic_mock.topic = "smart_topic"
-        topic_mock.gain = 1.0
-
-        # Empty topic
-        topic_empty = MagicMock()
-        topic_empty.topic = ""
-
-        mock_config.modbus[0].smartport.mqtt = [topic_mock, topic_empty]
-
-        sensor = TotalPVPower(0)
-        sensor.debug_logging = True
-        sensor.register_mqtt_sources()
-        topics = sensor.observable_topics()
-        assert "smart_topic" in topics
-        assert "Added Smart-Port MQTT topic smart_topic" in caplog.text
-        assert "Empty Smart-Port MQTT topic ignored" in caplog.text
 
     @pytest.mark.asyncio
     async def test_publish_skipped(self):
         sensor = TotalPVPower(0)
         sensor.debug_logging = True
         sensor.configure_mqtt_topics("test_device")
-        sensor._sources["t1"] = TotalPVPower.Value(1.0, TotalPVPower.SourceType.MANDATORY, enabled=True, state=None)
+        sensor._sources["t1"] = TotalPVPower.Value(gain=1.0, state=None)
         assert await sensor.publish(MagicMock(), None) is False
 
         sensor._sources["t1"].state = 100.0
         with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
             assert await sensor.publish(MagicMock(), None) is True
 
-    def test_register_source(self):
-        sensor = TotalPVPower(0)
-        sensor.debug_logging = True
-        s1 = MagicMock(spec=PVPowerSensor)
-        s1.unique_id = "s1"
-        s1.gain = 1.0
-        with patch("logging.debug") as mock_log:
-            sensor.register_source_sensors(s1, type=TotalPVPower.SourceType.MANDATORY)
-            # Check for "Added sensor s1"
-            any_added = any("Added sensor s1" in call.args[0] for call in mock_log.call_args_list)
-            assert any_added
 
     def test_set_source_values_ignored(self, caplog):
         sensor = TotalPVPower(0)
@@ -438,49 +352,7 @@ class TestTotalPVPowerCoverage:
         sensor.debug_logging = True
         sensor.set_source_values(s1)
 
-        assert "Updated from enabled source 's1'" in caplog.text
-
-    @pytest.mark.asyncio
-    async def test_silent_failover_timeout(self, mock_config):
-        mock_config.modbus[0].scan_interval.realtime = 1
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            # Setup source sensors
-            s1 = MagicMock(spec=PVPowerSensor)
-            s1.unique_id = "s1"
-            s1.gain = 1.0
-            s1.latest_raw_state = 1000.0
-
-            # Initialize TotalPVPower with s1 as primary (SMARTPORT intent)
-            sensor = TotalPVPower(0)
-            sensor.configure_mqtt_topics("test_device")
-
-            # Manually register s1 as SMARTPORT source
-            sensor.register_source_sensors(s1, type=TotalPVPower.SourceType.SMARTPORT, enabled=True)
-
-            # Add a FAILOVER source
-            s2 = MagicMock(spec=PVPowerSensor)
-            s2.unique_id = "s2"
-            s2.gain = 1.0
-            s2.latest_raw_state = 500.0
-            sensor.register_source_sensors(s2, type=TotalPVPower.SourceType.FAILOVER, enabled=False)
-
-            # Initial update works
-            start_time = 1000.0
-            with patch("time.time", return_value=start_time):
-                sensor.set_source_values(s1)
-
-            assert sensor.latest_raw_state == 1000.0
-            assert sensor._sources["s1"].enabled is True
-            assert sensor._sources["s2"].enabled is False
-
-            # Now s1 goes silent. Time passes beyond timeout (1s * 5 = 5s)
-            # We simulate checking at start_time + 6s
-            with patch("time.time", return_value=start_time + 6.0):
-                await sensor.publish(MagicMock(), None)
-
-            # Check source statuses - FAILOVER should be enabled, S1 disabled
-            assert not sensor._sources["s1"].enabled, "S1 should be disabled after timeout"
-            assert sensor._sources["s2"].enabled, "S2 should be enabled after timeout"
+        assert "Updated from source 's1'" in caplog.text
 
 
 class TestTotalLifetimePVEnergyCoverage:

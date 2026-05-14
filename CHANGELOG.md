@@ -29,6 +29,10 @@
 - Fixed various type errors and test failures related to `latest_raw_state` assignments and `set_source_values` refactoring
 - Improved consistency of warning messages in logs
 
+### Removed
+
+- BREAKING CHANGE: Removed sensors which are sourced by direct access to third-party PV generation devices (e.g. Enphase) and related "smart-port" configuration in config files, environment variables and command line options
+
 ---
 
 ## [2026.4.16] - 2026-04-16

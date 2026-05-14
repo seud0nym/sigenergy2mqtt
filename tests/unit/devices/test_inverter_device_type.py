@@ -43,7 +43,6 @@ def mock_config():
     cfg.modbus[0].scan_interval.low = 600
     cfg.modbus[0].scan_interval.medium = 60
     cfg.modbus[0].registers = None
-    cfg.modbus[0].smartport.enabled = False
     cfg.sensor_overrides = {}
 
     with _swap_active_config(cfg):

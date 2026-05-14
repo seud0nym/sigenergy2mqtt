@@ -9,7 +9,6 @@ from sigenergy2mqtt.main.main import (
     _validate_modbus_connections,
     _validate_mqtt_connection,
     _validate_pvoutput_connection,
-    _validate_smartport_connections,
     validate_connections,
 )
 
@@ -69,66 +68,6 @@ async def test_validate_modbus_connections_failure(mock_config_main):
         mock_client.connected = False
         with pytest.raises(ConnectionError, match="Unable to connect"):
             await _validate_modbus_connections()
-
-
-def test_validate_smartport_connections_disabled(mock_config_main):
-    mock_modbus = MagicMock()
-    mock_modbus.smartport.enabled = False
-    mock_config_main._config._settings.modbus = [mock_modbus]
-    _validate_smartport_connections(False)
-
-
-def test_validate_smartport_connections_non_enphase(mock_config_main):
-    # Line 577
-    mock_modbus = MagicMock()
-    mock_modbus.smartport.enabled = True
-    mock_modbus.smartport.module.name = "other"
-    mock_config_main._config._settings.modbus = [mock_modbus]
-    _validate_smartport_connections(False)
-
-
-def test_validate_smartport_connections_no_sensors(mock_config_main):
-    # Line 591
-    mock_modbus = MagicMock()
-    mock_modbus.smartport.enabled = True
-    mock_modbus.smartport.module.name = "enphase"
-    mock_config_main._config._settings.modbus = [mock_modbus]
-
-    with patch("sigenergy2mqtt.devices.smartport.enphase.SmartPort") as mock_sp_class:
-        mock_device = mock_sp_class.return_value
-        mock_device.get_all_sensors.return_value = {}  # No sensors
-        with pytest.raises(RuntimeError, match="Unable to locate EnphasePVPower"):
-            _validate_smartport_connections(False)
-
-
-def test_validate_smartport_connections_success(mock_config_main):
-    mock_modbus = MagicMock()
-    mock_modbus.smartport.enabled = True
-    mock_modbus.smartport.module.name = "enphase"
-    mock_modbus.smartport.module.host = "envoy.local"
-    mock_config_main._config._settings.modbus = [mock_modbus]
-
-    with patch("sigenergy2mqtt.devices.smartport.enphase.SmartPort") as mock_sp_class:
-        mock_device = mock_sp_class.return_value
-        mock_sensor = MagicMock()
-        mock_sensor.scan_interval = 10
-        mock_sensor.get_token.return_value = "token"
-
-        from sigenergy2mqtt.devices.smartport.enphase import EnphasePVPower
-
-        mock_sensor.__class__ = EnphasePVPower
-        mock_device.get_all_sensors.return_value = {"s": mock_sensor}
-
-        with patch("requests.get") as mock_get:
-            mock_res_ok = MagicMock()
-            mock_res_ok.status_code = 200
-            mock_res_401 = MagicMock()
-            mock_res_401.status_code = 401
-            # Each _validate_smartport_connections call below uses up to 2 responses
-            mock_get.side_effect = [mock_res_401, mock_res_ok, mock_res_401, mock_res_ok]
-
-            _validate_smartport_connections(True)  # show_credentials=True Line 584
-            _validate_smartport_connections(False)  # show_credentials=False Line 586
 
 
 def test_validate_mqtt_connection_success(mock_config_main):
@@ -209,13 +148,11 @@ def test_validate_pvoutput_connection_testing(mock_config_main):
 @pytest.mark.asyncio
 async def test_validate_connections_all(mock_config_main):
     with patch("sigenergy2mqtt.main.main._validate_modbus_connections") as m1:
-        with patch("sigenergy2mqtt.main.main._validate_smartport_connections") as m2:
-            with patch("sigenergy2mqtt.main.main._validate_mqtt_connection") as m3:
-                with patch("sigenergy2mqtt.main.main._validate_influxdb_connection") as m4:
-                    with patch("sigenergy2mqtt.main.main._validate_pvoutput_connection") as m5:
-                        await validate_connections(True)
-                        m1.assert_called()
-                        m2.assert_called()
-                        m3.assert_called()
-                        m4.assert_called()
-                        m5.assert_called()
+        with patch("sigenergy2mqtt.main.main._validate_mqtt_connection") as m3:
+            with patch("sigenergy2mqtt.main.main._validate_influxdb_connection") as m4:
+                with patch("sigenergy2mqtt.main.main._validate_pvoutput_connection") as m5:
+                    await validate_connections(True)
+                    m1.assert_called()
+                    m3.assert_called()
+                    m4.assert_called()
+                    m5.assert_called()

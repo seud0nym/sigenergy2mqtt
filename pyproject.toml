@@ -44,6 +44,7 @@ scripts.cov = "pytest -n auto --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 path = "sigenergy2mqtt/config/version.py"
 
 [tool.pyrefly]
+ignore = ["missing-import"]
 project-excludes = [".git", ".venv", "tests"]
 
 [tool.pyright]

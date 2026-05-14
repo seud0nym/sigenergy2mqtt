@@ -688,54 +688,6 @@ async def _validate_modbus_connections() -> None:
             client.close()
 
 
-def _validate_smartport_connections(show_credentials: bool) -> None:
-    """Validate supported Smart-Port module access/authentication settings.
-
-    Currently validates Enphase modules by initialising the Smart-Port device,
-    obtaining an Enphase token with configured credentials, and reading the
-    Envoy meter endpoint to confirm authenticated access. No write endpoints
-    are called.
-
-    Args:
-        show_credentials: When ``True``, include raw configured credentials in
-            log output for troubleshooting.
-    """
-    from sigenergy2mqtt.devices.smartport.enphase import EnphasePVPower, SmartPort
-
-    for plant_index, modbus in enumerate(active_config.modbus):
-        smartport = modbus.smartport
-        if not smartport.enabled:
-            continue
-        if smartport.module.name.lower() != "enphase":
-            continue
-
-        host = smartport.module.host
-        username = smartport.module.username
-        password = smartport.module.password
-
-        if show_credentials:
-            logging.info(f"Validating Smart-Port Enphase access for plant #{plant_index}: host={host!r} username={username!r} password={password!r}")
-        else:
-            logging.info(f"Validating Smart-Port Enphase access for plant #{plant_index}: host={host!r} username={username!r} password='[REDACTED]'")
-
-        device = SmartPort(plant_index, smartport.module)
-        pv_sensors = [s for s in device.get_all_sensors().values() if isinstance(s, EnphasePVPower)]
-        if not pv_sensors:
-            raise RuntimeError(f"Unable to locate EnphasePVPower sensor for plant #{plant_index}")
-
-        sensor = pv_sensors[0]
-        token = sensor.get_token()
-
-        url = f"https://{host}/ivp/meters/readings"
-        response = requests.get(url, timeout=sensor.scan_interval, verify=False, headers={"Authorization": f"Bearer {token}"})
-        if response.status_code == 401:
-            token = sensor.get_token(reauthenticate=True)
-            response = requests.get(url, timeout=sensor.scan_interval, verify=False, headers={"Authorization": f"Bearer {token}"})
-
-        response.raise_for_status()
-        logging.info(f"Validated Smart-Port Enphase access/authentication for plant #{plant_index} ({url})")
-
-
 def _validate_mqtt_connection(show_credentials: bool) -> None:
     """Validate MQTT broker reachability and authentication only.
 
@@ -876,7 +828,6 @@ async def validate_connections(show_credentials: bool = False) -> None:
             credentials where applicable.
     """
     await _validate_modbus_connections()
-    _validate_smartport_connections(show_credentials)
     _validate_mqtt_connection(show_credentials)
     _validate_influxdb_connection(show_credentials)
     _validate_pvoutput_connection(show_credentials)

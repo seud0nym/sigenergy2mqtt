@@ -450,39 +450,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Lifetime DC EV Discharge Energy
-  EnphaseCurrent:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Current
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Daily Production
-    name_reset: Set Daily Production
-  EnphaseFrequency:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Frequency
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Lifetime Production
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API # verify:ignore
-    name: PV Power
-  EnphasePowerFactor:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Power Factor
-  EnphaseReactivePower:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Reactive Power
-  EnphaseVoltage:
-    attributes:
-      source: Enphase Envoy API when EnphasePVPower derived
-    name: Voltage
   GeneralAlarm1:
     alarm:
       '0': Software version mismatch
@@ -1644,8 +1611,6 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Smart Load {smart_load_index} Total Consumption
-  SmartPort:
-    name: Sigenergy Plant Smart-Port {plant_suffix}
   Started:
     name: Started
   StartupTime:
@@ -1923,22 +1888,6 @@ cli:
     help: The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: Enable interrogation of a third-party device for production data.
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: The IP address or hostname of the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: The name of the module which will be used to obtain third-party device production data.
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. 1000 if the data is in kW) Default is 1 (Watts).
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: The MQTT topic to which to subscribe to obtain the production data for the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: The password to authenticate to the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: The sensor class to hold the production data obtained from the third-party device.
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: The username to authenticate to the third-party device.
   clean:
     help: Publish empty discovery to delete existing devices, then exits immediately.
   discovery_only:

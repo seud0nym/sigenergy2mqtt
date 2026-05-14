@@ -78,7 +78,7 @@ CLASSES_WITH_TYPE_ARG: frozenset[str] = frozenset({"ModbusDevice", "Inverter", "
 
 #: Classes whose ``name`` field should be automatically suffixed with dynamic
 #: placeholders (plant_index, etc.) if they were passed to ``super().__init__``.
-DEVICE_BASE_CLASSES: frozenset[str] = CLASSES_WITH_TYPE_ARG | {"Device", "SmartPort"}
+DEVICE_BASE_CLASSES: frozenset[str] = CLASSES_WITH_TYPE_ARG | {"Device"}
 
 #: Classes that should NEVER have automatic suffixes appended because they are
 #: already uniquely identified by their hardware IDs.

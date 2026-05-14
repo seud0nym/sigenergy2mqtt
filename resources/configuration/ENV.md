@@ -148,20 +148,3 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS` | InfluxDB maximum sync workers (default: `4`) [<sup>(More…)</sup>](README.md#opt_influxdb_max_sync_workers) | 2026.2.5 |
 
 
-## Third Party PV Production Configuration Variables
-
-**NOTE**: _This feature is under consideration for removal in a future release. Have your say in the [discussion](https://github.com/seud0nym/sigenergy2mqtt/discussions/124)._
-
-This feature allows you to report PV generation from a third-party device, either directly from Enphase micro-inverters, or via MQTT for other inverters. This may be useful if you find there are delays in updating third-party PV generation through the Sigenergy Modbus registers.
-
-| Name | Description | Since |
-|------|-------------|-------|
-| `SIGENERGY2MQTT_SMARTPORT_ENABLED` | Set to `true` to enable interrogation of a third-party device for production data. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_enabled) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_MODULE_NAME` | The name of the module which will be used to obtain third-party device production data. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_module_name) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_HOST` | The IP address or hostname of the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_host) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_USERNAME` | The username to authenticate to the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_username) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_PASSWORD` | The password to authenticate to the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_password) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_PV_POWER` | The sensor class to hold the production data obtained from the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_pv_power) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC` | The MQTT topic to which to subscribe to obtain the production data for the third-party device. [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_mqtt_topic) | 2025.5.12 |
-| `SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN` | The gain to be applied to the production data for the third-party device obtained from the MQTT topic. (e.g. `1000` if the data is in kW) Default is `1` (Watts). [<sup>(More…)</sup>](README.md#opt_modbus_smart_port_mqtt_gain) | 2025.5.12 |
-

@@ -450,39 +450,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: DC EV累計放電電力量
-  EnphaseCurrent:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 電流
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 日次発電量
-    name_reset: 日次発電量を設定
-  EnphaseFrequency:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 周波数
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 累計発電量
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV電力
-  EnphasePowerFactor:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 力率
-  EnphaseReactivePower:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 無効電力
-  EnphaseVoltage:
-    attributes:
-      source: EnphasePVPower導出時のEnphase Envoy API
-    name: 電圧
   GeneralAlarm1:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -1644,8 +1611,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: スマートロード {smart_load_index} 合計消費量
-  SmartPort:
-    name: Sigenergyシステム スマートポート {plant_suffix}
   Started:
     name: 起動済み
   StartupTime:
@@ -1923,22 +1888,6 @@ cli:
     help: '中頻度レジスタのスキャン間隔。デフォルト: 60。'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'リアルタイムレジスタのスキャン間隔。デフォルト: 5。'
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: サードパーティ機器のクエリを有効にする。
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: サードパーティ機器のIPアドレスまたはホスト名。
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: サードパーティ製造データ用モジュール名。
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: '製造データのゲイン（例: kWの場合1000）。デフォルト: 1（ワット）。'
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: サードパーティ製造データ用MQTTトピック。
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: サードパーティ機器の認証パスワード。
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: サードパーティ製造データ用センサークラス。
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: サードパーティ機器の認証ユーザー名。
   clean:
     help: 空のdiscoveryを公開して既存機器を削除し、終了。
   discovery_only:

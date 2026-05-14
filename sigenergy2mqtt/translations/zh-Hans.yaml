@@ -450,39 +450,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 直流电动汽车累计放电电量
-  EnphaseCurrent:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 电流
-  EnphaseDailyPVEnergy:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 日发电量
-    name_reset: 设置 日发电量
-  EnphaseFrequency:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 频率
-  EnphaseLifetimePVEnergy:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 累计发电量
-  EnphasePVPower:
-    attributes:
-      source: Enphase Envoy API
-    name: PV功率
-  EnphasePowerFactor:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 功率因数
-  EnphaseReactivePower:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 无功功率
-  EnphaseVoltage:
-    attributes:
-      source: 派生EnphasePVPower时的Enphase Envoy API
-    name: 电压
   GeneralAlarm1:
     alarm:
       '0': 软件版本不匹配
@@ -1644,8 +1611,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 智能负载 {smart_load_index} 总消耗
-  SmartPort:
-    name: Sigenergy电站 智能端口 {plant_suffix}
   Started:
     name: 已启动
   StartupTime:
@@ -1923,22 +1888,6 @@ cli:
     help: 中频寄存器扫描间隔。默认：60。
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 实时寄存器扫描间隔。默认：5。
-  SIGENERGY2MQTT_SMARTPORT_ENABLED:
-    help: 启用第三方设备查询。
-  SIGENERGY2MQTT_SMARTPORT_HOST:
-    help: 第三方设备IP地址或主机名。
-  SIGENERGY2MQTT_SMARTPORT_MODULE_NAME:
-    help: 第三方生产数据模块名称。
-  SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN:
-    help: 生产数据增益（如kW为1000）。默认：1（瓦特）。
-  SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC:
-    help: 第三方生产数据MQTT主题。
-  SIGENERGY2MQTT_SMARTPORT_PASSWORD:
-    help: 第三方设备认证密码。
-  SIGENERGY2MQTT_SMARTPORT_PV_POWER:
-    help: 第三方生产数据传感器类。
-  SIGENERGY2MQTT_SMARTPORT_USERNAME:
-    help: 第三方设备认证用户名。
   clean:
     help: 发布空discovery删除现有设备后退出。
   discovery_only:

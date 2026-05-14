@@ -118,23 +118,6 @@ def yaml_to_env(yaml_data):
         set_env(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH, m.get("scan-interval-high"))
         set_env(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME, m.get("scan-interval-realtime"))
 
-        # Smart-port
-        sp = m.get("smart-port", {})
-        if sp:
-            set_env(const.SIGENERGY2MQTT_SMARTPORT_ENABLED, sp.get("enabled"))
-            mod = sp.get("module", {})
-            if mod:
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_MODULE_NAME, mod.get("name"))
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_HOST, mod.get("host"))
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_USERNAME, mod.get("username"))
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_PASSWORD, mod.get("password"))
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_PV_POWER, mod.get("pv-power"))
-
-            sp_mqtt_list = sp.get("mqtt", [])
-            if sp_mqtt_list and isinstance(sp_mqtt_list, list):
-                sm = sp_mqtt_list[0]
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_MQTT_TOPIC, sm.get("topic"))
-                set_env(const.SIGENERGY2MQTT_SMARTPORT_MQTT_GAIN, sm.get("gain"))
 
     # PVOutput
     pvo = yaml_data.get("pvoutput", {})

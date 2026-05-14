@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from sigenergy2mqtt.common.consumption_source import ConsumptionSource
 from sigenergy2mqtt.common.tariff_type import TariffType
 from sigenergy2mqtt.common.voltage_source import VoltageSource
-from sigenergy2mqtt.config.models import HomeAssistantConfig, ModbusConfig, MqttConfig, PvOutputConfig, SmartPortConfig, SmartPortModule, SmartPortMqttEntry
+from sigenergy2mqtt.config.models import HomeAssistantConfig, ModbusConfig, MqttConfig, PvOutputConfig
 
 
 class TestHomeAssistantConfig:
@@ -219,51 +219,6 @@ class TestPvOutputConfig:
         assert tariff.periods[0].start == time(8, 0)
         assert tariff.periods[0].end == time(20, 0)
         assert tariff.periods[0].days == ["Mon", "Tue"]
-
-
-class TestSmartPortConfig:
-    def test_default_values(self):
-        config = SmartPortConfig()
-        assert config.enabled is False
-        assert isinstance(config.module, SmartPortModule)
-        assert config.mqtt == []
-
-    def test_module(self):
-        config = SmartPortConfig(
-            enabled=True,
-            module=SmartPortModule(
-                name="enphase",
-                host="1.2.3.4",
-                port=80,
-                username="admin",
-                password="password",
-                pv_power="envoy/production/inverters",
-            ),
-        )
-        assert config.enabled is True
-        assert config.module.name == "enphase"
-        assert config.module.host == "1.2.3.4"
-        assert config.module.port == 80
-        assert config.module.username == "admin"
-        assert config.module.password == "password"
-        assert config.module.pv_power == "envoy/production/inverters"
-
-    def test_mqtt_topics(self):
-        config = SmartPortConfig(
-            enabled=True,
-            module=SmartPortModule(name="enphase"),
-            mqtt=[
-                SmartPortMqttEntry(topic="topic/1", gain=1),
-                SmartPortMqttEntry(topic="topic/2", gain=10),
-            ],
-        )
-        assert len(config.mqtt) == 2
-        assert config.mqtt[0].topic == "topic/1"
-        assert config.mqtt[1].topic == "topic/2"
-
-    def test_invalid_enabled_combination(self):
-        with pytest.raises(ValidationError, match="no module name or MQTT topics configured"):
-            SmartPortConfig(enabled=True)
 
 
 class TestModbusConfig:

@@ -1,10 +1,6 @@
 import asyncio
-import importlib
-import logging
-import pkgutil
 from typing import cast
 
-import sigenergy2mqtt.devices.smartport as smartport_pkg
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
@@ -19,8 +15,6 @@ from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .statistics import PlantStatistics
-
-_VALID_SMARTPORT_MODULES = frozenset(mod.name for mod in pkgutil.iter_modules(smartport_pkg.__path__))
 
 
 class PowerPlant(ModbusDevice):
@@ -44,11 +38,7 @@ class PowerPlant(ModbusDevice):
         )
         self._consumption_source = ConsumptionMethod.CALCULATED if self.protocol_version < Protocol.V2_8 else active_config.consumption
         self._consumption_group = "Consumption" if self._consumption_source == ConsumptionMethod.CALCULATED else None  # No need to group sensors for scanning if not calculating consumption
-        self._plant_pv_power = ro.PlantPVPower(plant_index)
-        self._plant_3rd_party_pv_power = ro.ThirdPartyPVPower(plant_index) if protocol_version >= Protocol.V2_7 else None
-        self._total_pv_power = derived.TotalPVPower(plant_index, self._plant_pv_power)
         self._grid_sensor = None
-        self._smartport = None
 
     @classmethod
     async def create(cls, plant_index: int, device_type: DeviceType, firmware: str, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
@@ -69,22 +59,6 @@ class PowerPlant(ModbusDevice):
 
         if self._device_type.has_grid_code_interface and self.protocol_version >= Protocol.V2_8:
             self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
-
-        if active_config.modbus[self.plant_index].smartport.enabled:
-            smartport_config = active_config.modbus[self.plant_index].smartport
-            if smartport_config.module.name:
-                module_config = smartport_config.module
-                if module_config.name not in _VALID_SMARTPORT_MODULES:
-                    logging.error(f"{self.log_identity} Unknown SmartPort module '{module_config.name}' - ignoring")
-                else:
-                    module = importlib.import_module(f"sigenergy2mqtt.devices.smartport.{module_config.name}")
-                    try:
-                        SmartPort = getattr(module, "SmartPort")
-                        self._smartport = SmartPort(self.plant_index, module_config)
-                        self._smartport.via_device = self.unique_id
-                        self._add_child_device(self._smartport)
-                    except Exception:
-                        logging.exception(f"{self.log_identity} Failed to create SmartPort instance")
 
     async def _register_sensors(self, firmware: str, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
@@ -118,9 +92,10 @@ class PowerPlant(ModbusDevice):
         if len(active_config.modbus[self.plant_index].dc_chargers) > 0:
             self._add_sensor(ro.GeneralAlarm5(self.plant_index))
 
+        plant_pv_power = ro.PlantPVPower(self.plant_index)
         self._add_sensor(ro.PlantActivePower(self.plant_index), "Plant Power")
         self._add_sensor(ro.PlantReactivePower(self.plant_index), "Plant Power")
-        self._add_sensor(self._plant_pv_power, group=self._consumption_group)
+        self._add_sensor(plant_pv_power, group=self._consumption_group)
 
         self._add_sensor(ro.AvailableMaxActivePower(self.plant_index))
         self._add_sensor(ro.AvailableMinActivePower(self.plant_index))
@@ -219,28 +194,13 @@ class PowerPlant(ModbusDevice):
         self._add_sensor(ro.CurrentControlCommandValue(self.plant_index))
         self._add_sensor(ro.PlantAlarms(self.plant_index, ro.Alarm6(self.plant_index), ro.Alarm7(self.plant_index)))
 
-        self._add_sensor(self._total_pv_power, search_children=False)
-        if self._smartport:
-            smartport_pv_power = active_config.modbus[self.plant_index].smartport.module.pv_power
-            if smartport_pv_power and not smartport_pv_power.isspace():
-                for sensor in self._smartport.sensors.values():
-                    if sensor.__class__.__name__ == smartport_pv_power:
-                        self._total_pv_power.register_source_sensors(sensor, type=derived.TotalPVPower.SourceType.SMARTPORT, enabled=True)
-                        self._add_sensor(self._total_pv_power, search_children=True)
-                        break
-            if self._plant_3rd_party_pv_power:
-                self._add_sensor(self._plant_3rd_party_pv_power)
-                self._add_sensor(self._total_pv_power, search_children=False)
-                self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.FAILOVER, enabled=False)
-            else:
-                logging.warning(f"{self.log_identity} Unable to register ThirdPartyPVPower sensor for SmartPort failover - protocol version {self.protocol_version} does not support it")
+        plant_3rd_party_pv_power = ro.ThirdPartyPVPower(self.plant_index) if self.protocol_version >= Protocol.V2_7 else None
+        if plant_3rd_party_pv_power is None:
+            total_pv_power = derived.TotalPVPower(self.plant_index, plant_pv_power)
         else:
-            if self._plant_3rd_party_pv_power:
-                self._add_sensor(self._plant_3rd_party_pv_power, group=self._consumption_group)
-                self._add_sensor(self._total_pv_power, search_children=False)
-                self._total_pv_power.register_source_sensors(self._plant_3rd_party_pv_power, type=derived.TotalPVPower.SourceType.MANDATORY, enabled=True)
-            else:
-                logging.warning(f"{self.log_identity} Unable to register ThirdPartyPVPower sensor as TotalPVPower source - protocol version {self.protocol_version} does not support it")
+            self._add_sensor(plant_3rd_party_pv_power, group=self._consumption_group)
+            total_pv_power = derived.TotalPVPower(self.plant_index, plant_pv_power, plant_3rd_party_pv_power)
+        self._add_sensor(total_pv_power, search_children=False)
 
         plant_consumed_power = derived.PlantConsumedPower(self.plant_index, method=self._consumption_source)
         match plant_consumed_power.method:

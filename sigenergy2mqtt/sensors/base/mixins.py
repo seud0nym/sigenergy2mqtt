@@ -263,31 +263,6 @@ class ObservableMixin(abc.ABC):
         return set()
 
 
-class SubstituteMixin(abc.ABC):
-    """Mixin for sensors that can substitute for failed sensors."""
-
-    @abc.abstractmethod
-    def fallback(self, source: str):
-        """Handle fallback to this sensor from failed source.
-
-        Args:
-            source: Identifier of failed source sensor
-        """
-        pass
-
-    @abc.abstractmethod
-    def failover(self, smartport_sensor: Sensor) -> bool:
-        """Handle failover from another sensor.
-
-        Args:
-            smartport_sensor: The sensor to fail over from
-
-        Returns:
-            True if failover was successful
-        """
-        pass
-
-
 """Continuation of base sensor classes (Part 3).
 
 This file contains writable sensors, alarm sensors, and accumulation sensors.

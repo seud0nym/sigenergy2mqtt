@@ -241,46 +241,6 @@ properties:
             medium: {type: integer}
             high: {type: integer}
             realtime: {type: integer}
-        smart-port:
-          type: object
-          additionalProperties: false
-          properties:
-            enabled:
-              type: boolean
-              default: false
-            module:
-              type: object
-              additionalProperties: false
-              properties:
-                name:
-                  oneOf:
-                    - type: string
-                      enum: [enphase, ""]
-                    - type: object
-                host:
-                  type: string
-                port:
-                  type: [integer, "null"]
-                  default: 502
-                username:
-                  type: string
-                password:
-                  type: string
-                pv-power:
-                  type: string
-                testing:
-                  type: boolean
-            mqtt:
-              type: array
-              items:
-                type: object
-                additionalProperties: false
-                properties:
-                  topic:
-                    type: [string, "null"]
-                  gain:
-                    type: number
-                    default: 1
 
   sensor-debug-logging:
     type: boolean

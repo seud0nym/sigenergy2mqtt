@@ -105,14 +105,6 @@ def main():
         logging.info("Initialization interrupted — exiting")
         sys.exit(130)
 
-    # Check if smartport is enabled
-    for modbus in active_config.modbus:  # type: ignore
-        if modbus.smartport.enabled:
-            logging.warning("*****************************************************************************************************************************")
-            logging.warning("* Third-Party PV generation support (smartport) is enabled but has been DEPRECATED and will be removed in a future release! *")
-            logging.warning("*****************************************************************************************************************************")
-            break
-
     # debug=True enables asyncio's slow-callback detector, ResourceWarning
     # emission, and coroutine origin tracking — valuable during development,
     # but adds overhead so it is gated on the DEBUG log level.

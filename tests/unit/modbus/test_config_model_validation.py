@@ -5,7 +5,7 @@ import logging
 import pytest
 from pydantic import ValidationError
 
-from sigenergy2mqtt.config.models import ModbusConfig, SmartPortConfig, SmartPortModule
+from sigenergy2mqtt.config.models import ModbusConfig
 
 
 def test_modbus_config_empty_host_raises():
@@ -60,19 +60,6 @@ def test_modbus_config_default_inverter():
     """Default to [1] when no devices specified."""
     config = ModbusConfig(host="h")
     assert config.inverters == [1]
-
-
-def test_modbus_config_smartport():
-    """SmartPortConfig can be set as nested field."""
-    config = ModbusConfig(
-        host="h",
-        smartport=SmartPortConfig(
-            enabled=True,
-            module=SmartPortModule(name="enphase"),
-        ),
-    )
-    assert config.smartport.enabled is True
-    assert config.smartport.module.name == "enphase"
 
 
 def test_modbus_config_alias_keys():

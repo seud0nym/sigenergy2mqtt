@@ -1,11 +1,10 @@
 import logging
 import time
 from dataclasses import dataclass
-from enum import StrEnum
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, Protocol, StateClass, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, Protocol, PVInverter, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
@@ -16,7 +15,7 @@ from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulati
 from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
-from .base import CrossDeviceDerivedSensor, DerivedSensor, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor, SubstituteMixin
+from .base import CrossDeviceDerivedSensor, DerivedSensor, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor
 from .plant_read_only import (
     BatteryPower,
     ESSTotalChargedEnergy,
@@ -33,7 +32,7 @@ from .plant_read_only import (
 )
 
 
-class BatteryChargingPower(DerivedSensor):
+class BatteryChargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -71,7 +70,7 @@ class BatteryChargingPower(DerivedSensor):
         return True
 
 
-class BatteryDischargingPower(DerivedSensor):
+class BatteryDischargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -109,7 +108,7 @@ class BatteryDischargingPower(DerivedSensor):
         return True
 
 
-class GridSensorExportPower(DerivedSensor):
+class GridSensorExportPower(DerivedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, active_power: GridSensorActivePower):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -146,7 +145,7 @@ class GridSensorExportPower(DerivedSensor):
         return True
 
 
-class GridSensorImportPower(DerivedSensor):
+class GridSensorImportPower(DerivedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, active_power: GridSensorActivePower):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -183,22 +182,12 @@ class GridSensorImportPower(DerivedSensor):
         return True
 
 
-class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
-    class SourceType(StrEnum):
-        SMARTPORT = "s"
-        FAILOVER = "f"
-        MANDATORY = "m"
-
+class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
     @dataclass
     class Value:
         gain: float
-        type: str
-        enabled: bool = True
         state: float | None = None
         last_update: float | None = None
-
-        def __repr__(self):
-            return f"{self.state} ({self.type}/{'enabled' if self.enabled else 'disabled'})"
 
     def __init__(self, plant_index: int, *sensors: Sensor):
         # Set properties before super().__init__ so that log_identity is correctly generated
@@ -215,78 +204,17 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
             gain=None,
             precision=2,
         )
-        self._sources: dict[str, TotalPVPower.Value] = dict()
-        self._topics: set[str] = set()
-        self.register_source_sensors(*sensors, type=TotalPVPower.SourceType.MANDATORY, enabled=True)  # Register sensor sources
-        self.register_mqtt_sources()
-
-    async def _check_smartport_timeouts(self) -> None:
-        now = time.time()
-        timeout = active_config.modbus[self.plant_index].scan_interval.realtime * 5  # 5x poll interval grace period
-        for source_id, value in self._sources.items():
-            if value.enabled and value.type == TotalPVPower.SourceType.SMARTPORT:
-                if value.last_update and (now - value.last_update > timeout):
-                    logging.warning(f"{self.log_identity} Failover triggered: Source '{source_id}' timed out (last_update={now - value.last_update:.1f}s ago, timeout={timeout}s)")
-                    self.failover(source_id)
-
-    def fallback(self, source: str):
-        logging.info(f"{self.log_identity} Re-enabling '{source}' as source because state updated (state={self._sources[source].state})")
-        self._sources[source].enabled = True
-        for id, value in self._sources.items():
-            if value.type == TotalPVPower.SourceType.FAILOVER:
-                logging.info(f"{self.log_identity} Disabling '{id}' as failover source because state updated from SmartPort sensor '{source}'")
-                value.enabled = False
-
-    def failover(self, smartport_sensor: Sensor | str) -> bool:
-        failed_over = False
-        source_id = smartport_sensor if isinstance(smartport_sensor, str) else smartport_sensor.unique_id
-        for id, value in self._sources.items():
-            if value.type == TotalPVPower.SourceType.FAILOVER:
-                if value.enabled:
-                    return True
-                logging.info(f"{self.log_identity} Enabling '{id}' as failover source because SmartPort sensor '{source_id}' failed")
-                value.enabled = True
-                failed_over = True
-        if failed_over and source_id in self._sources:
-            logging.info(f"{self.log_identity} Disabling '{source_id}' as SmartPort source because failover sources enabled")
-            self._sources[source_id].enabled = False
-        if failed_over:
-            logging.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because failover source enabled")
-            self._failures = 0
-            self._next_retry = None
-        return failed_over
+        self.declare_source_sensors(*sensors)
+        self._sources: dict[str, TotalPVPower.Value] = {sensor.unique_id: TotalPVPower.Value(gain=1.0) for sensor in sensors}
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        if active_config.modbus[self.plant_index].smartport.enabled:
-            attributes["source"] = "PV Power + (sum of all Smart-Port PV Power sensors)"
-        else:
-            attributes["source"] = "PV Power + Third-Party PV Power"
+        attributes["source"] = "PV Power + Third-Party PV Power"
         return attributes
-
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source in self._sources:
-            if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
-                self.fallback(source)
-            self._sources[source].state = (value if isinstance(value, float) else float(value)) * self._sources[source].gain
-            self._sources[source].last_update = time.time()
-            if self.debug_logging:
-                logging.debug(f"{self.log_identity} Updated from ({'enabled' if self._sources[source].enabled else 'disabled'}) topic {source} - {self._sources=}")
-            if self._sources[source].enabled and not any(value.state is None for value in self._sources.values() if value.enabled):
-                self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None and value.enabled]))
-                await self.publish(mqtt_client, modbus_client, republish=True)
-            return True
-        else:
-            logging.warning(f"{self.log_identity} Attempt to call notify with topic {source}, but topic is not registered")
-            return False
-
-    def observable_topics(self) -> set[str]:
-        return set(self._topics)
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if not republish:
-            await self._check_smartport_timeouts()
-            if any(value.state is None for value in self._sources.values() if value.enabled):
+            if any(value.state is None for value in self._sources.values()):
                 if self.debug_logging:
                     logging.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources=}")
                 return False  # until all values populated, can't do calculation
@@ -299,24 +227,6 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
                 value.state = None
         return True
 
-    def register_mqtt_sources(self):
-        if active_config.modbus[self.plant_index].smartport.enabled:  # Register MQTT sources
-            for topic in active_config.modbus[self.plant_index].smartport.mqtt:  # pyright: ignore[reportGeneralTypeIssues]
-                if topic.topic and topic.topic != "":  # Command line/Environment variable overrides can cause an empty topic
-                    self._sources[topic.topic] = TotalPVPower.Value(topic.gain, type=TotalPVPower.SourceType.SMARTPORT)
-                    self._topics.add(topic.topic)
-                    if self.debug_logging:
-                        logging.debug(f"{self.log_identity} Added Smart-Port MQTT topic {topic.topic} as source")
-                else:
-                    logging.warning(f"{self.log_identity} Empty Smart-Port MQTT topic ignored")
-
-    def register_source_sensors(self, *sensors: Sensor, type: SourceType, enabled: bool = True) -> None:
-        for sensor in sensors:
-            assert isinstance(sensor, PVPowerSensor), f"Contributing sensors to TotalPVPower must be instances of PVPowerSensor ({sensor.__class__.__name__})"
-            self._sources[sensor.unique_id] = TotalPVPower.Value(sensor.gain, type=type, enabled=enabled)
-            if self.debug_logging:
-                logging.debug(f"{self.log_identity} Added sensor {sensor.unique_id} ({sensor.__class__.__name__}) as source ({type=} {enabled=})")
-
     def set_source_values(self, sensor: Sensor) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
@@ -328,19 +238,17 @@ class TotalPVPower(DerivedSensor, ObservableMixin, SubstituteMixin):
         raw_state = getattr(sensor, "latest_raw_state", None)
         if raw_state is None:
             return False
-        if not self._sources[source].enabled and self._sources[source].type == TotalPVPower.SourceType.SMARTPORT:
-            self.fallback(source)
         self._sources[source].state = float(raw_state)
         self._sources[source].last_update = time.time()
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Updated from {'enabled' if self._sources[source].enabled else 'disabled'} source '{source}' - {self._sources=}")
-        if not self._sources[source].enabled or any(value.state is None for value in self._sources.values() if value.enabled):
-            return False  # until all enabled values populated, can't do calculation
-        self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None and value.enabled]))
+            logging.debug(f"{self.log_identity} Updated from source '{source}' - {self._sources=}")
+        if any(value.state is None for value in self._sources.values()):
+            return False  # until all values populated, can't do calculation
+        self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None]))
         return True
 
 
-class PlantConsumedPower(DerivedSensor, ObservableMixin):
+class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMixin):
     @dataclass
     class Value:
         gain: float = 1.0
@@ -484,7 +392,7 @@ class PlantConsumedPower(DerivedSensor, ObservableMixin):
         return self._set_latest_consumption()
 
 
-class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
+class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, source: PlantTotalExportedEnergy):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -502,7 +410,7 @@ class GridSensorDailyExportEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
+class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, source: PlantTotalImportedEnergy):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -520,7 +428,7 @@ class GridSensorDailyImportEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
+class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -576,7 +484,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor):
         return True
 
 
-class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
+class TotalDailyPVEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, source: TotalLifetimePVEnergy):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -594,7 +502,7 @@ class TotalDailyPVEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
+class PlantDailyPVEnergy(EnergyDailyAccumulationSensor, HybridInverter, PVInverter):
     def __init__(self, plant_index: int, source: PlantPVTotalGeneration):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -612,7 +520,7 @@ class PlantDailyPVEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
+class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor, HybridInverter):
     def __init__(self, plant_index: int, source: ESSTotalChargedEnergy):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
@@ -630,7 +538,7 @@ class PlantDailyChargeEnergy(EnergyDailyAccumulationSensor):
         return attributes
 
 
-class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor):
+class PlantDailyDischargeEnergy(EnergyDailyAccumulationSensor, HybridInverter):
     def __init__(self, plant_index: int, source: ESSTotalDischargedEnergy):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
