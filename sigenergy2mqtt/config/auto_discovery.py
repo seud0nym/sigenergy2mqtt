@@ -109,7 +109,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
     async def check_single_host(ip: str) -> tuple[str, float | None]:
         start = time.perf_counter()
         try:
-            _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=float(timeout))
+            _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
             latency = time.perf_counter() - start
             writer.close()
             await writer.wait_closed()
