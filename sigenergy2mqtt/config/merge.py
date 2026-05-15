@@ -27,6 +27,65 @@ PROPAGATABLE_MODBUS_KEYS: Final = frozenset(
 )
 
 
+def _normalize_device_ids(ids: list[int] | int | None) -> list[int]:
+    """Normalize a device ID value to a list of ints."""
+    if ids is None:
+        return []
+    if isinstance(ids, int):
+        return [ids]
+    return list(ids)
+
+
+def _union_device_ids(base_ids: list[int] | int | None, overlay_ids: list[int] | int | None) -> list[int]:
+    """Merge two device ID lists, preserving order with overlay first, then base additions.
+
+    Returns a list where overlay IDs come first (preserving their order),
+    followed by any base IDs not already present.  Duplicates within a type
+    are removed.  Accepts scalar ints or ``None`` in addition to lists.
+    """
+    base = _normalize_device_ids(base_ids)
+    overlay = _normalize_device_ids(overlay_ids)
+    seen: set[int] = set()
+    result: list[int] = []
+    # Overlay (YAML/manual config) IDs take ordering priority
+    for did in overlay:
+        if did not in seen:
+            seen.add(did)
+            result.append(did)
+    # Then add any discovered IDs not already present
+    for did in base:
+        if did not in seen:
+            seen.add(did)
+            result.append(did)
+    return result
+
+
+_DEVICE_ID_KEYS = ("inverters", "ac-chargers", "dc-chargers")
+_DEVICE_ID_KEYS_SNAKE = ("inverters", "ac_chargers", "dc_chargers")
+
+
+def _validate_device_id_uniqueness(merged: dict[str, Any]) -> None:
+    """Ensure device IDs are unique across all device types within a single host entry.
+
+    Raises ValueError if a device ID appears under more than one type.
+    """
+    all_ids: dict[int, str] = {}
+    for key in sorted(set(_DEVICE_ID_KEYS + _DEVICE_ID_KEYS_SNAKE)):
+        ids = _normalize_device_ids(merged.get(key))
+        if not ids:
+            continue
+        # Normalise key name for error messages
+        display_key = key.replace("_", "-")
+        for did in ids:
+            if did in all_ids:
+                raise ValueError(
+                    f"Device ID {did} appears in both '{all_ids[did]}' and '{display_key}' "
+                    f"for host {merged.get('host', '?')}:{merged.get('port', 502)}. "
+                    f"Device IDs must be unique across all device types."
+                )
+            all_ids[did] = display_key
+
+
 def merge_modbus_by_host_port(
     base: list[dict[str, Any]],     # discovery devices
     overlay: list[dict[str, Any]],  # YAML-configured devices
@@ -39,9 +98,11 @@ def merge_modbus_by_host_port(
     - A named host matches an exact discovery device (host + port).
     - No match → kept as a standalone entry.
 
-    YAML config wins over discovery for all keys it provides.
-    Discovery contributes device IDs (inverters, ac-chargers, dc-chargers) and host when the
-    YAML entry had a blank host wildcard.
+    YAML config wins over discovery for all scalar keys.
+    Device IDs (inverters, ac-chargers, dc-chargers) are **unioned** — IDs from YAML
+    config are included first, followed by any additional IDs from discovery that are
+    not already present.  Device IDs must be unique within their type and across all
+    device types for a given host.
     """
     disc_map: dict[str, dict[str, Any]] = {}
     for entry in base:
@@ -63,6 +124,16 @@ def merge_modbus_by_host_port(
                 disc = disc_map.pop(matched_key)
                 merged = {**disc, **{k: v for k, v in entry.items() if v or v == 0}}
                 merged["host"] = disc["host"]
+                # Union device IDs
+                for dk in _DEVICE_ID_KEYS:
+                    sk = dk.replace("-", "_")
+                    base_ids = disc.get(dk, disc.get(sk, []))
+                    overlay_ids = entry.get(dk, entry.get(sk, []))
+                    if base_ids or overlay_ids:
+                        merged[dk] = _union_device_ids(base_ids or [], overlay_ids or [])
+                        if sk != dk:
+                            merged.pop(sk, None)
+                _validate_device_id_uniqueness(merged)
                 result[f"{merged['host']}:{port}"] = merged
             else:
                 result[f":{port}"] = dict(entry)
@@ -71,14 +142,25 @@ def merge_modbus_by_host_port(
             if key in disc_map:
                 disc = disc_map.pop(key)
                 merged = dict(disc)
+                # Merge non-device-ID fields from overlay (YAML wins for scalars)
                 merged.update(
                     {
                         k: v
                         for k, v in entry.items()
-                        if k not in ("inverters", "ac-chargers", "dc-chargers", "ac_chargers", "dc_chargers")
+                        if k not in (*_DEVICE_ID_KEYS, *_DEVICE_ID_KEYS_SNAKE)
                         or v
                     }
                 )
+                # Union device IDs
+                for dk in _DEVICE_ID_KEYS:
+                    sk = dk.replace("-", "_")
+                    base_ids = disc.get(dk, disc.get(sk, []))
+                    overlay_ids = entry.get(dk, entry.get(sk, []))
+                    if base_ids or overlay_ids:
+                        merged[dk] = _union_device_ids(base_ids or [], overlay_ids or [])
+                        if sk != dk:
+                            merged.pop(sk, None)
+                _validate_device_id_uniqueness(merged)
                 result[key] = merged
             else:
                 result[key] = dict(entry)

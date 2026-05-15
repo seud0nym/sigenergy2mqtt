@@ -20,8 +20,10 @@ For testing, use :func:`_swap_active_config` to temporarily replace the global::
 """
 
 import asyncio
+import ipaddress
 import logging
 import os
+import socket
 import sys
 import time
 from contextlib import contextmanager
@@ -170,8 +172,9 @@ class Config:
                 modbus_timeout = auto_settings.modbus_auto_discovery_timeout
                 modbus_retries = auto_settings.modbus_auto_discovery_retries
                 ping_timeout = auto_settings.modbus_auto_discovery_ping_timeout
-                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=})...")
-                auto_discovered = self._run_auto_discovery(port, ping_timeout, modbus_timeout, modbus_retries)
+                include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
+                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices ({port=} {ping_timeout=} {modbus_timeout=} {modbus_retries=} {include_networks=})...")
+                auto_discovered = self._run_auto_discovery(port, ping_timeout, modbus_timeout, modbus_retries, include_networks=include_networks)
                 if len(auto_discovered) > 0:
                     yaml_content = ""
                     with StringIO() as stream:
@@ -247,6 +250,7 @@ class Config:
                 "modbus_auto_discovery_timeout": yaml_payload.get("modbus-auto-discovery-timeout"),
                 "modbus_auto_discovery_ping_timeout": yaml_payload.get("modbus-auto-discovery-ping-timeout"),
                 "modbus_auto_discovery_retries": yaml_payload.get("modbus-auto-discovery-retries"),
+                "modbus_auto_discovery_networks": yaml_payload.get("modbus-auto-discovery-networks"),
             }
         )
         payload.update(_auto_discovery_env_values(os.getenv, include_modbus_port=True))
@@ -262,7 +266,93 @@ class Config:
         self._source = None
         self._settings = Settings()  # type: ignore[reportCallIssue]
 
-    def _run_auto_discovery(self, port: int, ping_timeout: float, modbus_timeout: float, modbus_retries: int, timeout: float = 120.0) -> list:
+    def _build_include_networks(self, user_networks: list[str]) -> list[str] | None:
+        """Build the include_networks list for auto-discovery scanning.
+
+        Prepends /32 CIDR networks derived from any already-configured modbus
+        hosts (YAML or env) before the user-specified networks.  Hostnames are
+        resolved to IPv4 addresses.
+
+        Args:
+            user_networks: Networks from ``modbus_auto_discovery_networks`` setting.
+
+        Returns:
+            A combined list of CIDR strings, or ``None`` when no networks are
+            specified and no hosts are configured.
+        """
+        host_networks: list[str] = []
+
+        # Collect hosts from YAML config
+        if self._source:
+            source_path = Path(self._source)
+            if source_path.is_file():
+                yaml = YAML(typ="safe", pure=True)
+                with open(source_path, "r") as f:
+                    data = yaml.load(f)
+                if isinstance(data, dict):
+                    entries = data.get("modbus")
+                    if isinstance(entries, list):
+                        for entry in entries:
+                            if isinstance(entry, dict) and entry.get("host"):
+                                host_networks.extend(self._resolve_host_to_cidr(entry["host"]))
+
+        # Collect host from env override
+        env_host = os.getenv(const.SIGENERGY2MQTT_MODBUS_HOST)
+        if env_host:
+            host_networks.extend(self._resolve_host_to_cidr(env_host))
+
+        # Deduplicate while preserving order
+        seen: set[str] = set()
+        combined: list[str] = []
+        for net in host_networks + user_networks:
+            if net not in seen:
+                seen.add(net)
+                combined.append(net)
+
+        return combined if combined else None
+
+    @staticmethod
+    def _resolve_host_to_cidr(host: str) -> list[str]:
+        """Resolve a hostname or IP address to a list of /32 CIDR strings.
+
+        If the host is already a valid IPv4 address, returns it as /32 directly.
+        Otherwise attempts DNS resolution and returns /32 for each resolved
+        IPv4 address.  On resolution failure, logs a warning and returns an
+        empty list.
+        """
+        try:
+            ipaddress.IPv4Address(host)
+            return [f"{host}/32"]
+        except ValueError:
+            pass
+
+        try:
+            results = socket.getaddrinfo(host, None, socket.AF_INET, socket.SOCK_STREAM)
+            ips: list[str] = []
+            seen: set[str] = set()
+            for _family, _type, _proto, _canonname, sockaddr in results:
+                ip = sockaddr[0]
+                if ip not in seen:
+                    seen.add(ip)
+                    ips.append(f"{ip}/32")
+            if ips:
+                logging.info(f"Resolved modbus host '{host}' to {', '.join(ips)} for auto-discovery")
+                return ips
+            logging.warning(f"Could not resolve modbus host '{host}' to any IPv4 address")
+            return []
+        except (socket.gaierror, OSError) as e:
+            logging.warning(f"Failed to resolve modbus host '{host}' for auto-discovery: {e}")
+            return []
+
+    def _run_auto_discovery(
+        self,
+        port: int,
+        ping_timeout: float,
+        modbus_timeout: float,
+        modbus_retries: int,
+        timeout: float = 120.0,
+        include_networks: list[str] | None = None,
+    ) -> list:
         """Execute the async auto-discovery scan, handling event loop edge cases.
 
         If no event loop is running, uses asyncio.run(). If called from within
@@ -276,6 +366,7 @@ class Config:
             modbus_timeout: Seconds to wait for a Modbus TCP response.
             modbus_retries: Number of Modbus connection retries per host.
             timeout: Maximum seconds to wait when submitting to a running loop.
+            include_networks: Optional list of CIDR networks to scan.
 
         Returns:
             A list of discovered device dicts, or an empty list on failure.
@@ -285,7 +376,7 @@ class Config:
         except RuntimeError:
             loop = None
 
-        coro = auto_discovery_scan(None, port, ping_timeout, modbus_timeout, modbus_retries)
+        coro = auto_discovery_scan(include_networks, port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
             # Normal case: no event loop running, asyncio.run() is safe.
             try:

@@ -478,6 +478,33 @@ These settings are parsed in a preflight configuration pass before full Modbus v
 
 If not specified, auto-discovery is disabled unless [Host](#opt_modbus_host) is also _NOT_ specified.
 
+When auto-discovery is enabled and modbus hosts are already configured (via YAML or environment variable), those hosts are automatically included as `/32` networks at the start of the scan list, before any [Modbus Auto Discovery Networks](#opt_modbus_auto_discovery_networks). If a host is configured by hostname rather than IP address, it will be resolved to its IPv4 address.
+
+Device IDs found during auto-discovery are **cumulative** with any manually configured device IDs. For example, if you configure inverter device ID `1` in your modbus settings and auto-discovery also finds device ID `1` plus device ID `2`, the final configuration will include both `[1, 2]`. Device IDs must be unique within their type (inverters, ac-chargers, dc-chargers) and across all device types for a given host.
+
+<a id="opt_modbus_auto_discovery_networks"></a>
+### Modbus Auto Discovery Networks
+- CLI: `--modbus-auto-discovery-networks`
+- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS`
+- Config key: `modbus-auto-discovery-networks`
+
+A list of IPv4 networks in CIDR notation to scan during auto-discovery. Use this setting to include networks that are accessible via routing but not directly attached to a network interface on the host running sigenergy2mqtt.
+
+Example values:
+- `192.168.1.0/24` — scan the entire 192.168.1.x subnet
+- `10.0.0.5/32` — scan a single specific host
+
+When specified via environment variable or CLI, networks should be comma-separated (e.g. `192.168.1.0/24,10.0.0.0/24`). In the YAML configuration file, use an array:
+
+```yaml
+modbus-auto-discovery-networks:
+  - 192.168.1.0/24
+  - 10.0.0.0/24
+```
+
+> [!NOTE]
+> Any configured modbus hosts are automatically prepended to this list as `/32` networks. You do not need to add them here explicitly.
+
 <a id="opt_modbus_auto_discovery_ping_timeout"></a>
 ### Modbus Auto Discovery Ping Timeout
 - CLI: `--modbus-auto-discovery-ping-timeout`

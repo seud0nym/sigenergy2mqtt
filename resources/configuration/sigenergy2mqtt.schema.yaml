@@ -484,3 +484,7 @@ properties:
   modbus-auto-discovery-timeout: {type: [number, "null"]}
   modbus-auto-discovery-ping-timeout: {type: [number, "null"]}
   modbus-auto-discovery-retries: {type: [integer, "null"]}
+  modbus-auto-discovery-networks:
+    type: [array, "null"]
+    items:
+      type: string

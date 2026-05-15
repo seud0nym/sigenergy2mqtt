@@ -90,6 +90,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_daily_consumed_energy'>Daily Consumption</a><br>
 <a href='#sigen_0_daily_discharge_energy'>Daily Discharge Energy</a><br>
 <a href='#sigen_0_daily_pv_energy'>Daily PV Production</a><br>
+<a href='#sigen_0_daily_self_consumed_energy'>Daily Self Consumed Energy</a><br>
 <a href='#sigen_0_total_daily_pv_energy'>Daily Total PV Production</a><br>
 <a href='#sigen_0_247_30086'>Discharge Cut-Off SoC</a><br>
 <a href='#sigen_0_247_40048'>Discharge Cut-Off SoC</a><br>
@@ -147,6 +148,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_40029'>Remote EMS</a><br>
 <a href='#sigen_0_247_40031'>Remote EMS Control Mode</a><br>
 <a href='#sigen_0_247_30051'>Running State</a><br>
+<a href='#sigen_0_self_consumed_power'>Self-Consumed Power</a><br>
 <a href='#sigen_0_247_30146'>Smart Load 01 Power</a><br>
 <a href='#sigen_0_247_30098'>Smart Load 01 Total Consumption</a><br>
 <a href='#sigen_0_247_30148'>Smart Load 02 Power</a><br>
@@ -279,6 +281,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_30618'>Reactive Power Percentage Adjustment Feedback</a><br>
 <a href='#sigen_0_001_41506'>Reactive Power Q/S Adjustment</a><br>
 <a href='#sigen_0_001_30578'>Running State</a><br>
+<a href='#sigen_0_inverter_1_self_consumed_power'>Self-Consumed Power</a><br>
 <a href='#sigen_0_001_30515'>Serial Number</a><br>
 <a href='#sigen_0_001_31040'>Shutdown Time</a><br>
 <a href='#sigen_0_001_31038'>Startup Time</a><br>
@@ -512,16 +515,6 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_31501'>Vehicle Charging Current</a><br>
 <a href='#sigen_0_001_31504'>Vehicle SoC</a><br>
 
-<h6>Smart-Port (Enphase Envoy only)</h6>
-<a href='#sigen_0_enphase_123456789012_current'>Current</a><br>
-<a href='#sigen_0_enphase_123456789012_daily_pv_energy'>Daily Production</a><br>
-<a href='#sigen_0_enphase_123456789012_frequency'>Frequency</a><br>
-<a href='#sigen_0_enphase_123456789012_lifetime_pv_energy'>Lifetime Production</a><br>
-<a href='#sigen_0_enphase_123456789012_active_power'>PV Power</a><br>
-<a href='#sigen_0_enphase_123456789012_power_factor'>Power Factor</a><br>
-<a href='#sigen_0_enphase_123456789012_reactive_power'>Reactive Power</a><br>
-<a href='#sigen_0_enphase_123456789012_voltage'>Voltage</a><br>
-
 <h6>Metrics</h6>
 <a href='#sigen_influxdb_queries'>InfluxDB Queries</a><br>
 <a href='#sigen_influxdb_query_errors'>InfluxDB Query Errors</a><br>
@@ -609,7 +602,7 @@ The attributes payload currently includes:
 
 <h6>DC Charger</h6>
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -967,6 +960,18 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_pv_energy/state</td></tr>
 <tr><td>Source</td><td>PlantLifetimePVEnergy − PlantLifetimePVEnergy at last midnight</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.6</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
+</table>
+<h5><a id='sigen_0_daily_self_consumed_energy'>Daily Self Consumed Energy</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PlantDailySelfConsumedEnergy</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_daily_self_consumed_energy</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_daily_self_consumed_energy/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_daily_self_consumed_energy/state</td></tr>
+<tr><td>Source</td><td>Riemann ∑ of PlantSelfConsumedPower since midnight</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
 </table>
 <h5><a id='sigen_0_total_daily_pv_energy'>Daily Total PV Production</a></h5>
@@ -1717,6 +1722,17 @@ The attributes payload currently includes:
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Standby</li><li value='1'>Normal</li><li value='2'>Fault</li><li value='3'>Power-Off</li><li value='7'>Environmental Abnormality</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 7  (0 ≦ raw value ≦ 7)</td></tr>
+</table>
+<h5><a id='sigen_0_self_consumed_power'>Self-Consumed Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PlantSelfConsumedPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_self_consumed_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_self_consumed_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_self_consumed_power/state</td></tr>
+<tr><td>Source</td><td>∑ of InverterSelfConsumedPower across all Inverters associated with the Plant</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500000 W and 500000 W (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30146'>Smart Load 01 Power</a></h5>
 <table>
@@ -3385,6 +3401,18 @@ The attributes payload currently includes:
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 7  (0 ≦ raw value ≦ 7)</td></tr>
+</table>
+<h5><a id='sigen_0_inverter_1_self_consumed_power'>Self-Consumed Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InverterSelfConsumedPower</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_inverter_1_self_consumed_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_self_consumed_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_self_consumed_power/state</td></tr>
+<tr><td>Source</td><td>Estimate of inverter self-consumption (ActivePower − ChargeDischargePower − ∑[PVStringPower])</td></tr>
+<tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0 W and 2000 W (0 ≦ raw value ≦ 2000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_30515'>Serial Number</a></h5>
 <table>
@@ -6350,103 +6378,6 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31504</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 % and 100.0 % (0 ≦ raw value ≦ 1000)</td></tr>
-</table>
-
-#### Smart-Port (Enphase Envoy only)
-<h5><a id='sigen_0_enphase_123456789012_current'>Current</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphaseCurrent</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
-<tr><td>Gain</td><td>1</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_current</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_current/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_current/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -2147483647.0 A and 2147483647.0 A (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_daily_pv_energy'>Daily Production</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphaseDailyPVEnergy</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>1000</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_daily_pv_energy</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_daily_pv_energy/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_frequency'>Frequency</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphaseFrequency</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>Hz</td></tr>
-<tr><td>Gain</td><td>1</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_frequency</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_frequency/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_frequency/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 Hz and 65535.0 Hz (0 ≦ raw value ≦ 65535)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_lifetime_pv_energy'>Lifetime Production</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphaseLifetimePVEnergy</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
-<tr><td>Gain</td><td>1000</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_lifetime_pv_energy</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_lifetime_pv_energy/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_active_power'>PV Power</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphasePVPower</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>W</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_active_power</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_active_power/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_active_power/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 W (raw value ≦ 500000)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_power_factor'>Power Factor</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphasePowerFactor</td></tr>
-<tr><td>Gain</td><td>1</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_power_factor</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_power_factor/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_power_factor/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0  and 65535.0  (0 ≦ raw value ≦ 65535)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_reactive_power'>Reactive Power</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphaseReactivePower</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
-<tr><td>Gain</td><td>1000</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_reactive_power</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_reactive_power/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kvar and 4294967.29 kvar (0 ≦ raw value ≦ 4294967295)</td></tr>
-</table>
-<h5><a id='sigen_0_enphase_123456789012_voltage'>Voltage</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>EnphaseVoltage</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
-<tr><td>Gain</td><td>1</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_enphase_123456789012_voltage</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_enphase_envoy_123456789012/sigen_0_enphase_123456789012_voltage/state</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_enphase_123456789012_voltage/state</td></tr>
-<tr><td>Source</td><td>Enphase Envoy API when EnphasePVPower derived</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 V and 65535.0 V (0 ≦ raw value ≦ 65535)</td></tr>
 </table>
 
 ### Metrics

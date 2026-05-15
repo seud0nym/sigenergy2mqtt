@@ -20,7 +20,7 @@ def test_merge_modbus_by_host_port_blank_host_wildcard() -> None:
 
     assert len(result) == 1
     assert result[0] == {
-        "inverters": 1,
+        "inverters": [1],
         "host": "192.168.1.100",
         "port": 502,
         "read_only": True,
@@ -29,8 +29,8 @@ def test_merge_modbus_by_host_port_blank_host_wildcard() -> None:
 
 def test_merge_modbus_by_host_port_named_host_exact() -> None:
     base = [
-        {"inverters": 1, "host": "192.168.1.100", "port": 502},
-        {"inverters": 1, "host": "192.168.1.101", "port": 502},
+        {"inverters": [1], "host": "192.168.1.100", "port": 502},
+        {"inverters": [1], "host": "192.168.1.101", "port": 502},
     ]
     overlay = [{"host": "192.168.1.101", "port": 502, "read_only": True}]
 
@@ -38,10 +38,10 @@ def test_merge_modbus_by_host_port_named_host_exact() -> None:
 
     assert len(result) == 2
     # Base entry kept
-    assert {"inverters": 1, "host": "192.168.1.100", "port": 502} in result
+    assert {"inverters": [1], "host": "192.168.1.100", "port": 502} in result
     # Exact match merged
     assert {
-        "inverters": 1,
+        "inverters": [1],
         "host": "192.168.1.101",
         "port": 502,
         "read_only": True,
@@ -60,13 +60,15 @@ def test_merge_modbus_by_host_port_no_match() -> None:
 
 
 def test_merge_modbus_by_host_port_priority() -> None:
-    base = [{"inverters": 1, "host": "192.168.1.100", "port": 502}]
-    overlay = [{"host": "192.168.1.100", "port": 502, "inverters": 2}]
+    """Overlay device IDs take priority in ordering but base IDs are also included."""
+    base = [{"inverters": [1], "host": "192.168.1.100", "port": 502}]
+    overlay = [{"host": "192.168.1.100", "port": 502, "inverters": [2]}]
 
     result = merge_modbus_by_host_port(base, overlay)
 
     assert len(result) == 1
-    assert result[0] == {"inverters": 2, "host": "192.168.1.100", "port": 502}
+    # Union: overlay [2] comes first, then base [1] is appended
+    assert result[0] == {"inverters": [2, 1], "host": "192.168.1.100", "port": 502}
 
 
 def test_merge_modbus_by_host_port_blank_host_no_match() -> None:
@@ -86,7 +88,7 @@ def test_merge_modbus_by_host_port_named_host_ignores_empty_device_lists() -> No
             "port": 502,
             "inverters": [1],
             "ac-chargers": [7],
-            "dc_chargers": [9],
+            "dc-chargers": [9],
         }
     ]
     overlay = [
@@ -95,7 +97,7 @@ def test_merge_modbus_by_host_port_named_host_ignores_empty_device_lists() -> No
             "port": 502,
             "inverters": [],
             "ac-chargers": [],
-            "dc_chargers": [],
+            "dc-chargers": [],
         }
     ]
 
@@ -104,18 +106,20 @@ def test_merge_modbus_by_host_port_named_host_ignores_empty_device_lists() -> No
     assert len(result) == 1
     assert result[0]["inverters"] == [1]
     assert result[0]["ac-chargers"] == [7]
-    assert result[0]["dc_chargers"] == [9]
+    assert result[0]["dc-chargers"] == [9]
 
 
-def test_merge_modbus_by_host_port_named_host_overrides_non_empty_device_lists() -> None:
-    base = [{"host": "192.168.1.100", "port": 502, "inverters": [1], "ac_chargers": [2]}]
-    overlay = [{"host": "192.168.1.100", "port": 502, "inverters": [3], "ac_chargers": [4]}]
+def test_merge_modbus_by_host_port_named_host_unions_non_empty_device_lists() -> None:
+    """Device IDs are now cumulative: overlay + base are unioned."""
+    base = [{"host": "192.168.1.100", "port": 502, "inverters": [1], "ac-chargers": [2]}]
+    overlay = [{"host": "192.168.1.100", "port": 502, "inverters": [3], "ac-chargers": [4]}]
 
     result = merge_modbus_by_host_port(base, overlay)
 
     assert len(result) == 1
-    assert result[0]["inverters"] == [3]
-    assert result[0]["ac_chargers"] == [4]
+    # Union: overlay IDs first, then base additions
+    assert result[0]["inverters"] == [3, 1]
+    assert result[0]["ac-chargers"] == [4, 2]
 
 
 def test_flatten_modbus() -> None:

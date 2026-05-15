@@ -274,6 +274,7 @@ def _auto_discovery_env_values(getenv: Any, include_modbus_port: bool = False) -
     _set(result, "modbus_auto_discovery_timeout", _float(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT)))
     _set(result, "modbus_auto_discovery_ping_timeout", _float(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT)))
     _set(result, "modbus_auto_discovery_retries", _int(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES)))
+    _set(result, "modbus_auto_discovery_networks", _str_list(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS)))
     if include_modbus_port:
         _set(result, "modbus_port", _int(getenv(const.SIGENERGY2MQTT_MODBUS_PORT)))
     return result
