@@ -4,11 +4,14 @@
 
 ### Added
 
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
 - Added Inverter and Plant estimated self-consumed power and daily energy sensors
 - Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
 
 ### Changed
 
+- Auto-discovery now prioritizes statically configured Modbus hosts and unions newly discovered Modbus device IDs with existing configurations
+- Improved Modbus auto-discovery with quiet connection handling and sequential device scanning
 - Reimplemented Modbus test server using Pymodbus SimDevice and custom latency tracking to support device communication failures simulation
 - Removed legacy add-sensor helpers and migrated to declared derived sources
 - Created `AccumulationSensor` base class and refactored `ResettableAccumulationSensor` to inherit from it
@@ -22,6 +25,7 @@
 
 ### Fixed
 
+- Fixed incorrect popping of aliased device ID keys during discovery merge which led to device config loss
 - Fixed the Phase Current and Phase Voltage sensors object_id when the inverter is a single-phase inverter
 - Resolved `RuntimeWarning: coroutine was never awaited` warnings during testing
 - Fixed `grid_status_initial_state` lacking a default value when configured via environment variable in Modbus test server
