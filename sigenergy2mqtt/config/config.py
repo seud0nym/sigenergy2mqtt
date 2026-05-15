@@ -385,24 +385,38 @@ class Config:
                 logging.exception("Auto-discovery failed")
                 return []
 
-        # A loop is already running (e.g. called from a signal handler or sync
-        # code invoked from async context). Submit to the running loop from this
-        # thread and wait with a finite timeout to avoid hanging indefinitely.
-        future = None
-        try:
-            future = asyncio.run_coroutine_threadsafe(coro, loop)
-            return future.result(timeout=timeout)
-        except TimeoutError:
-            if future:
-                future.cancel()
+        # A loop is already running in this thread (e.g. called from async_main).
+        # We cannot use run_coroutine_threadsafe and block on future.result()
+        # from the same thread, as that would deadlock the loop. Instead,
+        # run the discovery in a dedicated worker thread with its own loop.
+        import threading
+
+        result: list = []
+        exception: Exception | None = None
+
+        def worker():
+            nonlocal result, exception
+            try:
+                # Use a fresh event loop in the worker thread
+                result = asyncio.run(coro)
+            except Exception as e:
+                exception = e
+
+        thread = threading.Thread(target=worker, name="AutoDiscoveryWorker", daemon=True)
+        thread.start()
+        thread.join(timeout=timeout)
+
+        if thread.is_alive():
             logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
+            # We can't easily kill the thread, but it will eventually exit or
+            # be cleaned up on process exit due to daemon=True.
             return []
-        except Exception:
-            if future:
-                future.cancel()
-            coro.close()
-            logging.exception("Auto-discovery failed when submitting to running loop")
+
+        if exception:
+            logging.error(f"Auto-discovery failed in worker thread: {exception}")
             return []
+
+        return result
 
     def __getattr__(self, name: str) -> Any:
         if name == "_settings":
