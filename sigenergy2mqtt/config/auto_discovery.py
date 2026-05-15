@@ -293,7 +293,11 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
             logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found")
         else:
             results.append(device.to_dict())
-            logging.info(f" -> Scan complete for {ip}:{port}: Found {len(device.inverters)} inverter(s), {len(device.dc_chargers)} DC charger(s), {len(device.ac_chargers)} AC charger(s)")
+            logging.info(
+                f" -> Scan complete for {ip}:{port}: Found {len(device.inverters)} inverter(s) {sorted(device.inverters)}, "
+                f"{len(device.dc_chargers)} DC charger(s) {sorted(device.dc_chargers)}, "
+                f"{len(device.ac_chargers)} AC charger(s) {sorted(device.ac_chargers)}"
+            )
 
     except DiscoveryInterruptedError:
         raise KeyboardInterrupt("Auto-discovery interrupted by signal")
@@ -395,6 +399,8 @@ async def scan(
     logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
     started = time.perf_counter()
 
+    serial_numbers.clear()
+
     networks = _local_networks(include_networks)
     if not networks:
         logging.warning("No networks found to be scanned for auto-discovery! Scanning localhost only.")
@@ -438,7 +444,10 @@ async def scan(
     total_ac_chargers = sum(len(r.get("ac-chargers", [])) for r in results)
 
     logging.info(f"Scan completed in {elapsed:.2f}s")
-    logging.info(f"Found {len(results)} Sigenergy plant(s) with {total_inverters} inverter(s), {total_dc_chargers} DC charger(s), {total_ac_chargers} AC charger(s)")
+    if results:
+        logging.info(f"Found {len(results)} Sigenergy plant(s) with {total_inverters} inverter(s), {total_dc_chargers} DC charger(s), {total_ac_chargers} AC charger(s)")
+    else:
+        logging.info("No Sigenergy plants found during auto-discovery.")
 
     return results
 
