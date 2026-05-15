@@ -103,6 +103,15 @@ def _discover_config_file() -> str | None:
     return None
 
 
+async def _load_config_async(skip_auto_discovery: bool = False) -> None:
+    """Async version of _load_config."""
+    path = _discover_config_file()
+    if path:
+        await active_config.load_async(path, skip_auto_discovery=skip_auto_discovery)
+    else:
+        logging.debug("No config file found; using environment variables and defaults.")
+        await active_config.reload_async(skip_auto_discovery=skip_auto_discovery)
+
 def _load_config(skip_auto_discovery: bool = False) -> None:
     """Load active_config from a discovered file, or fall back to env-var / defaults."""
     path = _discover_config_file()
@@ -168,11 +177,11 @@ def initialize(args=None) -> bool:
     return True
 
 
-def initialize_with_persistence() -> None:
+async def initialize_with_persistence() -> None:
     """
     Phase 2: Called from async_main() after StateStore is initialised.
 
     Re-runs reload() with full auto-discovery. StateStore is now available,
     so auto-discovery cache can be restored from MQTT if disk is missing.
     """
-    _load_config(skip_auto_discovery=False)
+    await _load_config_async(skip_auto_discovery=False)

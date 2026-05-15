@@ -22,6 +22,7 @@
 - Upgraded `pydantic-settings` to 2.14.1 and `requests` to 2.34.0
 - Aligned zlib remediation with targeted package patch style in Dockerfile
 - Derived sensors now declare source dependencies via constructor injection
+- Implemented asynchronous configuration loading and auto-discovery support to improve startup performance
 
 ### Fixed
 
@@ -31,7 +32,7 @@
 - Fixed `grid_status_initial_state` lacking a default value when configured via environment variable in Modbus test server
 - Corrected the implementation of the `DerivedSensor` pattern
 - Fixed various type errors and test failures related to `latest_raw_state` assignments and `set_source_values` refactoring
-- Improved consistency of warning messages in logs
+- Fixed deadlock when running auto-discovery (#177)
 
 ### Removed
 
