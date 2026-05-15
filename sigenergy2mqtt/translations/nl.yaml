@@ -1786,6 +1786,8 @@ cli:
     help: 'De Sigenergy AC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: 'Probeer Sigenergy Modbus-hosts en apparaat-IDs automatisch te ontdekken. Indien ''once'' is opgegeven, vindt auto-discovery alleen plaats als er geen bestaande resultaten voor automatische detectie gevonden zijn. Indien ''force'', zal auto-discovery alle eerder ontdekte Modbus-hosts en apparaat-IDs overschrijven. Indien niet opgegeven, is auto-discovery uitgeschakeld.'
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
+    help: Een door komma's gescheiden lijst van IPv4-netwerken in CIDR-notatie om te scannen tijdens automatische detectie (bijv. '192.168.1.0/24,10.0.0.0/24'). Gebruik dit om netwerken te scannen die toegankelijk zijn via routering maar niet rechtstreeks zijn aangesloten op een netwerkinterface.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: 'Ping-timeout in seconden voor auto-discovery. Standaard: 0,5 seconden.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:

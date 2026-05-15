@@ -1786,6 +1786,8 @@ cli:
     help: Die Sigenergy-AC-Ladegerät-Modbus-Geräte-ID. Mehrere Geräte-IDs können durch Kommas getrennt angegeben werden.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: Automatische Erkennung von Sigenergy Modbus-Hosts und Geräte-IDs versuchen. Bei 'once' erfolgt die Auto-Erkennung nur, wenn keine vorhandenen Ergebnisse gefunden werden. Bei 'force' werden zuvor erkannte Modbus-Hosts und Geräte-IDs überschrieben. Ohne Angabe ist die Auto-Erkennung deaktiviert.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
+    help: Eine durch Kommas getrennte Liste von IPv4-Netzwerken in CIDR-Notation, die bei der automatischen Erkennung gescannt werden sollen (z. B. '192.168.1.0/24,10.0.0.0/24'). Verwenden Sie dies, um Netzwerke zu scannen, die über Routing zugänglich sind, aber nicht direkt an eine Netzwerkschnittstelle angeschlossen sind.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: Der Ping-Timeout in Sekunden für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0,5 Sekunden.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:

@@ -1786,6 +1786,8 @@ cli:
     help: 'Sigenergy AC充電器ModbusデバイスID。カンマで区切って複数のデバイスIDを指定できます。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: 'Sigenergy ModbusホストとデバイスIDの自動検出を試みます。「once」が指定されている場合、既存の自動検出結果が見つからない場合にのみ自動検出が行われます。「force」の場合、以前に検出されたModbusホストとデバイスIDを上書きします。指定しない場合、自動検出は無効になります。'
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
+    help: 自動検出中にスキャンする、CIDR表記のIPv4ネットワークのカンマ区切りリスト（例：'192.168.1.0/24,10.0.0.0/24'）。これを使用して、ルーティング経由でアクセスできるがネットワークインターフェースに直接接続されていないネットワークをスキャンします。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: 'ネットワーク上のSigenergyデバイスの自動検出を実行するときに使用する、秒単位のpingタイムアウト。デフォルトは0.5秒です。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
