@@ -331,7 +331,7 @@ class Config:
             ips: list[str] = []
             seen: set[str] = set()
             for _family, _type, _proto, _canonname, sockaddr in results:
-                ip = sockaddr[0]
+                ip = str(sockaddr[0])
                 if ip not in seen:
                     seen.add(ip)
                     ips.append(f"{ip}/32")
