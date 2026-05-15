@@ -122,6 +122,25 @@ def test_merge_modbus_by_host_port_named_host_unions_non_empty_device_lists() ->
     assert result[0]["ac-chargers"] == [4, 2]
 
 
+def test_validate_device_id_uniqueness_raises_value_error() -> None:
+    base = [{"inverters": [1], "host": "192.168.1.100", "port": 502}]
+    overlay = [{"host": "192.168.1.100", "port": 502, "ac-chargers": [1]}]
+
+    with pytest.raises(ValueError, match="Device IDs must be unique across all device types"):
+        merge_modbus_by_host_port(base, overlay)
+
+
+def test_merge_modbus_by_host_port_blank_host_pops_snake_case_keys() -> None:
+    base = [{"ac_chargers": [2], "host": "192.168.1.100", "port": 502}]
+    overlay = [{"host": "", "port": 502}]
+
+    result = merge_modbus_by_host_port(base, overlay)
+
+    assert len(result) == 1
+    assert "ac_chargers" not in result[0]
+    assert result[0]["ac-chargers"] == [2]
+
+
 def test_flatten_modbus() -> None:
     config = ModbusConfig(
         host="192.168.1.100",
