@@ -270,6 +270,14 @@ def get_parser() -> argparse.ArgumentParser:
         help="The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.",
     )
     parser.add_argument(
+        "--modbus-auto-discovery-networks",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS, None),
+        help="A comma-separated list of IPv4 networks in CIDR notation to scan during auto-discovery (e.g. '192.168.1.0/24,10.0.0.0/24'). Use this to scan networks that are accessible via routing but not directly attached to a network interface.",
+    )
+    parser.add_argument(
         "-m",
         "--modbus-host",
         nargs="?",

@@ -125,7 +125,9 @@ def test_ping_scan():
             self.destination = dest
 
     async def fake_open(host, port):
-        async def _noop(): pass
+        async def _noop():
+            pass
+
         writer = MagicMock()
         writer.close = MagicMock()
         writer.wait_closed = _noop
@@ -178,7 +180,7 @@ async def test_scan_host_full_discovery():
                 return True
             if address == 31501 and device_id == 1:
                 return True
-            if address == 30578 and device_id == 2:
+            if address == 30578 and device_id in (1, 2):
                 return True
             if address == 32000 and device_id == 3:
                 return True
@@ -304,10 +306,6 @@ async def test_ping_scan_top_level_exception():
             assert any("TCP port scan failed" in str(call) for call in mock_log.call_args_list)
 
 
-
-
-
-
 @pytest.mark.asyncio
 async def test_reconnect_already_connected():
     modbus = MagicMock()
@@ -359,11 +357,6 @@ async def test_reconnect_all_fail():
         await auto_discovery._reconnect(modbus, max_attempts=2)
         assert modbus.connected is False
         mock_warn.assert_called_with("Could not reconnect to 127.0.0.1:502 after 2 attempts")
-
-
-
-
-
 
 
 @pytest.mark.asyncio
@@ -445,6 +438,7 @@ async def test_probe_device_id_ignored_serial_combined():
     # Hit 235
     modbus = AsyncMock()
     from sigenergy2mqtt.config.auto_discovery import DiscoveredDevice
+
     device = DiscoveredDevice("host", 502)
     auto_discovery.serial_numbers = ["SN1"]
 
@@ -462,6 +456,7 @@ async def test_scan_full_flow():
         mock_nets.return_value = {"192.168.1.10": MagicMock(hosts=lambda: [MagicMock(__str__=lambda s: "192.168.1.1")])}
         with patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"192.168.1.1": 0.1}):
             with patch("sigenergy2mqtt.config.auto_discovery.scan_host") as mock_scan_host:
+
                 async def fake_scan(ip, port, results, **kwargs):
                     results.append({"host": ip})
 
@@ -492,7 +487,6 @@ async def test_scan_generic_exception_logging():
             with patch("logging.debug") as mock_log:
                 await auto_discovery.scan()
                 assert any("Scan failed: boom" in str(call) for call in mock_log.call_args_list)
-
 
 
 def test_install_async_signal_handlers():
@@ -527,7 +521,6 @@ def test_local_networks_exclusion():
         assert "192.168.1.10" in nets
 
 
-
 @pytest.mark.asyncio
 async def test_scan_host_cancelled_error_in_chunk():
     # Hit 284-289
@@ -538,11 +531,9 @@ async def test_scan_host_cancelled_error_in_chunk():
         mock_client.close = MagicMock()
 
         with patch("sigenergy2mqtt.config.auto_discovery.probe_register", return_value=True):
-            with patch("sigenergy2mqtt.config.auto_discovery.asyncio.gather", side_effect=asyncio.CancelledError):
+            with patch("sigenergy2mqtt.config.auto_discovery._probe_device_id", side_effect=asyncio.CancelledError):
                 with pytest.raises(asyncio.CancelledError):
                     await auto_discovery.scan_host("1.2.3.4", 502, [])
-
-
 
 
 # =============================================================================

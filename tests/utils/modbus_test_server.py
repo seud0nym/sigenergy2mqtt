@@ -998,6 +998,9 @@ async def run_async_server(
             if sensor.device_address not in context:
                 context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client, latency_budget)
             context[sensor.device_address].add_sensor(sensor)
+    _logger.info("Data blocks created:")
+    for device_address, data_block in context.items():
+        _logger.info(f"  Device {device_address}: {len(data_block.addresses)} addresses")
 
     _logger.info("Building SimDevice objects...")
     sim_devices: list[SimDevice] = [block.build_sim_device() for block in context.values()]

@@ -633,6 +633,42 @@ class TestConfigYamlString:
 # CLI overrides and reload edge-cases (merged from low-volume modules)
 # =============================================================================
 
+class TestConfigHostResolution:
+    @patch("socket.getaddrinfo")
+    def test_resolve_host_to_cidr_valid_ip(self, mock_getaddrinfo):
+        cfg = Config()
+        assert cfg._resolve_host_to_cidr("192.168.1.100") == ["192.168.1.100/32"]
+        mock_getaddrinfo.assert_not_called()
+
+    @patch("socket.getaddrinfo")
+    def test_resolve_host_to_cidr_valid_hostname(self, mock_getaddrinfo):
+        import socket
+        cfg = Config()
+        mock_getaddrinfo.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.101", 0)),
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.101", 0)), # Duplicate
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.102", 0))
+        ]
+        result = cfg._resolve_host_to_cidr("my-inverter.local")
+        assert result == ["192.168.1.101/32", "192.168.1.102/32"]
+        mock_getaddrinfo.assert_called_once()
+
+    @patch("socket.getaddrinfo")
+    def test_resolve_host_to_cidr_hostname_not_found(self, mock_getaddrinfo):
+        import socket
+        cfg = Config()
+        mock_getaddrinfo.side_effect = socket.gaierror("Name or service not known")
+        assert cfg._resolve_host_to_cidr("unknown.local") == []
+
+    @patch("socket.getaddrinfo")
+    def test_resolve_host_to_cidr_empty_results(self, mock_getaddrinfo):
+        cfg = Config()
+        mock_getaddrinfo.return_value = []
+        assert cfg._resolve_host_to_cidr("empty.local") == []
+
+
+# =============================================================================
+
 
 @patch.dict(os.environ, {}, clear=True)
 def test_apply_cli_overrides_boolean_flags():

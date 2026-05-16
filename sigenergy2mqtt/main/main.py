@@ -654,15 +654,21 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
         for config in configs:
             config.offline()
 
-    def reload_on_signal(caught, frame):
+    def reload_on_signal():
         """Handle SIGHUP by reloading config/logging and requesting restart."""
-        logging.info(f"Signal {caught} received - Reloading configuration")
-        restart_controller.request(f"signal {caught}")
+        logging.info("Signal SIGHUP received - Reloading configuration")
+        asyncio.create_task(active_config.reload_async())
+        restart_controller.request("signal SIGHUP")
 
+    loop = asyncio.get_running_loop()
     signal.signal(signal.SIGINT, exit_on_signal)
-    signal.signal(signal.SIGHUP, reload_on_signal)
     signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGUSR1, configure_for_restart)
+    try:
+        loop.add_signal_handler(signal.SIGHUP, reload_on_signal)
+    except NotImplementedError:
+        # Fallback for platforms without add_signal_handler (e.g. Windows, though this is Linux)
+        signal.signal(signal.SIGHUP, lambda s, f: asyncio.run_coroutine_threadsafe(active_config.reload_async(), loop))
 
 
 # ---------------------------------------------------------------------------
@@ -864,7 +870,7 @@ async def async_main() -> None:
             )
 
         # Phase 2 config load — StateStore now available for auto-discovery fallback
-        initialize_with_persistence()
+        await initialize_with_persistence()
 
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
@@ -881,6 +887,6 @@ async def async_main() -> None:
             logging.info(f"Shutdown of Release {active_config.version} completed")
             return
         else:
-            active_config.reload()
+            await active_config.reload_async()
 
         logging.info("Restarting runtime")

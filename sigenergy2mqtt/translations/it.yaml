@@ -1786,6 +1786,8 @@ cli:
     help: L'ID dispositivo Modbus del Caricatore CA Sigenergy. Possono essere specificati più ID separati da virgole.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: Tenta l'auto-scoperta degli host Modbus Sigenergy e degli ID dispositivo. Se 'once' è specificato, l'auto-scoperta avverrà solo se non vengono trovati risultati precedenti. Se 'force', sovrascriverà gli host Modbus e ID precedentemente scoperti. Se non specificato, l'auto-scoperta è disabilitata.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
+    help: Un elenco separato da virgole di reti IPv4 in notazione CIDR da scansionare durante il rilevamento automatico (ad es. '192.168.1.0/24,10.0.0.0/24'). Utilizzare questo per scansionare reti accessibili tramite routing ma non direttamente collegate a un'interfaccia di rete.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
     help: "Il timeout ping in secondi per l'auto-scoperta dei dispositivi Sigenergy sulla rete. Predefinito: 0,5 secondi."
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:

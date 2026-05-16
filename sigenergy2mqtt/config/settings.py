@@ -106,6 +106,7 @@ class Settings(BaseSettings):
         "modbus-auto-discovery-timeout",
         "modbus-auto-discovery-ping-timeout",
         "modbus-auto-discovery-retries",
+        "modbus-auto-discovery-networks",
     }
 
     # ── Internal args ────────────────────────────────────────────────────────
