@@ -25,7 +25,7 @@ def _apply_cli_to_env(variable: str, value: str | list[str]) -> None:
     """
     Set an environment variable from a CLI argument.
     """
-    os.environ[variable] = ",".join(str(x) for x in value) if isinstance(value, list) else str(value)
+    os.environ[variable] = ",".join(x for x in value) if isinstance(value, list) else value
     logging.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
 
 
@@ -111,6 +111,7 @@ async def _load_config_async(skip_auto_discovery: bool = False) -> None:
     else:
         logging.debug("No config file found; using environment variables and defaults.")
         await active_config.reload_async(skip_auto_discovery=skip_auto_discovery)
+
 
 def _load_config(skip_auto_discovery: bool = False) -> None:
     """Load active_config from a discovered file, or fall back to env-var / defaults."""

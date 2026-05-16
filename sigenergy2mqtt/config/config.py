@@ -30,7 +30,12 @@ from contextlib import contextmanager
 from copy import deepcopy
 from io import StringIO
 from pathlib import Path
-from typing import Any, Generator
+from typing import TYPE_CHECKING, Any, Generator
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.common import ConsumptionMethod
+
+    from .models import HomeAssistantConfig, InfluxDbConfig, ModbusConfig, MqttConfig, PersistenceConfig, PvOutputConfig
 
 from ruamel.yaml import YAML
 
@@ -64,8 +69,29 @@ class Config:
     origin: dict[str, str] = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
     persistent_state_path: Path
 
+    validate_only_mode: str | None = None
+    validate_show_credentials: bool = False
+
     _settings: Settings | None
     _source: str | None
+
+    if TYPE_CHECKING:
+        log_level: int
+        language: str
+        consumption: ConsumptionMethod
+        repeated_state_publish_interval: int
+        sanity_check_default_kw: float
+        sanity_check_failures_increment: bool
+        ems_mode_check: bool
+        metrics_enabled: bool
+        sensor_debug_logging: bool
+        home_assistant: HomeAssistantConfig
+        mqtt: MqttConfig
+        persistence: PersistenceConfig
+        pvoutput: PvOutputConfig
+        influxdb: InfluxDbConfig
+        modbus: list[ModbusConfig]
+        sensor_overrides: dict[str, Any]
 
     def __init__(self):
         self._source = None
@@ -189,12 +215,12 @@ class Config:
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_settings = self._load_auto_discovery_settings()
-        
+
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
         if not auto_discovery and not self._has_modbus_source():
             auto_discovery = "once"
-            
+
         return auto_discovery, auto_discovery_cache, auto_settings
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
@@ -212,6 +238,7 @@ class Config:
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
                 if cached:
@@ -223,6 +250,7 @@ class Config:
     async def _restore_discovery_from_mqtt_async(self, auto_discovery_cache: Path):
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 cached = await state_store.load(Category.CONFIG, "auto-discovery")
                 if cached:
@@ -236,6 +264,7 @@ class Config:
         auto_discovery_cache.write_text(yaml_content)
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 state_store.save_sync(Category.CONFIG, "auto-discovery", yaml_content)
         except Exception:
@@ -246,6 +275,7 @@ class Config:
         auto_discovery_cache.write_text(yaml_content)
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 await state_store.save(Category.CONFIG, "auto-discovery", yaml_content)
         except Exception:
@@ -436,6 +466,7 @@ class Config:
 
         # Fallback: if we are in a loop but must be sync, use a thread to avoid deadlock.
         import threading
+
         result: list = []
         exception: Exception | None = None
 
@@ -462,6 +493,14 @@ class Config:
             raise AttributeError("_settings not initialised")
         # Fall through to settings for all data attributes
         return getattr(self._settings, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name.startswith("_") or name in ("persistent_state_path", "clean", "validate_only_mode", "validate_show_credentials"):
+            super().__setattr__(name, value)
+        elif self._settings and name in type(self._settings).model_fields:
+            setattr(self._settings, name, value)
+        else:
+            super().__setattr__(name, value)
 
     def __str__(self) -> str:
         """Return the current configuration as nicely formatted YAML.
@@ -688,4 +727,7 @@ def _swap_active_config(new_config: Config) -> Generator[Config, None, None]:
 _system_initialize()
 
 # Global singleton — the authoritative configuration instance at runtime.
-active_config = _ConfigProxy(Config())
+if TYPE_CHECKING:
+    active_config = Config()
+else:
+    active_config = _ConfigProxy(Config())

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import asyncio
 import logging
@@ -5,8 +7,9 @@ from typing import Awaitable, Literal, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter, RegisterAccess
+from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler

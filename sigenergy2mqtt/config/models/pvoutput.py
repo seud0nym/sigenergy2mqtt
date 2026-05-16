@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from sigenergy2mqtt.common import (
     ConsumptionSource,
+    OutputField,
     StatusField,
     Tariff,
     TariffType,
@@ -50,6 +51,11 @@ class PvOutputConfig(BaseModel):
     calc_debug_logging: bool = Field(False, alias="calc-debug-logging")
     update_debug_logging: bool = Field(False, alias="update-debug-logging")
     tariffs: list[Any] = Field(default_factory=list, alias="time-periods")
+
+    @property
+    def current_time_period(self) -> tuple[OutputField | None, OutputField]:
+        """Placeholder for dynamic property added in settings.py."""
+        raise NotImplementedError
 
     started: float = Field(default=0.0, exclude=True)
 

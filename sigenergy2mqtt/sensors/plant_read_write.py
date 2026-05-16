@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import cast
 
@@ -6,7 +8,8 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, Protocol, PVInverter, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, NumericSensor, ReservedSensor, ScanInterval, SelectSensor, SwitchSensor, ThreePhaseAdjustmentTargetValue, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, NumericSensor, ReservedSensor, ScanInterval, SelectSensor, SwitchSensor, ThreePhaseAdjustmentTargetValue, WriteOnlySensor
+from sigenergy2mqtt.sensors.base.sensor import AvailabilityMixin
 
 # 5.2 Plant parameter setting address definition (holding register)
 
