@@ -52,7 +52,7 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
 
 def _mqtt_mock():
     m = MagicMock()
-    m.publish = MagicMock()
+    m.publish.return_value.is_published.return_value = True
     return m
 
 

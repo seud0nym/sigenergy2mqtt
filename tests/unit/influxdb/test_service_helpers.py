@@ -28,12 +28,12 @@ def service(logger):
     mock_config.batch_size = 100
     mock_config.flush_interval = 1.0
     mock_config.query_interval = 0.1
-
-    mock_config.query_interval = 0.1
+    mock_config.sync_chunk_size = 100
+    mock_config.max_sync_workers = 5
 
     with patch.object(active_config, "influxdb", mock_config):
         svc = InfluxService(logger, plant_index=0)
-    return svc
+        yield svc
 
 
 # =============================================================================
@@ -357,9 +357,13 @@ class TestHassHistorySyncCoverage:
         mock_config.flush_interval = 1.0
         mock_config.query_interval = 0.1
         mock_config.default_measurement = "state"
+        mock_config.max_sync_workers = 5
+        mock_config.sync_chunk_size = 100
 
-        with patch.object(active_config, "influxdb", mock_config):
-            return HassHistorySync(logger, plant_index=0)
+        # We set it directly on the active_config proxy.
+        # It will be reset by the next reload() or next test that mocks it.
+        active_config.influxdb = mock_config
+        return HassHistorySync(logger, plant_index=0)
 
     @pytest.mark.asyncio
     async def test_detect_homeassistant_db_v2_bucket_found(self, logger):

@@ -25,7 +25,7 @@ def _apply_cli_to_env(variable: str, value: str | list[str]) -> None:
     """
     Set an environment variable from a CLI argument.
     """
-    os.environ[variable] = ",".join(x for x in value) if isinstance(value, list) else value
+    os.environ[variable] = ",".join(x for x in value) if isinstance(value, list) else str(value)
     logging.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
 
 

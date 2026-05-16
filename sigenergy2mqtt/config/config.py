@@ -32,11 +32,6 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator
 
-if TYPE_CHECKING:
-    from sigenergy2mqtt.common import ConsumptionMethod
-
-    from .models import HomeAssistantConfig, InfluxDbConfig, ModbusConfig, MqttConfig, PersistenceConfig, PvOutputConfig
-
 from ruamel.yaml import YAML
 
 from sigenergy2mqtt import i18n
@@ -76,22 +71,15 @@ class Config:
     _source: str | None
 
     if TYPE_CHECKING:
-        log_level: int
-        language: str
-        consumption: ConsumptionMethod
-        repeated_state_publish_interval: int
-        sanity_check_default_kw: float
-        sanity_check_failures_increment: bool
-        ems_mode_check: bool
-        metrics_enabled: bool
-        sensor_debug_logging: bool
-        home_assistant: HomeAssistantConfig
-        mqtt: MqttConfig
-        persistence: PersistenceConfig
-        pvoutput: PvOutputConfig
-        influxdb: InfluxDbConfig
-        modbus: list[ModbusConfig]
-        sensor_overrides: dict[str, Any]
+        from sigenergy2mqtt.common import ConsumptionMethod
+        from sigenergy2mqtt.config.settings import (
+            HomeAssistantConfig,
+            InfluxDbConfig,
+            ModbusConfig,
+            MqttConfig,
+            PersistenceConfig,
+            PvOutputConfig,
+        )
 
     def __init__(self):
         self._source = None
@@ -106,6 +94,242 @@ class Config:
             self.reload(skip_auto_discovery=True)
         except Exception:
             pass
+
+    @property
+    def log_level(self) -> int:
+        return self._settings.log_level if self._settings else logging.WARNING
+
+    @log_level.setter
+    def log_level(self, value: int):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.log_level = value
+
+    @log_level.deleter
+    def log_level(self):
+        pass
+
+    @property
+    def language(self) -> str:
+        return self._settings.language if self._settings else "en"
+
+    @language.setter
+    def language(self, value: str):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.language = value
+
+    @language.deleter
+    def language(self):
+        pass
+
+    @property
+    def consumption(self) -> ConsumptionMethod:
+        from sigenergy2mqtt.common import ConsumptionMethod
+
+        return self._settings.consumption if self._settings else ConsumptionMethod.TOTAL
+
+    @consumption.setter
+    def consumption(self, value: ConsumptionMethod):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.consumption = value
+
+    @consumption.deleter
+    def consumption(self):
+        pass
+
+    @property
+    def repeated_state_publish_interval(self) -> int:
+        return self._settings.repeated_state_publish_interval if self._settings else 0
+
+    @repeated_state_publish_interval.setter
+    def repeated_state_publish_interval(self, value: int):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.repeated_state_publish_interval = value
+
+    @repeated_state_publish_interval.deleter
+    def repeated_state_publish_interval(self):
+        pass
+
+    @property
+    def sanity_check_default_kw(self) -> float:
+        return self._settings.sanity_check_default_kw if self._settings else 500.0
+
+    @sanity_check_default_kw.setter
+    def sanity_check_default_kw(self, value: float):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sanity_check_default_kw = value
+
+    @sanity_check_default_kw.deleter
+    def sanity_check_default_kw(self):
+        pass
+
+    @property
+    def sanity_check_failures_increment(self) -> bool:
+        return self._settings.sanity_check_failures_increment if self._settings else False
+
+    @sanity_check_failures_increment.setter
+    def sanity_check_failures_increment(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sanity_check_failures_increment = value
+
+    @sanity_check_failures_increment.deleter
+    def sanity_check_failures_increment(self):
+        pass
+
+    @property
+    def ems_mode_check(self) -> bool:
+        return self._settings.ems_mode_check if self._settings else True
+
+    @ems_mode_check.setter
+    def ems_mode_check(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.ems_mode_check = value
+
+    @ems_mode_check.deleter
+    def ems_mode_check(self):
+        pass
+
+    @property
+    def metrics_enabled(self) -> bool:
+        return self._settings.metrics_enabled if self._settings else True
+
+    @metrics_enabled.setter
+    def metrics_enabled(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.metrics_enabled = value
+
+    @metrics_enabled.deleter
+    def metrics_enabled(self):
+        pass
+
+    @property
+    def sensor_debug_logging(self) -> bool:
+        return self._settings.sensor_debug_logging if self._settings else False
+
+    @sensor_debug_logging.setter
+    def sensor_debug_logging(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sensor_debug_logging = value
+
+    @sensor_debug_logging.deleter
+    def sensor_debug_logging(self):
+        pass
+
+    @property
+    def home_assistant(self) -> HomeAssistantConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.home_assistant
+
+    @home_assistant.setter
+    def home_assistant(self, value: HomeAssistantConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.home_assistant = value
+
+    @home_assistant.deleter
+    def home_assistant(self):
+        pass
+
+    @property
+    def mqtt(self) -> MqttConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.mqtt
+
+    @mqtt.setter
+    def mqtt(self, value: MqttConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.mqtt = value
+
+    @mqtt.deleter
+    def mqtt(self):
+        pass
+
+    @property
+    def persistence(self) -> PersistenceConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.persistence
+
+    @persistence.setter
+    def persistence(self, value: PersistenceConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.persistence = value
+
+    @persistence.deleter
+    def persistence(self):
+        pass
+
+    @property
+    def pvoutput(self) -> PvOutputConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.pvoutput
+
+    @pvoutput.setter
+    def pvoutput(self, value: PvOutputConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.pvoutput = value
+
+    @pvoutput.deleter
+    def pvoutput(self):
+        pass
+
+    @property
+    def influxdb(self) -> InfluxDbConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.influxdb
+
+    @influxdb.setter
+    def influxdb(self, value: InfluxDbConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.influxdb = value
+
+    @influxdb.deleter
+    def influxdb(self):
+        pass
+
+    @property
+    def modbus(self) -> list[ModbusConfig]:
+        return self._settings.modbus if self._settings else []
+
+    @modbus.setter
+    def modbus(self, value: list[ModbusConfig]):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.modbus = value
+
+    @modbus.deleter
+    def modbus(self):
+        pass
+
+    @property
+    def sensor_overrides(self) -> dict[str, Any]:
+        return self._settings.sensor_overrides if self._settings else {}
+
+    @sensor_overrides.setter
+    def sensor_overrides(self, value: dict[str, Any]):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sensor_overrides = value
+
+    @sensor_overrides.deleter
+    def sensor_overrides(self):
+        pass
 
     @property
     def version(self) -> str:
@@ -491,13 +715,21 @@ class Config:
     def __getattr__(self, name: str) -> Any:
         if name == "_settings":
             raise AttributeError("_settings not initialised")
+        if self._settings is None:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}' (settings not loaded)")
         # Fall through to settings for all data attributes
-        return getattr(self._settings, name)
+        try:
+            return getattr(self._settings, name)
+        except AttributeError:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'") from None
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name.startswith("_") or name in ("persistent_state_path", "clean", "validate_only_mode", "validate_show_credentials"):
             super().__setattr__(name, value)
-        elif self._settings and name in type(self._settings).model_fields:
+            return
+
+        # Delegate to settings if it's a known field
+        if self._settings and name in type(self._settings).model_fields:
             setattr(self._settings, name, value)
         else:
             super().__setattr__(name, value)

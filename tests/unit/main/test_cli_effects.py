@@ -25,10 +25,9 @@ async def test_main_clean_disables_pvoutput(monkeypatch):
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(main_mod, "setup_devices", AsyncMock(return_value=([], None)))
     monkeypatch.setattr(main_mod, "setup_services", lambda c, p: c)
-    monkeypatch.setattr(main_mod, "initialize_with_persistence", lambda: None)
+    monkeypatch.setattr(main_mod, "initialize_with_persistence", AsyncMock())
     monkeypatch.setattr(main_mod, "configure_logging", lambda: None)
     monkeypatch.setattr(main_mod, "pymodbus_apply_logging_config", lambda *a: None)
-    monkeypatch.setattr(main_mod, "signal", MagicMock())
 
     await main_mod.async_main()
 
